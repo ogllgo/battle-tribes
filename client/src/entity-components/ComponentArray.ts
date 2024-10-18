@@ -1,10 +1,9 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "battletribes-shared/entities";
-import Entity from "../Entity";
-import { ClientComponentType } from "./components";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
+import { ClientComponentType } from "./client-components";
 
 export const enum ComponentArrayType {
    server,
@@ -68,8 +67,8 @@ export abstract class ComponentArray<T extends object = object, ArrayType extend
    public onUpdate?: (entity: EntityID) => void;
    public onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
    public onHit?(entity: EntityID, isDamagingHit: boolean): void;
-   public onRemove?(entity: EntityID): void;
    public onDie?(entity: EntityID): void;
+   public onRemove?(entity: EntityID): void;
 
    constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T>) {
       this.typeObject = {

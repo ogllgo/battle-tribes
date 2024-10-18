@@ -9,20 +9,44 @@ import { CowSpecies, EntityID } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityLayer } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class CowComponent {
-   public species = CowSpecies.black;
-   public grazeProgress = 0;
+export interface CowComponentParams {
+   readonly species: CowSpecies;
+   readonly grazeProgress: number;
 }
 
-export default CowComponent;
+export interface CowComponent {
+   readonly species: CowSpecies;
+   grazeProgress: number;
+}
 
-export const CowComponentArray = new ServerComponentArray<CowComponent>(ServerComponentType.cow, true, {
+export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, never>(ServerComponentType.cow, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): CowComponentParams {
+   const species = reader.readNumber();
+   const grazeProgress = reader.readNumber();
+
+   return {
+      species: species,
+      grazeProgress: grazeProgress
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cow>): CowComponent {
+   const cowComponentParams = entityConfig.components[ServerComponentType.cow];
+   
+   return {
+      species: cowComponentParams.species,
+      grazeProgress: cowComponentParams.grazeProgress
+   };
+}
 
 function onTick(cowComponent: CowComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -47,7 +71,7 @@ function padData(reader: PacketReader): void {
 function updateFromData(reader: PacketReader, entity: EntityID): void {
    const cowComponent = CowComponentArray.getComponent(entity);
    
-   cowComponent.species = reader.readNumber();
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
    const grazeProgress = reader.readNumber();
    
    // When the cow has finished grazing, create a bunch of dirt particles

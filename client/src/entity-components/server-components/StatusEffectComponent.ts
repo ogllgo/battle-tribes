@@ -11,10 +11,21 @@ import { Light, addLight, attachLightToEntity, removeLight } from "../../lights"
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import Player from "../../entities/Player";
 import { getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../Entity";
+
+export interface StatusEffectComponentParams {
+   readonly statusEffects: Array<StatusEffectData>;
+}
+
+export interface StatusEffectComponent {
+   burningLight: Light | null;
+   
+   // @Cleanup: should be readonly!
+   statusEffects: Array<StatusEffectData>;
+}
 
 const BURNING_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [
    [255/255, 102/255, 0],
@@ -23,33 +34,27 @@ const BURNING_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [
 
 const BURNING_SMOKE_PARTICLE_FADEIN_TIME = 0.15;
 
-class StatusEffectComponent {
-   public burningLight: Light | null = null;
-   
-   public statusEffects = new Array<StatusEffectData>();
-
-   public hasStatusEffect(type: StatusEffect): boolean {
-      for (const statusEffect of this.statusEffects) {
-         if (statusEffect.type === type) {
-            return true;
-         }
+const hasStatusEffect = (statusEffectComponent: StatusEffectComponent, type: StatusEffect): boolean => {
+   for (const statusEffect of statusEffectComponent.statusEffects) {
+      if (statusEffect.type === type) {
+         return true;
       }
-      return false;
    }
-
-   public getStatusEffect(type: StatusEffect): StatusEffectData | null {
-      for (const statusEffect of this.statusEffects) {
-         if (statusEffect.type === type) {
-            return statusEffect;
-         }
-      }
-      return null;
-   }
+   return false;
 }
 
-export default StatusEffectComponent;
+const getStatusEffect = (statusEffectComponent: StatusEffectComponent, type: StatusEffect): StatusEffectData | null => {
+   for (const statusEffect of statusEffectComponent.statusEffects) {
+      if (statusEffect.type === type) {
+         return statusEffect;
+      }
+   }
+   return null;
+}
 
-export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectComponent>(ServerComponentType.statusEffect, true, {
+export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectComponent, StatusEffectComponentParams, never>(ServerComponentType.statusEffect, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -57,10 +62,36 @@ export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectC
    calculateTint: calculateTint
 });
 
+function createParamsFromData(reader: PacketReader): StatusEffectComponentParams {
+   const statusEffects = new Array<StatusEffectData>();
+   const numStatusEffects = reader.readNumber();
+   for (let i = 0; i < numStatusEffects; i++) {
+      const type = reader.readNumber() as StatusEffect;
+      const ticksElapsed = reader.readNumber();
+
+      const statusEffectData: StatusEffectData = {
+         type: type,
+         ticksElapsed: ticksElapsed
+      }
+      statusEffects.push(statusEffectData);
+   }
+
+   return {
+      statusEffects: statusEffects
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEffect>): StatusEffectComponent {
+   return {
+      statusEffects: entityConfig.components[ServerComponentType.statusEffect].statusEffects,
+      burningLight: null
+   };
+}
+
 function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   const poisonStatusEffect = statusEffectComponent.getStatusEffect(StatusEffect.poisoned);
+   const poisonStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.poisoned);
    if (poisonStatusEffect !== null) {
       // Poison particles
       if (customTickIntervalHasPassed(poisonStatusEffect.ticksElapsed, 0.1)) {
@@ -105,7 +136,7 @@ function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID):
       }
    }
 
-   const fireStatusEffect = statusEffectComponent.getStatusEffect(StatusEffect.burning);
+   const fireStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.burning);
    if (fireStatusEffect !== null) {
       if (statusEffectComponent.burningLight === null) {
          statusEffectComponent.burningLight = {
@@ -215,7 +246,7 @@ function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID):
       statusEffectComponent.burningLight = null;
    }
 
-   const bleedingStatusEffect = statusEffectComponent.getStatusEffect(StatusEffect.bleeding);
+   const bleedingStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.bleeding);
    if (bleedingStatusEffect !== null) {
       if (Board.tickIntervalHasPassed(0.15)) {
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
@@ -231,10 +262,10 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numStatusEffects);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: boolean): void {
+function updateFromData(reader: PacketReader, entity: EntityID): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
 
-   const previousHasFreezing = statusEffectComponent.hasStatusEffect(StatusEffect.freezing);
+   const previousHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
    
    // @Speed @Garbage
    const statusEffects = new Array<StatusEffectData>();
@@ -250,15 +281,13 @@ function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: b
       statusEffects.push(statusEffectData);
    }
    
-   if (!isInitialData) {
-      for (const statusEffectData of statusEffects) {
-         if (!statusEffectComponent.hasStatusEffect(statusEffectData.type)) {
-            switch (statusEffectData.type) {
-               case StatusEffect.freezing: {
-                  const transformComponent = TransformComponentArray.getComponent(entity);
-                  playSound("freezing.mp3", 0.4, 1, transformComponent.position)
-                  break;
-               }
+   for (const statusEffectData of statusEffects) {
+      if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
+         switch (statusEffectData.type) {
+            case StatusEffect.freezing: {
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               playSound("freezing.mp3", 0.4, 1, transformComponent.position)
+               break;
             }
          }
       }
@@ -266,20 +295,20 @@ function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: b
    
    statusEffectComponent.statusEffects = statusEffects;
 
-   const newHasFreezing = statusEffectComponent.hasStatusEffect(StatusEffect.freezing);
+   const newHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
    if (newHasFreezing !== previousHasFreezing) {
       const renderInfo = getEntityRenderInfo(entity);
       renderInfo.recalculateTint();
    }
 }
 
-function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
-   updateFromData(reader, Player.instance!.id, isInitialData);
+function updatePlayerFromData(reader: PacketReader): void {
+   updateFromData(reader, Player.instance!.id);
 }
 
 function calculateTint(entity: EntityID): ComponentTint {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
-   if (statusEffectComponent.hasStatusEffect(StatusEffect.freezing)) {
+   if (hasStatusEffect(statusEffectComponent, StatusEffect.freezing)) {
       return createComponentTint(-0.15, 0, 0.5);
    } else {
       return createComponentTint(0, 0, 0);

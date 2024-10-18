@@ -9,19 +9,31 @@ import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
+export interface GuardianGemQuakeComponentParams {}
+
+export interface GuardianGemQuakeComponent {}
+
 const TEXTURE_SOURCES: ReadonlyArray<string> = [
    "entities/guardian-gem-quake/gem-1.png",
    "entities/guardian-gem-quake/gem-2.png",
    "entities/guardian-gem-quake/gem-3.png"
 ];
 
-export class GuardianGemQuakeComponent {}
-
-export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent>(ServerComponentType.guardianGemQuake, true, {
+export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, never>(ServerComponentType.guardianGemQuake, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): GuardianGemQuakeComponentParams {
+   return {};
+}
+
+function createComponent(): GuardianGemQuakeComponent {
+   return {};
+}
 
 function onLoad(_component: GuardianGemQuakeComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

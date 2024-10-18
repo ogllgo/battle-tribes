@@ -2,9 +2,25 @@ import { angle, lerp } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "../../../../shared/src/entities";
-import { getEntityRenderInfo } from "../../world";
 import RenderPart from "../../render-parts/RenderPart";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+
+export interface FenceGateComponentParams {
+   readonly openProgress: number;
+}
+
+interface RenderParts {
+   readonly doorRenderPart: RenderPart;
+}
+
+export interface FenceGateComponent {
+   readonly doorRenderPart: RenderPart;
+
+   openProgress: number;
+}
 
 interface DoorInfo {
    readonly offsetX: number;
@@ -34,23 +50,52 @@ const getFenceGateDoorInfo = (openProgress: number): DoorInfo => {
    };
 }
 
-class FenceGateComponent {
-   public readonly doorRenderPart: RenderPart;
-
-   public openProgress = 0;
-   
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
-      this.doorRenderPart = renderInfo.getRenderThing("fenceGateComponent:door") as RenderPart;
-   }
-}
-
-export default FenceGateComponent;
-
-export const FenceGateComponentArray = new ServerComponentArray<FenceGateComponent>(ServerComponentType.fenceGate, true, {
+export const FenceGateComponentArray = new ServerComponentArray<FenceGateComponent, FenceGateComponentParams, RenderParts>(ServerComponentType.fenceGate, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): FenceGateComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   const openProgress = reader.readNumber();
+
+   return {
+      openProgress: openProgress
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         1,
+         0,
+         getTextureArrayIndex("entities/fence-gate/fence-gate-sides.png")
+      )
+   );
+
+   const doorRenderPart = new TexturedRenderPart(
+      null,
+      0,
+      0,
+      getTextureArrayIndex("entities/fence-gate/fence-gate-door.png")
+   );
+   renderInfo.attachRenderThing(doorRenderPart);
+
+   return {
+      doorRenderPart: doorRenderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.fenceGate>, renderParts: RenderParts): FenceGateComponent {
+   return {
+      doorRenderPart: renderParts.doorRenderPart,
+      openProgress: entityConfig.components[ServerComponentType.fenceGate].openProgress
+   };
+}
 
 const updateDoor = (fenceGateComponent: FenceGateComponent): void => {
    const doorInfo = getFenceGateDoorInfo(fenceGateComponent.openProgress);

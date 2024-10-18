@@ -1,14 +1,24 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class SlimewispComponent {}
+export interface SlimewispComponentParams {}
 
-export default SlimewispComponent;
+export interface SlimewispComponent {}
 
-export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent>(ServerComponentType.slimewisp, true, {
+export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentParams, never>(ServerComponentType.slimewisp, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): SlimewispComponentParams {
+   return {};
+}
+
+function createComponent(): SlimewispComponent {
+   return {};
+}
 
 function padData(): void {}
 

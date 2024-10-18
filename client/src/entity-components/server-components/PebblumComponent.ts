@@ -1,14 +1,24 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class PebblumComponent {}
+export interface PebblumComponentParams {}
 
-export default PebblumComponent;
+export interface PebblumComponent {}
 
-export const PebblumComponentArray = new ServerComponentArray<PebblumComponent>(ServerComponentType.pebblum, true, {
+export const PebblumComponentArray = new ServerComponentArray<PebblumComponent, PebblumComponentParams, never>(ServerComponentType.pebblum, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): PebblumComponentParams {
+   return {};
+}
+
+function createComponent(): PebblumComponent {
+   return {};
+}
 
 function padData(): void {}
 

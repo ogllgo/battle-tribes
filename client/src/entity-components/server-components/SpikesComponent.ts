@@ -7,69 +7,84 @@ import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
+
+export interface SpikesComponentParams {
+   readonly isCovered: boolean;
+}
+
+export interface SpikesComponent {
+   isCovered: boolean;
+   // @Incomplete: We should randomise their position every time they are re-covered
+   readonly leafRenderParts: ReadonlyArray<RenderPart>;
+}
 
 export const NUM_SMALL_COVER_LEAVES = 8;
 export const NUM_LARGE_COVER_LEAVES = 3;
 
-class SpikesComponent {
-   // @Cleanup: should be in particles.ts
-   public static readonly LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
-   public static readonly LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
-   
-   public readonly leafRenderParts: ReadonlyArray<RenderPart>;
+// @Cleanup: should be in particles.ts
+const LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
+const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 
-   public isCovered = false;
-
-   constructor(entity: EntityID) {
-      const leafRenderParts = new Array<RenderPart>();
-      for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
-         const renderPart = this.createLeafRenderPart(entity, true);
-         leafRenderParts.push(renderPart);
-      }
-      for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
-         const renderPart = this.createLeafRenderPart(entity, false);
-         leafRenderParts.push(renderPart);
-      }
-      this.leafRenderParts = leafRenderParts;
-   }
-
-   private createLeafRenderPart(entity: EntityID, isSmall: boolean): RenderPart {
-      let textureSource: string;
-      if (isSmall) {
-         textureSource = "entities/miscellaneous/cover-leaf-small.png";
-      } else {
-         textureSource = "entities/miscellaneous/cover-leaf-large.png";
-      }
-      
-      const renderPart = new TexturedRenderPart(
-         null,
-         1 + Math.random() * 0.5,
-         2 * Math.PI * Math.random(),
-         getTextureArrayIndex(textureSource)
-      );
-
-      const spawnRange = isSmall ? 24 : 18;
-   
-      renderPart.offset.x = randFloat(-spawnRange, spawnRange);
-      renderPart.offset.y = randFloat(-spawnRange, spawnRange);
-   
-      const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.attachRenderThing(renderPart);
-   
-      return renderPart;
-   }
-}
-
-export default SpikesComponent;
-
-export const SpikesComponentArray = new ServerComponentArray<SpikesComponent>(ServerComponentType.spikes, true, {
+export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentParams, never>(ServerComponentType.spikes, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): SpikesComponentParams {
+   const isCovered = reader.readBoolean();
+   reader.padOffset(3);
+
+   return {
+      isCovered: isCovered
+   };
+}
+
+const createLeafRenderPart = (isSmall: boolean): RenderPart => {
+   let textureSource: string;
+   if (isSmall) {
+      textureSource = "entities/miscellaneous/cover-leaf-small.png";
+   } else {
+      textureSource = "entities/miscellaneous/cover-leaf-large.png";
+   }
+   
+   const renderPart = new TexturedRenderPart(
+      null,
+      1 + Math.random() * 0.5,
+      2 * Math.PI * Math.random(),
+      getTextureArrayIndex(textureSource)
+   );
+
+   const spawnRange = isSmall ? 24 : 18;
+
+   renderPart.offset.x = randFloat(-spawnRange, spawnRange);
+   renderPart.offset.y = randFloat(-spawnRange, spawnRange);
+
+   return renderPart;
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes>): SpikesComponent {
+   const leafRenderParts = new Array<RenderPart>();
+   for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
+      const renderPart = createLeafRenderPart(true);
+      entityConfig.renderInfo.attachRenderThing(renderPart);
+      leafRenderParts.push(renderPart);
+   }
+   for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
+      const renderPart = createLeafRenderPart(false);
+      entityConfig.renderInfo.attachRenderThing(renderPart);
+      leafRenderParts.push(renderPart);
+   }
+   
+   return {
+      isCovered: entityConfig.components[ServerComponentType.spikes].isCovered,
+      leafRenderParts: leafRenderParts
+   };
+}
 
 function onLoad(spikesComponent: SpikesComponent): void {
    updateLeafRenderParts(spikesComponent);
@@ -113,7 +128,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          
          // Create leaf specks
          for (let i = 0; i < 7; i++) {
-            createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, randFloat(0, 16), SpikesComponent.LEAF_SPECK_COLOUR_LOW, SpikesComponent.LEAF_SPECK_COLOUR_HIGH);
+            createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, randFloat(0, 16), LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
          }
       }
       

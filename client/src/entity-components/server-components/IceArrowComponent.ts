@@ -5,16 +5,26 @@ import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "battletribes-shared/entities";
 import ServerComponentArray from "../ServerComponentArray";
 
-class IceArrowComponent {}
+export interface IceArrowComponentParams {}
 
-export default IceArrowComponent;
+export interface IceArrowComponent {}
 
-export const IceArrowComponentArray = new ServerComponentArray<IceArrowComponent>(ServerComponentType.iceArrow, true, {
+export const IceArrowComponentArray = new ServerComponentArray<IceArrowComponent, IceArrowComponentParams, never>(ServerComponentType.iceArrow, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    onRemove: onRemove,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): IceArrowComponentParams {
+   return {};
+}
+
+function createComponent(): IceArrowComponent {
+   return {};
+}
 
 function onTick(_iceArrowComponent: IceArrowComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

@@ -5,16 +5,26 @@ import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 
-class BattleaxeProjectileComponent {}
+export interface BattleaxeProjectileComponentParams {}
 
-export default BattleaxeProjectileComponent;
+export interface BattleaxeProjectileComponent {}
 
-export const BattleaxeProjectileComponentArray = new ServerComponentArray<BattleaxeProjectileComponent>(ServerComponentType.battleaxeProjectile, true, {
+export const BattleaxeProjectileComponentArray = new ServerComponentArray<BattleaxeProjectileComponent, BattleaxeProjectileComponentParams, never>(ServerComponentType.battleaxeProjectile, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): BattleaxeProjectileComponentParams {
+   return {};
+}
+
+function createComponent(): BattleaxeProjectileComponent {
+   return {};
+}
 
 const playWhoosh = (entity: EntityID): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);

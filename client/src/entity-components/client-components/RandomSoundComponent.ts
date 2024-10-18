@@ -1,12 +1,12 @@
 import { EntityID } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
 import { playSound } from "../../sound";
+import { ClientComponentType } from "../client-components";
 import ClientComponentArray from "../ClientComponentArray";
-import { ClientComponentType } from "../components";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
 /** Plays sounds coming from the entity randomly */
-export default class RandomSoundComponent {
+export class RandomSoundComponent {
    public minSoundIntervalTicks = 0;
    public maxSoundIntervalTicks = 0;
    public volume = 0;

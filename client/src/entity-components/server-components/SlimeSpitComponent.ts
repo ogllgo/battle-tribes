@@ -7,27 +7,60 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSound } from "../../sound";
-import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 
-class SlimeSpitComponent {
-   // @Speed: polymorphism
-   public renderParts!: ReadonlyArray<RenderPart>;
+export interface SlimeSpitComponentParams {}
+
+export interface SlimeSpitComponent {
+   readonly renderParts: ReadonlyArray<RenderPart>;
 }
 
-export default SlimeSpitComponent;
-
-export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent>(ServerComponentType.slimeSpit, true, {
+export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, never>(ServerComponentType.slimeSpit, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function onLoad(slimeSpitComponent: SlimeSpitComponent, entity: EntityID): void {
-   const renderInfo = getEntityRenderInfo(entity);
-   slimeSpitComponent.renderParts = renderInfo.getRenderThings("slimeSpit:part", 2) as Array<RenderPart>;
+function createParamsFromData(): SlimeSpitComponentParams {
+   return {};
+}
 
+function createComponent(entityConfig: EntityConfig): SlimeSpitComponent {
+   const renderParts = new Array<RenderPart>();
+
+   // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
+
+   const renderPart1 = new TexturedRenderPart(
+      null,
+      1,
+      0,
+      getTextureArrayIndex("projectiles/slime-spit-medium.png")
+   );
+   renderPart1.opacity = 0.75;
+   entityConfig.renderInfo.attachRenderThing(renderPart1);
+   renderParts.push(renderPart1);
+
+   const renderPart2 = new TexturedRenderPart(
+      null,
+      0,
+      Math.PI/4,
+      getTextureArrayIndex("projectiles/slime-spit-medium.png")
+   );
+   renderPart2.opacity = 0.75;
+   entityConfig.renderInfo.attachRenderThing(renderPart2);
+   renderParts.push(renderPart2);
+
+   return {
+      renderParts: []
+   };
+}
+
+function onLoad(_slimeSpitComponent: SlimeSpitComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("slime-spit.mp3", 0.5, 1, transformComponent.position);
 }

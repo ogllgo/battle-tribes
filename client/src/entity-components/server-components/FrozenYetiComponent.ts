@@ -7,12 +7,29 @@ import Board from "../../Board";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import Player from "../../entities/Player";
-import { RenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityRenderInfo } from "../../world";
-import TransformComponent, { TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { RenderPart } from "../../render-parts/render-parts";
+
+export interface FrozenYetiComponentParams {
+   readonly attackType: FrozenYetiAttackType;
+   readonly attackStage: number;
+   readonly stageProgress: number;
+}
+
+export interface FrozenYetiComponent {
+   attackType: FrozenYetiAttackType;
+   attackStage: number;
+   stageProgress: number;
+   
+   readonly headRenderPart: RenderPart;
+   /** Index 0: left paw, index 1: right paw */
+   readonly pawRenderParts: ReadonlyArray<RenderPart>;
+}
 
 const HEAD_SIZE = 80;
 export const FROZEN_YETI_HEAD_DISTANCE = 60;
@@ -25,29 +42,69 @@ const ROAR_ARC = Math.PI / 6;
 const ROAR_REACH = 450;
 const SNOWBALL_THROW_OFFSET = 150;
 
-class FrozenYetiComponent {
-   public readonly headRenderPart: RenderPart;
-   /** Index 0: left paw, index 1: right paw */
-   public readonly pawRenderParts: ReadonlyArray<RenderPart>;
-   
-   public attackType: FrozenYetiAttackType = 0;
-   public attackStage = 0;
-   public stageProgress = 0;
-
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
-      this.headRenderPart = renderInfo.getRenderThing("frozenYetiComponent:head") as RenderPart;
-      this.pawRenderParts = renderInfo.getRenderThings("frozenYetiComponent:paw", 2) as Array<RenderPart>;
-   }
-}
-
-export default FrozenYetiComponent;
-
-export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiComponent>(ServerComponentType.frozenYeti, true, {
+export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiComponent, FrozenYetiComponentParams, never>(ServerComponentType.frozenYeti, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
+   const attackType = reader.readNumber();
+   const attackStage = reader.readNumber();
+   const stageProgress = reader.readNumber();
+
+   return {
+      attackType: attackType,
+      attackStage: attackStage,
+      stageProgress: stageProgress
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYeti>): FrozenYetiComponent {
+   const frozenYetiComponentParams = entityConfig.components[ServerComponentType.frozenYeti];
+
+   entityConfig.renderInfo.attachRenderThing(new TexturedRenderPart(
+      null,
+      1,
+      0,
+      getTextureArrayIndex("entities/frozen-yeti/frozen-yeti.png")
+   ));
+
+   const headRenderPart = new TexturedRenderPart(
+      null,
+      2,
+      0,
+      getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-head.png")
+   );
+   headRenderPart.addTag("frozenYetiComponent:head");
+   headRenderPart.offset.y = FROZEN_YETI_HEAD_DISTANCE;
+   entityConfig.renderInfo.attachRenderThing(headRenderPart);
+
+   // Create paw render parts
+   const pawRenderParts = new Array<RenderPart>();
+   for (let i = 0; i < 2; i++) {
+      const paw = new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-paw.png")
+      );
+      paw.addTag("frozenYetiComponent:paw");
+
+      entityConfig.renderInfo.attachRenderThing(paw);
+      pawRenderParts.push(paw);
+   }
+   
+   return {
+      attackType: frozenYetiComponentParams.attackType,
+      attackStage: frozenYetiComponentParams.attackStage,
+      stageProgress: frozenYetiComponentParams.stageProgress,
+      headRenderPart: headRenderPart,
+      pawRenderParts: pawRenderParts
+   };
+}
 
 const setPawRotationAndOffset = (frozenYetiComponent: FrozenYetiComponent, rotation: number, offsetMagnitude: number): void => {
    for (let i = 0; i < 2; i++) {

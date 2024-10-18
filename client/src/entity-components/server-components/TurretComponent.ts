@@ -10,9 +10,27 @@ import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
 type TurretType = EntityType.slingTurret | EntityType.ballista;
+
+export interface TurretComponentParams {
+   readonly aimDirection: number;
+   readonly chargeProgress: number;
+   readonly reloadProgress: number;
+}
+
+export interface TurretComponent {
+   // @Cleanup: Do we need to store this?
+   chargeProgress: number;
+
+   /** The render part which changes texture as the turret charges */
+   readonly aimingRenderPart: TexturedRenderPart;
+   /** The render part which pivots as the turret aims */
+   readonly pivotingRenderPart: RenderPart;
+   readonly gearRenderParts: ReadonlyArray<RenderPart>;
+   projectileRenderPart: TexturedRenderPart | null;
+}
 
 const NUM_SLING_TURRET_CHARGE_TEXTURES = 5;
 const NUM_BALLISTA_CHARGE_TEXTURES = 11;
@@ -116,31 +134,34 @@ const getProjectileZIndex = (entityType: TurretType): number => {
    }
 }
 
-class TurretComponent {
-   /** The render part which changes texture as the turret charges */
-   public readonly aimingRenderPart: TexturedRenderPart;
-   /** The render part which pivots as the turret aims */
-   public readonly pivotingRenderPart: RenderPart;
-   public readonly gearRenderParts: ReadonlyArray<RenderPart>;
-   public projectileRenderPart: TexturedRenderPart | null = null;
-   
-   // @Cleanup: Do we need to store this?
-   public chargeProgress = 0;
-   
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
-      this.aimingRenderPart = renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart;
-      this.pivotingRenderPart = renderInfo.getRenderThing("turretComponent:pivoting") as RenderPart;
-      this.gearRenderParts = renderInfo.getRenderThings("turretComponent:gear") as Array<RenderPart>;
-   }
-}
-
-export default TurretComponent;
-
-export const TurretComponentArray = new ServerComponentArray<TurretComponent>(ServerComponentType.turret, true, {
+export const TurretComponentArray = new ServerComponentArray<TurretComponent, TurretComponentParams, never>(ServerComponentType.turret, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): TurretComponentParams {
+   const aimDirection = reader.readNumber();
+   const chargeProgress = reader.readNumber();
+   const reloadProgress = reader.readNumber();
+
+   return {
+      aimDirection: aimDirection,
+      chargeProgress: chargeProgress,
+      reloadProgress: reloadProgress
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.turret>): TurretComponent {
+   return {
+      chargeProgress: entityConfig.components[ServerComponentType.turret].chargeProgress,
+      aimingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
+      pivotingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:pivoting") as RenderPart,
+      gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<RenderPart>,
+      projectileRenderPart:  null
+   };
+}
 
 const updateAimDirection = (turretComponent: TurretComponent, aimDirection: number, chargeProgress: number): void => {
    turretComponent.pivotingRenderPart.rotation = aimDirection;

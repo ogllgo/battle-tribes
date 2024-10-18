@@ -9,14 +9,14 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { playSound } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../Entity";
 
-export interface SlimeComponentConfig {
+export interface SlimeComponentParams {
    readonly size: SlimeSize;
 }
 
-export interface SlimeComponentRenderParts {
+interface RenderParts {
    readonly bodyRenderPart: RenderPart;
    readonly eyeRenderPart: RenderPart;
 }
@@ -60,27 +60,31 @@ const getBodyShakeAmount = (spitProgress: number): number => {
    return lerp(0, 5, spitProgress);
 }
 
-export const SlimeComponentArray = new ServerComponentArray<SlimeComponent>(ServerComponentType.slime, true, {
+export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, SlimeComponentParams, RenderParts>(ServerComponentType.slime, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData,
-   createRenderParts: createRenderParts
+   updateFromData: updateFromData
 });
 
-function createComponent(config: SlimeComponentConfig, renderParts: SlimeComponentRenderParts): SlimeComponent {
+function createParamsFromData(reader: PacketReader): SlimeComponentParams {
+   const size = reader.readNumber() as SlimeSize;
+
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   
+   const numOrbs = reader.readNumber();
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numOrbs);
+
    return {
-      bodyRenderPart: renderParts.bodyRenderPart,
-      eyeRenderPart: renderParts.eyeRenderPart,
-      orbRenderParts: [],
-      size: config.size,
-      orbs: new Array<SlimeOrbInfo>,
-      internalTickCounter: 0
+      size: size
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, config: SlimeComponentConfig): SlimeComponentRenderParts {
-   const sizeString = SIZE_STRINGS[config.size];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.slime>): RenderParts {
+   const size = entityConfig.components[ServerComponentType.slime].size;
+   const sizeString = SIZE_STRINGS[size];
 
    // Body
    const bodyRenderPart = new TexturedRenderPart(
@@ -112,6 +116,17 @@ function createRenderParts(renderInfo: EntityRenderInfo, config: SlimeComponentC
    return {
       bodyRenderPart: bodyRenderPart,
       eyeRenderPart: eyeRenderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.slime>, renderParts: RenderParts): SlimeComponent {
+   return {
+      bodyRenderPart: renderParts.bodyRenderPart,
+      eyeRenderPart: renderParts.eyeRenderPart,
+      orbRenderParts: [],
+      size: entityConfig.components[ServerComponentType.slime].size,
+      orbs: new Array<SlimeOrbInfo>,
+      internalTickCounter: 0
    };
 }
 

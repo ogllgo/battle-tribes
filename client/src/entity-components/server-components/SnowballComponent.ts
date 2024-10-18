@@ -6,20 +6,38 @@ import Board from "../../Board";
 import { createSnowParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class SnowballComponent {
-   public size: SnowballSize = 0;
+export interface SnowballComponentParams {
+   readonly size: SnowballSize;
 }
 
-export default SnowballComponent;
+export interface SnowballComponent {
+   readonly size: SnowballSize;
+}
 
-export const SnowballComponentArray = new ServerComponentArray<SnowballComponent>(ServerComponentType.snowball, true, {
+export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentParams, never>(ServerComponentType.snowball, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): SnowballComponentParams {
+   const size = reader.readNumber();
+
+   return {
+      size: size
+   };
+}
    
+function createComponent(entityConfig: EntityConfig<ServerComponentType.snowball>): SnowballComponent {
+   return {
+      size: entityConfig.components[ServerComponentType.snowball].size
+   };
+}
+
 function onTick(_snowballComponent: SnowballComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -34,7 +52,6 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
-   const snowballComponent = SnowballComponentArray.getComponent(entity);
-   snowballComponent.size = reader.readNumber();
+function updateFromData(reader: PacketReader): void {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

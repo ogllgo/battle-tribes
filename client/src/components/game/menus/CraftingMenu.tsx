@@ -14,7 +14,7 @@ import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemT
 import InventoryContainer from "../inventories/InventoryContainer";
 import { deselectHighlightedEntity } from "../../../entity-selection";
 import { addMenuCloseFunction } from "../../../menus";
-import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 
 interface RecipeViewerProps {
@@ -94,7 +94,7 @@ const Ingredient = ({ ingredientType, amountRequiredForRecipe }: IngredientProps
    const itemIconSource = getItemTypeImage(ingredientType);
 
    const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-   const hotbar = inventoryComponent.getInventory(InventoryName.hotbar)!;
+   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    // Find whether the player has enough available ingredients to craft the recipe
    const numIngredientsAvailableToPlayer = countItemTypesInInventory(hotbar, ingredientType);
@@ -226,8 +226,8 @@ const CraftingMenu = () => {
       }
       
       const inventoryComponent = InventoryComponentArray.getComponent(Player.instance.id);
-      const hotbar = inventoryComponent.getInventory(InventoryName.hotbar)!;
-      const backpack = inventoryComponent.getInventory(InventoryName.backpack);
+      const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
+      const backpack = getInventory(inventoryComponent, InventoryName.backpack);
       
       const availableItemsTally = new ItemTally2();
       tallyInventoryItems(availableItemsTally, hotbar);
@@ -383,7 +383,7 @@ const CraftingMenu = () => {
    }
 
    const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-   const craftingOutputSlot = inventoryComponent.getInventory(InventoryName.craftingOutputSlot)!;
+   const craftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot)!;
 
    return <div id="crafting-menu" className="inventory" ref={onCraftingMenuRefChange}>
       {/*

@@ -4,12 +4,12 @@ import { TileType } from "battletribes-shared/tiles";
 import { playSound } from "../../sound";
 import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
-import { ClientComponentType } from "../components";
 import { getEntityLayer } from "../../world";
-import { entityIsInRiver, getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../server-components/TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import ClientComponentArray from "../ClientComponentArray";
+import { ClientComponentType } from "../client-components";
 
 export class FootprintComponent {
    public readonly footstepParticleIntervalSeconds: number;
@@ -29,8 +29,6 @@ export class FootprintComponent {
       this.footstepSoundIntervalDist = footstepSoundIntervalDist;
    }
 }
-
-export default FootprintComponent;
 
 export const FootprintComponentArray = new ClientComponentArray<FootprintComponent>(ClientComponentType.footprint, true, {
    onTick: onTick

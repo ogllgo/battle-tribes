@@ -16,7 +16,7 @@ import TechTreeProgressBar from "./TechTreeProgressBar";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
-import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 
 const boundsScale = 16;
 
@@ -111,7 +111,7 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
             <ul>
                {Object.entries(techInfo.researchItemRequirements).map(([itemTypeString, itemAmount], i) => {
                   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-                  const hotbar = inventoryComponent.getInventory(InventoryName.hotbar)!;
+                  const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
                   
                   const itemType = Number(itemTypeString) as ItemType;
                   const itemProgress = (Game.tribe.techTreeUnlockProgress[techInfo.id]?.itemProgress.hasOwnProperty(itemType)) ? Game.tribe.techTreeUnlockProgress[techInfo.id]!.itemProgress[itemType] : 0;
@@ -149,7 +149,7 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
 /** Gets a tally of all the items which we predict will be researched when clicking */
 const getResearchedItems = (techInfo: TechInfo): ItemTally2 => {
    const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-   const hotbar = inventoryComponent.getInventory(InventoryName.hotbar)!;
+   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    const availableItemsTally = new ItemTally2();
    tallyInventoryItems(availableItemsTally, hotbar);

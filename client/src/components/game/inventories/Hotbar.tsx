@@ -4,7 +4,7 @@ import Player from "../../../entities/Player";
 import Game from "../../../Game";
 import { InventoryName } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
-import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
 
@@ -48,11 +48,11 @@ const Hotbar = (props: HotbarProps) => {
    const playerID = Player.instance?.id || undefined;
    
    const inventoryComponent = Player.instance !== null ? InventoryComponentArray.getComponent(Player.instance.id) : undefined;
-   const hotbar = inventoryComponent?.getInventory(InventoryName.hotbar) || null;
-   const offhand = inventoryComponent?.getInventory(InventoryName.offhand) || null;
-   const backpackSlot = inventoryComponent?.getInventory(InventoryName.backpackSlot) || null;
-   const armourSlot = inventoryComponent?.getInventory(InventoryName.armourSlot) || null;
-   const gloveSlot = inventoryComponent?.getInventory(InventoryName.gloveSlot) || null;
+   const hotbar = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.hotbar) : null;
+   const offhand = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.offhand) : null;
+   const backpackSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpackSlot) : null;
+   const armourSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.armourSlot) : null;
+   const gloveSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.gloveSlot) : null;
 
    return <div id="hotbar">
       <div className="flex-container">

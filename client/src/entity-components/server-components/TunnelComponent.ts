@@ -2,13 +2,27 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
-import RenderPart from "../../render-parts/RenderPart";
+import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
-import TransformComponent, { TransformComponentArray } from "./TransformComponent";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+
+export interface TunnelComponentParams {
+   readonly doorBitset: number;
+   readonly topDoorOpenProgress: number;
+   readonly bottomDoorOpenProgress: number;
+}
+
+export interface TunnelComponent {
+   doorBitset: number;
+   topDoorOpenProgress: number;
+   bottomDoorOpenProgress: number;
+   
+   readonly doorRenderParts: Record<number, RenderPart>;
+}
 
 const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 48 * 48) / 2;
 const angleToCenter = angle(16, 48);
@@ -37,28 +51,35 @@ const getTunnelDoorInfo = (doorBit: number, openProgress: number): TunnelDoorInf
    };
 }
 
-class TunnelComponent {
-   public readonly doorRenderParts: Record<number, RenderPart> = {};
-   public doorBitset = 0;
-
-   public topDoorOpenProgress = 0;
-   public bottomDoorOpenProgress = 0;
-
-   public hasTopDoor(): boolean {
-      return (this.doorBitset & 0b01) !== 0;
-   }
-
-   public hasBottomDoor(): boolean {
-      return (this.doorBitset & 0b10) !== 0;
-   }
-}
-
-export default TunnelComponent;
-
-export const TunnelComponentArray = new ServerComponentArray<TunnelComponent>(ServerComponentType.tunnel, true, {
+export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, never>(ServerComponentType.tunnel, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): TunnelComponentParams {
+   const doorBitset = reader.readNumber();
+   const topDoorOpenProgress = reader.readNumber();
+   const bottomDoorOpenProgress = reader.readNumber();
+
+   return {
+      doorBitset: doorBitset,
+      topDoorOpenProgress: topDoorOpenProgress,
+      bottomDoorOpenProgress: bottomDoorOpenProgress
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel>): TunnelComponent {
+   const tunnelComponentParams = entityConfig.components[ServerComponentType.tunnel];
+   
+   return {
+      doorBitset: tunnelComponentParams.doorBitset,
+      topDoorOpenProgress: tunnelComponentParams.topDoorOpenProgress,
+      bottomDoorOpenProgress: tunnelComponentParams.bottomDoorOpenProgress,
+      doorRenderParts: {}
+   };
+}
 
 const addDoor = (tunnelComponent: TunnelComponent, transformComponent: TransformComponent, entity: EntityID, doorBit: number): void => {
    const renderPart = new TexturedRenderPart(

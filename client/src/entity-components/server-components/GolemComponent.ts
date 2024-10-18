@@ -11,12 +11,9 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
-import { getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import ServerComponentArray from "../ServerComponentArray";
-
-const ANGRY_SOUND_INTERVAL_TICKS = Settings.TPS * 3;
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
 enum GolemRockSize {
    massive,
@@ -25,6 +22,20 @@ enum GolemRockSize {
    large,
    tiny
 }
+
+export interface GolemComponentParams {
+   readonly wakeProgress: number;
+}
+
+export interface GolemComponent {
+   wakeProgress: number;
+   
+   rockRenderParts: Array<RenderPart>;
+   readonly eyeRenderParts: Array<RenderPart>;
+   readonly eyeLights: Array<Light>;
+}
+
+const ANGRY_SOUND_INTERVAL_TICKS = Settings.TPS * 3;
 
 const getHitboxSize = (hitboxBox: CircularBox): GolemRockSize => {
    if (Math.abs(hitboxBox.radius - 36) < 0.01) {
@@ -80,31 +91,33 @@ const getZIndex = (size: GolemRockSize): number => {
    }
 }
 
-class GolemComponent {
-   public rockRenderParts = new Array<RenderPart>();
-   public readonly eyeRenderParts = new Array<RenderPart>();
-   public readonly eyeLights = new Array<Light>();
-
-   public wakeProgress = 0;
-}
-
-export default GolemComponent;
-
-export const GolemComponentArray = new ServerComponentArray<GolemComponent>(ServerComponentType.golem, true, {
-   onLoad: onLoad,
+export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentParams, never>(ServerComponentType.golem, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function onLoad(golemComponent: GolemComponent, entity: EntityID): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+function createParamsFromData(reader: PacketReader): GolemComponentParams {
+   const wakeProgress = reader.readNumber();
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
-   const renderInfo = getEntityRenderInfo(entity);
+   return {
+      wakeProgress: wakeProgress
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.golem>): GolemComponent {
+   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+   
+   const rockRenderParts = new Array<RenderPart>();
+   const eyeRenderParts = new Array<RenderPart>();
+   const eyeLights = new Array<Light>();
    
    // Add new rocks
-   for (let i = golemComponent.rockRenderParts.length; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
       const box = hitbox.box as CircularBox;
       
       const size = getHitboxSize(box);
@@ -117,8 +130,8 @@ function onLoad(golemComponent: GolemComponent, entity: EntityID): void {
       );
       renderPart.offset.x = box.offset.x;
       renderPart.offset.y = box.offset.y;
-      renderInfo.attachRenderThing(renderPart);
-      golemComponent.rockRenderParts.push(renderPart);
+      entityConfig.renderInfo.attachRenderThing(renderPart);
+      rockRenderParts.push(renderPart);
 
       if (size === GolemRockSize.large) {
          for (let i = 0; i < 2; i++) {
@@ -132,8 +145,8 @@ function onLoad(golemComponent: GolemComponent, entity: EntityID): void {
             eyeRenderPart.offset.x = 20 * (i === 0 ? -1 : 1);
             eyeRenderPart.offset.y = 17;
             eyeRenderPart.inheritParentRotation = false;
-            renderInfo.attachRenderThing(eyeRenderPart);
-            golemComponent.eyeRenderParts.push(eyeRenderPart);
+            entityConfig.renderInfo.attachRenderThing(eyeRenderPart);
+            eyeRenderParts.push(eyeRenderPart);
 
             // Create eye light
             const light: Light = {
@@ -145,12 +158,19 @@ function onLoad(golemComponent: GolemComponent, entity: EntityID): void {
                g: 0,
                b: 0
             };
-            golemComponent.eyeLights.push(light);
+            eyeLights.push(light);
             const lightID = addLight(light);
             attachLightToRenderPart(lightID, eyeRenderPart.id);
          }
       }
    }
+   
+   return {
+      wakeProgress: entityConfig.components[ServerComponentType.golem].wakeProgress,
+      rockRenderParts: rockRenderParts,
+      eyeRenderParts: eyeRenderParts,
+      eyeLights: eyeLights
+   };
 }
 
 function onTick(golemComponent: GolemComponent, entity: EntityID): void {
@@ -188,7 +208,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: boolean): void {
+function updateFromData(reader: PacketReader, entity: EntityID): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
    
    const wakeProgress = reader.readNumber();
@@ -196,29 +216,27 @@ function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: b
    const isAwake = reader.readBoolean();
    reader.padOffset(3);
 
-   if (!isInitialData) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
 
-      if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
-         playSound("golem-angry.mp3", 0.4, 1, transformComponent.position);
-      }
-      
-      golemComponent.wakeProgress = wakeProgress;
+   if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
+      playSound("golem-angry.mp3", 0.4, 1, transformComponent.position);
+   }
+   
+   golemComponent.wakeProgress = wakeProgress;
 
-      const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
-      for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-         const hitbox = transformComponent.hitboxes[i];
-         const box = hitbox.box;
-         const renderPart = golemComponent.rockRenderParts[i];
+   const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
+      const box = hitbox.box;
+      const renderPart = golemComponent.rockRenderParts[i];
 
-         renderPart.offset.x = box.offset.x;
-         renderPart.offset.y = box.offset.y;
-         renderPart.shakeAmount = shakeAmount;
-      }
+      renderPart.offset.x = box.offset.x;
+      renderPart.offset.y = box.offset.y;
+      renderPart.shakeAmount = shakeAmount;
+   }
 
-      for (let i = 0; i < 2; i++) {
-         golemComponent.eyeRenderParts[i].opacity = golemComponent.wakeProgress;
-         golemComponent.eyeLights[i].intensity = golemComponent.wakeProgress;
-      }
+   for (let i = 0; i < 2; i++) {
+      golemComponent.eyeRenderParts[i].opacity = golemComponent.wakeProgress;
+      golemComponent.eyeLights[i].intensity = golemComponent.wakeProgress;
    }
 }

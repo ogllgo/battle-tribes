@@ -35,6 +35,9 @@ import "./css/game/inspect-health-bar.css";
 import "./css/game/infocards.css";
 import "./css/game/attack-charge-bar.css";
 
+// We have to manually import this so that the component arrays are all detected
+import "./entity-components/components";
+
 const root = ReactDOM.createRoot(
    document.getElementById('root') as HTMLElement
 );

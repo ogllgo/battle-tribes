@@ -6,39 +6,67 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class CookingComponent {
-   public heatingProgress = 0;
-   public isCooking = false;
-
-   public readonly light: Light;
-
-   constructor(entity: EntityID) {
-      this.light = {
-         offset: new Point(0, 0),
-         intensity: 1,
-         strength: 3.5,
-         radius: 40,
-         r: 0,
-         g: 0,
-         b: 0
-      };
-      const lightID = addLight(this.light);
-      attachLightToEntity(lightID, entity);
-   }
+export interface CookingComponentParams {
+   readonly heatingProgress: number;
+   readonly isCooking: boolean;
 }
 
-export default CookingComponent;
+export interface CookingComponent {
+   heatingProgress: number;
+   isCooking: boolean;
 
-export const CookingComponentArray = new ServerComponentArray<CookingComponent>(ServerComponentType.cooking, true, {
+   // @Polymorphism
+   light: Light | null;
+}
+
+export const CookingComponentArray = new ServerComponentArray<CookingComponent, CookingComponentParams, never>(ServerComponentType.cooking, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
+   onLoad: onLoad,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
 
+function createParamsFromData(reader: PacketReader): CookingComponentParams {
+   const heatingProgress = reader.readNumber();
+   const isCooking = reader.readBoolean();
+   reader.padOffset(3);
+
+   return {
+      heatingProgress: heatingProgress,
+      isCooking: isCooking
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking>): CookingComponent {
+   const cookingComponentParams = entityConfig.components[ServerComponentType.cooking];
+   
+   return {
+      heatingProgress: cookingComponentParams.heatingProgress,
+      isCooking: cookingComponentParams.isCooking,
+      light: null
+   };
+}
+
+function onLoad(cookingComponent: CookingComponent, entity: EntityID): void {
+   cookingComponent.light = {
+      offset: new Point(0, 0),
+      intensity: 1,
+      strength: 3.5,
+      radius: 40,
+      r: 0,
+      g: 0,
+      b: 0
+   };
+   const lightID = addLight(cookingComponent.light);
+   attachLightToEntity(lightID, entity);
+}
+
 function onTick(cookingComponent: CookingComponent, entity: EntityID): void {
-   if (Board.tickIntervalHasPassed(0.15)) {
+   if (cookingComponent.light !== null && Board.tickIntervalHasPassed(0.15)) {
       cookingComponent.light.radius = 40 + randFloat(-7, 7);
    }
 

@@ -1,25 +1,39 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import ServerComponentArray from "../ServerComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class PlayerComponent {
-   public username = "";
+export interface PlayerComponentParams {
+   readonly username: string;
 }
 
-export default PlayerComponent;
+export interface PlayerComponent {
+   readonly username: string;
+}
 
-export const PlayerComponentArray = new ServerComponentArray<PlayerComponent>(ServerComponentType.player, true, {
+export const PlayerComponentArray = new ServerComponentArray<PlayerComponent, PlayerComponentParams, never>(ServerComponentType.player, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
-   
+
+function createParamsFromData(reader: PacketReader): PlayerComponentParams {
+   const username = reader.readString(100);
+   return {
+      username: username
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.player>): PlayerComponent {
+   return {
+      username: entityConfig.components[ServerComponentType.player].username
+   };
+}
+
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT + 100);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
-   const playerComponent = PlayerComponentArray.getComponent(entity);
-   
-   playerComponent.username = reader.readString(100);
+function updateFromData(reader: PacketReader): void {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT + 100);
 }

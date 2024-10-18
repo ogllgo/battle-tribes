@@ -8,10 +8,21 @@ import { getTribesmanRadius, TribeMemberComponentArray } from "./TribeMemberComp
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
 import Player from "../../entities/Player";
 
+export interface TribeComponentParams {
+   readonly tribeID: number;
+   readonly tribeType: TribeType;
+}
+
+export interface TribeComponent {
+   tribeID: number;
+   tribeType: TribeType;
+}
+
+// @Cleanup
 export function getTribeType(tribeID: number): TribeType {
    if (tribeID === Game.tribe.id) {
       return Game.tribe.tribeType;
@@ -32,30 +43,42 @@ export function getTribeType(tribeID: number): TribeType {
    }
 }
 
-class TribeComponent {
-   public tribeID = 0;
-   public tribeType = TribeType.plainspeople;
-}
-
-export default TribeComponent;
-
-export const TribeComponentArray = new ServerComponentArray<TribeComponent>(ServerComponentType.tribe, true, {
+export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentParams, never>(ServerComponentType.tribe, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
 
+function createParamsFromData(reader: PacketReader): TribeComponentParams {
+   const tribeID = reader.readNumber();
+   return {
+      tribeID: tribeID,
+      tribeType: getTribeType(tribeID)
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tribe>): TribeComponent {
+   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
+
+   return {
+      tribeID: tribeComponentParams.tribeID,
+      tribeType: tribeComponentParams.tribeType
+   };
+}
+
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: boolean): void {
+function updateFromData(reader: PacketReader, entity: EntityID): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    
    const tribeID = reader.readNumber();
    
    // Tribesman conversion
-   if (!isInitialData && tribeID !== tribeComponent.tribeID && TribeMemberComponentArray.hasComponent(entity)) {
+   if (tribeID !== tribeComponent.tribeID && TribeMemberComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
       playSound("conversion.mp3", 0.4, 1, transformComponent.position);

@@ -3,27 +3,88 @@ import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/ut
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import Board from "../../Board";
-import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
+import { RenderPart } from "../../render-parts/render-parts";
 
-class AmmoBoxComponent {
-   public ammoType: TurretAmmoType | null = null;
-   public ammoRemaining = 0;
-
-   public ammoWarningRenderPart: RenderPart | null = null;
+export interface AmmoBoxComponentParams {
+   readonly ammoType: TurretAmmoType | null;
+   readonly ammoRemaining: number;
 }
 
-export default AmmoBoxComponent;
+export interface RenderParts {
+   readonly ammoWarningRenderPart: RenderPart | null;
+}
 
-export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent>(ServerComponentType.ammoBox, true, {
+export interface AmmoBoxComponent {
+   ammoType: TurretAmmoType | null;
+   ammoRemaining: number;
+
+   ammoWarningRenderPart: RenderPart | null;
+}
+
+const createAmmoWarningRenderPart = (): RenderPart => {
+   const renderPart = new TexturedRenderPart(
+      null,
+      999,
+      0,
+      getTextureArrayIndex("entities/ballista/ammo-warning.png")
+   );
+   // @Incomplete? What is this supposed to be doing and does it achieve it?
+   // I think it's just supposed to be going over the ammo box but without copying its rotation
+   // renderPart.offset.x = rotateXAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
+   // renderPart.offset.y = rotateYAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
+   renderPart.inheritParentRotation = false;
+
+   return renderPart;
+}
+
+export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent, AmmoBoxComponentParams, RenderParts>(ServerComponentType.ammoBox, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
+   const ammoType = reader.readNumber();
+   const ammoRemaining = reader.readNumber();
+
+   return {
+      ammoType: ammoType,
+      ammoRemaining: ammoRemaining
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.ammoBox>): RenderParts {
+   let ammoWarningRenderPart: RenderPart | null;
+   if (entityConfig.components[ServerComponentType.ammoBox].ammoType === null) {
+      ammoWarningRenderPart = createAmmoWarningRenderPart();
+      renderInfo.attachRenderThing(ammoWarningRenderPart);
+   } else {
+      ammoWarningRenderPart = null;
+   }
+   
+   return {
+      ammoWarningRenderPart: ammoWarningRenderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.ammoBox>, renderParts: RenderParts): AmmoBoxComponent {
+   const ammoBoxComponentParams = entityConfig.components[ServerComponentType.ammoBox];
+   
+   return {
+      ammoType: ammoBoxComponentParams.ammoType,
+      ammoRemaining: ammoBoxComponentParams.ammoRemaining,
+      ammoWarningRenderPart: renderParts.ammoWarningRenderPart
+   };
+}
 
 const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: EntityID, ammoType: TurretAmmoType | null): void => {
    if (ammoType === null) {

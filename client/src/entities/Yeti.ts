@@ -3,7 +3,7 @@ import { HitData } from "battletribes-shared/client-server-types";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle } from "../particles";
 import Entity from "../Entity";
 import { YETI_SIZE } from "../entity-components/server-components/YetiComponent";
-import RandomSoundComponent, { RandomSoundComponentArray } from "../entity-components/client-components/RandomSoundComponent";
+import { RandomSoundComponent, RandomSoundComponentArray } from "../entity-components/client-components/RandomSoundComponent";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 
 class Yeti extends Entity {

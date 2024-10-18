@@ -12,7 +12,24 @@ import Particle from "../../Particle";
 import { createRockParticle } from "../../particles";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
+
+export interface RockSpikeComponentParams {
+   readonly size: number;
+   readonly lifetime: number;
+}
+
+export interface RenderParts {
+   readonly renderPart: RenderPart;
+}
+
+export interface RockSpikeComponent {
+   size: number;
+   readonly lifetime: number;
+   
+   readonly renderPart: RenderPart;
+}
 
 const enum Vars {
    ENTRANCE_SHAKE_DURATION = 0.5,
@@ -31,37 +48,56 @@ const ENTRANCE_SCALE = 0.65;
 
 const EXIT_SHAKE_AMOUNTS = [1.25, 2.25, 3.25];
 
-class RockSpikeComponent {
-   public size = 0;
-   public lifetime = 0;
-   
-   public renderPart!: RenderPart;
-}
-
-export default RockSpikeComponent;
-
-export const RockSpikeComponentArray = new ServerComponentArray<RockSpikeComponent>(ServerComponentType.rockSpike, true, {
+export const RockSpikeComponentArray = new ServerComponentArray<RockSpikeComponent, RockSpikeComponentParams, RenderParts>(ServerComponentType.rockSpike, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function onLoad(rockSpikeComponent: RockSpikeComponent, entity: EntityID): void {
-   const renderInfo = getEntityRenderInfo(entity);
+function createParamsFromData(reader: PacketReader): RockSpikeComponentParams {
+   const size = reader.readNumber();
+   const lifetime = reader.readNumber();
 
-   renderInfo.shakeAmount = ENTRANCE_SHAKE_AMOUNTS[rockSpikeComponent.size];
+   return {
+      size: size,
+      lifetime: lifetime
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.rockSpike>): RenderParts {
+   const rockSpikeComponentParams = entityConfig.components[ServerComponentType.rockSpike];
    
-   rockSpikeComponent.renderPart = new TexturedRenderPart(
+   renderInfo.shakeAmount = ENTRANCE_SHAKE_AMOUNTS[rockSpikeComponentParams.size];
+
+   const renderPart = new TexturedRenderPart(
       null,
       0,
       0,
-      getTextureArrayIndex(SPRITE_TEXTURE_SOURCES[rockSpikeComponent.size])
+      getTextureArrayIndex(SPRITE_TEXTURE_SOURCES[rockSpikeComponentParams.size])
    );
-   rockSpikeComponent.renderPart.addTag("rockSpikeProjectile:part");
-   rockSpikeComponent.renderPart.scale = ENTRANCE_SCALE;
-   renderInfo.attachRenderThing(rockSpikeComponent.renderPart);
+   renderPart.scale = ENTRANCE_SCALE;
+   renderInfo.attachRenderThing(renderPart);
 
+   return {
+      renderPart: renderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.rockSpike>, renderParts: RenderParts): RockSpikeComponent {
+   const rockSpikeComponentParams = entityConfig.components[ServerComponentType.rockSpike];
+   
+   return {
+      size: rockSpikeComponentParams.size,
+      lifetime: rockSpikeComponentParams.lifetime,
+      renderPart: renderParts.renderPart
+   };
+}
+
+function onLoad(rockSpikeComponent: RockSpikeComponent, entity: EntityID): void {
    // 
    // Create debris particles
    // 
@@ -163,5 +199,5 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(entity);
    
    rockSpikeComponent.size = reader.readNumber();
-   rockSpikeComponent.lifetime = reader.readNumber();
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

@@ -1,158 +1,215 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import RandomSoundComponent from "./client-components/RandomSoundComponent";
-import AIHelperComponent from "./server-components/AIHelperComponent";
-import AmmoBoxComponent from "./server-components/AmmoBoxComponent";
-import ProjectileComponent from "./server-components/ArrowComponent";
-import BattleaxeProjectileComponent from "./server-components/BattleaxeProjectileComponent";
-import BerryBushComponent from "./server-components/BerryBushComponent";
-import BlueprintComponent from "./server-components/BlueprintComponent";
-import BoulderComponent from "./server-components/BoulderComponent";
-import { BracingsComponent } from "./server-components/BracingsComponent";
-import BuildingMaterialComponent from "./server-components/BuildingMaterialComponent";
-import CactusComponent from "./server-components/CactusComponent";
-import CookingComponent from "./server-components/CookingComponent";
-import CowComponent from "./server-components/CowComponent";
-import CraftingStationComponent from "./server-components/CraftingStationComponent";
-import DamageBoxComponent from "./server-components/DamageBoxComponent";
-import DecorationComponent from "./server-components/DecorationComponent";
-import DoorComponent from "./server-components/DoorComponent";
-import EquipmentComponent from "./server-components/EquipmentComponent";
-import EscapeAIComponent from "./server-components/EscapeAIComponent";
-import FenceComponent from "./server-components/FenceComponent";
-import FenceGateComponent from "./server-components/FenceGateComponent";
-import FishComponent from "./server-components/FishComponent";
-import FollowAIComponent from "./server-components/FollowAIComponent";
-import FootprintComponent from "./server-components/FootprintComponent";
-import FrozenYetiComponent from "./server-components/FrozenYetiComponent";
-import GolemComponent from "./server-components/GolemComponent";
-import GuardianComponent from "./server-components/GuardianComponent";
-import { GuardianGemFragmentProjectileComponent } from "./server-components/GuardianGemFragmentProjectileComponent";
-import { GuardianGemQuakeComponent } from "./server-components/GuardianGemQuakeComponent";
-import { GuardianSpikyBallComponent } from "./server-components/GuardianSpikyBallComponent";
-import HealingTotemComponent from "./server-components/HealingTotemComponent";
-import HealthComponent from "./server-components/HealthComponent";
-import HutComponent from "./server-components/HutComponent";
-import IceArrowComponent from "./server-components/IceArrowComponent";
-import IceShardComponent from "./server-components/IceShardComponent";
-import IceSpikesComponent from "./server-components/IceSpikesComponent";
-import InventoryComponent from "./server-components/InventoryComponent";
-import InventoryUseComponent from "./server-components/InventoryUseComponent";
-import ItemComponent from "./server-components/ItemComponent";
-import KrumblidComponent from "./server-components/KrumblidComponent";
-import LayeredRodComponent from "./server-components/LayeredRodComponent";
-import PebblumComponent from "./server-components/PebblumComponent";
-import PhysicsComponent from "./server-components/PhysicsComponent";
-import PlantComponent from "./server-components/PlantComponent";
-import PlanterBoxComponent from "./server-components/PlanterBoxComponent";
-import PlayerComponent from "./server-components/PlayerComponent";
-import PunjiSticksComponent from "./server-components/PunjiSticksComponent";
-import ResearchBenchComponent from "./server-components/ResearchBenchComponent";
-import RockSpikeComponent from "./server-components/RockSpikeComponent";
-import SlimeComponent from "./server-components/SlimeComponent";
-import SlimeSpitComponent from "./server-components/SlimeSpitComponent";
-import SlimewispComponent from "./server-components/SlimewispComponent";
-import SnowballComponent from "./server-components/SnowballComponent";
-import SpearProjectileComponent from "./server-components/SpearProjectileComponent";
-import SpikesComponent from "./server-components/SpikesComponent";
-import SpitPoisonAreaComponent from "./server-components/SpitPoisonAreaComponent";
-import StatusEffectComponent from "./server-components/StatusEffectComponent";
-import StructureComponent from "./server-components/StructureComponent";
-import ThrowingProjectileComponent from "./server-components/ThrowingProjectileComponent";
-import TombstoneComponent from "./server-components/TombstoneComponent";
-import TotemBannerComponent from "./server-components/TotemBannerComponent";
-import { TransformComponent } from "./server-components/TransformComponent";
-import TreeComponent from "./server-components/TreeComponent";
-import TribeComponent from "./server-components/TribeComponent";
-import TribeMemberComponent from "./server-components/TribeMemberComponent";
-import TribesmanAIComponent from "./server-components/TribesmanAIComponent";
-import TribeWarriorComponent from "./server-components/TribeWarriorComponent";
-import TunnelComponent from "./server-components/TunnelComponent";
-import TurretComponent from "./server-components/TurretComponent";
-import YetiComponent from "./server-components/YetiComponent";
-import ZombieComponent from "./server-components/ZombieComponent";
+import { AIHelperComponentArray, AIHelperComponentParams } from "./server-components/AIHelperComponent";
+import { AmmoBoxComponentArray, AmmoBoxComponentParams } from "./server-components/AmmoBoxComponent";
+import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ArrowComponent";
+import { BattleaxeProjectileComponentArray, BattleaxeProjectileComponentParams } from "./server-components/BattleaxeProjectileComponent";
+import { BerryBushComponentArray, BerryBushComponentParams } from "./server-components/BerryBushComponent";
+import { BlueprintComponentArray, BlueprintComponentParams } from "./server-components/BlueprintComponent";
+import { BoulderComponentArray, BoulderComponentParams } from "./server-components/BoulderComponent";
+import { BracingsComponentArray, BracingsComponentParams } from "./server-components/BracingsComponent";
+import { BuildingMaterialComponentArray, BuildingMaterialComponentParams } from "./server-components/BuildingMaterialComponent";
+import { CactusComponentArray, CactusComponentParams } from "./server-components/CactusComponent";
+import { CookingComponentArray, CookingComponentParams } from "./server-components/CookingComponent";
+import { CowComponentArray, CowComponentParams } from "./server-components/CowComponent";
+import { CraftingStationComponentArray, CraftingStationComponentParams } from "./server-components/CraftingStationComponent";
+import { DamageBoxComponentArray, DamageBoxComponentParams } from "./server-components/DamageBoxComponent";
+import { DecorationComponentArray, DecorationComponentParams } from "./server-components/DecorationComponent";
+import { DoorComponentArray, DoorComponentParams } from "./server-components/DoorComponent";
+import { EscapeAIComponentArray, EscapeAIComponentParams } from "./server-components/EscapeAIComponent";
+import { FenceComponentArray, FenceComponentParams } from "./server-components/FenceComponent";
+import { FenceGateComponentArray, FenceGateComponentParams } from "./server-components/FenceGateComponent";
+import { FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
+import { FollowAIComponentArray, FollowAIComponentParams } from "./server-components/FollowAIComponent";
+import { FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
+import { GolemComponentArray, GolemComponentParams } from "./server-components/GolemComponent";
+import { GuardianComponentArray, GuardianComponentParams } from "./server-components/GuardianComponent";
+import { GuardianGemFragmentProjectileComponentArray, GuardianGemFragmentProjectileComponentParams } from "./server-components/GuardianGemFragmentProjectileComponent";
+import { GuardianGemQuakeComponentArray, GuardianGemQuakeComponentParams } from "./server-components/GuardianGemQuakeComponent";
+import { GuardianSpikyBallComponentArray, GuardianSpikyBallComponentParams } from "./server-components/GuardianSpikyBallComponent";
+import { HealingTotemComponentArray, HealingTotemComponentParams } from "./server-components/HealingTotemComponent";
+import { HealthComponentArray, HealthComponentParams } from "./server-components/HealthComponent";
+import { HutComponentArray, HutComponentParams } from "./server-components/HutComponent";
+import { IceArrowComponentArray, IceArrowComponentParams } from "./server-components/IceArrowComponent";
+import { IceShardComponentArray, IceShardComponentParams } from "./server-components/IceShardComponent";
+import { IceSpikesComponentArray, IceSpikesComponentParams } from "./server-components/IceSpikesComponent";
+import { InventoryComponentArray, InventoryComponentParams } from "./server-components/InventoryComponent";
+import { InventoryUseComponentArray, InventoryUseComponentParams } from "./server-components/InventoryUseComponent";
+import { ItemComponentArray, ItemComponentParams } from "./server-components/ItemComponent";
+import { KrumblidComponentArray, KrumblidComponentParams } from "./server-components/KrumblidComponent";
+import { LayeredRodComponentArray, LayeredRodComponentParams } from "./server-components/LayeredRodComponent";
+import { PebblumComponentArray, PebblumComponentParams } from "./server-components/PebblumComponent";
+import { PhysicsComponentArray, PhysicsComponentParams } from "./server-components/PhysicsComponent";
+import { PlantComponentArray, PlantComponentParams } from "./server-components/PlantComponent";
+import { PlanterBoxComponentArray, PlanterBoxComponentParams } from "./server-components/PlanterBoxComponent";
+import { PlayerComponentArray, PlayerComponentParams } from "./server-components/PlayerComponent";
+import { PunjiSticksComponentArray, PunjiSticksComponentParams } from "./server-components/PunjiSticksComponent";
+import { ResearchBenchComponentArray, ResearchBenchComponentParams } from "./server-components/ResearchBenchComponent";
+import { RockSpikeComponentArray, RockSpikeComponentParams } from "./server-components/RockSpikeComponent";
+import { SlimeComponentArray, SlimeComponentParams } from "./server-components/SlimeComponent";
+import { SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
+import { SlimewispComponentArray, SlimewispComponentParams } from "./server-components/SlimewispComponent";
+import { SnowballComponentArray, SnowballComponentParams } from "./server-components/SnowballComponent";
+import { SpearProjectileComponentArray, SpearProjectileComponentParams } from "./server-components/SpearProjectileComponent";
+import { SpikesComponentArray, SpikesComponentParams } from "./server-components/SpikesComponent";
+import { SpitPoisonAreaComponentArray, SpitPoisonAreaComponentParams } from "./server-components/SpitPoisonAreaComponent";
+import { StatusEffectComponentArray, StatusEffectComponentParams } from "./server-components/StatusEffectComponent";
+import { StructureComponentArray, StructureComponentParams } from "./server-components/StructureComponent";
+import { ThrowingProjectileComponentArray, ThrowingProjectileComponentParams } from "./server-components/ThrowingProjectileComponent";
+import { TombstoneComponentArray, TombstoneComponentParams } from "./server-components/TombstoneComponent";
+import { TotemBannerComponentArray, TotemBannerComponentParams } from "./server-components/TotemBannerComponent";
+import { TransformComponentArray, TransformComponentParams } from "./server-components/TransformComponent";
+import { TreeComponentArray, TreeComponentParams } from "./server-components/TreeComponent";
+import { TribeComponentArray, TribeComponentParams } from "./server-components/TribeComponent";
+import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-components/TribeMemberComponent";
+import { TribesmanAIComponentArray, TribesmanAIComponentParams } from "./server-components/TribesmanAIComponent";
+import { TribeWarriorComponentArray, TribeWarriorComponentParams } from "./server-components/TribeWarriorComponent";
+import { TunnelComponentArray, TunnelComponentParams } from "./server-components/TunnelComponent";
+import { TurretComponentArray, TurretComponentParams } from "./server-components/TurretComponent";
+import { YetiComponentArray, YetiComponentParams } from "./server-components/YetiComponent";
+import { ZombieComponentArray, ZombieComponentParams } from "./server-components/ZombieComponent";
 
-export enum ClientComponentType {
-   equipment,
-   footprint,
-   randomSound
-}
+// @Cleanup: make this use ServerComponentArray instead 
+// Just used to make sure all the components are properly imported (so they aren't removed by webpack)
+const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
+   [ServerComponentType.transform]: TransformComponentArray,
+   [ServerComponentType.cow]: CowComponentArray,
+   [ServerComponentType.turret]: TurretComponentArray,
+   [ServerComponentType.tribe]: TribeComponentArray,
+   [ServerComponentType.inventory]: InventoryComponentArray,
+   [ServerComponentType.ammoBox]: AmmoBoxComponentArray,
+   [ServerComponentType.slime]: SlimeComponentArray,
+   [ServerComponentType.golem]: GolemComponentArray,
+   [ServerComponentType.statusEffect]: StatusEffectComponentArray,
+   [ServerComponentType.cactus]: CactusComponentArray,
+   [ServerComponentType.health]: HealthComponentArray,
+   [ServerComponentType.physics]: PhysicsComponentArray,
+   [ServerComponentType.researchBench]: ResearchBenchComponentArray,
+   [ServerComponentType.berryBush]: BerryBushComponentArray,
+   [ServerComponentType.inventoryUse]: InventoryUseComponentArray,
+   [ServerComponentType.zombie]: ZombieComponentArray,
+   [ServerComponentType.player]: PlayerComponentArray,
+   [ServerComponentType.item]: ItemComponentArray,
+   [ServerComponentType.tombstone]: TombstoneComponentArray,
+   [ServerComponentType.tree]: TreeComponentArray,
+   [ServerComponentType.blueprint]: BlueprintComponentArray,
+   [ServerComponentType.projectile]: ProjectileComponentArray,
+   [ServerComponentType.iceArrow]: IceArrowComponentArray,
+   [ServerComponentType.yeti]: YetiComponentArray,
+   [ServerComponentType.frozenYeti]: FrozenYetiComponentArray,
+   [ServerComponentType.totemBanner]: TotemBannerComponentArray,
+   [ServerComponentType.cooking]: CookingComponentArray,
+   [ServerComponentType.hut]: HutComponentArray,
+   [ServerComponentType.snowball]: SnowballComponentArray,
+   [ServerComponentType.fish]: FishComponentArray,
+   [ServerComponentType.rockSpike]: RockSpikeComponentArray,
+   [ServerComponentType.slimeSpit]: SlimeSpitComponentArray,
+   [ServerComponentType.door]: DoorComponentArray,
+   [ServerComponentType.tribesmanAI]: TribesmanAIComponentArray,
+   [ServerComponentType.tunnel]: TunnelComponentArray,
+   [ServerComponentType.buildingMaterial]: BuildingMaterialComponentArray,
+   [ServerComponentType.spikes]: SpikesComponentArray,
+   [ServerComponentType.punjiSticks]: PunjiSticksComponentArray,
+   [ServerComponentType.tribeMember]: TribeMemberComponentArray,
+   [ServerComponentType.healingTotem]: HealingTotemComponentArray,
+   [ServerComponentType.planterBox]: PlanterBoxComponentArray,
+   [ServerComponentType.plant]: PlantComponentArray,
+   [ServerComponentType.structure]: StructureComponentArray,
+   [ServerComponentType.fence]: FenceComponentArray,
+   [ServerComponentType.fenceGate]: FenceGateComponentArray,
+   [ServerComponentType.craftingStation]: CraftingStationComponentArray,
+   [ServerComponentType.aiHelper]: AIHelperComponentArray,
+   [ServerComponentType.boulder]: BoulderComponentArray,
+   [ServerComponentType.iceShard]: IceShardComponentArray,
+   [ServerComponentType.iceSpikes]: IceSpikesComponentArray,
+   [ServerComponentType.pebblum]: PebblumComponentArray,
+   [ServerComponentType.slimewisp]: SlimewispComponentArray,
+   [ServerComponentType.throwingProjectile]: ThrowingProjectileComponentArray,
+   [ServerComponentType.escapeAI]: EscapeAIComponentArray,
+   [ServerComponentType.followAI]: FollowAIComponentArray,
+   [ServerComponentType.tribeWarrior]: TribeWarriorComponentArray,
+   [ServerComponentType.layeredRod]: LayeredRodComponentArray,
+   [ServerComponentType.decoration]: DecorationComponentArray,
+   [ServerComponentType.spitPoisonArea]: SpitPoisonAreaComponentArray,
+   [ServerComponentType.battleaxeProjectile]: BattleaxeProjectileComponentArray,
+   [ServerComponentType.spearProjectile]: SpearProjectileComponentArray,
+   [ServerComponentType.krumblid]: KrumblidComponentArray,
+   [ServerComponentType.damageBox]: DamageBoxComponentArray,
+   [ServerComponentType.guardian]: GuardianComponentArray,
+   [ServerComponentType.guardianGemQuake]: GuardianGemQuakeComponentArray,
+   [ServerComponentType.guardianGemFragmentProjectile]: GuardianGemFragmentProjectileComponentArray,
+   [ServerComponentType.guardianSpikyBall]: GuardianSpikyBallComponentArray,
+   [ServerComponentType.bracings]: BracingsComponentArray
+};
 
-const ServerComponents = {
-   [ServerComponentType.transform]: (): TransformComponent => 0 as any,
-   [ServerComponentType.cow]: (): CowComponent => 0 as any,
-   [ServerComponentType.turret]: (): TurretComponent => 0 as any,
-   [ServerComponentType.tribe]: (): TribeComponent => 0 as any,
-   [ServerComponentType.inventory]: (): InventoryComponent => 0 as any,
-   [ServerComponentType.ammoBox]: (): AmmoBoxComponent => 0 as any,
-   [ServerComponentType.slime]: (): SlimeComponent => 0 as any,
-   [ServerComponentType.golem]: (): GolemComponent => 0 as any,
-   [ServerComponentType.statusEffect]: (): StatusEffectComponent => 0 as any,
-   [ServerComponentType.cactus]: (): CactusComponent => 0 as any,
-   [ServerComponentType.health]: (): HealthComponent => 0 as any,
-   [ServerComponentType.physics]: (): PhysicsComponent => 0 as any,
-   [ServerComponentType.researchBench]: (): ResearchBenchComponent => 0 as any,
-   [ServerComponentType.berryBush]: (): BerryBushComponent => 0 as any,
-   [ServerComponentType.inventoryUse]: (): InventoryUseComponent => 0 as any,
-   [ServerComponentType.zombie]: (): ZombieComponent => 0 as any,
-   [ServerComponentType.player]: (): PlayerComponent => 0 as any,
-   [ServerComponentType.item]: (): ItemComponent => 0 as any,
-   [ServerComponentType.tombstone]: (): TombstoneComponent => 0 as any,
-   [ServerComponentType.tree]: (): TreeComponent => 0 as any,
-   [ServerComponentType.blueprint]: (): BlueprintComponent => 0 as any,
-   [ServerComponentType.projectile]: (): ProjectileComponent => 0 as any,
-   [ServerComponentType.iceArrow]: (): IceArrowComponent => 0 as any,
-   [ServerComponentType.yeti]: (): YetiComponent => 0 as any,
-   [ServerComponentType.frozenYeti]: (): FrozenYetiComponent => 0 as any,
-   [ServerComponentType.totemBanner]: (): TotemBannerComponent => 0 as any,
-   [ServerComponentType.cooking]: (): CookingComponent => 0 as any,
-   [ServerComponentType.hut]: (): HutComponent => 0 as any,
-   [ServerComponentType.snowball]: (): SnowballComponent => 0 as any,
-   [ServerComponentType.fish]: (): FishComponent => 0 as any,
-   [ServerComponentType.rockSpike]: (): RockSpikeComponent => 0 as any,
-   [ServerComponentType.slimeSpit]: (): SlimeSpitComponent => 0 as any,
-   [ServerComponentType.door]: (): DoorComponent => 0 as any,
-   [ServerComponentType.tribesmanAI]: (): TribesmanAIComponent => 0 as any,
-   [ServerComponentType.tunnel]: (): TunnelComponent => 0 as any,
-   [ServerComponentType.buildingMaterial]: (): BuildingMaterialComponent => 0 as any,
-   [ServerComponentType.spikes]: (): SpikesComponent => 0 as any,
-   [ServerComponentType.punjiSticks]: (): PunjiSticksComponent => 0 as any,
-   [ServerComponentType.tribeMember]: (): TribeMemberComponent => 0 as any,
-   [ServerComponentType.healingTotem]: (): HealingTotemComponent => 0 as any,
-   [ServerComponentType.planterBox]: (): PlanterBoxComponent => 0 as any,
-   [ServerComponentType.plant]: (): PlantComponent => 0 as any,
-   [ServerComponentType.structure]: (): StructureComponent => 0 as any,
-   [ServerComponentType.fence]: (): FenceComponent => 0 as any,
-   [ServerComponentType.fenceGate]: (): FenceGateComponent => 0 as any,
-   [ServerComponentType.craftingStation]: (): CraftingStationComponent => 0 as any,
-   [ServerComponentType.aiHelper]: (): AIHelperComponent => 0 as any,
-   [ServerComponentType.boulder]: (): BoulderComponent => 0 as any,
-   [ServerComponentType.iceShard]: (): IceShardComponent => 0 as any,
-   [ServerComponentType.iceSpikes]: (): IceSpikesComponent => 0 as any,
-   [ServerComponentType.pebblum]: (): PebblumComponent => 0 as any,
-   [ServerComponentType.slimewisp]: (): SlimewispComponent => 0 as any,
-   [ServerComponentType.throwingProjectile]: (): ThrowingProjectileComponent => 0 as any,
-   [ServerComponentType.escapeAI]: (): EscapeAIComponent => 0 as any,
-   [ServerComponentType.followAI]: (): FollowAIComponent => 0 as any,
-   [ServerComponentType.tribeWarrior]: (): TribeWarriorComponent => 0 as any,
-   [ServerComponentType.layeredRod]: (): LayeredRodComponent => 0 as any,
-   [ServerComponentType.decoration]: (): DecorationComponent => 0 as any,
-   [ServerComponentType.spitPoisonArea]: (): SpitPoisonAreaComponent => 0 as any,
-   [ServerComponentType.battleaxeProjectile]: (): BattleaxeProjectileComponent => 0 as any,
-   [ServerComponentType.spearProjectile]: (): SpearProjectileComponent => 0 as any,
-   [ServerComponentType.krumblid]: (): KrumblidComponent => 0 as any,
-   [ServerComponentType.damageBox]: (): DamageBoxComponent => 0 as any,
-   [ServerComponentType.guardian]: (): GuardianComponent => 0 as any,
-   [ServerComponentType.guardianGemQuake]: (): GuardianGemQuakeComponent => 0 as any,
-   [ServerComponentType.guardianGemFragmentProjectile]: (): GuardianGemFragmentProjectileComponent => 0 as any,
-   [ServerComponentType.guardianSpikyBall]: (): GuardianSpikyBallComponent => 0 as any,
-   [ServerComponentType.bracings]: (): BracingsComponent => 0 as any
-} satisfies Record<ServerComponentType, () => object>;
+const ServerComponentParamsRecord = {
+   [ServerComponentType.transform]: (): TransformComponentParams => 0 as any,
+   [ServerComponentType.cow]: (): CowComponentParams => 0 as any,
+   [ServerComponentType.turret]: (): TurretComponentParams => 0 as any,
+   [ServerComponentType.tribe]: (): TribeComponentParams => 0 as any,
+   [ServerComponentType.inventory]: (): InventoryComponentParams => 0 as any,
+   [ServerComponentType.ammoBox]: (): AmmoBoxComponentParams => 0 as any,
+   [ServerComponentType.slime]: (): SlimeComponentParams => 0 as any,
+   [ServerComponentType.golem]: (): GolemComponentParams => 0 as any,
+   [ServerComponentType.statusEffect]: (): StatusEffectComponentParams => 0 as any,
+   [ServerComponentType.cactus]: (): CactusComponentParams => 0 as any,
+   [ServerComponentType.health]: (): HealthComponentParams => 0 as any,
+   [ServerComponentType.physics]: (): PhysicsComponentParams => 0 as any,
+   [ServerComponentType.researchBench]: (): ResearchBenchComponentParams => 0 as any,
+   [ServerComponentType.berryBush]: (): BerryBushComponentParams => 0 as any,
+   [ServerComponentType.inventoryUse]: (): InventoryUseComponentParams => 0 as any,
+   [ServerComponentType.zombie]: (): ZombieComponentParams => 0 as any,
+   [ServerComponentType.player]: (): PlayerComponentParams => 0 as any,
+   [ServerComponentType.item]: (): ItemComponentParams => 0 as any,
+   [ServerComponentType.tombstone]: (): TombstoneComponentParams => 0 as any,
+   [ServerComponentType.tree]: (): TreeComponentParams => 0 as any,
+   [ServerComponentType.blueprint]: (): BlueprintComponentParams => 0 as any,
+   [ServerComponentType.projectile]: (): ProjectileComponentParams => 0 as any,
+   [ServerComponentType.iceArrow]: (): IceArrowComponentParams => 0 as any,
+   [ServerComponentType.yeti]: (): YetiComponentParams => 0 as any,
+   [ServerComponentType.frozenYeti]: (): FrozenYetiComponentParams => 0 as any,
+   [ServerComponentType.totemBanner]: (): TotemBannerComponentParams => 0 as any,
+   [ServerComponentType.cooking]: (): CookingComponentParams => 0 as any,
+   [ServerComponentType.hut]: (): HutComponentParams => 0 as any,
+   [ServerComponentType.snowball]: (): SnowballComponentParams => 0 as any,
+   [ServerComponentType.fish]: (): FishComponentParams => 0 as any,
+   [ServerComponentType.rockSpike]: (): RockSpikeComponentParams => 0 as any,
+   [ServerComponentType.slimeSpit]: (): SlimeSpitComponentParams => 0 as any,
+   [ServerComponentType.door]: (): DoorComponentParams => 0 as any,
+   [ServerComponentType.tribesmanAI]: (): TribesmanAIComponentParams => 0 as any,
+   [ServerComponentType.tunnel]: (): TunnelComponentParams => 0 as any,
+   [ServerComponentType.buildingMaterial]: (): BuildingMaterialComponentParams => 0 as any,
+   [ServerComponentType.spikes]: (): SpikesComponentParams => 0 as any,
+   [ServerComponentType.punjiSticks]: (): PunjiSticksComponentParams => 0 as any,
+   [ServerComponentType.tribeMember]: (): TribeMemberComponentParams => 0 as any,
+   [ServerComponentType.healingTotem]: (): HealingTotemComponentParams => 0 as any,
+   [ServerComponentType.planterBox]: (): PlanterBoxComponentParams => 0 as any,
+   [ServerComponentType.plant]: (): PlantComponentParams => 0 as any,
+   [ServerComponentType.structure]: (): StructureComponentParams => 0 as any,
+   [ServerComponentType.fence]: (): FenceComponentParams => 0 as any,
+   [ServerComponentType.fenceGate]: (): FenceGateComponentParams => 0 as any,
+   [ServerComponentType.craftingStation]: (): CraftingStationComponentParams => 0 as any,
+   [ServerComponentType.aiHelper]: (): AIHelperComponentParams => 0 as any,
+   [ServerComponentType.boulder]: (): BoulderComponentParams => 0 as any,
+   [ServerComponentType.iceShard]: (): IceShardComponentParams => 0 as any,
+   [ServerComponentType.iceSpikes]: (): IceSpikesComponentParams => 0 as any,
+   [ServerComponentType.pebblum]: (): PebblumComponentParams => 0 as any,
+   [ServerComponentType.slimewisp]: (): SlimewispComponentParams => 0 as any,
+   [ServerComponentType.throwingProjectile]: (): ThrowingProjectileComponentParams => 0 as any,
+   [ServerComponentType.escapeAI]: (): EscapeAIComponentParams => 0 as any,
+   [ServerComponentType.followAI]: (): FollowAIComponentParams => 0 as any,
+   [ServerComponentType.tribeWarrior]: (): TribeWarriorComponentParams => 0 as any,
+   [ServerComponentType.layeredRod]: (): LayeredRodComponentParams => 0 as any,
+   [ServerComponentType.decoration]: (): DecorationComponentParams => 0 as any,
+   [ServerComponentType.spitPoisonArea]: (): SpitPoisonAreaComponentParams => 0 as any,
+   [ServerComponentType.battleaxeProjectile]: (): BattleaxeProjectileComponentParams => 0 as any,
+   [ServerComponentType.spearProjectile]: (): SpearProjectileComponentParams => 0 as any,
+   [ServerComponentType.krumblid]: (): KrumblidComponentParams => 0 as any,
+   [ServerComponentType.damageBox]: (): DamageBoxComponentParams => 0 as any,
+   [ServerComponentType.guardian]: (): GuardianComponentParams => 0 as any,
+   [ServerComponentType.guardianGemQuake]: (): GuardianGemQuakeComponentParams => 0 as any,
+   [ServerComponentType.guardianGemFragmentProjectile]: (): GuardianGemFragmentProjectileComponentParams => 0 as any,
+   [ServerComponentType.guardianSpikyBall]: (): GuardianSpikyBallComponentParams => 0 as any,
+   [ServerComponentType.bracings]: (): BracingsComponentParams => 0 as any
+} satisfies Record<ServerComponentType, object>;
 
-export const ClientComponents = {
-   [ClientComponentType.equipment]: (): EquipmentComponent => 0 as any,
-   [ClientComponentType.footprint]: (): FootprintComponent => 0 as any,
-   [ClientComponentType.randomSound]: (): RandomSoundComponent => 0 as any
-} satisfies Record<ClientComponentType, () => object>;
-
-export type ServerComponentClass<T extends ServerComponentType> = ReturnType<typeof ServerComponents[T]>;
-export type ClientComponentClass<T extends ClientComponentType> = ReturnType<typeof ClientComponents[T]>;
+export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

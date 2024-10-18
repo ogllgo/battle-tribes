@@ -3,21 +3,46 @@ import { EntityID, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { playSound } from "../../sound";
 import { getEntityType } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-class StructureComponent {
-   public hasActiveBlueprint = false;
-   public connectedSidesBitset = 0;
+export interface StructureComponentParams {
+   readonly hasActiveBlueprint: boolean;
+   readonly connectedSidesBitset: number;
 }
 
-export default StructureComponent;
+export interface StructureComponent {
+   hasActiveBlueprint: boolean;
+   connectedSidesBitset: number;
+}
 
-export const StructureComponentArray = new ServerComponentArray<StructureComponent>(ServerComponentType.structure, true, {
+export const StructureComponentArray = new ServerComponentArray<StructureComponent, StructureComponentParams, never>(ServerComponentType.structure, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onSpawn: onSpawn,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): StructureComponentParams {
+   const hasActiveBlueprint = reader.readBoolean();
+   reader.padOffset(3);
+   const connectedSidesBitset = reader.readNumber();
+
+   return {
+      hasActiveBlueprint: hasActiveBlueprint,
+      connectedSidesBitset: connectedSidesBitset
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.structure>): StructureComponent {
+   const structureComponentParams = entityConfig.components[ServerComponentType.structure];
+   
+   return {
+      hasActiveBlueprint: structureComponentParams.hasActiveBlueprint,
+      connectedSidesBitset: structureComponentParams.connectedSidesBitset
+   };
+}
 
 function onSpawn(_structureComponent: StructureComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

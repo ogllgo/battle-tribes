@@ -10,7 +10,21 @@ import { PacketReader } from "battletribes-shared/packets";
 import { EntityID } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+
+export interface BlueprintComponentParams {
+   readonly blueprintType: BlueprintType;
+   readonly lastBlueprintProgress: number;
+   readonly associatedEntityID: number;
+}
+
+export interface BlueprintComponent {
+   readonly partialRenderParts: Array<TexturedRenderPart>;
+   
+   blueprintType: BlueprintType;
+   lastBlueprintProgress: number;
+   associatedEntityID: number;
+}
 
 const createWoodenBlueprintWorkParticleEffects = (entity: EntityID): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -53,22 +67,37 @@ const createStoneBlueprintWorkParticleEffects = (originX: number, originY: numbe
    }
 }
 
-class BlueprintComponent {
-   public readonly partialRenderParts = new Array<TexturedRenderPart>();
-   
-   public blueprintType: BlueprintType = 0;
-   public lastBlueprintProgress = 0;
-   public associatedEntityID = 0;
-}
-
-export default BlueprintComponent;
-
-export const BlueprintComponentArray = new ServerComponentArray<BlueprintComponent>(ServerComponentType.blueprint, true, {
+export const BlueprintComponentArray = new ServerComponentArray<BlueprintComponent, BlueprintComponentParams, never>(ServerComponentType.blueprint, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    onSpawn: onSpawn,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): BlueprintComponentParams {
+   const blueprintType = reader.readNumber() as BlueprintType;
+   const blueprintProgress = reader.readNumber();
+   const associatedEntityID = reader.readNumber();
+
+   return {
+      blueprintType: blueprintType,
+      lastBlueprintProgress: blueprintProgress,
+      associatedEntityID: associatedEntityID
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprint>): BlueprintComponent {
+   const blueprintComponentParams = entityConfig.components[ServerComponentType.blueprint];
+   
+   return {
+      partialRenderParts: [],
+      blueprintType: blueprintComponentParams.blueprintType,
+      lastBlueprintProgress: blueprintComponentParams.lastBlueprintProgress,
+      associatedEntityID: blueprintComponentParams.associatedEntityID
+   };
+}
 
 function onLoad(blueprintComponent: BlueprintComponent, entity: EntityID): void {
    // Create completed render parts

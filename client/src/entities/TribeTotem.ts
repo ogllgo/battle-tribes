@@ -21,16 +21,6 @@ class TribeTotem extends Entity {
       const renderInfo = getEntityRenderInfo(this.id);
       renderInfo.attachRenderThing(renderPart);
    }
-
-   protected onHit(): void {
-      const transformComponent = TransformComponentArray.getComponent(this.id);
-      playBuildingHitSound(transformComponent.position);
-   }
-
-   public onDie(): void {
-      const transformComponent = TransformComponentArray.getComponent(this.id);
-      playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
-   }
 }
 
 export default TribeTotem;

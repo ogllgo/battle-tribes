@@ -7,8 +7,16 @@ import { BackpackInventoryMenu_update } from "../../components/game/inventories/
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { CraftingMenu_updateRecipes } from "../../components/game/menus/CraftingMenu";
 import Player from "../../entities/Player";
-import ServerComponentArray from "../ServerComponentArray";
-import InventoryUseComponent, { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbInfoByInventoryName, InventoryUseComponent } from "./InventoryUseComponent";
+
+export interface InventoryComponentParams {
+   readonly inventories: Partial<Record<InventoryName, Inventory>>;
+}
+
+export interface InventoryComponent {
+   readonly inventories: Partial<Record<InventoryName, Inventory>>;
+}
 
 const registerInventoryUpdate = (inventoryName: InventoryName): void => {
    // @Hack
@@ -57,11 +65,11 @@ const playerActionIsLegal = (limb: LimbInfo, item: Item | null): boolean => {
 
 const validatePlayerAction = (inventoryName: InventoryName, item: Item | null): void => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-   if (!inventoryUseComponent.hasLimbInfo(inventoryName)) {
+   if (!inventoryUseComponentHasLimbInfo(inventoryUseComponent, inventoryName)) {
       return;
    }
 
-   const limb = inventoryUseComponent.getLimbInfoByInventoryName(inventoryName);
+   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
    if (!playerActionIsLegal(limb, item)) {
       // Reset the action
       limb.action = LimbAction.none;
@@ -158,8 +166,8 @@ const readInventory = (reader: PacketReader): Inventory => {
 }
 
 const updateHeldItem = (inventoryComponent: InventoryComponent, inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName, itemSlot: number): void => {
-   const inventory = inventoryComponent.getInventory(inventoryName)!;
-   const limb = inventoryUseComponent.getLimbInfoByInventoryName(inventoryName);
+   const inventory = getInventory(inventoryComponent, inventoryName)!;
+   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
    
    const heldItem = inventory.getItem(itemSlot);
    if (heldItem === null) {
@@ -169,28 +177,37 @@ const updateHeldItem = (inventoryComponent: InventoryComponent, inventoryUseComp
    }
 }
 
-class InventoryComponent {
-   public readonly inventories: Partial<Record<InventoryName, Inventory>> = {};
-
-   // @Cleanup: just combine these 2 and make it able to return undefined
-
-   // public hasInventory(inventoryName: InventoryName): boolean {
-   //    return typeof this.inventories[inventoryName] !== "undefined";
-   // }
-
-   public getInventory(inventoryName: InventoryName): Inventory | null {
-      return this.inventories[inventoryName] || null;
-   }
+export function getInventory(inventoryComponent: InventoryComponent, inventoryName: InventoryName): Inventory | null {
+   return inventoryComponent.inventories[inventoryName] || null;
 }
 
-export default InventoryComponent;
-
-export const InventoryComponentArray = new ServerComponentArray<InventoryComponent>(ServerComponentType.inventory, true, {
+export const InventoryComponentArray = new ServerComponentArray<InventoryComponent, InventoryComponentParams, never>(ServerComponentType.inventory, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData,
    updatePlayerAfterData: updatePlayerAfterData
 });
+
+function createParamsFromData(reader: PacketReader): InventoryComponentParams {
+   const inventories: Partial<Record<InventoryName, Inventory>> = {};
+   const numInventories = reader.readNumber();
+   for (let i = 0; i < numInventories; i++) {
+      const inventory = readInventory(reader);
+      inventories[inventory.name] = inventory;
+   }
+
+   return {
+      inventories: inventories
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory>): InventoryComponent {
+   return {
+      inventories: entityConfig.components[ServerComponentType.inventory].inventories
+   };
+}
 
 function updateInventories(inventoryComponent: InventoryComponent, reader: PacketReader, isPlayer: boolean): void {
    // @Temporary @Speed: garbage collection

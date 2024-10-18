@@ -3,7 +3,15 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+
+export interface BuildingMaterialComponentParams {
+   readonly material: BuildingMaterial;
+}
+
+export interface BuildingMaterialComponent {
+   material: BuildingMaterial;
+}
 
 export const WALL_TEXTURE_SOURCES = ["entities/wall/wooden-wall.png", "entities/wall/stone-wall.png"];
 export const DOOR_TEXTURE_SOURCES = ["entities/door/wooden-door.png", "entities/door/stone-door.png"];
@@ -26,16 +34,25 @@ const getMaterialTextureSources = (entityType: EntityType): ReadonlyArray<string
    }
 }
 
-class BuildingMaterialComponent {
-   public material: BuildingMaterial = 0;
-}
-
-export default BuildingMaterialComponent;
-
-export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingMaterialComponent>(ServerComponentType.buildingMaterial, true, {
+export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingMaterialComponent, BuildingMaterialComponentParams, never>(ServerComponentType.buildingMaterial, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
+   const material = reader.readNumber();
+   return {
+      material: material
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.buildingMaterial>): BuildingMaterialComponent {
+   return {
+      material: entityConfig.components[ServerComponentType.buildingMaterial].material
+   };
+}
 
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);

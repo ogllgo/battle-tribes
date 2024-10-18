@@ -6,7 +6,19 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+
+export interface CactusComponentParams {
+   readonly flowerData: Array<CactusBodyFlowerData>;
+   readonly limbData: Array<CactusLimbData>;
+}
+
+export interface CactusComponent {
+   // @Memory: go based off hitboxes/render parts
+   readonly flowerData: Array<CactusBodyFlowerData>;
+   // @Memory: go based off hitboxes/render parts
+   readonly limbData: Array<CactusLimbData>;
+}
 
 export const CACTUS_RADIUS = 40;
 
@@ -18,20 +30,77 @@ const getFlowerTextureSource = (type: number, size: CactusFlowerSize): string =>
    }
 }
 
-class CactusComponent {
-   // @Memory: go based off hitboxes/render parts
-   public flowerData = new Array<CactusBodyFlowerData>();
-   // @Memory: go based off hitboxes/render parts
-   public limbData = new Array<CactusLimbData>();
-}
-
-export default CactusComponent;
-
-export const CactusComponentArray = new ServerComponentArray<CactusComponent>(ServerComponentType.cactus, true, {
+export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, never>(ServerComponentType.cactus, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onDie: onDie,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): CactusComponentParams {
+   const flowers = new Array<CactusBodyFlowerData>();
+   const numFlowers = reader.readNumber();
+   for (let i = 0; i < numFlowers; i++) {
+      const flowerType = reader.readNumber();
+      const height = reader.readNumber();
+      const rotation = reader.readNumber();
+      const size = reader.readNumber();
+      const column = reader.readNumber();
+
+      const flower: CactusBodyFlowerData = {
+         type: flowerType,
+         height: height,
+         rotation: rotation,
+         size: size,
+         column: column
+      };
+      flowers.push(flower);
+   }
+
+   const limbs = new Array<CactusLimbData>();
+   const numLimbs = reader.readNumber();
+   for (let i = 0; i < numLimbs; i++) {
+      const limbDirection = reader.readNumber();
+      const hasFlower = reader.readBoolean();
+      reader.padOffset(3);
+
+      let flower: CactusLimbFlowerData | undefined;
+      if (hasFlower) {
+         const type = reader.readNumber();
+         const height = reader.readNumber();
+         const rotation = reader.readNumber();
+         const direction = reader.readNumber();
+         
+         flower = {
+            type: type,
+            height: height,
+            rotation: rotation,
+            direction: direction
+         };
+      }
+
+      const limbData: CactusLimbData = {
+         direction: limbDirection,
+         flower: flower
+      };
+      limbs.push(limbData);
+   }
+
+   return {
+      flowerData: flowers,
+      limbData: limbs
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cactus>): CactusComponent {
+   const cactusComponentParams = entityConfig.components[ServerComponentType.cactus];
+   
+   return {
+      flowerData: cactusComponentParams.flowerData,
+      limbData: cactusComponentParams.limbData
+   };
+}
 
 function onDie(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

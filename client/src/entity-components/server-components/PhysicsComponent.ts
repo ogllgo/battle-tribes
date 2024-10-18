@@ -14,7 +14,27 @@ import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
 import { getEntityByID, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { entityIsInRiver, getEntityTile, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+
+export interface PhysicsComponentParams {
+   readonly selfVelocity: Point;
+   readonly externalVelocity: Point;
+   readonly acceleration: Point;
+   readonly angularVelocity: number;
+   readonly traction: number;
+}
+
+export interface PhysicsComponent {
+   // @Memory @Speed: Unbox external velocity and velocity
+   readonly selfVelocity: Point;
+   readonly externalVelocity: Point;
+
+   readonly acceleration: Point;
+
+   angularVelocity: number;
+
+   traction: number;
+}
 
 const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): void => {
    if (isNaN(physicsComponent.selfVelocity.x)) {
@@ -153,28 +173,46 @@ const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Ent
    }
 }
 
-class PhysicsComponent {
-   // @Memory @Speed: Unbox external velocity and velocity
-   
-   public readonly selfVelocity = new Point(-1, -1);
-   public readonly acceleration = new Point(-1, -1);
-
-   public readonly externalVelocity = new Point(-1, -1);
-
-   public angularVelocity = 0;
-
-   public traction = 0;
-}
-
-export default PhysicsComponent;
-
-export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent>(ServerComponentType.physics, true, {
+export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent, PhysicsComponentParams, never>(ServerComponentType.physics, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    onUpdate: onUpdate,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
+
+function createParamsFromData(reader: PacketReader): PhysicsComponentParams {
+   const selfVelocityX = reader.readNumber();
+   const selfVelocityY = reader.readNumber();
+   const externalVelocityX = reader.readNumber();
+   const externalVelocityY = reader.readNumber();
+   const accelerationX = reader.readNumber();
+   const accelerationY = reader.readNumber();
+   const traction = reader.readNumber();
+
+   return {
+      selfVelocity: new Point(selfVelocityX, selfVelocityY),
+      externalVelocity: new Point(externalVelocityX, externalVelocityY),
+      acceleration: new Point(accelerationX, accelerationY),
+      // @Incomplete
+      angularVelocity: 0,
+      traction: traction
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.physics>): PhysicsComponent {
+   const physicsComponentParams = entityConfig.components[ServerComponentType.physics];
+   
+   return {
+      selfVelocity: physicsComponentParams.selfVelocity,
+      externalVelocity: physicsComponentParams.externalVelocity,
+      acceleration: physicsComponentParams.acceleration,
+      angularVelocity: physicsComponentParams.angularVelocity,
+      traction: physicsComponentParams.traction
+   }
+}
 
 function onTick(physicsComponent: PhysicsComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

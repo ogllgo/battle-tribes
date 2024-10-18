@@ -7,20 +7,38 @@ import Board from "../../Board";
 import { createWaterSplashParticle } from "../../particles";
 import { getEntityLayer } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class FishComponent {
-   public colour: FishColour = 0;
-   public readonly waterOpacityMultiplier = randFloat(0.6, 1);
+export interface FishComponentParams {
+   readonly colour: FishColour;
 }
 
-export default FishComponent;
+export interface FishComponent {
+   readonly colour: FishColour;
+   readonly waterOpacityMultiplier: number;
+}
 
-export const FishComponentArray = new ServerComponentArray<FishComponent>(ServerComponentType.fish, true, {
+export const FishComponentArray = new ServerComponentArray<FishComponent, FishComponentParams, never>(ServerComponentType.fish, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): FishComponentParams {
+   const colour = reader.readNumber();
+   return {
+      colour: colour
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.fish>): FishComponent {
+   return {
+      colour: entityConfig.components[ServerComponentType.fish].colour,
+      waterOpacityMultiplier: randFloat(0.6, 1)
+   };
+}
 
 function onTick(_fishComponent: FishComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -42,7 +60,6 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
-   const fishComponent = FishComponentArray.getComponent(entity);
-   fishComponent.colour = reader.readNumber();
+function updateFromData(reader: PacketReader): void {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

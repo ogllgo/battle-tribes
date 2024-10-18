@@ -1,24 +1,39 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import ServerComponentArray from "../ServerComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class BoulderComponent {
-   public boulderType = 0;
+export interface BoulderComponentParams {
+   readonly boulderType: number;
 }
 
-export default BoulderComponent;
+export interface BoulderComponent {
+   readonly boulderType: number;
+}
 
-export const BoulderComponentArray = new ServerComponentArray<BoulderComponent>(ServerComponentType.boulder, true, {
+export const BoulderComponentArray = new ServerComponentArray<BoulderComponent, BoulderComponentParams, never>(ServerComponentType.boulder, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
-   
+
+function createParamsFromData(reader: PacketReader): BoulderComponentParams {
+   const boulderType = reader.readNumber();
+   return {
+      boulderType: boulderType
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.boulder>): BoulderComponent {
+   return {
+      boulderType: entityConfig.components[ServerComponentType.boulder].boulderType
+   };
+}
+
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
-   const boudlerComponent = BoulderComponentArray.getComponent(entity);
-   boudlerComponent.boulderType = reader.readNumber();
+function updateFromData(reader: PacketReader): void {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

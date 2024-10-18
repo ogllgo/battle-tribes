@@ -5,29 +5,62 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { TribeComponentArray } from "./TribeComponent";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
+import { playBuildingHitSound, playSound } from "../../sound";
+import { EntityRenderInfo } from "../../Entity";
+import { TribeComponentArray } from "./TribeComponent";
+
+export interface TotemBannerComponentParams {
+   readonly banners: Record<number, TribeTotemBanner>;
+}
+
+interface RenderParts {
+   readonly bannerRenderParts: Record<number, RenderPart>;
+}
+
+export interface TotemBannerComponent {
+   readonly banners: Record<number, TribeTotemBanner>;
+   readonly bannerRenderParts: Record<number, RenderPart>;
+}
 
 const BANNER_LAYER_DISTANCES = [34, 52, 65];
 
-class TotemBannerComponent {
-   public readonly banners: Record<number, TribeTotemBanner> = {};
-   public readonly bannerRenderParts: Record<number, RenderPart> = {};
-}
-
-export default TotemBannerComponent;
-
-export const TotemBannerComponentArray = new ServerComponentArray<TotemBannerComponent>(ServerComponentType.totemBanner, true, {
+export const TotemBannerComponentArray = new ServerComponentArray<TotemBannerComponent, TotemBannerComponentParams, RenderParts>(ServerComponentType.totemBanner, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
-const createBannerRenderPart = (totemBannerComponent: TotemBannerComponent, entity: EntityID, banner: TribeTotemBanner): void => {
-   const tribeComponent = TribeComponentArray.getComponent(entity);
-   
+function createParamsFromData(reader: PacketReader): TotemBannerComponentParams {
+   const banners = new Array<TribeTotemBanner>();
+   const numBanners = reader.readNumber();
+   for (let i = 0; i < numBanners; i++) {
+      const hutNum = reader.readNumber();
+      const layer = reader.readNumber();
+      const direction = reader.readNumber();
+
+      const banner: TribeTotemBanner = {
+         hutNum: hutNum,
+         layer: layer,
+         direction: direction
+      };
+      banners.push(banner);
+   }
+
+   return {
+      banners: banners
+   };
+}
+
+const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderInfo, banner: TribeTotemBanner): TexturedRenderPart => {
    let totemTextureSourceID: string;
-   switch (tribeComponent.tribeType) {
+   switch (tribeType) {
       case TribeType.plainspeople: {
          totemTextureSourceID = "plainspeople-banner.png";
          break;
@@ -55,10 +88,33 @@ const createBannerRenderPart = (totemBannerComponent: TotemBannerComponent, enti
    const bannerOffsetAmount = BANNER_LAYER_DISTANCES[banner.layer];
    renderPart.offset.x = bannerOffsetAmount * Math.sin(banner.direction);
    renderPart.offset.y = bannerOffsetAmount * Math.cos(banner.direction);
-   totemBannerComponent.bannerRenderParts[banner.hutNum] = renderPart;
 
-   const renderInfo = getEntityRenderInfo(entity);
    renderInfo.attachRenderThing(renderPart);
+
+   return renderPart;
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.totemBanner | ServerComponentType.tribe>): RenderParts {
+   const bannerComponentParams = entityConfig.components[ServerComponentType.totemBanner];
+   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
+   
+   const renderParts = new Array<TexturedRenderPart>();
+   
+   for (const banner of Object.values(bannerComponentParams.banners)) {
+      const renderPart = createBannerRenderPart(tribeComponentParams.tribeType, renderInfo, banner);
+      renderParts.push(renderPart);
+   }
+
+   return {
+      bannerRenderParts: renderParts
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBanner>, renderParts: RenderParts): TotemBannerComponent {
+   return {
+      banners: entityConfig.components[ServerComponentType.totemBanner].banners,
+      bannerRenderParts: renderParts.bannerRenderParts
+   };
 }
 
 function padData(reader: PacketReader): void {
@@ -88,10 +144,14 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       banners.push(banner);
    }
    
+   const renderInfo = getEntityRenderInfo(entity);
+   
    // Add new banners
    for (const banner of banners) {
       if (!totemBannerComponent.banners.hasOwnProperty(banner.hutNum)) {
-         createBannerRenderPart(totemBannerComponent, entity, banner);
+         const tribeComponent = TribeComponentArray.getComponent(entity);
+         const renderPart = createBannerRenderPart(tribeComponent.tribeType, renderInfo, banner);
+         totemBannerComponent.bannerRenderParts[banner.hutNum] = renderPart;
          totemBannerComponent.banners[banner.hutNum] = banner;
       }
 
@@ -102,10 +162,19 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
    
    // Remove banners which are no longer there
-   const renderInfo = getEntityRenderInfo(entity);
    for (const hutNum of removedBannerNums) {
       renderInfo.removeRenderPart(totemBannerComponent.bannerRenderParts[hutNum]);
       delete totemBannerComponent.bannerRenderParts[hutNum];
       delete totemBannerComponent.banners[hutNum];
    }
+}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playBuildingHitSound(transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
 }

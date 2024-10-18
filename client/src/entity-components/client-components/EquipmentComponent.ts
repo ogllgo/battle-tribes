@@ -1,12 +1,12 @@
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ArmourItemType, ItemType, GloveItemType, ItemTypeString, InventoryName } from "battletribes-shared/items/items";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { ClientComponentType } from "../components";
-import { InventoryComponentArray } from "./InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../server-components/InventoryComponent";
 import { getEntityRenderInfo } from "../../world";
-import { InventoryUseComponentArray } from "./InventoryUseComponent";
+import { InventoryUseComponentArray } from "../server-components/InventoryUseComponent";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
+import { ClientComponentType } from "../client-components";
 
 // @Incomplete
 // public createFrostShieldBreakParticles(): void {
@@ -73,7 +73,7 @@ const getGloveTextureSource = (gloveType: ItemType): string => {
    return GLOVES_TEXTURE_SOURCE_RECORD[gloveType as GloveItemType];
 }
 
-class EquipmentComponent {
+export class EquipmentComponent {
    public armourRenderPart: TexturedRenderPart | null = null;
    public gloveRenderParts = new Array<TexturedRenderPart>();
    
@@ -84,8 +84,6 @@ class EquipmentComponent {
       this.hasFrostShield = false;
    }
 }
-
-export default EquipmentComponent;
 
 export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, {
    onLoad: onLoad,
@@ -100,7 +98,7 @@ function onLoad(equipmentComponent: EquipmentComponent, entity: EntityID): void 
 /** Updates the current armour render part based on the entity's inventory component */
 const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: EntityID): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
-   const armourInventory = inventoryComponent.getInventory(InventoryName.armourSlot)!;
+   const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;
    
    const armour = armourInventory.itemSlots[1];
    if (typeof armour !== "undefined") {
@@ -128,7 +126,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
 // @Cleanup: Copy and paste from armour
 const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: EntityID): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
-   const gloveInventory = inventoryComponent.getInventory(InventoryName.gloveSlot)!;
+   const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot)!;
    
    // @Incomplete: Make a glove for every hand
    const glove = gloveInventory.itemSlots[1];

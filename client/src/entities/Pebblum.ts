@@ -1,7 +1,5 @@
-import { EntityType } from "battletribes-shared/entities";
 import { getTextureArrayIndex } from "../texture-atlases/texture-atlases";
-import { ClientComponentType } from "../entity-components/components";
-import FootprintComponent, { FootprintComponentArray } from "../entity-components/server-components/FootprintComponent";
+import { FootprintComponent, FootprintComponentArray } from "../entity-components/client-components/FootprintComponent";
 import Entity from "../Entity";
 import TexturedRenderPart from "../render-parts/TexturedRenderPart";
 import { getEntityRenderInfo } from "../world";
@@ -32,7 +30,7 @@ class Pebblum extends Entity {
       body.offset.y = -8;
       renderInfo.attachRenderThing(body);
 
-      FootprintComponentArray.addComponent(this.id, new FootprintComponent(this, 0.3, 20, 64, 5, 40));
+      FootprintComponentArray.addComponent(this.id, new FootprintComponent(0.3, 20, 64, 5, 40));
    }
 }
 

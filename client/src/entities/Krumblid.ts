@@ -2,8 +2,7 @@ import { HitData } from "battletribes-shared/client-server-types";
 import { angle, randFloat } from "battletribes-shared/utils";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle } from "../particles";
 import { getTextureArrayIndex } from "../texture-atlases/texture-atlases";
-import { ClientComponentType } from "../entity-components/components";
-import FootprintComponent, { FootprintComponentArray } from "../entity-components/server-components/FootprintComponent";
+import { FootprintComponent, FootprintComponentArray } from "../entity-components/client-components/FootprintComponent";
 import Entity from "../Entity";
 import TexturedRenderPart from "../render-parts/TexturedRenderPart";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
@@ -15,7 +14,7 @@ class Krumblid extends Entity {
    constructor(id: number) {
       super(id);
 
-      FootprintComponentArray.addComponent(this.id, new FootprintComponent(this, 0.3, 20, 64, 5, 50));
+      FootprintComponentArray.addComponent(this.id, new FootprintComponent(0.3, 20, 64, 5, 50));
    }
 
    public onLoad(): void {

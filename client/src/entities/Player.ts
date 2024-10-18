@@ -1,9 +1,8 @@
 import Camera from "../Camera";
 import { halfWindowHeight, halfWindowWidth } from "../webgl";
-import TribeMember, { addTribeMemberRenderParts } from "./TribeMember";
-import { ClientComponentType } from "../entity-components/components";
-import FootprintComponent, { FootprintComponentArray } from "../entity-components/server-components/FootprintComponent";
-import EquipmentComponent, { EquipmentComponentArray } from "../entity-components/server-components/EquipmentComponent";
+import TribeMember from "./TribeMember";
+import { FootprintComponent, FootprintComponentArray } from "../entity-components/client-components/FootprintComponent";
+import { EquipmentComponent, EquipmentComponentArray } from "../entity-components/client-components/EquipmentComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
@@ -109,10 +108,6 @@ export default class Player extends TribeMember {
       
       FootprintComponentArray.addComponent(this.id, new FootprintComponent(0.2, 20, 64, 4, 64));
       EquipmentComponentArray.addComponent(this.id, new EquipmentComponent());
-   }
-
-   public onLoad(): void {
-      addTribeMemberRenderParts(this.id);
    }
 
    public static createInstancePlayer(player: Player): void {

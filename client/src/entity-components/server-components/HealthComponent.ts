@@ -5,24 +5,29 @@ import { updateHealthBar } from "../../components/game/HealthBar";
 import Player from "../../entities/Player";
 import { discombobulate } from "../../components/game/GameInteractableLayer";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../Entity";
 import { getEntityRenderInfo } from "../../world";
+
+export interface HealthComponentParams {
+   readonly health: number;
+   readonly maxHealth: number;
+}
+
+export interface HealthComponent {
+   health: number;
+   maxHealth: number;
+
+   secondsSinceLastHit: number;
+}
 
 /** Amount of seconds that the hit flash occurs for */
 const ATTACK_HIT_FLASH_DURATION = 0.4;
 const MAX_REDNESS = 0.85;
 
-class HealthComponent {
-   public health = 0;
-   public maxHealth = 0;
-
-   public secondsSinceLastHit = 99999;
-}
-
-export default HealthComponent;
-
-export const HealthComponentArray = new ServerComponentArray<HealthComponent>(ServerComponentType.health, true, {
+export const HealthComponentArray = new ServerComponentArray<HealthComponent, HealthComponentParams, never>(ServerComponentType.health, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    onHit: onHit,
    padData: padData,
@@ -30,6 +35,27 @@ export const HealthComponentArray = new ServerComponentArray<HealthComponent>(Se
    updatePlayerFromData: updatePlayerFromData,
    calculateTint: calculateTint
 });
+
+function createParamsFromData(reader: PacketReader): HealthComponentParams {
+   const health = reader.readNumber();
+   const maxHealth = reader.readNumber();
+
+   return {
+      health: health,
+      maxHealth: maxHealth
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.health>): HealthComponent {
+   const healthComponentParams = entityConfig.components[ServerComponentType.health];
+   
+   return {
+      health: healthComponentParams.health,
+      maxHealth: healthComponentParams.maxHealth,
+      // @Hack: ideally should be sent from server
+      secondsSinceLastHit: 99999
+   };
+}
 
 const calculateRedness = (healthComponent: HealthComponent): number => {
    let redness: number;

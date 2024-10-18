@@ -1,14 +1,24 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class ThrowingProjectileComponent {}
+export interface ThrowingProjectileComponentParams {}
 
-export default ThrowingProjectileComponent;
+export interface ThrowingProjectileComponent {}
 
-export const ThrowingProjectileComponentArray = new ServerComponentArray<ThrowingProjectileComponent>(ServerComponentType.throwingProjectile, true, {
+export const ThrowingProjectileComponentArray = new ServerComponentArray<ThrowingProjectileComponent, ThrowingProjectileComponentParams, never>(ServerComponentType.throwingProjectile, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): ThrowingProjectileComponentParams {
+   return {};
+}
+
+function createComponent(): ThrowingProjectileComponent {
+   return {};
+}
 
 function padData(): void {}
 

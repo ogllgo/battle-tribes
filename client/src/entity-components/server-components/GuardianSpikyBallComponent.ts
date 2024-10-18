@@ -9,13 +9,25 @@ import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export class GuardianSpikyBallComponent {}
+export interface GuardianSpikyBallComponentParams {}
 
-export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent>(ServerComponentType.guardianSpikyBall, true, {
+export interface GuardianSpikyBallComponent {}
+
+export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentParams, never>(ServerComponentType.guardianSpikyBall, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): GuardianSpikyBallComponentParams {
+   return {};
+}
+
+function createComponent(): GuardianSpikyBallComponent {
+   return {};
+}
 
 function onLoad(_guardianSpikyBallComponent: GuardianSpikyBallComponent, entity: EntityID): void {
    const renderPart = new TexturedRenderPart(

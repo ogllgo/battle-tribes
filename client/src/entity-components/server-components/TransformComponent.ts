@@ -17,9 +17,17 @@ import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import Player from "../../entities/Player";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
+
+export interface TransformComponentParams {
+   readonly position: Point;
+   readonly rotation: number;
+   readonly hitboxes: Array<ClientHitbox>;
+   readonly collisionBit: HitboxCollisionBit;
+   readonly collisionMask: number;
+}
 
 // @Memory: grass strands don't need a lot of this
 export interface TransformComponent {
@@ -46,32 +54,17 @@ export interface TransformComponent {
    boundingAreaMaxY: number;
 }
 
-export function createTransformComponent(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number): TransformComponent {
-   let totalMass = 0;
-   const hitboxMap = new Map<number, ClientHitbox>();
-   for (const hitbox of hitboxes) {
-      totalMass += hitbox.mass;
-      hitboxMap.set(hitbox.localID, hitbox);
-   }
-   
+export function createTransformComponentParams(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number): TransformComponentParams {
    return {
-      totalMass: totalMass,
       position: position,
       rotation: rotation,
-      chunks: new Set(),
       hitboxes: hitboxes,
-      hitboxMap: hitboxMap,
       collisionBit: collisionBit,
-      collisionMask: collisionMask,
-      collidingEntities: [],
-      boundingAreaMinX: Number.MAX_SAFE_INTEGER,
-      boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
-      boundingAreaMinY: Number.MAX_SAFE_INTEGER,
-      boundingAreaMaxY: Number.MIN_SAFE_INTEGER
+      collisionMask: collisionMask
    };
 }
 
-export function createTransformComponentFromData(reader: PacketReader): TransformComponent {
+export function createParamsFromData(reader: PacketReader): TransformComponentParams {
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
    const position = new Point(positionX, positionY);
@@ -136,7 +129,7 @@ export function createTransformComponentFromData(reader: PacketReader): Transfor
       hitboxes.push(hitbox);
    }
 
-   return createTransformComponent(position, rotation, hitboxes, collisionBit, collisionMask);
+   return createTransformComponentParams(position, rotation, hitboxes, collisionBit, collisionMask);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
@@ -271,13 +264,42 @@ export function updateEntityPosition(transformComponent: TransformComponent, ent
    updateContainingChunks(transformComponent, entity);
 }
 
-export const TransformComponentArray = new ServerComponentArray<TransformComponent>(ServerComponentType.transform, true, {
+export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentParams, never>(ServerComponentType.transform, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    onRemove: onRemove,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform>): TransformComponent {
+   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+   
+   let totalMass = 0;
+   const hitboxMap = new Map<number, ClientHitbox>();
+   for (const hitbox of transformComponentParams.hitboxes) {
+      totalMass += hitbox.mass;
+      hitboxMap.set(hitbox.localID, hitbox);
+   }
+   
+   return {
+      totalMass: totalMass,
+      position: transformComponentParams.position,
+      rotation: transformComponentParams.rotation,
+      chunks: new Set(),
+      hitboxes: transformComponentParams.hitboxes,
+      hitboxMap: hitboxMap,
+      collisionBit: transformComponentParams.collisionBit,
+      collisionMask: transformComponentParams.collisionMask,
+      collidingEntities: [],
+      boundingAreaMinX: Number.MAX_SAFE_INTEGER,
+      boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
+      boundingAreaMinY: Number.MAX_SAFE_INTEGER,
+      boundingAreaMaxY: Number.MIN_SAFE_INTEGER
+   };
+}
 
 function onLoad(transformComponent: TransformComponent, entity: EntityID): void {
    // @Hack?

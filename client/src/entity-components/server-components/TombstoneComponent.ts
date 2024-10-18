@@ -7,23 +7,74 @@ import { playSound } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityAgeTicks } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
-class TombstoneComponent {
-   public tombstoneType = 0;
-   public zombieSpawnProgress = 0;
-   public zombieSpawnX = -1;
-   public zombieSpawnY = -1;
-   public deathInfo: DeathInfo | null = null;
+export interface TombstoneComponentParams {
+   readonly tombstoneType: number;
+   readonly zombieSpawnProgress: number;
+   readonly zombieSpawnX: number;
+   readonly zombieSpawnY: number;
+   readonly deathInfo: DeathInfo | null;
 }
 
-export default TombstoneComponent;
+export interface TombstoneComponent {
+   readonly tombstoneType: number;
+   zombieSpawnProgress: number;
+   zombieSpawnX: number;
+   zombieSpawnY: number;
+   readonly deathInfo: DeathInfo | null;
+}
 
-export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent>(ServerComponentType.tombstone, true, {
+export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, never>(ServerComponentType.tombstone, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
+   const tombstoneType = reader.readNumber();
+   const zombieSpawnProgress = reader.readNumber();
+   const zombieSpawnX = reader.readNumber();
+   const zombieSpawnY = reader.readNumber();
+
+   const hasDeathInfo = reader.readBoolean();
+   reader.padOffset(3);
+   
+   let deathInfo: DeathInfo | null;
+   if (hasDeathInfo) {
+      // @Hack: hardcoded
+      const username = reader.readString(100);
+      const causeOfDeath = reader.readNumber() as PlayerCauseOfDeath;
+      deathInfo = {
+         username: username,
+         causeOfDeath: causeOfDeath
+      };
+   } else {
+      deathInfo = null;
+   }
+
+   return {
+      tombstoneType: tombstoneType,
+      zombieSpawnProgress: zombieSpawnProgress,
+      zombieSpawnX: zombieSpawnX,
+      zombieSpawnY: zombieSpawnY,
+      deathInfo: deathInfo
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tombstone>): TombstoneComponent {
+   const tombstoneComponentParams = entityConfig.components[ServerComponentType.tombstone];
+   
+   return {
+      tombstoneType:tombstoneComponentParams. tombstoneType,
+      zombieSpawnProgress:tombstoneComponentParams. zombieSpawnProgress,
+      zombieSpawnX:tombstoneComponentParams. zombieSpawnX,
+      zombieSpawnY:tombstoneComponentParams. zombieSpawnY,
+      deathInfo:tombstoneComponentParams. deathInfo
+   };
+}
 
 function onTick(tombstoneComponent: TombstoneComponent, entity: EntityID): void {
    if (tombstoneComponent.zombieSpawnProgress !== -1) {
@@ -57,7 +108,8 @@ function padData(reader: PacketReader): void {
 function updateFromData(reader: PacketReader, entity: EntityID): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    
-   tombstoneComponent.tombstoneType = reader.readNumber();
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+
    tombstoneComponent.zombieSpawnProgress = reader.readNumber();
    tombstoneComponent.zombieSpawnX = reader.readNumber();
    tombstoneComponent.zombieSpawnY = reader.readNumber();
@@ -65,14 +117,6 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const hasDeathInfo = reader.readBoolean();
    reader.padOffset(3);
    if (hasDeathInfo) {
-      // @Hack: hardcoded
-      const username = reader.readString(100);
-      const causeOfDeath = reader.readNumber() as PlayerCauseOfDeath;
-      tombstoneComponent.deathInfo = {
-         username: username,
-         causeOfDeath: causeOfDeath
-      };
-   } else {
-      tombstoneComponent.deathInfo = null;
+      reader.padOffset(100 + Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT);
    }
 }

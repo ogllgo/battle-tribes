@@ -8,13 +8,28 @@ import { RandomSoundComponentArray } from "../client-components/RandomSoundCompo
 import { Settings } from "../../../../shared/src/settings";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import { getEntityRenderInfo } from "../../world";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
+}
+
+export interface YetiComponentParams {
+   readonly attackProgress: number;
+}
+
+interface RenderParts {
+   readonly pawRenderParts: ReadonlyArray<RenderPart>;
+}
+
+export interface YetiComponent {
+   lastAttackProgress: number;
+   attackProgress: number;
+
+   readonly pawRenderParts: ReadonlyArray<RenderPart>;
 }
 
 export const YETI_SIZE = 128;
@@ -27,48 +42,62 @@ const ANGRY_SOUNDS: ReadonlyArray<string> = ["yeti-angry-1.mp3", "yeti-angry-2.m
 const HURT_SOUNDS: ReadonlyArray<string> = ["yeti-hurt-1.mp3", "yeti-hurt-2.mp3", "yeti-hurt-3.mp3", "yeti-hurt-4.mp3", "yeti-hurt-5.mp3"];
 const DEATH_SOUNDS: ReadonlyArray<string> = ["yeti-death-1.mp3", "yeti-death-2.mp3"];
 
-class YetiComponent {
-   public pawRenderParts!: ReadonlyArray<RenderPart>;
-   
-   public lastAttackProgress = 0;
-   public attackProgress = 0;
-
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
-      
-      renderInfo.attachRenderThing(
-         new TexturedRenderPart(
-            null,
-            1,
-            0,
-            getTextureArrayIndex("entities/yeti/yeti.png")
-         )
-      );
-
-      for (let i = 0; i < 2; i++) {
-         const paw = new TexturedRenderPart(
-            null,
-            0,
-            0,
-            getTextureArrayIndex("entities/yeti/yeti-paw.png")
-         );
-         paw.addTag("yetiComponent:paw");
-         renderInfo.attachRenderThing(paw);
-      }
-
-      this.pawRenderParts = renderInfo.getRenderThings("yetiComponent:paw", 2) as Array<RenderPart>;
-   }
-}
-
-export default YetiComponent;
-
-export const YetiComponentArray = new ServerComponentArray<YetiComponent>(ServerComponentType.yeti, true, {
+export const YetiComponentArray = new ServerComponentArray<YetiComponent, YetiComponentParams, RenderParts>(ServerComponentType.yeti, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    onTick: onTick,
    onHit: onHit,
    onDie: onDie,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): YetiComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   const attackProgress = reader.readNumber();
+
+   return {
+      attackProgress: attackProgress
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         1,
+         0,
+         getTextureArrayIndex("entities/yeti/yeti.png")
+      )
+   );
+
+   const pawRenderParts = new Array<RenderPart>();
+   for (let i = 0; i < 2; i++) {
+      const paw = new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("entities/yeti/yeti-paw.png")
+      );
+      pawRenderParts.push(paw);
+      renderInfo.attachRenderThing(paw);
+   }
+
+   return {
+      pawRenderParts: pawRenderParts
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti>, renderParts: RenderParts): YetiComponent {
+   const yetiComponentParams = entityConfig.components[ServerComponentType.yeti];
+   
+   return {
+      lastAttackProgress: yetiComponentParams.attackProgress,
+      attackProgress: yetiComponentParams.attackProgress,
+      pawRenderParts: renderParts.pawRenderParts
+   };
+}
 
 function onTick(yetiComponent: YetiComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

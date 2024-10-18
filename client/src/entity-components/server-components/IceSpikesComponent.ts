@@ -1,14 +1,24 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class IceSpikesComponent {}
+export interface IceSpikesComponentParams {}
 
-export default IceSpikesComponent;
+export interface IceSpikesComponent {}
 
-export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent>(ServerComponentType.iceSpikes, true, {
+export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent, IceSpikesComponentParams, never>(ServerComponentType.iceSpikes, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): IceSpikesComponentParams {
+   return {};
+}
+
+function createComponent(): IceSpikesComponent {
+   return {};
+}
 
 function padData(): void {}
 

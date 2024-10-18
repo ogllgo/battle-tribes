@@ -7,18 +7,31 @@ import { EntityID } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 
-class PunjiSticksComponent {
-   public ticksSinceLastFly = 0;
-   public ticksSinceLastFlySound = 0;
+export interface PunjiSticksComponentParams {}
+
+export interface PunjiSticksComponent {
+   ticksSinceLastFly: number;
+   ticksSinceLastFlySound: number;
 }
 
-export default PunjiSticksComponent;
-
-export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent>(ServerComponentType.punjiSticks, true, {
+export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, never>(ServerComponentType.punjiSticks, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): PunjiSticksComponentParams {
+   return {};
+}
+
+function createComponent(): PunjiSticksComponent {
+   return {
+      ticksSinceLastFly: 0,
+      ticksSinceLastFlySound: 0
+   };
+}
    
 function onTick(punjiSticksComponent: PunjiSticksComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

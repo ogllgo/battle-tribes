@@ -2,29 +2,87 @@ import { PlanterBoxPlant, ServerComponentType } from "../../../../shared/src/com
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../Entity";
 import { createGrowthParticle } from "../../particles";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo, getEntityAgeTicks } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
-import TransformComponent, { TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { TransformComponent, TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
 
-class PlanterBoxComponent {
-   public moundRenderPart: RenderPart | null = null;
-   
-   public hasPlant = false;
-   public isFertilised = false;
+export interface PlanterBoxComponentParams {
+   readonly plantType: PlanterBoxPlant | -1;
+   readonly isFertilised: boolean;
 }
 
-export default PlanterBoxComponent;
+interface RenderParts {
+   readonly moundRenderPart: RenderPart | null;
+}
 
-export const PlanterBoxComponentArray = new ServerComponentArray<PlanterBoxComponent>(ServerComponentType.planterBox, true, {
+export interface PlanterBoxComponent {
+   moundRenderPart: RenderPart | null;
+   
+   hasPlant: boolean;
+   isFertilised: boolean;
+}
+
+const createMoundRenderPart = (plantType: PlanterBoxPlant): TexturedRenderPart => {
+   const textureSource = plantType === PlanterBoxPlant.iceSpikes ? "entities/plant/snow-clump.png" : "entities/plant/dirt-clump.png";
+   return new TexturedRenderPart(
+      null,
+      1,
+      Math.PI / 2 * randInt(0, 3),
+      getTextureArrayIndex(textureSource)
+   );
+}
+
+export const PlanterBoxComponentArray = new ServerComponentArray<PlanterBoxComponent, PlanterBoxComponentParams, RenderParts>(ServerComponentType.planterBox, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
+   const plantType = reader.readNumber();
+   const isFertilised = reader.readBoolean();
+   reader.padOffset(3);
+
+   return {
+      plantType: plantType,
+      isFertilised: isFertilised
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.planterBox>): RenderParts {
+   const planterBoxComponentParams = entityConfig.components[ServerComponentType.planterBox];
+
+   let renderPart: TexturedRenderPart | null;
+   if (planterBoxComponentParams.plantType !== -1) {
+      renderPart = createMoundRenderPart(planterBoxComponentParams.plantType);
+      renderInfo.attachRenderThing(renderPart);
+   } else {
+      renderPart = null;
+   }
+   
+   return {
+      moundRenderPart: renderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.planterBox>, renderParts: RenderParts): PlanterBoxComponent {
+   const planterBoxComponentParams = entityConfig.components[ServerComponentType.planterBox];
+   
+   return {
+      hasPlant: planterBoxComponentParams.plantType !== -1,
+      isFertilised: planterBoxComponentParams.isFertilised,
+      moundRenderPart: renderParts.moundRenderPart
+   };
+}
 
 const createGrowthParticleInEntity = (transformComponent: TransformComponent): void => {
    const pos = getRandomPointInEntity(transformComponent);
@@ -69,15 +127,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
    if (plantType !== -1) {
       if (planterBoxComponent.moundRenderPart === null) {
-         // @Temporary
-         const textureSource = plantType === PlanterBoxPlant.iceSpikes ? "entities/plant/snow-clump.png" : "entities/plant/dirt-clump.png";
+         planterBoxComponent.moundRenderPart = createMoundRenderPart(plantType);
          
-         planterBoxComponent.moundRenderPart = new TexturedRenderPart(
-            null,
-            1,
-            Math.PI / 2 * randInt(0, 3),
-            getTextureArrayIndex(textureSource)
-         );
          const renderInfo = getEntityRenderInfo(entity);
          renderInfo.attachRenderThing(planterBoxComponent.moundRenderPart);
       }

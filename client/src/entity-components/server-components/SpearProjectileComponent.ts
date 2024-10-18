@@ -4,15 +4,25 @@ import { playSound } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-class SpearProjectileComponent {}
+export interface SpearProjectileComponentParams {}
 
-export default SpearProjectileComponent;
+export interface SpearProjectileComponent {}
 
-export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent>(ServerComponentType.spearProjectile, true, {
+export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent, SpearProjectileComponentParams, never>(ServerComponentType.spearProjectile, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onSpawn: onSpawn,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(): SpearProjectileComponentParams {
+   return {};
+}
+
+function createComponent(): SpearProjectileComponent {
+   return {};
+}
 
 function onSpawn(_spearProjectileComponent: SpearProjectileComponent, entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

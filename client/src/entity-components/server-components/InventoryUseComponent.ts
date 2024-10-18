@@ -22,7 +22,7 @@ import { getEntityRenderInfo, getEntityType } from "../../world";
 import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import Player from "../../entities/Player";
 
 export interface LimbInfo {
@@ -56,6 +56,23 @@ export interface LimbInfo {
    animationEndOffset: Point;
    animationDurationTicks: number;
    animationTicksElapsed: number;
+}
+
+export interface InventoryUseComponentParams {
+   readonly limbInfos: Array<LimbInfo>;
+}
+
+export interface InventoryUseComponent {
+   readonly limbInfos: Array<LimbInfo>;
+
+   readonly limbAttachPoints: Array<RenderAttachPoint>;
+   readonly limbRenderParts: Array<RenderPart>;
+   readonly activeItemRenderParts: Record<number, TexturedRenderPart> ;
+   readonly inactiveCrossbowArrowRenderParts: Record<number, RenderPart>;
+   readonly arrowRenderParts: Record<number, RenderPart>;
+
+   customItemRenderPart: RenderPart | null;
+   readonly bandageRenderParts: Array<RenderPart>;
 }
 
 /** Decimal percentage of total attack animation time spent doing the lunge part of the animation */
@@ -404,44 +421,31 @@ export function readCrossbowLoadProgressRecord(reader: PacketReader): Partial<Re
    return record;
 }
 
-class InventoryUseComponent {
-   public readonly limbInfos = new Array<LimbInfo>();
-
-   public readonly limbAttachPoints = new Array<RenderAttachPoint>();
-   public readonly limbRenderParts = new Array<RenderPart>();
-   public readonly activeItemRenderParts: Record<number, TexturedRenderPart> = {};
-   public readonly inactiveCrossbowArrowRenderParts: Record<number, RenderPart> = {};
-   public readonly arrowRenderParts: Record<number, RenderPart> = {};
-
-   public customItemRenderPart: RenderPart | null = null;
-   public readonly bandageRenderParts = new Array<RenderPart>();
-
-   public hasLimbInfo(inventoryName: InventoryName): boolean {
-      for (let i = 0; i < this.limbInfos.length; i++) {
-         const useInfo = this.limbInfos[i];
-         if (useInfo.inventoryName === inventoryName) {
-            return true;
-         }
+export function inventoryUseComponentHasLimbInfo(inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName): boolean {
+   for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
+      const useInfo = inventoryUseComponent.limbInfos[i];
+      if (useInfo.inventoryName === inventoryName) {
+         return true;
       }
-
-      return false;
    }
 
-   public getLimbInfoByInventoryName(inventoryName: InventoryName): LimbInfo {
-      for (let i = 0; i < this.limbInfos.length; i++) {
-         const useInfo = this.limbInfos[i];
-         if (useInfo.inventoryName === inventoryName) {
-            return useInfo;
-         }
-      }
-
-      throw new Error("No inventory by name " + inventoryName + ".");
-   }
+   return false;
 }
 
-export default InventoryUseComponent;
+export function getLimbInfoByInventoryName(inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName): LimbInfo {
+   for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
+      const useInfo = inventoryUseComponent.limbInfos[i];
+      if (useInfo.inventoryName === inventoryName) {
+         return useInfo;
+      }
+   }
 
-export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent>(ServerComponentType.inventoryUse, true, {
+   throw new Error("No inventory by name " + inventoryName + ".");
+}
+
+export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent, InventoryUseComponentParams, never>(ServerComponentType.inventoryUse, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onLoad: onLoad,
    onTick: onTick,
    onUpdate: onUpdate,
@@ -449,6 +453,37 @@ export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseC
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
+
+function createParamsFromData(reader: PacketReader): InventoryUseComponentParams {
+   const limbInfos = new Array<LimbInfo>();
+
+   const numUseInfos = reader.readNumber();
+   for (let i = 0; i < numUseInfos; i++) {
+      const usedInventoryName = reader.readNumber() as InventoryName;
+
+      const limbInfo = createZeroedLimbInfo(usedInventoryName);
+      limbInfos.push(limbInfo);
+
+      updateLimbInfoFromData(limbInfo, i, reader);
+   }
+
+   return {
+      limbInfos: limbInfos
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.inventoryUse>): InventoryUseComponent {
+   return {
+      limbInfos: entityConfig.components[ServerComponentType.inventoryUse].limbInfos,
+      limbAttachPoints: [],
+      limbRenderParts: [],
+      activeItemRenderParts: [],
+      inactiveCrossbowArrowRenderParts: {},
+      arrowRenderParts: {},
+      customItemRenderPart: null,
+      bandageRenderParts: []
+   };
+}
 
 function onLoad(inventoryUseComponent: InventoryUseComponent, entity: EntityID): void {
    const renderInfo = getEntityRenderInfo(entity);
@@ -1128,7 +1163,86 @@ const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
    }
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: boolean): void {
+const updateLimbInfoFromData = (limbInfo: LimbInfo, limbIdx: number, reader: PacketReader): void => {
+   const selectedItemSlot = reader.readNumber();
+   const heldItemType = reader.readNumber();
+
+   const spearWindupCooldowns: Partial<Record<number, number>> = {};
+   const numSpearWindupCooldowns = reader.readNumber();
+   for (let j = 0; j < numSpearWindupCooldowns; j++) {
+      const itemSlot = reader.readNumber();
+      const cooldown = reader.readNumber();
+      spearWindupCooldowns[itemSlot] = cooldown;
+   }
+
+   // @Garbage
+   const crossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
+
+   const foodEatingTimer = reader.readNumber();
+   const action = reader.readNumber();
+   const lastAttackTicks = reader.readNumber();
+   const lastEatTicks = reader.readNumber();
+   const lastBowChargeTicks = reader.readNumber();
+   const lastSpearChargeTicks = reader.readNumber();
+   const lastBattleaxeChargeTicks = reader.readNumber();
+   const lastCrossbowLoadTicks = reader.readNumber();
+   const lastCraftTicks = reader.readNumber();
+   const thrownBattleaxeItemID = reader.readNumber();
+   const lastAttackCooldown = reader.readNumber();
+   const currentActionElapsedTicks = reader.readNumber();
+   const currentActionDurationTicks = reader.readNumber();
+   const currentActionPauseTicksRemaining = reader.readNumber();
+   const currentActionRate = reader.readNumber();
+   const lastBlockTick = reader.readNumber();
+   const blockPositionX = reader.readNumber();
+   const blockPositionY = reader.readNumber();
+   const blockType = reader.readNumber();
+
+   updateLimbStateFromPacket(reader, limbInfo.currentActionStartLimbState);
+   updateLimbStateFromPacket(reader, limbInfo.currentActionEndLimbState);
+
+   limbInfo.selectedItemSlot = selectedItemSlot;
+   limbInfo.heldItemType = heldItemType !== -1 ? heldItemType : null;
+   limbInfo.spearWindupCooldowns = spearWindupCooldowns;
+   limbInfo.crossbowLoadProgressRecord = crossbowLoadProgressRecord;
+   limbInfo.foodEatingTimer = foodEatingTimer;
+   limbInfo.action = action;
+   limbInfo.lastAttackTicks = lastAttackTicks;
+   limbInfo.lastEatTicks = lastEatTicks;
+   limbInfo.lastBowChargeTicks = lastBowChargeTicks;
+   limbInfo.lastSpearChargeTicks = lastSpearChargeTicks;
+   limbInfo.lastBattleaxeChargeTicks = lastBattleaxeChargeTicks;
+   limbInfo.lastCrossbowLoadTicks = lastCrossbowLoadTicks;
+   limbInfo.lastCraftTicks = lastCraftTicks;
+   limbInfo.thrownBattleaxeItemID = thrownBattleaxeItemID;
+   limbInfo.lastAttackCooldown = lastAttackCooldown;
+   limbInfo.currentActionElapsedTicks = currentActionElapsedTicks;
+   limbInfo.currentActionDurationTicks = currentActionDurationTicks;
+   limbInfo.currentActionPauseTicksRemaining = currentActionPauseTicksRemaining;
+   limbInfo.currentActionRate = currentActionRate;
+
+   // @Hack
+   // Initial animation start position
+   if (action === LimbAction.craft || action === LimbAction.researching) {
+      if (limbInfo.animationStartOffset.x === -1) {
+         const startOffset = generateRandomLimbPosition(limbIdx);
+         limbInfo.animationStartOffset.x = startOffset.x;
+         limbInfo.animationStartOffset.y = startOffset.y;
+
+         const endOffset = generateRandomLimbPosition(limbIdx);
+         limbInfo.animationEndOffset.x = endOffset.x;
+         limbInfo.animationEndOffset.y = endOffset.y;
+      }
+   } else {
+      limbInfo.animationStartOffset.x = -1;
+   }
+
+   if (lastBlockTick === Board.serverTicks) {
+      playBlockEffects(blockPositionX, blockPositionY, blockType);
+   }
+}
+
+function updateFromData(reader: PacketReader, entity: EntityID): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    
    const numUseInfos = reader.readNumber();
@@ -1151,88 +1265,10 @@ function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: b
             throw new Error();
          }
       }
+
+      updateLimbInfoFromData(limbInfo, i, reader);
       
-      const selectedItemSlot = reader.readNumber();
-      const heldItemType = reader.readNumber();
-
-      const spearWindupCooldowns: Partial<Record<number, number>> = {};
-      const numSpearWindupCooldowns = reader.readNumber();
-      for (let j = 0; j < numSpearWindupCooldowns; j++) {
-         const itemSlot = reader.readNumber();
-         const cooldown = reader.readNumber();
-         spearWindupCooldowns[itemSlot] = cooldown;
-      }
-
-      // @Garbage
-      const crossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
-
-      const foodEatingTimer = reader.readNumber();
-      const action = reader.readNumber();
-      const lastAttackTicks = reader.readNumber();
-      const lastEatTicks = reader.readNumber();
-      const lastBowChargeTicks = reader.readNumber();
-      const lastSpearChargeTicks = reader.readNumber();
-      const lastBattleaxeChargeTicks = reader.readNumber();
-      const lastCrossbowLoadTicks = reader.readNumber();
-      const lastCraftTicks = reader.readNumber();
-      const thrownBattleaxeItemID = reader.readNumber();
-      const lastAttackCooldown = reader.readNumber();
-      const currentActionElapsedTicks = reader.readNumber();
-      const currentActionDurationTicks = reader.readNumber();
-      const currentActionPauseTicksRemaining = reader.readNumber();
-      const currentActionRate = reader.readNumber();
-      const lastBlockTick = reader.readNumber();
-      const blockPositionX = reader.readNumber();
-      const blockPositionY = reader.readNumber();
-      const blockType = reader.readNumber();
-
-      updateLimbStateFromPacket(reader, limbInfo.currentActionStartLimbState);
-      updateLimbStateFromPacket(reader, limbInfo.currentActionEndLimbState);
-
-      limbInfo.selectedItemSlot = selectedItemSlot;
-      limbInfo.heldItemType = heldItemType !== -1 ? heldItemType : null;
-      limbInfo.spearWindupCooldowns = spearWindupCooldowns;
-      limbInfo.crossbowLoadProgressRecord = crossbowLoadProgressRecord;
-      limbInfo.foodEatingTimer = foodEatingTimer;
-      limbInfo.action = action;
-      limbInfo.lastAttackTicks = lastAttackTicks;
-      limbInfo.lastEatTicks = lastEatTicks;
-      limbInfo.lastBowChargeTicks = lastBowChargeTicks;
-      limbInfo.lastSpearChargeTicks = lastSpearChargeTicks;
-      limbInfo.lastBattleaxeChargeTicks = lastBattleaxeChargeTicks;
-      limbInfo.lastCrossbowLoadTicks = lastCrossbowLoadTicks;
-      limbInfo.lastCraftTicks = lastCraftTicks;
-      limbInfo.thrownBattleaxeItemID = thrownBattleaxeItemID;
-      limbInfo.lastAttackCooldown = lastAttackCooldown;
-      limbInfo.currentActionElapsedTicks = currentActionElapsedTicks;
-      limbInfo.currentActionDurationTicks = currentActionDurationTicks;
-      limbInfo.currentActionPauseTicksRemaining = currentActionPauseTicksRemaining;
-      limbInfo.currentActionRate = currentActionRate;
-
-      // @Hack
-      // Initial animation start position
-      if (action === LimbAction.craft || action === LimbAction.researching) {
-         if (limbInfo.animationStartOffset.x === -1) {
-            const startOffset = generateRandomLimbPosition(i);
-            limbInfo.animationStartOffset.x = startOffset.x;
-            limbInfo.animationStartOffset.y = startOffset.y;
-
-            const endOffset = generateRandomLimbPosition(i);
-            limbInfo.animationEndOffset.x = endOffset.x;
-            limbInfo.animationEndOffset.y = endOffset.y;
-         }
-      } else {
-         limbInfo.animationStartOffset.x = -1;
-      }
-
-      if (lastBlockTick === Board.serverTicks) {
-         playBlockEffects(blockPositionX, blockPositionY, blockType);
-      }
-      
-      // If this is initial data, then the attach points won't have been gotten yet
-      if (!isInitialData) {
-         updateLimb(inventoryUseComponent, entity, i, limbInfo);
-      }
+      updateLimb(inventoryUseComponent, entity, i, limbInfo);
    }
 }
 

@@ -25,7 +25,6 @@ import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { updateHealthBar } from "../components/game/HealthBar";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { createComponent } from "../entity-components/component-creation";
 import { addEntity, addLayer, changeEntityLayer, entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, registerBasicEntityInfo, registerEntityRenderInfo, removeEntity, setCurrentLayer } from "../world";
 import { NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
@@ -35,7 +34,7 @@ import { playSound } from "../sound";
 import { initialiseRenderables } from "../rendering/render-loop";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { registerDirtyEntity } from "../rendering/render-part-matrices";
-import ServerComponentArray from "../entity-components/ServerComponentArray";
+import ServerComponentArray, { EntityComponents, EntityConfig } from "../entity-components/ServerComponentArray";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -334,7 +333,6 @@ export function processEntityCreationData(entityID: EntityID, reader: PacketRead
    // @Cleanup: might be able to be cleaned up by making a separate processPlayerCreationData
    
    const entityType = reader.readNumber() as EntityType;
-   console.log(EntityTypeString[entityType]);
    const spawnTicks = reader.readNumber();
    const layerIdx = reader.readNumber();
 
@@ -354,24 +352,61 @@ export function processEntityCreationData(entityID: EntityID, reader: PacketRead
    
    const layer = layers[layerIdx];
    registerBasicEntityInfo(entity, entityType, spawnTicks, layer, renderInfo);
-   
+
+   const components: EntityComponents = {};
+   const entityServerComponentTypes = new Array<ServerComponentType>();
+
+   // Create component params
    const numComponents = reader.readNumber();
    for (let i = 0; i < numComponents; i++) {
       const componentType = reader.readNumber() as ServerComponentType;
-      
-      const component = createComponent(entityID, componentType, reader);
+      entityServerComponentTypes.push(componentType);
+
       const componentArray = getServerComponentArray(componentType);
+
+      const params = componentArray.createParamsFromData(reader);
+      // @Cleanup: cast
+      components[componentType] = params as any;
+   }
+
+   // Create entity config
+   const entityConfig: EntityConfig = {
+      entity: entityID,
+      entityType: entityType,
+      layer: layer,
+      renderInfo: renderInfo,
+      // @Cleanup: cast
+      components: components as any
+   };
+
+   const renderPartsRecord: Partial<Record<ServerComponentType, object>> = {};
+
+   // Create render parts
+   for (const componentType of entityServerComponentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+      if (typeof componentArray.createRenderParts !== "undefined") {
+         const renderParts = componentArray.createRenderParts(renderInfo, entityConfig);
+         renderPartsRecord[componentType] = renderParts;
+      }
+   }
+
+   // Create components
+   for (const componentType of entityServerComponentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+
+      const renderParts = renderPartsRecord[componentType]!;
+      const component = componentArray.createComponent(entityConfig, renderParts);
       
       componentArray.addComponent(entityID, component);
 
-      // @Speed
-      if (isPlayer) {
-         if (typeof componentArray.updatePlayerFromData !== "undefined") {
-            componentArray.updatePlayerFromData(reader, true);
-         } else {
-            componentArray.padData(reader);
-         }
-      }
+      // @Cleanup: unneeded
+      // if (isPlayer) {
+      //    if (typeof componentArray.updatePlayerFromData !== "undefined") {
+      //       componentArray.updatePlayerFromData(reader, true);
+      //    } else {
+      //       componentArray.padData(reader);
+      //    }
+      // }
    }
 
    // Set the player instance
@@ -413,7 +448,7 @@ const processEntityUpdateData = (entity: EntityID, reader: PacketReader): void =
       const componentType = reader.readNumber() as ServerComponentType;
       const componentArray = getServerComponentArray(componentType);
       
-      componentArray.updateFromData(reader, entity, false);
+      componentArray.updateFromData(reader, entity);
    }
 
    // @Speed: Does this mean we can just collect all updated entities each tick and not have to do the dirty array bullshit?

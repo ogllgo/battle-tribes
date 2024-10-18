@@ -79,7 +79,7 @@ const getStyleLoaders = (cssOptions, preProcessor) => {
    return loaders;
 };
 
-module.exports = {
+module.exports = (env, argv) => ({
    mode: process.env.NODE_ENV ?? "development",
    entry: "./src/index",
    optimization: {
@@ -196,4 +196,6 @@ module.exports = {
      compress: true,
      port: 3000,
    },
-};
+   // Enable source maps only in development
+   devtool: argv.mode !== 'production' ? 'source-map' : false,
+});

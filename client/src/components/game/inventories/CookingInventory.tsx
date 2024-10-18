@@ -5,16 +5,16 @@ import { getSelectedEntity } from "../../../entity-selection";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { getEntityType } from "../../../world";
 import { CookingComponentArray } from "../../../entity-components/server-components/CookingComponent";
-import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 
 const CookingInventory = () => {
    const cookingEntity = getSelectedEntity();
    const cookingComponent = CookingComponentArray.getComponent(cookingEntity);
    const inventoryComponent = InventoryComponentArray.getComponent(cookingEntity);
 
-   const fuelInventory = inventoryComponent.getInventory(InventoryName.fuelInventory)!;
-   const ingredientInventory = inventoryComponent.getInventory(InventoryName.ingredientInventory)!;
-   const outputInventory = inventoryComponent.getInventory(InventoryName.outputInventory)!;
+   const fuelInventory = getInventory(inventoryComponent, InventoryName.fuelInventory)!;
+   const ingredientInventory = getInventory(inventoryComponent, InventoryName.ingredientInventory)!;
+   const outputInventory = getInventory(inventoryComponent, InventoryName.outputInventory)!;
 
    const heatingBarProgress = cookingComponent.heatingProgress !== -1 ? cookingComponent.heatingProgress : 0;
 

@@ -8,7 +8,38 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { EntityID } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
 
+export interface FenceComponentParams {}
+
+export interface FenceComponent {
+   readonly railRenderParts: [RenderPart | null, RenderPart | null, RenderPart | null, RenderPart | null];
+   
+   connectedSidesBitset: number;
+}
+
 type RailBit = 0b0001 | 0b0010 | 0b0100 | 0b1000;
+
+export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, never>(ServerComponentType.fence, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
+   onLoad: onLoad,
+   padData: padData,
+   updateFromData: updateFromData
+});
+
+function createParamsFromData(): FenceComponentParams {
+   return {};
+}
+
+function createComponent(): FenceComponent {
+   return {
+      railRenderParts: [null, null, null, null],
+      connectedSidesBitset: 0
+   };
+}
+
+function onLoad(fenceComponent: FenceComponent, entity: EntityID): void {
+   updateRails(fenceComponent, entity);
+}
 
 const getRailIdx = (railBit: RailBit): number => {
    switch (railBit) {
@@ -18,23 +49,6 @@ const getRailIdx = (railBit: RailBit): number => {
       case 0b1000: return 3;
    }
 }
-
-class FenceComponent {
-   public readonly railRenderParts: [RenderPart | null, RenderPart | null, RenderPart | null, RenderPart | null] = [null, null, null, null]
-   
-   public connectedSidesBitset = 0;
-   
-   constructor(entity: EntityID) {
-      updateRails(this, entity);
-   }
-}
-
-export default FenceComponent;
-
-export const FenceComponentArray = new ServerComponentArray<FenceComponent>(ServerComponentType.fence, true, {
-   padData: padData,
-   updateFromData: updateFromData
-});
 
 const addRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: RailBit): void => {
    let textureSource: string;

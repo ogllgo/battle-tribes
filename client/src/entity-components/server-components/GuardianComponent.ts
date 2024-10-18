@@ -4,298 +4,348 @@ import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
 import { Light, addLight, attachLightToRenderPart } from "../../lights";
-import RenderPart from "../../render-parts/RenderPart";
+import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
+
+export interface GuardianComponentParams {
+   readonly rubyGemActivation: number;
+   readonly emeraldGemActivation: number;
+
+   readonly amethystGemActivation: number;
+   readonly limbRubyGemActivation: number;
+   readonly limbEmeraldGemActivation: number;
+   readonly limbAmethystGemActivation: number;
+
+   readonly attackType: number;
+   readonly attackStage: number;
+   readonly stageProgress: number;
+}
+
+export interface GuardianComponent {
+   readonly rubyRenderParts: Array<RenderPart>;
+   readonly amethystRenderParts: Array<RenderPart>;
+   readonly emeraldRenderParts: Array<RenderPart>;
+
+   readonly rubyLights: Array<[number, Light]>;
+   readonly emeraldLights: Array<[number, Light]>;
+   readonly amethystLights: Array<[number, Light]>;
+
+   rubyGemActivation: number;
+   emeraldGemActivation: number;
+   amethystGemActivation: number;
+
+   readonly limbRenderParts: Array<RenderPart>;
+   readonly limbCrackRenderParts: Array<RenderPart>;
+   readonly limbCrackLights: Array<Light>;
+
+   limbRubyGemActivation: number;
+   limbEmeraldGemActivation: number;
+   limbAmethystGemActivation: number;
+
+   attackType: GuardianAttackType;
+   attackStage: number;
+}
 
 const enum Vars {
    SPIKY_BALL_SUMMON_SHAKE_AMOUNT = 2
 }
 
-export default class GuardianComponent {
-   public rubyRenderParts = new Array<RenderPart>();
-   public amethystRenderParts = new Array<RenderPart>();
-   public emeraldRenderParts = new Array<RenderPart>();
+export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentParams, never>(ServerComponentType.guardian, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
+   padData: padData,
+   updateFromData: updateFromData
+});
 
-   public rubyLights = new Array<[number, Light]>();
-   public emeraldLights = new Array<[number, Light]>();
-   public amethystLights = new Array<[number, Light]>();
+function createParamsFromData(reader: PacketReader): GuardianComponentParams {
+   const rubyGemActivation = reader.readNumber();
+   const emeraldGemActivation = reader.readNumber();
+   const amethystGemActivation = reader.readNumber();
 
-   public rubyGemActivation = 0;
-   public emeraldGemActivation = 0;
-   public amethystGemActivation = 0;
+   const limbRubyGemActivation = reader.readNumber();
+   const limbEmeraldGemActivation = reader.readNumber();
+   const limbAmethystGemActivation = reader.readNumber();
 
-   public limbRenderParts = new Array<RenderPart>();
-   public limbCrackRenderParts = new Array<RenderPart>();
-   public limbCrackLights = new Array<Light>();
+   const attackType = reader.readNumber();
+   const attackStage = reader.readNumber();
+   const stageProgress = reader.readNumber();
 
-   public limbRubyGemActivation = 0;
-   public limbEmeraldGemActivation = 0;
-   public limbAmethystGemActivation = 0;
+   return {
+      rubyGemActivation: rubyGemActivation,
+      emeraldGemActivation: emeraldGemActivation,
+      amethystGemActivation: amethystGemActivation,
+      limbRubyGemActivation: limbRubyGemActivation,
+      limbEmeraldGemActivation: limbEmeraldGemActivation,
+      limbAmethystGemActivation: limbAmethystGemActivation,
+      attackType: attackType,
+      attackStage: attackStage,
+      stageProgress: stageProgress
+   };
+}
 
-   public attackType = GuardianAttackType.none;
-   public attackStage = 0;
+function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform>): GuardianComponent {
+   const renderInfo = getEntityRenderInfo(entityConfig.entity);
 
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
+   const rubyRenderParts = new Array<RenderPart>();
+   const amethystRenderParts = new Array<RenderPart>();
+   const emeraldRenderParts = new Array<RenderPart>();
 
-      // Head
-      
-      const headRenderPart = new TexturedRenderPart(
-         null,
-         2,
-         0,
-         getTextureArrayIndex("entities/guardian/guardian-head.png")
-      );
-      headRenderPart.offset.y = 28;
-      renderInfo.attachRenderThing(headRenderPart);
-      
-      const headRubies = new TexturedRenderPart(
-         headRenderPart,
-         2.1,
-         0,
-         getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
-      );
-      renderInfo.attachRenderThing(headRubies);
-      this.rubyRenderParts.push(headRubies);
+   const rubyLights = new Array<[number, Light]>();
+   const emeraldLights = new Array<[number, Light]>();
+   const amethystLights = new Array<[number, Light]>();
 
-      // Body
+   // Head
+   
+   const headRenderPart = new TexturedRenderPart(
+      null,
+      2,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-head.png")
+   );
+   headRenderPart.offset.y = 28;
+   renderInfo.attachRenderThing(headRenderPart);
+   
+   const headRubies = new TexturedRenderPart(
+      headRenderPart,
+      2.1,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
+   );
+   renderInfo.attachRenderThing(headRubies);
+   rubyRenderParts.push(headRubies);
 
-      const bodyRenderPart = new TexturedRenderPart(
-         null,
-         1,
-         0,
-         getTextureArrayIndex("entities/guardian/guardian-body.png")
-      );
-      renderInfo.attachRenderThing(bodyRenderPart);
+   // Body
 
-      const bodyAmethystsRenderPart = new TexturedRenderPart(
-         bodyRenderPart,
-         1.1,
-         0,
-         getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
-      );
-      renderInfo.attachRenderThing(bodyAmethystsRenderPart);
-      this.amethystRenderParts.push(bodyAmethystsRenderPart);
+   const bodyRenderPart = new TexturedRenderPart(
+      null,
+      1,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-body.png")
+   );
+   renderInfo.attachRenderThing(bodyRenderPart);
 
-      const bodyEmeraldsRenderPart = new TexturedRenderPart(
-         bodyRenderPart,
-         1.1,
-         0,
-         getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
-      );
-      renderInfo.attachRenderThing(bodyEmeraldsRenderPart);
-      this.emeraldRenderParts.push(bodyEmeraldsRenderPart);
+   const bodyAmethystsRenderPart = new TexturedRenderPart(
+      bodyRenderPart,
+      1.1,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
+   );
+   renderInfo.attachRenderThing(bodyAmethystsRenderPart);
+   amethystRenderParts.push(bodyAmethystsRenderPart);
 
-      // Red lights
+   const bodyEmeraldsRenderPart = new TexturedRenderPart(
+      bodyRenderPart,
+      1.1,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
+   );
+   renderInfo.attachRenderThing(bodyEmeraldsRenderPart);
+   emeraldRenderParts.push(bodyEmeraldsRenderPart);
 
-      let light: Light = {
-         offset: new Point(0, 4.5 * 4),
-         intensity: 0.5,
-         strength: 0.3,
-         radius: 6,
+   // Red lights
+
+   let light: Light = {
+      offset: new Point(0, 4.5 * 4),
+      intensity: 0.5,
+      strength: 0.3,
+      radius: 6,
+      r: 1,
+      g: 0,
+      b: 0.1
+   };
+   let lightID = addLight(light);
+   attachLightToRenderPart(lightID, headRenderPart.id);
+   rubyLights.push([light.intensity, light]);
+
+   for (let i = 0; i < 2; i++) {
+      const light: Light = {
+         offset: new Point(4.25 * 4 * (i === 0 ? 1 : -1), 3.25 * 4),
+         intensity: 0.4,
+         strength: 0.2,
+         radius: 4,
          r: 1,
          g: 0,
          b: 0.1
       };
-      let lightID = addLight(light);
+      const lightID = addLight(light);
       attachLightToRenderPart(lightID, headRenderPart.id);
-      this.rubyLights.push([light.intensity, light]);
-
-      for (let i = 0; i < 2; i++) {
-         const light: Light = {
-            offset: new Point(4.25 * 4 * (i === 0 ? 1 : -1), 3.25 * 4),
-            intensity: 0.4,
-            strength: 0.2,
-            radius: 4,
-            r: 1,
-            g: 0,
-            b: 0.1
-         };
-         const lightID = addLight(light);
-         attachLightToRenderPart(lightID, headRenderPart.id);
-         this.rubyLights.push([light.intensity, light]);
-      }
-
-      // Green lights
-
-      light = {
-         offset: new Point(0, -3 * 4),
-         intensity: 0.5,
-         strength: 0.3,
-         radius: 6,
-         r: 0,
-         g: 1,
-         b: 0
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.emeraldLights.push([light.intensity, light]);
-
-      // Amethyst lights
-      // @Hack @Robustness: Make pixels able to glow!
-
-      // @Temporary
-      // light = {
-      //    offset: new Point(0, 4 * 4),
-      //    intensity: 0.35,
-      //    strength: 0.2,
-      //    radius: 4,
-      //    r: 0.6,
-      //    g: 0,
-      //    b: 1
-      // };
-      // lightID = addLight(light);
-      // attachLightToRenderPart(lightID, bodyRenderPart.id);
-
-      light = {
-         offset: new Point(5 * 4, 6.5 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(6.5 * 4, 3 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(10 * 4, 0),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(7 * 4, -5 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(3.5 * 4, -8 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(-2 * 4, -9 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(-5 * 4, -5 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(-8 * 4, -3 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(-7 * 4, 2.5 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
-
-      light = {
-         offset: new Point(-8 * 4, 6 * 4),
-         intensity: 0.35,
-         strength: 0.2,
-         radius: 4,
-         r: 0.6,
-         g: 0,
-         b: 1
-      };
-      lightID = addLight(light);
-      attachLightToRenderPart(lightID, bodyRenderPart.id);
-      this.amethystLights.push([light.intensity, light]);
+      rubyLights.push([light.intensity, light]);
    }
-}
 
-export const GuardianComponentArray = new ServerComponentArray<GuardianComponent>(ServerComponentType.guardian, true, {
-   onLoad: onLoad,
-   padData: padData,
-   updateFromData: updateFromData
-});
+   // Green lights
+
+   light = {
+      offset: new Point(0, -3 * 4),
+      intensity: 0.5,
+      strength: 0.3,
+      radius: 6,
+      r: 0,
+      g: 1,
+      b: 0
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   emeraldLights.push([light.intensity, light]);
+
+   // Amethyst lights
+   // @Hack @Robustness: Make pixels able to glow!
+
+   // @Temporary
+   // light = {
+   //    offset: new Point(0, 4 * 4),
+   //    intensity: 0.35,
+   //    strength: 0.2,
+   //    radius: 4,
+   //    r: 0.6,
+   //    g: 0,
+   //    b: 1
+   // };
+   // lightID = addLight(light);
+   // attachLightToRenderPart(lightID, bodyRenderPart.id);
+
+   light = {
+      offset: new Point(5 * 4, 6.5 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(6.5 * 4, 3 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(10 * 4, 0),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(7 * 4, -5 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(3.5 * 4, -8 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(-2 * 4, -9 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(-5 * 4, -5 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(-8 * 4, -3 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(-7 * 4, 2.5 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   light = {
+      offset: new Point(-8 * 4, 6 * 4),
+      intensity: 0.35,
+      strength: 0.2,
+      radius: 4,
+      r: 0.6,
+      g: 0,
+      b: 1
+   };
+   lightID = addLight(light);
+   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   amethystLights.push([light.intensity, light]);
+
+   const limbRenderParts = new Array<RenderPart>();
+   const limbCrackRenderParts = new Array<RenderPart>();
+   const limbCrackLights = new Array<Light>();
    
-function onLoad(guardianComponent: GuardianComponent, entity: EntityID): void {
    // Attach limb render parts
-   const renderInfo = getEntityRenderInfo(entity);
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
+   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
          const limbRenderPart = new TexturedRenderPart(
             hitbox,
@@ -304,7 +354,7 @@ function onLoad(guardianComponent: GuardianComponent, entity: EntityID): void {
             getTextureArrayIndex("entities/guardian/guardian-limb.png")
          );
          renderInfo.attachRenderThing(limbRenderPart);
-         guardianComponent.limbRenderParts.push(limbRenderPart);
+         limbRenderParts.push(limbRenderPart);
 
          const cracksRenderPart = new TexturedRenderPart(
             limbRenderPart,
@@ -313,7 +363,7 @@ function onLoad(guardianComponent: GuardianComponent, entity: EntityID): void {
             getTextureArrayIndex("entities/guardian/guardian-limb-gem-cracks.png")
          );
          renderInfo.attachRenderThing(cracksRenderPart);
-         guardianComponent.limbCrackRenderParts.push(cracksRenderPart);
+         limbCrackRenderParts.push(cracksRenderPart);
 
          const light: Light = {
             offset: new Point(0, 0),
@@ -326,9 +376,31 @@ function onLoad(guardianComponent: GuardianComponent, entity: EntityID): void {
          };
          const lightID = addLight(light);
          attachLightToRenderPart(lightID, cracksRenderPart.id);
-         guardianComponent.limbCrackLights.push(light);
+         limbCrackLights.push(light);
       }
    }
+
+   const guardianComponentParams = entityConfig.components[ServerComponentType.guardian];
+
+   return {
+      rubyRenderParts: rubyRenderParts,
+      amethystRenderParts: amethystRenderParts,
+      emeraldRenderParts: emeraldRenderParts,
+      rubyLights: rubyLights,
+      emeraldLights: emeraldLights,
+      amethystLights: amethystLights,
+      rubyGemActivation: guardianComponentParams.rubyGemActivation,
+      emeraldGemActivation: guardianComponentParams.emeraldGemActivation,
+      amethystGemActivation: guardianComponentParams.amethystGemActivation,
+      limbRenderParts: limbRenderParts,
+      limbCrackRenderParts: limbCrackRenderParts,
+      limbCrackLights: limbCrackLights,
+      limbRubyGemActivation: guardianComponentParams.limbRubyGemActivation,
+      limbEmeraldGemActivation: guardianComponentParams.limbEmeraldGemActivation,
+      limbAmethystGemActivation: guardianComponentParams.limbAmethystGemActivation,
+      attackType: guardianComponentParams.attackType,
+      attackStage: guardianComponentParams.attackStage
+   };
 }
    
 function padData(reader: PacketReader): void {

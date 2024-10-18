@@ -9,7 +9,7 @@ import { EntityID } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { InventoryName } from "battletribes-shared/items/items";
 import Player from "../../entities/Player";
-import { InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
+import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
 import { discombobulate, GameInteractableLayer_setItemRestTime } from "../../components/game/GameInteractableLayer";
 import { AttackVars } from "battletribes-shared/attack-patterns";
 import { getEntityLayer } from "../../world";
@@ -20,7 +20,26 @@ import { TransformComponentArray } from "./TransformComponent";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import Board from "../../Board";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+
+export interface DamageBoxComponentParams {
+   readonly damageBoxes: Array<ClientDamageBox>;
+   readonly blockBoxes: Array<ClientBlockBox>;
+   readonly damageBoxesRecord: Partial<Record<number, ClientDamageBox>>;
+   readonly blockBoxesRecord: Partial<Record<number, ClientBlockBox>>;
+   readonly damageBoxLocalIDs: Array<number>;
+   readonly blockBoxLocalIDs: Array<number>;
+}
+
+export interface DamageBoxComponent {
+   damageBoxes: Array<ClientDamageBox>;
+   blockBoxes: Array<ClientBlockBox>;
+   readonly damageBoxesRecord: Partial<Record<number, ClientDamageBox>>;
+   readonly blockBoxesRecord: Partial<Record<number, ClientBlockBox>>;
+
+   readonly damageBoxLocalIDs: Array<number>;
+   readonly blockBoxLocalIDs: Array<number>;
+}
 
 interface DamageBoxCollisionInfo {
    readonly collidingEntity: EntityID;
@@ -70,31 +89,186 @@ const getCollidingBox = (entity: EntityID, box: Box): DamageBoxCollisionInfo | n
    return null;
 }
 
-class DamageBoxComponent {
-   public damageBoxes = new Array<ClientDamageBox>();
-   public blockBoxes = new Array<ClientBlockBox>();
-   public readonly damageBoxesRecord: Partial<Record<number, ClientDamageBox>> = {};
-   public readonly blockBoxesRecord: Partial<Record<number, ClientBlockBox>> = {};
-
-   public damageBoxLocalIDs = new Array<number>();
-   public blockBoxLocalIDs = new Array<number>();
-
-   public nextDamageBoxLocalID = 1;
-   public nextBlockBoxLocalID = 1;
-}
-
-export default DamageBoxComponent;
-
-export const DamageBoxComponentArray = new ServerComponentArray<DamageBoxComponent>(ServerComponentType.damageBox, true, {
+export const DamageBoxComponentArray = new ServerComponentArray<DamageBoxComponent, DamageBoxComponentParams, never>(ServerComponentType.damageBox, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
 
+function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
+   const damageBoxes = Array<ClientDamageBox>();
+   const blockBoxes = Array<ClientBlockBox>();
+   const damageBoxesRecord: Partial<Record<number, ClientDamageBox>> = {};
+   const blockBoxesRecord: Partial<Record<number, ClientBlockBox>> = {};
+   const damageBoxLocalIDs = Array<number>();
+   const blockBoxLocalIDs = Array<number>();
+   
+   const numCircularDamageBoxes = reader.readNumber();
+   for (let i = 0; i < numCircularDamageBoxes; i++) {
+      const positionX = reader.readNumber();
+      const positionY = reader.readNumber();
+      const offsetX = reader.readNumber();
+      const offsetY = reader.readNumber();
+      const scale = reader.readNumber();
+      const rotation = reader.readNumber();
+      const localID = reader.readNumber();
+      const radius = reader.readNumber();
+      const associatedLimbInventoryName = reader.readNumber() as InventoryName;
+      const isActive = reader.readBoolean();
+      reader.padOffset(3);
+      const isBlockedByWall = reader.readBoolean();
+      reader.padOffset(3);
+      const blockingSubtileIndex = reader.readNumber();
+
+      const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+      // @Cleanup: why is this cast needed?
+      const damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive) as ClientDamageBox<BoxType.circular>;
+
+      damageBoxes.push(damageBox);
+      damageBoxLocalIDs.push(localID);
+      damageBoxesRecord[localID] = damageBox;
+      
+      damageBox.box.position.x = positionX;
+      damageBox.box.position.y = positionY;
+      damageBox.box.offset.x = offsetX;
+      damageBox.box.offset.y = offsetY;
+      damageBox.box.scale = scale;
+      damageBox.box.rotation = rotation;
+      damageBox.box.radius = radius;
+   }
+
+   const numRectangularDamageBoxes = reader.readNumber();
+   for (let i = 0; i < numRectangularDamageBoxes; i++) {
+      const positionX = reader.readNumber();
+      const positionY = reader.readNumber();
+      const offsetX = reader.readNumber();
+      const offsetY = reader.readNumber();
+      const scale = reader.readNumber();
+      const rotation = reader.readNumber();
+      const localID = reader.readNumber();
+      const width = reader.readNumber();
+      const height = reader.readNumber();
+      const relativeRotation = reader.readNumber();
+      const associatedLimbInventoryName = reader.readNumber() as InventoryName;
+      const isActive = reader.readBoolean();
+      reader.padOffset(3);
+      const isBlockedByWall = reader.readBoolean();
+      reader.padOffset(3);
+      const blockingSubtileIndex = reader.readNumber();
+
+      const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+      const damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive) as ClientDamageBox<BoxType.rectangular>;
+
+      damageBoxes.push(damageBox);
+      damageBoxLocalIDs.push(localID);
+      damageBoxesRecord[localID] = damageBox;
+
+      damageBox.box.position.x = positionX;
+      damageBox.box.position.y = positionY;
+      damageBox.box.offset.x = offsetX;
+      damageBox.box.offset.y = offsetY;
+      damageBox.box.scale = scale;
+      damageBox.box.rotation = rotation;
+      damageBox.box.width = width;
+      damageBox.box.height = height;
+      damageBox.box.relativeRotation = relativeRotation;
+      updateVertexPositionsAndSideAxes(damageBox.box);
+   }
+   
+   const numCircularBlockBoxes = reader.readNumber();
+   for (let i = 0; i < numCircularBlockBoxes; i++) {
+      const positionX = reader.readNumber();
+      const positionY = reader.readNumber();
+      const offsetX = reader.readNumber();
+      const offsetY = reader.readNumber();
+      const scale = reader.readNumber();
+      const rotation = reader.readNumber();
+      const localID = reader.readNumber();
+      const radius = reader.readNumber();
+      const associatedLimbInventoryName = reader.readNumber() as InventoryName;
+      const isActive = reader.readBoolean();
+      reader.padOffset(3);
+
+      const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+      const blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive) as ClientBlockBox<BoxType.circular>;
+
+      blockBoxes.push(blockBox);
+      blockBoxLocalIDs.push(localID);
+      blockBoxesRecord[localID] = blockBox;
+      
+      blockBox.box.position.x = positionX;
+      blockBox.box.position.y = positionY;
+      blockBox.box.offset.x = offsetX;
+      blockBox.box.offset.y = offsetY;
+      blockBox.box.scale = scale;
+      blockBox.box.rotation = rotation;
+      blockBox.box.radius = radius;
+   }
+
+   const numRectangularBlockBoxes = reader.readNumber();
+   for (let i = 0; i < numRectangularBlockBoxes; i++) {
+      const positionX = reader.readNumber();
+      const positionY = reader.readNumber();
+      const offsetX = reader.readNumber();
+      const offsetY = reader.readNumber();
+      const scale = reader.readNumber();
+      const rotation = reader.readNumber();
+      const localID = reader.readNumber();
+      const width = reader.readNumber();
+      const height = reader.readNumber();
+      const relativeRotation = reader.readNumber();
+      const associatedLimbInventoryName = reader.readNumber() as InventoryName;
+      const isActive = reader.readBoolean();
+      reader.padOffset(3);
+
+      const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+      const blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive) as ClientBlockBox<BoxType.rectangular>;
+
+      blockBoxes.push(blockBox);
+      blockBoxLocalIDs.push(localID);
+      blockBoxesRecord[localID] = blockBox;
+
+      blockBox.box.position.x = positionX;
+      blockBox.box.position.y = positionY;
+      blockBox.box.offset.x = offsetX;
+      blockBox.box.offset.y = offsetY;
+      blockBox.box.scale = scale;
+      blockBox.box.rotation = rotation;
+      blockBox.box.width = width;
+      blockBox.box.height = height;
+      blockBox.box.relativeRotation = relativeRotation;
+      updateVertexPositionsAndSideAxes(blockBox.box);
+   }
+
+   return {
+      damageBoxes: damageBoxes,
+      blockBoxes: blockBoxes,
+      damageBoxesRecord: damageBoxesRecord,
+      blockBoxesRecord: blockBoxesRecord,
+      damageBoxLocalIDs: damageBoxLocalIDs,
+      blockBoxLocalIDs: blockBoxLocalIDs
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.damageBox>): DamageBoxComponent {
+   const damageBoxComponentParams = entityConfig.components[ServerComponentType.damageBox];
+   
+   return {
+      damageBoxes: damageBoxComponentParams.damageBoxes,
+      blockBoxes: damageBoxComponentParams.blockBoxes,
+      damageBoxesRecord: damageBoxComponentParams.damageBoxesRecord,
+      blockBoxesRecord: damageBoxComponentParams.blockBoxesRecord,
+      damageBoxLocalIDs: damageBoxComponentParams.damageBoxLocalIDs,
+      blockBoxLocalIDs: damageBoxComponentParams.blockBoxLocalIDs,
+   };
+}
+
 const blockPlayerAttack = (damageBox: ClientDamageBox): void => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-   const limb = inventoryUseComponent.getLimbInfoByInventoryName(damageBox.associatedLimbInventoryName);
+   const limb = getLimbInfoByInventoryName(inventoryUseComponent, damageBox.associatedLimbInventoryName);
    
    // Pause the attack for a brief period
    limb.currentActionPauseTicksRemaining = Math.floor(Settings.TPS / 15);
@@ -202,7 +376,7 @@ function onTick(damageBoxComponent: DamageBoxComponent, entity: EntityID): void 
          if (blockBox.collidingBox !== collisionInfo.collidingBox) {
             blockBox.hasBlocked = true;
 
-            const limb = inventoryUseComponent.getLimbInfoByInventoryName(blockBox.associatedLimbInventoryName);
+            const limb = getLimbInfoByInventoryName(inventoryUseComponent, blockBox.associatedLimbInventoryName);
             onPlayerBlock(limb);
          }
          blockBox.collidingBox = collisionInfo.collidingBox;

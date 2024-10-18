@@ -12,7 +12,7 @@ import Player from "../../entities/Player";
 import Game from "../../Game";
 import { InventoryName, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../menus";
-import { InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { getPlayerSelectedItem } from "./GameInteractableLayer";
 import { entityExists, getEntityType } from "../../world";
 import { StructureComponentArray } from "../../entity-components/server-components/StructureComponent";
@@ -520,8 +520,8 @@ const BuildMenu = () => {
       // @Speed
       const selectOption = (option: MenuOption): void => {
          const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-         const hotbar = inventoryComponent.getInventory(InventoryName.hotbar)!;
-         const backpack = inventoryComponent.getInventory(InventoryName.backpack);
+         const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
+         const backpack = getInventory(inventoryComponent, InventoryName.backpack);
          
          for (let i = 0; i < option.costs.length; i++) {
             const cost = option.costs[i];

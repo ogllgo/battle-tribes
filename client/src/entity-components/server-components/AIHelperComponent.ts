@@ -2,14 +2,26 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class AIHelperComponent {}
+export interface AIHelperComponentParams {}
 
-export default AIHelperComponent;
+export interface AIHelperComponent {}
 
-export const AIHelperComponentArray = new ServerComponentArray<AIHelperComponent>(ServerComponentType.aiHelper, true, {
+export const AIHelperComponentArray = new ServerComponentArray<AIHelperComponent, AIHelperComponentParams, never>(ServerComponentType.aiHelper, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): AIHelperComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   
+   return {};
+}
+
+function createComponent(): AIHelperComponent {
+   return {};
+}
 
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);

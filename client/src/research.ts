@@ -13,7 +13,7 @@ import { createMagicParticle, createStarParticle } from "./particles";
 import { getRandomPointInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { entityExists, getEntityType } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { TribeMemberComponentArray } from "./entity-components/server-components/TribeMemberComponent";
+import { TribeMemberComponentArray, tribeMemberHasTitle } from "./entity-components/server-components/TribeMemberComponent";
 
 export interface ResearchOrb {
    /* X position of the node in the world */
@@ -120,7 +120,7 @@ const getResearchSpeedMultiplier = (): number => {
    let multiplier = 1;
 
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
-   if (tribeMemberComponent.hasTitle(TribesmanTitle.shrewd)) {
+   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.shrewd)) {
       multiplier *= 1.5;
    }
 

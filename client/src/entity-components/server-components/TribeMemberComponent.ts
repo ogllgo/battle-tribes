@@ -16,8 +16,36 @@ import { getEntityRenderInfo, getEntityType } from "../../world";
 import { InventoryUseComponentArray } from "../server-components/InventoryUseComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import Player from "../../entities/Player";
+import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
+import { TribeType } from "../../../../shared/src/tribes";
+import { EntityRenderInfo } from "../../Entity";
+
+export interface TribeMemberComponentParams {
+   readonly warpaintType: number | null;
+   readonly titles: ReadonlyArray<TitleGenerationInfo>;
+}
+
+interface RenderParts {
+   readonly bodyRenderPart: RenderPart;
+   readonly limbRenderParts: ReadonlyArray<RenderPart>;
+}
+
+export interface TribeMemberComponent {
+   readonly bodyRenderPart: RenderPart;
+   readonly handRenderParts: ReadonlyArray<RenderPart>;
+   
+   warpaintType: number | null;
+   
+   // @Polymorphism: Make readonly
+   titles: ReadonlyArray<TitleGenerationInfo>;
+
+   readonly deathbringerEyeLights: Array<Light>;
+}
+
+const GOBLIN_EAR_OFFSET = 4;
+const GOBLIN_EAR_ANGLE = Math.PI / 3;
 
 export function getTribesmanRadius(tribesman: EntityID): number {
    const entityType = getEntityType(tribesman);
@@ -84,46 +112,230 @@ const readWarpaint = (reader: PacketReader): number | null => {
    return warpaintType;
 }
 
-class TribeMemberComponent {
-   public bodyRenderPart!: RenderPart;
-   public handRenderParts!: ReadonlyArray<RenderPart>;
-   
-   public warPaintType: number | null = null;
-   
-   public titles: ReadonlyArray<TitleGenerationInfo> = [];
-
-   public deathbringerEyeLights = new Array<Light>();
-
-   public getTitles(): Array<TribesmanTitle> {
-      const titles = new Array<TribesmanTitle>();
-      for (let i = 0; i < this.titles.length; i++) {
-         const titleGenerationInfo = this.titles[i];
-         titles.push(titleGenerationInfo.title);
+export function tribeMemberHasTitle(tribeMemberComponent: TribeMemberComponent, title: TribesmanTitle): boolean {
+   for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
+      const generationInfo = tribeMemberComponent.titles[i];
+      if (generationInfo.title === title) {
+         return true;
       }
-      return titles;
    }
 
-   public hasTitle(title: TribesmanTitle): boolean {
-      for (let i = 0; i < this.titles.length; i++) {
-         const generationInfo = this.titles[i];
-         if (generationInfo.title === title) {
-            return true;
-         }
-      }
-
-      return false;
-   }
+   return false;
 }
 
-export default TribeMemberComponent;
-
-export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberComponent>(ServerComponentType.tribeMember, true, {
-   onLoad: onLoad,
+export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberComponent, TribeMemberComponentParams, RenderParts>(ServerComponentType.tribeMember, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
 });
+
+function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
+   const warpaintType = readWarpaint(reader);
+
+   const titles = new Array<TitleGenerationInfo>();
+   const numTitles = reader.readNumber();
+   for (let i = 0; i < numTitles; i++) {
+      const title = reader.readNumber() as TribesmanTitle;
+      const displayOption = reader.readNumber();
+      
+      titles.push({
+         title: title,
+         displayOption: displayOption
+      });
+   }
+
+   return {
+      warpaintType: warpaintType,
+      titles: titles
+   };
+}
+
+const getFistTextureSource = (entityType: EntityType, tribeType: TribeType): string => {
+   switch (entityType) {
+      // @Robustness
+      case EntityType.player:
+      case EntityType.tribeWorker:
+      case EntityType.tribeWarrior: {
+         switch (tribeType) {
+            case TribeType.plainspeople: {
+               return "entities/plainspeople/fist.png";
+            }
+            case TribeType.goblins: {
+               return "entities/goblins/fist.png";
+            }
+            case TribeType.frostlings: {
+               return "entities/frostlings/fist.png";
+            }
+            case TribeType.barbarians: {
+               return "entities/barbarians/fist.png";
+            }
+            default: {
+               const unreachable: never = tribeType;
+               return unreachable;
+            }
+         }
+      }
+      default: throw new Error();
+   }
+}
+
+const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): string => {
+   switch (tribeType) {
+      case TribeType.plainspeople: {
+         if (entityType === EntityType.tribeWarrior) {
+            return "entities/plainspeople/warrior.png";
+         } else if (entityType === EntityType.player) {
+            return "entities/plainspeople/player.png";
+         } else {
+            return "entities/plainspeople/worker.png";
+         }
+      }
+      case TribeType.goblins: {
+         if (entityType === EntityType.tribeWarrior) {
+            return "entities/goblins/warrior.png";
+         } else if (entityType === EntityType.player) {
+            return "entities/goblins/player.png";
+         } else {
+            return "entities/goblins/worker.png";
+         }
+      }
+      case TribeType.frostlings: {
+         if (entityType === EntityType.tribeWarrior) {
+            return "entities/frostlings/warrior.png";
+         } else if (entityType === EntityType.player) {
+            return "entities/frostlings/player.png";
+         } else {
+            return "entities/frostlings/worker.png";
+         }
+      }
+      case TribeType.barbarians: {
+         if (entityType === EntityType.tribeWarrior) {
+            return "entities/barbarians/warrior.png";
+         } else if (entityType === EntityType.player) {
+            return "entities/barbarians/player.png";
+         } else {
+            return "entities/barbarians/worker.png";
+         }
+      }
+   }
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribe | ServerComponentType.tribeMember>): RenderParts {
+   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
+   const tribeMemberComponentParams = entityConfig.components[ServerComponentType.tribeMember];
+   
+   const warPaintType = tribeMemberComponentParams.warpaintType;
+
+   // @Temporary @Hack
+   // const radius = tribesman.type === EntityType.player || tribesman.type === EntityType.tribeWarrior ? 32 : 28;
+   const radius = 32;
+
+   // 
+   // Body render part
+   // 
+   
+   const bodyRenderPart = new TexturedRenderPart(
+      null,
+      2,
+      0,
+      getTextureArrayIndex(getBodyTextureSource(entityConfig.entityType, tribeComponentParams.tribeType))
+   );
+   renderInfo.attachRenderThing(bodyRenderPart);
+
+   if (tribeComponentParams.tribeType === TribeType.goblins) {
+      if (warPaintType !== null) {
+         let textureSource: string;
+         if (entityConfig.entityType === EntityType.tribeWarrior) {
+            textureSource = `entities/goblins/warrior-warpaint-${warPaintType}.png`;
+         } else {
+            textureSource = `entities/goblins/goblin-warpaint-${warPaintType}.png`;
+         }
+         
+         // Goblin warpaint
+         const warpaintRenderPart = new TexturedRenderPart(
+            null,
+            4,
+            0,
+            getTextureArrayIndex(textureSource)
+         );
+         warpaintRenderPart.addTag("tribeMemberComponent:warpaint");
+         renderInfo.attachRenderThing(warpaintRenderPart);
+      } else {
+         console.warn("bad");
+      }
+
+      // Left ear
+      const leftEarRenderPart = new TexturedRenderPart(
+         null,
+         3,
+         -Math.PI/2 + GOBLIN_EAR_ANGLE,
+         getTextureArrayIndex("entities/goblins/goblin-ear.png")
+      );
+      leftEarRenderPart.addTag("tribeMemberComponent:ear");
+      leftEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
+      leftEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
+      leftEarRenderPart.setFlipX(true);
+      renderInfo.attachRenderThing(leftEarRenderPart);
+
+      // Right ear
+      const rightEarRenderPart = new TexturedRenderPart(
+         null,
+         3,
+         -Math.PI/2 + GOBLIN_EAR_ANGLE,
+         getTextureArrayIndex("entities/goblins/goblin-ear.png")
+      );
+      rightEarRenderPart.addTag("tribeMemberComponent:ear");
+      rightEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
+      rightEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
+      renderInfo.attachRenderThing(rightEarRenderPart);
+   }
+
+   // Hands
+   const limbRenderParts = new Array<RenderPart>();
+   for (let i = 0; i < 2; i++) {
+      const attachPoint = new RenderAttachPoint(
+         null,
+         1,
+         0
+      );
+      if (i === 1) {
+         attachPoint.setFlipX(true);
+      }
+      attachPoint.addTag("inventoryUseComponent:attachPoint");
+      renderInfo.attachRenderThing(attachPoint);
+      
+      const handRenderPart = new TexturedRenderPart(
+         attachPoint,
+         1.2,
+         0,
+         getTextureArrayIndex(getFistTextureSource(entityConfig.entityType, tribeComponentParams.tribeType))
+      );
+      limbRenderParts.push(handRenderPart);
+      handRenderPart.addTag("inventoryUseComponent:hand");
+      renderInfo.attachRenderThing(handRenderPart);
+   }
+
+   return {
+      bodyRenderPart: bodyRenderPart,
+      limbRenderParts: limbRenderParts
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMember>, renderParts: RenderParts): TribeMemberComponent {
+   const tribeMemberComponentParams = entityConfig.components[ServerComponentType.tribeMember];
+   
+   return {
+      bodyRenderPart: renderParts.bodyRenderPart,
+      handRenderParts: renderParts.limbRenderParts,
+      warpaintType: tribeMemberComponentParams.warpaintType,
+      titles: tribeMemberComponentParams.titles,
+      deathbringerEyeLights: []
+   };
+}
 
 const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, entity: EntityID): void => {
    // Remove previous effects
@@ -323,12 +535,6 @@ const updateTitles = (tribeMemberComponent: TribeMemberComponent, entity: Entity
    }
 }
 
-function onLoad(tribeMemberComponent: TribeMemberComponent, entity: EntityID): void {
-   const renderInfo = getEntityRenderInfo(entity);
-   tribeMemberComponent.bodyRenderPart = renderInfo.getRenderThing("tribeMemberComponent:body") as RenderPart;
-   tribeMemberComponent.handRenderParts = renderInfo.getRenderThings("tribeMemberComponent:hand", 2) as Array<RenderPart>;
-}
-
 function onTick(tribeMemberComponent: TribeMemberComponent, entity: EntityID): void {
    if (tribeMemberComponent.deathbringerEyeLights.length > 0) {
       const eyeFlashProgress = Math.min(getSecondsSinceLastAttack(entity) / 0.5, 1)
@@ -345,7 +551,7 @@ function onTick(tribeMemberComponent: TribeMemberComponent, entity: EntityID): v
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    // Sprinter particles
-   if (tribeMemberComponent.hasTitle(TribesmanTitle.sprinter) && physicsComponent.selfVelocity.length() > 100) {
+   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter) && physicsComponent.selfVelocity.length() > 100) {
       const sprintParticleSpawnRate = Math.sqrt(physicsComponent.selfVelocity.length() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
@@ -362,7 +568,7 @@ function onTick(tribeMemberComponent: TribeMemberComponent, entity: EntityID): v
    }
 
    // Winterswrath particles
-   if (tribeMemberComponent.hasTitle(TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.I_TPS) {
+   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.I_TPS) {
       const offsetMagnitude = randFloat(36, 50);
       const offsetDirection = 2 * Math.PI * Math.random();
       const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
@@ -387,7 +593,7 @@ function padData(reader: PacketReader): void {
 function updateFromData(reader: PacketReader, entity: EntityID): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
-   tribeMemberComponent.warPaintType = readWarpaint(reader);
+   tribeMemberComponent.warpaintType = readWarpaint(reader);
 
    // @Temporary @Garbage
    const titles = new Array<TitleGenerationInfo>();
@@ -407,7 +613,15 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
 function updatePlayerFromData(reader: PacketReader): void {
    updateFromData(reader, Player.instance!.id);
-   
+
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
-   TitlesTab_setTitles(tribeMemberComponent.getTitles());
+
+   // @Garbage
+   const titles = new Array<TribesmanTitle>();
+   for (let i = 0; i < titles.length; i++) {
+      const titleGenerationInfo = tribeMemberComponent.titles[i];
+      titles.push(titleGenerationInfo.title);
+   }
+   
+   TitlesTab_setTitles(titles);
 }

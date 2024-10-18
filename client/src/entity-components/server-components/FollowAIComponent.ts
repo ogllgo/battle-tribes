@@ -2,14 +2,25 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-class FollowAIComponent {}
+export interface FollowAIComponentParams {}
 
-export default FollowAIComponent;
+export interface FollowAIComponent {}
 
-export const FollowAIComponentArray = new ServerComponentArray<FollowAIComponent>(ServerComponentType.followAI, true, {
+export const FollowAIComponentArray = new ServerComponentArray<FollowAIComponent, FollowAIComponentParams, never>(ServerComponentType.followAI, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): FollowAIComponentParams {
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   return {};
+}
+
+function createComponent(): FollowAIComponent {
+   return {};
+}
 
 function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);

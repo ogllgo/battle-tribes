@@ -2,7 +2,7 @@ import { craftingMenuIsOpen } from "./components/game/menus/CraftingMenu";
 import { setHeldItemVisualPosition } from "./components/game/HeldItem";
 import { InventorySelector_inventoryIsOpen } from "./components/game/inventories/InventorySelector";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
-import { InventoryComponentArray } from "./entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray } from "./entity-components/server-components/InventoryComponent";
 import Player from "./entities/Player";
 import { sendItemPickupPacket, sendItemReleasePacket } from "./client/packet-creation";
 
@@ -18,7 +18,7 @@ export function leftClickItemSlot(e: MouseEvent, entityID: number, inventory: In
    if (typeof clickedItem !== "undefined") {
       // Attempt to pick up the item if there isn't a held item
       const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-      const heldItemInventory = inventoryComponent.getInventory(InventoryName.heldItemSlot)!;
+      const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
       const heldItem = heldItemInventory.itemSlots[1];
       if (typeof heldItem === "undefined") {
          sendItemPickupPacket(entityID, inventory.name, itemSlot, clickedItem.count);
@@ -35,7 +35,7 @@ export function leftClickItemSlot(e: MouseEvent, entityID: number, inventory: In
 
       // Attempt to release the held item into the item slot if there is a held item
       const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-      const heldItemInventory = inventoryComponent.getInventory(InventoryName.heldItemSlot)!;
+      const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
       const heldItem = heldItemInventory.itemSlots[1];
       if (typeof heldItem !== "undefined") {
          sendItemReleasePacket(entityID, inventory.name, itemSlot, heldItem.count);
@@ -52,7 +52,7 @@ export function rightClickItemSlot(e: MouseEvent, entityID: number, inventory: I
    const clickedItem = inventory.itemSlots[itemSlot];
    if (typeof clickedItem !== "undefined") {
       const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-      const heldItemInventory = inventoryComponent.getInventory(InventoryName.heldItemSlot)!;
+      const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
       const heldItem = heldItemInventory.itemSlots[1];
       if (typeof heldItem === "undefined") {
          const numItemsInSlot = clickedItem.count;
@@ -71,7 +71,7 @@ export function rightClickItemSlot(e: MouseEvent, entityID: number, inventory: I
       // There is no item in the clicked item slot
       
       const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-      const heldItemInventory = inventoryComponent.getInventory(InventoryName.heldItemSlot)!;
+      const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
       if (heldItemInventory.hasItem(1)) {
          // Attempt to place one of the held item into the clicked item slot
          sendItemReleasePacket(entityID, inventory.name, itemSlot, 1);

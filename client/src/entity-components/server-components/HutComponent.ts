@@ -10,7 +10,29 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
+
+export interface HutComponentParams {
+   readonly doorSwingAmount: number;
+   readonly isRecalling: boolean;
+}
+
+interface RenderParts {
+   readonly doorRenderParts: ReadonlyArray<RenderPart>;
+   readonly recallMarker: RenderPart | null;
+}
+
+export interface HutComponent {
+   readonly doorRenderParts: ReadonlyArray<RenderPart>;
+   
+   // @Memory: Don't need to store
+   /** Amount the door should swing outwards from 0 to 1 */
+   doorSwingAmount: number;
+   isRecalling: boolean;
+
+   recallMarker: RenderPart | null;
+}
 
 export const WORKER_HUT_SIZE = 88;
 export const WARRIOR_HUT_SIZE = 104;
@@ -55,28 +77,54 @@ const getDoorXOffset = (hutType: HutType, i: number): number => {
    }
 }
 
-class HutComponent {
-   public readonly doorRenderParts: ReadonlyArray<RenderPart>;
-   
-   // @Memory: Don't need to store
-   /** Amount the door should swing outwards from 0 to 1 */
-   public doorSwingAmount = 0;
-   public isRecalling = false;
-
-   public recallMarker: RenderPart | null = null;
-
-   constructor(entity: EntityID) {
-      const renderInfo = getEntityRenderInfo(entity);
-      this.doorRenderParts = renderInfo.getRenderThings("hutComponent:door") as Array<RenderPart>;
-   }
-}
-
-export default HutComponent;
-
-export const HutComponentArray = new ServerComponentArray<HutComponent>(ServerComponentType.hut, true, {
+export const HutComponentArray = new ServerComponentArray<HutComponent, HutComponentParams, RenderParts>(ServerComponentType.hut, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): HutComponentParams {
+   const lastDoorSwingTicks = reader.readNumber();
+   const isRecalling = reader.readBoolean();
+   reader.padOffset(3);
+
+   return {
+      doorSwingAmount: lastDoorSwingTicks,
+      isRecalling: isRecalling
+   };
+}
+
+const createRecallMarker = (): TexturedRenderPart => {
+   const recallMarker = new TexturedRenderPart(
+      null,
+      9,
+      0,
+      getTextureArrayIndex("entities/recall-marker.png")
+   );
+   recallMarker.inheritParentRotation = false;
+
+   return recallMarker;
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.hut>): RenderParts {
+   return {
+      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<RenderPart>,
+      recallMarker: entityConfig.components[ServerComponentType.hut].isRecalling ? createRecallMarker() : null
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.hut>, renderParts: RenderParts): HutComponent {
+   const hutComponentParams = entityConfig.components[ServerComponentType.hut];
+   
+   return {
+      doorRenderParts: renderParts.doorRenderParts,
+      doorSwingAmount: hutComponentParams.doorSwingAmount,
+      isRecalling: hutComponentParams.isRecalling,
+      recallMarker: renderParts.recallMarker
+   };
+}
 
 function updateDoors(hutComponent: HutComponent, entity: EntityID): void {
    for (let i = 0; i < hutComponent.doorRenderParts.length; i++) {
@@ -127,13 +175,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
    if (hutComponent.isRecalling) {
       if (hutComponent.recallMarker === null) {
-         hutComponent.recallMarker = new TexturedRenderPart(
-            null,
-            9,
-            0,
-            getTextureArrayIndex("entities/recall-marker.png")
-         );
-         hutComponent.recallMarker.inheritParentRotation = false;
+         hutComponent.recallMarker = createRecallMarker();
          const renderInfo = getEntityRenderInfo(entity);
          renderInfo.attachRenderThing(hutComponent.recallMarker);
       }

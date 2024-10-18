@@ -4,20 +4,39 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
 import { createPaperParticle } from "../../particles";
 import { getEntityAgeTicks } from "../../world";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 import { TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
 
-class ResearchBenchComponent {
-   public isOccupied = false;
+export interface ResearchBenchComponentParams {
+   readonly isOccupied: boolean;
 }
 
-export default ResearchBenchComponent;
+export interface ResearchBenchComponent {
+   isOccupied: boolean;
+}
 
-export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent>(ServerComponentType.researchBench, true, {
+export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, never>(ServerComponentType.researchBench, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): ResearchBenchComponentParams {
+   const isOccupied = reader.readBoolean();
+   reader.padOffset(3);
+
+   return {
+      isOccupied: isOccupied
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.researchBench>): ResearchBenchComponent {
+   return {
+      isOccupied: entityConfig.components[ServerComponentType.researchBench].isOccupied
+   };
+}
 
 function onTick(researchBenchComponent: ResearchBenchComponent, entity: EntityID): void {
    if (researchBenchComponent.isOccupied && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.3)) {

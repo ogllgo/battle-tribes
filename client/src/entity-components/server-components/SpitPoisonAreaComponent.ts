@@ -6,35 +6,45 @@ import { createAcidParticle, createPoisonBubble } from "../../particles";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
 
 const enum Vars {
    MAX_RANGE = 55
 }
 
-class SpitPoisonAreaComponent {
-   public trackSource!: AudioBufferSourceNode;
-   public sound!: Sound;
+export interface SpitPoisonAreaComponentParams {}
+
+export interface SpitPoisonAreaComponent {
+   readonly trackSource: AudioBufferSourceNode;
+   readonly sound: Sound;
 }
 
-export default SpitPoisonAreaComponent;
-
-export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent>(ServerComponentType.spitPoisonArea, true, {
-   onLoad: onLoad,
+export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentParams, never>(ServerComponentType.spitPoisonArea, true, {
+   createParamsFromData: createParamsFromData,
+   createComponent: createComponent,
    onTick: onTick,
    onRemove: onRemove,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function onLoad(spitPoisonAreaComponent: SpitPoisonAreaComponent, entity: EntityID): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+function createParamsFromData(): SpitPoisonAreaComponentParams {
+   return {};
+}
 
-   const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponent.position);
-   spitPoisonAreaComponent.trackSource = audioInfo.trackSource;
-   spitPoisonAreaComponent.sound = audioInfo.sound;
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform>): SpitPoisonAreaComponent {
+   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
 
-   spitPoisonAreaComponent.trackSource.loop = true;
+   const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponentParams.position);
+   const trackSource = audioInfo.trackSource;
+   const sound = audioInfo.sound;
+
+   trackSource.loop = true;
+
+   return {
+      trackSource: trackSource,
+      sound: sound
+   };
 }
 
 function onTick(spitPoisonAreaComponent: SpitPoisonAreaComponent, entity: EntityID): void {

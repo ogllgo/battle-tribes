@@ -5,8 +5,7 @@ import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, cr
 import { getTextureArrayIndex } from "../texture-atlases/texture-atlases";
 import { playSound } from "../sound";
 import Entity from "../Entity";
-import { ClientComponentType } from "../entity-components/components";
-import FootprintComponent, { FootprintComponentArray } from "../entity-components/server-components/FootprintComponent";
+import { FootprintComponent, FootprintComponentArray } from "../entity-components/client-components/FootprintComponent";
 import TexturedRenderPart from "../render-parts/TexturedRenderPart";
 import { CowComponentArray } from "../entity-components/server-components/CowComponent";
 import { getEntityRenderInfo } from "../world";
@@ -46,7 +45,7 @@ class Cow extends Entity {
       headRenderPart.offset.y = (Cow.BODY_HEIGHT - Cow.HEAD_OVERLAP) / 2;
       renderInfo.attachRenderThing(headRenderPart);
 
-      FootprintComponentArray.addComponent(this.id, new FootprintComponent(this, 0.3, 20, 64, 5, 40));
+      FootprintComponentArray.addComponent(this.id, new FootprintComponent(0.3, 20, 64, 5, 40));
    }
 
    protected onHit(hitData: HitData): void {

@@ -4,7 +4,21 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray from "../ServerComponentArray";
+import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../Entity";
+
+export interface BerryBushComponentParams {
+   readonly numBerries: number;
+}
+
+interface RenderParts {
+   readonly renderPart: TexturedRenderPart;
+}
+
+export interface BerryBushComponent {
+   numBerries: number;
+   readonly renderPart: TexturedRenderPart;
+}
 
 const BERRY_BUSH_TEXTURE_SOURCES = [
    "entities/berry-bush1.png",
@@ -15,43 +29,54 @@ const BERRY_BUSH_TEXTURE_SOURCES = [
    "entities/berry-bush6.png"
 ];
 
-class BerryBushComponent {
-   public numBerries = 0;
-   public renderPart!: TexturedRenderPart;
-}
-
-export default BerryBushComponent;
-
-export const BerryBushComponentArray = new ServerComponentArray<BerryBushComponent>(ServerComponentType.berryBush, true, {
+export const BerryBushComponentArray = new ServerComponentArray<BerryBushComponent, BerryBushComponentParams, RenderParts>(ServerComponentType.berryBush, true, {
+   createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
+   createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
 });
+
+function createParamsFromData(reader: PacketReader): BerryBushComponentParams {
+   const numBerries = reader.readNumber();
+   return {
+      numBerries: numBerries
+   };
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.berryBush>): RenderParts {
+   const renderPart = new TexturedRenderPart(
+      null,
+      0,
+      0,
+      getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityConfig.components[ServerComponentType.berryBush].numBerries])
+   );
+   renderPart.addTag("berryBushComponent:renderPart");
+   renderInfo.attachRenderThing(renderPart)
+
+   return {
+      renderPart: renderPart
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.berryBush>, renderParts: RenderParts): BerryBushComponent {
+   return {
+      numBerries: entityConfig.components[ServerComponentType.berryBush].numBerries,
+      renderPart: renderParts.renderPart
+   };
+}
 
 function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID, isInitialData: boolean): void {
+function updateFromData(reader: PacketReader, entity: EntityID): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);
    
-   const numBerries = reader.readNumber();
+   berryBushComponent.numBerries = reader.readNumber();
 
-   if (isInitialData) {
-      berryBushComponent.renderPart = new TexturedRenderPart(
-         null,
-         0,
-         0,
-         getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[numBerries])
-      );
-      berryBushComponent.renderPart.addTag("berryBushComponent:renderPart");
-      const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.attachRenderThing(berryBushComponent.renderPart);
-   } else if (numBerries !== berryBushComponent.numBerries) {
-      berryBushComponent.numBerries = numBerries;
-
-      berryBushComponent.renderPart.switchTextureSource(BERRY_BUSH_TEXTURE_SOURCES[berryBushComponent.numBerries]);
-      // @Bug: not working!
-      const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
-   }
+   berryBushComponent.renderPart.switchTextureSource(BERRY_BUSH_TEXTURE_SOURCES[berryBushComponent.numBerries]);
+   // @Bug: not working!
+   const renderInfo = getEntityRenderInfo(entity);
+   renderInfo.dirty();
 }

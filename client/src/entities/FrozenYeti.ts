@@ -11,43 +11,6 @@ import { TransformComponentArray } from "../entity-components/server-components/
 
 class FrozenYeti extends Entity {
    private static readonly SIZE = 152;
-   
-   constructor(id: number) {
-      super(id);
-
-      const renderInfo = getEntityRenderInfo(this.id);
-      renderInfo.attachRenderThing(new TexturedRenderPart(
-         null,
-         1,
-         0,
-         getTextureArrayIndex("entities/frozen-yeti/frozen-yeti.png")
-      ));
-
-      const headRenderPart = new TexturedRenderPart(
-         null,
-         2,
-         0,
-         getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-head.png")
-      );
-      headRenderPart.addTag("frozenYetiComponent:head");
-      headRenderPart.offset.y = FROZEN_YETI_HEAD_DISTANCE;
-      renderInfo.attachRenderThing(headRenderPart);
-
-      // Create paw render parts
-      const pawRenderParts = new Array<RenderPart>();
-      for (let i = 0; i < 2; i++) {
-         const paw = new TexturedRenderPart(
-            null,
-            0,
-            0,
-            getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-paw.png")
-         );
-         paw.addTag("frozenYetiComponent:paw");
-
-         renderInfo.attachRenderThing(paw);
-         pawRenderParts.push(paw);
-      }
-   }
 
    protected onHit(hitData: HitData): void {
       const transformComponent = TransformComponentArray.getComponent(this.id);
