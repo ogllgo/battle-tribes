@@ -2,27 +2,26 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PlanterBoxPlant, TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import Player from "./entities/Player";
 import Game from "./Game";
 import Board from "./Board";
-import Client from "./client/Client";
+import Client from "./networking/Client";
 import { latencyGameState } from "./game-state/game-states";
 import { BuildMenu_hide, BuildMenu_setBuildingID, BuildMenu_updateBuilding, entityCanOpenBuildMenu, isHoveringInBlueprintMenu } from "./components/game/BuildMenu";
 import { InventoryMenuType, InventorySelector_inventoryIsOpen, InventorySelector_setInventoryMenuType } from "./components/game/inventories/InventorySelector";
 import { SEED_TO_PLANT_RECORD } from "./entity-components/server-components/PlantComponent";
-import { GhostInfo, GhostType, PARTIAL_OPACITY, setGhostInfo } from "./rendering/webgl/entity-ghost-rendering";
+import { GhostInfo, GhostType, PARTIAL_OPACITY } from "./rendering/webgl/entity-ghost-rendering";
 import { getClosestGroupNum } from "./rendering/webgl/entity-selection-rendering";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./components/game/menus/CraftingMenu";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { boxIsWithinRange } from "battletribes-shared/boxes/boxes";
 import { getPlayerSelectedItem } from "./components/game/GameInteractableLayer";
-import { entityExists, getEntityLayer, getEntityType } from "./world";
+import { entityExists, getEntityLayer, getEntityType, playerInstance } from "./world";
 import { TombstoneComponentArray } from "./entity-components/server-components/TombstoneComponent";
 import { TunnelComponentArray } from "./entity-components/server-components/TunnelComponent";
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
-import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
+import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 const enum InteractActionType {
@@ -205,8 +204,8 @@ const interactWithEntity = (entity: EntityID, action: InteractAction): void => {
          Client.sendModifyBuilding(highlightedEntity, action.plantType);
 
          // @Hack
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-         const hotbarUseInfo = inventoryUseComponent.getLimbInfoByInventoryName(InventoryName.hotbar);
+         const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
          
          break;
@@ -215,8 +214,8 @@ const interactWithEntity = (entity: EntityID, action: InteractAction): void => {
          Client.sendModifyBuilding(entity, -1);
 
          // @Hack
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-         const hotbarUseInfo = inventoryUseComponent.getLimbInfoByInventoryName(InventoryName.hotbar);
+         const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
 
          break;
@@ -225,8 +224,8 @@ const interactWithEntity = (entity: EntityID, action: InteractAction): void => {
          Client.sendStructureInteract(highlightedEntity, action.doorSide);
 
          // @Hack
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-         const hotbarUseInfo = inventoryUseComponent.getLimbInfoByInventoryName(InventoryName.hotbar);
+         const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
          
          break;
@@ -241,8 +240,8 @@ const interactWithEntity = (entity: EntityID, action: InteractAction): void => {
          Client.sendStructureInteract(highlightedEntity, 0);
 
          // @Hack
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
-         const hotbarUseInfo = inventoryUseComponent.getLimbInfoByInventoryName(InventoryName.hotbar);
+         const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
 
          break;
@@ -315,8 +314,8 @@ export function deselectHighlightedEntity(): void {
 
 // @Cleanup: name
 const getEntityID = (doPlayerProximityCheck: boolean, doCanSelectCheck: boolean): number => {
-   const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
-   const layer = getEntityLayer(Player.instance!.id);
+   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const layer = getEntityLayer(playerInstance!);
    
    const minChunkX = Math.max(Math.floor((Game.cursorPositionX! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
    const maxChunkX = Math.min(Math.floor((Game.cursorPositionX! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
@@ -379,13 +378,15 @@ const getPlantGhostType = (plantType: PlanterBoxPlant): GhostType => {
 // @Cleanup: setGhostInfo called at every return
 const updateHighlightedEntity = (entity: EntityID | null): void => {
    if (entity === null) {
-      setGhostInfo(null);
+      // @Incomplete
+      // setGhostInfo(null);
       return;
    }
    
    const interactAction = getEntityInteractAction(entity);
    if (interactAction === null) {
-      setGhostInfo(null);
+      // @Incomplete
+      // setGhostInfo(null);
       return;
    }
    
@@ -400,7 +401,8 @@ const updateHighlightedEntity = (entity: EntityID | null): void => {
             tint: [1, 1, 1],
             opacity: PARTIAL_OPACITY
          };
-         setGhostInfo(ghostInfo);
+         // @Incomplete
+         // setGhostInfo(ghostInfo);
          break;
       }
       case InteractActionType.useFertiliser: {
@@ -411,11 +413,13 @@ const updateHighlightedEntity = (entity: EntityID | null): void => {
             tint: [1, 1, 1],
             opacity: PARTIAL_OPACITY
          };
-         setGhostInfo(ghostInfo);
+         // @Incomplete
+         // setGhostInfo(ghostInfo);
          break;
       }
       default: {
-         setGhostInfo(null);
+         // @Incomplete
+         // setGhostInfo(null);
          break;
       }
    }
@@ -427,7 +431,7 @@ export function updateHighlightedAndHoveredEntities(): void {
    }
 
    // @Hack
-   if (Player.instance === null) {
+   if (playerInstance === null) {
       hoveredEntityID = -1;
       return;
    }
@@ -443,10 +447,10 @@ export function updateHighlightedAndHoveredEntities(): void {
    }
 
    // If the player is interacting with an inventory, only consider the distance from the player not the cursor
-   if (Player.instance !== null && entityExists(selectedEntityID) && (isHoveringInBlueprintMenu() || InventorySelector_inventoryIsOpen())) {
+   if (playerInstance !== null && entityExists(selectedEntityID) && (isHoveringInBlueprintMenu() || InventorySelector_inventoryIsOpen())) {
       const selectedEntity = getSelectedEntity();
 
-      const playerTransformComponent = TransformComponentArray.getComponent(Player.instance.id);
+      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
       const entityTransformComponent = TransformComponentArray.getComponent(selectedEntity);
       
       const distance = playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
@@ -460,7 +464,8 @@ export function updateHighlightedAndHoveredEntities(): void {
 
    const newHighlightedEntityID = getEntityID(true, true);
    if (newHighlightedEntityID !== highlightedEntity) {
-      setGhostInfo(null);
+      // @Incomplete
+      // setGhostInfo(null);
       deselectHighlightedEntity();
       highlightedEntity = newHighlightedEntityID;
    }

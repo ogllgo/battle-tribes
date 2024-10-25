@@ -18,15 +18,19 @@ export const BracingsComponentArray = new ServerComponentArray<BracingsComponent
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): BracingsComponentParams {
+export function createBracingsComponentParams(): BracingsComponentParams {
    return {};
+}
+
+function createParamsFromData(): BracingsComponentParams {
+   return createBracingsComponentParams();
 }
 
 function createComponent(): BracingsComponent {
    return {};
 }
 
-function onLoad(_bracingsComponent: BracingsComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    const renderInfo = getEntityRenderInfo(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
 

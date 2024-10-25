@@ -6,7 +6,8 @@ import { createAcidParticle, createPoisonBubble } from "../../particles";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 const enum Vars {
    MAX_RANGE = 55
@@ -32,8 +33,8 @@ function createParamsFromData(): SpitPoisonAreaComponentParams {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform>): SpitPoisonAreaComponent {
-   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform, never>): SpitPoisonAreaComponent {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
 
    const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponentParams.position);
    const trackSource = audioInfo.trackSource;
@@ -47,8 +48,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function onTick(spitPoisonAreaComponent: SpitPoisonAreaComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
 
    const hitbox = transformComponent.hitboxes[0];
    const box = hitbox.box as CircularBox;

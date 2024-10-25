@@ -16,6 +16,7 @@ import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { AmmoBoxComponent } from "../../components/AmmoBoxComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { BallistaComponent } from "../../components/BallistaComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -25,7 +26,8 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.turret
    | ServerComponentType.aiHelper
    | ServerComponentType.ammoBox
-   | ServerComponentType.inventory;
+   | ServerComponentType.inventory
+   | ServerComponentType.ballista;
 
 export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default)
@@ -49,6 +51,8 @@ export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConn
 
    const ammoBoxInventory = new Inventory(3, 1, InventoryName.ammoBoxInventory);
    addInventoryToInventoryComponent(inventoryComponent, ammoBoxInventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
+
+   const ballistaComponent = new BallistaComponent();
    
    return {
       entityType: EntityType.ballista,
@@ -61,7 +65,8 @@ export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConn
          [ServerComponentType.turret]: turretComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.ammoBox]: ammoBoxComponent,
-         [ServerComponentType.inventory]: inventoryComponent
+         [ServerComponentType.inventory]: inventoryComponent,
+         [ServerComponentType.ballista]: ballistaComponent
       }
    };
 }

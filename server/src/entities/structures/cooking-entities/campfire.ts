@@ -14,6 +14,7 @@ import { TribeComponent } from "../../../components/TribeComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../../components/InventoryComponent";
 import { CookingComponent } from "../../../components/CookingComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { CampfireComponent } from "../../../components/CampfireComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +22,8 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.structure
    | ServerComponentType.tribe
    | ServerComponentType.inventory
-   | ServerComponentType.cooking;
+   | ServerComponentType.cooking
+   | ServerComponentType.campfire;
 
 const LIFETIME_SECONDS = 30;
 
@@ -53,6 +55,8 @@ export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConn
    addInventoryToInventoryComponent(inventoryComponent, outputInventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    
    const cookingComponent = new CookingComponent(LIFETIME_SECONDS);
+
+   const campfireComponent = new CampfireComponent();
    
    return {
       entityType: EntityType.campfire,
@@ -63,7 +67,8 @@ export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConn
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.inventory]: inventoryComponent,
-         [ServerComponentType.cooking]: cookingComponent
+         [ServerComponentType.cooking]: cookingComponent,
+         [ServerComponentType.campfire]: campfireComponent
       }
    };
 }

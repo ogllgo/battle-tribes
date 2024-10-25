@@ -8,9 +8,10 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../Entity";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { RenderPart } from "../../render-parts/render-parts";
+import { EntityConfig } from "../ComponentArray";
 
 export interface AmmoBoxComponentParams {
    readonly ammoType: TurretAmmoType | null;
@@ -62,9 +63,9 @@ function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.ammoBox>): RenderParts {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.ammoBox, never>): RenderParts {
    let ammoWarningRenderPart: RenderPart | null;
-   if (entityConfig.components[ServerComponentType.ammoBox].ammoType === null) {
+   if (entityConfig.serverComponents[ServerComponentType.ammoBox].ammoType === null) {
       ammoWarningRenderPart = createAmmoWarningRenderPart();
       renderInfo.attachRenderThing(ammoWarningRenderPart);
    } else {
@@ -76,8 +77,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.ammoBox>, renderParts: RenderParts): AmmoBoxComponent {
-   const ammoBoxComponentParams = entityConfig.components[ServerComponentType.ammoBox];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.ammoBox, never>, renderParts: RenderParts): AmmoBoxComponent {
+   const ammoBoxComponentParams = entityConfig.serverComponents[ServerComponentType.ammoBox];
    
    return {
       ammoType: ammoBoxComponentParams.ammoType,

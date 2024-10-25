@@ -10,7 +10,8 @@ import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 type TurretType = EntityType.slingTurret | EntityType.ballista;
 
@@ -153,9 +154,9 @@ function createParamsFromData(reader: PacketReader): TurretComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.turret>): TurretComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.turret, never>): TurretComponent {
    return {
-      chargeProgress: entityConfig.components[ServerComponentType.turret].chargeProgress,
+      chargeProgress: entityConfig.serverComponents[ServerComponentType.turret].chargeProgress,
       aimingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
       pivotingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:pivoting") as RenderPart,
       gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<RenderPart>,

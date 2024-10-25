@@ -1,7 +1,8 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType } from "battletribes-shared/tiles";
 
-// @Cleanup: location? should this be in the layer file as it might be used outside of terrain generation (during the game loop)?
+// @Cleanup: location? should these be in the layer file as it might be used outside of terrain generation (during the game loop)?
+
 export function getSubtileIndex(subtileX: number, subtileY: number): number {
    return (subtileY + Settings.EDGE_GENERATION_DISTANCE * 4) * Settings.FULL_BOARD_DIMENSIONS * 4 + subtileX + Settings.EDGE_GENERATION_DISTANCE * 4;
 }
@@ -40,4 +41,8 @@ export function tileHasWallSubtile(subtileTypes: Float32Array, tileX: number, ti
    }
 
    return false;
+}
+
+export function subtileIsInWorld(subtileX: number, subtileY: number): boolean {
+   return subtileX >= -Settings.EDGE_GENERATION_DISTANCE * 4 && subtileX < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 && subtileY >= -Settings.EDGE_GENERATION_DISTANCE * 4 && subtileY < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4;
 }

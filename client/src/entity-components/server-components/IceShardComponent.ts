@@ -1,5 +1,8 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityConfig } from "../ComponentArray";
 
 export interface IceShardComponentParams {}
 
@@ -16,7 +19,16 @@ function createParamsFromData(): IceShardComponentParams {
    return {};
 }
 
-function createComponent(): IceShardComponent {
+function createComponent(entityConfig: EntityConfig<never, never>): IceShardComponent {
+   entityConfig.renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("projectiles/ice-shard.png")
+      )
+   );
+
    return {};
 }
 

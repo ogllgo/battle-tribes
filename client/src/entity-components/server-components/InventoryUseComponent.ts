@@ -18,12 +18,12 @@ import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbState, SHIELD_BASH_PUSH
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { BlockType } from "../../../../shared/src/boxes/boxes";
-import { getEntityRenderInfo, getEntityType } from "../../world";
+import { getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import Player from "../../entities/Player";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -472,9 +472,9 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.inventoryUse>): InventoryUseComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.inventoryUse, never>): InventoryUseComponent {
    return {
-      limbInfos: entityConfig.components[ServerComponentType.inventoryUse].limbInfos,
+      limbInfos: entityConfig.serverComponents[ServerComponentType.inventoryUse].limbInfos,
       limbAttachPoints: [],
       limbRenderParts: [],
       activeItemRenderParts: [],
@@ -485,8 +485,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.inventor
    };
 }
 
-function onLoad(inventoryUseComponent: InventoryUseComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    const renderInfo = getEntityRenderInfo(entity);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
    const attachPoints = renderInfo.getRenderThings("inventoryUseComponent:attachPoint", 2) as Array<RenderAttachPoint>;
    for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
@@ -506,8 +507,9 @@ function onLoad(inventoryUseComponent: InventoryUseComponent, entity: EntityID):
    updateCustomItemRenderPart(entity);
 }
 
-function onTick(inventoryUseComponent: InventoryUseComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    // @Cleanup: move to separate function
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
       const limbInfo = inventoryUseComponent.limbInfos[limbIdx];
       if (limbInfo.heldItemType === null) {
@@ -1273,7 +1275,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    
    const numUseInfos = reader.readNumber();
    for (let i = 0; i < numUseInfos; i++) {

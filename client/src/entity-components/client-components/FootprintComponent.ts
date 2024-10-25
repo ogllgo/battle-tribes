@@ -9,30 +9,56 @@ import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../serv
 import { EntityID } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import ClientComponentArray from "../ClientComponentArray";
-import { ClientComponentType } from "../client-components";
+import { EntityConfig } from "../ComponentArray";
+import { ClientComponentType } from "../client-component-types";
 
-export class FootprintComponent {
-   public readonly footstepParticleIntervalSeconds: number;
-   public readonly footstepOffset: number;
-   public readonly footstepSize: number;
-   public readonly footstepLifetime: number;
-   public readonly footstepSoundIntervalDist: number;
+export interface FootprintComponentParams {
+   readonly footstepParticleIntervalSeconds: number;
+   readonly footstepOffset: number;
+   readonly footstepSize: number;
+   readonly footstepLifetime: number;
+   readonly footstepSoundIntervalDist: number;
+}
+
+export interface FootprintComponent {
+   readonly footstepParticleIntervalSeconds: number;
+   readonly footstepOffset: number;
+   readonly footstepSize: number;
+   readonly footstepLifetime: number;
+   readonly footstepSoundIntervalDist: number;
    
-   public numFootstepsTaken = 0;
-   public distanceTracker = 0;
-
-   constructor(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number) {
-      this.footstepParticleIntervalSeconds = footstepParticleIntervalSeconds;
-      this.footstepOffset = footstepOffset;
-      this.footstepSize = footstepSize;
-      this.footstepLifetime = footstepLifetime;
-      this.footstepSoundIntervalDist = footstepSoundIntervalDist;
-   }
+   numFootstepsTaken: number;
+   distanceTracker: number;
 }
 
 export const FootprintComponentArray = new ClientComponentArray<FootprintComponent>(ClientComponentType.footprint, true, {
+   createComponent: createComponent,
    onTick: onTick
 });
+
+export function createFootprintComponentParams(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number): FootprintComponentParams {
+   return {
+      footstepParticleIntervalSeconds: footstepParticleIntervalSeconds,
+      footstepOffset: footstepOffset,
+      footstepSize: footstepSize,
+      footstepLifetime: footstepLifetime,
+      footstepSoundIntervalDist: footstepSoundIntervalDist
+   };
+}
+
+function createComponent(entityConfig: EntityConfig<never, ClientComponentType.footprint>): FootprintComponent {
+   const footprintComponentParams = entityConfig.clientComponents[ClientComponentType.footprint];
+   
+   return {
+      footstepParticleIntervalSeconds: footprintComponentParams.footstepParticleIntervalSeconds,
+      footstepOffset: footprintComponentParams.footstepOffset,
+      footstepSize: footprintComponentParams.footstepSize,
+      footstepLifetime: footprintComponentParams.footstepLifetime,
+      footstepSoundIntervalDist: footprintComponentParams.footstepSoundIntervalDist,
+      numFootstepsTaken: 0,
+      distanceTracker: 0
+   }
+}
 
 const createFootstepSound = (entity: EntityID): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -65,9 +91,10 @@ const createFootstepSound = (entity: EntityID): void => {
    }
 }
 
-function onTick(footprintComponent: FootprintComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   const footprintComponent = FootprintComponentArray.getComponent(entity);
 
    // Footsteps
    if (physicsComponent.selfVelocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {

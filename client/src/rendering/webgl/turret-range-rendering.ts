@@ -1,5 +1,4 @@
 import { EntityID, EntityType } from "battletribes-shared/entities";
-import Player from "../../entities/Player";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getHoveredEntityID } from "../../entity-selection";
 import { calculateStructurePlaceInfo } from "battletribes-shared/structures";
@@ -7,7 +6,7 @@ import Camera from "../../Camera";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { ItemType, ITEM_INFO_RECORD, PlaceableItemType } from "battletribes-shared/items/items";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
-import { entityExists, getEntityLayer, getEntityType } from "../../world";
+import { entityExists, getEntityLayer, getEntityType, playerInstance } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TurretComponentArray } from "../../entity-components/server-components/TurretComponent";
 
@@ -143,9 +142,9 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    // @Cleanup: shouldn't call structure place info func. should have it passed in probably
    const playerSelectedItem = getPlayerSelectedItem();
    if (playerSelectedItem !== null && (playerSelectedItem.type === ItemType.ballista || playerSelectedItem.type === ItemType.sling_turret)) {
-      const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
-      const layer = getEntityLayer(Player.instance!.id);
+      const layer = getEntityLayer(playerInstance!);
       const structureType = ITEM_INFO_RECORD[playerSelectedItem.type as PlaceableItemType].entityType;
       const placeInfo = calculateStructurePlaceInfo(Camera.position, playerTransformComponent.rotation, structureType, layer.getWorldInfo());
 

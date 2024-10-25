@@ -2,6 +2,8 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { AIHelperComponentArray, AIHelperComponentParams } from "./server-components/AIHelperComponent";
 import { AmmoBoxComponentArray, AmmoBoxComponentParams } from "./server-components/AmmoBoxComponent";
 import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ArrowComponent";
+import { BallistaComponentArray, BallistaComponentParams } from "./server-components/BallistaComponent";
+import { BarrelComponentArray, BarrelComponentParams } from "./server-components/BarrelComponent";
 import { BattleaxeProjectileComponentArray, BattleaxeProjectileComponentParams } from "./server-components/BattleaxeProjectileComponent";
 import { BerryBushComponentArray, BerryBushComponentParams } from "./server-components/BerryBushComponent";
 import { BlueprintComponentArray, BlueprintComponentParams } from "./server-components/BlueprintComponent";
@@ -9,6 +11,7 @@ import { BoulderComponentArray, BoulderComponentParams } from "./server-componen
 import { BracingsComponentArray, BracingsComponentParams } from "./server-components/BracingsComponent";
 import { BuildingMaterialComponentArray, BuildingMaterialComponentParams } from "./server-components/BuildingMaterialComponent";
 import { CactusComponentArray, CactusComponentParams } from "./server-components/CactusComponent";
+import { CampfireComponentArray, CampfireComponentParams } from "./server-components/CampfireComponent";
 import { CookingComponentArray, CookingComponentParams } from "./server-components/CookingComponent";
 import { CowComponentArray, CowComponentParams } from "./server-components/CowComponent";
 import { CraftingStationComponentArray, CraftingStationComponentParams } from "./server-components/CraftingStationComponent";
@@ -21,6 +24,7 @@ import { FenceGateComponentArray, FenceGateComponentParams } from "./server-comp
 import { FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
 import { FollowAIComponentArray, FollowAIComponentParams } from "./server-components/FollowAIComponent";
 import { FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
+import { FurnaceComponentArray, FurnaceComponentParams } from "./server-components/FurnaceComponent";
 import { GolemComponentArray, GolemComponentParams } from "./server-components/GolemComponent";
 import { GuardianComponentArray, GuardianComponentParams } from "./server-components/GuardianComponent";
 import { GuardianGemFragmentProjectileComponentArray, GuardianGemFragmentProjectileComponentParams } from "./server-components/GuardianGemFragmentProjectileComponent";
@@ -48,6 +52,7 @@ import { RockSpikeComponentArray, RockSpikeComponentParams } from "./server-comp
 import { SlimeComponentArray, SlimeComponentParams } from "./server-components/SlimeComponent";
 import { SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
 import { SlimewispComponentArray, SlimewispComponentParams } from "./server-components/SlimewispComponent";
+import { SlingTurretComponentArray, SlingTurretComponentParams } from "./server-components/SlingTurretComponent";
 import { SnowballComponentArray, SnowballComponentParams } from "./server-components/SnowballComponent";
 import { SpearProjectileComponentArray, SpearProjectileComponentParams } from "./server-components/SpearProjectileComponent";
 import { SpikesComponentArray, SpikesComponentParams } from "./server-components/SpikesComponent";
@@ -138,7 +143,12 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.guardianGemQuake]: GuardianGemQuakeComponentArray,
    [ServerComponentType.guardianGemFragmentProjectile]: GuardianGemFragmentProjectileComponentArray,
    [ServerComponentType.guardianSpikyBall]: GuardianSpikyBallComponentArray,
-   [ServerComponentType.bracings]: BracingsComponentArray
+   [ServerComponentType.bracings]: BracingsComponentArray,
+   [ServerComponentType.ballista]: BallistaComponentArray,
+   [ServerComponentType.slingTurret]: SlingTurretComponentArray,
+   [ServerComponentType.barrel]: BarrelComponentArray,
+   [ServerComponentType.campfire]: CampfireComponentArray,
+   [ServerComponentType.furnace]: FurnaceComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -209,7 +219,12 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.guardianGemQuake]: (): GuardianGemQuakeComponentParams => 0 as any,
    [ServerComponentType.guardianGemFragmentProjectile]: (): GuardianGemFragmentProjectileComponentParams => 0 as any,
    [ServerComponentType.guardianSpikyBall]: (): GuardianSpikyBallComponentParams => 0 as any,
-   [ServerComponentType.bracings]: (): BracingsComponentParams => 0 as any
+   [ServerComponentType.bracings]: (): BracingsComponentParams => 0 as any,
+   [ServerComponentType.ballista]: (): BallistaComponentParams => 0 as any,
+   [ServerComponentType.slingTurret]: (): SlingTurretComponentParams => 0 as any,
+   [ServerComponentType.barrel]: (): BarrelComponentParams => 0 as any,
+   [ServerComponentType.campfire]: (): CampfireComponentParams => 0 as any,
+   [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

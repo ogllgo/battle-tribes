@@ -2,13 +2,13 @@ import { EntityDebugData } from "battletribes-shared/client-server-types";
 import { EnemyTribeData } from "battletribes-shared/techs";
 import { Settings } from "battletribes-shared/settings";
 import Board from "./Board";
-import Player, { updatePlayerRotation } from "./entities/Player";
+import { updatePlayerRotation } from "./entities/Player";
 import { isDev } from "./utils";
 import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-canvas";
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
-import { createEntityShaders, renderEntities } from "./rendering/webgl/entity-rendering";
-import Client, { getQueuedGameDataPackets } from "./client/Client";
+import { createEntityShaders } from "./rendering/webgl/entity-rendering";
+import Client, { getQueuedGameDataPackets } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, getMouseTargetEntity, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createWebGLContext, gl, resizeCanvas } from "./webgl";
@@ -30,7 +30,7 @@ import OPTIONS from "./options";
 import { RENDER_CHUNK_SIZE, createRenderChunks } from "./rendering/render-chunks";
 import { registerFrame, updateFrameGraph } from "./components/game/dev/FrameGraph";
 import { createNightShaders, renderLighting } from "./rendering/webgl/lighting-rendering";
-import { createPlaceableItemProgram, getEntityGhosts, renderGhostEntities } from "./rendering/webgl/entity-ghost-rendering";
+import { renderGhostEntities } from "./rendering/webgl/entity-ghost-rendering";
 import { setupFrameGraph } from "./rendering/webgl/frame-graph-rendering";
 import { createTextureAtlases } from "./texture-atlases/texture-atlases";
 import { createForcefieldShaders, renderForcefield } from "./rendering/webgl/world-border-forcefield-rendering";
@@ -55,18 +55,19 @@ import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
 import { updateEntityRenderPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
-import { processGameDataPacket } from "./client/packet-processing";
+import { processGameDataPacket } from "./networking/packet-processing";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { updateEntity } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
 import { updatePlayerMovement, updatePlayerItems } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
-import { getCurrentLayer, getEntityByID, getEntityLayer, getEntityRenderInfo, layers } from "./world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance } from "./world";
 import Layer from "./Layer";
 import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darkening-rendering";
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
+import { createCollapseParticles } from "./collapses";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -113,14 +114,14 @@ const main = (currentTime: number): void => {
                updateTextNumbers();
                Board.updateTickCallbacks();
                Board.tickEntities();
-               if (Player.instance !== null) {
+               if (playerInstance !== null) {
                   resolvePlayerCollisions();
                }
             }
             queuedPackets.length = 0;
 
-            if (Player.instance !== null) {
-               updateEntity(Player.instance.id);
+            if (playerInstance !== null) {
+               updateEntity(playerInstance);
             }
          } else {
             updateTextNumbers();
@@ -168,7 +169,7 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
    renderSolidTiles(layer, false);
    renderGrassBlockers();
    renderTurretRange();
-   if (nerdVisionIsVisible() && entityDebugData !== null && typeof getEntityByID(entityDebugData.entityID) !== "undefined") {
+   if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
       renderTriangleDebugData(entityDebugData);
    }
    renderRestrictedBuildingAreas();
@@ -228,14 +229,11 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
    if (OPTIONS.showDamageBoxes) {
       renderDamageBoxes();
    }
-   if (nerdVisionIsVisible() && entityDebugData !== null && typeof getEntityByID(entityDebugData.entityID) !== "undefined") {
+   if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
       renderLineDebugData(entityDebugData);
    }
 
-   const entityGhosts = getEntityGhosts();
-   if (entityGhosts.length > 0) {
-      renderEntities(entityGhosts);
-   }
+   renderGhostEntities();
 }
 
 abstract class Game {
@@ -364,7 +362,6 @@ abstract class Game {
             createEntityShaders();
             await createEntityOverlayShaders();
             createWorldBorderShaders();
-            createPlaceableItemProgram();
             createChunkBorderShaders();
             createHitboxShaders();
             createDebugDataShaders();
@@ -439,6 +436,8 @@ abstract class Game {
       this.cursorPositionY = calculateCursorWorldPositionY(cursorY!);
       renderCursorTooltip();
 
+      createCollapseParticles();
+
       if (isDev()) refreshDebugInfo();
    }
 
@@ -467,12 +466,12 @@ abstract class Game {
 
       // @Cleanup: move to update function in camera
       // Update the camera
-      if (Player.instance !== null) {
+      if (playerInstance !== null) {
          const frameProgress = getFrameProgress();
-         const playerRenderInfo = getEntityRenderInfo(Player.instance.id);
+         const playerRenderInfo = getEntityRenderInfo(playerInstance);
          updateEntityRenderPosition(playerRenderInfo, frameProgress);
          Camera.updatePosition();
-         Camera.updateVisibleChunkBounds(getEntityLayer(Player.instance.id));
+         Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
          Camera.updateVisibleRenderChunkBounds();
       }
 
@@ -490,8 +489,7 @@ abstract class Game {
       }
 
       if (isDev()) {
-         const trackedEntity = getEntityByID(Camera.trackedEntityID);
-         if (typeof trackedEntity !== "undefined" && Camera.trackedEntityID !== Player.instance?.id) {
+         if (entityExists(Camera.trackedEntityID) && Camera.trackedEntityID !== playerInstance) {
             Client.sendTrackEntity(Camera.trackedEntityID);
          } else if (nerdVisionIsVisible()) {
             const targettedEntity = getMouseTargetEntity();

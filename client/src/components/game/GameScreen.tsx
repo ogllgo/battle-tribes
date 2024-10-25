@@ -18,10 +18,10 @@ import { AppState } from "../App";
 import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
 import { Mutable } from "../../../../shared/src/utils";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
-import Client from "../../client/Client";
+import Client from "../../networking/Client";
 import AttackChargeBar from "./AttackChargeBar";
 import GameInteractableLayer from "./GameInteractableLayer";
-import { sendEntitySummonPacket } from "../../client/packet-creation";
+import { sendEntitySummonPacket } from "../../networking/packet-creation";
 
 export const enum GameInteractState {
    none,

@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { NUM_RENDER_LAYERS, RenderLayer } from "../../render-layers";
 import { EntityID } from "battletribes-shared/entities";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { clearEntityInVertexData, EntityRenderingVars, getEntityRenderingProgram, setEntityInVertexData } from "./entity-rendering";
 import Camera from "../../Camera";
@@ -191,7 +191,7 @@ export function registerChunkRenderedEntity(entity: EntityID, renderLayer: Chunk
    const renderInfo = getEntityRenderInfo(entity);
    
    const chunkDatas = renderLayerChunkDataRecord[renderLayer];
-   const chunkIdx = getEntityChunkIndex(renderInfo.associatedEntity);
+   const chunkIdx = getEntityChunkIndex(entity);
    let chunkData = chunkDatas[chunkIdx];
    if (typeof chunkData === "undefined") {
       createEntityRenderedChunkData(chunkIdx);

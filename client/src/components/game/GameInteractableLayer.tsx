@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
-import { EntityID, EntityType, LimbAction } from "../../../../shared/src/entities";
-import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo } from "../../../../shared/src/items/items";
+import { EntityID, LimbAction } from "../../../../shared/src/entities";
+import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { calculateStructurePlaceInfo } from "../../../../shared/src/structures";
@@ -9,9 +9,8 @@ import { TribesmanTitle } from "../../../../shared/src/titles";
 import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
-import Client from "../../client/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../client/packet-creation";
-import Player from "../../entities/Player";
+import Client from "../../networking/Client";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../networking/packet-creation";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
@@ -22,28 +21,19 @@ import Game from "../../Game";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
 import { closeCurrentMenu } from "../../menus";
-import { setGhostInfo, GhostInfo, ENTITY_TYPE_TO_GHOST_TYPE_MAP, createEntityGhost, removeEntityGhost } from "../../rendering/webgl/entity-ghost-rendering";
+import { GhostInfo, ENTITY_TYPE_TO_GHOST_TYPE_MAP } from "../../rendering/webgl/entity-ghost-rendering";
 import { attemptToCompleteNode } from "../../research";
 import { playSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
-import { createTransformComponentParams, TransformComponentArray, TransformComponentParams, updateEntityPosition } from "../../entity-components/server-components/TransformComponent";
+import { TransformComponentArray, updateEntityPosition } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, registerBasicEntityInfo, removeBasicEntityInfo } from "../../world";
+import { getEntityLayer, playerInstance } from "../../world";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../entity-components/server-components/TribeMemberComponent";
-import { SpikesComponentArray } from "../../entity-components/server-components/SpikesComponent";
 import { StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
-import { EntityComponents, ServerComponentType } from "../../../../shared/src/components";
-import { createEntity } from "../../entity-class-record";
-import { getServerComponentArray } from "../../entity-components/ComponentArray";
-import { EntityRenderInfo } from "../../Entity";
-import { addEntityToRenderHeightMap } from "../../rendering/webgl/entity-rendering";
 import { registerDirtyEntity } from "../../rendering/render-part-matrices";
-import { thingIsRenderPart } from "../../render-parts/render-parts";
-import { ClientHitbox } from "../../boxes";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -140,7 +130,7 @@ export function getHotbarSelectedItemSlot(): number {
 }
 
 export function getInstancePlayerAction(inventoryName: InventoryName): LimbAction {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limbInfo = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
    return limbInfo.action;
 }
@@ -153,7 +143,7 @@ export function discombobulate(discombobulationTimeSeconds: number): void {
 }
 
 const hasBlockedAttack = (limb: LimbInfo): boolean => {
-   const damageBoxComponent = DamageBoxComponentArray.getComponent(Player.instance!.id);
+   const damageBoxComponent = DamageBoxComponentArray.getComponent(playerInstance!);
 
    for (const blockBox of damageBoxComponent.blockBoxes) {
       if (blockBox.associatedLimbInventoryName === limb.inventoryName && blockBox.hasBlocked) {
@@ -184,7 +174,7 @@ export function cancelAttack(limb: LimbInfo): void {
 
 // @Cleanup: bad name. mostly updating limbs
 export function updatePlayerItems(): void {
-   if (Player.instance === null) {
+   if (playerInstance === null) {
       return;
    }
 
@@ -199,7 +189,7 @@ export function updatePlayerItems(): void {
       const inventoryName = i === 0 ? InventoryName.hotbar : InventoryName.offhand;
       const selectedItemSlot = i === 0 ? hotbarSelectedItemSlot : 1;
       
-      const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance.id);
+      const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
       const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
 
       if (limb.currentActionPauseTicksRemaining > 0) {
@@ -237,8 +227,8 @@ export function updatePlayerItems(): void {
          // @Speed: Garbage collection
          limb.currentActionEndLimbState = copyLimbState(attackInfo.attackPattern!.swung);
 
-         const transformComponent = TransformComponentArray.getComponent(Player.instance!.id);
-         const physicsComponent = PhysicsComponentArray.getComponent(Player.instance!.id);
+         const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
 
          // Add extra range for moving attacks
          const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
@@ -390,7 +380,7 @@ export function updatePlayerItems(): void {
 }
 
 const tryToSwing = (inventoryName: InventoryName): boolean => {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
 
    const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
    const attackInfo = getItemAttackInfo(limb.heldItemType);
@@ -444,7 +434,7 @@ const getAttackTimeMultiplier = (itemType: ItemType | null): number => {
    }
 
    // Builders swing hammers 30% faster
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
    if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.builder) && itemType !== null && ITEM_TYPE_RECORD[itemType] === "hammer") {
       swingTimeMultiplier /= 1.3;
    }
@@ -484,7 +474,7 @@ const getAttackTimeMultiplier = (itemType: ItemType | null): number => {
 // }
 
 const attemptAttack = (): void => {
-   if (Player.instance === null) return;
+   if (playerInstance === null) return;
 
    let attackDidSucceed = tryToSwing(InventoryName.hotbar);
    if (!attackDidSucceed && Game.tribe.tribeType === TribeType.barbarians) {
@@ -499,15 +489,19 @@ const attemptAttack = (): void => {
 }
 
 export function getPlayerSelectedItem(): Item | null {
-   if (Player.instance === null) return null;
+   if (playerInstance === null) return null;
 
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar)!;
    return hotbarInventory.getItem(hotbarSelectedItemSlot);
 }
 
-const getSelectedItemInfo = (): SelectedItemInfo | null => {
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+export function getSelectedItemInfo(): SelectedItemInfo | null {
+   if (playerInstance === null) {
+      return null;
+   }
+   
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    const heldItem = hotbarInventory.getItem(hotbarSelectedItemSlot);
@@ -533,7 +527,7 @@ const getSelectedItemInfo = (): SelectedItemInfo | null => {
 }
 
 const onGameMouseDown = (e: React.MouseEvent): void => {
-   if (Player.instance === null) return;
+   if (playerInstance === null) return;
 
    if (e.button === 0) { // Left click
       leftMouseButtonIsPressed = true;
@@ -547,7 +541,7 @@ const onGameMouseDown = (e: React.MouseEvent): void => {
 
          // Special case: Barbarians can eat with both hands at once
          if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
-            const inventoryComponent = InventoryComponentArray.getComponent(Player.instance.id);
+            const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
             const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
             const offhandHeldItem = offhandInventory.getItem(1);
             if (offhandHeldItem !== null) {
@@ -566,7 +560,7 @@ const onGameMouseDown = (e: React.MouseEvent): void => {
 }
 
 const onGameMouseUp = (e: React.MouseEvent): void => {
-   if (Player.instance === null) return;
+   if (playerInstance === null) return;
 
    if (e.button === 0) { // Left click
       leftMouseButtonIsPressed = false;
@@ -594,8 +588,8 @@ const createHotbarKeyListeners = (): void => {
 }
 
 const throwHeldItem = (): void => {
-   if (Player.instance !== null) {
-      const transformComponent = TransformComponentArray.getComponent(Player.instance.id);
+   if (playerInstance !== null) {
+      const transformComponent = TransformComponentArray.getComponent(playerInstance);
       Client.sendHeldItemDropPacket(99999, transformComponent.rotation);
    }
 }
@@ -608,7 +602,7 @@ const hideInventory = (): void => {
    BackpackInventoryMenu_setIsVisible(false);
 
    // If the player is holding an item when their inventory is closed, throw the item out
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
    if (heldItemInventory.hasItem(1)) {
       throwHeldItem();
@@ -667,14 +661,14 @@ export function createPlayerInputListeners(): void {
    });
 
    addKeyListener("q", () => {
-      if (Player.instance !== null) {
+      if (playerInstance !== null) {
          const selectedItemInfo = getSelectedItemInfo();
          if (selectedItemInfo === null) {
             return;
          }
 
          const isOffhand = selectedItemInfo.inventoryName === InventoryName.offhand;
-         const playerTransformComponent = TransformComponentArray.getComponent(Player.instance.id);
+         const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const dropAmount = keyIsPressed("shift") ? 99999 : 1;
          sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerTransformComponent.rotation);
       }
@@ -682,33 +676,36 @@ export function createPlayerInputListeners(): void {
 }
 
 const isCollidingWithCoveredSpikes = (): boolean => {
-   const transformComponent = TransformComponentArray.getComponent(Player.instance!.id);
-   
-   for (let i = 0; i < transformComponent.collidingEntities.length; i++) {
-      const entity = transformComponent.collidingEntities[i];
-
-      if (SpikesComponentArray.hasComponent(entity.id)) {
-         const spikesComponent = SpikesComponentArray.getComponent(entity.id);
-         if (spikesComponent.isCovered) {
-            return true;
-         }
-      }
-   }
-
+   // @Incomplete
    return false;
+   
+   // const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   
+   // for (let i = 0; i < transformComponent.collidingEntities.length; i++) {
+   //    const entity = transformComponent.collidingEntities[i];
+
+   //    if (SpikesComponentArray.hasComponent(entity.id)) {
+   //       const spikesComponent = SpikesComponentArray.getComponent(entity.id);
+   //       if (spikesComponent.isCovered) {
+   //          return true;
+   //       }
+   //    }
+   // }
+
+   // return false;
 }
 
 const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
    let moveSpeedMultiplier = 1;
 
-   const statusEffectComponent = StatusEffectComponentArray.getComponent(Player.instance!.id);
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(playerInstance!);
    for (const statusEffect of statusEffectComponent.statusEffects) {
       moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect.type].moveSpeedMultiplier;
    }
 
    moveSpeedMultiplier *= TRIBE_INFO_RECORD[Game.tribe.tribeType].moveSpeedMultiplier;
 
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
    if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter)) {
       moveSpeedMultiplier *= 1.2;
    }
@@ -717,7 +714,7 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
       moveSpeedMultiplier *= 0.5;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
    // Get how aligned the intended movement direction and the player's rotation are
    const directionAlignmentDot = Math.sin(moveDirection) * Math.sin(transformComponent.rotation) + Math.cos(moveDirection) * Math.cos(transformComponent.rotation);
    // Move 15% slower if you're accelerating away from where you're moving
@@ -732,7 +729,7 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
 /** Updates the player's movement to match what keys are being pressed. */
 export function updatePlayerMovement(): void {
    // Don't update movement if the player doesn't exist
-   if (Player.instance === null) return;
+   if (playerInstance === null) return;
    
    // Get pressed keys
    const wIsPressed = keyIsPressed("w") || keyIsPressed("W") || keyIsPressed("ArrowUp");
@@ -763,7 +760,7 @@ export function updatePlayerMovement(): void {
       case 15: moveDirection = null;          break;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(Player.instance.id);
+   const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
 
    if (moveDirection !== null) {
       const playerAction = getInstancePlayerAction(InventoryName.hotbar);
@@ -807,13 +804,15 @@ const selectItem = (item: Item): void => {
 
          // @Incomplete: Will miss out on any client components
          // @Incomplete: Make sure this will work when the player changes layers
+
+         // Lots of @Copynpaste from packet-processing
          
          // @INCOMPLETE
          // @INCOMPLETE
          // @INCOMPLETE
          
          // const layer = getCurrentLayer();
-         // const transformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+         // const transformComponent = TransformComponentArray.getComponent(playerInstance!);
          
          // const itemInfo = ITEM_INFO_RECORD[item.type] as PlaceableItemInfo;
          // const entityType = itemInfo.entityType;
@@ -828,12 +827,12 @@ const selectItem = (item: Item): void => {
          // const renderInfo = new EntityRenderInfo(entityID);
          // registerBasicEntityInfo(entity, entityType, 0, layer, renderInfo);
 
+         // const components: EntityServerComponentParams = {};
+
          // const componentTypes = EntityComponents[entityType];
          // for (let i = 0; i < componentTypes.length; i++) {
          //    const componentType = componentTypes[i];
-         //    const componentArray = getServerComponentArray(componentType);
 
-         //    let component!: object;
          //    switch (componentType) {
          //       case ServerComponentType.transform: {
          //          const hitboxes = new Array<ClientHitbox>();
@@ -842,7 +841,6 @@ const selectItem = (item: Item): void => {
          //             const clientHitbox = new ClientHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags, i);
          //             hitboxes.push(clientHitbox);
          //          }
-                  
 
          //          const transformComponentParams = createTransformComponentParams(
          //             placeInfo.position.copy(),
@@ -852,17 +850,72 @@ const selectItem = (item: Item): void => {
          //             DEFAULT_COLLISION_MASK
          //          );
 
+         //          components[componentType] = transformComponentParams;
+         //          break;
+         //       }
+         //       case ServerComponentType.health: {
+         //          const params = createHealthComponentParams(0, 0);
+         //          components[componentType] = params;
+         //          break;
+         //       }
+         //       case ServerComponentType.statusEffect: {
+         //          const params = createStatusEffectComponentParams([]);
+         //          components[componentType] = params;
+         //          break;
+         //       }
+         //       case ServerComponentType.structure: {
+         //          components[componentType] = createStructureComponentParams(false, 0);
+         //          break;
+         //       }
+         //       case ServerComponentType.tribe: {
+         //          const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
                   
-         //          const position = placeInfo.position.copy();
-         //          component = componentArray.createComponent()
-         //          component = createTransformComponent(position, placeInfo.rotation, hitboxes, COLLISION_BITS.default, DEFAULT_COLLISION_MASK);
+         //          components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
+         //          break;
+         //       }
+         //       case ServerComponentType.buildingMaterial: {
+         //          components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
+         //          break;
+         //       }
+         //       case ServerComponentType.bracings: {
+         //          components[componentType] = createBracingsComponentParams();
          //          break;
          //       }
          //       default: {
-         //          throw new Error(componentType.toString());
+         //          throw new Error(ServerComponentType[componentType]);
          //       }
          //    }
+         // }
 
+         // // Create entity config
+         // const entityConfig: EntityConfig<never, never> = {
+         //    entity: entityID,
+         //    entityType: entityType,
+         //    layer: layer,
+         //    renderInfo: renderInfo,
+         //    // @Cleanup: cast
+         //    serverComponents: components as any,
+         //    clientComponents: {}
+         // };
+
+         // const renderPartsRecord: Partial<Record<ServerComponentType, object>> = {};
+      
+         // // Create render parts
+         // for (const componentType of componentTypes) {
+         //    const componentArray = getServerComponentArray(componentType);
+         //    if (typeof componentArray.createRenderParts !== "undefined") {
+         //       const renderParts = componentArray.createRenderParts(renderInfo, entityConfig);
+         //       renderPartsRecord[componentType] = renderParts;
+         //    }
+         // }
+      
+         // // Create components
+         // for (const componentType of componentTypes) {
+         //    const componentArray = getServerComponentArray(componentType);
+      
+         //    const renderParts = renderPartsRecord[componentType]!;
+         //    const component = componentArray.createComponent(entityConfig, renderParts);
+            
          //    componentArray.addComponent(entityID, component);
          // }
 
@@ -880,16 +933,16 @@ const selectItem = (item: Item): void => {
          // addEntityToRenderHeightMap(renderInfo);
          
          // placeableEntityGhost = entityID;
-         // createEntityGhost(entityID);
+         // // createEntityGhost(entityID);
          
          // registerDirtyEntity(entityID);
-         // break;
+         break;
       }
    }
 }
 
 const deselectItem = (item: Item, isOffhand: boolean): void => {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limb = inventoryUseComponent.limbInfos[isOffhand ? 1 : 0];
 
    const itemCategory = ITEM_TYPE_RECORD[item.type];
@@ -910,38 +963,38 @@ const deselectItem = (item: Item, isOffhand: boolean): void => {
 
          // Clear entity ghost
          if (placeableEntityGhost !== 0) {
-            const entityType = getEntityType(placeableEntityGhost);
-            const componentTypes = EntityComponents[entityType];
+            // const entityType = getEntityType(placeableEntityGhost);
+            // const componentTypes = EntityComponents[entityType];
 
-            // @Hack @Copynpaste from addEntity
-            for (let i = 0; i < componentTypes.length; i++) {
-               const componentType = componentTypes[i];
-               const componentArray = getServerComponentArray(componentType);
-               if (typeof componentArray.onRemove !== "undefined" && componentArray.hasComponent(placeableEntityGhost)) {
-                  componentArray.onRemove(placeableEntityGhost);
-               }
-            }
+            // // @Hack @Copynpaste from addEntity
+            // for (let i = 0; i < componentTypes.length; i++) {
+            //    const componentType = componentTypes[i];
+            //    const componentArray = getServerComponentArray(componentType);
+            //    if (typeof componentArray.onRemove !== "undefined" && componentArray.hasComponent(placeableEntityGhost)) {
+            //       componentArray.onRemove(placeableEntityGhost);
+            //    }
+            // }
 
-            // Remove components
-            for (let i = 0; i < componentTypes.length; i++) {
-               const componentType = componentTypes[i];
-               const componentArray = getServerComponentArray(componentType);
-               componentArray.removeComponent(placeableEntityGhost);
-            }
+            // // Remove components
+            // for (let i = 0; i < componentTypes.length; i++) {
+            //    const componentType = componentTypes[i];
+            //    const componentArray = getServerComponentArray(componentType);
+            //    componentArray.removeComponent(placeableEntityGhost);
+            // }
          
-            // @Hack @Copynpaste from addEntity
-            const renderInfo = getEntityRenderInfo(placeableEntityGhost);
-            addEntityToRenderHeightMap(renderInfo);
+            // // @Hack @Copynpaste from addEntity
+            // const renderInfo = getEntityRenderInfo(placeableEntityGhost);
+            // addEntityToRenderHeightMap(renderInfo);
    
-            removeBasicEntityInfo(placeableEntityGhost);
+            // removeBasicEntityInfo(placeableEntityGhost);
 
-            removeEntityGhost(placeableEntityGhost);
+            // removeEntityGhost(placeableEntityGhost);
             
             placeableEntityGhost = 0;
          }
          
          // Clear placeable item ghost
-         setGhostInfo(null);
+         // setGhostInfo(null);
          break;
       }
    }
@@ -950,7 +1003,7 @@ const deselectItem = (item: Item, isOffhand: boolean): void => {
 const unuseItem = (itemType: ItemType): void => {
    switch (ITEM_TYPE_RECORD[itemType]) {
       case "healing": {
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+         const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
          const useInfo = inventoryUseComponent.limbInfos[0];
          
          useInfo.action = LimbAction.none;
@@ -971,8 +1024,8 @@ const unuseItem = (itemType: ItemType): void => {
 }
 
 const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryName, itemSlot: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(Player.instance!.id);
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
 
    const attackInfo = getItemAttackInfo(itemType);
    if (attackInfo.attackTimings.blockTimeTicks !== null) {
@@ -1011,7 +1064,7 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
    const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "healing": {
-         const healthComponent = HealthComponentArray.getComponent(Player.instance!.id);
+         const healthComponent = HealthComponentArray.getComponent(playerInstance!);
          const maxHealth = TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer;
          if (healthComponent.health >= maxHealth) {
             break;
@@ -1102,7 +1155,7 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
          break;
       }
       case "placeable": {
-         const layer = getEntityLayer(Player.instance!.id);
+         const layer = getEntityLayer(playerInstance!);
          const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
          const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, layer.getWorldInfo());
          
@@ -1119,7 +1172,7 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
 }
 
 const onItemRightClickUp = (item: Item, inventoryName: InventoryName): void => {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
 
    const itemCategory = ITEM_TYPE_RECORD[item.type];
@@ -1175,7 +1228,7 @@ const onItemRightClickUp = (item: Item, inventoryName: InventoryName): void => {
          
          sendItemUsePacket();
          // @Incomplete: Don't play if bow didn't actually fire an arrow
-         playBowFireSound(Player.instance!.id, item.type);
+         playBowFireSound(playerInstance!, item.type);
 
          break;
       }
@@ -1187,7 +1240,7 @@ const onItemRightClickUp = (item: Item, inventoryName: InventoryName): void => {
 }
 
 export function selectItemSlot(itemSlot: number): void {
-   if (Player.instance === null || itemSlot === hotbarSelectedItemSlot) {
+   if (playerInstance === null || itemSlot === hotbarSelectedItemSlot) {
       return;
    }
 
@@ -1198,7 +1251,7 @@ export function selectItemSlot(itemSlot: number): void {
       return;
    }
 
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    const previousItem = hotbarInventory.itemSlots[hotbarSelectedItemSlot];
@@ -1221,7 +1274,7 @@ export function selectItemSlot(itemSlot: number): void {
       }
    }
 
-   const playerInventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance.id);
+   const playerInventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
    const hotbarUseInfo = getLimbInfoByInventoryName(playerInventoryUseComponent, InventoryName.hotbar);
    hotbarUseInfo.selectedItemSlot = itemSlot;
 
@@ -1248,7 +1301,7 @@ const tickItem = (itemType: ItemType): void => {
    switch (itemCategory) {
       case "healing": {
          // If the player can no longer eat food without wasting it, stop eating
-         const healthComponent = HealthComponentArray.getComponent(Player.instance!.id);
+         const healthComponent = HealthComponentArray.getComponent(playerInstance!);
          const maxHealth = TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer;
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
          if ((playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine) && healthComponent.health >= maxHealth) {
@@ -1262,8 +1315,8 @@ const tickItem = (itemType: ItemType): void => {
          // Placeable item ghost
          // 
 
-         const layer = getEntityLayer(Player.instance!.id);
-         const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+         const layer = getEntityLayer(playerInstance!);
+         const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
          const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
          const placeInfo = calculateStructurePlaceInfo(Camera.position, playerTransformComponent.rotation, structureType, layer.getWorldInfo());
 
@@ -1296,7 +1349,7 @@ const tickItem = (itemType: ItemType): void => {
             tint: placeInfo.isValid ? [1, 1, 1] : [1.5, 0.5, 0.5],
             opacity: 0.5
          };
-         setGhostInfo(ghostInfo);
+         // setGhostInfo(ghostInfo);
 
          break;
       }

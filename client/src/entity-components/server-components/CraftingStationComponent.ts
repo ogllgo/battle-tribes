@@ -1,7 +1,8 @@
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface CraftingStationComponentParams {
    readonly craftingStation: CraftingStation;
@@ -25,9 +26,9 @@ function createParamsFromData(reader: PacketReader): CraftingStationComponentPar
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.craftingStation>): CraftingStationComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.craftingStation, never>): CraftingStationComponent {
    return {
-      craftingStation: entityConfig.components[ServerComponentType.craftingStation].craftingStation
+      craftingStation: entityConfig.serverComponents[ServerComponentType.craftingStation].craftingStation
    };
 }
 

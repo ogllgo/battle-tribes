@@ -8,9 +8,10 @@ import { getTribesmanRadius, TribeMemberComponentArray } from "./TribeMemberComp
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
-import Player from "../../entities/Player";
+import { playerInstance } from "../../world";
+import { EntityConfig } from "../ComponentArray";
 
 export interface TribeComponentParams {
    readonly tribeID: number;
@@ -51,16 +52,20 @@ export const TribeComponentArray = new ServerComponentArray<TribeComponent, Trib
    updatePlayerFromData: updatePlayerFromData
 });
 
-function createParamsFromData(reader: PacketReader): TribeComponentParams {
-   const tribeID = reader.readNumber();
+export function createTribeComponentParams(tribeID: number): TribeComponentParams {
    return {
       tribeID: tribeID,
       tribeType: getTribeType(tribeID)
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribe>): TribeComponent {
-   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
+function createParamsFromData(reader: PacketReader): TribeComponentParams {
+   const tribeID = reader.readNumber();
+   return createTribeComponentParams(tribeID);
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tribe, never>): TribeComponent {
+   const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
 
    return {
       tribeID: tribeComponentParams.tribeID,
@@ -104,7 +109,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   const tribeComponent = TribeComponentArray.getComponent(Player.instance!.id);
+   const tribeComponent = TribeComponentArray.getComponent(playerInstance!);
    tribeComponent.tribeID = reader.readNumber();
    tribeComponent.tribeType = getTribeType(tribeComponent.tribeID);
 }

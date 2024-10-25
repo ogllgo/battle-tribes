@@ -1,11 +1,10 @@
 import { getTechRequiredForItem } from "battletribes-shared/techs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { windowHeight } from "../../../webgl";
 import ItemSlot, { ItemSlotCallbackInfo } from "../inventories/ItemSlot";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
-import Player from "../../../entities/Player";
 import Game from "../../../Game";
 import { playSound } from "../../../sound";
 import { CraftingRecipe, CraftingStation, CRAFTING_RECIPES, forceGetItemRecipe } from "battletribes-shared/items/crafting-recipes";
@@ -16,6 +15,7 @@ import { deselectHighlightedEntity } from "../../../entity-selection";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
+import { playerInstance } from "../../../world";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
@@ -93,7 +93,7 @@ const Ingredient = ({ ingredientType, amountRequiredForRecipe }: IngredientProps
    
    const itemIconSource = getItemTypeImage(ingredientType);
 
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    // Find whether the player has enough available ingredients to craft the recipe
@@ -191,7 +191,7 @@ const CraftingMenu = () => {
          return;
       }
 
-      const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
       playSound("craft.mp3", 0.25, 1, playerTransformComponent.position);
       Client.sendCraftingPacket(selectedRecipeIndex.current);
@@ -221,11 +221,11 @@ const CraftingMenu = () => {
    // }
 
    CraftingMenu_updateRecipes = useCallback((): void => {
-      if (Player.instance === null) {
+      if (playerInstance === null) {
          return;
       }
       
-      const inventoryComponent = InventoryComponentArray.getComponent(Player.instance.id);
+      const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
       const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
       const backpack = getInventory(inventoryComponent, InventoryName.backpack);
       
@@ -382,7 +382,7 @@ const CraftingMenu = () => {
       return isCraftable ? "craftable" : undefined;
    }
 
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    const craftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot)!;
 
    return <div id="crafting-menu" className="inventory" ref={onCraftingMenuRefChange}>
@@ -417,7 +417,7 @@ const CraftingMenu = () => {
 
             <div className="bottom">
                <button onClick={craftRecipe} className={`craft-button${craftableRecipes.current.includes(selectedRecipe) ? " craftable" : ""}`}>CRAFT</button>
-               <ItemSlot className="crafting-output" entityID={Player.instance!.id} inventory={craftingOutputSlot} itemSlot={1} validItemSpecifier={() => false} />
+               <ItemSlot className="crafting-output" entityID={playerInstance!} inventory={craftingOutputSlot} itemSlot={1} validItemSpecifier={() => false} />
             </div>
          </> : <>
             <div className="select-message">&#40;Select a recipe to view&#41;</div>

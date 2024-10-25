@@ -1,5 +1,4 @@
 import { Hitbox } from "../../../../shared/src/boxes/boxes";
-import { createBracingHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import { CollisionGroup } from "../../../../shared/src/collision-groups";
 import { BuildingMaterial, ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";

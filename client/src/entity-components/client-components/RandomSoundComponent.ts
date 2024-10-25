@@ -1,49 +1,62 @@
 import { EntityID } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
 import { playSound } from "../../sound";
-import { ClientComponentType } from "../client-components";
+import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
+export interface RandomSoundComponentParams {}
+
 /** Plays sounds coming from the entity randomly */
-export class RandomSoundComponent {
-   public minSoundIntervalTicks = 0;
-   public maxSoundIntervalTicks = 0;
-   public volume = 0;
+export interface RandomSoundComponent {
+   minSoundIntervalTicks: number;
+   maxSoundIntervalTicks: number;
+   volume: number;
 
-   public soundTimerTicks = 0;
+   soundTimerTicks: number;
 
-   public sounds: ReadonlyArray<string> = [];
-   
-   constructor(entity: EntityID) {
-      // @Hack
-      RandomSoundComponentArray.addComponent(entity, this);
+   sounds: ReadonlyArray<string>;
+}
+
+export function updateRandomSoundComponentSounds(randomSoundComponent: RandomSoundComponent, minSoundIntervalTicks: number, maxSoundIntervalTicks: number, sounds: ReadonlyArray<string>, volume: number) {
+   // Don't update if already updated
+   if (randomSoundComponent.sounds === sounds) {
+      return;
    }
-
-   public updateSounds(minSoundIntervalTicks: number, maxSoundIntervalTicks: number, sounds: ReadonlyArray<string>, volume: number) {
-      // Don't update if already updated
-      if (this.sounds === sounds) {
-         return;
-      }
-      
-      this.minSoundIntervalTicks = minSoundIntervalTicks;
-      this.maxSoundIntervalTicks = maxSoundIntervalTicks;
-      this.sounds = sounds;
-      this.volume = volume;
-      
-      if (this.soundTimerTicks === 0) {
-         this.soundTimerTicks = randFloat(minSoundIntervalTicks, maxSoundIntervalTicks);
-      } else if (this.soundTimerTicks > this.maxSoundIntervalTicks)  {
-         this.soundTimerTicks = this.maxSoundIntervalTicks;
-      }
+   
+   randomSoundComponent.minSoundIntervalTicks = minSoundIntervalTicks;
+   randomSoundComponent.maxSoundIntervalTicks = maxSoundIntervalTicks;
+   randomSoundComponent.sounds = sounds;
+   randomSoundComponent.volume = volume;
+   
+   if (randomSoundComponent.soundTimerTicks === 0) {
+      randomSoundComponent.soundTimerTicks = randFloat(minSoundIntervalTicks, maxSoundIntervalTicks);
+   } else if (randomSoundComponent.soundTimerTicks > randomSoundComponent.maxSoundIntervalTicks)  {
+      randomSoundComponent.soundTimerTicks = randomSoundComponent.maxSoundIntervalTicks;
    }
 }
 
 export const RandomSoundComponentArray = new ClientComponentArray<RandomSoundComponent>(ClientComponentType.randomSound, true, {
+   createComponent: createComponent,
    onTick: onTick
 });
 
-function onTick(randomSoundComponent: RandomSoundComponent, entity: EntityID): void {
+export function createRandomSoundComponentParams(): RandomSoundComponentParams {
+   return {};
+}
+
+function createComponent(): RandomSoundComponent {
+   return {
+      minSoundIntervalTicks: 0,
+      maxSoundIntervalTicks: 0,
+      volume: 0,
+      soundTimerTicks: 0,
+      sounds: []
+   };
+}
+
+function onTick(entity: EntityID): void {
+   const randomSoundComponent = RandomSoundComponentArray.getComponent(entity);
    if (randomSoundComponent.maxSoundIntervalTicks === 0) {
       return;
    }

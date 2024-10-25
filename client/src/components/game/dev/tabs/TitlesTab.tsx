@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NUM_TRIBESMAN_TITLES, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "battletribes-shared/titles";
-import Client from "../../../../client/Client";
+import Client from "../../../../networking/Client";
 
 const enum ListType {
    add,

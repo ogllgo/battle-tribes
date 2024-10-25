@@ -2,13 +2,12 @@ import { rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/util
 import { createWebGLProgram, gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../ubos";
-import Entity from "../../Entity";
 import { createImage } from "../../textures";
 import { RenderableType, addRenderable } from "../render-loop";
 import { RenderPart, renderPartIsTextured } from "../../render-parts/render-parts";
-import { getEntityRenderLayer } from "../../render-layers";
-import { getEntityLayer } from "../../world";
+import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
+import { calculateRenderPartDepth } from "./entity-rendering";
 
 const enum Vars {
    ATTRIBUTES_PER_VERTEX = 8
@@ -32,6 +31,20 @@ let indexBuffer: WebGLBuffer;
 
 let overlayTextureArray: WebGLTexture;
 
+const getOverlayRenderHeight = (overlay: RenderPartOverlayGroup): number => {
+   let minDepth = 999999;
+   for (let i = 0; i < overlay.renderParts.length; i++) {
+      const renderPart = overlay.renderParts[i];
+      const renderInfo = getEntityRenderInfo(overlay.entity);
+      const depth = calculateRenderPartDepth(renderPart, renderInfo);
+      if (depth < minDepth) {
+         minDepth = depth;
+      }
+   }
+
+   return minDepth - 0.0001;
+}
+
 export function createRenderPartOverlayGroup(entity: EntityID, textureSource: string, renderParts: Array<RenderPart>): RenderPartOverlayGroup {
    const overlay: RenderPartOverlayGroup = {
       entity: entity,
@@ -39,9 +52,10 @@ export function createRenderPartOverlayGroup(entity: EntityID, textureSource: st
       renderParts: renderParts
    };
 
-   const renderLayer = getEntityRenderLayer(entity);
+   const renderInfo = getEntityRenderInfo(entity);
+   
    // @Cleanup: Side effect
-   addRenderable(getEntityLayer(entity), RenderableType.overlay, overlay, renderLayer);
+   addRenderable(getEntityLayer(entity), RenderableType.overlay, overlay, renderInfo.renderLayer, getOverlayRenderHeight(overlay));
 
    return overlay;
 }

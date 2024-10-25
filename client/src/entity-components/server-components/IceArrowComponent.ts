@@ -26,7 +26,7 @@ function createComponent(): IceArrowComponent {
    return {};
 }
 
-function onTick(_iceArrowComponent: IceArrowComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    if (Math.random() < 30 / Settings.TPS) {

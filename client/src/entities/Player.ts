@@ -1,16 +1,12 @@
-import Camera from "../Camera";
 import { halfWindowHeight, halfWindowWidth } from "../webgl";
-import TribeMember from "./TribeMember";
-import { FootprintComponent, FootprintComponentArray } from "../entity-components/client-components/FootprintComponent";
-import { EquipmentComponent, EquipmentComponentArray } from "../entity-components/client-components/EquipmentComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { getEntityRenderInfo } from "../world";
+import { getEntityRenderInfo, playerInstance } from "../world";
 
 /** Updates the rotation of the player to match the cursor position */
 export function updatePlayerRotation(cursorX: number, cursorY: number): void {
-   if (Player.instance === null || cursorX === null || cursorY === null) return;
+   if (playerInstance === null || cursorX === null || cursorY === null) return;
 
    const relativeCursorX = cursorX - halfWindowWidth;
    const relativeCursorY = -cursorY + halfWindowHeight;
@@ -18,8 +14,8 @@ export function updatePlayerRotation(cursorX: number, cursorY: number): void {
    let cursorDirection = Math.atan2(relativeCursorY, relativeCursorX);
    cursorDirection = Math.PI/2 - cursorDirection;
 
-   const transformComponent = TransformComponentArray.getComponent(Player.instance.id);
-   const physicsComponent = PhysicsComponentArray.getComponent(Player.instance.id);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
    
    const previousRotation = transformComponent.rotation;
    transformComponent.rotation = cursorDirection;
@@ -27,7 +23,7 @@ export function updatePlayerRotation(cursorX: number, cursorY: number): void {
    // Angular velocity
    physicsComponent.angularVelocity = (transformComponent.rotation - previousRotation) * Settings.TPS;
 
-   const renderInfo = getEntityRenderInfo(Player.instance.id);
+   const renderInfo = getEntityRenderInfo(playerInstance);
    renderInfo.dirty();
 }
 
@@ -97,31 +93,3 @@ export function updatePlayerRotation(cursorX: number, cursorY: number): void {
 //    setCraftingMenuAvailableRecipes(availableCraftingRecipes);
 //    setCraftingMenuAvailableCraftingStations(availableCraftingStations);
 // }
-
-export default class Player extends TribeMember {
-   // @Cleanup: once reworked entity out of existance, this should be changed to instanceID which can be EntityID | null (or Entity | null)
-   /** The player entity associated with the current player. If null, then the player is dead */
-   public static instance: Player | null = null;
-   
-   constructor(id: number) {
-      super(id);
-      
-      FootprintComponentArray.addComponent(this.id, new FootprintComponent(0.2, 20, 64, 4, 64));
-      EquipmentComponentArray.addComponent(this.id, new EquipmentComponent());
-   }
-
-   public static createInstancePlayer(player: Player): void {
-      Player.instance = player;
-      Camera.setTrackedEntityID(player.id);
-   }
-}
-
-if (module.hot) {
-   module.hot.dispose(data => {
-      data.playerInstance = Player.instance;
-   });
-
-   if (module.hot.data) {
-      Player.instance = module.hot.data.playerInstance;
-   }
-}

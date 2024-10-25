@@ -68,6 +68,11 @@ import { GuardianGemFragmentProjectileComponent } from "./components/GuardianGem
 import { GuardianSpikyBallComponent } from "./components/GuardianSpikyBallComponent";
 import { EntityType } from "battletribes-shared/entities";
 import { BracingsComponent } from "./components/BracingsComponent";
+import { BallistaComponent } from "./components/BallistaComponent";
+import { SlingTurretComponent } from "./components/SlingTurretComponent";
+import { BarrelComponent } from "./components/BarrelComponent";
+import { CampfireComponent } from "./components/CampfireComponent";
+import { FurnaceComponent } from "./components/FurnaceComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -139,7 +144,12 @@ const ComponentClassRecord = {
    [ServerComponentType.guardianGemQuake]: () => GuardianGemQuakeComponent,
    [ServerComponentType.guardianGemFragmentProjectile]: () => GuardianGemFragmentProjectileComponent,
    [ServerComponentType.guardianSpikyBall]: () => GuardianSpikyBallComponent,
-   [ServerComponentType.bracings]: () => BracingsComponent
+   [ServerComponentType.bracings]: () => BracingsComponent,
+   [ServerComponentType.ballista]: () => BallistaComponent,
+   [ServerComponentType.slingTurret]: () => SlingTurretComponent,
+   [ServerComponentType.barrel]: () => BarrelComponent,
+   [ServerComponentType.campfire]: () => CampfireComponent,
+   [ServerComponentType.furnace]: () => FurnaceComponent
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

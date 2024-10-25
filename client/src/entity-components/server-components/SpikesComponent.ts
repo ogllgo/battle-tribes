@@ -7,8 +7,9 @@ import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
+import { EntityConfig } from "../ComponentArray";
 
 export interface SpikesComponentParams {
    readonly isCovered: boolean;
@@ -67,7 +68,7 @@ const createLeafRenderPart = (isSmall: boolean): RenderPart => {
    return renderPart;
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes>): SpikesComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes, never>): SpikesComponent {
    const leafRenderParts = new Array<RenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(true);
@@ -81,12 +82,13 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes>)
    }
    
    return {
-      isCovered: entityConfig.components[ServerComponentType.spikes].isCovered,
+      isCovered: entityConfig.serverComponents[ServerComponentType.spikes].isCovered,
       leafRenderParts: leafRenderParts
    };
 }
 
-function onLoad(spikesComponent: SpikesComponent): void {
+function onLoad(entity: EntityID): void {
+   const spikesComponent = SpikesComponentArray.getComponent(entity);
    updateLeafRenderParts(spikesComponent);
 }
 

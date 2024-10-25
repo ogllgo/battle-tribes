@@ -2,14 +2,15 @@ import { PlanterBoxPlant, ServerComponentType } from "../../../../shared/src/com
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGrowthParticle } from "../../particles";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo, getEntityAgeTicks } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponent, TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
 
 export interface PlanterBoxComponentParams {
@@ -58,8 +59,17 @@ function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.planterBox>): RenderParts {
-   const planterBoxComponentParams = entityConfig.components[ServerComponentType.planterBox];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.planterBox, never>): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("entities/planter-box/planter-box.png")
+      )
+   );
+   
+   const planterBoxComponentParams = entityConfig.serverComponents[ServerComponentType.planterBox];
 
    let renderPart: TexturedRenderPart | null;
    if (planterBoxComponentParams.plantType !== -1) {
@@ -74,8 +84,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.planterBox>, renderParts: RenderParts): PlanterBoxComponent {
-   const planterBoxComponentParams = entityConfig.components[ServerComponentType.planterBox];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.planterBox, never>, renderParts: RenderParts): PlanterBoxComponent {
+   const planterBoxComponentParams = entityConfig.serverComponents[ServerComponentType.planterBox];
    
    return {
       hasPlant: planterBoxComponentParams.plantType !== -1,
@@ -89,7 +99,8 @@ const createGrowthParticleInEntity = (transformComponent: TransformComponent): v
    createGrowthParticle(pos.x, pos.y);
 }
    
-function onTick(planterBoxComponent: PlanterBoxComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    if (planterBoxComponent.isFertilised && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.35)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       createGrowthParticleInEntity(transformComponent);

@@ -6,9 +6,8 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { EntityID } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
-import Player from "./entities/Player";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
-import { getEntityLayer } from "./world";
+import { getEntityLayer, playerInstance } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 
@@ -179,8 +178,8 @@ const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayer
             const entity1Hitbox = collisionInfo.minEntityInvolvedHitboxes[i];
             const entity2Hitbox = collisionInfo.maxEntityInvolvedHitboxes[i];
 
-            collide(entity1, entity2, entity1Hitbox, entity2Hitbox, !onlyResolvePlayerCollisions || entity1 === Player.instance!.id);
-            collide(entity2, entity1, entity2Hitbox, entity1Hitbox, !onlyResolvePlayerCollisions || entity2 === Player.instance!.id);
+            collide(entity1, entity2, entity1Hitbox, entity2Hitbox, !onlyResolvePlayerCollisions || entity1 === playerInstance);
+            collide(entity2, entity1, entity2Hitbox, entity1Hitbox, !onlyResolvePlayerCollisions || entity2 === playerInstance);
          }
       }
    }
@@ -209,11 +208,10 @@ export function resolveEntityCollisions(layer: Layer): void {
 export function resolvePlayerCollisions(): void {
    const collisionPairs: CollisionPairs = {};
 
-   const player = Player.instance!;
-   const transformComponent = TransformComponentArray.getComponent(player.id);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
 
    for (const chunk of transformComponent.chunks) {
-      collectEntityCollisionsWithChunk(collisionPairs, Player.instance!.id, chunk);
+      collectEntityCollisionsWithChunk(collisionPairs, playerInstance!, chunk);
    }
 
    resolveCollisionPairs(collisionPairs, true);

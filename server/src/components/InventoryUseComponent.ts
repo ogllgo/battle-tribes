@@ -303,7 +303,8 @@ const getBoxCollidingWallSubtiles = (layer: Layer, box: Box): ReadonlyArray<numb
    const collidingWallSubtiles = new Array<number>();
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-         if (layer.subtileIsWall(subtileX, subtileY) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
             const subtileIndex = getSubtileIndex(subtileX, subtileY);
             collidingWallSubtiles.push(subtileIndex);
          }

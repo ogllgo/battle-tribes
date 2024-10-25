@@ -33,11 +33,11 @@ const playWhoosh = (entity: EntityID): void => {
    attachSoundToEntity(soundInfo.sound, entity);
 }
 
-function onLoad(_battleaxeProjectileComponent: BattleaxeProjectileComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    playWhoosh(entity);
 }
 
-function onTick(_battleaxeProjectileComponent: BattleaxeProjectileComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    if (Board.tickIntervalHasPassed(0.25)) {
       playWhoosh(entity);
    }

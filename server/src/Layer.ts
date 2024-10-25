@@ -17,7 +17,7 @@ import { CollisionGroup } from "battletribes-shared/collision-groups";
 import CollisionChunk from "./CollisionChunk";
 import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detection";
 import { getSubtileIndex, tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
-import { addMinedSubtileToSupportNetwork } from "./collapses";
+import { registerMinedSubtile, MinedSubtileInfo } from "./collapses";
 
 // @Cleanup: same as WaterTileGenerationInfo
 export interface RiverFlowDirection {
@@ -104,6 +104,8 @@ export default class Layer {
 
    public globalCollisionInfo: GlobalCollisionInfo = {};
 
+   public minedSubtileInfoMap = new Map<number, MinedSubtileInfo>();
+
    constructor(generationInfo: TerrainGenerationInfo) {
       this.tileTypes = generationInfo.tileTypes;
       this.tileBiomes = generationInfo.tileBiomes;
@@ -181,10 +183,10 @@ export default class Layer {
       }
 
       if (this.wallSubtileDamageTakenMap.get(subtileIndex)! >= 3) {
+         const previousSubtileType = this.subtileTypes[subtileIndex];
          this.subtileTypes[subtileIndex] = SubtileType.none;
          
-         this.wallSubtileDamageTakenMap.delete(subtileIndex);
-         addMinedSubtileToSupportNetwork(subtileIndex);
+         registerMinedSubtile(this, subtileIndex, previousSubtileType);
 
          this.wallSubtileUpdates.push({
             subtileIndex: subtileIndex,
@@ -200,6 +202,25 @@ export default class Layer {
       }
 
       return damageDealt;
+   }
+
+   public getMinedSubtileType(subtileIndex: number): SubtileType {
+      const minedSubtileInfo = this.minedSubtileInfoMap.get(subtileIndex);
+      console.assert(typeof minedSubtileInfo !== "undefined");
+
+      return minedSubtileInfo!.subtileType;
+   }
+
+   public restoreWallSubtile(subtileIndex: number, subtileType: SubtileType): void {
+      this.subtileTypes[subtileIndex] = subtileType;
+      
+      this.minedSubtileInfoMap.delete(subtileIndex);
+      
+      this.wallSubtileUpdates.push({
+         subtileIndex: subtileIndex,
+         subtileType: subtileType,
+         damageTaken: 0
+      });
    }
 
    public static tickIntervalHasPassed(intervalSeconds: number): boolean {
@@ -226,15 +247,25 @@ export default class Layer {
       return this.getTileXYType(tileX, tileY);
    }
 
-   public subtileIsWall(subtileX: number, subtileY: number): boolean {
-      const subtileIndex = getSubtileIndex(subtileX, subtileY);
+   public subtileIsWall(subtileIndex: number): boolean {
       return this.subtileTypes[subtileIndex] !== SubtileType.none;
+   }
+
+   public subtileCanHaveWall(subtileIndex: number): boolean {
+      return this.subtileTypes[subtileIndex] !== SubtileType.none || this.wallSubtileDamageTakenMap.has(subtileIndex);
+   }
+
+   /** Returns if the given subtile can support a wall but is mined out */
+   public subtileIsMined(subtileIndex: number): boolean {
+      return this.subtileTypes[subtileIndex] === SubtileType.none && this.wallSubtileDamageTakenMap.has(subtileIndex);
    }
 
    public positionHasWall(x: number, y: number): boolean {
       const subtileX = Math.floor(x / Settings.SUBTILE_SIZE);
       const subtileY = Math.floor(y / Settings.SUBTILE_SIZE);
-      return this.subtileIsWall(subtileX, subtileY);
+
+      const subtileIndex = getSubtileIndex(subtileX, subtileY);
+      return this.subtileIsWall(subtileIndex);
    }
 
    public getTileBiome(tileIndex: TileIndex): Biome {
@@ -557,7 +588,8 @@ export default class Layer {
       }
    
       for (; n > 0; n--) {
-         if (this.subtileIsWall(x, y)) {
+         const subtileIndex = getSubtileIndex(x, y);
+         if (this.subtileIsWall(subtileIndex)) {
             return true;
          }
    

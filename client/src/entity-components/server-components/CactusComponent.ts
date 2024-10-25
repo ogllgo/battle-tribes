@@ -1,17 +1,23 @@
 import { CactusBodyFlowerData, CactusFlowerSize, CactusLimbData, CactusLimbFlowerData, EntityID } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { createFlowerParticle } from "../../particles";
+import { createCactusSpineParticle, createFlowerParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { randInt } from "../../../../shared/src/utils";
+import { playSound } from "../../sound";
+import { EntityConfig } from "../ComponentArray";
 
 export interface CactusComponentParams {
    readonly flowerData: Array<CactusBodyFlowerData>;
    readonly limbData: Array<CactusLimbData>;
 }
+
+interface RenderParts {}
 
 export interface CactusComponent {
    // @Memory: go based off hitboxes/render parts
@@ -30,12 +36,14 @@ const getFlowerTextureSource = (type: number, size: CactusFlowerSize): string =>
    }
 }
 
-export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, never>(ServerComponentType.cactus, true, {
+export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, RenderParts>(ServerComponentType.cactus, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
-   onDie: onDie,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): CactusComponentParams {
@@ -93,35 +101,25 @@ function createParamsFromData(reader: PacketReader): CactusComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cactus>): CactusComponent {
-   const cactusComponentParams = entityConfig.components[ServerComponentType.cactus];
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   const baseRenderPart = new TexturedRenderPart(
+      null,
+      2,
+      0,
+      getTextureArrayIndex("entities/cactus/cactus.png")
+   );
+   renderInfo.attachRenderThing(baseRenderPart);
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cactus, never>): CactusComponent {
+   const cactusComponentParams = entityConfig.serverComponents[ServerComponentType.cactus];
    
    return {
       flowerData: cactusComponentParams.flowerData,
       limbData: cactusComponentParams.limbData
    };
-}
-
-function onDie(entity: EntityID): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const cactusComponent = CactusComponentArray.getComponent(entity);
-   
-   for (const flower of cactusComponent.flowerData) {
-      const offsetDirection = flower.column * Math.PI / 4;
-      const spawnPositionX = transformComponent.position.x + flower.height * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + flower.height * Math.cos(offsetDirection);
-
-      createFlowerParticle(spawnPositionX, spawnPositionY, flower.type, flower.size, flower.rotation);
-   }
-
-   for (const limb of cactusComponent.limbData) {
-      if (typeof limb.flower !== "undefined") {
-         const spawnPositionX = transformComponent.position.x + CACTUS_RADIUS * Math.sin(limb.direction) + limb.flower.height * Math.sin(limb.flower.direction);
-         const spawnPositionY = transformComponent.position.y + CACTUS_RADIUS * Math.cos(limb.direction) + limb.flower.height * Math.cos(limb.flower.direction);
-
-         createFlowerParticle(spawnPositionX, spawnPositionY, limb.flower.type, CactusFlowerSize.small, limb.flower.rotation);
-      }
-   }
 }
 
 function padData(reader: PacketReader): void {
@@ -242,6 +240,42 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          flowerRenderPart.offset.x = flowerInfo.height * Math.sin(flowerInfo.direction);
          flowerRenderPart.offset.y = flowerInfo.height * Math.cos(flowerInfo.direction);
          renderInfo.attachRenderThing(flowerRenderPart);
+      }
+   }
+}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   // Create cactus spine particles when hurt
+   const numSpines = randInt(3, 5);
+   for (let i = 0; i < numSpines; i++) {
+      createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
+   }
+
+   playSound("cactus-hit.mp3", 0.4, 1, transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const cactusComponent = CactusComponentArray.getComponent(entity);
+
+   playSound("cactus-destroy.mp3", 0.4, 1, transformComponent.position);
+   
+   for (const flower of cactusComponent.flowerData) {
+      const offsetDirection = flower.column * Math.PI / 4;
+      const spawnPositionX = transformComponent.position.x + flower.height * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + flower.height * Math.cos(offsetDirection);
+
+      createFlowerParticle(spawnPositionX, spawnPositionY, flower.type, flower.size, flower.rotation);
+   }
+
+   for (const limb of cactusComponent.limbData) {
+      if (typeof limb.flower !== "undefined") {
+         const spawnPositionX = transformComponent.position.x + CACTUS_RADIUS * Math.sin(limb.direction) + limb.flower.height * Math.sin(limb.flower.direction);
+         const spawnPositionY = transformComponent.position.y + CACTUS_RADIUS * Math.cos(limb.direction) + limb.flower.height * Math.cos(limb.flower.direction);
+
+         createFlowerParticle(spawnPositionX, spawnPositionY, limb.flower.type, CactusFlowerSize.small, limb.flower.rotation);
       }
    }
 }

@@ -1,25 +1,51 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
-import { ClientComponentType } from "./client-components";
+import { ClientComponentParams } from "./client-components";
+import { HitData } from "../../../shared/src/client-server-types";
+import { EntityRenderInfo } from "../EntityRenderInfo";
+import Layer from "../Layer";
+import { ServerComponentParams } from "./components";
+import { ClientComponentType } from "./client-component-types";
 
 export const enum ComponentArrayType {
    server,
    client
 }
 
-export interface ComponentArrayFunctions<T extends object> {
-   /** Called once when the entity is created, just after all the components are added */
-   onLoad?(component: T, entity: EntityID): void;
-   // @Cleanup: is this not the same as spawn?
+let componentArrayIDCounter = 0;
+
+/** Contains information useful for creating components. */
+export type EntityConfig<ServerComponentTypes extends ServerComponentType, ClientComponentTypes extends ClientComponentType> = {
+   /** Currently this is used to create lights and sometimes attach components in the createComponent function */
+   readonly entity: EntityID;
+   readonly entityType: EntityType;
+   readonly layer: Layer;
+   readonly renderInfo: EntityRenderInfo;
+   readonly serverComponents: {
+      [T in ServerComponentTypes]: ServerComponentParams<T>;
+   };
+   readonly clientComponents: {
+      [T in ClientComponentTypes]: ClientComponentParams<T>;
+   }
+};
+
+export interface ComponentArrayFunctions<T extends object, RenderParts extends object | never> {
+   /** SHOULD NOT MUTATE THE GLOBAL STATE */
+   createRenderParts?(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts;
+   /** SHOULD NOT MUTATE THE GLOBAL STATE */
+   createComponent(config: EntityConfig<never, never>, renderParts: RenderParts): T;
+   /** Called once when the entity is being created, just after all the components are created from their params */
+   onLoad?(entity: EntityID): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
    onSpawn?(component: T, entity: EntityID): void;
-   onTick?(component: T, entity: EntityID): void;
+   onTick?(entity: EntityID): void;
+   /** Called when a packet is skipped and there is no data to update from */
    onUpdate?(entity: EntityID): void;
    onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   onHit?(entity: EntityID, isDamagingHit: boolean): void;
+   onHit?(entity: EntityID, hitData: Readonly<HitData>): void;
    onRemove?(entity: EntityID): void;
    /** Called when the entity dies, not when the entity leaves the player's vision. */
    onDie?(entity: EntityID): void;
@@ -30,17 +56,19 @@ type ComponentTypeForArray = {
    [ComponentArrayType.client]: ClientComponentType
 };
 
-interface ComponentArrayTypeObject<ArrayType extends ComponentArrayType> {
-   readonly type: ArrayType;
-   readonly componentType: ComponentTypeForArray[ArrayType];
-}
-
 let componentArrays = new Array<ComponentArray>();
+let serverComponentArrays = new Array<ServerComponentArray>();
+
 let clientComponentArrayRecord: Record<ClientComponentType, ClientComponentArray> = {} as any;
 let serverComponentArrayRecord: Record<ServerComponentType, ServerComponentArray> = {} as any;
 
-export abstract class ComponentArray<T extends object = object, ArrayType extends ComponentArrayType = ComponentArrayType, ComponentType extends ComponentTypeForArray[ArrayType] = ComponentTypeForArray[ArrayType]> implements ComponentArrayFunctions<T> {
-   public readonly typeObject: ComponentArrayTypeObject<ArrayType>;
+export abstract class ComponentArray<
+   T extends object = object,
+   RenderParts extends object | never = object | never,
+   ArrayType extends ComponentArrayType = ComponentArrayType,
+   ComponentType extends ComponentTypeForArray[ArrayType] = ComponentTypeForArray[ArrayType]
+> implements ComponentArrayFunctions<T, RenderParts> {
+   public readonly id = componentArrayIDCounter++;
    private readonly isActiveByDefault: boolean;
    
    public entities = new Array<EntityID>();
@@ -61,22 +89,27 @@ export abstract class ComponentArray<T extends object = object, ArrayType extend
 
    private deactivateBuffer = new Array<number>();
 
-   public onLoad?(component: T, entity: EntityID): void;
+   // In reality this is just all information beyond its config which the component wishes to expose to other components
+   // This is a separate layer so that, for example, components can immediately get render parts without having to wait for onLoad (introducing polymorphism)
+   public createRenderParts?(renderInfo: EntityRenderInfo, config: EntityConfig<never, never>): RenderParts;
+   // @Cleanup: At some point I was going for this to be a pure-ish function where it just returns the component with no side-effects,
+   // but is that really the right approach? What would be the benefits? That was my original reason for making the
+   // createRenderParts thing.
+   public readonly createComponent: (config: EntityConfig<never, never>, renderParts: RenderParts) => T;
+   public onLoad?(entity: EntityID): void;
    public onSpawn?(component: T, entity: EntityID): void;
-   public onTick?: (component: T, entity: EntityID) => void;
+   public onTick?: (entity: EntityID) => void;
    public onUpdate?: (entity: EntityID) => void;
    public onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   public onHit?(entity: EntityID, isDamagingHit: boolean): void;
+   public onHit?(entity: EntityID, hitData: Readonly<HitData>): void;
    public onDie?(entity: EntityID): void;
    public onRemove?(entity: EntityID): void;
 
-   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T>) {
-      this.typeObject = {
-         type: arrayType,
-         componentType: componentType
-      };
+   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, RenderParts>) {
       this.isActiveByDefault = isActiveByDefault;
       
+      this.createRenderParts = functions.createRenderParts;
+      this.createComponent = functions.createComponent;
       this.onLoad = functions.onLoad;
       this.onSpawn = functions.onSpawn;
       this.onTick = functions.onTick;
@@ -89,6 +122,7 @@ export abstract class ComponentArray<T extends object = object, ArrayType extend
       componentArrays.push(this as unknown as ComponentArray);
       if (arrayType === ComponentArrayType.server) {
          // @Cleanup: casts
+         serverComponentArrays.push(this as unknown as ServerComponentArray);
          serverComponentArrayRecord[componentType as ServerComponentType] = this as unknown as ServerComponentArray;
       } else {
          // @Cleanup: casts
@@ -186,6 +220,10 @@ export abstract class ComponentArray<T extends object = object, ArrayType extend
 
 export function getComponentArrays(): ReadonlyArray<ComponentArray> {
    return componentArrays;
+}
+
+export function getServerComponentArrays(): ReadonlyArray<ServerComponentArray> {
+   return serverComponentArrays;
 }
 
 export function getClientComponentArray(componentType: ClientComponentType): ClientComponentArray {

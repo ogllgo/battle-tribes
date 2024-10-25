@@ -2,25 +2,31 @@ import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/enti
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
-import { Point, lerp, randFloat, veryBadHash } from "battletribes-shared/utils";
+import { Point, angle, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
 import { Light, addLight, attachLightToEntity, removeLightsAttachedToEntity } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { createSprintParticle, createTitleObtainParticle } from "../../particles";
+import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createLeafParticle, createSprintParticle, createTitleObtainParticle, LeafParticleSize } from "../../particles";
 import { createRenderPartOverlayGroup } from "../../rendering/webgl/overlay-rendering";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
-import { getEntityRenderInfo, getEntityType } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { InventoryUseComponentArray } from "../server-components/InventoryUseComponent";
-import { TransformComponentArray } from "./TransformComponent";
-import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import Player from "../../entities/Player";
+import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "../server-components/PhysicsComponent";
+import ServerComponentArray from "../ServerComponentArray";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { TribeType } from "../../../../shared/src/tribes";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { EntityConfig } from "../ComponentArray";
+import { HitData } from "../../../../shared/src/client-server-types";
+import { InventoryName, ItemType } from "../../../../shared/src/items/items";
+import { playSound } from "../../sound";
+import { InventoryComponentArray, getInventory } from "./InventoryComponent";
+import { TribeComponentArray } from "./TribeComponent";
+import { TileType } from "../../../../shared/src/tiles";
 
 export interface TribeMemberComponentParams {
    readonly warpaintType: number | null;
@@ -44,8 +50,116 @@ export interface TribeMemberComponent {
    readonly deathbringerEyeLights: Array<Light>;
 }
 
+// @Memory
+const GOBLIN_HURT_SOUNDS: ReadonlyArray<string> = ["goblin-hurt-1.mp3", "goblin-hurt-2.mp3", "goblin-hurt-3.mp3", "goblin-hurt-4.mp3", "goblin-hurt-5.mp3"];
+const GOBLIN_DIE_SOUNDS: ReadonlyArray<string> = ["goblin-die-1.mp3", "goblin-die-2.mp3", "goblin-die-3.mp3", "goblin-die-4.mp3"];
+
 const GOBLIN_EAR_OFFSET = 4;
 const GOBLIN_EAR_ANGLE = Math.PI / 3;
+
+const TUNDRA_IGNORED_TILE_MOVE_SPEEDS = [TileType.snow];
+const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
+
+
+
+// @Incomplete?
+
+
+// const switchTribeMemberRenderParts = (tribesman: Entity): void => {
+//    // @Robustness: don't do this. instead remove all and add them back
+   
+//    const entityType = getEntityType(tribesman.id);
+   
+//    const tribeComponent = tribesman.getServerComponentA(ServerComponentType.tribe);
+//    const tribeType = tribeComponent.tribeType;
+   
+//    // Switch hand texture sources
+//    const handTextureSource = getFistTextureSource(entityType, tribeType);
+//    const handRenderParts = tribesman.getRenderThings("tribeMemberComponent:hand", 2) as Array<TexturedRenderPart>;
+//    for (let i = 0; i < handRenderParts.length; i++) {
+//       const renderPart = handRenderParts[i];
+//       renderPart.switchTextureSource(handTextureSource);
+//    }
+
+//    // Switch body texture source
+//    const bodyTextureSource = getBodyTextureSource(entityType, tribeType);
+//    const handRenderPart = tribesman.getRenderThing("tribeMemberComponent:body") as TexturedRenderPart;
+//    handRenderPart.switchTextureSource(bodyTextureSource);
+
+//    // Remove any goblin ears
+//    const goblinEars = tribesman.getRenderThings("tribeMemberComponent:ear") as Array<RenderPart>;
+//    for (let i = 0; i < goblinEars.length; i++) {
+//       const renderPart = goblinEars[i];
+//       tribesman.removeRenderPart(renderPart);
+//    }
+
+//    if (tribeType === TribeType.goblins) {
+//       // Add warpaint
+//       // @Incomplete
+//    } else {
+//       // Remove warpaint (if any)
+//       const warpaints = tribesman.getRenderThings("tribeMemberComponent:warpaint") as Array<RenderPart>;
+//       for (let i = 0; i < warpaints.length; i++) {
+//          const renderPart = warpaints[i];
+//          tribesman.removeRenderPart(renderPart);
+//       }
+//    }
+// }
+
+
+
+
+
+
+// @Incomplete?
+// private updateLowHealthMarker(shouldShow: boolean): void {
+//    if (shouldShow) {
+//       if (this.lowHealthMarker === null) {
+//          this.lowHealthMarker = new TexturedRenderPart(
+//             null,
+//             9,
+//             0,
+//             getTextureArrayIndex("entities/low-health-marker.png")
+//          );
+//          this.lowHealthMarker.inheritParentRotation = false;
+//          this.lowHealthMarker.offset.x = 20;
+//          this.lowHealthMarker.offset.y = 20;
+
+//          const renderInfo = getEntityRenderInfo(this.id);
+//          renderInfo.attachRenderThing(this.lowHealthMarker);
+//       }
+
+//       let opacity = Math.sin(getEntityAgeTicks(this.id) / Settings.TPS * 5) * 0.5 + 0.5;
+//       this.lowHealthMarker.opacity = lerp(0.3, 0.8, opacity);
+//    } else {
+//       if (this.lowHealthMarker !== null) {
+//          const renderInfo = getEntityRenderInfo(this.id);
+//          renderInfo.removeRenderPart(this.lowHealthMarker);
+//          this.lowHealthMarker = null;
+//       }
+//    }
+// }
+
+// @Cleanup: remove. just do in components
+// public updateFromData(data: EntityData): void {
+//    const tribeComponent = this.getServerComponentA(ServerComponentType.tribe);
+//    const tribeTypeBeforeUpdate = tribeComponent.tribeType;
+
+//    super.updateFromData(data);
+
+//    // Show low health marker for friendly tribe members
+//    if (tribeComponent.tribeID === Game.tribe.id) {
+//       const healthComponent = this.getServerComponentA(ServerComponentType.health);
+//       this.updateLowHealthMarker(healthComponent.health <= healthComponent.maxHealth / 2);
+//    }
+
+//    // If tribe type is changed, update render parts
+//    if (tribeComponent.tribeType !== tribeTypeBeforeUpdate) {
+//       switchTribeMemberRenderParts(this);
+//    }
+// }
+
+
 
 export function getTribesmanRadius(tribesman: EntityID): number {
    const entityType = getEntityType(tribesman);
@@ -130,7 +244,9 @@ export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberCom
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData
+   updatePlayerFromData: updatePlayerFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
@@ -224,9 +340,9 @@ const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): str
    }
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribe | ServerComponentType.tribeMember>): RenderParts {
-   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
-   const tribeMemberComponentParams = entityConfig.components[ServerComponentType.tribeMember];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribe | ServerComponentType.tribeMember, never>): RenderParts {
+   const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
+   const tribeMemberComponentParams = entityConfig.serverComponents[ServerComponentType.tribeMember];
    
    const warPaintType = tribeMemberComponentParams.warpaintType;
 
@@ -325,8 +441,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMember>, renderParts: RenderParts): TribeMemberComponent {
-   const tribeMemberComponentParams = entityConfig.components[ServerComponentType.tribeMember];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMember, never>, renderParts: RenderParts): TribeMemberComponent {
+   const tribeMemberComponentParams = entityConfig.serverComponents[ServerComponentType.tribeMember];
    
    return {
       bodyRenderPart: renderParts.bodyRenderPart,
@@ -535,7 +651,8 @@ const updateTitles = (tribeMemberComponent: TribeMemberComponent, entity: Entity
    }
 }
 
-function onTick(tribeMemberComponent: TribeMemberComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
    if (tribeMemberComponent.deathbringerEyeLights.length > 0) {
       const eyeFlashProgress = Math.min(getSecondsSinceLastAttack(entity) / 0.5, 1)
       const intensity = lerp(0.6, 0.5, eyeFlashProgress);
@@ -549,6 +666,25 @@ function onTick(tribeMemberComponent: TribeMemberComponent, entity: EntityID): v
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
+
+   const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   const armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;
+   
+   // Move speeds
+   const armour = armourSlotInventory.itemSlots[1];
+   resetIgnoredTileSpeedMultipliers(physicsComponent);
+   if (typeof armour !== "undefined") {
+      const layer = getEntityLayer(entity);
+      const tile = getEntityTile(layer, transformComponent);
+
+      // If snow armour is equipped, move at normal speed on snow tiles
+      if ((armour.type === ItemType.frost_armour || armour.type === ItemType.deepfrost_armour) && tile.type === TileType.snow) {
+         physicsComponent.ignoredTileSpeedMultipliers = TUNDRA_IGNORED_TILE_MOVE_SPEEDS;
+      // If fishlord suit is equipped, move at normal speed on snow tiles
+      } else if (armour.type === ItemType.fishlord_suit && tile.type === TileType.water) {
+         physicsComponent.ignoredTileSpeedMultipliers = FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS;
+      }
+   }
 
    // Sprinter particles
    if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter) && physicsComponent.selfVelocity.length() > 100) {
@@ -612,9 +748,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, Player.instance!.id);
+   updateFromData(reader, playerInstance!);
 
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
 
    // @Garbage
    const titles = new Array<TribesmanTitle>();
@@ -624,4 +760,84 @@ function updatePlayerFromData(reader: PacketReader): void {
    }
    
    TitlesTab_setTitles(titles);
+}
+   
+function onHit(entity: EntityID, hitData: HitData): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   // Blood pool particle
+   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+   
+   // Blood particles
+   for (let i = 0; i < 10; i++) {
+      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
+
+      const spawnPositionX = transformComponent.position.x + 32 * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+   }
+
+   const tribeComponent = TribeComponentArray.getComponent(entity);
+   switch (tribeComponent.tribeType) {
+      case TribeType.goblins: {
+         playSound(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.plainspeople: {
+         playSound("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.barbarians: {
+         playSound("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.frostlings: {
+         playSound("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+   }
+
+   // If the tribesman is wearing a leaf suit, create leaf particles
+   const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;
+   const armour = armourInventory.itemSlots[1];
+   if (typeof armour !== "undefined" && armour.type === ItemType.leaf_suit) {
+      for (let i = 0; i < 3; i++) {
+         const moveDirection = 2 * Math.PI * Math.random();
+
+         const radius = getTribesmanRadius(entity);
+         const spawnPositionX = transformComponent.position.x + radius * Math.sin(moveDirection);
+         const spawnPositionY = transformComponent.position.y + radius * Math.cos(moveDirection);
+
+         createLeafParticle(spawnPositionX, spawnPositionY, moveDirection + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
+      }
+   }
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+   createBloodParticleFountain(entity, 0.1, 1);
+
+   const tribeComponent = TribeComponentArray.getComponent(entity);
+   switch (tribeComponent.tribeType) {
+      case TribeType.goblins: {
+         playSound(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.plainspeople: {
+         playSound("plainsperson-die-1.mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.barbarians: {
+         playSound("barbarian-die-1.mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case TribeType.frostlings: {
+         playSound("frostling-die.mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+   }
 }

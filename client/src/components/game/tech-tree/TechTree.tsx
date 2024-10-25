@@ -3,10 +3,9 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { addKeyListener } from "../../../keyboard-input";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
 import Game from "../../../Game";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { setTechTreeX, setTechTreeY, setTechTreeZoom, techIsDirectlyAccessible } from "../../../rendering/webgl/tech-tree-rendering";
 import OPTIONS from "../../../options";
-import Player from "../../../entities/Player";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
 import { createTechTreeItem } from "../../../rendering/webgl/tech-tree-item-rendering";
 import { Point, randFloat } from "battletribes-shared/utils";
@@ -17,6 +16,7 @@ import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemT
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { playerInstance } from "../../../world";
 
 const boundsScale = 16;
 
@@ -110,7 +110,7 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
          <div className="container">
             <ul>
                {Object.entries(techInfo.researchItemRequirements).map(([itemTypeString, itemAmount], i) => {
-                  const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+                  const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
                   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
                   
                   const itemType = Number(itemTypeString) as ItemType;
@@ -148,7 +148,7 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
 
 /** Gets a tally of all the items which we predict will be researched when clicking */
 const getResearchedItems = (techInfo: TechInfo): ItemTally2 => {
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    const availableItemsTally = new ItemTally2();
@@ -304,7 +304,7 @@ const TechTree = () => {
 
       changeVisibility.current = (): void => {
          if (!isVisible) {
-            if (Player.instance === null) {
+            if (playerInstance === null) {
                return;
             }
             document.getElementById("tech-tree-canvas")!.classList.remove("hidden");

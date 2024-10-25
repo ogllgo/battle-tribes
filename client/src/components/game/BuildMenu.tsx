@@ -3,18 +3,17 @@ import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/enti
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { deselectSelectedEntity, getSelectedEntityID } from "../../entity-selection";
 import Camera from "../../Camera";
-import Client from "../../client/Client";
-import { GhostInfo, GhostType, PARTIAL_OPACITY, setGhostInfo } from "../../rendering/webgl/entity-ghost-rendering";
+import Client from "../../networking/Client";
+import { GhostInfo, GhostType, PARTIAL_OPACITY } from "../../rendering/webgl/entity-ghost-rendering";
 import { getItemTypeImage } from "../../client-item-info";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import { playSound } from "../../sound";
-import Player from "../../entities/Player";
 import Game from "../../Game";
 import { InventoryName, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../menus";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { getPlayerSelectedItem } from "./GameInteractableLayer";
-import { entityExists, getEntityType } from "../../world";
+import { entityExists, getEntityType, playerInstance } from "../../world";
 import { StructureComponentArray } from "../../entity-components/server-components/StructureComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { BuildingMaterialComponentArray } from "../../entity-components/server-components/BuildingMaterialComponent";
@@ -371,7 +370,7 @@ export function entityCanOpenBuildMenu(entity: EntityID): boolean {
 
 // @Cleanup: copy paste of shared function
 const snapRotationToPlayer = (structure: EntityID, rotation: number): number => {
-   const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
 
    const playerDirection = playerTransformComponent.position.calculateAngleBetween(entityTransformComponent.position);
@@ -391,7 +390,7 @@ const getGhostRotation = (building: EntityID, ghostType: GhostType): number => {
          const tunnelComponent = TunnelComponentArray.getComponent(building);
          switch (tunnelComponent.doorBitset) {
             case 0b00: {
-               const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
                // Show the door closest to the player
                const dirToPlayer = buildingTransformComponent.position.calculateAngleBetween(playerTransformComponent.position);
@@ -444,7 +443,8 @@ const BuildMenu = () => {
    useEffect(() => {
       // Clear blueprint ghost type when the build menu is closed
       if (!entityExists(buildingID)) {
-         setGhostInfo(null);
+         // @Incomplete
+         // setGhostInfo(null);
          return;
       }
       addMenuCloseFunction(() => {
@@ -486,7 +486,8 @@ const BuildMenu = () => {
    // Blueprint ghost type
    useEffect(() => {
       if (hoveredOptionIdx === null || !entityExists(buildingID)) {
-         setGhostInfo(null);
+         // @Incomplete
+         // setGhostInfo(null);
          return;
       }
       
@@ -501,7 +502,8 @@ const BuildMenu = () => {
          tint: [1, 1, 1],
          opacity: hoveredGhostType === GhostType.deconstructMarker ? 0.8 : PARTIAL_OPACITY
       };
-      setGhostInfo(ghostInfo);
+      // @Incomplete
+      // setGhostInfo(ghostInfo);
    }, [hoveredOptionIdx]);
    
    const setHoveredGhostType = (ghostType: GhostType): void => {
@@ -519,7 +521,7 @@ const BuildMenu = () => {
 
       // @Speed
       const selectOption = (option: MenuOption): void => {
-         const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+         const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
          const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
          const backpack = getInventory(inventoryComponent, InventoryName.backpack);
          
@@ -532,7 +534,7 @@ const BuildMenu = () => {
             }
    
             if (count < cost.amount) {
-               const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
                playSound("error.mp3", 0.4, 1, playerTransformComponent.position);
                return;
             }

@@ -1,6 +1,7 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface PlayerComponentParams {
    readonly username: string;
@@ -24,9 +25,9 @@ function createParamsFromData(reader: PacketReader): PlayerComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.player>): PlayerComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.player, never>): PlayerComponent {
    return {
-      username: entityConfig.components[ServerComponentType.player].username
+      username: entityConfig.serverComponents[ServerComponentType.player].username
    };
 }
 

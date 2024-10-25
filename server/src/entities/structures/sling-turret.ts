@@ -14,6 +14,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import { TurretComponent } from "../../components/TurretComponent";
 import Tribe from "../../Tribe";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { SlingTurretComponent } from "../../components/SlingTurretComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +22,8 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.structure
    | ServerComponentType.tribe
    | ServerComponentType.aiHelper
-   | ServerComponentType.turret;
+   | ServerComponentType.turret
+   | ServerComponentType.slingTurret;
 
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
@@ -41,6 +43,8 @@ export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureC
    const turretComponent = new TurretComponent(SLING_TURRET_SHOT_COOLDOWN_TICKS + SLING_TURRET_RELOAD_TIME_TICKS);
    
    const aiHelperComponent = new AIHelperComponent(400);
+
+   const slingTurretComponent = new SlingTurretComponent();
    
    return {
       entityType: EntityType.slingTurret,
@@ -51,7 +55,8 @@ export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureC
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.turret]: turretComponent,
-         [ServerComponentType.aiHelper]: aiHelperComponent
+         [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.slingTurret]: slingTurretComponent
       }
    };
 }

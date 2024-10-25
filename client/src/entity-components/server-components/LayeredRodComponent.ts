@@ -7,7 +7,8 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 const enum Vars {
    NATURAL_DRIFT = 20 / Settings.TPS
@@ -72,12 +73,12 @@ const pushAmountToBend = (pushAmount: number): number => {
    return bend;
 }
 
-const getLayerColour = (entityConfig: EntityConfig<ServerComponentType.transform>, r: number, g: number, b: number, layer: number, numLayers: number): RenderPartColour => {
+const getLayerColour = (entityConfig: EntityConfig<ServerComponentType.transform, never>, r: number, g: number, b: number, layer: number, numLayers: number): RenderPartColour => {
    switch (entityConfig.entityType as EntityType.grassStrand | EntityType.reed) {
       case EntityType.grassStrand: {
          // @Speed: a lot of this is shared for all strands
          
-         const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+         const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    
          const tileX = Math.floor(transformComponentParams.position.x / Settings.TILE_SIZE);
          const tileY = Math.floor(transformComponentParams.position.y / Settings.TILE_SIZE);
@@ -151,14 +152,13 @@ function createParamsFromData(reader: PacketReader): LayeredRodComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredRod | ServerComponentType.transform>): LayeredRodComponent {
-   const layeredRodComponentParams = entityConfig.components[ServerComponentType.layeredRod];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredRod | ServerComponentType.transform, never>): LayeredRodComponent {
+   const layeredRodComponentParams = entityConfig.serverComponents[ServerComponentType.layeredRod];
 
    const naturalBendX = layeredRodComponentParams.naturalBendX;
    const naturalBendY = layeredRodComponentParams.naturalBendY;
    
    // Create layers
-   const renderInfo = getEntityRenderInfo(entityConfig.entity);
    for (let layer = 1; layer <= layeredRodComponentParams.numLayers; layer++) {
       const colour = getLayerColour(entityConfig, layeredRodComponentParams.r, layeredRodComponentParams.g, layeredRodComponentParams.b, layer, layeredRodComponentParams.numLayers);
 
@@ -173,7 +173,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredR
       renderPart.offset.x = naturalBendX * layer;
       renderPart.offset.y = naturalBendY * layer;
 
-      renderInfo.attachRenderThing(renderPart);
+      entityConfig.renderInfo.attachRenderThing(renderPart);
    }
 
    return {
@@ -202,7 +202,8 @@ const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: EntityI
    }
 }
 
-function onTick(layeredRodComponent: LayeredRodComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    if (layeredRodComponent.bendX === 0 && layeredRodComponent.bendY === 0) {
       LayeredRodComponentArray.queueComponentDeactivate(entity);
       return;

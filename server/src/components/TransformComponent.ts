@@ -16,6 +16,7 @@ import { Packet } from "battletribes-shared/packets";
 import { boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
+import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
@@ -359,7 +360,8 @@ export class TransformComponent {
 
          for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
             for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-               if (layer.subtileIsWall(subtileX, subtileY)) {
+               const subtileIndex = getSubtileIndex(subtileX, subtileY);
+               if (layer.subtileIsWall(subtileIndex)) {
                   resolveWallCollision(entity, hitbox, subtileX, subtileY);
                }
             }

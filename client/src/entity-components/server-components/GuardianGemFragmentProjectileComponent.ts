@@ -1,13 +1,14 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGenericGemParticle } from "../../particles";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianGemFragmentProjectileComponentParams {
@@ -51,8 +52,8 @@ function createParamsFromData(reader: PacketReader): GuardianGemFragmentProjecti
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.guardianGemFragmentProjectile>): RenderParts {
-   const guardianGemFragmentProjectileComponentParams = entityConfig.components[ServerComponentType.guardianGemFragmentProjectile];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.guardianGemFragmentProjectile, never>): RenderParts {
+   const guardianGemFragmentProjectileComponentParams = entityConfig.serverComponents[ServerComponentType.guardianGemFragmentProjectile];
    
    const renderPart = new TexturedRenderPart(
       null,
@@ -94,7 +95,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(_entityConfig: EntityConfig, renderParts: RenderParts): GuardianGemFragmentProjectileComponent {
+function createComponent(_entityConfig: EntityConfig<never, never>, renderParts: RenderParts): GuardianGemFragmentProjectileComponent {
    return {
       renderPart: renderParts.renderPart
    };

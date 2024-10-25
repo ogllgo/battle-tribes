@@ -1,4 +1,3 @@
-import Entity from "../../Entity";
 import { distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
@@ -13,13 +12,13 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag } from "battletr
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { getEntityLayer, getEntityRenderInfo } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import Player from "../../entities/Player";
+import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
+import { EntityConfig } from "../ComponentArray";
 
 export interface TransformComponentParams {
    readonly position: Point;
@@ -46,8 +45,6 @@ export interface TransformComponent {
    collisionBit: number;
    collisionMask: number;
 
-   collidingEntities: Array<Entity>;
-   
    boundingAreaMinX: number;
    boundingAreaMaxX: number;
    boundingAreaMinY: number;
@@ -274,8 +271,8 @@ export const TransformComponentArray = new ServerComponentArray<TransformCompone
    updatePlayerFromData: updatePlayerFromData
 });
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform>): TransformComponent {
-   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform, never>): TransformComponent {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    
    let totalMass = 0;
    const hitboxMap = new Map<number, ClientHitbox>();
@@ -293,7 +290,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       hitboxMap: hitboxMap,
       collisionBit: transformComponentParams.collisionBit,
       collisionMask: transformComponentParams.collisionMask,
-      collidingEntities: [],
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
@@ -301,8 +297,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function onLoad(transformComponent: TransformComponent, entity: EntityID): void {
-   // @Hack?
+function onLoad(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
    updateEntityPosition(transformComponent, entity);
 }
 
@@ -543,7 +539,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
    if (isInitialData) {
-      updateFromData(reader, Player.instance!.id);
+      updateFromData(reader, playerInstance!);
    } else {
       padData(reader);
    }

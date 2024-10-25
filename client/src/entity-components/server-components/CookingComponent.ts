@@ -6,7 +6,8 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface CookingComponentParams {
    readonly heatingProgress: number;
@@ -41,8 +42,8 @@ function createParamsFromData(reader: PacketReader): CookingComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking>): CookingComponent {
-   const cookingComponentParams = entityConfig.components[ServerComponentType.cooking];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking, never>): CookingComponent {
+   const cookingComponentParams = entityConfig.serverComponents[ServerComponentType.cooking];
    
    return {
       heatingProgress: cookingComponentParams.heatingProgress,
@@ -51,7 +52,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking>
    };
 }
 
-function onLoad(cookingComponent: CookingComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
+   const cookingComponent = CookingComponentArray.getComponent(entity);
    cookingComponent.light = {
       offset: new Point(0, 0),
       intensity: 1,
@@ -65,7 +67,8 @@ function onLoad(cookingComponent: CookingComponent, entity: EntityID): void {
    attachLightToEntity(lightID, entity);
 }
 
-function onTick(cookingComponent: CookingComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const cookingComponent = CookingComponentArray.getComponent(entity);
    if (cookingComponent.light !== null && Board.tickIntervalHasPassed(0.15)) {
       cookingComponent.light.radius = 40 + randFloat(-7, 7);
    }

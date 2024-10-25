@@ -1,5 +1,5 @@
 import CLIENT_ITEM_INFO_RECORD from "../client-item-info";
-import { BLUEPRINT_PROGRESS_TEXTURE_SOURCES } from "../entities/BlueprintEntity";
+import { BLUEPRINT_PROGRESS_TEXTURE_SOURCES } from "../entity-components/server-components/BlueprintComponent";
 import { getTechTreeGL } from "../rendering/webgl/tech-tree-rendering";
 import { gl } from "../webgl";
 import { TextureAtlasInfo, generateTextureAtlas, stitchTextureAtlas } from "./texture-atlas-stitching";

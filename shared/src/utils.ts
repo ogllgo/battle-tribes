@@ -395,6 +395,12 @@ export function assertUnreachable(x: never): never {
    throw new Error("Why must I exist?");
 }
 
+export function assert(condition: unknown, errorMessage?: string): asserts condition {
+   if (!condition) {
+      throw new Error(errorMessage);
+   }
+}
+
 export function getAngleDiff(sourceAngle: number, targetAngle: number): number {
    let a = targetAngle - sourceAngle;
    a = Math.abs((a + Math.PI) % (Math.PI * 2)) - Math.PI;

@@ -1,5 +1,5 @@
 import Particle from "../Particle";
-import { calculateRenderPartDepth, getEntityHeight, renderEntities } from "./webgl/entity-rendering";
+import { renderEntities } from "./webgl/entity-rendering";
 import { RenderPartOverlayGroup, renderEntityOverlay } from "./webgl/overlay-rendering";
 import { NUM_RENDER_LAYERS, RenderLayer } from "../render-layers";
 import { renderChunkedEntities, renderLayerIsChunkRendered } from "./webgl/chunked-entity-rendering";
@@ -17,10 +17,10 @@ type Renderable = EntityID | Particle | RenderPartOverlayGroup;
 
 type RenderableArrays = Array<Array<RenderableInfo>>;
 
-// @Incomplete: z-index
 interface RenderableInfo {
    readonly type: RenderableType;
    readonly renderable: Renderable;
+   readonly renderHeight: number;
 }
 
 let currentRenderLayer: RenderLayer = 0;
@@ -36,49 +36,17 @@ export function initialiseRenderables(): void {
    }
 }
 
-const getRenderableRenderHeight = (type: RenderableType, renderable: Renderable): number => {
-   switch (type) {
-      case RenderableType.entity: {
-         // @Cleanup: remove cast
-         const renderInfo = getEntityRenderInfo(renderable as EntityID);
-         return getEntityHeight(renderInfo);
-      }
-      // @Incomplete
-      case RenderableType.particle: {
-         return 0;
-      }
-      case RenderableType.overlay: {
-         // @Cleanup: cast
-         const overlay = renderable as RenderPartOverlayGroup;
-         
-         let minDepth = 999999;
-         for (let i = 0; i < overlay.renderParts.length; i++) {
-            const renderPart = overlay.renderParts[i];
-            const renderInfo = getEntityRenderInfo(overlay.entity);
-            const depth = calculateRenderPartDepth(renderPart, renderInfo);
-            if (depth < minDepth) {
-               minDepth = depth;
-            }
-         }
-      
-         return minDepth - 0.0001;
-      }
-   }
-}
-
-const getRenderableInsertIdx = (type: RenderableType, renderable: Renderable, renderables: ReadonlyArray<RenderableInfo>): number => {
-   const depth = getRenderableRenderHeight(type, renderable);
-
+const getRenderableInsertIdx = (renderables: ReadonlyArray<RenderableInfo>, renderHeight: number): number => {
    let left = 0;
    let right = renderables.length - 1;
    while (left <= right) {
       const midIdx = Math.floor((left + right) * 0.5);
       const mid = renderables[midIdx];
-      const midDepth = getRenderableRenderHeight(mid.type, mid.renderable);
+      const midDepth = mid.renderHeight;
 
-      if (midDepth < depth) {
+      if (midDepth < renderHeight) {
          left = midIdx + 1;
-      } else if (midDepth > depth) {
+      } else if (midDepth > renderHeight) {
          right = midIdx - 1;
       } else {
          return midIdx;
@@ -88,29 +56,19 @@ const getRenderableInsertIdx = (type: RenderableType, renderable: Renderable, re
    return left;
 }
 
-export function addRenderable(layer: Layer, type: RenderableType, renderable: Renderable, renderLayer: RenderLayer): void {
+export function addRenderable(layer: Layer, type: RenderableType, renderable: Renderable, renderLayer: RenderLayer, renderHeight: number): void {
    const renderableArrays = layerRenderableArrays[layer.idx];
    const renderables = renderableArrays[renderLayer];
    
    // Use binary search to find index in array
-   const idx = getRenderableInsertIdx(type, renderable, renderables);
+   const idx = getRenderableInsertIdx(renderables, renderHeight);
 
    const renderableInfo: RenderableInfo = {
       type: type,
-      renderable: renderable
+      renderable: renderable,
+      renderHeight: renderHeight
    };
    renderables.splice(idx, 0, renderableInfo);
-
-   // @Speed @Temporary
-   let previousRenderHeight = -99999;
-   for (let i = 0; i < renderables.length; i++) {
-      const renderable = renderables[i];
-      const renderHeight = getRenderableRenderHeight(renderable.type, renderable.renderable);
-      if (renderHeight < previousRenderHeight) {
-         throw new Error();
-      }
-      previousRenderHeight = renderHeight;
-   }
 }
 
 export function removeRenderable(layer: Layer, renderable: Renderable, renderLayer: RenderLayer): void {
@@ -149,8 +107,9 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
             // @Bug: this always renders the whole render layer...
             renderChunkedEntities(renderLayer);
          } else {
-            // @Cleanup: remove need for cast
-            renderEntities(renderables as Array<EntityID>);
+            // @Speed @Hack: surely we could just only push the render info to the array in the case of entities...?
+            const renderInfos = (renderables as Array<EntityID>).map(entity => getEntityRenderInfo(entity));
+            renderEntities(renderInfos);
          }
          break;
       }

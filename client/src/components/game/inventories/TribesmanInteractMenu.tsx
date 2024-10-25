@@ -5,16 +5,15 @@ import InventoryContainer from "./InventoryContainer";
 import ItemSlot from "./ItemSlot";
 import { getSelectedEntity } from "../../../entity-selection";
 import Game from "../../../Game";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { InventoryName, itemTypeIsArmour, itemTypeIsBackpack } from "battletribes-shared/items/items";
-import Player from "../../../entities/Player";
 import { TribeComponentArray } from "../../../entity-components/server-components/TribeComponent";
 import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
 import { EntityID } from "../../../../../shared/src/entities";
 import { TribesmanAIComponentArray } from "../../../entity-components/server-components/TribesmanAIComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
-import { getEntityAgeTicks } from "../../../world";
+import { getEntityAgeTicks, playerInstance } from "../../../world";
 
 const PLAINSPEOPLE_NAMES: ReadonlyArray<string> = [
    "Oda",
@@ -238,7 +237,7 @@ const TribesmanInteractMenu = () => {
 
    // @Copy and paste from hotbar
 
-   const playerID = Player.instance !== null ? Player.instance.id : 0;
+   const playerID = playerInstance || 0;
 
    const backpackSlotElement = <ItemSlot className="armour-slot" entityID={playerID} inventory={backpackSlotInventory} itemSlot={1} placeholderImg={require("../../../images/miscellaneous/backpack-wireframe.png")} validItemSpecifier={itemTypeIsBackpack} />
    const armourItemSlotElement = <ItemSlot className="backpack-slot" entityID={playerID} inventory={armourSlotInventory} itemSlot={1} placeholderImg={require("../../../images/miscellaneous/armour-wireframe.png")} validItemSpecifier={itemTypeIsArmour} />

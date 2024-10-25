@@ -14,6 +14,7 @@ import { StructureComponent } from "../../../components/StructureComponent";
 import { TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { FurnaceComponent } from "../../../components/FurnaceComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +22,8 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.structure
    | ServerComponentType.tribe
    | ServerComponentType.inventory
-   | ServerComponentType.cooking;
+   | ServerComponentType.cooking
+   | ServerComponentType.furnace;
 
 export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
@@ -49,6 +51,8 @@ export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConne
    addInventoryToInventoryComponent(inventoryComponent, outputInventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    
    const cookingComponent = new CookingComponent(0);
+
+   const furnaceComponent = new FurnaceComponent();
    
    return {
       entityType: EntityType.furnace,
@@ -59,7 +63,8 @@ export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConne
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.inventory]: inventoryComponent,
-         [ServerComponentType.cooking]: cookingComponent
+         [ServerComponentType.cooking]: cookingComponent,
+         [ServerComponentType.furnace]: furnaceComponent
       }
    };
 }

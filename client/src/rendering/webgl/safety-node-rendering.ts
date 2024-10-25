@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { SafetyNodeData, WallSideNodeData } from "battletribes-shared/ai-building-types";
 import { createWebGLProgram, gl } from "../../webgl";
 import OPTIONS from "../../options";
-import { getVisibleWalls } from "../../client/Client";
+import { getVisibleWalls } from "../../networking/Client";
 import { getHoveredEntityID } from "../../entity-selection";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 

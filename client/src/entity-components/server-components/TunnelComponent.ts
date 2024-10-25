@@ -2,12 +2,15 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { TUNNEL_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export interface TunnelComponentParams {
@@ -15,6 +18,8 @@ export interface TunnelComponentParams {
    readonly topDoorOpenProgress: number;
    readonly bottomDoorOpenProgress: number;
 }
+
+interface RenderParts {}
 
 export interface TunnelComponent {
    doorBitset: number;
@@ -51,8 +56,9 @@ const getTunnelDoorInfo = (doorBit: number, openProgress: number): TunnelDoorInf
    };
 }
 
-export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, never>(ServerComponentType.tunnel, true, {
+export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, RenderParts>(ServerComponentType.tunnel, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData
@@ -70,8 +76,23 @@ function createParamsFromData(reader: PacketReader): TunnelComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel>): TunnelComponent {
-   const tunnelComponentParams = entityConfig.components[ServerComponentType.tunnel];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): RenderParts {
+   const buildingMaterialComponentParams = entityConfig.serverComponents[ServerComponentType.buildingMaterial];
+
+   const renderPart = new TexturedRenderPart(
+      null,
+      1,
+      0,
+      getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
+   );
+
+   renderInfo.attachRenderThing(renderPart);
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel, never>): TunnelComponent {
+   const tunnelComponentParams = entityConfig.serverComponents[ServerComponentType.tunnel];
    
    return {
       doorBitset: tunnelComponentParams.doorBitset,

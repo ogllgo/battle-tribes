@@ -1,12 +1,12 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useReducer, useState } from "react";
-import Player from "../../../entities/Player";
 import Game from "../../../Game";
 import { InventoryName } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
+import { playerInstance } from "../../../world";
 
 export let Hotbar_update: () => void = () => {};
 
@@ -45,9 +45,9 @@ const Hotbar = (props: HotbarProps) => {
       }
    }, []);
 
-   const playerID = Player.instance?.id || undefined;
+   const playerID = playerInstance || undefined;
    
-   const inventoryComponent = Player.instance !== null ? InventoryComponentArray.getComponent(Player.instance.id) : undefined;
+   const inventoryComponent = playerInstance !== null ? InventoryComponentArray.getComponent(playerInstance) : undefined;
    const hotbar = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.hotbar) : null;
    const offhand = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.offhand) : null;
    const backpackSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpackSlot) : null;

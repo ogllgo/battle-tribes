@@ -3,15 +3,14 @@ import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbS
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Player from "./entities/Player";
 import Board from "./Board";
 import Game from "./Game";
-import Client from "./client/Client";
+import Client from "./networking/Client";
 import { getSelectedEntityID } from "./entity-selection";
 import { playSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
 import { getRandomPointInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { entityExists, getEntityType } from "./world";
+import { entityExists, getEntityType, playerInstance } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "./entity-components/server-components/TribeMemberComponent";
 
@@ -102,12 +101,12 @@ const completeOrb = (): void => {
       createStarParticle(x, y);
    }
 
-   const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
    playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerTransformComponent.position);
 
    // Make the player smack to the bench
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const useInfo = inventoryUseComponent.limbInfos[0];
    useInfo.lastAttackTicks = Board.serverTicks;
    
@@ -119,7 +118,7 @@ const completeOrb = (): void => {
 const getResearchSpeedMultiplier = (): number => {
    let multiplier = 1;
 
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(Player.instance!.id);
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
    if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.shrewd)) {
       multiplier *= 1.5;
    }

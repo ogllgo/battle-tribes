@@ -1,8 +1,7 @@
-import { EntityRenderInfo } from "../Entity";
+import { EntityRenderInfo } from "../EntityRenderInfo";
 import { createIdentityMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderThing } from "../render-parts/render-parts";
-import { getEntityRenderLayer } from "../render-layers";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
@@ -252,9 +251,8 @@ export function updateRenderPartMatrices(frameProgress: number): void {
          }
       }
 
-      const renderLayer = getEntityRenderLayer(entity);
-      if (renderLayerIsChunkRendered(renderLayer)) {
-         updateChunkRenderedEntity(renderInfo, renderLayer);
+      if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
+         updateChunkRenderedEntity(renderInfo, renderInfo.renderLayer);
       }
 
       renderInfo.isDirty = false;

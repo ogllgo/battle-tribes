@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 import Camera from "../../Camera";
 import { getHoveredEntityID } from "../../entity-selection";
 import Game from "../../Game";
-import Player from "../../entities/Player";
 import { latencyGameState } from "../../game-state/game-states";
 import { BuildMenu_isOpen } from "./BuildMenu";
-import { getEntityRenderInfo } from "../../world";
+import { getEntityRenderInfo, playerInstance } from "../../world";
 import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
@@ -60,13 +59,13 @@ const InspectHealthBar = () => {
 export default InspectHealthBar;
 
 export function updateInspectHealthBar(): void {
-   if (Player.instance === null || latencyGameState.playerIsPlacingEntity || BuildMenu_isOpen()) {
+   if (playerInstance === null || latencyGameState.playerIsPlacingEntity || BuildMenu_isOpen()) {
       InspectHealthBar_setEntity(null);
       return;
    }
    
    const hoveredEntity = getHoveredEntityID();
-   if (hoveredEntity === Player.instance.id) {
+   if (hoveredEntity === playerInstance) {
       InspectHealthBar_setEntity(null);
       return;
    }
@@ -92,7 +91,7 @@ export function updateInspectHealthBar(): void {
    const barY = renderInfo.renderPosition.y + Y_OFFSET;
    InspectHealthBar_setPos(Camera.calculateXScreenPos(barX), Camera.calculateYScreenPos(barY));
 
-   const transformComponent = TransformComponentArray.getComponent(Player.instance.id);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
    
    const dist = distance(barX, barY, transformComponent.position.x, transformComponent.position.y);
    const opacity = lerp(0.4, 1, clamp((dist - 80) / 80, 0, 1));

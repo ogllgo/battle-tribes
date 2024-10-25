@@ -6,11 +6,17 @@ import { Light, addLight, attachLightToEntity, removeLight } from "../../lights"
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 
 export interface HealingTotemComponentParams {
    readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
 }
+
+interface RenderParts {}
 
 export interface HealingTotemComponent {
    // @Hack @Temporary: make readonly
@@ -23,8 +29,9 @@ export interface HealingTotemComponent {
 const EYE_LIGHTS_TRANSFORM_TICKS = Math.floor(0.5 / Settings.TPS);
 const BASELINE_EYE_LIGHT_INTENSITY = 0.5;
 
-export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, never>(ServerComponentType.healingTotem, true, {
+export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, RenderParts>(ServerComponentType.healingTotem, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
@@ -53,15 +60,30 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.healingTotem>): HealingTotemComponent {
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("entities/healing-totem/healing-totem.png")
+      )
+   );
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.healingTotem, never>): HealingTotemComponent {
    return {
-      healingTargetsData: entityConfig.components[ServerComponentType.healingTotem].healingTargetsData,
+      healingTargetsData: entityConfig.serverComponents[ServerComponentType.healingTotem].healingTargetsData,
       ticksSpentHealing: 0,
       eyeLights: []
    };
 }
 
-function onTick(healingTotemComponent: HealingTotemComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
+   
    // Update eye lights
    const isHealing = healingTotemComponent.healingTargetsData.length > 0;
    if (isHealing) {

@@ -1,7 +1,7 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
-import { DecorationType } from "battletribes-shared/components";
-import { getEntityType } from "./world";
-import { DecorationComponentArray } from "./entity-components/server-components/DecorationComponent";
+import { EntityType } from "battletribes-shared/entities";
+import { DecorationType, ServerComponentType } from "battletribes-shared/components";
+import { EntityPreCreationInfo } from "./world";
+import { assert } from "../../shared/src/utils";
 
 export enum RenderLayer {
    lowDecorations,
@@ -41,12 +41,6 @@ export function getMaxRenderHeightForRenderLayer(renderLayer: RenderLayer): numb
    return rawRenderHeight / MAX_RENDER_HEIGHT * 2 - 1;
 }
 
-const calculateRenderDepthFromLayer = (renderLayer: RenderLayer): number => {
-   const rawRenderHeight = renderLayer + Math.random() * 0.9;
-   // Convert from [0, 1] to [-1, 1];
-   return rawRenderHeight / MAX_RENDER_HEIGHT * 2 - 1;
-}
-
 const decorationIsHigh = (decorationType: DecorationType): boolean => {
    return decorationType === DecorationType.flower1
        || decorationType === DecorationType.flower2
@@ -54,8 +48,8 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
        || decorationType === DecorationType.flower4;
 }
 
-export function getEntityRenderLayer(entity: EntityID): RenderLayer {
-   switch (getEntityType(entity)) {
+export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: EntityPreCreationInfo): RenderLayer {
+   switch (entityType) {
       case EntityType.bracings: {
          return RenderLayer.bracings;
       }
@@ -65,8 +59,9 @@ export function getEntityRenderLayer(entity: EntityID): RenderLayer {
       }
       // Decorations
       case EntityType.decoration: {
-         const decorationComponent = DecorationComponentArray.getComponent(entity);
-         return decorationIsHigh(decorationComponent.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
+         const decorationComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.decoration];
+         assert(typeof decorationComponentParams !== "undefined");
+         return decorationIsHigh(decorationComponentParams.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
       }
       case EntityType.guardianGemQuake: {
          return RenderLayer.quakes;
@@ -133,9 +128,4 @@ export function getEntityRenderLayer(entity: EntityID): RenderLayer {
          return RenderLayer.defaultEntities;
       }
    }
-}
-
-export function calculateEntityRenderHeight(entity: EntityID): number {
-   const renderLayer = getEntityRenderLayer(entity);
-   return calculateRenderDepthFromLayer(renderLayer);
 }

@@ -7,14 +7,14 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { playSound } from "../../sound";
-import Player from "../../entities/Player";
 import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
-import { getEntityByID, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { entityIsInRiver, getEntityTile, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface PhysicsComponentParams {
    readonly selfVelocity: Point;
@@ -34,6 +34,16 @@ export interface PhysicsComponent {
    angularVelocity: number;
 
    traction: number;
+
+   ignoredTileSpeedMultipliers: ReadonlyArray<TileType>;
+}
+
+// We use this so that a component tries to override the empty array with the same empty
+// array, instead of a different empty array which would cause garbage collection
+const EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS = new Array<TileType>();
+
+export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsComponent): void {
+   physicsComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
 }
 
 const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): void => {
@@ -58,7 +68,7 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): voi
    // Apply acceleration (to self-velocity)
    if (physicsComponent.acceleration.x !== 0 || physicsComponent.acceleration.y !== 0) {
       let tileMoveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tile.type];
-      if (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity)) {
+      if (physicsComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
          tileMoveSpeedMultiplier = 1;
       }
 
@@ -73,13 +83,9 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): voi
       physicsComponent.selfVelocity.y += (desiredVelocityY - physicsComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
    }
 
-   // @Hack
-   const entityTemp = getEntityByID(entity)!;
-
-   // @Speed: so much polymorphism and function calls and shit
+   // @Incomplete: here goes fish suit exception
    // Apply river flow to external velocity
-   const moveSpeedIsOverridden = typeof entityTemp.overrideTileMoveSpeedMultiplier !== "undefined" && entityTemp.overrideTileMoveSpeedMultiplier() !== null;
-   if (entityIsInRiver(transformComponent, entity) && !moveSpeedIsOverridden) {
+   if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       physicsComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection);
       physicsComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection);
@@ -202,20 +208,22 @@ function createParamsFromData(reader: PacketReader): PhysicsComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.physics>): PhysicsComponent {
-   const physicsComponentParams = entityConfig.components[ServerComponentType.physics];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.physics, never>): PhysicsComponent {
+   const physicsComponentParams = entityConfig.serverComponents[ServerComponentType.physics];
    
    return {
       selfVelocity: physicsComponentParams.selfVelocity,
       externalVelocity: physicsComponentParams.externalVelocity,
       acceleration: physicsComponentParams.acceleration,
       angularVelocity: physicsComponentParams.angularVelocity,
-      traction: physicsComponentParams.traction
+      traction: physicsComponentParams.traction,
+      ignoredTileSpeedMultipliers: EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS
    }
 }
 
-function onTick(physicsComponent: PhysicsComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition
@@ -263,7 +271,7 @@ function onUpdate(entity: EntityID): void {
    applyPhysics(physicsComponent, entity);
    
    // Don't resolve wall tile collisions in lightspeed mode
-   if (Player.instance === null || entity !== Player.instance.id || !keyIsPressed("l")) { 
+   if (entity !== playerInstance || !keyIsPressed("l")) { 
       resolveWallCollisions(entity);
    }
 
@@ -288,7 +296,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
    if (isInitialData) {
-      updateFromData(reader, Player.instance!.id);
+      updateFromData(reader, playerInstance!);
    } else {
       padData(reader);
    }

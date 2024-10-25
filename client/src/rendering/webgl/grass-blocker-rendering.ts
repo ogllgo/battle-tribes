@@ -1,5 +1,5 @@
 import { GrassBlocker, blockerIsCircluar } from "battletribes-shared/grass-blockers";
-import { getGrassBlockers } from "../../client/Client";
+import { getGrassBlockers } from "../../networking/Client";
 import { createTexture, createWebGLProgram, getCirclePoint, gl, windowHeight, windowWidth } from "../../webgl";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { getTexture } from "../../textures";

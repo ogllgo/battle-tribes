@@ -1,6 +1,6 @@
 import ItemCatalogue from "./ItemCatalogue";
 import { ItemSlotCallbackInfo } from "../../inventories/ItemSlot";
-import { sendDevGiveItemPacket } from "../../../../client/packet-creation";
+import { sendDevGiveItemPacket } from "../../../../networking/packet-creation";
 
 const ItemsTab = () => {
    const onSlotClick = (e: MouseEvent, callbackInfo: ItemSlotCallbackInfo): void => {

@@ -35,6 +35,7 @@ import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { createGuardianConfig } from "../entities/mobs/guardian";
 import { getTileIndexIncludingEdges } from "../Layer";
 import { resolveEntityCollisions } from "../collision-detection";
+import { runCollapses } from "../collapses";
 
 /*
 
@@ -290,6 +291,7 @@ class GameServer {
          updateTribes();
          
          updateGrassBlockers();
+         runCollapses();
          
          updateEntities();
          updateDynamicPathfindingNodes();

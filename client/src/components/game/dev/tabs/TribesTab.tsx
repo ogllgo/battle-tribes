@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import Game from "../../../../Game";
 import DevmodeScrollableOptions from "../DevmodeScrollableOptions";
 import { TribeData } from "battletribes-shared/techs";
-import Client from "../../../../client/Client";
+import Client from "../../../../networking/Client";
 import { TribeType, NUM_TRIBE_TYPES } from "battletribes-shared/tribes";
 import CLIENT_TRIBE_INFO_RECORD from "../../../../client-tribe-info";
 import DevmodeDropdownInput from "../DevmodeDropdownInput";

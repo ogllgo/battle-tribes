@@ -1,19 +1,21 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID, FrozenYetiAttackType } from "battletribes-shared/entities";
-import { lerp, randFloat, randInt } from "battletribes-shared/utils";
+import { angle, lerp, randFloat, randInt } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { createBiteParticle, createRockParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
+import { BloodParticleSize, createBiteParticle, createBlueBloodParticle, createBlueBloodParticleFountain, createBlueBloodPoolParticle, createRockParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import Player from "../../entities/Player";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { RenderPart } from "../../render-parts/render-parts";
+import { HitData } from "../../../../shared/src/client-server-types";
+import { EntityConfig } from "../ComponentArray";
+import { playerInstance } from "../../world";
 
 export interface FrozenYetiComponentParams {
    readonly attackType: FrozenYetiAttackType;
@@ -31,6 +33,9 @@ export interface FrozenYetiComponent {
    readonly pawRenderParts: ReadonlyArray<RenderPart>;
 }
 
+// @Hardcoded
+const SIZE = 152;
+
 const HEAD_SIZE = 80;
 export const FROZEN_YETI_HEAD_DISTANCE = 60;
 
@@ -47,13 +52,19 @@ export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiCompo
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
    const attackType = reader.readNumber();
    const attackStage = reader.readNumber();
    const stageProgress = reader.readNumber();
+
+   // @Temporary: Skip rock spikes
+   const numRockSpikes = reader.readNumber();
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numRockSpikes);
 
    return {
       attackType: attackType,
@@ -62,8 +73,8 @@ function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYeti>): FrozenYetiComponent {
-   const frozenYetiComponentParams = entityConfig.components[ServerComponentType.frozenYeti];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYeti, never>): FrozenYetiComponent {
+   const frozenYetiComponentParams = entityConfig.serverComponents[ServerComponentType.frozenYeti];
 
    entityConfig.renderInfo.attachRenderThing(new TexturedRenderPart(
       null,
@@ -198,12 +209,13 @@ const createRoarParticles = (transformComponent: TransformComponent): void => {
    }
 }
 
-function onTick(frozenYetiComponent: FrozenYetiComponent, entity: EntityID): void {
-   if (Player.instance === null) {
+function onTick(entity: EntityID): void {
+   if (playerInstance === null) {
       return;
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
    switch (frozenYetiComponent.attackType) {
       case FrozenYetiAttackType.stomp: {
@@ -292,7 +304,7 @@ function onTick(frozenYetiComponent: FrozenYetiComponent, entity: EntityID): voi
                
                createRoarParticles(transformComponent);
 
-               const playerTransformComponent = TransformComponentArray.getComponent(Player.instance.id);
+               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
 
                const distanceToPlayer = transformComponent.position.calculateDistanceBetween(playerTransformComponent.position);
 
@@ -486,4 +498,30 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    frozenYetiComponent.attackType = attackType;
    frozenYetiComponent.attackStage = attackStage;
    frozenYetiComponent.stageProgress = stageProgress;
+}
+
+function onHit(entity: EntityID, hitData: HitData): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   // Blood pool particle
+   createBlueBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, SIZE / 2);
+   
+   for (let i = 0; i < 10; i++) {
+      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
+
+      const spawnPositionX = transformComponent.position.x + SIZE / 2 * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + SIZE / 2 * Math.cos(offsetDirection);
+      createBlueBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+   }
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
+   for (let i = 0; i < 4; i++) {
+      createBlueBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, SIZE / 2);
+   }
+
+   createBlueBloodParticleFountain(transformComponent, 0.15, 1.4);
 }

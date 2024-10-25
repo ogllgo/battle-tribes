@@ -239,7 +239,9 @@ export async function loadSoundEffects(): Promise<void> {
       "stone-mine-3.mp3",
       "stone-mine-4.mp3",
       "stone-destroy-1.mp3",
-      "stone-destroy-2.mp3"
+      "stone-destroy-2.mp3",
+      "wall-collapse-1.mp3",
+      "wall-collapse-2.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

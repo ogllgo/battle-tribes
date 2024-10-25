@@ -9,7 +9,7 @@ import Board from "./Board";
 import Chunk from "./Chunk";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Particle from "./Particle";
-import { getEntityRenderLayer } from "./render-layers";
+import { RenderLayer } from "./render-layers";
 import { RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import { addRenderable, removeRenderable, RenderableType } from "./rendering/render-loop";
 import { removeEntityFromDirtyArray } from "./rendering/render-part-matrices";
@@ -277,23 +277,20 @@ export default class Layer {
       return direction;
    }
 
-   public addEntityForRendering(entity: EntityID): void {
-      const renderLayer = getEntityRenderLayer(entity);
+   public addEntityToRendering(entity: EntityID, renderLayer: RenderLayer, renderHeight: number): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
          registerChunkRenderedEntity(entity, renderLayer);
       } else {
-         addRenderable(this, RenderableType.entity, entity, renderLayer);
+         addRenderable(this, RenderableType.entity, entity, renderLayer, renderHeight);
       }
    }
 
-   public removeEntity(entity: EntityID): void {
-      const renderLayer = getEntityRenderLayer(entity);
+   public removeEntityFromRendering(entity: EntityID, renderLayer: RenderLayer): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
          removeChunkRenderedEntity(entity, renderLayer);
       } else {
          removeRenderable(this, entity, renderLayer);
       }
-      removeEntityFromDirtyArray(entity);
    }
 
    public getWorldInfo(): WorldInfo {

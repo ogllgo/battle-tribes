@@ -4,10 +4,9 @@ import { lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
-import { calculatePotentialPlanIdealness, getHoveredBuildingPlan, getPotentialPlanStats, getVisibleBuildingPlans } from "./client/Client";
-import Player from "./entities/Player";
+import { calculatePotentialPlanIdealness, getHoveredBuildingPlan, getPotentialPlanStats, getVisibleBuildingPlans } from "./networking/Client";
 import { PlayerComponentArray } from "./entity-components/server-components/PlayerComponent";
-import { getCurrentLayer, getEntityLayer, getEntityRenderInfo } from "./world";
+import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance } from "./world";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -299,7 +298,7 @@ const renderPlayerNames = (): void => {
    const currentLayer = getCurrentLayer();
    for (let i = 0; i < PlayerComponentArray.entities.length; i++) {
       const player = PlayerComponentArray.entities[i];
-      if (Player.instance !== null && player === Player.instance.id || getEntityLayer(player) !== currentLayer) {
+      if (player === playerInstance || getEntityLayer(player) !== currentLayer) {
          continue;
       }
 

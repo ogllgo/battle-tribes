@@ -1,17 +1,19 @@
-import { lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { angle, lerp, randFloat, randItem } from "battletribes-shared/utils";
 import { RenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createSnowParticle, createWhiteSmokeParticle } from "../../particles";
+import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
 import { playSound } from "../../sound";
-import { RandomSoundComponentArray } from "../client-components/RandomSoundComponent";
+import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../Entity";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { EntityConfig } from "../ComponentArray";
+import { HitData } from "../../../../shared/src/client-server-types";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
@@ -33,6 +35,8 @@ export interface YetiComponent {
 }
 
 export const YETI_SIZE = 128;
+
+const BLOOD_POOL_SIZE = 30;
 
 const YETI_PAW_START_ANGLE = Math.PI/3;
 const YETI_PAW_END_ANGLE = Math.PI/6;
@@ -89,8 +93,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti>, renderParts: RenderParts): YetiComponent {
-   const yetiComponentParams = entityConfig.components[ServerComponentType.yeti];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti, never>, renderParts: RenderParts): YetiComponent {
+   const yetiComponentParams = entityConfig.serverComponents[ServerComponentType.yeti];
    
    return {
       lastAttackProgress: yetiComponentParams.attackProgress,
@@ -99,8 +103,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti>, r
    };
 }
 
-function onTick(yetiComponent: YetiComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const yetiComponent = YetiComponentArray.getComponent(entity);
 
    // Create snow impact particles when the Yeti does a throw attack
    if (yetiComponent.attackProgress === 0 && yetiComponent.lastAttackProgress !== 0) {
@@ -127,14 +132,32 @@ function onTick(yetiComponent: YetiComponent, entity: EntityID): void {
    yetiComponent.lastAttackProgress = yetiComponent.attackProgress;
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: EntityID, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+
    playSound(randItem(HURT_SOUNDS), 0.7, 1, transformComponent.position.copy());
+
+   // Blood pool particle
+   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
+   
+   // Blood particles
+   for (let i = 0; i < 10; i++) {
+      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
+
+      const spawnPositionX = transformComponent.position.x + YETI_SIZE / 2 * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + YETI_SIZE / 2 * Math.cos(offsetDirection);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+   }
 }
 
 function onDie(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound(randItem(DEATH_SOUNDS), 0.7, 1, transformComponent.position.copy());
+
+   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
+
+   createBloodParticleFountain(entity, 0.15, 1.6);
 }
 
 function padData(reader: PacketReader): void {
@@ -164,8 +187,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 
    const randomSoundComponent = RandomSoundComponentArray.getComponent(entity);
    if (isAttacking) {
-      randomSoundComponent.updateSounds(3.5 * Settings.TPS, 5.5 * Settings.TPS, ANGRY_SOUNDS, 0.7);
+      updateRandomSoundComponentSounds(randomSoundComponent, 3.5 * Settings.TPS, 5.5 * Settings.TPS, ANGRY_SOUNDS, 0.7);
    } else {
-      randomSoundComponent.updateSounds(7 * Settings.TPS, 11 * Settings.TPS, AMBIENT_SOUNDS, 0.7);
+      updateRandomSoundComponentSounds(randomSoundComponent, 7 * Settings.TPS, 11 * Settings.TPS, AMBIENT_SOUNDS, 0.7);
    }
 }

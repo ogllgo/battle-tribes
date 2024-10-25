@@ -1,5 +1,5 @@
 import { TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "battletribes-shared/titles";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { CLIENT_TITLE_INFO_RECORD } from "../../../client-title-info";
 
 interface TribesmanTitleInfocardProps {

@@ -9,8 +9,9 @@ import { ComponentArray, getComponentArrayRecord } from "./components/ComponentA
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { addEntityToJoinBuffer, getEntityType } from "./world";
 
-// @Hack: 0 is for none, 1 is for player ghost entity
-let idCounter = 2;
+// @Cleanup: Rename this file
+
+let idCounter = 1;
 
 /** Finds a unique available ID for an entity */
 const getNextEntityID = (): EntityID => {

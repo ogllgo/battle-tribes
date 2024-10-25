@@ -62,7 +62,7 @@ export function generateUndergroundTerrain(surfaceTerrainGenerationInfo: Terrain
 
    const subtileTypes = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
-   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 40, 12, 1.75, 0.65);
+   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
    const dropdownClosenessArray = generateDropdownClosenessArray(surfaceTerrainGenerationInfo);
    
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
@@ -76,7 +76,7 @@ export function generateUndergroundTerrain(surfaceTerrainGenerationInfo: Terrain
          
          tileBiomes[tileIndex] = Biome.mountains;
 
-         if (weight > 0.58) {
+         if (weight > 0.57) {
             tileTypes[tileIndex] = TileType.stoneWallFloor;
             setWallInSubtiles(subtileTypes, tileX, tileY, SubtileType.stoneWall);
          } else {

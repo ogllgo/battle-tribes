@@ -2,7 +2,7 @@ import { Settings } from "battletribes-shared/settings";
 import { EntityDebugData } from "battletribes-shared/client-server-types";
 import { Point } from "battletribes-shared/utils";
 import { createWebGLProgram, generateLine, generateThickCircleWireframeVertices, gl } from "../../webgl";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { entityExists, getEntityRenderInfo } from "../../world";
 

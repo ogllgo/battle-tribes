@@ -7,8 +7,9 @@ import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { EntityID } from "../../../../shared/src/entities";
 import { playSound } from "../../sound";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
+import { EntityConfig } from "../ComponentArray";
 
 export interface TribesmanAIComponentParams {
    readonly name: number;
@@ -59,8 +60,8 @@ function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams 
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesmanAI>): TribesmanAIComponent {
-   const tribesmanAIComponentParams = entityConfig.components[ServerComponentType.tribesmanAI];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesmanAI, never>): TribesmanAIComponent {
+   const tribesmanAIComponentParams = entityConfig.serverComponents[ServerComponentType.tribesmanAI];
 
    return {
       name: tribesmanAIComponentParams.name,
@@ -72,9 +73,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
    };
 }
 
-function onTick(tribesmanAIComponent: TribesmanAIComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const tribeComponent = TribeComponentArray.getComponent(entity);
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
 
    // Sounds
    switch (tribesmanAIComponent.aiType) {

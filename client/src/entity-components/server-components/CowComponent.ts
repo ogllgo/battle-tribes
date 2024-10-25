@@ -1,32 +1,47 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { randInt } from "battletribes-shared/utils";
+import { angle, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
-import { createDirtParticle } from "../../particles";
+import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSound } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, EntityID } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityLayer } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { HitData } from "../../../../shared/src/client-server-types";
+import { EntityConfig } from "../ComponentArray";
 
 export interface CowComponentParams {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
 }
 
+interface RenderParts {}
+
 export interface CowComponent {
    readonly species: CowSpecies;
    grazeProgress: number;
 }
 
-export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, never>(ServerComponentType.cow, true, {
+const HEAD_SIZE = 64;
+/** How far the head overlaps the body */
+const HEAD_OVERLAP = 24;
+const BODY_HEIGHT = 96;
+
+export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, RenderParts>(ServerComponentType.cow, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): CowComponentParams {
@@ -39,8 +54,35 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cow>): CowComponent {
-   const cowComponentParams = entityConfig.components[ServerComponentType.cow];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.cow, never>): RenderParts {
+   const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
+   const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
+
+   // Body
+   const bodyRenderPart = new TexturedRenderPart(
+      null,
+      0,
+      0,
+      getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
+   );
+   bodyRenderPart.offset.y = -(HEAD_SIZE - HEAD_OVERLAP) / 2;
+   renderInfo.attachRenderThing(bodyRenderPart);
+
+   // Head
+   const headRenderPart = new TexturedRenderPart(
+      null,
+      1,
+      0,
+      getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
+   );
+   headRenderPart.offset.y = (BODY_HEIGHT - HEAD_OVERLAP) / 2;
+   renderInfo.attachRenderThing(headRenderPart);
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, never>): CowComponent {
+   const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
    
    return {
       species: cowComponentParams.species,
@@ -48,8 +90,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cow>): C
    };
 }
 
-function onTick(cowComponent: CowComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const cowComponent = CowComponentArray.getComponent(entity);
 
    if (cowComponent.grazeProgress !== -1 && Board.tickIntervalHasPassed(0.1)) {
       const spawnOffsetMagnitude = 30 * Math.random();
@@ -87,4 +130,36 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       }
    }
    cowComponent.grazeProgress = grazeProgress;
+}
+
+function onHit(entity: EntityID, hitData: HitData): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+         
+   // Blood pool particles
+   for (let i = 0; i < 2; i++) {
+      createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+   }
+   
+   // Blood particles
+   for (let i = 0; i < 10; i++) {
+      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
+
+      const spawnPositionX = transformComponent.position.x + 32 * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+   }
+
+   playSound("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (let i = 0; i < 3; i++) {
+      createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 35);
+   }
+
+   createBloodParticleFountain(entity, 0.1, 1.1);
+
+   playSound("cow-die-1.mp3", 0.2, 1, transformComponent.position);
 }

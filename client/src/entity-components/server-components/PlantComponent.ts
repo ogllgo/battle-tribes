@@ -1,16 +1,20 @@
+import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
 import { PlanterBoxPlant, ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
-import { randFloat } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../Entity";
-import { createDirtParticle } from "../../particles";
+import { angle, randFloat, randInt, randItem } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { createDirtParticle, createLeafParticle, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW, LeafParticleSize } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
+import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
+import { TREE_DESTROY_SOUNDS, TREE_HIT_SOUNDS } from "./TreeComponent";
 
 export interface PlantComponentParams {
    readonly plant: PlanterBoxPlant;
@@ -65,7 +69,9 @@ export const PlantComponentArray = new ServerComponentArray<PlantComponent, Plan
    createComponent: createComponent,
    onSpawn: onSpawn,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): PlantComponentParams {
@@ -80,8 +86,8 @@ function createParamsFromData(reader: PacketReader): PlantComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.plant>): RenderParts {
-   const plantComponentParams = entityConfig.components[ServerComponentType.plant];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.plant, never>): RenderParts {
+   const plantComponentParams = entityConfig.serverComponents[ServerComponentType.plant];
    
    const textureSource = getPlantTextureSource(plantComponentParams.plant, plantComponentParams.growthProgress, plantComponentParams.numFruits);
    const renderPart = createPlantRenderPart(textureSource);
@@ -92,8 +98,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.plant>, renderParts: RenderParts): PlantComponent {
-   const plantConfig = entityConfig.components[ServerComponentType.plant];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.plant, never>, renderParts: RenderParts): PlantComponent {
+   const plantConfig = entityConfig.serverComponents[ServerComponentType.plant];
    
    return {
       plant: plantConfig.plant,
@@ -166,4 +172,81 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const numFruit = reader.readNumber();
    
    updatePlantRenderPart(plantComponent, entity, numFruit);
+}
+
+function onHit(entity: EntityID, hitData: HitData): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const plantComponent = PlantComponentArray.getComponent(entity);
+
+   switch (plantComponent.plant) {
+      case PlanterBoxPlant.tree: {
+         const radius = Math.floor(plantComponent.growthProgress * 10);
+   
+         // @Cleanup: copy and paste
+         const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
+         
+         // Create leaf particles
+         {
+            const moveDirection = 2 * Math.PI * Math.random();
+   
+            const spawnPositionX = transformComponent.position.x + radius * Math.sin(moveDirection);
+            const spawnPositionY = transformComponent.position.y + radius * Math.cos(moveDirection);
+   
+            createLeafParticle(spawnPositionX, spawnPositionY, moveDirection + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
+         }
+         
+         // Create leaf specks
+         const numSpecks = Math.floor(plantComponent.growthProgress * 7) + 2;
+         for (let i = 0; i < numSpecks; i++) {
+            createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
+         }
+   
+         if (isDamagingHit) {
+            // Create wood specks at the point of hit
+
+            let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+            offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
+
+            const spawnPositionX = transformComponent.position.x + (radius + 2) * Math.sin(offsetDirection);
+            const spawnPositionY = transformComponent.position.y + (radius + 2) * Math.cos(offsetDirection);
+            for (let i = 0; i < 4; i++) {
+               createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
+            }
+            
+            playSound(randItem(TREE_HIT_SOUNDS), 0.4, 1, transformComponent.position);
+         } else {
+            // @Temporary
+            playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         }
+         break;
+      }
+      case PlanterBoxPlant.berryBush: {
+         playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case PlanterBoxPlant.iceSpikes: {
+         playSound("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+   }
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const plantComponent = PlantComponentArray.getComponent(entity);
+
+   switch (plantComponent.plant) {
+      case PlanterBoxPlant.tree: {
+         playSound(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, transformComponent.position);
+         break;
+      }
+      case PlanterBoxPlant.berryBush: {
+         playSound("berry-bush-destroy-1.mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+      case PlanterBoxPlant.iceSpikes: {
+         playSound("ice-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
+         break;
+      }
+   }
 }

@@ -3,26 +3,55 @@ import { Settings } from "battletribes-shared/settings";
 import { randFloat } from "battletribes-shared/utils";
 import { createFlyParticle } from "../../particles";
 import { playSound } from "../../sound";
-import { EntityID } from "../../../../shared/src/entities";
+import { EntityID, EntityType } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityConfig } from "../ComponentArray";
 
 export interface PunjiSticksComponentParams {}
+
+interface RenderParts {}
 
 export interface PunjiSticksComponent {
    ticksSinceLastFly: number;
    ticksSinceLastFlySound: number;
 }
 
-export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, never>(ServerComponentType.punjiSticks, true, {
+export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, RenderParts>(ServerComponentType.punjiSticks, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(): PunjiSticksComponentParams {
+   return {};
+}
+
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts {
+   const isAttachedToWall = entityConfig.entityType === EntityType.wallPunjiSticks;
+   let textureArrayIndex: number;
+   if (isAttachedToWall) {
+      textureArrayIndex = getTextureArrayIndex("entities/wall-punji-sticks/wall-punji-sticks.png");
+   } else {
+      textureArrayIndex = getTextureArrayIndex("entities/floor-punji-sticks/floor-punji-sticks.png");
+   }
+
+   const renderPart = new TexturedRenderPart(
+      null,
+      0,
+      0,
+      textureArrayIndex
+   );
+   renderInfo.attachRenderThing(renderPart);
+
    return {};
 }
 
@@ -33,8 +62,9 @@ function createComponent(): PunjiSticksComponent {
    };
 }
    
-function onTick(punjiSticksComponent: PunjiSticksComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const punjiSticksComponent = PunjiSticksComponentArray.getComponent(entity);
 
    punjiSticksComponent.ticksSinceLastFly++;
    const flyChance = ((punjiSticksComponent.ticksSinceLastFly / Settings.TPS) - 0.25) * 0.2;
@@ -58,3 +88,13 @@ function onTick(punjiSticksComponent: PunjiSticksComponent, entity: EntityID): v
 function padData(): void {}
 
 function updateFromData(): void {}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playSound("wooden-spikes-hit.mp3", 0.3, 1, transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playSound("wooden-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
+}

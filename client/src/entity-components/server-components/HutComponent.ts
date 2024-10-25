@@ -10,8 +10,9 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../Entity";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { EntityConfig } from "../ComponentArray";
 
 export interface HutComponentParams {
    readonly doorSwingAmount: number;
@@ -108,15 +109,15 @@ const createRecallMarker = (): TexturedRenderPart => {
    return recallMarker;
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.hut>): RenderParts {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.hut, never>): RenderParts {
    return {
       doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<RenderPart>,
-      recallMarker: entityConfig.components[ServerComponentType.hut].isRecalling ? createRecallMarker() : null
+      recallMarker: entityConfig.serverComponents[ServerComponentType.hut].isRecalling ? createRecallMarker() : null
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.hut>, renderParts: RenderParts): HutComponent {
-   const hutComponentParams = entityConfig.components[ServerComponentType.hut];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.hut, never>, renderParts: RenderParts): HutComponent {
+   const hutComponentParams = entityConfig.serverComponents[ServerComponentType.hut];
    
    return {
       doorRenderParts: renderParts.doorRenderParts,

@@ -1,13 +1,18 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DeathInfo, EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt } from "battletribes-shared/utils";
-import { createDirtParticle } from "../../particles";
-import { playSound } from "../../sound";
+import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
+import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
+import { playSound, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityAgeTicks } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface TombstoneComponentParams {
    readonly tombstoneType: number;
@@ -17,6 +22,8 @@ export interface TombstoneComponentParams {
    readonly deathInfo: DeathInfo | null;
 }
 
+interface RenderParts {}
+
 export interface TombstoneComponent {
    readonly tombstoneType: number;
    zombieSpawnProgress: number;
@@ -25,8 +32,12 @@ export interface TombstoneComponent {
    readonly deathInfo: DeathInfo | null;
 }
 
-export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, never>(ServerComponentType.tombstone, true, {
+const HITBOX_WIDTH = 48;
+const HITBOX_HEIGHT = 88;
+
+export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, RenderParts>(ServerComponentType.tombstone, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
@@ -64,8 +75,23 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tombstone>): TombstoneComponent {
-   const tombstoneComponentParams = entityConfig.components[ServerComponentType.tombstone];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tombstone, never>): RenderParts {
+   const tombstoneComponentParams = entityConfig.serverComponents[ServerComponentType.tombstone];
+   
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex(`entities/tombstone/tombstone${tombstoneComponentParams.tombstoneType + 1}.png`)
+      )
+   );
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.tombstone, never>): TombstoneComponent {
+   const tombstoneComponentParams = entityConfig.serverComponents[ServerComponentType.tombstone];
    
    return {
       tombstoneType:tombstoneComponentParams. tombstoneType,
@@ -76,7 +102,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tombston
    };
 }
 
-function onTick(tombstoneComponent: TombstoneComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    if (tombstoneComponent.zombieSpawnProgress !== -1) {
       // Create zombie digging particles
       if (tombstoneComponent.zombieSpawnProgress < 0.8) {
@@ -119,4 +146,47 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    if (hasDeathInfo) {
       reader.padOffset(100 + Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT);
    }
+}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (let i = 0; i < 4; i++) {
+      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+
+      let moveDirection = Math.PI/2 - Math.atan2(spawnPositionY, spawnPositionX);
+      moveDirection += randFloat(-1, 1);
+      
+      createRockParticle(spawnPositionX, spawnPositionY, moveDirection, randFloat(80, 125), ParticleRenderLayer.low);
+   }
+
+   for (let i = 0; i < 8; i++) {
+      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+
+      createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
+   }
+
+   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (let i = 0; i < 8; i++) {
+      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+
+      createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 125), ParticleRenderLayer.low);
+   }
+
+   for (let i = 0; i < 5; i++) {
+      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+
+      createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
+   }
+
+   playSound(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, transformComponent.position);
 }

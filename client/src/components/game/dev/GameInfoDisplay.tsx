@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import Game from "../../../Game";
-import { sendToggleSimulationPacket } from "../../../client/packet-creation";
+import { sendToggleSimulationPacket } from "../../../networking/packet-creation";
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
 

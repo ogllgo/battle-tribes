@@ -108,10 +108,9 @@ abstract class Board {
       for (let i = 0; i < componentArrays.length; i++) {
          const componentArray = componentArrays[i];
          if (typeof componentArray.onTick !== "undefined") {
-            for (let j = 0; j < componentArray.activeComponents.length; j++) {
-               const component = componentArray.activeComponents[j];
+            for (let j = 0; j < componentArray.activeEntities.length; j++) {
                const entity = componentArray.activeEntities[j];
-               componentArray.onTick(component, entity);
+               componentArray.onTick(entity);
             }
          }
          

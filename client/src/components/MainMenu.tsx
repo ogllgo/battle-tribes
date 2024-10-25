@@ -11,7 +11,7 @@ const enum Vars {
 const usernameIsValid = (username: string): [warning: string, isValid: false] | [warning: null, isValid: true] => {
    if (username.length > Vars.MAX_USERNAME_CHARS) return ["Name cannot be more than " + Vars.MAX_USERNAME_CHARS + " characters long!", false];
    if (username.length === 0) return ["Name cannot be empty!", false];
-
+   
    return [null, true];
 }
 

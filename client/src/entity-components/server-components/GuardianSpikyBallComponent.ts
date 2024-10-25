@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { Light, addLight, attachLightToEntity } from "../../lights";
+import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -18,7 +19,8 @@ export const GuardianSpikyBallComponentArray = new ServerComponentArray<Guardian
    createComponent: createComponent,
    onLoad: onLoad,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onDie: onDie
 });
 
 function createParamsFromData(): GuardianSpikyBallComponentParams {
@@ -29,7 +31,7 @@ function createComponent(): GuardianSpikyBallComponent {
    return {};
 }
 
-function onLoad(_guardianSpikyBallComponent: GuardianSpikyBallComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    const renderPart = new TexturedRenderPart(
       null,
       0,
@@ -59,3 +61,14 @@ function onLoad(_guardianSpikyBallComponent: GuardianSpikyBallComponent, entity:
 function padData(): void {}
 
 function updateFromData(): void {}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playSound("guardian-spiky-ball-death.mp3", 0.4, 1, transformComponent.position);
+
+   for (let i = 0; i < 10; i++) {
+      const offsetMagnitude = 10 * Math.random();
+
+      createGenericGemParticle(transformComponent, offsetMagnitude, 0.7, 0.16, 0.7);
+   }
+}

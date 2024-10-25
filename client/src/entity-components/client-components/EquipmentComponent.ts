@@ -6,24 +6,17 @@ import { getEntityRenderInfo } from "../../world";
 import { InventoryUseComponentArray } from "../server-components/InventoryUseComponent";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityID } from "../../../../shared/src/entities";
-import { ClientComponentType } from "../client-components";
+import { ClientComponentType } from "../client-component-types";
 
-// @Incomplete
-// public createFrostShieldBreakParticles(): void {
-//    const transformComponent = TransformComponentArray.getComponent(this.entity.id);
-//    for (let i = 0; i < 17; i++) {
-//       createFrostShieldBreakParticle(transformComponent.position.x, transformComponent.position.y);
-//    }
-// }
+export interface EquipmentComponentParams {}
 
-// @Incomplete
-// public genericUpdateFromData(entityData: EntityData<EntityType.player> | EntityData<EntityType.tribeWorker> | EntityData<EntityType.tribeWarrior>): void {
-//    const hasFrostShield = entityData.clientArgs[15];
-//    if (this.hasFrostShield && !hasFrostShield) {
-//       this.createFrostShieldBreakParticles();
-//    }
-//    this.hasFrostShield = hasFrostShield;
-// }
+export interface EquipmentComponent {
+   armourRenderPart: TexturedRenderPart | null;
+   gloveRenderParts: Array<TexturedRenderPart>;
+   
+   // @Incomplete: i broke the frost shield at some point
+   hasFrostShield: boolean;
+}
 
 interface ArmourInfo {
    readonly textureSource: string;
@@ -73,24 +66,43 @@ const getGloveTextureSource = (gloveType: ItemType): string => {
    return GLOVES_TEXTURE_SOURCE_RECORD[gloveType as GloveItemType];
 }
 
-export class EquipmentComponent {
-   public armourRenderPart: TexturedRenderPart | null = null;
-   public gloveRenderParts = new Array<TexturedRenderPart>();
-   
-   // @Incomplete
-   public hasFrostShield: boolean;
+// @Incomplete
+// public createFrostShieldBreakParticles(): void {
+//    const transformComponent = TransformComponentArray.getComponent(this.entity.id);
+//    for (let i = 0; i < 17; i++) {
+//       createFrostShieldBreakParticle(transformComponent.position.x, transformComponent.position.y);
+//    }
+// }
 
-   constructor() {
-      this.hasFrostShield = false;
-   }
-}
+// @Incomplete
+// public genericUpdateFromData(entityData: EntityData<EntityType.player> | EntityData<EntityType.tribeWorker> | EntityData<EntityType.tribeWarrior>): void {
+//    const hasFrostShield = entityData.clientArgs[15];
+//    if (this.hasFrostShield && !hasFrostShield) {
+//       this.createFrostShieldBreakParticles();
+//    }
+//    this.hasFrostShield = hasFrostShield;
+// }
 
 export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, {
+   createComponent: createComponent,
    onLoad: onLoad,
    onTick: onTick
 });
 
-function onLoad(equipmentComponent: EquipmentComponent, entity: EntityID): void {
+export function createEquipmentComponentParams(): EquipmentComponentParams {
+   return {};
+}
+
+function createComponent(): EquipmentComponent {
+   return {
+      armourRenderPart: null,
+      gloveRenderParts: [],
+      hasFrostShield: false
+   };
+}
+
+function onLoad(entity: EntityID): void {
+   const equipmentComponent = EquipmentComponentArray.getComponent(entity);
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);
 }
@@ -160,7 +172,8 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
    }
 }
 
-function onTick(equipmentComponent: EquipmentComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const equipmentComponent = EquipmentComponentArray.getComponent(entity);
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);
 }

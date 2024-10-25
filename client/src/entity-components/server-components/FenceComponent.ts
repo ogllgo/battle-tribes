@@ -7,8 +7,11 @@ import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
 import { EntityID } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface FenceComponentParams {}
+
+interface RenderParts {}
 
 export interface FenceComponent {
    readonly railRenderParts: [RenderPart | null, RenderPart | null, RenderPart | null, RenderPart | null];
@@ -18,8 +21,9 @@ export interface FenceComponent {
 
 type RailBit = 0b0001 | 0b0010 | 0b0100 | 0b1000;
 
-export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, never>(ServerComponentType.fence, true, {
+export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, RenderParts>(ServerComponentType.fence, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onLoad: onLoad,
    padData: padData,
@@ -30,6 +34,19 @@ function createParamsFromData(): FenceComponentParams {
    return {};
 }
 
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         1,
+         0,
+         getTextureArrayIndex("entities/fence/fence-node.png")
+      )
+   );
+
+   return {};
+}
+
 function createComponent(): FenceComponent {
    return {
       railRenderParts: [null, null, null, null],
@@ -37,7 +54,8 @@ function createComponent(): FenceComponent {
    };
 }
 
-function onLoad(fenceComponent: FenceComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
+   const fenceComponent = FenceComponentArray.getComponent(entity);
    updateRails(fenceComponent, entity);
 }
 

@@ -3,10 +3,11 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "../../../../shared/src/entities";
 import RenderPart from "../../render-parts/RenderPart";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../Entity";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityConfig } from "../ComponentArray";
 
 export interface FenceGateComponentParams {
    readonly openProgress: number;
@@ -90,10 +91,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.fenceGate>, renderParts: RenderParts): FenceGateComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.fenceGate, never>, renderParts: RenderParts): FenceGateComponent {
    return {
       doorRenderPart: renderParts.doorRenderPart,
-      openProgress: entityConfig.components[ServerComponentType.fenceGate].openProgress
+      openProgress: entityConfig.serverComponents[ServerComponentType.fenceGate].openProgress
    };
 }
 

@@ -6,11 +6,12 @@ import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { playBuildingHitSound, playSound } from "../../sound";
-import { EntityRenderInfo } from "../../Entity";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TribeComponentArray } from "./TribeComponent";
+import { EntityConfig } from "../ComponentArray";
 
 export interface TotemBannerComponentParams {
    readonly banners: Record<number, TribeTotemBanner>;
@@ -94,9 +95,19 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
    return renderPart;
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.totemBanner | ServerComponentType.tribe>): RenderParts {
-   const bannerComponentParams = entityConfig.components[ServerComponentType.totemBanner];
-   const tribeComponentParams = entityConfig.components[ServerComponentType.tribe];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.totemBanner | ServerComponentType.tribe, never>): RenderParts {
+   // Main render part
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         1,
+         0,
+         getTextureArrayIndex(`entities/tribe-totem/tribe-totem.png`)
+      )
+   );
+   
+   const bannerComponentParams = entityConfig.serverComponents[ServerComponentType.totemBanner];
+   const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
    
    const renderParts = new Array<TexturedRenderPart>();
    
@@ -110,9 +121,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBanner>, renderParts: RenderParts): TotemBannerComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBanner, never>, renderParts: RenderParts): TotemBannerComponent {
    return {
-      banners: entityConfig.components[ServerComponentType.totemBanner].banners,
+      banners: entityConfig.serverComponents[ServerComponentType.totemBanner].banners,
       bannerRenderParts: renderParts.bannerRenderParts
    };
 }

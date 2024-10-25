@@ -19,6 +19,8 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes, layers, surfaceLayer } from "../world";
+import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
+import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from "../collapses";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -115,7 +117,33 @@ const getVisibleGrassBlockers = (layer: Layer, visibleChunkBounds: VisibleChunkB
    return visibleGrassBlockers;
 }
 
+const getVisibleMinedSubtiles = (playerClient: PlayerClient): ReadonlyArray<number> => {
+   const minedSubtiles = new Array<number>();
+   
+   for (let chunkX = playerClient.visibleChunkBounds[0]; chunkX <= playerClient.visibleChunkBounds[1]; chunkX++) {
+      for (let chunkY = playerClient.visibleChunkBounds[2]; chunkY <= playerClient.visibleChunkBounds[3]; chunkY++) {
+         const minSubtileX = chunkX * Settings.CHUNK_SIZE * 4;
+         const maxSubtileX = (chunkX + 1) * Settings.CHUNK_SIZE * 4 - 1;
+         const minSubtileY = chunkY * Settings.CHUNK_SIZE * 4;
+         const maxSubtileY = (chunkY + 1) * Settings.CHUNK_SIZE * 4 - 1;
+         
+         for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+            for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+               const subtile = getSubtileIndex(subtileX, subtileY);
+               if (playerClient.lastLayer.subtileIsMined(subtile)) {
+                  minedSubtiles.push(subtile);
+               }
+            }
+         }
+      }
+   }
+
+   return minedSubtiles;
+}
+
 export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<EntityID>): ArrayBuffer {
+   // @Cleanup: The mined subtile system here exists really only to send particles. Can be entirely encompassed in a server particles system!
+
    const playerIsAlive = entityExists(playerClient.instance);
    const player = playerClient.instance;
    const layer = playerClient.lastLayer;
@@ -159,6 +187,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
 
    const titleOffer = playerIsAlive ? PlayerComponentArray.getComponent(player).titleOffer : null;
+
+   const minedSubtiles = getVisibleMinedSubtiles(playerClient);
+   const nearbyCollapses = getPlayerNearbyCollapses(playerClient);
    
    // Packet type
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -232,6 +263,16 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
 
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * playerClient.entityTickEvents.length;
+
+   // Mined subtiles
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT * minedSubtiles.length;
+
+   // Collapses
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * nearbyCollapses.length;
+
+   // Collapses (so the client can play collapse sound effects)
 
    lengthBytes = alignLengthBytes(lengthBytes);
 
@@ -426,6 +467,29 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       packet.addNumber(tickEvent.entityID);
       packet.addNumber(tickEvent.type);
       packet.addNumber(tickEvent.data as number);
+   }
+
+   // Mined subtiles
+   packet.addNumber(minedSubtiles.length);
+   for (const subtileIndex of minedSubtiles) {
+      packet.addNumber(subtileIndex);
+
+      const subtileType = layer.getMinedSubtileType(subtileIndex);
+      packet.addNumber(subtileType);
+      
+      const support = getSubtileSupport(layer, subtileIndex);
+      packet.addNumber(support);
+
+      packet.addBoolean(subtileIsCollapsing(subtileIndex));
+      packet.padOffset(3);
+   }
+
+   // Collapses
+   packet.addNumber(nearbyCollapses.length);
+   // @Cleanup: unused?
+   for (const [collapse, subtileIndex] of nearbyCollapses) {
+      packet.addNumber(subtileIndex);
+      packet.addNumber(collapse.age);
    }
    
    // const visibleTribes = getVisibleTribes(extendedVisibleChunkBounds);

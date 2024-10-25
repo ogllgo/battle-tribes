@@ -3,7 +3,8 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface BuildingMaterialComponentParams {
    readonly material: BuildingMaterial;
@@ -41,16 +42,20 @@ export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingM
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
-   const material = reader.readNumber();
+export function createBuildingMaterialComponentParams(material: BuildingMaterial): BuildingMaterialComponentParams {
    return {
       material: material
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.buildingMaterial>): BuildingMaterialComponent {
+function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
+   const material = reader.readNumber();
+   return createBuildingMaterialComponentParams(material);
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): BuildingMaterialComponent {
    return {
-      material: entityConfig.components[ServerComponentType.buildingMaterial].material
+      material: entityConfig.serverComponents[ServerComponentType.buildingMaterial].material
    };
 }
 

@@ -11,10 +11,10 @@ import { Light, addLight, attachLightToEntity, removeLight } from "../../lights"
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import Player from "../../entities/Player";
-import { getEntityRenderInfo } from "../../world";
-import { ComponentTint, createComponentTint } from "../../Entity";
+import ServerComponentArray from "../ServerComponentArray";
+import { getEntityRenderInfo, playerInstance } from "../../world";
+import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
+import { EntityConfig } from "../ComponentArray";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;
@@ -62,6 +62,12 @@ export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectC
    calculateTint: calculateTint
 });
 
+export function createStatusEffectComponentParams(statusEffects: Array<StatusEffectData>): StatusEffectComponentParams {
+   return {
+      statusEffects: statusEffects
+   };
+}
+
 function createParamsFromData(reader: PacketReader): StatusEffectComponentParams {
    const statusEffects = new Array<StatusEffectData>();
    const numStatusEffects = reader.readNumber();
@@ -76,20 +82,19 @@ function createParamsFromData(reader: PacketReader): StatusEffectComponentParams
       statusEffects.push(statusEffectData);
    }
 
-   return {
-      statusEffects: statusEffects
-   };
+   return createStatusEffectComponentParams(statusEffects);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEffect>): StatusEffectComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEffect, never>): StatusEffectComponent {
    return {
-      statusEffects: entityConfig.components[ServerComponentType.statusEffect].statusEffects,
+      statusEffects: entityConfig.serverComponents[ServerComponentType.statusEffect].statusEffects,
       burningLight: null
    };
 }
 
-function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    
    const poisonStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.poisoned);
    if (poisonStatusEffect !== null) {
@@ -303,7 +308,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, Player.instance!.id);
+   updateFromData(reader, playerInstance!);
 }
 
 function calculateTint(entity: EntityID): ComponentTint {

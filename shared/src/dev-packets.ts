@@ -74,7 +74,12 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.guardianGemQuake]: {},
    [ServerComponentType.guardianGemFragmentProjectile]: {},
    [ServerComponentType.guardianSpikyBall]: {},
-   [ServerComponentType.bracings]: {}
+   [ServerComponentType.bracings]: {},
+   [ServerComponentType.ballista]: {},
+   [ServerComponentType.slingTurret]: {},
+   [ServerComponentType.barrel]: {},
+   [ServerComponentType.campfire]: {},
+   [ServerComponentType.furnace]: {}
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

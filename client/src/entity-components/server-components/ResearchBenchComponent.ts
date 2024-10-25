@@ -2,21 +2,28 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createPaperParticle } from "../../particles";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityAgeTicks } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
 
 export interface ResearchBenchComponentParams {
    readonly isOccupied: boolean;
 }
 
+interface RenderParts {}
+
 export interface ResearchBenchComponent {
    isOccupied: boolean;
 }
 
-export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, never>(ServerComponentType.researchBench, true, {
+export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, RenderParts>(ServerComponentType.researchBench, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
@@ -32,13 +39,27 @@ function createParamsFromData(reader: PacketReader): ResearchBenchComponentParam
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.researchBench>): ResearchBenchComponent {
+function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex("entities/research-bench/research-bench.png")
+      )
+   );
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.researchBench, never>): ResearchBenchComponent {
    return {
-      isOccupied: entityConfig.components[ServerComponentType.researchBench].isOccupied
+      isOccupied: entityConfig.serverComponents[ServerComponentType.researchBench].isOccupied
    };
 }
 
-function onTick(researchBenchComponent: ResearchBenchComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
    if (researchBenchComponent.isOccupied && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.3)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const pos = getRandomPointInEntity(transformComponent);

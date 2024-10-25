@@ -3,9 +3,7 @@ import { CactusFlowerSize, EntityID } from "battletribes-shared/entities";
 import Particle from "./Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer } from "./rendering/webgl/particle-rendering";
 import Board from "./Board";
-import Entity from "./Entity";
-import { ServerComponentType } from "battletribes-shared/components";
-import TransformComponent, { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { BlockType } from "../../shared/src/boxes/boxes";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
@@ -18,6 +16,10 @@ const BURNING_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [
    [255/255, 102/255, 0],
    [255/255, 184/255, 61/255]
 ];
+
+// @Hack
+export const LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
+export const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 
 export enum BloodParticleSize {
    small,
@@ -65,11 +67,10 @@ const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 
 export function createBloodParticleFountain(entity: EntityID, interval: number, speedMultiplier: number): void {
    const offset = 2 * Math.PI * Math.random();
+   const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 4; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
-         const transformComponent = TransformComponentArray.getComponent(entity);
-
          for (let j = 0; j < BLOOD_FOUNTAIN_RAY_COUNT; j++) {
             let moveDirection = 2 * Math.PI / BLOOD_FOUNTAIN_RAY_COUNT * j + offset;
             moveDirection += randFloat(-0.3, 0.3);
@@ -990,9 +991,7 @@ export function createFlowerParticle(spawnPositionX: number, spawnPositionY: num
    Board.lowTexturedParticles.push(particle);
 }
 
-export function createCactusSpineParticle(cactus: Entity, offset: number, flyDirection: number): void {
-   const transformComponent = TransformComponentArray.getComponent(cactus.id);
-
+export function createCactusSpineParticle(transformComponent: TransformComponent, offset: number, flyDirection: number): void {
    // @Speed: Garbage collection
    const spawnPosition = Point.fromVectorForm(offset, flyDirection);
    spawnPosition.add(transformComponent.position);
@@ -1292,12 +1291,11 @@ export function createBlueBloodParticle(size: BloodParticleSize, spawnPositionX:
 
 const BLUE_BLOOD_FOUNTAIN_RAY_COUNT = 7;
 
-export function createBlueBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
+export function createBlueBloodParticleFountain(transformComponent: TransformComponent, interval: number, speedMultiplier: number): void {
    const offset = 2 * Math.PI * Math.random();
 
    for (let i = 0; i < 6; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
-         const transformComponent = TransformComponentArray.getComponent(entity.id);
          for (let j = 0; j < BLUE_BLOOD_FOUNTAIN_RAY_COUNT; j++) {
             let moveDirection = 2 * Math.PI / BLOOD_FOUNTAIN_RAY_COUNT * j + offset;
             moveDirection += randFloat(-0.3, 0.3);

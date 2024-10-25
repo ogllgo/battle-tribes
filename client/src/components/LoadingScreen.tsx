@@ -1,11 +1,10 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
-import Client from "../client/Client";
+import Client from "../networking/Client";
 import Game from "../Game";
 import { AppState } from "./App";
 import { definiteGameState } from "../game-state/game-states";
-import { processGameDataPacket } from "../client/packet-processing";
-import Camera from "../Camera";
+import { processGameDataPacket } from "../networking/packet-processing";
 
 // @Cleanup: This file does too much logic on its own. It should really only have UI/loading state
 
@@ -72,13 +71,6 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          
          const gameDataPacket = await Client.getNextGameDataPacket();
          processGameDataPacket(gameDataPacket);
-
-         // @Temporary
-         // Game.tribe = new Tribe(gameDataPacket.playerTribeData.name, gameDataPacket.playerTribeData.id, tribeType, gameDataPacket.playerTribeData.numHuts);
-         
-         // @Incomplete
-         // const spawnPosition = Point.unpackage(initialGameDataPacket.spawnPosition);
-         // Player.createInstancePlayer(spawnPosition, initialGameDataPacket.playerID);
 
          Game.start();
 

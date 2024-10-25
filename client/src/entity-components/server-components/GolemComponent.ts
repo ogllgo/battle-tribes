@@ -1,11 +1,11 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { Point, randItem } from "battletribes-shared/utils";
 import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { Light, addLight, attachLightToRenderPart } from "../../lights";
-import { playSound } from "../../sound";
+import { playSound, ROCK_HIT_SOUNDS } from "../../sound";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
@@ -13,7 +13,8 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 enum GolemRockSize {
    massive,
@@ -96,7 +97,8 @@ export const GolemComponentArray = new ServerComponentArray<GolemComponent, Gole
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit
 });
 
 function createParamsFromData(reader: PacketReader): GolemComponentParams {
@@ -108,8 +110,8 @@ function createParamsFromData(reader: PacketReader): GolemComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.golem>): GolemComponent {
-   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.golem, never>): GolemComponent {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    
    const rockRenderParts = new Array<RenderPart>();
    const eyeRenderParts = new Array<RenderPart>();
@@ -166,16 +168,17 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    }
    
    return {
-      wakeProgress: entityConfig.components[ServerComponentType.golem].wakeProgress,
+      wakeProgress: entityConfig.serverComponents[ServerComponentType.golem].wakeProgress,
       rockRenderParts: rockRenderParts,
       eyeRenderParts: eyeRenderParts,
       eyeLights: eyeLights
    };
 }
 
-function onTick(golemComponent: GolemComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   const golemComponent = GolemComponentArray.getComponent(entity);
 
    if (golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -239,4 +242,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       golemComponent.eyeRenderParts[i].opacity = golemComponent.wakeProgress;
       golemComponent.eyeLights[i].intensity = golemComponent.wakeProgress;
    }
+}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
 }

@@ -27,7 +27,9 @@ export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianG
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): GuardianGemQuakeComponentParams {
+function createParamsFromData(reader: PacketReader): GuardianGemQuakeComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   
    return {};
 }
 
@@ -35,7 +37,7 @@ function createComponent(): GuardianGemQuakeComponent {
    return {};
 }
 
-function onLoad(_component: GuardianGemQuakeComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
    

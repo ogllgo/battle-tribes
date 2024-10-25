@@ -6,8 +6,9 @@ import { getHotbarSelectedItemSlot } from "../../components/game/GameInteractabl
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { CraftingMenu_updateRecipes } from "../../components/game/menus/CraftingMenu";
-import Player from "../../entities/Player";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { playerInstance } from "../../world";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbInfoByInventoryName, InventoryUseComponent } from "./InventoryUseComponent";
 
 export interface InventoryComponentParams {
@@ -64,7 +65,7 @@ const playerActionIsLegal = (limb: LimbInfo, item: Item | null): boolean => {
 }
 
 const validatePlayerAction = (inventoryName: InventoryName, item: Item | null): void => {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    if (!inventoryUseComponentHasLimbInfo(inventoryUseComponent, inventoryName)) {
       return;
    }
@@ -203,9 +204,9 @@ function createParamsFromData(reader: PacketReader): InventoryComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory>): InventoryComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory, never>): InventoryComponent {
    return {
-      inventories: entityConfig.components[ServerComponentType.inventory].inventories
+      inventories: entityConfig.serverComponents[ServerComponentType.inventory].inventories
    };
 }
 
@@ -273,15 +274,15 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    updateInventories(inventoryComponent, reader, true);
 }
 
 function updatePlayerAfterData(): void {
    // Update held items
    // @Cleanup: this seems like it should be done in the inventoryusecomponent, but make sure that it's done after the inventorycomponent is updated
-   const inventoryComponent = InventoryComponentArray.getComponent(Player.instance!.id);
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    updateHeldItem(inventoryComponent, inventoryUseComponent, InventoryName.hotbar, getHotbarSelectedItemSlot());
    updateHeldItem(inventoryComponent, inventoryUseComponent, InventoryName.offhand, 1);
 }

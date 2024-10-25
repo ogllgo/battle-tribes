@@ -3,7 +3,8 @@ import { EntityID, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { playSound } from "../../sound";
 import { getEntityType } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface StructureComponentParams {
@@ -24,19 +25,23 @@ export const StructureComponentArray = new ServerComponentArray<StructureCompone
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): StructureComponentParams {
-   const hasActiveBlueprint = reader.readBoolean();
-   reader.padOffset(3);
-   const connectedSidesBitset = reader.readNumber();
-
+export function createStructureComponentParams(hasActiveBlueprint: boolean, connectedSidesBitset: number): StructureComponentParams {
    return {
       hasActiveBlueprint: hasActiveBlueprint,
       connectedSidesBitset: connectedSidesBitset
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.structure>): StructureComponent {
-   const structureComponentParams = entityConfig.components[ServerComponentType.structure];
+function createParamsFromData(reader: PacketReader): StructureComponentParams {
+   const hasActiveBlueprint = reader.readBoolean();
+   reader.padOffset(3);
+   const connectedSidesBitset = reader.readNumber();
+
+   return createStructureComponentParams(hasActiveBlueprint, connectedSidesBitset);
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.structure, never>): StructureComponent {
+   const structureComponentParams = entityConfig.serverComponents[ServerComponentType.structure];
    
    return {
       hasActiveBlueprint: structureComponentParams.hasActiveBlueprint,

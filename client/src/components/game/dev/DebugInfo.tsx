@@ -6,8 +6,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Tile } from "../../../Tile";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
-import { getEntityLayer, getEntityType } from "../../../world";
-import Player from "../../../entities/Player";
+import { getEntityLayer, getEntityType, playerInstance } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { EntityID } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
@@ -130,7 +129,7 @@ const DebugInfo = () => {
    const [, forceUpdate] = useReducer(x => x + 1, 0);
 
    // @Incomplete @Bug: will crash when the player dies
-   const layer = getEntityLayer(Player.instance!.id);
+   const layer = getEntityLayer(playerInstance!);
 
    useEffect(() => {
       updateDebugInfoTile = (tile: Tile | null): void => {

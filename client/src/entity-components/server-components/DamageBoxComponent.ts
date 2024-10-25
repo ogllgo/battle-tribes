@@ -8,11 +8,10 @@ import { ClientBlockBox, ClientDamageBox } from "../../boxes";
 import { EntityID } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { InventoryName } from "battletribes-shared/items/items";
-import Player from "../../entities/Player";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
 import { discombobulate, GameInteractableLayer_setItemRestTime } from "../../components/game/GameInteractableLayer";
 import { AttackVars } from "battletribes-shared/attack-patterns";
-import { getEntityLayer } from "../../world";
+import { getEntityLayer, playerInstance } from "../../world";
 import { getSubtileX, getSubtileY } from "../../Layer";
 import { createSparkParticle } from "../../particles";
 import { playSound } from "../../sound";
@@ -20,7 +19,8 @@ import { TransformComponentArray } from "./TransformComponent";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import Board from "../../Board";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
 
 export interface DamageBoxComponentParams {
    readonly damageBoxes: Array<ClientDamageBox>;
@@ -253,8 +253,8 @@ function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.damageBox>): DamageBoxComponent {
-   const damageBoxComponentParams = entityConfig.components[ServerComponentType.damageBox];
+function createComponent(entityConfig: EntityConfig<ServerComponentType.damageBox, never>): DamageBoxComponent {
+   const damageBoxComponentParams = entityConfig.serverComponents[ServerComponentType.damageBox];
    
    return {
       damageBoxes: damageBoxComponentParams.damageBoxes,
@@ -267,7 +267,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.damageBo
 }
 
 const blockPlayerAttack = (damageBox: ClientDamageBox): void => {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(Player.instance!.id);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limb = getLimbInfoByInventoryName(inventoryUseComponent, damageBox.associatedLimbInventoryName);
    
    // Pause the attack for a brief period
@@ -291,7 +291,7 @@ const wallBlockPlayerAttack = (damageBox: ClientDamageBox, blockingSubtileIndex:
    playSound("stone-mine-" + randInt(1, 4) + ".mp3", 0.85, 1, new Point(originX, originY));
 
    // Create rock debris particles moving towards the player on hit
-   const playerTransformComponent = TransformComponentArray.getComponent(Player.instance!.id);
+   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const angleToPlayer = angle(playerTransformComponent.position.x - originX, playerTransformComponent.position.y - originY);
    for (let i = 0; i < 7; i++) {
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
@@ -339,11 +339,12 @@ const onPlayerBlock = (limb: LimbInfo): void => {
    GameInteractableLayer_setItemRestTime(limb.inventoryName, limb.selectedItemSlot, AttackVars.SHIELD_BLOCK_REST_TIME_TICKS);
 }
 
-function onTick(damageBoxComponent: DamageBoxComponent, entity: EntityID): void {
-   if (Player.instance === null || entity !== Player.instance.id) {
+function onTick(entity: EntityID): void {
+   if (entity !== playerInstance) {
       return;
    }
    
+   const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    
    for (let i = 0; i < damageBoxComponent.damageBoxes.length; i++) {
@@ -596,5 +597,5 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, Player.instance!.id);
+   updateFromData(reader, playerInstance!);
 }

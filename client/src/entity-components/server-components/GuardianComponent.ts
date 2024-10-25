@@ -9,7 +9,8 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianComponentParams {
@@ -88,7 +89,7 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform>): GuardianComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform, never>): GuardianComponent {
    const renderInfo = getEntityRenderInfo(entityConfig.entity);
 
    const rubyRenderParts = new Array<RenderPart>();
@@ -343,7 +344,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
    const limbCrackLights = new Array<Light>();
    
    // Attach limb render parts
-   const transformComponentParams = entityConfig.components[ServerComponentType.transform];
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
       const hitbox = transformComponentParams.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
@@ -380,7 +381,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       }
    }
 
-   const guardianComponentParams = entityConfig.components[ServerComponentType.guardian];
+   const guardianComponentParams = entityConfig.serverComponents[ServerComponentType.guardian];
 
    return {
       rubyRenderParts: rubyRenderParts,

@@ -1,7 +1,7 @@
 import { COMMANDS, CommandPermissions, CommandSpecifications, commandIsValid, parseCommand } from "battletribes-shared/commands";
 import { useEffect, useRef, useState } from "react";
 import { isDev } from "../../../utils";
-import Client from "../../../client/Client";
+import Client from "../../../networking/Client";
 import { setTerminalButtonOpened } from "./TerminalButton";
 import Camera from "../../../Camera";
 import Board from "../../../Board";

@@ -1,29 +1,46 @@
-import { randFloat } from "battletribes-shared/utils";
+import { randFloat, randInt } from "battletribes-shared/utils";
 import { EntityID, FishColour } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TileType } from "battletribes-shared/tiles";
 import Board from "../../Board";
-import { createWaterSplashParticle } from "../../particles";
+import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createWaterSplashParticle } from "../../particles";
 import { getEntityLayer } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
+import { EntityConfig } from "../ComponentArray";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { playSound } from "../../sound";
 
 export interface FishComponentParams {
    readonly colour: FishColour;
 }
+
+interface RenderParts {}
 
 export interface FishComponent {
    readonly colour: FishColour;
    readonly waterOpacityMultiplier: number;
 }
 
-export const FishComponentArray = new ServerComponentArray<FishComponent, FishComponentParams, never>(ServerComponentType.fish, true, {
+const TEXTURE_SOURCES: Record<FishColour, string> = {
+   [FishColour.blue]: "entities/fish/fish-blue.png",
+   [FishColour.gold]: "entities/fish/fish-gold.png",
+   [FishColour.red]: "entities/fish/fish-red.png",
+   [FishColour.lime]: "entities/fish/fish-lime.png"
+};
+
+export const FishComponentArray = new ServerComponentArray<FishComponent, FishComponentParams, RenderParts>(ServerComponentType.fish, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): FishComponentParams {
@@ -33,14 +50,29 @@ function createParamsFromData(reader: PacketReader): FishComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.fish>): FishComponent {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.fish, never>): RenderParts {
+   const fishComponentParams = entityConfig.serverComponents[ServerComponentType.fish];
+   
+   renderInfo.attachRenderThing(
+      new TexturedRenderPart(
+         null,
+         0,
+         0,
+         getTextureArrayIndex(TEXTURE_SOURCES[fishComponentParams.colour])
+      )
+   );
+
+   return {};
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.fish, never>): FishComponent {
    return {
-      colour: entityConfig.components[ServerComponentType.fish].colour,
+      colour: entityConfig.serverComponents[ServerComponentType.fish].colour,
       waterOpacityMultiplier: randFloat(0.6, 1)
    };
 }
 
-function onTick(_fishComponent: FishComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    
@@ -62,4 +94,24 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+}
+
+function onHit(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   // Blood particles
+   for (let i = 0; i < 5; i++) {
+      const position = transformComponent.position.offset(16, 2 * Math.PI * Math.random());
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, position.x, position.y, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+   }
+
+   playSound("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
+}
+
+function onDie(entity: EntityID): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   createBloodParticleFountain(entity, 0.1, 0.8);
+   
+   playSound("fish-die-1.mp3", 0.4, 1, transformComponent.position);
 }

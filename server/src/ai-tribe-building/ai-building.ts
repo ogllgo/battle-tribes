@@ -11,6 +11,7 @@ import { HitboxCollisionBit } from "battletribes-shared/collision";
 import { getGameTicks, getTribes, LayerType, surfaceLayer, undergroundLayer } from "../world";
 import Layer from "../Layer";
 import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
+import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
 
 const enum Vars {
    /** How much safety increases when moving in a node */
@@ -389,7 +390,9 @@ const getBorderNodes = (layer: Layer, buildingInfo: TribeLayerBuildingInfo, insi
 export function safetyNodeIsInWall(layer: Layer, nodeX: number, nodeY: number): boolean {
    const subtileX = Math.floor(nodeX * Settings.SAFETY_NODE_SEPARATION / Settings.SUBTILE_SIZE);
    const subtileY = Math.floor(nodeY * Settings.SAFETY_NODE_SEPARATION / Settings.SUBTILE_SIZE);
-   return layer.subtileIsWall(subtileX, subtileY);
+
+   const subtileIndex = getSubtileIndex(subtileX, subtileY);
+   return layer.subtileIsWall(subtileIndex);
 }
 
 const createPaddingNodes = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo, outmostPaddingNodes: Set<SafetyNode>, borderNodes: ReadonlySet<SafetyNode>, paddingNodes: Set<SafetyNode>): void => {

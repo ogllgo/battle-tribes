@@ -7,9 +7,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSound } from "../../sound";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
+import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityConfig } from "../ComponentArray";
 
 export interface SlimeSpitComponentParams {}
 
@@ -23,14 +24,15 @@ export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitCompone
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onDie: onDie
 });
 
 function createParamsFromData(): SlimeSpitComponentParams {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig): SlimeSpitComponent {
+function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitComponent {
    const renderParts = new Array<RenderPart>();
 
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
@@ -60,12 +62,13 @@ function createComponent(entityConfig: EntityConfig): SlimeSpitComponent {
    };
 }
 
-function onLoad(_slimeSpitComponent: SlimeSpitComponent, entity: EntityID): void {
+function onLoad(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("slime-spit.mp3", 0.5, 1, transformComponent.position);
 }
 
-function onTick(slimeSpitComponent: SlimeSpitComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const slimeSpitComponent = SlimeSpitComponentArray.getComponent(entity);
    slimeSpitComponent.renderParts[0].rotation += 1.5 * Math.PI / Settings.TPS;
    slimeSpitComponent.renderParts[1].rotation -= 1.5 * Math.PI / Settings.TPS;
 
@@ -82,4 +85,10 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+}
+
+function onDie(entity: EntityID): void {
+   for (let i = 0; i < 15; i++) {
+      createPoisonParticle(entity);
+   }
 }

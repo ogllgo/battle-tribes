@@ -2,12 +2,13 @@ import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { updateHealthBar } from "../../components/game/HealthBar";
-import Player from "../../entities/Player";
 import { discombobulate } from "../../components/game/GameInteractableLayer";
 import { EntityID } from "../../../../shared/src/entities";
-import ServerComponentArray, { EntityConfig } from "../ServerComponentArray";
-import { ComponentTint, createComponentTint } from "../../Entity";
-import { getEntityRenderInfo } from "../../world";
+import ServerComponentArray from "../ServerComponentArray";
+import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
+import { getEntityRenderInfo, playerInstance } from "../../world";
+import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
+import { EntityConfig } from "../ComponentArray";
 
 export interface HealthComponentParams {
    readonly health: number;
@@ -36,18 +37,22 @@ export const HealthComponentArray = new ServerComponentArray<HealthComponent, He
    calculateTint: calculateTint
 });
 
-function createParamsFromData(reader: PacketReader): HealthComponentParams {
-   const health = reader.readNumber();
-   const maxHealth = reader.readNumber();
-
+export function createHealthComponentParams(health: number, maxHealth: number): HealthComponentParams {
    return {
       health: health,
       maxHealth: maxHealth
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.health>): HealthComponent {
-   const healthComponentParams = entityConfig.components[ServerComponentType.health];
+function createParamsFromData(reader: PacketReader): HealthComponentParams {
+   const health = reader.readNumber();
+   const maxHealth = reader.readNumber();
+
+   return createHealthComponentParams(health, maxHealth);
+}
+
+function createComponent(entityConfig: EntityConfig<ServerComponentType.health, never>): HealthComponent {
+   const healthComponentParams = entityConfig.serverComponents[ServerComponentType.health];
    
    return {
       health: healthComponentParams.health,
@@ -67,7 +72,9 @@ const calculateRedness = (healthComponent: HealthComponent): number => {
    return redness;
 }
 
-function onTick(healthComponent: HealthComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const healthComponent = HealthComponentArray.getComponent(entity);
+   
    const previousRedness = calculateRedness(healthComponent);
    healthComponent.secondsSinceLastHit += Settings.I_TPS;
 
@@ -79,15 +86,16 @@ function onTick(healthComponent: HealthComponent, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID, isDamagingHit: boolean): void {
+function onHit(entity: EntityID, hitData: HitData): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
       
+   const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
    if (isDamagingHit) {
       healthComponent.secondsSinceLastHit = 0;
    }
 
    // @Hack
-   if (entity === Player.instance?.id) {
+   if (entity === playerInstance) {
       discombobulate(0.2);
    }
 }
@@ -104,9 +112,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, Player.instance!.id);
+   updateFromData(reader, playerInstance!);
 
-   const healthComponent = HealthComponentArray.getComponent(Player.instance!.id);
+   const healthComponent = HealthComponentArray.getComponent(playerInstance!);
    updateHealthBar(healthComponent.health);
 }
 
