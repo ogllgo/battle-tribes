@@ -16,8 +16,9 @@ import { getEntityType, getGameTicks, layers } from "./world";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 import CollisionChunk from "./CollisionChunk";
 import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detection";
-import { getSubtileIndex, tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
+import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
 import { registerMinedSubtile, MinedSubtileInfo } from "./collapses";
+import { getSubtileIndex } from "../../shared/src/subtiles";
 
 // @Cleanup: same as WaterTileGenerationInfo
 export interface RiverFlowDirection {
@@ -84,10 +85,11 @@ const createCollisionGroupChunks = (): Record<CollisionGroup, ReadonlyArray<Coll
 export default class Layer {
    public readonly tileTypes: Float32Array;
    public readonly tileBiomes: Float32Array;
-   private readonly subtileTypes: Float32Array;
    public readonly riverFlowDirections: Float32Array;
    public readonly tileTemperatures: Float32Array;
    public readonly tileHumidities: Float32Array;
+
+   private readonly wallSubtileTypes: Float32Array;
 
    public readonly wallSubtileDamageTakenMap = new Map<number, number>();
 
@@ -109,7 +111,7 @@ export default class Layer {
    constructor(generationInfo: TerrainGenerationInfo) {
       this.tileTypes = generationInfo.tileTypes;
       this.tileBiomes = generationInfo.tileBiomes;
-      this.subtileTypes = generationInfo.subtileTypes;
+      this.wallSubtileTypes = generationInfo.subtileTypes;
       this.riverFlowDirections = generationInfo.riverFlowDirections;
       this.tileTemperatures = generationInfo.tileTemperatures;
       this.tileHumidities = generationInfo.tileHumidities;
@@ -133,7 +135,7 @@ export default class Layer {
       if (OPTIONS.generateWalls) {
          for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
             for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-               if (tileHasWallSubtile(this.subtileTypes, tileX, tileY)) {
+               if (tileHasWallSubtile(this.wallSubtileTypes, tileX, tileY)) {
                   // Mark which chunks have wall tiles
                   const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
                   const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
@@ -168,7 +170,7 @@ export default class Layer {
    }
 
    public getSubtileTypes(): Readonly<Float32Array> {
-      return this.subtileTypes;
+      return this.wallSubtileTypes;
    }
 
    public damageWallSubtitle(subtileIndex: number, damage: number): number {
@@ -183,8 +185,8 @@ export default class Layer {
       }
 
       if (this.wallSubtileDamageTakenMap.get(subtileIndex)! >= 3) {
-         const previousSubtileType = this.subtileTypes[subtileIndex];
-         this.subtileTypes[subtileIndex] = SubtileType.none;
+         const previousSubtileType = this.wallSubtileTypes[subtileIndex];
+         this.wallSubtileTypes[subtileIndex] = SubtileType.none;
          
          registerMinedSubtile(this, subtileIndex, previousSubtileType);
 
@@ -196,7 +198,7 @@ export default class Layer {
       } else {
          this.wallSubtileUpdates.push({
             subtileIndex: subtileIndex,
-            subtileType: this.subtileTypes[subtileIndex],
+            subtileType: this.wallSubtileTypes[subtileIndex],
             damageTaken: this.wallSubtileDamageTakenMap.get(subtileIndex)!
          });
       }
@@ -212,7 +214,7 @@ export default class Layer {
    }
 
    public restoreWallSubtile(subtileIndex: number, subtileType: SubtileType): void {
-      this.subtileTypes[subtileIndex] = subtileType;
+      this.wallSubtileTypes[subtileIndex] = subtileType;
       
       this.minedSubtileInfoMap.delete(subtileIndex);
       
@@ -248,16 +250,16 @@ export default class Layer {
    }
 
    public subtileIsWall(subtileIndex: number): boolean {
-      return this.subtileTypes[subtileIndex] !== SubtileType.none;
+      return this.wallSubtileTypes[subtileIndex] !== SubtileType.none;
    }
 
    public subtileCanHaveWall(subtileIndex: number): boolean {
-      return this.subtileTypes[subtileIndex] !== SubtileType.none || this.wallSubtileDamageTakenMap.has(subtileIndex);
+      return this.wallSubtileTypes[subtileIndex] !== SubtileType.none || this.wallSubtileDamageTakenMap.has(subtileIndex);
    }
 
    /** Returns if the given subtile can support a wall but is mined out */
    public subtileIsMined(subtileIndex: number): boolean {
-      return this.subtileTypes[subtileIndex] === SubtileType.none && this.wallSubtileDamageTakenMap.has(subtileIndex);
+      return this.wallSubtileTypes[subtileIndex] === SubtileType.none && this.wallSubtileDamageTakenMap.has(subtileIndex);
    }
 
    public positionHasWall(x: number, y: number): boolean {
@@ -434,6 +436,7 @@ export default class Layer {
    public getWorldInfo(): WorldInfo {
       return {
          chunks: this.chunks,
+         wallSubtileTypes: this.wallSubtileTypes,
          getEntityCallback: (entity: EntityID): EntityInfo => {
             const transformComponent = TransformComponentArray.getComponent(entity);
 

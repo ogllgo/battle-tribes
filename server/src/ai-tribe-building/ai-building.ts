@@ -11,7 +11,7 @@ import { HitboxCollisionBit } from "battletribes-shared/collision";
 import { getGameTicks, getTribes, LayerType, surfaceLayer, undergroundLayer } from "../world";
 import Layer from "../Layer";
 import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
-import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 const enum Vars {
    /** How much safety increases when moving in a node */

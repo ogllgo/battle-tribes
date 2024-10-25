@@ -12,7 +12,6 @@ import Particle from "./Particle";
 import { RenderLayer } from "./render-layers";
 import { RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import { addRenderable, removeRenderable, RenderableType } from "./rendering/render-loop";
-import { removeEntityFromDirtyArray } from "./rendering/render-part-matrices";
 import { renderLayerIsChunkRendered, registerChunkRenderedEntity, removeChunkRenderedEntity } from "./rendering/webgl/chunked-entity-rendering";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "./rendering/webgl/particle-rendering";
 import { recalculateWallSubtileRenderData, WALL_TILE_TEXTURE_SOURCE_RECORD } from "./rendering/webgl/solid-tile-rendering";
@@ -296,6 +295,7 @@ export default class Layer {
    public getWorldInfo(): WorldInfo {
       return {
          chunks: this.chunks,
+         wallSubtileTypes: this.wallSubtileTypes,
          getEntityCallback: (entity: EntityID): EntityInfo => {
             const transformComponent = TransformComponentArray.getComponent(entity);
 

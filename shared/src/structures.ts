@@ -5,6 +5,8 @@ import { createBracingHitboxes, createNormalStructureHitboxes } from "./boxes/en
 import { boxIsCircular, Hitbox } from "./boxes/boxes";
 import { Settings } from "./settings";
 import { Point, distance, getAbsAngleDiff } from "./utils";
+import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./subtiles";
+import { SubtileType } from "./tiles";
 
 /*
 When snapping:
@@ -58,6 +60,7 @@ export interface StructureConnectionInfo {
 
 export interface WorldInfo {
    readonly chunks: Chunks;
+   readonly wallSubtileTypes: Readonly<Float32Array>;
    getEntityCallback(entity: EntityID): EntityInfo;
 }
 
@@ -384,51 +387,81 @@ const filterCandidatePositions = (candidates: Array<StructureTransformInfo>, reg
    }
 }
 
-const getNearbyTileCorners = (regularPlacePosition: Point): ReadonlyArray<Point> => {
+const getNearbyTileCornerSubtiles = (regularPlacePosition: Point): ReadonlyArray<number> => {
    const minTileX = Math.floor(regularPlacePosition.x / Settings.TILE_SIZE);
    const maxTileX = Math.ceil(regularPlacePosition.x / Settings.TILE_SIZE);
    const minTileY = Math.floor(regularPlacePosition.y / Settings.TILE_SIZE);
    const maxTileY = Math.ceil(regularPlacePosition.y / Settings.TILE_SIZE);
 
-   const tileCornerPositions = new Array<Point>();
+   const tileCornerSubtiles = new Array<number>();
    for (let tileCornerX = minTileX; tileCornerX <= maxTileX; tileCornerX++) {
       for (let tileCornerY = minTileY; tileCornerY <= maxTileY; tileCornerY++) {
-         const x = tileCornerX * Settings.TILE_SIZE;
-         const y = tileCornerY * Settings.TILE_SIZE;
-         tileCornerPositions.push(new Point(x, y));
+         const subtileX = tileCornerX * Settings.SUBTILES_IN_TILE;
+         const subtileY = tileCornerY * Settings.SUBTILES_IN_TILE;
+         tileCornerSubtiles.push(getSubtileIndex(subtileX, subtileY));
       }
    }
-   return tileCornerPositions;
+   return tileCornerSubtiles;
 }
 
-const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: StructureType): StructurePlaceInfo => {
-   // Snap the place position to the closest tile
-   const tileX = Math.floor(regularPlacePosition.x / Settings.TILE_SIZE + 0.5);
-   const tileY = Math.floor(regularPlacePosition.y / Settings.TILE_SIZE + 0.5);
-   const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
-   
-   const nearbyTileCorners = getNearbyTileCorners(regularPlacePosition);
+const checkSubtileForWall = (subtileX: number, subtileY: number, worldInfo: WorldInfo): boolean => {
+   if (!subtileIsInWorld(subtileX, subtileY)) {
+      return false;
+   }
 
-   let closestTileCorner: Point | undefined;
-   let secondClosestTileCorner: Point | undefined;
+   const subtileIndex = getSubtileIndex(subtileX, subtileY);
+   return worldInfo.wallSubtileTypes[subtileIndex] !== SubtileType.none;
+}
+
+const cornerIsPlaceable = (cornerSubtileX: number, cornerSubtileY: number, worldInfo: WorldInfo): boolean => {
+   // Corners are valid if they have 1-3 wall subtiles connected to the corner
+
+   let numConnected = 0;
+
+   if (checkSubtileForWall(cornerSubtileX, cornerSubtileY, worldInfo)) {
+      numConnected++;
+   }
+   if (checkSubtileForWall(cornerSubtileX - 1, cornerSubtileY, worldInfo)) {
+      numConnected++;
+   }
+   if (checkSubtileForWall(cornerSubtileX, cornerSubtileY - 1, worldInfo)) {
+      numConnected++;
+   }
+   if (checkSubtileForWall(cornerSubtileX - 1, cornerSubtileY - 1, worldInfo)) {
+      numConnected++;
+   }
+
+   return numConnected >= 1 && numConnected <= 3;
+}
+
+const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
+   // Note: for each subtile, the corner position refers to the bottom-left corner of the subtile
+   const nearbyTileCornerSubtiles = getNearbyTileCornerSubtiles(regularPlacePosition);
+
+   let closestTileCorner: number | undefined;
+   let secondClosestTileCorner: number | undefined;
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let secondMinDist = Number.MAX_SAFE_INTEGER;
 
-   for (let i = 0; i < nearbyTileCorners.length; i++) {
-      const corner = nearbyTileCorners[i];
+   for (let i = 0; i < nearbyTileCornerSubtiles.length; i++) {
+      const subtileIndex = nearbyTileCornerSubtiles[i];
+      const subtileX = getSubtileX(subtileIndex);
+      const subtileY = getSubtileY(subtileIndex);
+      
+      const x = subtileX * Settings.SUBTILE_SIZE;
+      const y = subtileY * Settings.SUBTILE_SIZE;
+      const dist = distance(x, y, regularPlacePosition.x, regularPlacePosition.y);
 
-      const distance = corner.calculateDistanceBetween(regularPlacePosition);
-
-      if (distance < minDist) {
+      if (dist < minDist) {
          secondClosestTileCorner = closestTileCorner;
          secondMinDist = minDist;
          
-         closestTileCorner = corner;
-         minDist = distance;
-      } else if (distance < secondMinDist) {
-         secondClosestTileCorner = corner;
-         secondMinDist = distance;
+         closestTileCorner = subtileIndex;
+         minDist = dist;
+      } else if (dist < secondMinDist) {
+         secondClosestTileCorner = subtileIndex;
+         secondMinDist = dist;
       }
    }
 
@@ -436,31 +469,49 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: Structure
       throw new Error();
    }
 
-   const hitboxes = createBracingHitboxes(closestTileCorner.x - position.x, closestTileCorner.y - position.y, secondClosestTileCorner.x - position.x, secondClosestTileCorner.y - position.y);
-
-   // // @Incomplete: Make sure that the hitboxes being updated before created won't mess stuff up
-   // for (const hitbox of hitboxes) {
-   //    updateBox(hitbox.box, position.x, position.y, rotation);
-   // }
+   let isValid = true;
    
-   // // @Hack: should use the structurePlaceIsValid function
-   // const collidingHitboxes = getBoxesCollidingEntities(worldInfo, hitboxes, epsilon);
+   const closestTileCornerSubtileX = getSubtileX(closestTileCorner);
+   const closestTileCornerSubtileY = getSubtileY(closestTileCorner);
+   if (!cornerIsPlaceable(closestTileCornerSubtileX, closestTileCornerSubtileY, worldInfo)) {
+      isValid = false;
+   }
+   
+   const secondClosestTileCornerSubtileX = getSubtileX(secondClosestTileCorner);
+   const secondClosestTileCornerSubtileY = getSubtileY(secondClosestTileCorner);
+   if (!cornerIsPlaceable(secondClosestTileCornerSubtileX, secondClosestTileCornerSubtileY, worldInfo)) {
+      isValid = false;
+   }
+
+   const closestTileCornerX = Settings.SUBTILE_SIZE * closestTileCornerSubtileX;
+   const closestTileCornerY = Settings.SUBTILE_SIZE * closestTileCornerSubtileY;
+
+   const secondClosestTileCornerX = Settings.SUBTILE_SIZE * secondClosestTileCornerSubtileX;
+   const secondClosestTileCornerY = Settings.SUBTILE_SIZE * secondClosestTileCornerSubtileY;
+
+   // Place position is the average of the two corner's positions
+   const x = (closestTileCornerX + secondClosestTileCornerX) * 0.5;
+   const y = (closestTileCornerY + secondClosestTileCornerY) * 0.5;
+   const position = new Point(x, y);
+   
+   const hitboxes = createBracingHitboxes(closestTileCornerX - position.x, closestTileCornerY - position.y, secondClosestTileCornerX - position.x, secondClosestTileCornerY - position.y);
    
    return {
       position: position,
+      // Bracings always have 0 rotation
       rotation: 0,
       connectedSidesBitset: 0,
       connectedEntityIDs: [0, 0, 0, 0],
       entityType: entityType,
       hitboxes: hitboxes,
-      isValid: true
-   }
+      isValid: isValid
+   };
 }
 
 const calculatePlaceInfo = (position: Point, rotation: number, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
    // @Hack?
    if (entityType === EntityType.bracings) {
-      return getBracingsPlaceInfo(position, entityType);
+      return getBracingsPlaceInfo(position, entityType, worldInfo);
    }
    
    const nearbyStructures = getNearbyStructures(position, worldInfo);

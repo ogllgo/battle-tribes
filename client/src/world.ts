@@ -143,8 +143,10 @@ export function createEntity(entity: EntityID, entityType: EntityType, layer: La
       const renderParts = renderPartsRecord[componentArray.id]!;
       const component = componentArray.createComponent(entityConfig, renderParts);
       
-      // @Incomplete: don't always add
-      componentArray.addComponent(entity, component);
+      // @Hack: so that ghost entites don't add components
+      if (entity !== 0) {
+         componentArray.addComponent(entity, component);
+      }
 
       // @Cleanup: unneeded
       // if (isPlayer) {
@@ -156,8 +158,7 @@ export function createEntity(entity: EntityID, entityType: EntityType, layer: La
       // }
    }
    
-   // @Temporary? @Cleanup: should be done using the dirty function probs
-   registerDirtyEntity(entity);
+   registerDirtyEntity(renderInfo);
 
    return {
       renderInfo: renderInfo
@@ -182,7 +183,7 @@ export function removeEntity(entity: EntityID, isDeath: boolean): void {
       }
    }
    
-   removeEntityFromDirtyArray(entity);
+   removeEntityFromDirtyArray(renderInfo);
 
    // Remove any attached lights
    removeLightsAttachedToEntity(entity);

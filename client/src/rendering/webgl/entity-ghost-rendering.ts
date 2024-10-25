@@ -1,19 +1,8 @@
 import { Point } from "battletribes-shared/utils";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { StructureType } from "battletribes-shared/structures";
-import { getSelectedItemInfo } from "../../components/game/GameInteractableLayer";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { renderEntities } from "./entity-rendering";
-
-// @Temporary: might be useful later
-// // Detect the entity types which need ghosts
-// type PlaceableItemInfoRecord = {
-//    [T in PlaceableItemType]: (typeof ITEM_INFO_RECORD)[T];
-// }
-// type PlaceableItemEntityRecord = {
-//    [T in PlaceableItemType]: (PlaceableItemInfoRecord[T])["entityType"];
-// }
-// type GhostEntityType = PlaceableItemEntityRecord[PlaceableItemType];
 
 // @Cleanup @Robustness: a lot of these are just mirrors of entity textures. Is there some way to utilise the existing render part definitions?
 export enum GhostType {
@@ -68,17 +57,11 @@ export interface GhostInfo {
    readonly opacity: number;
 }
 
-interface TextureInfo {
-   readonly textureSource: string;
-   readonly offsetX: number;
-   readonly offsetY: number;
-   readonly rotation: number;
-}
-
 export const PARTIAL_OPACITY = 0.5;
 
-const entityGhosts = new Array<EntityID>();
+let ghostRenderInfo: EntityRenderInfo | null = null;
 
+// @Cleanup: is this used? or the right spot for this?
 export const ENTITY_TYPE_TO_GHOST_TYPE_MAP: Record<StructureType, GhostType> = {
    [EntityType.campfire]: GhostType.campfire,
    [EntityType.furnace]: GhostType.furnace,
@@ -108,12 +91,15 @@ export const ENTITY_TYPE_TO_GHOST_TYPE_MAP: Record<StructureType, GhostType> = {
    [EntityType.bracings]: GhostType.stonecarvingTable
 };
 
+export function setGhostRenderInfo(renderInfo: EntityRenderInfo | null): void {
+   ghostRenderInfo = renderInfo;
+}
+
 export function renderGhostEntities(): void {
    const renderInfos = new Array<EntityRenderInfo>();
 
-   const selectedItemInfo = getSelectedItemInfo();
-   if (selectedItemInfo !== null) {
-
+   if (ghostRenderInfo !== null) {
+      renderInfos.push(ghostRenderInfo);
    }
 
    // @INCOMPLETE

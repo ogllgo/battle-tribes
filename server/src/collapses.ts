@@ -1,10 +1,10 @@
 import { Settings } from "../../shared/src/settings";
+import { getSubtileX, getSubtileY, subtileIsInWorld, getSubtileIndex } from "../../shared/src/subtiles";
 import { SubtileType } from "../../shared/src/tiles";
 import { customTickIntervalHasPassed, distance } from "../../shared/src/utils";
 import Layer from "./Layer";
 import PlayerClient from "./server/PlayerClient";
 import { getGameTicks, layers } from "./world";
-import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./world-generation/terrain-generation-utils";
 
 const enum Vars {
    MAX_SUPPORT = 100,

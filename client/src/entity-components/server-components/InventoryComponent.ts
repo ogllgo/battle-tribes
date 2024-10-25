@@ -2,7 +2,7 @@ import { InventoryComponentData, ServerComponentType } from "../../../../shared/
 import { EntityID, LimbAction } from "../../../../shared/src/entities";
 import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
-import { getHotbarSelectedItemSlot } from "../../components/game/GameInteractableLayer";
+import { getHotbarSelectedItemSlot, getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { CraftingMenu_updateRecipes } from "../../components/game/menus/CraftingMenu";
@@ -110,12 +110,13 @@ const updateInventoryFromData = (inventory: Inventory, inventoryData: Inventory,
       // If it doesn't exist in the server data, remove it
       const itemData = inventoryData.itemSlots[itemSlot];
       if (typeof itemData === "undefined" || itemData.id !== item.id) {
-         inventory.removeItem(itemSlot);
-         hasChanged = true;
-
-         if (isPlayer && itemSlot === getHotbarSelectedItemSlot()) {
+         if (isPlayer && itemSlot === getPlayerSelectedItemSlot(inventory.name)) {
+            onItemDeselect(item.type, inventory.name === InventoryName.offhand);
             validatePlayerAction(inventory.name, null);
          }
+
+         inventory.removeItem(itemSlot);
+         hasChanged = true;
       }
    }
 
@@ -133,7 +134,8 @@ const updateInventoryFromData = (inventory: Inventory, inventoryData: Inventory,
          inventory.addItem(item, itemSlot);
          hasChanged = true;
 
-         if (isPlayer && itemSlot === getHotbarSelectedItemSlot()) {
+         if (isPlayer && itemSlot === getPlayerSelectedItemSlot(inventory.name)) {
+            onItemSelect(item.type);
             validatePlayerAction(inventory.name, item);
          }
       } else if (item.count !== itemData.count) {

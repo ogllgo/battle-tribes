@@ -20,7 +20,7 @@ import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getGameTicks } from "../world";
 import Layer from "../Layer";
-import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {

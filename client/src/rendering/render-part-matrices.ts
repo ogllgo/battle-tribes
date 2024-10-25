@@ -6,10 +6,10 @@ import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/c
 import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { EntityID } from "../../../shared/src/entities";
-import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 
-let dirtyEntities = new Array<EntityID>();
+let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 
 /* ------------------------ */
 /* Matrix Utility Functions */
@@ -126,20 +126,21 @@ export function translateMatrix(matrix: Matrix3x3, tx: number, ty: number): void
    matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
 }
 
-export function registerDirtyEntity(entity: EntityID): void {
-   dirtyEntities.push(entity);
+export function registerDirtyEntity(renderInfo: EntityRenderInfo): void {
+   dirtyEntityRenderInfos.push(renderInfo);
 }
 
-export function removeEntityFromDirtyArray(entity: EntityID): void {
-   const idx = dirtyEntities.indexOf(entity);
+export function removeEntityFromDirtyArray(renderInfo: EntityRenderInfo): void {
+   const idx = dirtyEntityRenderInfos.indexOf(renderInfo);
    if (idx !== -1) {
-      dirtyEntities.splice(idx, 1);
+      dirtyEntityRenderInfos.splice(idx, 1);
    }
 }
 
-export function updateEntityRenderPosition(renderInfo: EntityRenderInfo, frameProgress: number): void {
+export function updateEntityRenderInfo(transformComponent: TransformComponent, renderInfo: EntityRenderInfo, frameProgress: number): void {
+   renderInfo.rotation = transformComponent.rotation;
+   
    const renderPosition = renderInfo.renderPosition;
-   const transformComponent = TransformComponentArray.getComponent(renderInfo.associatedEntity);
    renderPosition.x = transformComponent.position.x;
    renderPosition.y = transformComponent.position.y;
 
@@ -158,10 +159,20 @@ export function updateEntityRenderPosition(renderInfo: EntityRenderInfo, framePr
    }
 }
 
+export function updateRenderInfosFromTransformComponents(frameProgress: number): void {
+   for (let i = 0; i < TransformComponentArray.activeEntities.length; i++) {
+      const entity = TransformComponentArray.activeEntities[i];
+      const transformComponent = TransformComponentArray.activeComponents[i];
+
+      const renderInfo = getEntityRenderInfo(entity);
+
+      updateEntityRenderInfo(transformComponent, renderInfo, frameProgress);
+   }
+}
+
 const calculateAndOverrideEntityModelMatrix = (renderInfo: EntityRenderInfo): void => {
    // Rotate
-   const transformComponent = TransformComponentArray.getComponent(renderInfo.associatedEntity);
-   overrideWithRotationMatrix(renderInfo.modelMatrix, transformComponent.rotation);
+   overrideWithRotationMatrix(renderInfo.modelMatrix, renderInfo.rotation);
 
    // Translate
    translateMatrix(renderInfo.modelMatrix, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
@@ -193,7 +204,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderThing): void => {
 }
 
 const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Matrix3x3 => {
-   const matrix = createIdentityMatrix();;
+   const matrix = createIdentityMatrix();
 
    // Rotation
    overrideWithRotationMatrix(matrix, hitbox.box.relativeRotation);
@@ -217,16 +228,14 @@ export function renderParentIsHitbox(parent: RenderParent): parent is Hitbox {
    return parent !== null && typeof (parent as Hitbox).mass !== "undefined";
 }
 
-export function updateRenderPartMatrices(frameProgress: number): void {
+export function updateRenderPartMatrices(): void {
    // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
    // To fix: temporarily set Settings.TPS to like 10 or something and then fix the subsequent slideshow
-   for (let i = 0; i < dirtyEntities.length; i++) {
-      const entity = dirtyEntities[i];
-      const renderInfo = getEntityRenderInfo(entity);
+   for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
+      const renderInfo = dirtyEntityRenderInfos[i];
       
       const numRenderThings = renderInfo.allRenderThings.length;
       
-      updateEntityRenderPosition(renderInfo, frameProgress);
       calculateAndOverrideEntityModelMatrix(renderInfo);
 
       const entityRenderPosition = renderInfo.renderPosition;
@@ -259,5 +268,5 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    }
 
    // Reset dirty entities
-   dirtyEntities.length = 0;
+   dirtyEntityRenderInfos.length = 0;
 }

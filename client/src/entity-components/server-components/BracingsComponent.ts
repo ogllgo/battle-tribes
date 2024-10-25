@@ -1,19 +1,20 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
+import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
 
 export interface BracingsComponentParams {}
 
+interface RenderParts {}
+
 export interface BracingsComponent {}
 
-export const BracingsComponentArray = new ServerComponentArray<BracingsComponent, BracingsComponentParams, never>(ServerComponentType.bracings, true, {
+export const BracingsComponentArray = new ServerComponentArray<BracingsComponent, BracingsComponentParams, RenderParts>(ServerComponentType.bracings, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
-   onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -26,15 +27,11 @@ function createParamsFromData(): BracingsComponentParams {
    return createBracingsComponentParams();
 }
 
-function createComponent(): BracingsComponent {
-   return {};
-}
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform, never>): RenderParts {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
 
-function onLoad(entity: EntityID): void {
-   const renderInfo = getEntityRenderInfo(entity);
-   const transformComponent = TransformComponentArray.getComponent(entity);
-
-   for (const hitbox of transformComponent.hitboxes) {
+   // Vertical posts
+   for (const hitbox of transformComponentParams.hitboxes) {
       const renderPart = new TexturedRenderPart(
          hitbox,
          0,
@@ -44,6 +41,23 @@ function onLoad(entity: EntityID): void {
 
       renderInfo.attachRenderThing(renderPart);
    }
+
+   // Horizontal bar connecting the vertical ones
+   const rotation = transformComponentParams.hitboxes[0].box.offset.calculateAngleBetween(transformComponentParams.hitboxes[1].box.offset);
+   const horizontalBar = new TexturedRenderPart(
+      null,
+      1,
+      rotation,
+      getTextureArrayIndex("entities/bracings/horizontal-post.png")
+   );
+   horizontalBar.opacity = 0.5;
+   renderInfo.attachRenderThing(horizontalBar);
+
+   return {};
+}
+
+function createComponent(): BracingsComponent {
+   return {};
 }
 
 function padData(): void {}

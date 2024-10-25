@@ -238,11 +238,11 @@ export function createBracingHitboxes(corner1OffsetX: number, corner1OffsetY: nu
    const hitboxes = new Array<Hitbox>();
 
    hitboxes.push(
-      createHitbox(new RectangularBox(new Point(corner1OffsetX, corner1OffsetY), 16, 16, 0), 0.8, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
+      createHitbox(new RectangularBox(new Point(corner1OffsetX, corner1OffsetY), 16, 16, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
    );
 
    hitboxes.push(
-      createHitbox(new RectangularBox(new Point(corner2OffsetX, corner2OffsetY), 16, 16, 0), 0.8, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
+      createHitbox(new RectangularBox(new Point(corner2OffsetX, corner2OffsetY), 16, 16, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
    );
    
    return hitboxes;

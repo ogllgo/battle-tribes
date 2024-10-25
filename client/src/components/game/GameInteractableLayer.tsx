@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
 import { EntityID, LimbAction } from "../../../../shared/src/entities";
-import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo } from "../../../../shared/src/items/items";
+import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { calculateStructurePlaceInfo } from "../../../../shared/src/structures";
@@ -12,7 +12,7 @@ import Camera from "../../Camera";
 import Client from "../../networking/Client";
 import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../networking/packet-creation";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
-import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
+import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection } from "../../entity-selection";
@@ -21,19 +21,26 @@ import Game from "../../Game";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
 import { closeCurrentMenu } from "../../menus";
-import { GhostInfo, ENTITY_TYPE_TO_GHOST_TYPE_MAP } from "../../rendering/webgl/entity-ghost-rendering";
+import { setGhostRenderInfo } from "../../rendering/webgl/entity-ghost-rendering";
 import { attemptToCompleteNode } from "../../research";
 import { playSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
-import { TransformComponentArray, updateEntityPosition } from "../../entity-components/server-components/TransformComponent";
+import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { getEntityLayer, playerInstance } from "../../world";
+import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance, registerBasicEntityInfo } from "../../world";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../entity-components/server-components/TribeMemberComponent";
-import { StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
-import { registerDirtyEntity } from "../../rendering/render-part-matrices";
+import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
+import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
+import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
+import { ClientHitbox } from "../../boxes";
+import { createBracingsComponentParams } from "../../entity-components/server-components/BracingsComponent";
+import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
+import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
+import { TribeComponentArray, createTribeComponentParams } from "../../entity-components/server-components/TribeComponent";
+import { thingIsRenderPart } from "../../render-parts/render-parts";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -496,7 +503,22 @@ export function getPlayerSelectedItem(): Item | null {
    return hotbarInventory.getItem(hotbarSelectedItemSlot);
 }
 
-export function getSelectedItemInfo(): SelectedItemInfo | null {
+/** Gets the selected item slot for an arbitrary inventory */
+export function getPlayerSelectedItemSlot(inventoryName: InventoryName): number | null {
+   switch (inventoryName) {
+      case InventoryName.hotbar: {
+         return hotbarSelectedItemSlot;
+      }
+      case InventoryName.offhand: {
+         return 1;
+      }
+      default: {
+         return null;
+      }
+   }
+}
+
+const getSelectedItemInfo = (): SelectedItemInfo | null => {
    if (playerInstance === null) {
       return null;
    }
@@ -794,161 +816,24 @@ export function updatePlayerMovement(): void {
    }
 }
 
-const selectItem = (item: Item): void => {
-   const itemCategory = ITEM_TYPE_RECORD[item.type];
+export function onItemSelect(itemType: ItemType): void {
+   const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "placeable": {
          latencyGameState.playerIsPlacingEntity = true;
-
-         // Create a ghost entity
-
-         // @Incomplete: Will miss out on any client components
-         // @Incomplete: Make sure this will work when the player changes layers
-
-         // Lots of @Copynpaste from packet-processing
-         
-         // @INCOMPLETE
-         // @INCOMPLETE
-         // @INCOMPLETE
-         
-         // const layer = getCurrentLayer();
-         // const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-         
-         // const itemInfo = ITEM_INFO_RECORD[item.type] as PlaceableItemInfo;
-         // const entityType = itemInfo.entityType;
-         
-         // const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
-
-         // // @Incomplete: Fix conflicts with server entities
-         // // @Incomplete: Make sure there can be an arbitrary amount of entity ghosts
-         // const entityID = 1;
-         // const entity = createEntity(entityID, entityType);
-         
-         // const renderInfo = new EntityRenderInfo(entityID);
-         // registerBasicEntityInfo(entity, entityType, 0, layer, renderInfo);
-
-         // const components: EntityServerComponentParams = {};
-
-         // const componentTypes = EntityComponents[entityType];
-         // for (let i = 0; i < componentTypes.length; i++) {
-         //    const componentType = componentTypes[i];
-
-         //    switch (componentType) {
-         //       case ServerComponentType.transform: {
-         //          const hitboxes = new Array<ClientHitbox>();
-         //          for (let i = 0; i < placeInfo.hitboxes.length; i++) {
-         //             const hitbox = placeInfo.hitboxes[i];
-         //             const clientHitbox = new ClientHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags, i);
-         //             hitboxes.push(clientHitbox);
-         //          }
-
-         //          const transformComponentParams = createTransformComponentParams(
-         //             placeInfo.position.copy(),
-         //             placeInfo.rotation,
-         //             hitboxes,
-         //             COLLISION_BITS.default,
-         //             DEFAULT_COLLISION_MASK
-         //          );
-
-         //          components[componentType] = transformComponentParams;
-         //          break;
-         //       }
-         //       case ServerComponentType.health: {
-         //          const params = createHealthComponentParams(0, 0);
-         //          components[componentType] = params;
-         //          break;
-         //       }
-         //       case ServerComponentType.statusEffect: {
-         //          const params = createStatusEffectComponentParams([]);
-         //          components[componentType] = params;
-         //          break;
-         //       }
-         //       case ServerComponentType.structure: {
-         //          components[componentType] = createStructureComponentParams(false, 0);
-         //          break;
-         //       }
-         //       case ServerComponentType.tribe: {
-         //          const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
-                  
-         //          components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
-         //          break;
-         //       }
-         //       case ServerComponentType.buildingMaterial: {
-         //          components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
-         //          break;
-         //       }
-         //       case ServerComponentType.bracings: {
-         //          components[componentType] = createBracingsComponentParams();
-         //          break;
-         //       }
-         //       default: {
-         //          throw new Error(ServerComponentType[componentType]);
-         //       }
-         //    }
-         // }
-
-         // // Create entity config
-         // const entityConfig: EntityConfig<never, never> = {
-         //    entity: entityID,
-         //    entityType: entityType,
-         //    layer: layer,
-         //    renderInfo: renderInfo,
-         //    // @Cleanup: cast
-         //    serverComponents: components as any,
-         //    clientComponents: {}
-         // };
-
-         // const renderPartsRecord: Partial<Record<ServerComponentType, object>> = {};
-      
-         // // Create render parts
-         // for (const componentType of componentTypes) {
-         //    const componentArray = getServerComponentArray(componentType);
-         //    if (typeof componentArray.createRenderParts !== "undefined") {
-         //       const renderParts = componentArray.createRenderParts(renderInfo, entityConfig);
-         //       renderPartsRecord[componentType] = renderParts;
-         //    }
-         // }
-      
-         // // Create components
-         // for (const componentType of componentTypes) {
-         //    const componentArray = getServerComponentArray(componentType);
-      
-         //    const renderParts = renderPartsRecord[componentType]!;
-         //    const component = componentArray.createComponent(entityConfig, renderParts);
-            
-         //    componentArray.addComponent(entityID, component);
-         // }
-
-         // entity.callOnLoadFunctions();
-
-         // // @Incomplete: why does this compound? it's because all the ghosts are stacking and not being removed
-         // for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
-         //    const renderThing = renderInfo.allRenderThings[i];
-         //    if (thingIsRenderPart(renderThing)) {
-         //       renderThing.opacity *= 0.5;
-         //    }
-         // }
-         
-         // // @Hack @Copynpaste from addEntity
-         // addEntityToRenderHeightMap(renderInfo);
-         
-         // placeableEntityGhost = entityID;
-         // // createEntityGhost(entityID);
-         
-         // registerDirtyEntity(entityID);
          break;
       }
    }
 }
 
-const deselectItem = (item: Item, isOffhand: boolean): void => {
+export function onItemDeselect(itemType: ItemType, isOffhand: boolean): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limb = inventoryUseComponent.limbInfos[isOffhand ? 1 : 0];
 
-   const itemCategory = ITEM_TYPE_RECORD[item.type];
+   const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "healing": {
-         unuseItem(item.type);
+         unuseItem(itemType);
          break;
       }
       case "spear":
@@ -962,39 +847,7 @@ const deselectItem = (item: Item, isOffhand: boolean): void => {
          latencyGameState.playerIsPlacingEntity = false;
 
          // Clear entity ghost
-         if (placeableEntityGhost !== 0) {
-            // const entityType = getEntityType(placeableEntityGhost);
-            // const componentTypes = EntityComponents[entityType];
-
-            // // @Hack @Copynpaste from addEntity
-            // for (let i = 0; i < componentTypes.length; i++) {
-            //    const componentType = componentTypes[i];
-            //    const componentArray = getServerComponentArray(componentType);
-            //    if (typeof componentArray.onRemove !== "undefined" && componentArray.hasComponent(placeableEntityGhost)) {
-            //       componentArray.onRemove(placeableEntityGhost);
-            //    }
-            // }
-
-            // // Remove components
-            // for (let i = 0; i < componentTypes.length; i++) {
-            //    const componentType = componentTypes[i];
-            //    const componentArray = getServerComponentArray(componentType);
-            //    componentArray.removeComponent(placeableEntityGhost);
-            // }
-         
-            // // @Hack @Copynpaste from addEntity
-            // const renderInfo = getEntityRenderInfo(placeableEntityGhost);
-            // addEntityToRenderHeightMap(renderInfo);
-   
-            // removeBasicEntityInfo(placeableEntityGhost);
-
-            // removeEntityGhost(placeableEntityGhost);
-            
-            placeableEntityGhost = 0;
-         }
-         
-         // Clear placeable item ghost
-         // setGhostInfo(null);
+         setGhostRenderInfo(null);
          break;
       }
    }
@@ -1264,11 +1117,11 @@ export function selectItemSlot(itemSlot: number): void {
 
    // Deselect the previous item and select the new item
    if (typeof previousItem !== "undefined") {
-      deselectItem(previousItem, false);
+      onItemDeselect(previousItem.type, false);
    }
    const newItem = hotbarInventory.itemSlots[itemSlot];
    if (typeof newItem !== "undefined") {
-      selectItem(newItem);
+      onItemSelect(newItem.type);
       if (rightMouseButtonIsPressed) {
          onItemRightClickDown(newItem.type, InventoryName.hotbar, itemSlot);
       }
@@ -1311,45 +1164,106 @@ const tickItem = (itemType: ItemType): void => {
          break;
       }
       case "placeable": {
-         // 
-         // Placeable item ghost
-         // 
+         // Create a ghost entity
 
-         const layer = getEntityLayer(playerInstance!);
-         const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-         const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
-         const placeInfo = calculateStructurePlaceInfo(Camera.position, playerTransformComponent.rotation, structureType, layer.getWorldInfo());
-
-         // @Speed: should only run when the player position or rotation changes
-         if (placeableEntityGhost !== 0) {
-            const transformComponent = TransformComponentArray.getComponent(placeableEntityGhost);
-            transformComponent.position.x = placeInfo.position.x;
-            transformComponent.position.y = placeInfo.position.y;
-            transformComponent.rotation = placeInfo.rotation;
-
-            // @Speed @Garbage: only do when hitboxes change!
-
-            // @Hack: only works if hitboxes aren't added or removed
-            for (let i = 0; i < placeInfo.hitboxes.length; i++) {
-               const hitboxData = placeInfo.hitboxes[i];
-               const entityHitbox = transformComponent.hitboxes[i];
-               entityHitbox.box.offset.x = hitboxData.box.offset.x;
-               entityHitbox.box.offset.y = hitboxData.box.offset.y;
-            }
-
-            updateEntityPosition(transformComponent, placeableEntityGhost);
-            
-            registerDirtyEntity(placeableEntityGhost);
-         }
+         const layer = getCurrentLayer();
+         const transformComponent = TransformComponentArray.getComponent(playerInstance!);
          
-         const ghostInfo: GhostInfo = {
-            position: placeInfo.position,
-            rotation: placeInfo.rotation,
-            ghostType: ENTITY_TYPE_TO_GHOST_TYPE_MAP[placeInfo.entityType],
-            tint: placeInfo.isValid ? [1, 1, 1] : [1.5, 0.5, 0.5],
-            opacity: 0.5
+         const itemInfo = ITEM_INFO_RECORD[itemType] as PlaceableItemInfo;
+         const entityType = itemInfo.entityType;
+         
+         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
+
+         const components: EntityServerComponentParams = {};
+
+         const componentTypes = EntityComponents[entityType];
+         for (let i = 0; i < componentTypes.length; i++) {
+            const componentType = componentTypes[i];
+
+            switch (componentType) {
+               case ServerComponentType.transform: {
+                  const hitboxes = new Array<ClientHitbox>();
+                  for (let i = 0; i < placeInfo.hitboxes.length; i++) {
+                     const hitbox = placeInfo.hitboxes[i];
+                     const clientHitbox = new ClientHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags, i);
+                     hitboxes.push(clientHitbox);
+                  }
+
+                  const transformComponentParams = createTransformComponentParams(
+                     placeInfo.position.copy(),
+                     placeInfo.rotation,
+                     hitboxes,
+                     COLLISION_BITS.default,
+                     DEFAULT_COLLISION_MASK
+                  );
+
+                  components[componentType] = transformComponentParams;
+                  break;
+               }
+               case ServerComponentType.health: {
+                  const params = createHealthComponentParams(0, 0);
+                  components[componentType] = params;
+                  break;
+               }
+               case ServerComponentType.statusEffect: {
+                  const params = createStatusEffectComponentParams([]);
+                  components[componentType] = params;
+                  break;
+               }
+               case ServerComponentType.structure: {
+                  components[componentType] = createStructureComponentParams(false, 0);
+                  break;
+               }
+               case ServerComponentType.tribe: {
+                  const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
+                  
+                  components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
+                  break;
+               }
+               case ServerComponentType.buildingMaterial: {
+                  components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
+                  break;
+               }
+               case ServerComponentType.bracings: {
+                  components[componentType] = createBracingsComponentParams();
+                  break;
+               }
+               default: {
+                  throw new Error(ServerComponentType[componentType]);
+               }
+            }
+         }
+
+         const preCreationInfo: EntityPreCreationInfo = {
+            serverComponentTypes: componentTypes,
+            serverComponentParams: components
          };
-         // setGhostInfo(ghostInfo);
+
+         // Create the entity
+         const creationInfo = createEntity(0, entityType, layer, preCreationInfo);
+
+         const renderInfo = creationInfo.renderInfo;
+
+         // @Hack: Could potentially get overridden in the future
+         renderInfo.tintR = placeInfo.isValid ? 0 : 0.5;
+         renderInfo.tintG = placeInfo.isValid ? 0 : -0.5;
+         renderInfo.tintB = placeInfo.isValid ? 0 : -0.5;
+
+         // Modify all the render part's opacity
+         for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
+            const renderThing = renderInfo.allRenderThings[i];
+            if (thingIsRenderPart(renderThing)) {
+               renderThing.opacity *= 0.5;
+            }
+         }
+
+         setGhostRenderInfo(renderInfo);
+
+         // Manually set the render info's position and rotation
+         const transformComponentParams = components[ServerComponentType.transform]!;
+         renderInfo.renderPosition.x = transformComponentParams.position.x;
+         renderInfo.renderPosition.y = transformComponentParams.position.y;
+         renderInfo.rotation = transformComponentParams.rotation;
 
          break;
       }

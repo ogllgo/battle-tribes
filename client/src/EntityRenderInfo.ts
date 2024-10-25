@@ -38,6 +38,7 @@ export class EntityRenderInfo {
    public readonly renderHeight: number;
 
    public renderPosition = new Point(0, 0);
+   public rotation = 0;
 
    /** Stores all render parts attached to the object, sorted ascending based on zIndex. (So that render part with smallest zIndex is rendered first) */
    public readonly allRenderThings = new Array<RenderThing>();
@@ -180,7 +181,7 @@ export class EntityRenderInfo {
             throw new Error("Tried to dirty an entity which does not exist!");
          }
          
-         registerDirtyEntity(this.associatedEntity);
+         registerDirtyEntity(this);
          this.isDirty = true;
       }
    }

@@ -53,7 +53,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { updateEntityRenderPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { updateEntityRenderInfo, updateRenderInfosFromTransformComponents, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { processGameDataPacket } from "./networking/packet-processing";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
@@ -68,6 +68,7 @@ import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darke
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
 import { createCollapseParticles } from "./collapses";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -182,7 +183,6 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
 
    renderHealingBeams();
 
-   updateRenderPartMatrices(frameProgress);
    refreshChunkedEntityRenderingBuffers();
 
    const visibleRiverRenderChunks = calculateVisibleRiverInfo();
@@ -467,9 +467,10 @@ abstract class Game {
       // @Cleanup: move to update function in camera
       // Update the camera
       if (playerInstance !== null) {
-         const frameProgress = getFrameProgress();
+         const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerRenderInfo = getEntityRenderInfo(playerInstance);
-         updateEntityRenderPosition(playerRenderInfo, frameProgress);
+         updateEntityRenderInfo(playerTransformComponent, playerRenderInfo, frameProgress);
+
          Camera.updatePosition();
          Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
          Camera.updateVisibleRenderChunkBounds();
@@ -478,6 +479,9 @@ abstract class Game {
       const playerLayer = getCurrentLayer();
 
       updateUBOs();
+
+      updateRenderInfosFromTransformComponents(frameProgress);
+      updateRenderPartMatrices();
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {

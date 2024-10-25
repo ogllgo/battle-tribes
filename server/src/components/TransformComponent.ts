@@ -1,22 +1,22 @@
 import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
-import { clampToBoardDimensions, Point, TileIndex } from "battletribes-shared/utils";
+import { Point, TileIndex } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import Chunk from "../Chunk";
-import { EntityID, EntityTypeString } from "battletribes-shared/entities";
+import { EntityID } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
 import { TileType } from "battletribes-shared/tiles";
-import { PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
 import { boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { getEntityLayer } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
-import { getSubtileIndex } from "../world-generation/terrain-generation-utils";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 

@@ -90,8 +90,6 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform, never>): GuardianComponent {
-   const renderInfo = getEntityRenderInfo(entityConfig.entity);
-
    const rubyRenderParts = new Array<RenderPart>();
    const amethystRenderParts = new Array<RenderPart>();
    const emeraldRenderParts = new Array<RenderPart>();
@@ -109,7 +107,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       getTextureArrayIndex("entities/guardian/guardian-head.png")
    );
    headRenderPart.offset.y = 28;
-   renderInfo.attachRenderThing(headRenderPart);
+   entityConfig.renderInfo.attachRenderThing(headRenderPart);
    
    const headRubies = new TexturedRenderPart(
       headRenderPart,
@@ -117,7 +115,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
    );
-   renderInfo.attachRenderThing(headRubies);
+   entityConfig.renderInfo.attachRenderThing(headRubies);
    rubyRenderParts.push(headRubies);
 
    // Body
@@ -128,7 +126,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body.png")
    );
-   renderInfo.attachRenderThing(bodyRenderPart);
+   entityConfig.renderInfo.attachRenderThing(bodyRenderPart);
 
    const bodyAmethystsRenderPart = new TexturedRenderPart(
       bodyRenderPart,
@@ -136,7 +134,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
    );
-   renderInfo.attachRenderThing(bodyAmethystsRenderPart);
+   entityConfig.renderInfo.attachRenderThing(bodyAmethystsRenderPart);
    amethystRenderParts.push(bodyAmethystsRenderPart);
 
    const bodyEmeraldsRenderPart = new TexturedRenderPart(
@@ -145,7 +143,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
    );
-   renderInfo.attachRenderThing(bodyEmeraldsRenderPart);
+   entityConfig.renderInfo.attachRenderThing(bodyEmeraldsRenderPart);
    emeraldRenderParts.push(bodyEmeraldsRenderPart);
 
    // Red lights
@@ -354,7 +352,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb.png")
          );
-         renderInfo.attachRenderThing(limbRenderPart);
+         entityConfig.renderInfo.attachRenderThing(limbRenderPart);
          limbRenderParts.push(limbRenderPart);
 
          const cracksRenderPart = new TexturedRenderPart(
@@ -363,7 +361,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb-gem-cracks.png")
          );
-         renderInfo.attachRenderThing(cracksRenderPart);
+         entityConfig.renderInfo.attachRenderThing(cracksRenderPart);
          limbCrackRenderParts.push(cracksRenderPart);
 
          const light: Light = {
