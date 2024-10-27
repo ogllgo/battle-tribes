@@ -23,7 +23,7 @@ export const SpearProjectileComponentArray = new ComponentArray<SpearProjectileC
    addDataToPacket: addDataToPacket
 });
 
-function onTick(_spearProjectileComponent: SpearProjectileComponent, spear: EntityID): void {
+function onTick(spear: EntityID): void {
    const physicsComponent = PhysicsComponentArray.getComponent(spear);
 
    const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;

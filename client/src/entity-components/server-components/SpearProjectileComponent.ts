@@ -44,7 +44,7 @@ function createComponent(): SpearProjectileComponent {
    return {};
 }
 
-function onSpawn(_spearProjectileComponent: SpearProjectileComponent, entity: EntityID): void {
+function onSpawn(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("spear-throw.mp3", 0.4, 1, transformComponent.position);
 }

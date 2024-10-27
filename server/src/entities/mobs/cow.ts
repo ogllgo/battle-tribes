@@ -1,10 +1,8 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt, TileIndex } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "../../entity-shared";
+import { Point, randInt } from "battletribes-shared/utils";
 import { registerAttackingEntity } from "../../ai/escape-ai";
-import { ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -86,9 +84,4 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
 
 export function onCowHurt(cow: EntityID, attackingEntity: EntityID): void {
    registerAttackingEntity(cow, attackingEntity);
-}
-
-export function onCowDeath(cow: EntityID): void {
-   createItemsOverEntity(cow, ItemType.raw_beef, randInt(2, 3), 40);
-   createItemsOverEntity(cow, ItemType.leather, randInt(1, 2), 40);
 }

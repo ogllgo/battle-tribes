@@ -1,10 +1,7 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randInt } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "../../entity-shared";
-import { wasTribeMemberKill } from "../tribes/tribe-member";
-import { ItemType } from "battletribes-shared/items/items";
+import { Point } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -42,10 +39,4 @@ export function createBoulderConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.boulder]: boulderComponent
       }
    };
-}
-
-export function onBoulderDeath(boulder: EntityID, attackingEntity: EntityID): void {
-   if (wasTribeMemberKill(attackingEntity)) {
-      createItemsOverEntity(boulder, ItemType.rock, randInt(5, 7), 40);
-   }
 }

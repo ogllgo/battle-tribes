@@ -1,18 +1,13 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { CactusBodyFlowerData, CactusLimbData, CactusLimbFlowerData, EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { CactusBodyFlowerData, CactusLimbData, CactusLimbFlowerData, EntityType } from "battletribes-shared/entities";
 import { randInt, lerp, randFloat, Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { createItemsOverEntity } from "../../entity-shared";
-import { applyKnockback } from "../../components/PhysicsComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { ItemType } from "battletribes-shared/items/items";
+import { HealthComponent } from "../../components/HealthComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
+import { TransformComponent } from "../../components/TransformComponent";
+import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { destroyEntity, getEntityType } from "../../world";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CactusComponent } from "../../components/CactusComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
@@ -116,33 +111,4 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.cactus]: cactusComponent
       }
    };
-}
-
-export function onCactusCollision(cactus: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
-   if (getEntityType(collidingEntity) === EntityType.itemEntity) {
-      destroyEntity(collidingEntity);
-      return;
-   }
-   
-   if (!HealthComponentArray.hasComponent(collidingEntity)) {
-      return;
-   }
-
-   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "cactus")) {
-      return;
-   }
-
-   const transformComponent = TransformComponentArray.getComponent(cactus);
-   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-   const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-
-   damageEntity(collidingEntity, cactus, 1, PlayerCauseOfDeath.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 200, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "cactus", 0.3);
-}
-
-export function onCactusDeath(cactus: EntityID): void {
-   createItemsOverEntity(cactus, ItemType.cactus_spine, randInt(2, 5), 40);
 }

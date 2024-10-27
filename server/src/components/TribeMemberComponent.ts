@@ -23,7 +23,6 @@ import { TransformComponentArray } from "./TransformComponent";
 import { adjustTribesmanRelationsAfterGift, TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
-import { createItem } from "../items";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -310,7 +309,7 @@ const tickInventoryUseInfo = (tribeMember: EntityID, inventoryUseInfo: LimbInfo)
    }
 }
 
-function onTick(_tribeMemberComponent: TribeMemberComponent, tribeMember: EntityID): void {
+function onTick(tribeMember: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    const layer = getEntityLayer(tribeMember);
    

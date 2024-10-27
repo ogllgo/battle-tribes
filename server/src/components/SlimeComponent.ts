@@ -6,7 +6,7 @@ import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { Biome, TileType } from "battletribes-shared/tiles";
-import { UtilVars } from "battletribes-shared/utils";
+import { randInt, UtilVars } from "battletribes-shared/utils";
 import { turnAngle, stopEntity } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntityFromConfig } from "../Entity";
@@ -15,6 +15,8 @@ import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType, getGameTicks } from "../world";
+import { ItemType } from "../../../shared/src/items/items";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -53,11 +55,19 @@ export class SlimeComponent {
    }
 }
 
+// @Memory
+const SLIME_DROP_AMOUNTS: ReadonlyArray<[minDropAmount: number, maxDropAmount: number]> = [
+   [1, 2], // small slime
+   [3, 5], // medium slime
+   [6, 9] // large slime
+];
+
 export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComponentType.slime, true, {
    onTick: {
       tickInterval: 1,
       func: onTick
    },
+   preRemove: preRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
@@ -194,7 +204,7 @@ const slimeWantsToMerge = (slimeComponent: SlimeComponent): boolean => {
    return mergeWant >= SLIME_MAX_MERGE_WANT[slimeComponent.size];
 }
 
-function onTick(slimeComponent: SlimeComponent, slime: EntityID): void {
+function onTick(slime: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
 
@@ -211,6 +221,8 @@ function onTick(slimeComponent: SlimeComponent, slime: EntityID): void {
          healEntity(slime, Vars.HEALING_ON_SLIME_PER_SECOND * Vars.HEALING_PROC_INTERVAL, slime);
       }
    }
+
+   const slimeComponent = SlimeComponentArray.getComponent(slime);
 
    // Attack entities the slime is angry at
    const angerTarget = updateAngerTarget(slime);
@@ -278,6 +290,11 @@ function onTick(slimeComponent: SlimeComponent, slime: EntityID): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.run(slime);
+}
+
+function preRemove(slime: EntityID): void {
+   const slimeComponent = SlimeComponentArray.getComponent(slime);
+   createItemsOverEntity(slime, ItemType.slimeball, randInt(...SLIME_DROP_AMOUNTS[slimeComponent.size]));
 }
 
 function getDataLength(entity: EntityID): number {

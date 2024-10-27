@@ -46,7 +46,8 @@ export enum GhostType {
    fence,
    fenceGate,
    frostshaper,
-   stonecarvingTable
+   stonecarvingTable,
+   stoneBracings
 }
 
 export interface GhostInfo {

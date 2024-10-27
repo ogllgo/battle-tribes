@@ -28,7 +28,7 @@ export abstract class BaseRenderThing {
    public readonly children = new Array<RenderThing>();
    public readonly parent: RenderParent;
 
-   // Needed for the tree-like update system regardless of whether the thing is visible visually
+   // Needed for the tree-like update system regardless of whether the thing will be rendered to the screen
    public readonly modelMatrix = createIdentityMatrix();
    public modelMatrixIsDirty = true;
 

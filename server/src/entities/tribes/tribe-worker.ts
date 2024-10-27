@@ -81,25 +81,3 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
       }
    };
 }
-
-// @Cleanup: copy and paste
-export function onTribeWorkerDeath(worker: EntityID): void {
-   // 
-   // Attempt to respawn the tribesman when it is killed
-   // 
-   
-   const tribesmanComponent = TribesmanAIComponentArray.getComponent(worker);
-
-   // Only respawn the tribesman if their hut is alive
-   if (!entityExists(tribesmanComponent.hut)) {
-      return;
-   }
-   
-   const hutComponent = HutComponentArray.getComponent(tribesmanComponent.hut);
-   if (hutComponent.isRecalling) {
-      hutComponent.hasSpawnedTribesman = false;
-   } else {
-      const tribeComponent = TribeComponentArray.getComponent(worker);
-      tribeComponent.tribe.respawnTribesman(tribesmanComponent.hut);
-   }
-}

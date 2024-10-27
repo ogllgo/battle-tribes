@@ -104,9 +104,11 @@ const updateDoorOpenProgress = (tunnel: EntityID, tunnelComponent: TunnelCompone
    }
 }
 
-function onTick(tunnelComponent: TunnelComponent, tunnel: EntityID): void {
+function onTick(tunnel: EntityID): void {
    // @Incomplete: Hard hitboxes
    
+   const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
+
    if (tunnelComponent.topDoorToggleType !== DoorToggleType.none) {
       switch (tunnelComponent.topDoorToggleType) {
          case DoorToggleType.open: {

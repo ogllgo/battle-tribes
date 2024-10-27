@@ -9,7 +9,6 @@ import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createEntityFromConfig } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { ItemType } from "battletribes-shared/items/items";
-import { createItemsOverEntity } from "../entity-shared";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { EntityConfig } from "../components";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -19,6 +18,7 @@ import { createIceShardConfig } from "../entities/projectiles/ice-shard";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback } from "./PhysicsComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -43,7 +43,7 @@ export const IceSpikesComponentArray = new ComponentArray<IceSpikesComponent>(Se
       tickInterval: 1,
       func: onTick
    },
-   onRemove: onRemove,
+   preRemove: preRemove,
    onHitboxCollision: onHitboxCollision,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
@@ -103,7 +103,8 @@ const grow = (iceSpikes: EntityID): void => {
    }
 }
 
-function onTick(iceSpikesComponent: IceSpikesComponent, iceSpikes: EntityID): void {
+function onTick(iceSpikes: EntityID): void {
+   const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
    if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE / Settings.TPS) {
       iceSpikesComponent.iceSpikeGrowProgressTicks++;
       if (iceSpikesComponent.iceSpikeGrowProgressTicks >= Vars.TICKS_TO_GROW) {
@@ -112,9 +113,9 @@ function onTick(iceSpikesComponent: IceSpikesComponent, iceSpikes: EntityID): vo
    }
 }
 
-function onRemove(iceSpikes: EntityID): void {
+function preRemove(iceSpikes: EntityID): void {
    if (Math.random() < 0.5) {
-      createItemsOverEntity(iceSpikes, ItemType.frostcicle, 1, 40);
+      createItemsOverEntity(iceSpikes, ItemType.frostcicle, 1);
    }
 
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);

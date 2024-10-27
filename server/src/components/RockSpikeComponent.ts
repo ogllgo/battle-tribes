@@ -26,10 +26,11 @@ export const RockSpikeComponentArray = new ComponentArray<RockSpikeComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(rockSpikeComponent: RockSpikeComponent, rockSpike: EntityID): void {
-   const ageTicks = getEntityAgeTicks(rockSpike);
+function onTick(rockSpike: EntityID): void {
+   const rockSpikeComponent = RockSpikeComponentArray.getComponent(rockSpike);
    
    // Remove if past lifetime
+   const ageTicks = getEntityAgeTicks(rockSpike);
    if (ageTicks >= rockSpikeComponent.lifetimeTicks) {
       destroyEntity(rockSpike);
    }

@@ -22,7 +22,6 @@ import { attemptToOccupyResearchBench, deoccupyResearchBench } from "../componen
 import { toggleDoor } from "../components/DoorComponent";
 import { toggleFenceGateDoor } from "../components/FenceGateComponent";
 import { toggleTunnelDoor } from "../components/TunnelComponent";
-import { createItemsOverEntity } from "../entity-shared";
 import { BuildingMaterialComponentArray } from "../components/BuildingMaterialComponent";
 import { TurretComponentArray } from "../components/TurretComponent";
 import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
@@ -34,6 +33,7 @@ import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
+import { createItemsOverEntity } from "../components/ItemComponent";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 
@@ -284,12 +284,12 @@ const processDeconstructPacket = (playerClient: PlayerClient, structure: EntityI
       const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
       
       if (getEntityType(structure) === EntityType.wall && materialComponent.material === BuildingMaterial.wood) {
-         createItemsOverEntity(structure, ItemType.wooden_wall, 1, 40);
+         createItemsOverEntity(structure, ItemType.wooden_wall, 1);
          return;
       }
       
       const materialItemType = MATERIAL_TO_ITEM_MAP[materialComponent.material];
-      createItemsOverEntity(structure, materialItemType, 5, 40);
+      createItemsOverEntity(structure, materialItemType, 5);
    }
 }
 

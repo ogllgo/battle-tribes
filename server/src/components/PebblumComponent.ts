@@ -28,7 +28,9 @@ export const PebblumComponentArray = new ComponentArray<PebblumComponent>(Server
    addDataToPacket: addDataToPacket
 });
 
-function onTick(pebblumComponent: PebblumComponent, pebblum: EntityID): void {
+function onTick(pebblum: EntityID): void {
+   const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
+   
    const target = pebblumComponent.targetEntityID;
    if (entityExists(target)) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);

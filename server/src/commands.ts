@@ -1,12 +1,9 @@
 import { PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/tiles";
-import { Point, randItem, TileIndex } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { parseCommand } from "battletribes-shared/commands";
-import { getTilesOfBiome } from "./census";
-import Layer, { getTileX, getTileY } from "./Layer";
 import { damageEntity, healEntity } from "./components/HealthComponent";
-import { getRandomPositionInEntity } from "./Entity";
 import { InventoryComponentArray, addItem } from "./components/InventoryComponent";
 import { createItem } from "./items";
 import { forceBuildPlans } from "./ai-tribe-building/ai-building-plans";
@@ -14,17 +11,19 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { forcePlayerTeleport, getPlayerFromUsername } from "./server/player-clients";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { ItemType, getItemTypeFromString } from "battletribes-shared/items/items";
-import { surfaceLayer } from "./world";
+import { getRandomPositionInEntity, TransformComponentArray } from "./components/TransformComponent";
 
 const ENTITY_SPAWN_RANGE = 200;
 
 const killPlayer = (player: EntityID): void => {
-   const hitPosition = getRandomPositionInEntity(player);
+   const transformComponent = TransformComponentArray.getComponent(player);
+   const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, null, 999999, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const damagePlayer = (player: EntityID, damage: number): void => {
-   const hitPosition = getRandomPositionInEntity(player);
+   const transformComponent = TransformComponentArray.getComponent(player);
+   const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, null, damage, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 

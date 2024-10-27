@@ -17,7 +17,7 @@ export const SpitPoisonAreaComponentArray = new ComponentArray<SpitPoisonAreaCom
    addDataToPacket: addDataToPacket
 });
 
-function onTick(_spitPoisonAreaComponent: SpitPoisonAreaComponent, spit: EntityID): void {
+function onTick(spit: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    
    const hitbox = transformComponent.hitboxes[0];

@@ -7,21 +7,19 @@ import TombstoneDeathManager from "../tombstone-deaths";
 import { onBerryBushHurt } from "../entities/resources/berry-bush";
 import { onCowHurt } from "../entities/mobs/cow";
 import { onKrumblidHurt } from "../entities/mobs/krumblid";
-import { onTombstoneDeath } from "../entities/tombstone";
 import { onZombieHurt, onZombieVisibleEntityHurt } from "../entities/mobs/zombie";
-import { onSlimeDeath, onSlimeHurt } from "../entities/mobs/slime";
+import { onSlimeHurt } from "../entities/mobs/slime";
 import { onYetiHurt } from "../entities/mobs/yeti";
 import { onFishHurt } from "../entities/mobs/fish";
-import { onBoulderDeath } from "../entities/resources/boulder";
-import { onFrozenYetiDeath, onFrozenYetiHurt } from "../entities/mobs/frozen-yeti";
+import { onFrozenYetiHurt } from "../entities/mobs/frozen-yeti";
 import { onPlayerHurt } from "../entities/tribes/player";
-import { onGolemDeath, onGolemHurt } from "../entities/mobs/golem";
+import { onGolemHurt } from "../entities/mobs/golem";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { adjustTribesmanRelationsAfterHurt, adjustTribesmanRelationsAfterKill } from "./TribesmanAIComponent";
 import { onTribeMemberHurt } from "../entities/tribes/tribe-member";
 import { TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { TribeMemberComponentArray, awardTitle } from "./TribeMemberComponent";
-import { onPlantDeath, onPlantHit } from "../entities/plant";
+import { onPlantHit } from "../entities/plant";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray } from "./ComponentArray";
@@ -55,7 +53,9 @@ export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerCo
    addDataToPacket: addDataToPacket
 });
 
-function onTick(healthComponent: HealthComponent): void {
+function onTick(entity: EntityID): void {
+   const healthComponent = HealthComponentArray.getComponent(entity);
+   
    // Update local invulnerability hashes
    for (let i = 0; i < healthComponent.localIframeHashes.length; i++) {
       healthComponent.localIframeDurations[i] -= Settings.I_TPS;
@@ -91,50 +91,15 @@ export function damageEntity(entity: EntityID, attackingEntity: EntityID | null,
 
    registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
 
-   // @Hack? @Cleanup? Maybe should make 'on death' component array event
-
    const entityType = getEntityType(entity);
    
    // If the entity was killed by the attack, destroy the entity
    if (healthComponent.health <= 0) {
       destroyEntity(entity);
 
-      switch (entityType) {
-         case EntityType.tombstone: {
-            onTombstoneDeath(entity, attackingEntity);
-            break;
-         }
-         case EntityType.slime: {
-            if (attackingEntity !== null) {
-               onSlimeDeath(entity, attackingEntity);
-            }
-            break;
-         }
-         case EntityType.boulder: {
-            if (attackingEntity !== null) {
-               onBoulderDeath(entity, attackingEntity);
-            }
-            break;
-         }
-         case EntityType.frozenYeti: {
-            onFrozenYetiDeath(entity, attackingEntity);
-            break;
-         }
-         case EntityType.player:
-         case EntityType.tribeWorker:
-         case EntityType.tribeWarrior: {
-            if (attackingEntity !== null) {
-               adjustTribesmanRelationsAfterKill(entity, attackingEntity);
-            }
-            break;
-         }
-         case EntityType.plant: {
-            onPlantDeath(entity);
-            break;
-         }
-         case EntityType.golem: {
-            onGolemDeath(entity);
-            break;
+      if (TribeMemberComponentArray.hasComponent(entity)) {
+         if (attackingEntity !== null) {
+            adjustTribesmanRelationsAfterKill(entity, attackingEntity);
          }
       }
 
@@ -155,6 +120,7 @@ export function damageEntity(entity: EntityID, attackingEntity: EntityID | null,
       }
    }
 
+   // @Cleanup: make into component array event
    switch (entityType) {
       case EntityType.berryBush: {
          onBerryBushHurt(entity);

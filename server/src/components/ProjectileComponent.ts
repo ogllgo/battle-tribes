@@ -29,7 +29,7 @@ export const ProjectileComponentArray = new ComponentArray<ProjectileComponent>(
    addDataToPacket: addDataToPacket
 });
 
-function onTick(_projectileComponent: ProjectileComponent, projectile: EntityID): void {
+function onTick(projectile: EntityID): void {
    // @Hack
    const entityType = getEntityType(projectile);
    if (entityType !== EntityType.guardianSpikyBall) {

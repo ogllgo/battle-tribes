@@ -108,7 +108,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.plant, n
    };
 }
 
-function onSpawn(_plantComponent: PlantComponent, entity: EntityID): void {
+function onSpawn(entity: EntityID): void {
    // Create dirt particles
    
    const transformComponent = TransformComponentArray.getComponent(entity);

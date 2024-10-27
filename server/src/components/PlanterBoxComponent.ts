@@ -40,7 +40,8 @@ function onRemove(entity: EntityID): void {
    destroyEntity(plant);
 }
 
-function onTick(planterBoxComponent: PlanterBoxComponent): void {
+function onTick(entity: EntityID): void {
+   const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    if (planterBoxComponent.remainingFertiliserTicks > 0) {
       planterBoxComponent.remainingFertiliserTicks--;
    }

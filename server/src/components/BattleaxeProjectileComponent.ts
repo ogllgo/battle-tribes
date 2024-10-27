@@ -24,7 +24,7 @@ export const BattleaxeProjectileComponentArray = new ComponentArray<BattleaxePro
    addDataToPacket: addDataToPacket
 });
 
-function onTick(_battleaxeProjectileComponent: BattleaxeProjectileComponent, battleaxe: EntityID): void {
+function onTick(battleaxe: EntityID): void {
    const physicsComponent = PhysicsComponentArray.getComponent(battleaxe);
 
    const ageTicks = getEntityAgeTicks(battleaxe);

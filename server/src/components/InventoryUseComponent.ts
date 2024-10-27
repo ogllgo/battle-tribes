@@ -329,7 +329,8 @@ const cancelAttack = (limb: LimbInfo): void => {
    limb.heldItemDamageBox.isActive = false;
 }
 
-function onTick(inventoryUseComponent: InventoryUseComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
       inventoryUseComponent.globalAttackCooldown--;
    }

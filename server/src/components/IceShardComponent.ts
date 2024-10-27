@@ -27,10 +27,11 @@ export const IceShardComponentArray = new ComponentArray<IceShardComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-function onTick(iceShardComponent: IceShardComponent, iceShard: EntityID): void {
-   const ageTicks = getEntityAgeTicks(iceShard);
+function onTick(iceShard: EntityID): void {
+   const iceShardComponent = IceShardComponentArray.getComponent(iceShard);
    
    // @Cleanup @Speed: Don't even need a component for this, just do it based on age with a random chance
+   const ageTicks = getEntityAgeTicks(iceShard);
    if (ageTicks / Settings.TPS >= iceShardComponent.lifetime) {
       destroyEntity(iceShard);
    }

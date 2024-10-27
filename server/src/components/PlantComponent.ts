@@ -4,6 +4,12 @@ import { ComponentArray } from "./ComponentArray";
 import { PlanterBoxComponentArray } from "./PlanterBoxComponent";
 import { EntityID } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
+import { ItemType } from "../../../shared/src/items/items";
+import { randInt } from "../../../shared/src/utils";
+import { getEntityLayer } from "../world";
+import { createIceShardExplosion } from "./IceSpikesComponent";
+import { createItemsOverEntity } from "./ItemComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export const PLANT_GROWTH_TICKS: Record<PlanterBoxPlant, number> = {
    // @Temporary
@@ -38,8 +44,38 @@ export const PlantComponentArray = new ComponentArray<PlantComponent>(ServerComp
    },
    onRemove: onRemove,
    getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
+   addDataToPacket: addDataToPacket,
+   preRemove: preRemove
 });
+
+function preRemove(plant: EntityID): void {
+   const plantComponent = PlantComponentArray.getComponent(plant);
+
+   switch (plantComponent.plantType) {
+      case PlanterBoxPlant.tree: {
+         // If fully grown, drop wood
+         if (plantComponent.plantGrowthTicks === PLANT_GROWTH_TICKS[PlanterBoxPlant.tree]) {
+            createItemsOverEntity(plant, ItemType.wood, randInt(2, 4));
+            createItemsOverEntity(plant, ItemType.seed, 1);
+         }
+         break;
+      }
+      case PlanterBoxPlant.iceSpikes: {
+         const transformComponent = TransformComponentArray.getComponent(plant);
+         
+         const layer = getEntityLayer(plant);
+         const ticksToGrow = PLANT_GROWTH_TICKS[PlanterBoxPlant.iceSpikes];
+         if (plantComponent.plantGrowthTicks === ticksToGrow) {
+            createItemsOverEntity(plant, ItemType.frostcicle, randInt(1, 2));
+            
+            createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(2, 3));
+         } else if (plantComponent.plantGrowthTicks >= ticksToGrow * 0.5) {
+            createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(1, 2));
+         }
+         break;
+      }
+   }
+}
 
 function onRemove(entity: EntityID): void {
    // Register in the planter box that the plant has been removed
@@ -65,7 +101,8 @@ const plantIsFertilised = (plantComponent: PlantComponent): boolean => {
    return planterBoxComponent.remainingFertiliserTicks > 0;
 }
 
-function onTick(plantComponent: PlantComponent): void {
+function onTick(entity: EntityID): void {
+   const plantComponent = PlantComponentArray.getComponent(entity);
    if (plantComponent.plantType === null) {
       return;
    }

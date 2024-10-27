@@ -51,8 +51,9 @@ const updateDoorOpenProgress = (door: EntityID, doorComponent: DoorComponent): v
    physicsComponent.hitboxesAreDirty = true;
 }
 
-function onTick(doorComponent: DoorComponent, door: EntityID): void {
+function onTick(door: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(door);
+   const doorComponent = DoorComponentArray.getComponent(door);
    
    switch (doorComponent.toggleType) {
       case DoorToggleType.open: {

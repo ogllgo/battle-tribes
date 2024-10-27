@@ -32,7 +32,7 @@ export const SlimewispComponentArray = new ComponentArray<SlimewispComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(slimewispComponent: SlimewispComponent, slimewisp: EntityID): void {
+function onTick(slimewisp: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);
 
    const tileIndex = getEntityTile(transformComponent);
@@ -44,6 +44,7 @@ function onTick(slimewispComponent: SlimewispComponent, slimewisp: EntityID): vo
    physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.slime || tileType === TileType.sludge;
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(slimewisp);
+   const slimewispComponent = SlimewispComponentArray.getComponent(slimewisp);
    
    // Merge with other slimewisps
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {

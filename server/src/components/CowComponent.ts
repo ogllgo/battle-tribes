@@ -21,7 +21,7 @@ import { BerryBushComponentArray } from "./BerryBushComponent";
 import { EscapeAIComponentArray, updateEscapeAIComponent } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, continueFollowingEntity, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { healEntity, getEntityHealth } from "./HealthComponent";
-import { ItemComponentArray } from "./ItemComponent";
+import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { GrassBlockerCircle } from "battletribes-shared/grass-blockers";
 import { entitiesAreColliding, CollisionVars } from "../collision";
@@ -66,7 +66,8 @@ export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponen
       func: onTick
    },
    getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
+   addDataToPacket: addDataToPacket,
+   preRemove: preRemove
 });
 
 const poop = (cow: EntityID, cowComponent: CowComponent): void => {
@@ -200,7 +201,8 @@ const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: 
    return target;
 }
 
-function onTick(cowComponent: CowComponent, cow: EntityID): void {
+function onTick(cow: EntityID): void {
+   const cowComponent = CowComponentArray.getComponent(cow);
    updateCowComponent(cow, cowComponent);
 
    const transformComponent = TransformComponentArray.getComponent(cow);
@@ -359,4 +361,9 @@ export function eatBerry(berryItemEntity: EntityID, cowComponent: CowComponent):
 
 export function wantsToEatBerries(cowComponent: CowComponent): boolean {
    return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
+}
+
+function preRemove(cow: EntityID): void {
+   createItemsOverEntity(cow, ItemType.raw_beef, randInt(2, 3));
+   createItemsOverEntity(cow, ItemType.leather, randInt(1, 2));
 }

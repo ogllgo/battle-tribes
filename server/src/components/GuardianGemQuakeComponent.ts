@@ -32,7 +32,7 @@ const getLife = (ageTicks: number): number => {
    return ageTicks < Vars.TICKS_BEFORE_RECEED ? 1 : 1 - (ageTicks - Vars.TICKS_BEFORE_RECEED) / (Vars.LIFETIME_TICKS - Vars.TICKS_BEFORE_RECEED);
 }
 
-function onTick(_component: GuardianGemQuakeComponent, quake: EntityID): void {
+function onTick(quake: EntityID): void {
    const age = getEntityAgeTicks(quake);
 
    if (age >= Vars.TICKS_BEFORE_RECEED) {

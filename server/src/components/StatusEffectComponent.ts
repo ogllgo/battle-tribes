@@ -3,11 +3,10 @@ import { EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/status-effects";
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import { getRandomPositionInEntity } from "../Entity";
 import { damageEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 
 export class StatusEffectComponent {
@@ -103,7 +102,8 @@ export function clearStatusEffects(entityID: number): void {
    }
 }
 
-function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    for (let i = 0; i < statusEffectComponent.activeStatusEffectTypes.length; i++) {
       const statusEffect = statusEffectComponent.activeStatusEffectTypes[i];
 
@@ -119,7 +119,7 @@ function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID):
                // Fire tick
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
-                  const hitPosition = getRandomPositionInEntity(entity);
+                  const hitPosition = getRandomPositionInEntity(transformComponent);
                   damageEntity(entity, null, 1, PlayerCauseOfDeath.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
@@ -128,7 +128,8 @@ function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID):
          case StatusEffect.poisoned: {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 0.5)) {
-               const hitPosition = getRandomPositionInEntity(entity);
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               const hitPosition = getRandomPositionInEntity(transformComponent);
                damageEntity(entity, null, 1, PlayerCauseOfDeath.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
@@ -136,7 +137,8 @@ function onTick(statusEffectComponent: StatusEffectComponent, entity: EntityID):
          case StatusEffect.bleeding: {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 1)) {
-               const hitPosition = getRandomPositionInEntity(entity);
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               const hitPosition = getRandomPositionInEntity(transformComponent);
                damageEntity(entity, null, 1, PlayerCauseOfDeath.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;

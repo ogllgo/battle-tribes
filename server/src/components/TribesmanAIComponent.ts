@@ -11,7 +11,8 @@ import { Item, ItemType } from "battletribes-shared/items/items";
 import { EntityID } from "battletribes-shared/entities";
 import { tickTribesman } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { Packet } from "battletribes-shared/packets";
-import { getGameTicks } from "../world";
+import { entityExists, getGameTicks } from "../world";
+import { HutComponentArray } from "./HutComponent";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -156,6 +157,7 @@ export const TribesmanAIComponentArray = new ComponentArray<TribesmanAIComponent
       tickInterval: 1,
       func: tickTribesman
    },
+   onRemove: onRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
@@ -293,4 +295,25 @@ export function getItemGiftAppreciation(itemType: ItemType): number {
 export function itemThrowIsOnCooldown(tribesmanComponent: TribesmanAIComponent): boolean {
    const ticksSinceThrow = getGameTicks() - tribesmanComponent.lastItemThrowTicks;
    return ticksSinceThrow <= Vars.ITEM_THROW_COOLDOWN_TICKS;
+}
+
+function onRemove(worker: EntityID): void {
+   // 
+   // Attempt to respawn the tribesman when it is killed
+   // 
+   
+   const tribesmanComponent = TribesmanAIComponentArray.getComponent(worker);
+
+   // Only respawn the tribesman if their hut is alive
+   if (!entityExists(tribesmanComponent.hut)) {
+      return;
+   }
+   
+   const hutComponent = HutComponentArray.getComponent(tribesmanComponent.hut);
+   if (hutComponent.isRecalling) {
+      hutComponent.hasSpawnedTribesman = false;
+   } else {
+      const tribeComponent = TribeComponentArray.getComponent(worker);
+      tribeComponent.tribe.respawnTribesman(tribesmanComponent.hut);
+   }
 }

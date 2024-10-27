@@ -11,20 +11,26 @@ const enum ComponentArrayPriority {
    high
 }
 
-interface ComponentArrayTickFunction<T extends object> {
+interface ComponentArrayTickFunction {
    readonly tickInterval: number;
-   func(component: T, entity: EntityID): void;
+   func(entity: EntityID): void;
 }
 
-interface ComponentArrayFunctions<T extends object> {
+interface ComponentArrayFunctions {
    /** Called after all the components for an entity are created, before the entity has joined the world. */
    onInitialise?(config: EntityConfig<ServerComponentType>, entity: EntityID): void;
    onJoin?(entity: EntityID): void;
-   readonly onTick?: ComponentArrayTickFunction<T>;
+   readonly onTick?: ComponentArrayTickFunction;
    /** Called whenever the entity collides with a wall */
    onWallCollision?(entity: EntityID): void;
    onEntityCollision?(actingEntity: EntityID, receivingEntity: EntityID): void;
    onHitboxCollision?(actingEntity: EntityID, receivingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void;
+   /**Called immediately after an entity is marked for removal. */
+   preRemove?(entity: EntityID): void;
+   /**
+    * Called just before the entity is removed from the world.
+    * Should be used to clean up all data related to the entity, so that the entity no longer exists in the world.
+   */
    onRemove?(entity: EntityID): void;
    // @Cleanup: make getDataLength not return an extra float length
    /** Returns the length of the data that would be added to the packet */
@@ -39,7 +45,7 @@ export function getComponentArrayRecord(): typeof ComponentArrayRecord {
    return ComponentArrayRecord;
 }
 
-export class ComponentArray<T extends object = object, C extends ServerComponentType = ServerComponentType> implements ComponentArrayFunctions<T> {
+export class ComponentArray<T extends object = object, C extends ServerComponentType = ServerComponentType> implements ComponentArrayFunctions {
    public readonly componentType: ServerComponentType;
    private readonly isActiveByDefault: boolean;
    
@@ -67,15 +73,16 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash. (Can't add components to the join buffer while iterating it). solution: make it not crash
    public onInitialise?(config: EntityConfig<ServerComponentType>, entity: EntityID): void;
    public onJoin?(entity: EntityID): void;
-   public onTick?: ComponentArrayTickFunction<T>;
+   public onTick?: ComponentArrayTickFunction;
    public onWallCollision?(entity: EntityID): void;
    public onEntityCollision?(entity: EntityID, collidingEntity: EntityID): void;
    public onHitboxCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionPoint: Point): void;
+   public preRemove?(entity: EntityID): void;
    public onRemove?(entity: EntityID): void;
    public getDataLength: (entity: EntityID, player: EntityID | null) => number;
    public addDataToPacket: (packet: Packet, entity: EntityID, player: EntityID | null) => void;
    
-   constructor(componentType: C, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T>) {
+   constructor(componentType: C, isActiveByDefault: boolean, functions: ComponentArrayFunctions) {
       this.componentType = componentType;
       this.isActiveByDefault = isActiveByDefault;
 
@@ -85,6 +92,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.onWallCollision = functions.onWallCollision;
       this.onEntityCollision = functions.onEntityCollision;
       this.onHitboxCollision = functions.onHitboxCollision;
+      this.preRemove = functions.preRemove;
       this.onRemove = functions.onRemove;
       this.getDataLength = functions.getDataLength;
       this.addDataToPacket = functions.addDataToPacket;

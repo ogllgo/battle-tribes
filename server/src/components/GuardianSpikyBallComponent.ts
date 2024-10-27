@@ -26,7 +26,9 @@ export const GuardianSpikyBallComponentArray = new ComponentArray<GuardianSpikyB
    addDataToPacket: addDataToPacket
 });
 
-function onTick(guardianSpikyBallComponent: GuardianSpikyBallComponent, spikyBall: EntityID): void {
+function onTick(spikyBall: EntityID): void {
+   const guardianSpikyBallComponent = GuardianSpikyBallComponentArray.getComponent(spikyBall);
+
    const ageTicks = getEntityAgeTicks(spikyBall);
    if (ageTicks >= guardianSpikyBallComponent.lifetime) {
       destroyEntity(spikyBall);

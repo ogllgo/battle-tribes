@@ -11,15 +11,15 @@ import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from
 import { stopEntity, runHerdAI } from "../ai-shared";
 import { chooseEscapeEntity, runFromAttackingEntity } from "../ai/escape-ai";
 import { entitiesAreColliding, CollisionVars } from "../collision";
-import { getRandomPositionInEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { EscapeAIComponentArray, updateEscapeAIComponent } from "./EscapeAIComponent";
 import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
-import { TransformComponentArray, getEntityTile } from "./TransformComponent";
+import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -52,6 +52,7 @@ export const FishComponentArray = new ComponentArray<FishComponent>(ServerCompon
       tickInterval: 1,
       func: onTick
    },
+   preRemove: preRemove,
    onRemove: onRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
@@ -111,9 +112,10 @@ const entityIsWearingFishlordSuit = (entityID: number): boolean => {
    return typeof armour !== "undefined" && armour.type === ItemType.fishlord_suit;
 }
 
-function onTick(fishComponent: FishComponent, fish: EntityID): void {
+function onTick(fish: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
+   const fishComponent = FishComponentArray.getComponent(fish);
 
    const tileIndex = getEntityTile(transformComponent);
    const layer = getEntityLayer(fish)
@@ -124,7 +126,7 @@ function onTick(fishComponent: FishComponent, fish: EntityID): void {
    if (tileType !== TileType.water) {
       fishComponent.secondsOutOfWater += Settings.I_TPS;
       if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, 1.5)) {
-         const hitPosition = getRandomPositionInEntity(fish);
+         const hitPosition = getRandomPositionInEntity(transformComponent);
          damageEntity(fish, null, 1, PlayerCauseOfDeath.lack_of_oxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
    } else {
@@ -235,6 +237,10 @@ function onTick(fishComponent: FishComponent, fish: EntityID): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.run(fish);
+}
+
+function preRemove(fish: EntityID): void {
+   createItemsOverEntity(fish, ItemType.raw_fish, 1);
 }
 
 function onRemove(entity: EntityID): void {

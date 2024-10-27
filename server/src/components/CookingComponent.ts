@@ -88,8 +88,9 @@ const getHeatingRecipeByIngredientType = (heatingEntityType: EntityType, ingredi
    return null;
 }
 
-function onTick(cookingComponent: CookingComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   const cookingComponent = CookingComponentArray.getComponent(entity);
 
    const fuelInventory = getInventory(inventoryComponent, InventoryName.fuelInventory);
    const ingredientInventory = getInventory(inventoryComponent, InventoryName.ingredientInventory);

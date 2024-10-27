@@ -1,15 +1,12 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randInt, TileIndex } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { createItemsOverEntity } from "../../entity-shared";
 import { FrozenYetiComponent, FrozenYetiComponentArray } from "../../components/FrozenYetiComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
-import { wasTribeMemberKill } from "../tribes/tribe-member";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { ItemType } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -146,14 +143,5 @@ export function onFrozenYetiHurt(frozenYeti: EntityID, attackingEntity: EntityID
          damageDealtToSelf: damage,
          timeSinceLastAggro: 0
       };
-   }
-}
-
-export function onFrozenYetiDeath(frozenYeti: EntityID, attackingEntity: EntityID | null): void {
-   createItemsOverEntity(frozenYeti, ItemType.raw_beef, randInt(13, 18), 90);
-
-   if (wasTribeMemberKill(attackingEntity)) {
-      createItemsOverEntity(frozenYeti, ItemType.deepfrost_heart, randInt(2, 3), 30);
-      createItemsOverEntity(frozenYeti, ItemType.yeti_hide, randInt(5, 7), 90);
    }
 }

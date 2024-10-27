@@ -49,7 +49,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.structur
    };
 }
 
-function onSpawn(_structureComponent: StructureComponent, entity: EntityID): void {
+function onSpawn(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    switch (getEntityType(entity)) {
       case EntityType.wall: {
@@ -80,6 +80,10 @@ function onSpawn(_structureComponent: StructureComponent, entity: EntityID): voi
       case EntityType.researchBench: {
          // @Temporary
          playSound("wooden-wall-place.mp3", 0.3, 1, transformComponent.position);
+         break;
+      }
+      case EntityType.bracings: {
+         playSound("wooden-bracings-place.mp3", 0.4, 1, transformComponent.position);
          break;
       }
    }

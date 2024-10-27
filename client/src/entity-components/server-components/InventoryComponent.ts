@@ -1,6 +1,6 @@
 import { InventoryComponentData, ServerComponentType } from "../../../../shared/src/components";
 import { EntityID, LimbAction } from "../../../../shared/src/entities";
-import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType } from "../../../../shared/src/items/items";
+import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType, ItemTypeString } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { getHotbarSelectedItemSlot, getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
@@ -110,13 +110,15 @@ const updateInventoryFromData = (inventory: Inventory, inventoryData: Inventory,
       // If it doesn't exist in the server data, remove it
       const itemData = inventoryData.itemSlots[itemSlot];
       if (typeof itemData === "undefined" || itemData.id !== item.id) {
-         if (isPlayer && itemSlot === getPlayerSelectedItemSlot(inventory.name)) {
-            onItemDeselect(item.type, inventory.name === InventoryName.offhand);
-            validatePlayerAction(inventory.name, null);
-         }
-
          inventory.removeItem(itemSlot);
          hasChanged = true;
+
+         if (isPlayer && itemSlot === getPlayerSelectedItemSlot(inventory.name)) {
+            updatePlayerHeldItem(inventory.name, itemSlot);
+            onItemDeselect(item.type, inventory.name === InventoryName.offhand);
+
+            validatePlayerAction(inventory.name, null);
+         }
       }
    }
 
@@ -136,6 +138,8 @@ const updateInventoryFromData = (inventory: Inventory, inventoryData: Inventory,
 
          if (isPlayer && itemSlot === getPlayerSelectedItemSlot(inventory.name)) {
             onItemSelect(item.type);
+            updatePlayerHeldItem(inventory.name, itemSlot);
+
             validatePlayerAction(inventory.name, item);
          }
       } else if (item.count !== itemData.count) {
@@ -168,11 +172,14 @@ const readInventory = (reader: PacketReader): Inventory => {
    return inventory;
 }
 
-const updateHeldItem = (inventoryComponent: InventoryComponent, inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName, itemSlot: number): void => {
+export function updatePlayerHeldItem(inventoryName: InventoryName, heldItemSlot: number): void {
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+   
    const inventory = getInventory(inventoryComponent, inventoryName)!;
    const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
    
-   const heldItem = inventory.getItem(itemSlot);
+   const heldItem = inventory.getItem(heldItemSlot);
    if (heldItem === null) {
       limb.heldItemType = null;
    } else {
@@ -189,8 +196,7 @@ export const InventoryComponentArray = new ServerComponentArray<InventoryCompone
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData,
-   updatePlayerAfterData: updatePlayerAfterData
+   updatePlayerFromData: updatePlayerFromData
 });
 
 function createParamsFromData(reader: PacketReader): InventoryComponentParams {
@@ -278,13 +284,4 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
 function updatePlayerFromData(reader: PacketReader): void {
    const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    updateInventories(inventoryComponent, reader, true);
-}
-
-function updatePlayerAfterData(): void {
-   // Update held items
-   // @Cleanup: this seems like it should be done in the inventoryusecomponent, but make sure that it's done after the inventorycomponent is updated
-   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-   updateHeldItem(inventoryComponent, inventoryUseComponent, InventoryName.hotbar, getHotbarSelectedItemSlot());
-   updateHeldItem(inventoryComponent, inventoryUseComponent, InventoryName.offhand, 1);
 }

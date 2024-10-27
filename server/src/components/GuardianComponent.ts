@@ -171,8 +171,9 @@ const limbsAreInStagingPosition = (guardian: EntityID, guardianComponent: Guardi
    return (diffFromTarget1 >= -0.05 && diffFromTarget1 <= 0.05) || (diffFromTarget2 >= -0.05 && diffFromTarget2 <= 0.05);
 }
 
-function onTick(guardianComponent: GuardianComponent, guardian: EntityID): void {
+function onTick(guardian: EntityID): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(guardian);
+   const guardianComponent = GuardianComponentArray.getComponent(guardian);
    
    const guardianAI = aiHelperComponent.getGuardianAI();
    const target = guardianAI.getTarget(guardian);

@@ -164,9 +164,6 @@ export function collide(pushedEntity: EntityID, pushingEntity: EntityID, collidi
 
    // @Incomplete
    // switch (entityType) {
-   //    case EntityType.iceSpikes: onIceSpikesCollision(entity, pushingEntity, collisionPoint); break;
-   //    case EntityType.cactus: onCactusCollision(entity, pushingEntity, collisionPoint); break;
-   //    case EntityType.zombie: onZombieCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.slime: onSlimeCollision(entity, pushingEntity, collisionPoint); break;
    //    // @Cleanup:
    //    case EntityType.woodenArrow: onWoodenArrowCollision(entity, pushingEntity, collisionPoint); break;
@@ -178,7 +175,6 @@ export function collide(pushedEntity: EntityID, pushingEntity: EntityID, collidi
    //    case EntityType.frozenYeti: onFrozenYetiCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.rockSpikeProjectile: onRockSpikeProjectileCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.spearProjectile: onSpearProjectileCollision(entity, pushingEntity, collisionPoint); break;
-   //    case EntityType.slimeSpit: onSlimeSpitCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.spitPoisonArea: onSpitPoisonCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.battleaxeProjectile: onBattleaxeProjectileCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.iceArrow: onIceArrowCollision(entity, pushingEntity); break;

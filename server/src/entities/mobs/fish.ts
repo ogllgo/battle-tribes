@@ -3,10 +3,8 @@ import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
-import { createItemsOverEntity } from "../../entity-shared";
 import { registerAttackingEntity } from "../../ai/escape-ai";
 import { TribeMemberComponentArray } from "../../components/TribeMemberComponent";
-import { ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -14,7 +12,7 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome, TileType } from "battletribes-shared/tiles";
-import Layer, { getTileIndexFromPos } from "../../Layer";
+import Layer from "../../Layer";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -125,8 +123,4 @@ export function onFishLeaderHurt(fish: EntityID, attackingEntity: EntityID): voi
 
 export function onFishHurt(fish: EntityID, attackingEntity: EntityID): void {
    registerAttackingEntity(fish, attackingEntity);
-}
-
-export function onFishDeath(fish: EntityID): void {
-   createItemsOverEntity(fish, ItemType.raw_fish, 1, 40);
 }

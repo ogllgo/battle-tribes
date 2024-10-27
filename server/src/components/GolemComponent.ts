@@ -14,6 +14,8 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
+import { ItemType } from "../../../shared/src/items/items";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
@@ -86,6 +88,7 @@ export const GolemComponentArray = new ComponentArray<GolemComponent>(ServerComp
       tickInterval: 1,
       func: onTick
    },
+   preRemove: preRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
@@ -175,7 +178,9 @@ const updateGolemHitboxPositions = (golem: EntityID, golemComponent: GolemCompon
    physicsComponent.hitboxesAreDirty = true;
 }
 
-function onTick(golemComponent: GolemComponent, golem: EntityID): void {
+function onTick(golem: EntityID): void {
+   const golemComponent = GolemComponentArray.getComponent(golem);
+   
    // Remove targets which are dead or have been out of aggro long enough
    // @Speed: Remove calls to Object.keys, Number, and hasOwnProperty
    // @Cleanup: Copy and paste from frozen-yeti
@@ -272,6 +277,10 @@ function onTick(golemComponent: GolemComponent, golem: EntityID): void {
 
    physicsComponent.targetRotation = angleToTarget;
    physicsComponent.turnSpeed = Math.PI / 1.5;
+}
+
+function preRemove(golem: EntityID): void {
+   createItemsOverEntity(golem, ItemType.living_rock, randInt(10, 20));
 }
 
 function getDataLength(): number {

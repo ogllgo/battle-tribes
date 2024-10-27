@@ -287,7 +287,8 @@ export enum BlueprintType {
    stoneFloorSpikes,
    stoneWallSpikes,
    warriorHutUpgrade,
-   fenceGate
+   fenceGate,
+   stoneBracings
 }
 
 export interface BlueprintComponentData extends BaseComponentData {

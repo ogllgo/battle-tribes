@@ -51,9 +51,10 @@ const updateDoorOpenProgress = (fenceGate: EntityID, fenceGateComponent: FenceGa
    hitbox.relativeRotation = rotation - Math.PI/2;
 }
 
-function onTick(fenceGateComponent: FenceGateComponent, fenceGate: EntityID): void {
+function onTick(fenceGate: EntityID): void {
    // @Incomplete: Hard hitboxes
    
+   const fenceGateComponent = FenceGateComponentArray.getComponent(fenceGate);
    if (fenceGateComponent.toggleType !== DoorToggleType.none) {
       switch (fenceGateComponent.toggleType) {
          case DoorToggleType.open: {

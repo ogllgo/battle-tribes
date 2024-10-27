@@ -24,7 +24,8 @@ export const BerryBushComponentArray = new ComponentArray<BerryBushComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(berryBushComponent: BerryBushComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
+   const berryBushComponent = BerryBushComponentArray.getComponent(entity);
    if (berryBushComponent.numBerries >= 5) {
       return;
    }

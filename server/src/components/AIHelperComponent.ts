@@ -153,11 +153,12 @@ export function entityIsNoticedByAI(aiHelperComponent: AIHelperComponent, entity
    return !aiHelperComponent.ignoreDecorativeEntities || !entityIsDecorative(entity);
 }
 
-function onTick(aiHelperComponent: AIHelperComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    // @Speed: Not all entities with this component need this always.
    // Slimewisp: can pass with once per second
    
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    
    const minChunkX = Math.max(Math.floor((transformComponent.position.x - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
    const maxChunkX = Math.min(Math.floor((transformComponent.position.x + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);

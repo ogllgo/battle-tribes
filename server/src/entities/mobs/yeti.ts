@@ -1,17 +1,14 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
-import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randInt, TileIndex } from "battletribes-shared/utils";
+import { Point, TileIndex } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { createItemsOverEntity } from "../../entity-shared";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { SnowballComponentArray } from "../../components/SnowballComponent";
-import { ItemType } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -131,9 +128,4 @@ export function onYetiHurt(yeti: EntityID, attackingEntity: EntityID, damage: nu
          totalDamageDealt: damage
       };
    }
-}
-
-export function onYetiDeath(yeti: EntityID): void {
-   createItemsOverEntity(yeti, ItemType.raw_beef, randInt(4, 7), 80);
-   createItemsOverEntity(yeti, ItemType.yeti_hide, randInt(2, 3), 80);
 }

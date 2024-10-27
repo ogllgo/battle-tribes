@@ -86,22 +86,25 @@ const EMBRASURE_BLUEPRINT_TYPES = [BlueprintType.woodenEmbrasure, BlueprintType.
 const DOOR_BLUEPRINT_TYPES = [BlueprintType.woodenDoor, BlueprintType.stoneDoor];
 const TUNNEL_BLUEPRINT_TYPES = [BlueprintType.woodenTunnel, BlueprintType.stoneTunnel];
 
-type UpgradeableEntityType = EntityType.wall | EntityType.tunnel | EntityType.door | EntityType.embrasure | EntityType.floorSpikes | EntityType.wallSpikes;
+type UpgradeableEntityType = EntityType.wall | EntityType.tunnel | EntityType.door | EntityType.embrasure | EntityType.floorSpikes | EntityType.wallSpikes | EntityType.bracings;
 const MATERIAL_UPGRADE_IMAGE_SOURCES: Record<UpgradeableEntityType, any> = {
    [EntityType.wall]: require("../../images/entities/wall/stone-wall.png"),
    [EntityType.tunnel]: require("../../images/entities/tunnel/stone-tunnel.png"),
    [EntityType.door]: require("../../images/entities/door/stone-door.png"),
    [EntityType.embrasure]: require("../../images/entities/embrasure/stone-embrasure.png"),
    [EntityType.floorSpikes]: require("../../images/entities/spikes/stone-floor-spikes.png"),
-   [EntityType.wallSpikes]: require("../../images/entities/spikes/stone-wall-spikes.png")
+   [EntityType.wallSpikes]: require("../../images/entities/spikes/stone-wall-spikes.png"),
+   [EntityType.bracings]: require("../../images/entities/bracings/stone-vertical-post.png"),
 };
+// @Hack: Hardcoded
 const MATERIAL_UPGRADE_IMAGE_SIZES: Record<UpgradeableEntityType, [width: number, height: number]> = {
    [EntityType.wall]: [64, 64],
    [EntityType.tunnel]: [64, 64],
    [EntityType.door]: [64, 24],
    [EntityType.embrasure]: [64, 20],
    [EntityType.floorSpikes]: [56, 56],
-   [EntityType.wallSpikes]: [68, 28]
+   [EntityType.wallSpikes]: [68, 28],
+   [EntityType.bracings]: [64, 64],
 };
 const MATERIAL_UPGRADE_GHOST_TYPES: Record<UpgradeableEntityType, GhostType> = {
    [EntityType.wall]: GhostType.stoneWall,
@@ -110,6 +113,7 @@ const MATERIAL_UPGRADE_GHOST_TYPES: Record<UpgradeableEntityType, GhostType> = {
    [EntityType.embrasure]: GhostType.stoneEmbrasureUpgrade,
    [EntityType.floorSpikes]: GhostType.stoneFloorSpikes,
    [EntityType.wallSpikes]: GhostType.stoneWallSpikes,
+   [EntityType.bracings]: GhostType.stoneBracings,
 };
 const MATERIAL_UPGRADE_BLUEPRINT_TYPES: Record<UpgradeableEntityType, BlueprintType> = {
    [EntityType.wall]: BlueprintType.stoneWall,
@@ -117,7 +121,8 @@ const MATERIAL_UPGRADE_BLUEPRINT_TYPES: Record<UpgradeableEntityType, BlueprintT
    [EntityType.door]: BlueprintType.stoneDoorUpgrade,
    [EntityType.embrasure]: BlueprintType.stoneEmbrasureUpgrade,
    [EntityType.floorSpikes]: BlueprintType.stoneFloorSpikes,
-   [EntityType.wallSpikes]: BlueprintType.stoneWallSpikes
+   [EntityType.wallSpikes]: BlueprintType.stoneWallSpikes,
+   [EntityType.bracings]: BlueprintType.stoneBracings,
 };
 
 const playerIsHoldingHammer = (): boolean => {

@@ -59,24 +59,3 @@ export function createEntityFromConfig<ComponentTypes extends ServerComponentTyp
 export function entityIsStructure(entity: EntityID): boolean {
    return STRUCTURE_TYPES.indexOf(getEntityType(entity) as StructureType) !== -1;
 }
-
-export function getRandomPositionInEntity(entity: EntityID): Point {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
-   const box = hitbox.box;
-
-   if (boxIsCircular(box)) {
-      return box.position.offset(box.radius * Math.random(), 2 * Math.PI * Math.random());
-   } else {
-      const halfWidth = box.width / 2;
-      const halfHeight = box.height / 2;
-      
-      const xOffset = randFloat(-halfWidth, halfWidth);
-      const yOffset = randFloat(-halfHeight, halfHeight);
-
-      const x = transformComponent.position.x + rotateXAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
-      const y = transformComponent.position.y + rotateYAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
-      return new Point(x, y);
-   }
-}

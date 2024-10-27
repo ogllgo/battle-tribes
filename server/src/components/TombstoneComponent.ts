@@ -9,6 +9,8 @@ import { createEntityFromConfig } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
+import { ItemType } from "../../../shared/src/items/items";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    /** Average number of zombies that are created by the tombstone in a second */
@@ -36,6 +38,7 @@ export class TombstoneComponent {
 }
 
 export const TombstoneComponentArray = new ComponentArray<TombstoneComponent>(ServerComponentType.tombstone, true, {
+   preRemove: preRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
@@ -117,6 +120,27 @@ export function tickTombstone(tombstone: EntityID): void {
          spawnZombie(tombstone, tombstoneComponent);
       }
    }
+}
+
+function preRemove(tombstone: EntityID): void {
+   // 60% chance to spawn zombie
+   if (Math.random() < 0.4) {
+      return;
+   }
+   
+   createItemsOverEntity(tombstone, ItemType.rock, randInt(2, 3));
+
+   // @Copynpaste
+   const tombstoneComponent = TombstoneComponentArray.getComponent(tombstone);
+   const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
+   
+   const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
+
+   const config = createZombieConfig(isGolden, tombstone);
+   config.components[ServerComponentType.transform].position.x = tombstoneTransformComponent.position.x;
+   config.components[ServerComponentType.transform].position.y = tombstoneTransformComponent.position.y;
+   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   createEntityFromConfig(config, getEntityLayer(tombstone), 0);
 }
 
 function getDataLength(entity: EntityID): number {

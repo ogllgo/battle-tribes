@@ -1,9 +1,7 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityID, EntityType } from "battletribes-shared/entities";
-import { Point, randInt, TileIndex } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "../../entity-shared";
+import { Point, randInt } from "battletribes-shared/utils";
 import { registerAttackingEntity } from "../../ai/escape-ai";
-import { ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -82,8 +80,4 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
 
 export function onKrumblidHurt(cow: EntityID, attackingEntity: EntityID): void {
    registerAttackingEntity(cow, attackingEntity);
-}
-
-export function onKrumblidDeath(krumblid: EntityID): void {
-   createItemsOverEntity(krumblid, ItemType.leather, randInt(2, 3), 30);
 }

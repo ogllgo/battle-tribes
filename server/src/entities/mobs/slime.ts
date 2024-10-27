@@ -2,17 +2,14 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { SlimeSize, EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, TileIndex, lerp, randInt } from "battletribes-shared/utils";
+import { Point, lerp } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, getEntityHealth, healEntity } from "../../components/HealthComponent";
 import { SlimeComponent, SlimeComponentArray } from "../../components/SlimeComponent";
 import { getEntitiesInRange } from "../../ai-shared";
-import { createItemsOverEntity } from "../../entity-shared";
 import Layer from "../../Layer";
-import { wasTribeMemberKill } from "../tribes/tribe-member";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
-import { ItemType } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { createEntityFromConfig } from "../../Entity";
@@ -48,11 +45,6 @@ interface AngerPropagationInfo {
 export const SLIME_RADII: ReadonlyArray<number> = [32, 44, 60];
 const CONTACT_DAMAGE: ReadonlyArray<number> = [1, 2, 3];
 export const SLIME_MERGE_WEIGHTS: ReadonlyArray<number> = [2, 5, 11];
-const SLIME_DROP_AMOUNTS: ReadonlyArray<[minDropAmount: number, maxDropAmount: number]> = [
-   [1, 2], // small slime
-   [3, 5], // medium slime
-   [6, 9] // large slime
-];
 export const SLIME_MAX_MERGE_WANT: ReadonlyArray<number> = [15 * Settings.TPS, 40 * Settings.TPS, 75 * Settings.TPS];
 
 export const SLIME_MERGE_TIME = 7.5;
@@ -266,11 +258,4 @@ export function onSlimeHurt(slime: EntityID, attackingEntity: EntityID): void {
 
    addEntityAnger(slime, attackingEntity, 1, { chainLength: 0, propagatedEntityIDs: new Set() });
    propagateAnger(slime, attackingEntity, 1);
-}
-
-export function onSlimeDeath(slime: EntityID, attackingEntity: EntityID): void {
-   if (wasTribeMemberKill(attackingEntity)) {
-      const slimeComponent = SlimeComponentArray.getComponent(slime);
-      createItemsOverEntity(slime, ItemType.slimeball, randInt(...SLIME_DROP_AMOUNTS[slimeComponent.size]), 40);
-   }
 }

@@ -37,8 +37,9 @@ export const ResearchBenchComponentArray = new ComponentArray<ResearchBenchCompo
    addDataToPacket: addDataToPacket
 });
 
-function onTick(researchBenchComponent: ResearchBenchComponent, researchBench: EntityID): void {
+function onTick(researchBench: EntityID): void {
    // @Speed: This runs every tick, but this condition only activates rarely when the bench is being used.
+   const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    if (researchBenchComponent.isOccupied) {
       // @Incomplete?
       if (TribesmanAIComponentArray.hasComponent(researchBenchComponent.occupee)) {

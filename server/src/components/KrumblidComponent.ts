@@ -11,6 +11,8 @@ import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, s
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
+import { ItemType } from "../../../shared/src/items/items";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -24,10 +26,11 @@ export const KrumblidComponentArray = new ComponentArray<KrumblidComponent>(Serv
       func: onTick
    },
    getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
+   addDataToPacket: addDataToPacket,
+   preRemove: preRemove
 });
 
-function onTick(_krumblidComponent: KrumblidComponent, krumblid: EntityID): void {
+function onTick(krumblid: EntityID): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
    
    // Escape AI
@@ -72,3 +75,7 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
+
+export function preRemove(krumblid: EntityID): void {
+   createItemsOverEntity(krumblid, ItemType.leather, randInt(2, 3));
+}

@@ -2,13 +2,11 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { distance, Point, randInt } from "battletribes-shared/utils";
+import { distance, Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { GolemComponent, GolemComponentArray } from "../../components/GolemComponent";
-import { createItemsOverEntity } from "../../entity-shared";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { ItemType } from "battletribes-shared/items/items";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -186,8 +184,4 @@ export function onGolemCollision(golem: EntityID, collidingEntity: EntityID, col
    damageEntity(collidingEntity, golem, 3, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 300, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "golem", 0.3);
-}
-
-export function onGolemDeath(golem: EntityID): void {
-   createItemsOverEntity(golem, ItemType.living_rock, randInt(10, 20), 60);
 }

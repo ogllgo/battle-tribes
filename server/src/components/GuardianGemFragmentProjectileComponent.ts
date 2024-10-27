@@ -29,7 +29,7 @@ export const GuardianGemFragmentProjectileComponentArray = new ComponentArray<Gu
    addDataToPacket: addDataToPacket
 });
 
-function onTick(_component: GuardianGemFragmentProjectileComponent, fragment: EntityID): void {
+function onTick(fragment: EntityID): void {
    const age = getEntityAgeTicks(fragment);
    if (age >= Settings.TPS * 0.75) {
       destroyEntity(fragment);

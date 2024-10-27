@@ -459,7 +459,7 @@ function onLoad(entity: EntityID): void {
 }
 
 
-function onSpawn(_blueprintComponent: BlueprintComponent, entity: EntityID): void {
+function onSpawn(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("blueprint-place.mp3", 0.4, 1, transformComponent.position);
 }

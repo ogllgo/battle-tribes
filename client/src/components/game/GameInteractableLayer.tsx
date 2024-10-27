@@ -13,7 +13,7 @@ import Client from "../../networking/Client";
 import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../networking/packet-creation";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
-import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
+import { getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
@@ -1130,6 +1130,9 @@ export function selectItemSlot(itemSlot: number): void {
    const playerInventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
    const hotbarUseInfo = getLimbInfoByInventoryName(playerInventoryUseComponent, InventoryName.hotbar);
    hotbarUseInfo.selectedItemSlot = itemSlot;
+
+   // Update the held item type
+   updatePlayerHeldItem(InventoryName.hotbar, itemSlot);
 
    // @Incomplete
    // @Cleanup: Copy and paste, and shouldn't be here

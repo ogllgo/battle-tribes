@@ -1,7 +1,7 @@
 import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
-import { Point, TileIndex } from "battletribes-shared/utils";
+import { Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import Chunk from "../Chunk";
 import { EntityID } from "battletribes-shared/entities";
@@ -508,5 +508,24 @@ function addDataToPacket(packet: Packet, entity: EntityID): void {
       packet.addNumber(box.width);
       packet.addNumber(box.height);
       packet.addNumber(box.relativeRotation);
+   }
+}
+
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
+   const box = hitbox.box;
+
+   if (boxIsCircular(box)) {
+      return box.position.offset(box.radius * Math.random(), 2 * Math.PI * Math.random());
+   } else {
+      const halfWidth = box.width / 2;
+      const halfHeight = box.height / 2;
+      
+      const xOffset = randFloat(-halfWidth, halfWidth);
+      const yOffset = randFloat(-halfHeight, halfHeight);
+
+      const x = transformComponent.position.x + rotateXAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
+      const y = transformComponent.position.y + rotateYAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
+      return new Point(x, y);
    }
 }

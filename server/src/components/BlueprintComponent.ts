@@ -37,7 +37,8 @@ const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.stoneFloorSpikes]: 3,
    [BlueprintType.stoneWallSpikes]: 3,
    [BlueprintType.warriorHutUpgrade]: 25,
-   [BlueprintType.fenceGate]: 3
+   [BlueprintType.fenceGate]: 3,
+   [BlueprintType.stoneBracings]: 3
 };
 
 export class BlueprintComponent {
@@ -202,7 +203,8 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
       case BlueprintType.stoneEmbrasureUpgrade:
       case BlueprintType.stoneTunnelUpgrade:
       case BlueprintType.stoneFloorSpikes:
-      case BlueprintType.stoneWallSpikes: {
+      case BlueprintType.stoneWallSpikes:
+      case BlueprintType.stoneBracings: {
          upgradeBuilding(blueprintComponent.associatedEntityID);
          return;
       }

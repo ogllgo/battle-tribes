@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt } from "battletribes-shared/utils";
+import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
 import { getCurrentLayer } from "./world";
@@ -11,7 +11,7 @@ export const ROCK_HIT_SOUNDS: ReadonlyArray<string> = ["rock-hit-1.mp3", "rock-h
 export const ROCK_DESTROY_SOUNDS: ReadonlyArray<string> = ["rock-destroy-1.mp3", "rock-destroy-2.mp3", "rock-destroy-3.mp3"];
 
 let audioContext: AudioContext;
-let audioBuffers: Record<string, AudioBuffer>;
+let audioBuffers: Partial<Record<string, AudioBuffer>>;
 
 export interface Sound {
    volume: number;
@@ -241,7 +241,8 @@ export async function loadSoundEffects(): Promise<void> {
       "stone-destroy-1.mp3",
       "stone-destroy-2.mp3",
       "wall-collapse-1.mp3",
-      "wall-collapse-2.mp3"
+      "wall-collapse-2.mp3",
+      "wooden-bracings-place.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
@@ -279,6 +280,7 @@ export interface SoundInfo {
 // @Speed: Garbage collection, unbox the source from a point
 export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point): SoundInfo {
    const audioBuffer = audioBuffers[filePath];
+   assert(typeof audioBuffer !== "undefined");
 
    const gainNode = audioContext.createGain();
    gainNode.gain.value = calculateSoundVolume(volume, source);

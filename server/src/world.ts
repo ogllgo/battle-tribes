@@ -1,17 +1,9 @@
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { tickTribes } from "./ai-tribe-building/ai-building";
-import Layer, { getChunkIndex } from "./Layer";
+import Layer from "./Layer";
 import { removeEntityFromCensus } from "./census";
-import { ComponentArrays } from "./components/ComponentArray";
-import { onCowDeath } from "./entities/mobs/cow";
-import { onFishDeath } from "./entities/mobs/fish";
-import { onKrumblidDeath } from "./entities/mobs/krumblid";
-import { onYetiDeath } from "./entities/mobs/yeti";
-import { onSlimeSpitDeath } from "./entities/projectiles/slime-spit";
-import { onCactusDeath } from "./entities/resources/cactus";
-import { onTribeWarriorDeath } from "./entities/tribes/tribe-warrior";
-import { onTribeWorkerDeath } from "./entities/tribes/tribe-worker";
+import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityRemoval } from "./server/player-clients";
 import Tribe from "./Tribe";
 import { TerrainGenerationInfo } from "./world-generation/surface-terrain-generation";
@@ -282,18 +274,14 @@ export function destroyEntity(entity: EntityID): void {
       }
    }
 
-   // @Cleanup: do these functions actually need to be called here? why not in the proper remove flagged function?
-   switch (entityType) {
-      case EntityType.cow: onCowDeath(entity); break;
-      // @Temporary
-      // case EntityType.tree: onTreeDeath(entity); break;
-      case EntityType.krumblid: onKrumblidDeath(entity); break;
-      case EntityType.cactus: onCactusDeath(entity); break;
-      case EntityType.tribeWorker: onTribeWorkerDeath(entity); break;
-      case EntityType.tribeWarrior: onTribeWarriorDeath(entity); break;
-      case EntityType.yeti: onYetiDeath(entity); break;
-      case EntityType.fish: onFishDeath(entity); break;
-      case EntityType.slimeSpit: onSlimeSpitDeath(entity); break;
+   // Call any preRemove functions
+   const componentTypes = getEntityComponentTypes(entity);
+   const componentArrayRecord = getComponentArrayRecord();
+   for (const componentType of componentTypes) {
+      const componentArray = componentArrayRecord[componentType];
+      if (typeof componentArray.preRemove !== "undefined") {
+         componentArray.preRemove(entity);
+      }
    }
 }
 
@@ -325,10 +313,9 @@ export function updateEntities(): void {
    for (const componentArray of ComponentArrays) {
       if (typeof componentArray.onTick !== "undefined" && gameTicks % componentArray.onTick.tickInterval === 0) {
          const func = componentArray.onTick.func;
-         for (let i = 0; i < componentArray.activeComponents.length; i++) {
+         for (let i = 0; i < componentArray.activeEntities.length; i++) {
             const entity = componentArray.activeEntities[i];
-            const component = componentArray.activeComponents[i];
-            func(component, entity);
+            func(entity);
          }
       }
 

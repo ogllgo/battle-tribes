@@ -1,19 +1,15 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { ZombieComponent, ZombieComponentArray, zombieShouldAttackEntity } from "../../components/ZombieComponent";
-import { addInventoryToInventoryComponent, InventoryComponent, pickupItemEntity } from "../../components/InventoryComponent";
-import { wasTribeMemberKill } from "../tribes/tribe-member";
-import { PhysicsComponent, PhysicsComponentArray, applyKnockback } from "../../components/PhysicsComponent";
-import { createItemsOverEntity } from "../../entity-shared";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { TombstoneComponentArray } from "../../components/TombstoneComponent";
-import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
+import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
+import { ZombieComponent, ZombieComponentArray } from "../../components/ZombieComponent";
+import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
@@ -91,57 +87,12 @@ export function createZombieConfig(isGolden: boolean, tombstone: EntityID): Enti
    };
 }
 
-export function onZombieCollision(zombie: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
-   // Pick up item entities
-   if (getEntityType(collidingEntity) === EntityType.itemEntity) {
-      pickupItemEntity(zombie, collidingEntity);
-      return;
-   }
-   
-   if (!zombieShouldAttackEntity(zombie, collidingEntity)) {
-      return;
-   }
-
-   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "zombie")) {
-      return;
-   }
-
-   const transformComponent = TransformComponentArray.getComponent(zombie);
-   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-   const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-
-   // Damage and knock back the player
-   damageEntity(collidingEntity, zombie, 1, PlayerCauseOfDeath.zombie, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 150, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "zombie", 0.3);
-
-   // Push the zombie away from the entity
-   const flinchDirection = hitDirection + Math.PI;
-   const physicsComponent = PhysicsComponentArray.getComponent(zombie);
-   physicsComponent.externalVelocity.x += 100 * Math.sin(flinchDirection);
-   physicsComponent.externalVelocity.y += 100 * Math.cos(flinchDirection);
-}
-
 export function onZombieHurt(zombie: EntityID, attackingEntity: EntityID): void {
    // @Cleanup: too many ifs. generalise
    const attackingEntityType = getEntityType(attackingEntity);
    if (HealthComponentArray.hasComponent(attackingEntity) && attackingEntityType !== EntityType.iceSpikes && attackingEntityType !== EntityType.cactus && attackingEntityType !== EntityType.floorSpikes && attackingEntityType !== EntityType.wallSpikes && attackingEntityType !== EntityType.floorPunjiSticks && attackingEntityType !== EntityType.wallPunjiSticks) {
       const zombieComponent = ZombieComponentArray.getComponent(zombie);
       zombieComponent.attackingEntityIDs[attackingEntity] = ZombieVars.CHASE_PURSUE_TIME_TICKS;
-   }
-}
-
-export function onZombieDeath(zombie: EntityID): void {
-   const zombieComponent = ZombieComponentArray.getComponent(zombie);
-   if (zombieComponent.tombstone !== 0 && TombstoneComponentArray.hasComponent(zombieComponent.tombstone)) {
-      const tombstoneComponent = TombstoneComponentArray.getComponent(zombieComponent.tombstone);
-      tombstoneComponent.numZombies--;
-   }
-
-   if (wasTribeMemberKill(zombie) && Math.random() < 0.1) {
-      createItemsOverEntity(zombie, ItemType.eyeball, 1, 40);
    }
 }
 

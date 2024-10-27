@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { EntityID, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/tiles";
-import { randFloat, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
+import { randFloat, randInt, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -16,7 +16,7 @@ import { createSnowballConfig } from "../entities/snowball";
 import { createEntityFromConfig } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, healEntity } from "./HealthComponent";
-import { ItemComponentArray } from "./ItemComponent";
+import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType, surfaceLayer } from "../world";
@@ -70,6 +70,7 @@ export const YetiComponentArray = new ComponentArray<YetiComponent>(ServerCompon
       tickInterval: 1,
       func: onTick
    },
+   preRemove: preRemove,
    onRemove: onRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
@@ -291,9 +292,10 @@ const getYetiTarget = (yeti: EntityID, visibleEntities: ReadonlyArray<EntityID>)
    return target;
 }
 
-function onTick(yetiComponent: YetiComponent, yeti: EntityID): void {
+function onTick(yeti: EntityID): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);
+   const yetiComponent = YetiComponentArray.getComponent(yeti);
 
    if (yetiComponent.isThrowingSnow) {
       // If the target is dead or has run outside the yeti's vision range, cancel the attack
@@ -404,6 +406,11 @@ function onTick(yetiComponent: YetiComponent, yeti: EntityID): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.run(yeti);
+}
+
+export function preRemove(yeti: EntityID): void {
+   createItemsOverEntity(yeti, ItemType.raw_beef, randInt(4, 7));
+   createItemsOverEntity(yeti, ItemType.yeti_hide, randInt(2, 3));
 }
 
 function onRemove(yeti: EntityID): void {

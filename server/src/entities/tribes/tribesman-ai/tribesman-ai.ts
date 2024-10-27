@@ -302,10 +302,12 @@ const getSeedItemSlot = (hotbarInventory: Inventory, plantType: PlanterBoxPlant)
    return getItemTypeSlot(hotbarInventory, searchItemType);
 }
 
-export function tickTribesman(tribesmanAIComponent: TribesmanAIComponent, tribesman: EntityID): void {
+// @Cleanup: Remove to tribesmanAIComponent
+export function tickTribesman(tribesman: EntityID): void {
    // @Cleanup: This is an absolutely massive function
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
 
    tribesmanAIComponent.targetResearchBenchID = 0;
    tribesmanAIComponent.ticksSinceLastHelpRequest++;

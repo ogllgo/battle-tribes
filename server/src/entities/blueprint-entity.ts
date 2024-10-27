@@ -36,6 +36,7 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): StructureT
       case BlueprintType.stoneWallSpikes: return EntityType.wallSpikes;
       case BlueprintType.warriorHutUpgrade: return EntityType.warriorHut;
       case BlueprintType.fenceGate: return EntityType.fenceGate;
+      case BlueprintType.stoneBracings: return EntityType.bracings;
    }
 }
 

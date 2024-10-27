@@ -40,7 +40,7 @@ export interface ComponentArrayFunctions<T extends object, RenderParts extends o
    /** Called once when the entity is being created, just after all the components are created from their params */
    onLoad?(entity: EntityID): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
-   onSpawn?(component: T, entity: EntityID): void;
+   onSpawn?(entity: EntityID): void;
    onTick?(entity: EntityID): void;
    /** Called when a packet is skipped and there is no data to update from */
    onUpdate?(entity: EntityID): void;
@@ -97,7 +97,7 @@ export abstract class ComponentArray<
    // createRenderParts thing.
    public readonly createComponent: (config: EntityConfig<never, never>, renderParts: RenderParts) => T;
    public onLoad?(entity: EntityID): void;
-   public onSpawn?(component: T, entity: EntityID): void;
+   public onSpawn?(entity: EntityID): void;
    public onTick?: (entity: EntityID) => void;
    public onUpdate?: (entity: EntityID) => void;
    public onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;

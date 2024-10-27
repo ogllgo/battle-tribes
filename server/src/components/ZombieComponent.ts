@@ -1,27 +1,30 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { randFloat, UtilVars } from "battletribes-shared/utils";
+import { Point, randFloat, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { healEntity, HealthComponentArray } from "./HealthComponent";
-import { ItemComponentArray } from "./ItemComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
+import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
+import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { calculateRadialAttackTargets } from "../entities/tribes/tribe-member";
+import { calculateRadialAttackTargets, wasTribeMemberKill } from "../entities/tribes/tribe-member";
 import { entityIsStructure } from "../Entity";
-import { InventoryComponentArray, getInventory } from "./InventoryComponent";
+import { InventoryComponentArray, getInventory, pickupItemEntity } from "./InventoryComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { ZombieVars } from "../entities/mobs/zombie";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { destroyEntity, entityExists, getEntityType, getGameTicks, isNight } from "../world";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { TombstoneComponentArray } from "./TombstoneComponent";
 
 const enum Vars {
    TURN_SPEED = 3 * UtilVars.PI,
@@ -76,7 +79,9 @@ export const ZombieComponentArray = new ComponentArray<ZombieComponent>(ServerCo
       func: onTick
    },
    getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
+   addDataToPacket: addDataToPacket,
+   onHitboxCollision: onHitboxCollision,
+   preRemove: preRemove
 });
 
 const tribesmanIsWearingMeatSuit = (entityID: number): boolean => {
@@ -213,7 +218,8 @@ const findHerdMembers = (visibleEntities: ReadonlyArray<EntityID>): ReadonlyArra
    return herdMembers;
 }
 
-function onTick(zombieComponent: ZombieComponent, zombie: EntityID): void {
+function onTick(zombie: EntityID): void {
+   const zombieComponent = ZombieComponentArray.getComponent(zombie);
    zombieComponent.visibleHurtEntityTicks++;
 
    // Update attacking entities
@@ -325,4 +331,46 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: EntityID): void {
    const zombieComponent = ZombieComponentArray.getComponent(entity);
    packet.addNumber(zombieComponent.zombieType);
+}
+
+function onHitboxCollision(zombie: EntityID, collidingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+   // Pick up item entities
+   if (getEntityType(collidingEntity) === EntityType.itemEntity) {
+      pickupItemEntity(zombie, collidingEntity);
+      return;
+   }
+   
+   if (!zombieShouldAttackEntity(zombie, collidingEntity)) {
+      return;
+   }
+
+   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+   if (!canDamageEntity(healthComponent, "zombie")) {
+      return;
+   }
+
+   const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
+
+   // Damage and knock back the player
+   damageEntity(collidingEntity, zombie, 1, PlayerCauseOfDeath.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, 150, hitDirection);
+   addLocalInvulnerabilityHash(healthComponent, "zombie", 0.3);
+
+   // Push the zombie away from the entity
+   const flinchDirection = hitDirection + Math.PI;
+   const physicsComponent = PhysicsComponentArray.getComponent(zombie);
+   physicsComponent.externalVelocity.x += 100 * Math.sin(flinchDirection);
+   physicsComponent.externalVelocity.y += 100 * Math.cos(flinchDirection);
+}
+
+function preRemove(zombie: EntityID): void {
+   const zombieComponent = ZombieComponentArray.getComponent(zombie);
+   if (zombieComponent.tombstone !== 0 && TombstoneComponentArray.hasComponent(zombieComponent.tombstone)) {
+      const tombstoneComponent = TombstoneComponentArray.getComponent(zombieComponent.tombstone);
+      tombstoneComponent.numZombies--;
+   }
+
+   if (wasTribeMemberKill(zombie) && Math.random() < 0.1) {
+      createItemsOverEntity(zombie, ItemType.eyeball, 1);
+   }
 }

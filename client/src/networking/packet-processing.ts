@@ -396,8 +396,7 @@ export function processEntityCreationData(entity: EntityID, reader: PacketReader
       for (let i = 0; i < componentArrays.length; i++) {
          const componentArray = componentArrays[i];
          if (componentArray.hasComponent(entity) && typeof componentArray.onSpawn !== "undefined") {
-            const component = componentArray.getComponent(entity);
-            componentArray.onSpawn(component, entity);
+            componentArray.onSpawn(entity);
          }
       }
    }

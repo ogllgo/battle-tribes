@@ -1,5 +1,5 @@
 import { Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
-import { EntityID, EntityType, EntityTypeString, FrozenYetiAttackType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
+import { EntityID, EntityType, FrozenYetiAttackType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { FROZEN_YETI_BITE_COOLDOWN, FROZEN_YETI_GLOBAL_ATTACK_COOLDOWN, FROZEN_YETI_ROAR_COOLDOWN, FROZEN_YETI_SNOWBALL_THROW_COOLDOWN, FROZEN_YETI_STOMP_COOLDOWN, FrozenYetiRockSpikeInfo, FrozenYetiTargetInfo, FrozenYetiVars } from "../entities/mobs/frozen-yeti";
 import { ComponentArray } from "./ComponentArray";
@@ -19,6 +19,8 @@ import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectCom
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
+import { ItemType } from "../../../shared/src/items/items";
+import { createItemsOverEntity } from "./ItemComponent";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -64,6 +66,7 @@ export const FrozenYetiComponentArray = new ComponentArray<FrozenYetiComponent>(
       tickInterval: 1,
       func: onTick
    },
+   preRemove: preRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
@@ -384,7 +387,9 @@ const doBiteAttack = (frozenYeti: EntityID, angleToTarget: number): void => {
    }
 }
 
-function onTick(frozenYetiComponent: FrozenYetiComponent, frozenYeti: EntityID): void {
+function onTick(frozenYeti: EntityID): void {
+   const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
+   
    // Remove targets which are dead or have been out of aggro long enough
    // @Speed: Remove calls to Object.keys, Number, and hasOwnProperty
    for (const _targetID of Object.keys(frozenYetiComponent.attackingEntities)) {
@@ -658,6 +663,13 @@ function onTick(frozenYetiComponent: FrozenYetiComponent, frozenYeti: EntityID):
          break;
       }
    }
+}
+
+function preRemove(frozenYeti: EntityID): void {
+   createItemsOverEntity(frozenYeti, ItemType.raw_beef, randInt(13, 18));
+
+   createItemsOverEntity(frozenYeti, ItemType.deepfrost_heart, randInt(2, 3));
+   createItemsOverEntity(frozenYeti, ItemType.yeti_hide, randInt(5, 7));
 }
 
 function getDataLength(entity: EntityID): number {

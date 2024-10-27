@@ -84,9 +84,10 @@ const getCollidingCollisionBox = (entity: EntityID, blockBox: ServerBlockBox): D
    return null;
 }
 
-function onTick(damageBoxComponent: DamageBoxComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const layer = getEntityLayer(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
+   const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
    
    for (const damageBox of damageBoxComponent.damageBoxes) {
       if (!damageBox.isActive) {

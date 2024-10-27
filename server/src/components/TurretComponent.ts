@@ -236,9 +236,10 @@ const fire = (turret: EntityID, ammoType: TurretAmmoType): void => {
    }
 }
 
-function onTick(turretComponent: TurretComponent, turret: EntityID): void {
+function onTick(turret: EntityID): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(turret);
    const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
+   const turretComponent = TurretComponentArray.getComponent(turret);
 
    // Attempt to load ammo if there is none loaded
    // @Speed: ideally shouldn't be done every tick, just when the inventory is changed (ammo is added to the inventory)

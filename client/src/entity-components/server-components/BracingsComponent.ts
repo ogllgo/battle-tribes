@@ -36,7 +36,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          hitbox,
          0,
          0,
-         getTextureArrayIndex("entities/bracings/vertical-post.png")
+         getTextureArrayIndex("entities/bracings/wooden-vertical-post.png")
       );
 
       renderInfo.attachRenderThing(renderPart);
@@ -48,7 +48,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       null,
       1,
       rotation,
-      getTextureArrayIndex("entities/bracings/horizontal-post.png")
+      getTextureArrayIndex("entities/bracings/wooden-horizontal-post.png")
    );
    horizontalBar.opacity = 0.5;
    renderInfo.attachRenderThing(horizontalBar);

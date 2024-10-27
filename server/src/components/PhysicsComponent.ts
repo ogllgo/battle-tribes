@@ -327,8 +327,9 @@ const updatePosition = (entity: EntityID, transformComponent: TransformComponent
    }
 }
 
-function onTick(physicsComponent: PhysicsComponent, entity: EntityID): void {
+function onTick(entity: EntityID): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    turnEntity(entity, transformComponent, physicsComponent);
    applyPhysics(entity, transformComponent, physicsComponent);

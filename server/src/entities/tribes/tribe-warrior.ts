@@ -105,14 +105,3 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
       }
    };
 }
-
-export function onTribeWarriorDeath(warrior: EntityID): void {
-   // Attempt to respawn the tribesman when it is killed
-   // Only respawn the tribesman if their hut is alive
-   const tribesmanComponent = TribesmanAIComponentArray.getComponent(warrior);
-
-   if (entityExists(tribesmanComponent.hut)) {
-      const tribeComponent = TribeComponentArray.getComponent(warrior);
-      tribeComponent.tribe.respawnTribesman(tribesmanComponent.hut);
-   }
-}

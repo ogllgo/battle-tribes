@@ -5,7 +5,10 @@ import { removeFleshSword } from "../flesh-sword-ai";
 import { ItemType } from "battletribes-shared/items/items";
 import { EntityID } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityAgeTicks } from "../world";
+import { destroyEntity, getEntityAgeTicks, getEntityLayer } from "../world";
+import { createItemEntityConfig } from "../entities/item-entity";
+import { createEntityFromConfig } from "../Entity";
+import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
    TICKS_TO_DESPAWN = 300 * Settings.TPS
@@ -49,7 +52,9 @@ function onRemove(entity: EntityID): void {
    }
 }
 
-function onTick(itemComponent: ItemComponent, itemEntity: EntityID): void {
+function onTick(itemEntity: EntityID): void {
+   const itemComponent = ItemComponentArray.getComponent(itemEntity);
+   
    // @Speed
    for (const entityID of Object.keys(itemComponent.entityPickupCooldowns).map(idString => Number(idString))) {
       itemComponent.entityPickupCooldowns[entityID]! -= Settings.I_TPS;
@@ -72,4 +77,18 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: EntityID): void {
    const itemComponent = ItemComponentArray.getComponent(entity);
    packet.addNumber(itemComponent.itemType);
+}
+
+export function createItemsOverEntity(entity: EntityID, itemType: ItemType, amount: number): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (let i = 0; i < amount; i++) {
+      const position = getRandomPositionInEntity(transformComponent);
+
+      // Create item entity
+      const config = createItemEntityConfig(itemType, 1, null);
+      config.components[ServerComponentType.transform].position.x = position.x;
+      config.components[ServerComponentType.transform].position.y = position.y;
+      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      createEntityFromConfig(config, getEntityLayer(entity), 0);
+   }
 }

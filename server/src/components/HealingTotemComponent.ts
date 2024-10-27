@@ -92,7 +92,9 @@ const healTargetIsInIDs = (target: EntityID, ids: ReadonlyArray<number>): boolea
    return false;
 }
 
-function onTick(healingTotemComponent: HealingTotemComponent, healingTotem: EntityID): void {
+function onTick(healingTotem: EntityID): void {
+   const healingTotemComponent = HealingTotemComponentArray.getComponent(healingTotem);
+   
    // @Speed: shouldn't call every tick
    const healingTargets = getHealingTargets(healingTotem);
 

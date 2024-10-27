@@ -7,7 +7,7 @@ import { addGrassBlocker } from "../grass-blockers";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
 import { randInt } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "../entity-shared";
+import { createItemsOverEntity } from "./ItemComponent";
 
 export const TREE_RADII: ReadonlyArray<number> = [40, 50];
 
@@ -33,10 +33,11 @@ export class TreeComponent {
 
 export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerComponentType.tree, true, {
    onJoin: onJoin,
-   onRemove: onRemove,
+   preRemove: preRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
+
 function onJoin(entity: EntityID): void {
    const treeComponent = TreeComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -50,14 +51,14 @@ function onJoin(entity: EntityID): void {
    addGrassBlocker(blocker, entity);
 }
 
-function onRemove(tree: EntityID): void {
+function preRemove(tree: EntityID): void {
    const treeComponent = TreeComponentArray.getComponent(tree);
 
-   createItemsOverEntity(tree, ItemType.wood, randInt(...WOOD_DROP_AMOUNTS[treeComponent.treeSize]), TREE_RADII[treeComponent.treeSize]);
+   createItemsOverEntity(tree, ItemType.wood, randInt(...WOOD_DROP_AMOUNTS[treeComponent.treeSize]));
 
    const dropChance = SEED_DROP_CHANCES[treeComponent.treeSize];
    if (Math.random() < dropChance) {
-      createItemsOverEntity(tree, ItemType.seed, 1, TREE_RADII[treeComponent.treeSize])
+      createItemsOverEntity(tree, ItemType.seed, 1)
    }
 }
 
