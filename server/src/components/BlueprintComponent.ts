@@ -20,6 +20,8 @@ import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
+import { cloneHitbox, Hitbox } from "../../../shared/src/boxes/boxes";
+import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -38,7 +40,7 @@ const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.stoneWallSpikes]: 3,
    [BlueprintType.warriorHutUpgrade]: 25,
    [BlueprintType.fenceGate]: 3,
-   [BlueprintType.stoneBracings]: 3
+   [BlueprintType.stoneBracings]: 2
 };
 
 export class BlueprintComponent {
@@ -67,8 +69,22 @@ function onJoin(entityID: EntityID): void {
 
    const virtualEntityID = tribeComponent.tribe.virtualEntityIDCounter++;
 
+   // @Copynpaste from blueprint-entity 
+   let hitboxes: Array<Hitbox>;
+   if (blueprintComponent.associatedEntityID !== 0) {
+      const structureTransformComponent = TransformComponentArray.getComponent(blueprintComponent.associatedEntityID);
+
+      hitboxes = [];
+      for (const hitbox of structureTransformComponent.hitboxes) {
+         hitboxes.push(cloneHitbox(hitbox));
+      }
+   } else {
+      const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
+      hitboxes = createNormalStructureHitboxes(entityType);
+   }
+
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
-   placeVirtualBuilding(tribeComponent.tribe, transformComponent.position, transformComponent.rotation, entityType, virtualEntityID);
+   placeVirtualBuilding(tribeComponent.tribe, transformComponent.position, transformComponent.rotation, entityType, hitboxes, virtualEntityID);
    tribeComponent.tribe.buildingsAreDirty = true;
 
    if (StructureComponentArray.hasComponent(blueprintComponent.associatedEntityID)) {

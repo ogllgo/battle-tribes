@@ -3,7 +3,7 @@ import { NUM_RENDER_LAYERS, RenderLayer } from "../../render-layers";
 import { EntityID } from "battletribes-shared/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { clearEntityInVertexData, EntityRenderingVars, getEntityRenderingProgram, setEntityInVertexData } from "./entity-rendering";
+import { clearEntityInVertexData, EntityRenderingVars, getEntityRenderingProgram, setRenderInfoInVertexData } from "./entity-rendering";
 import Camera from "../../Camera";
 import { gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
@@ -208,7 +208,7 @@ export function registerChunkRenderedEntity(entity: EntityID, renderLayer: Chunk
 
    // Set data
    const renderPartIdx = bufferIndex * renderLayerInfo.maxRenderPartsPerEntity;
-   setEntityInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);
+   setRenderInfoInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);
 }
 
 export function removeChunkRenderedEntity(entity: EntityID, renderLayer: ChunkedRenderLayer): void {
@@ -258,7 +258,7 @@ export function updateChunkRenderedEntity(renderInfo: EntityRenderInfo, renderLa
    registerBufferChange(renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.allRenderThings.length - 1);
 
    const renderPartIdx = bufferIndex * renderLayerInfo.maxRenderPartsPerEntity;
-   setEntityInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);
+   setRenderInfoInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);
 }
 
 export function refreshChunkedEntityRenderingBuffers(): void {

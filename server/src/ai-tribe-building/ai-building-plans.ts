@@ -390,7 +390,8 @@ const findIdealWallPlacePosition = (tribe: Tribe): NewBuildingPlan | null => {
       const candidate = potentialCandidates[i];
 
       // Simulate placing the wall
-      placeVirtualBuilding(tribe, candidate.position, candidate.rotation, EntityType.wall, tribe.virtualEntityIDCounter);
+      const hitboxes = createNormalStructureHitboxes(EntityType.wall);
+      placeVirtualBuilding(tribe, candidate.position, candidate.rotation, EntityType.wall, hitboxes, tribe.virtualEntityIDCounter);
       tribe.virtualEntityIDCounter++;
       
       updateTribeBuildingInfo(LayerType.surface, tribe);
@@ -675,13 +676,15 @@ export function updateTribePlans(tribe: Tribe): void {
       switch (plan.type) {
          case BuildingPlanType.newBuilding: {
             const entityType = (ITEM_INFO_RECORD[plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
-            virtualBuilding = placeVirtualBuilding(tribe, plan.position, plan.rotation, entityType as StructureType, virtualEntityID);
+            const hitboxes = createNormalStructureHitboxes(entityType);
+            virtualBuilding = placeVirtualBuilding(tribe, plan.position, plan.rotation, entityType as StructureType, hitboxes, virtualEntityID);
             break;
          }
          case BuildingPlanType.upgrade: {
             // @Bug: Get from virtual buildings not actual entities
             const baseBuildingTransformComponent = TransformComponentArray.getComponent(plan.baseBuildingID);
-            virtualBuilding = placeVirtualBuilding(tribe, baseBuildingTransformComponent.position, plan.rotation, plan.entityType, virtualEntityID);
+            const hitboxes = createNormalStructureHitboxes(plan.entityType);
+            virtualBuilding = placeVirtualBuilding(tribe, baseBuildingTransformComponent.position, plan.rotation, plan.entityType, hitboxes, virtualEntityID);
             break;
          }
       }

@@ -10,10 +10,10 @@ import { PlayerComponentArray } from "../components/PlayerComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
-import { calculateRadialAttackTargets, throwItem, useItem } from "../entities/tribes/tribe-member";
+import { calculateRadialAttackTargets, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory } from "../components/InventoryComponent";
-import { ServerComponentType } from "battletribes-shared/components";
+import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
 import { createEntityFromConfig } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
@@ -440,4 +440,31 @@ export function processToggleSimulationPacket(playerClient: PlayerClient, reader
    const isSimulating = reader.readBoolean();
    reader.padOffset(3);
    SERVER.isSimulating = isSimulating;
+}
+
+// @Cleanup: name, and there is already a shared definition
+const snapRotationToPlayer = (player: EntityID, placePosition: Point, rotation: number): number => {
+   const transformComponent = TransformComponentArray.getComponent(player);
+   const playerDirection = transformComponent.position.calculateAngleBetween(placePosition);
+   let snapRotation = playerDirection - rotation;
+
+   // Snap to nearest PI/2 interval
+   snapRotation = Math.round(snapRotation / Math.PI*2) * Math.PI/2;
+
+   snapRotation += rotation;
+   return snapRotation;
+}
+
+export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const structure = reader.readNumber() as EntityID;
+   const blueprintType = reader.readNumber() as BlueprintType;
+   
+   if (!entityExists(playerClient.instance) || !entityExists(structure)) {
+      return;
+   }
+
+   // @Cleanup: should not do this logic here.
+   const structureTransformComponent = TransformComponentArray.getComponent(structure);
+   const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.rotation);
+   placeBlueprint(playerClient.instance, structure, blueprintType, rotation);
 }

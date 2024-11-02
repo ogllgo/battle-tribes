@@ -601,12 +601,6 @@ abstract class Client {
 
    // @Cleanup: either make this.socket always not null or use a decorator.
 
-   public static sendPlaceBlueprint(structureID: number, blueprintType: BlueprintType): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("place_blueprint", structureID, blueprintType);
-      }
-   }
-
    public static sendModifyBuilding(structureID: number, data: number): void {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("modify_building", structureID, data);

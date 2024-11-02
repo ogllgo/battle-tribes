@@ -22,6 +22,7 @@ import { SpikesComponentArray } from "../../entity-components/server-components/
 import { HutComponentArray } from "../../entity-components/server-components/HutComponent";
 import { PlanterBoxComponentArray } from "../../entity-components/server-components/PlanterBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { sendPlaceBlueprintPacket } from "../../networking/packet-creation";
 
 /*
 // @Incomplete
@@ -443,6 +444,23 @@ const BuildMenu = () => {
       BuildMenu_setBuildingID = (buildingID: number): void => {
          setBuildingID(buildingID);
       }
+
+      BuildMenu_hide = (): void => {
+         setBuildingID(0);
+      }
+
+      BuildMenu_updateBuilding = (building?: number): void => {
+         if (typeof building === "undefined" || !entityExists(building)) {
+            return;
+         }
+
+         const transformComponent = TransformComponentArray.getComponent(building);
+
+         const screenX = Camera.calculateXScreenPos(transformComponent.position.x);
+         const screenY = Camera.calculateYScreenPos(transformComponent.position.y);
+         setX(screenX);
+         setY(screenY);
+      }
    }, []);
 
    useEffect(() => {
@@ -461,30 +479,12 @@ const BuildMenu = () => {
       
       BuildMenu_isOpen = () => entityExists(buildingID);
 
-      BuildMenu_hide = (): void => {
-         setBuildingID(0);
-      }
-
-      BuildMenu_updateBuilding = (building?: number): void => {
-         if (typeof building === "undefined" || !entityExists(building)) {
-            return;
-         }
-
-         const transformComponent = TransformComponentArray.getComponent(building);
-
-         const screenX = Camera.calculateXScreenPos(transformComponent.position.x);
-         const screenY = Camera.calculateYScreenPos(transformComponent.position.y);
-         setX(screenX);
-         setY(screenY);
-      }
-
       BuildMenu_refreshBuildingID = (): void => {
          if (!entityExists(buildingID)) {
             setBuildingID(0);
+         } else {
+            BuildMenu_updateBuilding(buildingID);
          }
-
-         // @Hack
-         forcedUpdate();
       }
    }, [buildingID]);
 
@@ -557,7 +557,7 @@ const BuildMenu = () => {
                   blueprintType = option.blueprintType(building!);
                }
                
-               Client.sendPlaceBlueprint(selectedStructureID, blueprintType);
+               sendPlaceBlueprintPacket(selectedStructureID, blueprintType);
                break;
             }
             case OptionType.modify: {

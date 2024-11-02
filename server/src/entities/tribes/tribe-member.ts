@@ -687,6 +687,10 @@ const blueprintTypeMatchesBuilding = (structure: EntityID, blueprintType: Bluepr
       return blueprintType === BlueprintType.fenceGate;
    }
 
+   if (entityType === EntityType.bracings) {
+      return blueprintType === BlueprintType.stoneBracings;
+   }
+
    return false;
 }
 
@@ -745,7 +749,8 @@ export function placeBlueprint(tribeMember: EntityID, structure: EntityID, bluep
       case BlueprintType.stoneTunnelUpgrade:
       case BlueprintType.stoneFloorSpikes:
       case BlueprintType.stoneWallSpikes:
-      case BlueprintType.stoneWall: {
+      case BlueprintType.stoneWall:
+      case BlueprintType.stoneBracings: {
          const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
          const upgradeMaterialItemType = MATERIAL_TO_ITEM_MAP[(materialComponent.material + 1) as BuildingMaterial];
          

@@ -6,6 +6,8 @@ import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../
 import { renderPartIsTextured, thingIsRenderPart } from "../../render-parts/render-parts";
 import { entityExists, getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
+import { renderEntities } from "./entity-rendering";
+import { cleanEntityRenderInfo } from "../render-part-matrices";
 
 let framebufferProgram: WebGLProgram;
 let renderProgram: WebGLProgram;
@@ -198,7 +200,7 @@ export function createStructureHighlightShaders(): void {
    void main() {
       vec4 framebufferColour = texture(u_framebufferTexure, v_texCoord);
       
-      if (framebufferColour.r > 0.5) {
+      if (framebufferColour.a > 0.0) {
          if (u_isSelected > 0.5) {
             outputColour = vec4(245.0/255.0, 234.0/255.0, 113.0/255.0, 1.0);
          } else {
@@ -213,6 +215,8 @@ export function createStructureHighlightShaders(): void {
          // Transparent
          outputColour = vec4(0.0, 0.0, 0.0, 0.0);
       }
+
+      // outputColour = framebufferColour;
    }
    `;
 
@@ -245,6 +249,7 @@ export function createStructureHighlightShaders(): void {
    
    frameBuffer = gl.createFramebuffer()!;
 
+   // @Garbage
    const framebufferVertices = [
       0, 0,
       1, 0,
@@ -408,12 +413,16 @@ const calculateVertices = (entity: EntityID): ReadonlyArray<number> => {
 // }
 
 export function renderEntitySelection(): void {
-   const highlightedStructureID = getHighlightedEntityID();
-   if (!entityExists(highlightedStructureID)) {
+   const highlightedEntity = getHighlightedEntityID();
+   if (!entityExists(highlightedEntity)) {
       return;
    }
 
-   const highlightedEntityRenderInfo = getEntityRenderInfo(highlightedStructureID);
+   // 
+   // Framebuffer Program
+   // 
+
+   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
    if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
       frameBufferTexture = createTexture(windowWidth, windowHeight);
@@ -421,53 +430,90 @@ export function renderEntitySelection(): void {
       lastTextureWidth = windowWidth;
       lastTextureHeight = windowHeight;
    }
-
-   const vertices = calculateVertices(highlightedStructureID);
-
-   // 
-   // Framebuffer Program
-   // 
-
-   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
    
    // Attach the texture as the first color attachment
    const attachmentPoint = gl.COLOR_ATTACHMENT0;
    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, frameBufferTexture, 0);
-   
-   gl.useProgram(framebufferProgram);
 
    // Reset the previous texture
-   gl.clearColor(0, 0, 0, 1);
+   gl.clearColor(0, 0, 0, 0);
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+   const renderInfo = getEntityRenderInfo(highlightedEntity);
+
+   const startRenderPositionX = renderInfo.renderPosition.x;
+   const startRenderPositionY = renderInfo.renderPosition.y;
+
+   // For the outline, we render normally
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-   
-   const buffer = gl.createBuffer()!;
-   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+   gl.blendFunc(gl.ONE, gl.ONE);
 
-   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
-   gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 6 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(4, 1, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 7 * Float32Array.BYTES_PER_ELEMENT);
+   // Right
+   renderInfo.renderPosition.x += 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
 
-   gl.enableVertexAttribArray(0);
-   gl.enableVertexAttribArray(1);
-   gl.enableVertexAttribArray(2);
-   gl.enableVertexAttribArray(3);
-   gl.enableVertexAttribArray(4);
+   // Left
+   renderInfo.renderPosition.x -= 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
 
-   // Bind texture atlas
-   const textureAtlas = getEntityTextureAtlas();
-   gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, textureAtlas.texture);
+   // Top
+   renderInfo.renderPosition.y += 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
 
-   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 8);
+   // Bottom
+   renderInfo.renderPosition.y -= 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
 
-   gl.disable(gl.BLEND);
-   gl.blendFunc(gl.ONE, gl.ZERO);
+   // Top right
+   renderInfo.renderPosition.x += 4;
+   renderInfo.renderPosition.y += 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
+
+   // Bottom right
+   renderInfo.renderPosition.x += 4;
+   renderInfo.renderPosition.y -= 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
+
+   // Bottom left
+   renderInfo.renderPosition.x -= 4;
+   renderInfo.renderPosition.y -= 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
+
+   // Top left
+   renderInfo.renderPosition.x -= 4;
+   renderInfo.renderPosition.y += 4;
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo]);
+   renderInfo.renderPosition.x = startRenderPositionX;
+   renderInfo.renderPosition.y = startRenderPositionY;
+
+   // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
+   // (dfactor) by 1 minus the middle alpha.
+   gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
+
+   cleanEntityRenderInfo(renderInfo);
+   renderEntities([renderInfo], { overrideAlphaWithOne: true });
 
    // 
    // Render program
@@ -476,9 +522,9 @@ export function renderEntitySelection(): void {
    gl.useProgram(renderProgram);
    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
    
-   gl.enable(gl.BLEND);
    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+   // @Speed
    const buffer2 = gl.createBuffer()!;
    gl.bindBuffer(gl.ARRAY_BUFFER, buffer2);
    gl.bufferData(gl.ARRAY_BUFFER, framebufferVertexData, gl.STATIC_DRAW);
@@ -487,8 +533,8 @@ export function renderEntitySelection(): void {
 
    gl.enableVertexAttribArray(0);
    
-   gl.uniform1f(isSelectedUniformLocation, highlightedStructureID === getSelectedEntityID() ? 1 : 0);
-   gl.uniform2f(originPositionUniformLocation, highlightedEntityRenderInfo.renderPosition.x, highlightedEntityRenderInfo.renderPosition.y);
+   gl.uniform1f(isSelectedUniformLocation, highlightedEntity === getSelectedEntityID() ? 1 : 0);
+   gl.uniform2f(originPositionUniformLocation, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
 
    gl.activeTexture(gl.TEXTURE0);
    gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
@@ -497,4 +543,98 @@ export function renderEntitySelection(): void {
 
    gl.disable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ZERO);
+
+
+
+
+
+
+
+
+
+
+   // const highlightedEntityRenderInfo = getEntityRenderInfo(highlightedEntity);
+
+   // if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
+   //    frameBufferTexture = createTexture(windowWidth, windowHeight);
+
+   //    lastTextureWidth = windowWidth;
+   //    lastTextureHeight = windowHeight;
+   // }
+
+   // const vertices = calculateVertices(highlightedEntity);
+
+   // // 
+   // // Framebuffer Program
+   // // 
+
+   // gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+   
+   // // Attach the texture as the first color attachment
+   // const attachmentPoint = gl.COLOR_ATTACHMENT0;
+   // gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, frameBufferTexture, 0);
+   
+   // gl.useProgram(framebufferProgram);
+
+   // // Reset the previous texture
+   // gl.clearColor(0, 0, 0, 1);
+   // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+   // gl.enable(gl.BLEND);
+   // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   
+   // const buffer = gl.createBuffer()!;
+   // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+   // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+   // gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
+   // gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+   // gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
+   // gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 6 * Float32Array.BYTES_PER_ELEMENT);
+   // gl.vertexAttribPointer(4, 1, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 7 * Float32Array.BYTES_PER_ELEMENT);
+
+   // gl.enableVertexAttribArray(0);
+   // gl.enableVertexAttribArray(1);
+   // gl.enableVertexAttribArray(2);
+   // gl.enableVertexAttribArray(3);
+   // gl.enableVertexAttribArray(4);
+
+   // // Bind texture atlas
+   // const textureAtlas = getEntityTextureAtlas();
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, textureAtlas.texture);
+
+   // gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 8);
+
+   // gl.disable(gl.BLEND);
+   // gl.blendFunc(gl.ONE, gl.ZERO);
+
+   // // 
+   // // Render program
+   // // 
+   
+   // gl.useProgram(renderProgram);
+   // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+   
+   // gl.enable(gl.BLEND);
+   // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+   // const buffer2 = gl.createBuffer()!;
+   // gl.bindBuffer(gl.ARRAY_BUFFER, buffer2);
+   // gl.bufferData(gl.ARRAY_BUFFER, framebufferVertexData, gl.STATIC_DRAW);
+
+   // gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0);
+
+   // gl.enableVertexAttribArray(0);
+   
+   // gl.uniform1f(isSelectedUniformLocation, highlightedEntity === getSelectedEntityID() ? 1 : 0);
+   // gl.uniform2f(originPositionUniformLocation, highlightedEntityRenderInfo.renderPosition.x, highlightedEntityRenderInfo.renderPosition.y);
+
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+
+   // gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+   // gl.disable(gl.BLEND);
+   // gl.blendFunc(gl.ONE, gl.ZERO);
 }

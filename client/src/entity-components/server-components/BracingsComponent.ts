@@ -43,11 +43,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    }
 
    // Horizontal bar connecting the vertical ones
-   const rotation = transformComponentParams.hitboxes[0].box.offset.calculateAngleBetween(transformComponentParams.hitboxes[1].box.offset);
    const horizontalBar = new TexturedRenderPart(
       null,
       1,
-      rotation,
+      0,
       getTextureArrayIndex("entities/bracings/wooden-horizontal-post.png")
    );
    horizontalBar.opacity = 0.5;

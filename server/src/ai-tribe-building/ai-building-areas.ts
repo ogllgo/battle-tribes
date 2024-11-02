@@ -5,6 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import Tribe, { BuildingPlanType, BuildingUpgradePlan, VirtualBuilding } from "../Tribe";
 import { SafetyNode, getSafetyNode, placeVirtualBuilding } from "./ai-building";
 import { LayerType } from "../world";
+import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
 
 export const enum TribeDoorType {
    outside,
@@ -183,7 +184,8 @@ export function getOutsideDoorPlacePlan(tribe: Tribe, area: TribeArea): Building
       // @Incomplete: Make sure the door's restricted areas wouldn't be occupied if it were placed
    
       const virtualBuildingID = tribe.virtualEntityIDCounter++;
-      const virtualBuilding = placeVirtualBuilding(tribe, wallInfo.wall.position, doorRotation, EntityType.door, virtualBuildingID);
+      const hitboxes = createNormalStructureHitboxes(EntityType.door);
+      const virtualBuilding = placeVirtualBuilding(tribe, wallInfo.wall.position, doorRotation, EntityType.door, hitboxes, virtualBuildingID);
    
       let isValidPosition = true;
       for (const node of virtualBuilding.occupiedNodes) {

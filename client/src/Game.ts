@@ -53,7 +53,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { updateEntityRenderInfo, updateRenderInfosFromTransformComponents, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { updateRenderInfoRenderPosition, updateRenderInfosFromTransformComponents, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { processGameDataPacket } from "./networking/packet-processing";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
@@ -469,7 +469,7 @@ abstract class Game {
       if (playerInstance !== null) {
          const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerRenderInfo = getEntityRenderInfo(playerInstance);
-         updateEntityRenderInfo(playerTransformComponent, playerRenderInfo, frameProgress);
+         updateRenderInfoRenderPosition(playerTransformComponent, playerRenderInfo, frameProgress);
 
          Camera.updatePosition();
          Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));

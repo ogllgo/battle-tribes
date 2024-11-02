@@ -9,6 +9,7 @@ import { InventoryUseComponentArray, onBlockBoxCollisionWithDamageBox, onBlockBo
 import { Settings } from "battletribes-shared/settings";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { getEntityLayer } from "../world";
+import { ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 
 interface DamageBoxCollisionInfo {
    readonly collidingEntity: EntityID;
@@ -102,8 +103,15 @@ function onTick(entity: EntityID): void {
          // throw new Error();
       }
 
-      // Look for entities to damage
       const collidingEntities = getBoxesCollidingEntities(layer.getWorldInfo(), [damageBox]);
+
+      // If attacking with a hammer, check for blueprints to work on
+      const item = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
+      if (typeof item !== "undefined" && ITEM_TYPE_RECORD[item.type] === "hammer") {
+         
+      }
+
+      // Look for entities to damage
       for (let j = 0; j < collidingEntities.length; j++) {
          const collidingEntity = collidingEntities[j];
          if (collidingEntity !== entity) {

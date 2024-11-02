@@ -6,6 +6,7 @@ import { renderChunkedEntities, renderLayerIsChunkRendered } from "./webgl/chunk
 import { getEntityRenderInfo, layers } from "../world";
 import Layer from "../Layer";
 import { EntityID } from "../../../shared/src/entities";
+import { gl } from "../webgl";
 
 export const enum RenderableType {
    entity,
@@ -107,9 +108,15 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
             // @Bug: this always renders the whole render layer...
             renderChunkedEntities(renderLayer);
          } else {
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
             // @Speed @Hack: surely we could just only push the render info to the array in the case of entities...?
             const renderInfos = (renderables as Array<EntityID>).map(entity => getEntityRenderInfo(entity));
             renderEntities(renderInfos);
+
+            gl.disable(gl.BLEND);
+            gl.blendFunc(gl.ONE, gl.ZERO);
          }
          break;
       }

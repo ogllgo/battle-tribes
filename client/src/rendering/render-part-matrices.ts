@@ -137,7 +137,7 @@ export function removeEntityFromDirtyArray(renderInfo: EntityRenderInfo): void {
    }
 }
 
-export function updateEntityRenderInfo(transformComponent: TransformComponent, renderInfo: EntityRenderInfo, frameProgress: number): void {
+export function updateRenderInfoRenderPosition(transformComponent: TransformComponent, renderInfo: EntityRenderInfo, frameProgress: number): void {
    renderInfo.rotation = transformComponent.rotation;
    
    const renderPosition = renderInfo.renderPosition;
@@ -166,7 +166,7 @@ export function updateRenderInfosFromTransformComponents(frameProgress: number):
 
       const renderInfo = getEntityRenderInfo(entity);
 
-      updateEntityRenderInfo(transformComponent, renderInfo, frameProgress);
+      updateRenderInfoRenderPosition(transformComponent, renderInfo, frameProgress);
    }
 }
 
@@ -228,43 +228,46 @@ export function renderParentIsHitbox(parent: RenderParent): parent is Hitbox {
    return parent !== null && typeof (parent as Hitbox).mass !== "undefined";
 }
 
+export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo): void {
+   const numRenderThings = renderInfo.allRenderThings.length;
+   
+   calculateAndOverrideEntityModelMatrix(renderInfo);
+
+   const entityRenderPosition = renderInfo.renderPosition;
+   
+   for (let j = 0; j < numRenderThings; j++) {
+      const thing = renderInfo.allRenderThings[j];
+
+      // Model matrix for the render part
+      calculateAndOverrideRenderThingMatrix(thing);
+
+      if (thing.inheritParentRotation) {
+         let parentModelMatrix: Matrix3x3;
+         if (renderParentIsHitbox(thing.parent)) {
+            // @Speed?
+            parentModelMatrix = calculateHitboxMatrix(renderInfo.modelMatrix, thing.parent);
+         } else {
+            parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
+         }
+         matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
+      } else {
+         translateMatrix(thing.modelMatrix, entityRenderPosition.x, entityRenderPosition.y);
+      }
+   }
+
+   if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
+      updateChunkRenderedEntity(renderInfo, renderInfo.renderLayer);
+   }
+
+   renderInfo.isDirty = false;
+}
+
 export function updateRenderPartMatrices(): void {
    // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
    // To fix: temporarily set Settings.TPS to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      
-      const numRenderThings = renderInfo.allRenderThings.length;
-      
-      calculateAndOverrideEntityModelMatrix(renderInfo);
-
-      const entityRenderPosition = renderInfo.renderPosition;
-      
-      for (let j = 0; j < numRenderThings; j++) {
-         const thing = renderInfo.allRenderThings[j];
-
-         // Model matrix for the render part
-         calculateAndOverrideRenderThingMatrix(thing);
-
-         if (thing.inheritParentRotation) {
-            let parentModelMatrix: Matrix3x3;
-            if (renderParentIsHitbox(thing.parent)) {
-               // @Speed?
-               parentModelMatrix = calculateHitboxMatrix(renderInfo.modelMatrix, thing.parent);
-            } else {
-               parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
-            }
-            matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
-         } else {
-            translateMatrix(thing.modelMatrix, entityRenderPosition.x, entityRenderPosition.y);
-         }
-      }
-
-      if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
-         updateChunkRenderedEntity(renderInfo, renderInfo.renderLayer);
-      }
-
-      renderInfo.isDirty = false;
+      cleanEntityRenderInfo(renderInfo);
    }
 
    // Reset dirty entities

@@ -14,6 +14,10 @@ export const enum EntityRenderingVars {
    ATTRIBUTES_PER_VERTEX = Vars.ATTRIBUTES_PER_VERTEX
 }
 
+export interface EntityRenderingOptions {
+   readonly overrideAlphaWithOne?: boolean;
+}
+
 let program: WebGLProgram;
 let vao: WebGLVertexArrayObject;
 
@@ -22,6 +26,8 @@ let indicesData: Uint16Array;
 
 let vertexBuffer: WebGLBuffer;
 let vertexData: Float32Array;
+
+let overrideAlphaWithOneUniformLocation: WebGLUniformLocation;
 
 export function getEntityRenderingProgram(): WebGLProgram {
    return program;
@@ -91,6 +97,8 @@ export function createEntityShaders(): void {
    uniform sampler2D u_textureAtlas;
    ${ENTITY_TEXTURE_ATLAS_UBO}
    
+   uniform float u_overrideAlphaWithOne;
+   
    in vec2 v_texCoord;
    in float v_textureArrayIndex;
    in vec3 v_tint;
@@ -143,7 +151,11 @@ export function createEntityShaders(): void {
          }
       }
    
-      outputColour.a *= v_opacity;
+      if (u_overrideAlphaWithOne > 0.5) {
+         outputColour.a = 1.0;
+      } else {
+         outputColour.a *= v_opacity;
+      }
    }
    `;
 
@@ -200,6 +212,8 @@ export function createEntityShaders(): void {
    gl.enableVertexAttribArray(6);
    gl.enableVertexAttribArray(7);
 
+   overrideAlphaWithOneUniformLocation = gl.getUniformLocation(program, "u_overrideAlphaWithOne")!;
+
    gl.bindVertexArray(null);
 }
 
@@ -207,7 +221,7 @@ export function calculateRenderPartDepth(renderPart: RenderPart, renderInfo: Ent
    return renderInfo.renderHeight + renderPart.zIndex * 0.0001;
 }
 
-export function setEntityInVertexData(renderInfo: EntityRenderInfo, vertexData: Float32Array, indicesData: Uint16Array | null, renderPartIdx: number): number {
+export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexData: Float32Array, indicesData: Uint16Array | null, renderPartIdx: number): number {
    const baseTintR = renderInfo.tintR;
    const baseTintG = renderInfo.tintG;
    const baseTintB = renderInfo.tintB;
@@ -411,13 +425,15 @@ export function clearEntityInVertexData(renderInfo: EntityRenderInfo, vertexData
    }
 }
 
-export function renderEntities(renderInfos: ReadonlyArray<EntityRenderInfo>): void {
+/** NOTE: Callers must control the blending. */
+export function renderEntities(renderInfos: ReadonlyArray<EntityRenderInfo>, options?: EntityRenderingOptions): void {
    const textureAtlas = getEntityTextureAtlas();
 
    // Set data
    let renderPartIdx = 0;
    for (const renderInfo of renderInfos) {
-      renderPartIdx = setEntityInVertexData(renderInfo, vertexData, null, renderPartIdx);
+      // @Incomplete: Why don't we use an index buffer here?
+      renderPartIdx = setRenderInfoInVertexData(renderInfo, vertexData, null, renderPartIdx);
    }
 
    // renderPartIdx is now the idx of the final render part we want to render + 1. A.k.a the number of render parts we're rendering
@@ -431,9 +447,8 @@ export function renderEntities(renderInfos: ReadonlyArray<EntityRenderInfo>): vo
    gl.useProgram(program);
    gl.bindVertexArray(vao);
 
-   gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+   gl.uniform1f(overrideAlphaWithOneUniformLocation, options?.overrideAlphaWithOne ? 1 : 0);
+   
    // Bind texture atlas
    gl.activeTexture(gl.TEXTURE0);
    gl.bindTexture(gl.TEXTURE_2D, textureAtlas.texture);
@@ -443,9 +458,6 @@ export function renderEntities(renderInfos: ReadonlyArray<EntityRenderInfo>): vo
    gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertexData, 0, length);
 
    gl.drawElements(gl.TRIANGLES, numRenderParts * 6, gl.UNSIGNED_SHORT, 0);
-
-   gl.disable(gl.BLEND);
-   gl.blendFunc(gl.ONE, gl.ZERO);
 
    gl.bindVertexArray(null);
 }

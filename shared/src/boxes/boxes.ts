@@ -148,3 +148,7 @@ export function boxIsWithinRange(box: Box, position: Point, range: number): bool
       return circleAndRectangleDoIntersect(position, range, box.position, box.width * box.scale, box.height * box.scale, box.rotation);
    }
 }
+
+export function cloneHitbox(hitbox: Hitbox): Hitbox {
+   return createHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
+}

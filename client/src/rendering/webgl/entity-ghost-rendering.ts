@@ -3,6 +3,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StructureType } from "battletribes-shared/structures";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { renderEntities } from "./entity-rendering";
+import { gl } from "../../webgl";
 
 // @Cleanup @Robustness: a lot of these are just mirrors of entity textures. Is there some way to utilise the existing render part definitions?
 export enum GhostType {
@@ -154,5 +155,11 @@ export function renderGhostEntities(): void {
    //    }
    // }
 
+   gl.enable(gl.BLEND);
+   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
    renderEntities(renderInfos);
+
+   gl.disable(gl.BLEND);
+   gl.blendFunc(gl.ONE, gl.ZERO);
 }

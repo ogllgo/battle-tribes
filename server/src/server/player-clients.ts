@@ -240,30 +240,6 @@ const processStudyPacket = (playerClient: PlayerClient, studyAmount: number): vo
    }
 }
 
-// @Cleanup: name, and there is already a shared definition
-const snapRotationToPlayer = (player: EntityID, placePosition: Point, rotation: number): number => {
-   const transformComponent = TransformComponentArray.getComponent(player);
-   const playerDirection = transformComponent.position.calculateAngleBetween(placePosition);
-   let snapRotation = playerDirection - rotation;
-
-   // Snap to nearest PI/2 interval
-   snapRotation = Math.round(snapRotation / Math.PI*2) * Math.PI/2;
-
-   snapRotation += rotation;
-   return snapRotation;
-}
-
-const processPlaceBlueprintPacket = (playerClient: PlayerClient, structure: EntityID, buildingType: BlueprintType): void => {
-   if (!entityExists(playerClient.instance) || !entityExists(structure)) {
-      return;
-   }
-
-   // @Cleanup: should not do this logic here.
-   const structureTransformComponent = TransformComponentArray.getComponent(structure);
-   const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.rotation);
-   placeBlueprint(playerClient.instance, structure, buildingType, rotation);
-}
-
 const processModifyBuildingPacket = (playerClient: PlayerClient, structure: EntityID, data: number): void => {
    if (!entityExists(playerClient.instance)) {
       return;
@@ -448,11 +424,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: EntityID, la
       processPlayerCraftingPacket(playerClient, recipeIndex);
    });
 
-   // @Incomplete
-   // socket.on("held_item_drop", (dropAmount: number, throwDirection: number) => {
-   //    processItemDropPacket(playerClient, InventoryName.heldItemSlot, 1, dropAmount, throwDirection);
-   // });
-
    socket.on("command", (command: string) => {
       processCommandPacket(playerClient, command);
    });
@@ -476,10 +447,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: EntityID, la
 
    socket.on("study_tech", (studyAmount: number): void => {
       processStudyPacket(playerClient, studyAmount);
-   });
-
-   socket.on("place_blueprint", (structureID: number, buildingType: BlueprintType): void => {
-      processPlaceBlueprintPacket(playerClient, structureID, buildingType);
    });
 
    socket.on("modify_building", (structureID: number, data: number): void => {

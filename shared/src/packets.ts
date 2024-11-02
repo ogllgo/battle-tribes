@@ -20,6 +20,7 @@ export const enum PacketType {
    itemRelease,
    summonEntity,
    toggleSimulation,
+   placeBlueprint,
    devGiveItem, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT

@@ -302,6 +302,16 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
          rotation: 0,
          zIndex: 0
       },
+   ],
+   [BlueprintType.stoneBracings]: [
+      {
+         progressTextureSources: ["entities/bracings/stone-vertical-post.png"],
+         completedTextureSource: "entities/bracings/stone-vertical-post.png",
+         offsetX: 0,
+         offsetY: 28,
+         rotation: 0,
+         zIndex: 0
+      }
    ]
 };
 
@@ -546,7 +556,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          case BlueprintType.stoneTunnelUpgrade:
          case BlueprintType.stoneWallSpikes:
          case BlueprintType.stoneWall:
-         case BlueprintType.stoneDoor: {
+         case BlueprintType.stoneDoor:
+         case BlueprintType.stoneBracings: {
             createStoneBlueprintWorkParticleEffects(particleOriginX, particleOriginY);
             break;
          }
@@ -593,7 +604,8 @@ function onDie(entity: EntityID): void {
       case BlueprintType.stoneTunnelUpgrade:
       case BlueprintType.stoneWallSpikes:
       case BlueprintType.stoneWall:
-      case BlueprintType.stoneDoor: {
+      case BlueprintType.stoneDoor:
+      case BlueprintType.stoneBracings: {
          for (let i = 0; i < 5; i++) {
             const offsetDirection = 2 * Math.PI * Math.random();
             const offsetAmount = 32 * Math.random();

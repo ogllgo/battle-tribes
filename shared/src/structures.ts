@@ -494,12 +494,14 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: Structure
    const y = (closestTileCornerY + secondClosestTileCornerY) * 0.5;
    const position = new Point(x, y);
    
-   const hitboxes = createBracingHitboxes(closestTileCornerX - position.x, closestTileCornerY - position.y, secondClosestTileCornerX - position.x, secondClosestTileCornerY - position.y);
+   const hitboxes = createBracingHitboxes();
+
+   // 0 rotation - vertical, 90 deg rotation - horizontal
+   const rotation = closestTileCornerSubtileY === secondClosestTileCornerSubtileY ? Math.PI / 2 : 0;
    
    return {
       position: position,
-      // Bracings always have 0 rotation
-      rotation: 0,
+      rotation: rotation,
       connectedSidesBitset: 0,
       connectedEntityIDs: [0, 0, 0, 0],
       entityType: entityType,

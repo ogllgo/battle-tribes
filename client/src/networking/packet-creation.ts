@@ -1,6 +1,6 @@
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { getSelectedEntityID } from "../entity-selection";
-import { EntityType } from "battletribes-shared/entities";
+import { EntityID, EntityType } from "battletribes-shared/entities";
 import { GameDataPacketOptions } from "battletribes-shared/client-server-types";
 import OPTIONS from "../options";
 import { windowHeight, windowWidth } from "../webgl";
@@ -10,6 +10,7 @@ import { getHotbarSelectedItemSlot, getInstancePlayerAction } from "../component
 import { entityExists, getEntityType, playerInstance } from "../world";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
+import { BlueprintType } from "../../../shared/src/components";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -187,6 +188,15 @@ export function sendToggleSimulationPacket(isSimulating: boolean): void {
 
    packet.addBoolean(isSimulating);
    packet.padOffset(3);
+
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendPlaceBlueprintPacket(structure: EntityID, blueprintType: BlueprintType): void {
+   const packet = new Packet(PacketType.placeBlueprint, 3 * Float32Array.BYTES_PER_ELEMENT);
+
+   packet.addNumber(structure);
+   packet.addNumber(blueprintType);
 
    Client.sendPacket(packet.buffer);
 }

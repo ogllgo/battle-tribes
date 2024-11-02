@@ -3,13 +3,14 @@ import { BlueprintType, ServerComponentType } from "battletribes-shared/componen
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { StructureType } from "battletribes-shared/structures";
 import { EntityConfig } from "../components";
-import { TransformComponent } from "../components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { BlueprintComponent } from "../components/BlueprintComponent";
 import Tribe from "../Tribe";
 import { TribeComponent } from "../components/TribeComponent";
 import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { cloneHitbox, Hitbox } from "../../../shared/src/boxes/boxes";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -45,8 +46,19 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
    transformComponent.collisionBit = COLLISION_BITS.none;
    transformComponent.collisionMask = 0;
 
-   const entityType = getBlueprintEntityType(blueprintType);
-   const hitboxes = createNormalStructureHitboxes(entityType);
+   let hitboxes: Array<Hitbox>;
+   if (associatedEntityID !== 0) {
+      const structureTransformComponent = TransformComponentArray.getComponent(associatedEntityID);
+
+      hitboxes = [];
+      for (const hitbox of structureTransformComponent.hitboxes) {
+         hitboxes.push(cloneHitbox(hitbox));
+      }
+   } else {
+      const entityType = getBlueprintEntityType(blueprintType);
+      hitboxes = createNormalStructureHitboxes(entityType);
+   }
+
    transformComponent.addHitboxes(hitboxes, null);
    
    const healthComponent = new HealthComponent(5);
