@@ -5,7 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import { EntityID } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createPlantConfig } from "../entities/plant";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, entityExists, getEntityLayer } from "../world";
 
@@ -77,7 +77,7 @@ export function placePlantInPlanterBox(planterBox: EntityID, plantType: PlanterB
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   const plant = createEntityFromConfig(config, getEntityLayer(planterBox), 0);
+   const plant = createEntity(config, getEntityLayer(planterBox), 0);
 
    planterBoxComponent.plantEntity = plant;
    planterBoxComponent.replantType = plantType;

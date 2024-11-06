@@ -425,7 +425,7 @@ const updatePartialTexture = (entity: EntityID): void => {
          renderPart.offset.y = progressTextureInfo.offsetY;
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(renderPart);
+         renderInfo.attachRenderPart(renderPart);
          blueprintComponent.partialRenderParts.push(renderPart);
       } else {
          // Existing render part
@@ -464,7 +464,7 @@ function onLoad(entity: EntityID): void {
       renderPart.tintR = 0.2;
       renderPart.tintG = 0.1;
       renderPart.tintB = 0.8;
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 }
 

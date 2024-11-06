@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import RenderPart from "../../render-parts/RenderPart";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, BALLISTA_GEAR_X, BALLISTA_GEAR_Y } from "../../utils";
@@ -9,6 +8,7 @@ import { EntityID } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { randItem } from "../../../../shared/src/utils";
 import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS } from "../../sound";
+import { RenderPart } from "../../render-parts/render-parts";
 
 export interface BallistaComponentParams {}
 
@@ -32,7 +32,7 @@ function createParamsFromData(): BallistaComponentParams {
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    // Base
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,
@@ -50,7 +50,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    );
    ammoBoxRenderPart.offset.x = BALLISTA_AMMO_BOX_OFFSET_X;
    ammoBoxRenderPart.offset.y = BALLISTA_AMMO_BOX_OFFSET_Y;
-   renderInfo.attachRenderThing(ammoBoxRenderPart);
+   renderInfo.attachRenderPart(ammoBoxRenderPart);
 
    // Plate
    const plateRenderPart = new TexturedRenderPart(
@@ -60,7 +60,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/ballista/plate.png")
    );
    plateRenderPart.addTag("turretComponent:pivoting");
-   renderInfo.attachRenderThing(plateRenderPart);
+   renderInfo.attachRenderPart(plateRenderPart);
 
    // Shaft
    const shaftRenderPart = new TexturedRenderPart(
@@ -69,7 +69,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       0,
       getTextureArrayIndex("entities/ballista/shaft.png")
    );
-   renderInfo.attachRenderThing(shaftRenderPart);
+   renderInfo.attachRenderPart(shaftRenderPart);
 
    // Gears
    const gearRenderParts = new Array<RenderPart>();
@@ -84,7 +84,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       // @Speed: Garbage collection
       renderPart.offset.x = i === 0 ? BALLISTA_GEAR_X : -BALLISTA_GEAR_X;
       renderPart.offset.y = BALLISTA_GEAR_Y;
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       gearRenderParts.push(renderPart);
    }
 
@@ -96,7 +96,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/ballista/crossbow-1.png")
    );
    crossbowRenderPart.addTag("turretComponent:aiming");
-   renderInfo.attachRenderThing(crossbowRenderPart);
+   renderInfo.attachRenderPart(crossbowRenderPart);
    
    return {};
 }

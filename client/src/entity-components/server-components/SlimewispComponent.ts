@@ -44,7 +44,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex(`entities/slimewisp/slimewisp.png`)
    );
    renderPart.opacity = 0.8;
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

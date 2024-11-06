@@ -50,7 +50,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0,
       textureArrayIndex
    );
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

@@ -15,7 +15,6 @@ import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { calculateRadialAttackTargets, wasTribeMemberKill } from "../entities/tribes/tribe-member";
-import { entityIsStructure } from "../Entity";
 import { InventoryComponentArray, getInventory, pickupItemEntity } from "./InventoryComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
@@ -25,6 +24,7 @@ import { destroyEntity, entityExists, getEntityType, getGameTicks, isNight } fro
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { TombstoneComponentArray } from "./TombstoneComponent";
+import { entityIsStructure } from "../../../shared/src/structures";
 
 const enum Vars {
    TURN_SPEED = 3 * UtilVars.PI,
@@ -108,7 +108,8 @@ export function zombieShouldAttackEntity(zombie: EntityID, entity: EntityID): bo
       return true;
    }
 
-   return entityIsStructure(entity);
+   const entityType = getEntityType(entity)!;
+   return entityIsStructure(entityType);
 }
 
 const getTarget = (zombie: EntityID, aiHelperComponent: AIHelperComponent): EntityID | null => {

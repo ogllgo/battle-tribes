@@ -20,7 +20,7 @@ export function createThrownBattleaxeComponentParams(): ThrownBattleaxeComponent
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

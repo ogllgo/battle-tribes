@@ -7,7 +7,7 @@ import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../comp
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemFragmentProjectileConfig } from "../entities/projectiles/guardian-gem-fragment-projectile";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
 
 const enum Vars {
@@ -41,7 +41,7 @@ const createFragmentProjectile = (guardian: EntityID): void => {
    config.components[ServerComponentType.physics].externalVelocity.x = vx;
    config.components[ServerComponentType.physics].externalVelocity.y = vy;
    config.components[ServerComponentType.physics].angularVelocity = randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign();
-   createEntityFromConfig(config, getEntityLayer(guardian), 0);
+   createEntity(config, getEntityLayer(guardian), 0);
 }
 
 export default class GuardianCrystalBurstAI {

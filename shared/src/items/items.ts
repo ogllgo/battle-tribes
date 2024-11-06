@@ -1,4 +1,4 @@
-import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, DEFAULT_ATTACK_PATTERN, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERN, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERN, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO } from "../attack-patterns";
+import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, DEFAULT_ATTACK_PATTERN, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, HAMMER_ATTACK_TIMINGS, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERN, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERN, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO } from "../attack-patterns";
 import { EntityType } from "../entities";
 import { Settings } from "../settings";
 import { StructureType } from "../structures";
@@ -349,7 +349,7 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, AttackInfo>
    },
    battleaxe: {
       attackPattern: DEFAULT_ATTACK_PATTERN,
-      attackTimings: SWORD_ATTACK_TIMINGS,
+      attackTimings: HAMMER_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: SWORD_ITEM_DAMAGE_BOX_INFO
    },
    crossbow: {
@@ -669,7 +669,8 @@ export const ITEM_INFO_RECORD = {
       // @Incomplete
       // attackCooldown: 0.5,
       level: 3,
-      wallDamage: 3
+      // @Temporary
+      wallDamage: 12
    },
    [ItemType.deepfrost_axe]: {
       stackSize: 1,

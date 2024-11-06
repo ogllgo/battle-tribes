@@ -10,7 +10,7 @@ import Board from "./Board";
 import { getItemRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, ITEM_INFO_RECORD, ConsumableItemInfo } from "battletribes-shared/items/items";
 import TexturedRenderPart from "./render-parts/TexturedRenderPart";
-import { RenderPart } from "./render-parts/render-parts";
+import { VisualRenderPart } from "./render-parts/render-parts";
 import { TribesmanAIComponentArray } from "./entity-components/server-components/TribesmanAIComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityAgeTicks, getEntityRenderInfo } from "./world";
@@ -101,13 +101,13 @@ const createBandageRenderPart = (entity: EntityID): void => {
    renderPart.offset.y = offsetMagnitude * Math.cos(offsetDirection);
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    inventoryUseComponent.bandageRenderParts.push(renderPart);
 }
 
-export function updateBandageRenderPart(entity: EntityID, renderPart: RenderPart): void {
+export function updateBandageRenderPart(entity: EntityID, renderPart: VisualRenderPart): void {
    const renderPartAge = renderPart.getAge();
    
    if (renderPartAge >= BANDAGE_LIFETIME_TICKS) {
@@ -220,7 +220,7 @@ export function updateCustomItemRenderPart(entity: EntityID): void {
          inventoryUseComponent.customItemRenderPart.offset.y = 38;
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(inventoryUseComponent.customItemRenderPart);
+         renderInfo.attachRenderPart(inventoryUseComponent.customItemRenderPart);
       }
       
       inventoryUseComponent.customItemRenderPart.opacity = getCustomItemRenderPartOpacity(entity, customItemState);
@@ -233,7 +233,7 @@ export function updateCustomItemRenderPart(entity: EntityID): void {
    }
 }
 
-export function animateLimb(limb: RenderPart, limbIdx: number, limbInfo: LimbInfo): void {
+export function animateLimb(limb: VisualRenderPart, limbIdx: number, limbInfo: LimbInfo): void {
    if (limbInfo.animationTicksElapsed === limbInfo.animationDurationTicks) {
       // New animation
 

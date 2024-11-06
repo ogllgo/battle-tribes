@@ -3,9 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
-import Client from "../../../networking/Client";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import Game from "../../../Game";
 import { sendToggleSimulationPacket } from "../../../networking/packet-creation";
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
@@ -51,6 +49,7 @@ const GameInfoDisplay = () => {
    const [showWallConnections, setShowWallConnections] = useState(OPTIONS.showWallConnections);
    const [maxGreenSafety, setMaxGreenSafety] = useState(OPTIONS.maxGreenSafety);
    const [debugLights, setDebugLights] = useState(OPTIONS.debugLights);
+   const [showSubtileSupport, setShowSubtileSupport] = useState(OPTIONS.showSubtileSupports);
    
    useEffect(() => {
       if (typeof Board.time !== "undefined") {
@@ -126,6 +125,11 @@ const GameInfoDisplay = () => {
       OPTIONS.debugLights = !debugLights;
       setDebugLights(!debugLights);
    }, [debugLights]);
+
+   const toggleShowSubtileSupport = useCallback(() => {
+      OPTIONS.showSubtileSupports = !showSubtileSupport;
+      setShowSubtileSupport(!showSubtileSupport);
+   }, [showSubtileSupport]);
 
    const toggleAIBuilding = useCallback(() => {
       const toggleResult = !showSafetyNodes || !showBuildingSafetys || !showBuildingPlans || !showRestrictedAreas || !showWallConnections;
@@ -219,6 +223,12 @@ const GameInfoDisplay = () => {
             <label className={debugLights ? "enabled" : undefined}>
                <input checked={debugLights} name="debug-lights-checkbox" type="checkbox" onChange={toggleDebugLights} />
                Debug lights
+            </label>
+         </li>
+         <li>
+            <label className={showSubtileSupport ? "enabled" : undefined}>
+               <input checked={showSubtileSupport} name="show-subtile-support-checkbox" type="checkbox" onChange={toggleShowSubtileSupport} />
+               Subtile support
             </label>
          </li>
       </ul>

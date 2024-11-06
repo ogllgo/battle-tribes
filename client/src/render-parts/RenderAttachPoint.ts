@@ -1,5 +1,5 @@
-import { BaseRenderThing } from "./RenderPart";
+import BaseRenderPart from "./BaseRenderPart";
 
-class RenderAttachPoint extends BaseRenderThing {}
+class RenderAttachPoint extends BaseRenderPart {}
 
 export default RenderAttachPoint;

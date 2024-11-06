@@ -48,7 +48,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -86,7 +86,7 @@ const updateDamageRenderPart = (entity: EntityID, health: number, maxHealth: num
          getTextureArrayIndex(textureSource)
       );
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.attachRenderThing(wallComponent.damageRenderPart);
+      renderInfo.attachRenderPart(wallComponent.damageRenderPart);
    } else {
       wallComponent.damageRenderPart.switchTextureSource(textureSource);
    }

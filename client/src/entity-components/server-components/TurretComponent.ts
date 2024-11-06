@@ -4,7 +4,7 @@ import { lerp } from "battletribes-shared/utils";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ItemType } from "battletribes-shared/items/items";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
@@ -28,8 +28,8 @@ export interface TurretComponent {
    /** The render part which changes texture as the turret charges */
    readonly aimingRenderPart: TexturedRenderPart;
    /** The render part which pivots as the turret aims */
-   readonly pivotingRenderPart: RenderPart;
-   readonly gearRenderParts: ReadonlyArray<RenderPart>;
+   readonly pivotingRenderPart: VisualRenderPart;
+   readonly gearRenderParts: ReadonlyArray<VisualRenderPart>;
    projectileRenderPart: TexturedRenderPart | null;
 }
 
@@ -158,8 +158,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.turret, 
    return {
       chargeProgress: entityConfig.serverComponents[ServerComponentType.turret].chargeProgress,
       aimingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
-      pivotingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:pivoting") as RenderPart,
-      gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<RenderPart>,
+      pivotingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
+      gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
       projectileRenderPart:  null
    };
 }
@@ -215,7 +215,7 @@ const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: En
          }
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(turretComponent.projectileRenderPart);
+         renderInfo.attachRenderPart(turretComponent.projectileRenderPart);
       } else {
          turretComponent.projectileRenderPart.switchTextureSource(textureSource);
       }

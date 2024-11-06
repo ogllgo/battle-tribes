@@ -4,9 +4,9 @@ import { Point, randItem } from "battletribes-shared/utils";
 import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { Light, addLight, attachLightToRenderPart } from "../../lights";
+import { Light, attachLightToRenderPart, createLight } from "../../lights";
 import { playSound, ROCK_HIT_SOUNDS } from "../../sound";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -31,8 +31,8 @@ export interface GolemComponentParams {
 export interface GolemComponent {
    wakeProgress: number;
    
-   rockRenderParts: Array<RenderPart>;
-   readonly eyeRenderParts: Array<RenderPart>;
+   rockRenderParts: Array<VisualRenderPart>;
+   readonly eyeRenderParts: Array<VisualRenderPart>;
    readonly eyeLights: Array<Light>;
 }
 
@@ -113,8 +113,8 @@ function createParamsFromData(reader: PacketReader): GolemComponentParams {
 function createComponent(entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.golem, never>): GolemComponent {
    const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    
-   const rockRenderParts = new Array<RenderPart>();
-   const eyeRenderParts = new Array<RenderPart>();
+   const rockRenderParts = new Array<VisualRenderPart>();
+   const eyeRenderParts = new Array<VisualRenderPart>();
    const eyeLights = new Array<Light>();
    
    // Add new rocks
@@ -132,7 +132,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       );
       renderPart.offset.x = box.offset.x;
       renderPart.offset.y = box.offset.y;
-      entityConfig.renderInfo.attachRenderThing(renderPart);
+      entityConfig.renderInfo.attachRenderPart(renderPart);
       rockRenderParts.push(renderPart);
 
       if (size === GolemRockSize.large) {
@@ -147,22 +147,21 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
             eyeRenderPart.offset.x = 20 * (i === 0 ? -1 : 1);
             eyeRenderPart.offset.y = 17;
             eyeRenderPart.inheritParentRotation = false;
-            entityConfig.renderInfo.attachRenderThing(eyeRenderPart);
+            entityConfig.renderInfo.attachRenderPart(eyeRenderPart);
             eyeRenderParts.push(eyeRenderPart);
 
             // Create eye light
-            const light: Light = {
-               offset: new Point(0, 0),
-               intensity: 0,
-               strength: 0.5,
-               radius: 0.15,
-               r: 0.75,
-               g: 0,
-               b: 0
-            };
+            const light = createLight(
+               new Point(0, 0),
+               0,
+               0.5,
+               0.15,
+               0.75,
+               0,
+               0
+            );
             eyeLights.push(light);
-            const lightID = addLight(light);
-            attachLightToRenderPart(lightID, eyeRenderPart.id);
+            attachLightToRenderPart(light, eyeRenderPart, entityConfig.entity, entityConfig.layer);
          }
       }
    }

@@ -23,7 +23,7 @@ import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { updateHealthBar } from "../components/game/HealthBar";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
 import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance, registerBasicEntityInfo, removeEntity, setCurrentLayer, setPlayerInstance, getEntityAgeTicks, EntityPreCreationInfo } from "../world";
-import { NEIGHBOUR_OFFSETS } from "../utils";
+import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, tileIsWithinEdge } from "../Layer";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
@@ -32,6 +32,8 @@ import { initialiseRenderables } from "../rendering/render-loop";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
+import { setVisibleSubtileSupports, SubtileSupportInfo } from "../rendering/webgl/subtile-support-rendering";
+import { createResearchNumber } from "../text-canvas";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -682,18 +684,13 @@ export function processGameDataPacket(reader: PacketReader): void {
       visibleEntityDeathIDs.push(id);
    }
 
-   const orbCompletes = new Array<ResearchOrbCompleteData>();
+   // Research orb completes
    const numOrbs = reader.readNumber();
    for (let i = 0; i < numOrbs; i++) {
       const x = reader.readNumber();
       const y = reader.readNumber();
       const amount = reader.readNumber();
-
-      orbCompletes.push({
-         x: x,
-         y: y,
-         amount: amount
-      });
+      createResearchNumber(x, y, amount);
    }
 
    const tileUpdates = new Array<ServerTileUpdateData>();
@@ -731,9 +728,11 @@ export function processGameDataPacket(reader: PacketReader): void {
    const hasDebugData = reader.readBoolean();
    reader.padOffset(3);
    
-   let debugData: EntityDebugData | undefined;
-   if (hasDebugData) {
-      debugData = readDebugData(reader);
+   if (hasDebugData && isDev()) {
+      const debugData = readDebugData(reader);
+      Game.setGameObjectDebugData(debugData);
+   } else {
+      Game.setGameObjectDebugData(null);
    }
 
    // @Incomplete
@@ -799,15 +798,33 @@ export function processGameDataPacket(reader: PacketReader): void {
       const ageTicks = reader.readNumber();
       tickCollapse(collapsingSubtileIndex, ageTicks);
    }
+
+   // Subtile supports
+   const showSubtileSupports = reader.readBoolean();
+   reader.padOffset(3);
+   if (showSubtileSupports) {
+      const subtileSupports = new Array<SubtileSupportInfo>();
+      
+      const numSubtiles = reader.readNumber();
+      for (let i = 0; i < numSubtiles; i++) {
+         const subtileIndex = reader.readNumber();
+         const support = reader.readNumber();
+
+         subtileSupports.push({
+            subtileIndex: subtileIndex,
+            support: support
+         });
+      }
+
+      setVisibleSubtileSupports(subtileSupports);
+   }
    
    const gameDataPacket: GameDataPacket = {
       tileUpdates: tileUpdates,
       visibleHits: visibleHits,
       playerKnockbacks: playerKnockbacks,
       heals: heals,
-      orbCompletes: orbCompletes,
       playerHealth: playerHealth,
-      entityDebugData: debugData,
       playerTribeData: {
          name: tribeName,
          id: tribeID,

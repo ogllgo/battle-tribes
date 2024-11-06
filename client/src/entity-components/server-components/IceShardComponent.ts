@@ -20,7 +20,7 @@ function createParamsFromData(): IceShardComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<never, never>): IceShardComponent {
-   entityConfig.renderInfo.attachRenderThing(
+   entityConfig.renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

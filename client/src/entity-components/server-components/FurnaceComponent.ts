@@ -32,7 +32,7 @@ function createParamsFromData(): FurnaceComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

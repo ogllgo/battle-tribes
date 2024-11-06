@@ -62,7 +62,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       renderPart.offset.x = scarInfo.offsetX;
       renderPart.offset.y = scarInfo.offsetY;
 
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    return {};

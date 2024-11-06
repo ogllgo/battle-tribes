@@ -1,8 +1,8 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, LimbAction } from "battletribes-shared/entities";
+import { EntityID, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { getItemAttackInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, PickaxeItemInfo } from "battletribes-shared/items/items";
+import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, PickaxeItemInfo } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -14,13 +14,17 @@ import { TransformComponentArray } from "./TransformComponent";
 import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { HealthComponentArray } from "./HealthComponent";
+import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { attemptAttack, calculateItemKnockback } from "../entities/tribes/limb-use";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getGameTicks } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { doBlueprintWork } from "./BlueprintComponent";
+import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
+import { TribesmanTitle } from "../../../shared/src/titles";
+import { hasTitle } from "./TribeMemberComponent";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -271,14 +275,63 @@ export function onBlockBoxCollisionWithProjectile(blockingEntity: EntityID, proj
 }
 
 export function onDamageBoxCollision(attacker: EntityID, victim: EntityID, limb: LimbInfo): void {
-   // Attack the entity
-   if (HealthComponentArray.hasComponent(victim)) {
-      // Deactivate the damage boxes
-      limb.limbDamageBox.isActive = false;
-      limb.heldItemDamageBox.isActive = false;
-      
-      attemptAttack(attacker, victim, limb);
+   if (!HealthComponentArray.hasComponent(victim)) {
+      return;
    }
+
+   // Don't attack friendlies
+   const relationship = getEntityRelationship(attacker, victim);
+   if (relationship === EntityRelationship.friendly || relationship === EntityRelationship.friendlyBuilding) {
+      return;
+   }
+   
+   // Deactivate the damage boxes
+   limb.limbDamageBox.isActive = false;
+   limb.heldItemDamageBox.isActive = false;
+   
+   attemptAttack(attacker, victim, limb);
+}
+
+const getRepairAmount = (tribeMember: EntityID, hammerItem: Item): number => {
+   const itemInfo = ITEM_INFO_RECORD[hammerItem.type] as HammerItemInfo;
+   let repairAmount = itemInfo.repairAmount;
+
+   if (hasTitle(tribeMember, TribesmanTitle.builder)) {
+      repairAmount *= 1.5;
+   }
+   
+   return Math.round(repairAmount);
+}
+
+export function workOnBlueprint(tribeMember: EntityID, targetEntity: EntityID, attackingLimb: LimbInfo, item: Item): boolean {
+   // Deactivate the damage boxes
+   attackingLimb.limbDamageBox.isActive = false;
+   attackingLimb.heldItemDamageBox.isActive = false;
+
+   // If holding a hammer and attacking a friendly blueprint, work on the blueprint instead of damaging it
+   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
+   const blueprintTribeComponent = TribeComponentArray.getComponent(targetEntity);
+   if (blueprintTribeComponent.tribe === tribeComponent.tribe) {
+      doBlueprintWork(targetEntity, item);
+      return true;
+   }
+   return false;
+}
+
+export function repairBuilding(tribeMember: EntityID, targetEntity: EntityID, attackingLimb: LimbInfo, item: Item): boolean {
+   // Deactivate the damage boxes
+   attackingLimb.limbDamageBox.isActive = false;
+   attackingLimb.heldItemDamageBox.isActive = false;
+
+   // Heal friendly structures
+   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
+   const buildingTribeComponent = TribeComponentArray.getComponent(targetEntity);
+   if (buildingTribeComponent.tribe === tribeComponent.tribe) {
+      const repairAmount = getRepairAmount(tribeMember, item);
+      healEntity(targetEntity, repairAmount, tribeMember);
+      return true;
+   }
+   return false;
 }
 
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {

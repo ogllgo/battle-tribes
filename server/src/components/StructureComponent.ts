@@ -93,6 +93,7 @@ function onRemove(entity: EntityID): void {
       }
    }
 
+   // Destroy the attached blueprint if it exists
    if (BlueprintComponentArray.hasComponent(structureComponent.activeBlueprint)) {
       destroyEntity(structureComponent.activeBlueprint);
    }

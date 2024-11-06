@@ -6,7 +6,7 @@ import { stopEntity, turnToPosition } from "../ai-shared";
 import { GuardianComponentArray } from "../components/GuardianComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { createGuardianSpikyBallConfig } from "../entities/projectiles/guardian-spiky-ball";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { getEntityLayer, getGameTicks } from "../world";
 
 const enum Vars {
@@ -50,7 +50,7 @@ const createSpikyBall = (guardian: EntityID, targetX: number, targetY: number): 
       config.components[ServerComponentType.physics].externalVelocity.x = vx;
       config.components[ServerComponentType.physics].externalVelocity.y = vy;
       config.components[ServerComponentType.physics].angularVelocity = Math.PI;
-      createEntityFromConfig(config, layer, 0);
+      createEntity(config, layer, 0);
    }
 }
 

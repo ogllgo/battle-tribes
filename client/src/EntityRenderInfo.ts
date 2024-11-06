@@ -4,7 +4,7 @@ import Board from "./Board";
 import { removeLightsAttachedToRenderPart } from "./lights";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
-import { RenderPart, RenderThing, thingIsRenderPart } from "./render-parts/render-parts";
+import { VisualRenderPart, RenderPart, thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { createIdentityMatrix } from "./rendering/matrices";
 import { NUM_RENDER_LAYERS, RenderLayer } from "./render-layers";
 import { registerDirtyEntity, renderParentIsHitbox } from "./rendering/render-part-matrices";
@@ -41,7 +41,7 @@ export class EntityRenderInfo {
    public rotation = 0;
 
    /** Stores all render parts attached to the object, sorted ascending based on zIndex. (So that render part with smallest zIndex is rendered first) */
-   public readonly allRenderThings = new Array<RenderThing>();
+   public readonly allRenderThings = new Array<RenderPart>();
 
    public readonly renderPartOverlayGroups = new Array<RenderPartOverlayGroup>();
    
@@ -63,9 +63,9 @@ export class EntityRenderInfo {
       this.renderHeight = calculateRenderDepthFromLayer(renderLayer);
    }
 
-   public attachRenderThing(thing: RenderThing): void {
+   public attachRenderPart(renderPart: RenderPart): void {
       // Don't add if already attached
-      if (this.allRenderThings.indexOf(thing) !== -1) {
+      if (this.allRenderThings.indexOf(renderPart) !== -1) {
          return;
       }
 
@@ -83,25 +83,25 @@ export class EntityRenderInfo {
       let idx = this.allRenderThings.length;
       for (let i = 0; i < this.allRenderThings.length; i++) {
          const currentRenderPart = this.allRenderThings[i];
-         if (thing.zIndex < currentRenderPart.zIndex) {
+         if (renderPart.zIndex < currentRenderPart.zIndex) {
             idx = i;
             break;
          }
       }
-      this.allRenderThings.splice(idx, 0, thing);
+      this.allRenderThings.splice(idx, 0, renderPart);
 
-      if (thing.parent !== null && !renderParentIsHitbox(thing.parent)) {
-         thing.parent.children.push(thing);
+      if (renderPart.parent !== null && !renderParentIsHitbox(renderPart.parent)) {
+         renderPart.parent.children.push(renderPart);
       }
       
-      if (thingIsRenderPart(thing)) {
-         Board.renderPartRecord[thing.id] = thing;
+      if (thingIsVisualRenderPart(renderPart)) {
+         Board.renderPartRecord[renderPart.id] = renderPart;
       }
 
       this.dirty();
    }
 
-   public removeRenderPart(renderPart: RenderPart): void {
+   public removeRenderPart(renderPart: VisualRenderPart): void {
       // Don't remove if already removed
       const idx = this.allRenderThings.indexOf(renderPart);
       if (idx === -1) {
@@ -117,7 +117,7 @@ export class EntityRenderInfo {
       this.allRenderThings.splice(this.allRenderThings.indexOf(renderPart), 1);
    }
 
-   public getRenderThing(tag: string): RenderThing {
+   public getRenderThing(tag: string): RenderPart {
       for (let i = 0; i < this.allRenderThings.length; i++) {
          const renderThing = this.allRenderThings[i];
 
@@ -129,8 +129,8 @@ export class EntityRenderInfo {
       throw new Error("No render part with tag '" + tag + "' could be found on entity type " + EntityTypeString[getEntityType(this.associatedEntity)]);
    }
 
-   public getRenderThings(tag: string, expectedAmount?: number): Array<RenderThing> {
-      const renderThings = new Array<RenderThing>();
+   public getRenderThings(tag: string, expectedAmount?: number): Array<RenderPart> {
+      const renderThings = new Array<RenderPart>();
       for (let i = 0; i < this.allRenderThings.length; i++) {
          const renderThing = this.allRenderThings[i];
 

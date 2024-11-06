@@ -1,4 +1,5 @@
-import { getLightPositionMatrix, getLights } from "../../lights";
+import Layer from "../../Layer";
+import { getLightPositionMatrix } from "../../lights";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 
@@ -42,12 +43,12 @@ export function createLightDebugShaders(): void {
    bindUBOToProgram(gl, program, UBOBindingIndex.CAMERA);
 }
 
-export function renderLightingDebug(): void {
-   const lights = getLights();
-
-   const vertexData = new Float32Array(lights.length * 11 * 6);
-   for (let i = 0; i < lights.length; i++) {
-      const modelMatrix = getLightPositionMatrix(i);
+// @Speed
+export function renderLightingDebug(layer: Layer): void {
+   const vertexData = new Float32Array(layer.lights.length * 11 * 6);
+   for (let i = 0; i < layer.lights.length; i++) {
+      const light = layer.lights[i];
+      const modelMatrix = getLightPositionMatrix(light);
 
       const dataOffset = i * 11 * 6;
 
@@ -139,5 +140,5 @@ export function renderLightingDebug(): void {
    gl.enableVertexAttribArray(2);
    gl.enableVertexAttribArray(3);
 
-   gl.drawArrays(gl.TRIANGLES, 0, lights.length * 6);
+   gl.drawArrays(gl.TRIANGLES, 0, layer.lights.length * 6);
 }

@@ -7,7 +7,7 @@ import { Settings } from "battletribes-shared/settings";
 import { randFloat, lerp, randInt } from "battletribes-shared/utils";
 import { stopEntity } from "../ai-shared";
 import { createPebblumConfig } from "../entities/mobs/pebblum";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { PebblumComponentArray } from "./PebblumComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -160,7 +160,7 @@ const summonPebblums = (golem: EntityID, golemComponent: GolemComponent, target:
       config.components[ServerComponentType.transform].position.y = y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
       config.components[ServerComponentType.pebblum].targetEntityID = target;
-      const pebblum = createEntityFromConfig(config, layer, 0);
+      const pebblum = createEntity(config, layer, 0);
       
       golemComponent.summonedPebblumIDs.push(pebblum);
    }

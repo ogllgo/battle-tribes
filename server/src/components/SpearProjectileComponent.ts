@@ -3,7 +3,7 @@ import { ComponentArray } from "./ComponentArray";
 import { EntityID } from "battletribes-shared/entities";
 import { ItemType } from "battletribes-shared/items/items";
 import { createItemEntityConfig } from "../entities/item-entity";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer } from "../world";
@@ -37,7 +37,7 @@ function onTick(spear: EntityID): void {
       config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
       config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(spear), 0);
+      createEntity(config, getEntityLayer(spear), 0);
       
       destroyEntity(spear);
    }

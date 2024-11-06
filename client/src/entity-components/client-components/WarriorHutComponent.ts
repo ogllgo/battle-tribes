@@ -1,6 +1,6 @@
 import { EntityID } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playBuildingHitSound, playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -33,10 +33,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       0,
       getTextureArrayIndex("entities/warrior-hut/warrior-hut.png")
    );
-   renderInfo.attachRenderThing(hutRenderPart);
+   renderInfo.attachRenderPart(hutRenderPart);
 
    // Doors
-   const doorRenderParts = new Array<RenderPart>();
+   const doorRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const doorRenderPart = new TexturedRenderPart(
          null,
@@ -45,7 +45,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
          getTextureArrayIndex("entities/warrior-hut/warrior-hut-door.png")
       );
       doorRenderPart.addTag("hutComponent:door");
-      renderInfo.attachRenderThing(doorRenderPart);
+      renderInfo.attachRenderPart(doorRenderPart);
       doorRenderParts.push(doorRenderPart);
    }
 

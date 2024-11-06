@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID, TribeTotemBanner } from "battletribes-shared/entities";
 import { TribeType } from "battletribes-shared/tribes";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo } from "../../world";
@@ -18,12 +18,12 @@ export interface TotemBannerComponentParams {
 }
 
 interface RenderParts {
-   readonly bannerRenderParts: Record<number, RenderPart>;
+   readonly bannerRenderParts: Record<number, VisualRenderPart>;
 }
 
 export interface TotemBannerComponent {
    readonly banners: Record<number, TribeTotemBanner>;
-   readonly bannerRenderParts: Record<number, RenderPart>;
+   readonly bannerRenderParts: Record<number, VisualRenderPart>;
 }
 
 const BANNER_LAYER_DISTANCES = [34, 52, 65];
@@ -90,14 +90,14 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
    renderPart.offset.x = bannerOffsetAmount * Math.sin(banner.direction);
    renderPart.offset.y = bannerOffsetAmount * Math.cos(banner.direction);
 
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return renderPart;
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.totemBanner | ServerComponentType.tribe, never>): RenderParts {
    // Main render part
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          1,

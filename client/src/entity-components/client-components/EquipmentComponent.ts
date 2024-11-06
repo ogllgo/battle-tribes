@@ -124,7 +124,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
          );
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(equipmentComponent.armourRenderPart);
+         renderInfo.attachRenderPart(equipmentComponent.armourRenderPart);
       } else {
          equipmentComponent.armourRenderPart.switchTextureSource(getArmourTextureSource(armour.type));
       }
@@ -156,7 +156,7 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
             equipmentComponent.gloveRenderParts.push(gloveRenderPart);
 
             const renderInfo = getEntityRenderInfo(entity);
-            renderInfo.attachRenderThing(gloveRenderPart);
+            renderInfo.attachRenderPart(gloveRenderPart);
          }
       } else {
          for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {

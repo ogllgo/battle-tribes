@@ -1,8 +1,8 @@
 import { getTextureArrayIndex } from "../texture-atlases/texture-atlases";
 import { RenderParent } from "./render-parts";
-import BaseRenderPart from "./RenderPart";
+import VisualRenderPart from "./VisualRenderPart";
 
-class TexturedRenderPart extends BaseRenderPart {
+class TexturedRenderPart extends VisualRenderPart {
    public textureArrayIndex: number;
 
    constructor(parent: RenderParent, zIndex: number, rotation: number, textureArrayIndex: number) {

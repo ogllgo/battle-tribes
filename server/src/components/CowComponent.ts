@@ -10,7 +10,7 @@ import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { positionIsInWorld } from "../Layer";
 import { createItemEntityConfig } from "../entities/item-entity";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { TileType } from "battletribes-shared/tiles";
 import { moveEntityToPosition, runHerdAI, stopEntity } from "../ai-shared";
@@ -80,7 +80,7 @@ const poop = (cow: EntityID, cowComponent: CowComponent): void => {
    config.components[ServerComponentType.transform].position.x = poopPosition.x;
    config.components[ServerComponentType.transform].position.y = poopPosition.y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   createEntityFromConfig(config, getEntityLayer(cow), 0);
+   createEntity(config, getEntityLayer(cow), 0);
 
    // Let it out
    const event: EntityTickEvent<EntityTickEventType.cowFart> = {

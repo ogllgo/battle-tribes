@@ -58,7 +58,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       }
    }
 
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

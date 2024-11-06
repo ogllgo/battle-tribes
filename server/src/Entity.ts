@@ -1,32 +1,22 @@
-import { Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { EntityID } from "battletribes-shared/entities";
 import Layer from "./Layer";
-import { STRUCTURE_TYPES, StructureType } from "battletribes-shared/structures";
-import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "./components";
 import { ComponentArray, getComponentArrayRecord } from "./components/ComponentArray";
-import { boxIsCircular } from "battletribes-shared/boxes/boxes";
-import { addEntityToJoinBuffer, getEntityType } from "./world";
+import { addEntityToJoinBuffer } from "./world";
 
 // @Cleanup: Rename this file
 
+// We skip 0 as that is reserved for there being no entity
 let idCounter = 1;
-
-/** Finds a unique available ID for an entity */
-const getNextEntityID = (): EntityID => {
-   return idCounter++;
-}
 
 // @Hack @Cleanup ?@Speed
 const getComponentTypes = <ComponentTypes extends ServerComponentType>(componentConfig: EntityConfig<ComponentTypes>): ReadonlyArray<ComponentTypes> => {
    return Object.keys(componentConfig.components).map(Number) as Array<ComponentTypes>;
 }
 
-// @Cleanup: maybe rename once other generic one is reworked?
-// export function createEntityFromConfig<ComponentTypes extends ServerComponentType>(componentTypes: ReadonlyArray<ComponentTypes>, componentConfig: ComponentConfig<ComponentTypes>): void {
-export function createEntityFromConfig<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig<ComponentTypes>, layer: Layer, joinDelayTicks: number): EntityID {
-   const id = getNextEntityID();
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig<ComponentTypes>, layer: Layer, joinDelayTicks: number): EntityID {
+   const id = idCounter++;
    // @Hack
    const componentTypes = getComponentTypes(entityConfig);
    const componentArrayRecord = getComponentArrayRecord();
@@ -54,8 +44,4 @@ export function createEntityFromConfig<ComponentTypes extends ServerComponentTyp
    addEntityToJoinBuffer(id, entityConfig.entityType, layer, componentTypes, joinDelayTicks);
 
    return id;
-}
-
-export function entityIsStructure(entity: EntityID): boolean {
-   return STRUCTURE_TYPES.indexOf(getEntityType(entity) as StructureType) !== -1;
 }

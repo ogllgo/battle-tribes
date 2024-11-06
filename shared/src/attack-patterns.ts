@@ -148,6 +148,14 @@ export const SPEAR_ATTACK_TIMINGS: AttackTimingsInfo = {
    blockTimeTicks: null
 };
 
+export const HAMMER_ATTACK_TIMINGS: AttackTimingsInfo = {
+   windupTimeTicks: Math.floor(0.3 * Settings.TPS),
+   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
+   returnTimeTicks: Math.floor(0.35 * Settings.TPS),
+   restTimeTicks: Math.floor(0.35 * Settings.TPS),
+   blockTimeTicks: Math.floor(0.3 * Settings.TPS)
+};
+
 /* ----------- */
 /* LIMB STATES */
 /* ----------- */

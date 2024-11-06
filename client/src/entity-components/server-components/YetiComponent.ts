@@ -1,5 +1,5 @@
 import { angle, lerp, randFloat, randItem } from "battletribes-shared/utils";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
@@ -24,14 +24,14 @@ export interface YetiComponentParams {
 }
 
 interface RenderParts {
-   readonly pawRenderParts: ReadonlyArray<RenderPart>;
+   readonly pawRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export interface YetiComponent {
    lastAttackProgress: number;
    attackProgress: number;
 
-   readonly pawRenderParts: ReadonlyArray<RenderPart>;
+   readonly pawRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export const YETI_SIZE = 128;
@@ -67,7 +67,7 @@ function createParamsFromData(reader: PacketReader): YetiComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          1,
@@ -76,7 +76,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       )
    );
 
-   const pawRenderParts = new Array<RenderPart>();
+   const pawRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const paw = new TexturedRenderPart(
          null,
@@ -85,7 +85,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
          getTextureArrayIndex("entities/yeti/yeti-paw.png")
       );
       pawRenderParts.push(paw);
-      renderInfo.attachRenderThing(paw);
+      renderInfo.attachRenderPart(paw);
    }
 
    return {

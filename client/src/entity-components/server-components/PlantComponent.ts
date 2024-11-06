@@ -91,7 +91,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    
    const textureSource = getPlantTextureSource(plantComponentParams.plant, plantComponentParams.growthProgress, plantComponentParams.numFruits);
    const renderPart = createPlantRenderPart(textureSource);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
    
    return {
       plantRenderPart: renderPart
@@ -147,7 +147,7 @@ const updatePlantRenderPart = (plantComponent: PlantComponent, entity: EntityID,
          plantComponent.plantRenderPart = createPlantRenderPart(textureSource);
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(plantComponent.plantRenderPart);
+         renderInfo.attachRenderPart(plantComponent.plantRenderPart);
       } else {
          plantComponent.plantRenderPart.switchTextureSource(textureSource);
       }

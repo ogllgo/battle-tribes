@@ -66,7 +66,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
    );
    bodyRenderPart.offset.y = -(HEAD_SIZE - HEAD_OVERLAP) / 2;
-   renderInfo.attachRenderThing(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    // Head
    const headRenderPart = new TexturedRenderPart(
@@ -76,7 +76,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
    );
    headRenderPart.offset.y = (BODY_HEIGHT - HEAD_OVERLAP) / 2;
-   renderInfo.attachRenderThing(headRenderPart);
+   renderInfo.attachRenderPart(headRenderPart);
 
    return {};
 }

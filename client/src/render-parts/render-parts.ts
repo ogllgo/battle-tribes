@@ -3,20 +3,15 @@ import ColouredRenderPart from "./ColouredRenderPart";
 import RenderAttachPoint from "./RenderAttachPoint";
 import TexturedRenderPart from "./TexturedRenderPart";
 
-export type RenderPart = ColouredRenderPart | TexturedRenderPart;
+export type VisualRenderPart = ColouredRenderPart | TexturedRenderPart;
+export type RenderPart = VisualRenderPart | RenderAttachPoint;
 
-export function renderPartIsTextured(renderPart: RenderPart): renderPart is TexturedRenderPart {
+export type RenderParent = Hitbox | RenderPart | null;
+
+export function renderPartIsTextured(renderPart: VisualRenderPart): renderPart is TexturedRenderPart {
    return typeof (renderPart as TexturedRenderPart).textureArrayIndex !== "undefined";
 }
 
-export const enum RenderUnitType {
-   renderPart,
-   attachPoint
-}
-
-export type RenderThing = RenderPart | RenderAttachPoint;
-export type RenderParent = Hitbox | RenderThing | null;
-
-export function thingIsRenderPart(thing: RenderThing): thing is RenderPart {
-   return typeof (thing as RenderPart).tintR !== "undefined";
+export function thingIsVisualRenderPart(thing: RenderPart): thing is VisualRenderPart {
+   return typeof (thing as VisualRenderPart).tintR !== "undefined";
 }

@@ -3,6 +3,7 @@ import { ComponentArray } from "./ComponentArray";
 import { EntityID } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { HealthComponentArray } from "./HealthComponent";
+import { registerDirtyEntity } from "../server/player-clients";
 
 export class BuildingMaterialComponent {
    public material: BuildingMaterial;
@@ -27,6 +28,8 @@ export function upgradeMaterial(structure: EntityID, materialComponent: Building
    const healthComponent = HealthComponentArray.getComponent(structure);
    healthComponent.maxHealth = health;
    healthComponent.health = health;
+
+   registerDirtyEntity(structure);
 }
 
 function getDataLength(): number {

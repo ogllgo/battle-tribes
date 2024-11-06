@@ -1,7 +1,7 @@
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { EntityID, EntityType } from "battletribes-shared/entities";
-import { StructureType } from "battletribes-shared/structures";
+import { createEmptyStructureConnectionInfo, StructureType } from "battletribes-shared/structures";
 import { EntityConfig } from "../components";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
@@ -11,9 +11,11 @@ import { TribeComponent } from "../components/TribeComponent";
 import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { cloneHitbox, Hitbox } from "../../../shared/src/boxes/boxes";
+import { StructureComponent } from "../components/StructureComponent";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
+   | ServerComponentType.structure
    | ServerComponentType.blueprint
    | ServerComponentType.tribe;
 
@@ -63,6 +65,9 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
    
    const healthComponent = new HealthComponent(5);
    
+   // @Incomplete: connection info?
+   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo());
+   
    const blueprintComponent = new BlueprintComponent(blueprintType, associatedEntityID);
 
    const tribeComponent = new TribeComponent(tribe);
@@ -72,6 +77,7 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.blueprint]: blueprintComponent,
          [ServerComponentType.tribe]: tribeComponent
       }

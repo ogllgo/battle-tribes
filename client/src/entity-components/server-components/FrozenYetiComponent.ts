@@ -12,7 +12,7 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { EntityConfig } from "../ComponentArray";
 import { playerInstance } from "../../world";
@@ -28,9 +28,9 @@ export interface FrozenYetiComponent {
    attackStage: number;
    stageProgress: number;
    
-   readonly headRenderPart: RenderPart;
+   readonly headRenderPart: VisualRenderPart;
    /** Index 0: left paw, index 1: right paw */
-   readonly pawRenderParts: ReadonlyArray<RenderPart>;
+   readonly pawRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 // @Hardcoded
@@ -76,7 +76,7 @@ function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
 function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYeti, never>): FrozenYetiComponent {
    const frozenYetiComponentParams = entityConfig.serverComponents[ServerComponentType.frozenYeti];
 
-   entityConfig.renderInfo.attachRenderThing(new TexturedRenderPart(
+   entityConfig.renderInfo.attachRenderPart(new TexturedRenderPart(
       null,
       1,
       0,
@@ -91,10 +91,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYe
    );
    headRenderPart.addTag("frozenYetiComponent:head");
    headRenderPart.offset.y = FROZEN_YETI_HEAD_DISTANCE;
-   entityConfig.renderInfo.attachRenderThing(headRenderPart);
+   entityConfig.renderInfo.attachRenderPart(headRenderPart);
 
    // Create paw render parts
-   const pawRenderParts = new Array<RenderPart>();
+   const pawRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const paw = new TexturedRenderPart(
          null,
@@ -104,7 +104,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYe
       );
       paw.addTag("frozenYetiComponent:paw");
 
-      entityConfig.renderInfo.attachRenderThing(paw);
+      entityConfig.renderInfo.attachRenderPart(paw);
       pawRenderParts.push(paw);
    }
    

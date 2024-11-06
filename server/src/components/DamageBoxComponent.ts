@@ -1,15 +1,17 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, LimbAction } from "battletribes-shared/entities";
+import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
 import { ServerBlockBox, ServerDamageBox } from "../boxes";
-import { InventoryUseComponentArray, onBlockBoxCollisionWithDamageBox, onBlockBoxCollisionWithProjectile, onDamageBoxCollision } from "./InventoryUseComponent";
+import { InventoryUseComponentArray, onBlockBoxCollisionWithDamageBox, onBlockBoxCollisionWithProjectile, onDamageBoxCollision, repairBuilding, workOnBlueprint } from "./InventoryUseComponent";
 import { Settings } from "battletribes-shared/settings";
 import { ProjectileComponentArray } from "./ProjectileComponent";
-import { getEntityLayer } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
 import { ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
+import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
+import { HealthComponentArray } from "./HealthComponent";
 
 interface DamageBoxCollisionInfo {
    readonly collidingEntity: EntityID;
@@ -85,6 +87,21 @@ const getCollidingCollisionBox = (entity: EntityID, blockBox: ServerBlockBox): D
    return null;
 }
 
+const shouldRepairBuilding = (entity: EntityID, comparingEntity: EntityID): boolean => {
+   if (getEntityRelationship(entity, comparingEntity) !== EntityRelationship.friendlyBuilding) {
+      return false;
+   }
+
+   const ownerTribeComponent = TribeComponentArray.getComponent(entity);
+   const tribeComponent = TribeComponentArray.getComponent(comparingEntity);
+   if (tribeComponent.tribe !== ownerTribeComponent.tribe) {
+      return false;
+   }
+
+   const healthComponent = HealthComponentArray.getComponent(comparingEntity);
+   return healthComponent.health < healthComponent.maxHealth;
+}
+
 function onTick(entity: EntityID): void {
    const layer = getEntityLayer(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
@@ -108,7 +125,18 @@ function onTick(entity: EntityID): void {
       // If attacking with a hammer, check for blueprints to work on
       const item = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
       if (typeof item !== "undefined" && ITEM_TYPE_RECORD[item.type] === "hammer") {
-         
+         for (let i = 0; i < collidingEntities.length; i++) {
+            const collidingEntity = collidingEntities[i];
+            const entityType = getEntityType(collidingEntity);
+            
+            if (entityType === EntityType.blueprintEntity) {
+               // @Incomplete: break if successful?
+               workOnBlueprint(entity, collidingEntity, limbInfo, item);
+            } else if (shouldRepairBuilding(entity, collidingEntity)) {
+               // @Incomplete: break if successful?
+               repairBuilding(entity, collidingEntity, limbInfo, item);
+            }
+         }
       }
 
       // Look for entities to damage

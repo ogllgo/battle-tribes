@@ -3,8 +3,8 @@ import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage
 import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
-import { Light, addLight, attachLightToRenderPart } from "../../lights";
-import { RenderPart } from "../../render-parts/render-parts";
+import { Light, attachLightToRenderPart, createLight } from "../../lights";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -28,9 +28,9 @@ export interface GuardianComponentParams {
 }
 
 export interface GuardianComponent {
-   readonly rubyRenderParts: Array<RenderPart>;
-   readonly amethystRenderParts: Array<RenderPart>;
-   readonly emeraldRenderParts: Array<RenderPart>;
+   readonly rubyRenderParts: Array<VisualRenderPart>;
+   readonly amethystRenderParts: Array<VisualRenderPart>;
+   readonly emeraldRenderParts: Array<VisualRenderPart>;
 
    readonly rubyLights: Array<[number, Light]>;
    readonly emeraldLights: Array<[number, Light]>;
@@ -40,8 +40,8 @@ export interface GuardianComponent {
    emeraldGemActivation: number;
    amethystGemActivation: number;
 
-   readonly limbRenderParts: Array<RenderPart>;
-   readonly limbCrackRenderParts: Array<RenderPart>;
+   readonly limbRenderParts: Array<VisualRenderPart>;
+   readonly limbCrackRenderParts: Array<VisualRenderPart>;
    readonly limbCrackLights: Array<Light>;
 
    limbRubyGemActivation: number;
@@ -90,9 +90,9 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform, never>): GuardianComponent {
-   const rubyRenderParts = new Array<RenderPart>();
-   const amethystRenderParts = new Array<RenderPart>();
-   const emeraldRenderParts = new Array<RenderPart>();
+   const rubyRenderParts = new Array<VisualRenderPart>();
+   const amethystRenderParts = new Array<VisualRenderPart>();
+   const emeraldRenderParts = new Array<VisualRenderPart>();
 
    const rubyLights = new Array<[number, Light]>();
    const emeraldLights = new Array<[number, Light]>();
@@ -107,7 +107,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       getTextureArrayIndex("entities/guardian/guardian-head.png")
    );
    headRenderPart.offset.y = 28;
-   entityConfig.renderInfo.attachRenderThing(headRenderPart);
+   entityConfig.renderInfo.attachRenderPart(headRenderPart);
    
    const headRubies = new TexturedRenderPart(
       headRenderPart,
@@ -115,7 +115,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
    );
-   entityConfig.renderInfo.attachRenderThing(headRubies);
+   entityConfig.renderInfo.attachRenderPart(headRubies);
    rubyRenderParts.push(headRubies);
 
    // Body
@@ -126,7 +126,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body.png")
    );
-   entityConfig.renderInfo.attachRenderThing(bodyRenderPart);
+   entityConfig.renderInfo.attachRenderPart(bodyRenderPart);
 
    const bodyAmethystsRenderPart = new TexturedRenderPart(
       bodyRenderPart,
@@ -134,7 +134,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
    );
-   entityConfig.renderInfo.attachRenderThing(bodyAmethystsRenderPart);
+   entityConfig.renderInfo.attachRenderPart(bodyAmethystsRenderPart);
    amethystRenderParts.push(bodyAmethystsRenderPart);
 
    const bodyEmeraldsRenderPart = new TexturedRenderPart(
@@ -143,52 +143,49 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
    );
-   entityConfig.renderInfo.attachRenderThing(bodyEmeraldsRenderPart);
+   entityConfig.renderInfo.attachRenderPart(bodyEmeraldsRenderPart);
    emeraldRenderParts.push(bodyEmeraldsRenderPart);
 
    // Red lights
 
-   let light: Light = {
-      offset: new Point(0, 4.5 * 4),
-      intensity: 0.5,
-      strength: 0.3,
-      radius: 6,
-      r: 1,
-      g: 0,
-      b: 0.1
-   };
-   let lightID = addLight(light);
-   attachLightToRenderPart(lightID, headRenderPart.id);
+   let light = createLight(
+      new Point(0, 4.5 * 4),
+      0.5,
+      0.3,
+      6,
+      1,
+      0,
+      0.1
+   );
+   attachLightToRenderPart(light, headRenderPart, entityConfig.entity, entityConfig.layer);
    rubyLights.push([light.intensity, light]);
 
    for (let i = 0; i < 2; i++) {
-      const light: Light = {
-         offset: new Point(4.25 * 4 * (i === 0 ? 1 : -1), 3.25 * 4),
-         intensity: 0.4,
-         strength: 0.2,
-         radius: 4,
-         r: 1,
-         g: 0,
-         b: 0.1
-      };
-      const lightID = addLight(light);
-      attachLightToRenderPart(lightID, headRenderPart.id);
+      const light = createLight(
+         new Point(4.25 * 4 * (i === 0 ? 1 : -1), 3.25 * 4),
+         0.4,
+         0.2,
+         4,
+         1,
+         0,
+         0.1
+      );
+      attachLightToRenderPart(light, headRenderPart, entityConfig.entity, entityConfig.layer);
       rubyLights.push([light.intensity, light]);
    }
 
    // Green lights
 
-   light = {
-      offset: new Point(0, -3 * 4),
-      intensity: 0.5,
-      strength: 0.3,
-      radius: 6,
-      r: 0,
-      g: 1,
-      b: 0
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(0, -3 * 4),
+      0.5,
+      0.3,
+      6,
+      0,
+      1,
+      0
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    emeraldLights.push([light.intensity, light]);
 
    // Amethyst lights
@@ -207,138 +204,128 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
    // lightID = addLight(light);
    // attachLightToRenderPart(lightID, bodyRenderPart.id);
 
-   light = {
-      offset: new Point(5 * 4, 6.5 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(5 * 4, 6.5 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(6.5 * 4, 3 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(6.5 * 4, 3 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(10 * 4, 0),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(10 * 4, 0),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(7 * 4, -5 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(7 * 4, -5 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(3.5 * 4, -8 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(3.5 * 4, -8 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(-2 * 4, -9 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(-2 * 4, -9 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(-5 * 4, -5 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(-5 * 4, -5 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(-8 * 4, -3 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(-8 * 4, -3 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(-7 * 4, 2.5 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(-7 * 4, 2.5 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   light = {
-      offset: new Point(-8 * 4, 6 * 4),
-      intensity: 0.35,
-      strength: 0.2,
-      radius: 4,
-      r: 0.6,
-      g: 0,
-      b: 1
-   };
-   lightID = addLight(light);
-   attachLightToRenderPart(lightID, bodyRenderPart.id);
+   light = createLight(
+      new Point(-8 * 4, 6 * 4),
+      0.35,
+      0.2,
+      4,
+      0.6,
+      0,
+      1
+   );
+   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
 
-   const limbRenderParts = new Array<RenderPart>();
-   const limbCrackRenderParts = new Array<RenderPart>();
+   const limbRenderParts = new Array<VisualRenderPart>();
+   const limbCrackRenderParts = new Array<VisualRenderPart>();
    const limbCrackLights = new Array<Light>();
    
    // Attach limb render parts
@@ -352,7 +339,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb.png")
          );
-         entityConfig.renderInfo.attachRenderThing(limbRenderPart);
+         entityConfig.renderInfo.attachRenderPart(limbRenderPart);
          limbRenderParts.push(limbRenderPart);
 
          const cracksRenderPart = new TexturedRenderPart(
@@ -361,20 +348,19 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb-gem-cracks.png")
          );
-         entityConfig.renderInfo.attachRenderThing(cracksRenderPart);
+         entityConfig.renderInfo.attachRenderPart(cracksRenderPart);
          limbCrackRenderParts.push(cracksRenderPart);
 
-         const light: Light = {
-            offset: new Point(0, 0),
-            intensity: 0.5,
-            strength: 0.3,
-            radius: 12,
-            r: 0,
-            g: 0,
-            b: 0
-         };
-         const lightID = addLight(light);
-         attachLightToRenderPart(lightID, cracksRenderPart.id);
+         const light = createLight(
+            new Point(0, 0),
+            0.5,
+            0.3,
+            12,
+            0,
+            0,
+            0
+         );
+         attachLightToRenderPart(light, cracksRenderPart, entityConfig.entity, entityConfig.layer);
          limbCrackLights.push(light);
       }
    }
@@ -406,7 +392,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-const setColours = (renderParts: ReadonlyArray<RenderPart>, lights: ReadonlyArray<[number, Light]>, activation: number, tintR: number, tintG: number, tintB: number): void => {
+const setColours = (renderParts: ReadonlyArray<VisualRenderPart>, lights: ReadonlyArray<[number, Light]>, activation: number, tintR: number, tintG: number, tintB: number): void => {
    for (let i = 0; i < renderParts.length; i++) {
       const renderPart = renderParts[i];
       renderPart.tintR = tintR;

@@ -1,12 +1,12 @@
 import { EntityType, EntityTypeString, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { TileType, TileTypeString } from "battletribes-shared/tiles";
-import { Point, randInt, randFloat, TileIndex } from "battletribes-shared/utils";
+import { TileType } from "battletribes-shared/tiles";
+import { randInt, randFloat, TileIndex } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "./Layer";
 import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
 import OPTIONS from "./options";
 import SRandom from "./SRandom";
-import { createEntityFromConfig, entityIsStructure } from "./Entity";
+import { createEntity } from "./Entity";
 import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { entityIsTribesman } from "./entities/tribes/tribe-member";
@@ -32,6 +32,7 @@ import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { TribeType } from "battletribes-shared/tribes";
 import Tribe from "./Tribe";
 import { createTreeConfig } from "./entities/resources/tree";
+import { entityIsStructure } from "../../shared/src/structures";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -318,7 +319,8 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
-            if (!entityIsStructure(entity) && !entityIsTribesman(getEntityType(entity)!)) {
+            const entityType = getEntityType(entity)!;
+            if (!entityIsStructure(entityType) && !entityIsTribesman(entityType)) {
                continue;
             }
 
@@ -426,7 +428,7 @@ const spawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y:
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   const entity = createEntityFromConfig(config, layer, 0);
+   const entity = createEntity(config, layer, 0);
 
    addEntityToCensus(entity, entityType);
    if (!SERVER.isRunning) {

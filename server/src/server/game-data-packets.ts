@@ -1,4 +1,4 @@
-import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
+import { GameDataPacketOptions, VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { EntityID, EntityTypeString } from "battletribes-shared/entities";
 import { TechUnlockProgress } from "battletribes-shared/techs";
@@ -19,7 +19,7 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes, layers, surfaceLayer } from "../world";
-import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from "../collapses";
+import { getPlayerNearbyCollapses, getSubtileSupport, getVisibleSubtileSupports, subtileIsCollapsing } from "../collapses";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 export function getInventoryDataLength(inventory: Inventory): number {
@@ -272,7 +272,15 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * nearbyCollapses.length;
 
-   // Collapses (so the client can play collapse sound effects)
+   // Subtile supports
+   let visibleSubtileSupports: ReadonlyArray<number> | undefined;
+   const sendSubtileSupports = (playerClient.gameDataOptions & GameDataPacketOptions.sendSubtileSupports) !== 0;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   if (sendSubtileSupports) {
+      visibleSubtileSupports = getVisibleSubtileSupports(playerClient);
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * visibleSubtileSupports.length;
+   }
 
    lengthBytes = alignLengthBytes(lengthBytes);
 
@@ -490,6 +498,19 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    for (const [collapse, subtileIndex] of nearbyCollapses) {
       packet.addNumber(subtileIndex);
       packet.addNumber(collapse.age);
+   }
+
+   // Subtile supports
+   packet.addBoolean(sendSubtileSupports);
+   packet.padOffset(3);
+   if (sendSubtileSupports) {
+      packet.addNumber(visibleSubtileSupports!.length);
+      for (const subtileIndex of visibleSubtileSupports!) {
+         const support = getSubtileSupport(playerClient.lastLayer, subtileIndex);
+         
+         packet.addNumber(subtileIndex);
+         packet.addNumber(support);
+      }
    }
    
    // const visibleTribes = getVisibleTribes(extendedVisibleChunkBounds);

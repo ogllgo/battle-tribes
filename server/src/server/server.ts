@@ -16,7 +16,7 @@ import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processUseItemPacket } from "./packet-processing";
 import { EntityID } from "battletribes-shared/entities";
@@ -178,7 +178,7 @@ class GameServer {
                   const config = createPlayerConfig(tribe, username);
                   config.components[ServerComponentType.transform].position.x = spawnPosition.x;
                   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-                  const player = createEntityFromConfig(config, layer, 0);
+                  const player = createEntity(config, layer, 0);
       
                   playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, player, username);
                   addPlayerClient(playerClient, player, surfaceLayer, config);

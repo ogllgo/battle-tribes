@@ -49,7 +49,7 @@ function createParamsFromData(reader: PacketReader): BoulderComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.boulder, never>): RenderParts {
    const boulderComponentParams = entityConfig.serverComponents[ServerComponentType.boulder];
    
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

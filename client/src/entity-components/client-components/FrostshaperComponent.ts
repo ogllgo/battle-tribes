@@ -20,7 +20,7 @@ export function createFrostshaperComponentParams(): FrostshaperComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          1,

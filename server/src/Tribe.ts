@@ -18,7 +18,7 @@ import { HutComponentArray } from "./components/HutComponent";
 import { CraftingRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./components/TransformComponent";
-import { createEntityFromConfig } from "./Entity";
+import { createEntity } from "./Entity";
 import { BoxType, Hitbox } from "battletribes-shared/boxes/boxes";
 import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, LayerType, removeTribe } from "./world";
 import Layer, { getTileIndexIncludingEdges } from "./Layer";
@@ -402,6 +402,7 @@ class Tribe {
 
    public attackingEntities: Partial<Record<number, number>> = {};
 
+   // @Cleanup: Why can't this just start at 0?
    public virtualEntityIDCounter = 999999999;
 
    public readonly pathfindingGroupID: number;
@@ -747,7 +748,7 @@ class Tribe {
       config.components[ServerComponentType.transform].position.y = position.y;
       config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
       config.components[ServerComponentType.tribesmanAI].hut = hut;
-      createEntityFromConfig(config, getEntityLayer(hut), 0);
+      createEntity(config, getEntityLayer(hut), 0);
    }
 
    // @Cleanup

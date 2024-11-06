@@ -18,7 +18,7 @@ import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/compon
 import { BerryBushComponentArray } from "../../components/BerryBushComponent";
 import { PlantComponentArray, plantIsFullyGrown } from "../../components/PlantComponent";
 import { TreeComponentArray, TREE_RADII } from "../../components/TreeComponent";
-import { createEntityFromConfig } from "../../Entity";
+import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
 import { dropBerryOverEntity, BERRY_BUSH_RADIUS } from "../resources/berry-bush";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
@@ -124,7 +124,7 @@ const gatherPlant = (plant: EntityID, attacker: EntityID, gloves: Item | null): 
       config.components[ServerComponentType.transform].position.x = x;
       config.components[ServerComponentType.transform].position.y = y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(plant), 0);
+      createEntity(config, getEntityLayer(plant), 0);
    }
 
    // @Hack

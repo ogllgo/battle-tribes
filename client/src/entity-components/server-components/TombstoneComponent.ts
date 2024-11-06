@@ -78,7 +78,7 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tombstone, never>): RenderParts {
    const tombstoneComponentParams = entityConfig.serverComponents[ServerComponentType.tombstone];
    
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

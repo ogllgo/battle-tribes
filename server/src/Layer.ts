@@ -108,6 +108,8 @@ export default class Layer {
 
    public minedSubtileInfoMap = new Map<number, MinedSubtileInfo>();
 
+   private readonly worldInfo: WorldInfo;
+
    constructor(generationInfo: TerrainGenerationInfo) {
       this.tileTypes = generationInfo.tileTypes;
       this.tileBiomes = generationInfo.tileBiomes;
@@ -167,6 +169,23 @@ export default class Layer {
             }
          }
       }
+
+      this.worldInfo = {
+         chunks: this.chunks,
+         wallSubtileTypes: this.wallSubtileTypes,
+         getEntityCallback: (entity: EntityID): EntityInfo => {
+            const transformComponent = TransformComponentArray.getComponent(entity);
+
+            return {
+               type: getEntityType(entity)!,
+               position: transformComponent.position,
+               rotation: transformComponent.rotation,
+               id: entity,
+               hitboxes: transformComponent.hitboxes
+            };
+         },
+         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex)
+      };
    }
 
    public getSubtileTypes(): Readonly<Float32Array> {
@@ -184,24 +203,18 @@ export default class Layer {
          this.wallSubtileDamageTakenMap.set(subtileIndex, previousDamageTaken + damageDealt);
       }
 
-      if (this.wallSubtileDamageTakenMap.get(subtileIndex)! >= 3) {
+      const damageTaken = this.wallSubtileDamageTakenMap.get(subtileIndex)!;
+      if (damageTaken >= 3) {
          const previousSubtileType = this.wallSubtileTypes[subtileIndex];
          this.wallSubtileTypes[subtileIndex] = SubtileType.none;
-         
          registerMinedSubtile(this, subtileIndex, previousSubtileType);
-
-         this.wallSubtileUpdates.push({
-            subtileIndex: subtileIndex,
-            subtileType: SubtileType.none,
-            damageTaken: 0
-         });
-      } else {
-         this.wallSubtileUpdates.push({
-            subtileIndex: subtileIndex,
-            subtileType: this.wallSubtileTypes[subtileIndex],
-            damageTaken: this.wallSubtileDamageTakenMap.get(subtileIndex)!
-         });
       }
+      
+      this.wallSubtileUpdates.push({
+         subtileIndex: subtileIndex,
+         subtileType: this.wallSubtileTypes[subtileIndex],
+         damageTaken: damageTaken
+      });
 
       return damageDealt;
    }
@@ -434,21 +447,7 @@ export default class Layer {
    }
 
    public getWorldInfo(): WorldInfo {
-      return {
-         chunks: this.chunks,
-         wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: EntityID): EntityInfo => {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-
-            return {
-               type: getEntityType(entity)!,
-               position: transformComponent.position,
-               rotation: transformComponent.rotation,
-               id: entity,
-               hitboxes: transformComponent.hitboxes
-            };
-         }
-      }
+      return this.worldInfo;
    }
 
    public getChunksInBounds(minX: number, maxX: number, minY: number, maxY: number): ReadonlyArray<Chunk> {

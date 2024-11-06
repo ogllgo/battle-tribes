@@ -27,7 +27,7 @@ export function createSlingTurretRockComponentParams(): SlingTurretRockComponent
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

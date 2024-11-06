@@ -7,7 +7,7 @@ import { EntityID } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityLayer } from "../world";
 import { createItemEntityConfig } from "../entities/item-entity";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
@@ -89,6 +89,6 @@ export function createItemsOverEntity(entity: EntityID, itemType: ItemType, amou
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(entity), 0);
+      createEntity(config, getEntityLayer(entity), 0);
    }
 }

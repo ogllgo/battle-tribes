@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSound } from "../../sound";
 import { LeafParticleSize, createLeafParticle, createLeafSpeckParticle } from "../../particles";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -18,7 +18,7 @@ export interface SpikesComponentParams {
 export interface SpikesComponent {
    isCovered: boolean;
    // @Incomplete: We should randomise their position every time they are re-covered
-   readonly leafRenderParts: ReadonlyArray<RenderPart>;
+   readonly leafRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export const NUM_SMALL_COVER_LEAVES = 8;
@@ -45,7 +45,7 @@ function createParamsFromData(reader: PacketReader): SpikesComponentParams {
    };
 }
 
-const createLeafRenderPart = (isSmall: boolean): RenderPart => {
+const createLeafRenderPart = (isSmall: boolean): VisualRenderPart => {
    let textureSource: string;
    if (isSmall) {
       textureSource = "entities/miscellaneous/cover-leaf-small.png";
@@ -69,15 +69,15 @@ const createLeafRenderPart = (isSmall: boolean): RenderPart => {
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes, never>): SpikesComponent {
-   const leafRenderParts = new Array<RenderPart>();
+   const leafRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(true);
-      entityConfig.renderInfo.attachRenderThing(renderPart);
+      entityConfig.renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
    for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(false);
-      entityConfig.renderInfo.attachRenderThing(renderPart);
+      entityConfig.renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
    

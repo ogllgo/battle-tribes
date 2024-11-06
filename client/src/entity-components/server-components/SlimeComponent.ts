@@ -2,7 +2,7 @@ import { lerp, randFloat, randInt } from "battletribes-shared/utils";
 import { EntityID, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -21,14 +21,14 @@ export interface SlimeComponentParams {
 }
 
 interface RenderParts {
-   readonly bodyRenderPart: RenderPart;
-   readonly eyeRenderPart: RenderPart;
+   readonly bodyRenderPart: VisualRenderPart;
+   readonly eyeRenderPart: VisualRenderPart;
 }
 
 export interface SlimeComponent {
-   bodyRenderPart: RenderPart;
-   eyeRenderPart: RenderPart;
-   readonly orbRenderParts: Array<RenderPart>;
+   bodyRenderPart: VisualRenderPart;
+   eyeRenderPart: VisualRenderPart;
+   readonly orbRenderParts: Array<VisualRenderPart>;
 
    size: SlimeSize;
    readonly orbs: Array<SlimeOrbInfo>;
@@ -106,10 +106,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0,
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-body.png`)
    );
-   renderInfo.attachRenderThing(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    // Shading
-   renderInfo.attachRenderThing(new TexturedRenderPart(
+   renderInfo.attachRenderPart(new TexturedRenderPart(
       null,
       0,
       0,
@@ -124,7 +124,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-eye.png`)
    );
    eyeRenderPart.inheritParentRotation = false;
-   renderInfo.attachRenderThing(eyeRenderPart);
+   renderInfo.attachRenderPart(eyeRenderPart);
 
    return {
       bodyRenderPart: bodyRenderPart,
@@ -214,7 +214,7 @@ const createOrb = (slimeComponent: SlimeComponent, entity: EntityID, size: Slime
    slimeComponent.orbRenderParts.push(renderPart);
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 }
 
 function padData(reader: PacketReader): void {

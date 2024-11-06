@@ -6,7 +6,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/tiles";
 import Layer, { positionIsInWorld } from "../Layer";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
@@ -96,7 +96,7 @@ const grow = (iceSpikes: EntityID): void => {
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, layer, 0);
+      createEntity(config, layer, 0);
       
       const rootIceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikesComponent.rootIceSpike);
       rootIceSpikesComponent.numChildrenIceSpikes++;
@@ -163,7 +163,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       config.components[ServerComponentType.transform].rotation = moveDirection;
       config.components[ServerComponentType.physics].externalVelocity.x += 700 * Math.sin(moveDirection);
       config.components[ServerComponentType.physics].externalVelocity.y += 700 * Math.cos(moveDirection);
-      createEntityFromConfig(config, layer, 0);
+      createEntity(config, layer, 0);
    }
 }
 

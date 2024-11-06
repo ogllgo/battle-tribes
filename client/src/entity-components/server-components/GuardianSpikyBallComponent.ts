@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityID } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
-import { Light, addLight, attachLightToEntity } from "../../lights";
+import { Light, attachLightToEntity, createLight } from "../../lights";
 import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
@@ -40,19 +40,18 @@ function onLoad(entity: EntityID): void {
    );
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
-   const light: Light = {
-      offset: new Point(0, 0),
-      intensity: 0.4,
-      strength: 0.3,
-      radius: 20,
-      r: 0.9,
-      g: 0.2,
-      b: 0.9
-   };
-   const lightID = addLight(light);
-   attachLightToEntity(lightID, entity);
+   const light = createLight(
+      new Point(0, 0),
+      0.4,
+      0.3,
+      20,
+      0.9,
+      0.2,
+      0.9
+   );
+   attachLightToEntity(light, entity);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("guardian-spiky-ball-spawn.mp3", 0.4, 1, transformComponent.position);

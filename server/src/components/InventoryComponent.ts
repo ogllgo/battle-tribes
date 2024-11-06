@@ -8,7 +8,7 @@ import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemT
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
 import { EntityID } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { addInventoryDataToPacket, getInventoryDataLength } from "../server/game-data-packets";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
@@ -58,7 +58,7 @@ const dropInventory = (entity: EntityID, inventory: Inventory, dropRange: number
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(entity), 0);
+      createEntity(config, getEntityLayer(entity), 0);
    }
 }
 

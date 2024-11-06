@@ -8,7 +8,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
@@ -49,7 +49,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    const zombieComponentParams = entityConfig.serverComponents[ServerComponentType.zombie];
 
    // Body render part
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          2,
@@ -60,7 +60,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
    // Hand render parts
    const handTextureSource = ZOMBIE_HAND_TEXTURE_SOURCES[zombieComponentParams.zombieType];
-   const handRenderParts = new Array<RenderPart>();
+   const handRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const renderPart = new TexturedRenderPart(
          null,
@@ -69,7 +69,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          getTextureArrayIndex(handTextureSource)
       );
       renderPart.addTag("inventoryUseComponent:hand");
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       handRenderParts.push(renderPart);
    }
 

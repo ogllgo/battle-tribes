@@ -5,6 +5,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 
 export interface BuildingMaterialComponentParams {
    readonly material: BuildingMaterial;
@@ -22,6 +23,7 @@ export const FLOOR_SPIKE_TEXTURE_SOURCES = ["entities/spikes/wooden-floor-spikes
 export const WALL_SPIKE_TEXTURE_SOURCES = ["entities/spikes/wooden-wall-spikes.png", "entities/spikes/stone-wall-spikes.png"];
 
 const getMaterialTextureSources = (entityType: EntityType): ReadonlyArray<string> => {
+   // @Robustness
    switch (entityType) {
       case EntityType.wall: return WALL_TEXTURE_SOURCES;
       case EntityType.door: return DOOR_TEXTURE_SOURCES;
@@ -69,13 +71,26 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const material = reader.readNumber();
    
    if (material !== buildingMaterialComponent.material) {
-      const textureSources = getMaterialTextureSources(getEntityType(entity));
-
-      const textureSource = textureSources[material];
-
       const renderInfo = getEntityRenderInfo(entity);
-      const materialRenderPart = renderInfo.getRenderThing("buildingMaterialComponent:material") as TexturedRenderPart;
-      materialRenderPart.switchTextureSource(textureSource);
+
+      // @Hack: this fucking sucks. Instead each entity which uses the building material component should define its own function to do this
+      const entityType = getEntityType(entity);
+      if (entityType !== EntityType.bracings) {
+         const textureSources = getMaterialTextureSources(entityType);
+   
+         const textureSource = textureSources[material];
+   
+         const materialRenderPart = renderInfo.getRenderThing("buildingMaterialComponent:material") as TexturedRenderPart;
+         materialRenderPart.switchTextureSource(textureSource);
+      } else {
+         const verticals = renderInfo.getRenderThings("bracingsComponent:vertical", 2) as Array<TexturedRenderPart>;
+         for (const renderPart of verticals) {
+            renderPart.switchTextureSource("entities/bracings/stone-vertical-post.png");
+         }
+
+         const horizontal = renderInfo.getRenderThing("bracingsComponent:horizontal") as TexturedRenderPart;
+         horizontal.switchTextureSource("entities/bracings/stone-horizontal-post.png");
+      }
    }
    
    buildingMaterialComponent.material = material;

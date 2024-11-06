@@ -94,7 +94,7 @@ export function removeRenderable(layer: Layer, renderable: Renderable, renderLay
    }
 }
 
-const renderRenderablesBatch = (renderableType: RenderableType, renderables: ReadonlyArray<Renderable>, renderLayer: RenderLayer): void => {
+const renderRenderablesBatch = (renderableType: RenderableType, renderables: ReadonlyArray<Renderable>, layer: Layer, renderLayer: RenderLayer): void => {
    if (renderables.length === 0) {
       // @Hack: chunk-rendered entities don't use renderables. The ideal fix for this would be to not create the renderables array for chunk rendered entities
       if (!renderLayerIsChunkRendered(renderLayer)) {
@@ -106,7 +106,7 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
       case RenderableType.entity: {
          if (renderLayerIsChunkRendered(renderLayer)) {
             // @Bug: this always renders the whole render layer...
-            renderChunkedEntities(renderLayer);
+            renderChunkedEntities(layer, renderLayer);
          } else {
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -158,13 +158,13 @@ export function renderNextRenderables(layer: Layer, maxRenderLayer: RenderLayer)
          if (renderableInfo.type === currentRenderableType) {
             currentRenderables.push(renderableInfo.renderable);
          } else {
-            renderRenderablesBatch(currentRenderableType, currentRenderables, currentRenderLayer);
+            renderRenderablesBatch(currentRenderableType, currentRenderables, layer, currentRenderLayer);
             
             currentRenderableType = renderableInfo.type;
             currentRenderables = [renderableInfo.renderable];
          }
       }
    
-      renderRenderablesBatch(currentRenderableType, currentRenderables, currentRenderLayer);
+      renderRenderablesBatch(currentRenderableType, currentRenderables, layer, currentRenderLayer);
    }
 }

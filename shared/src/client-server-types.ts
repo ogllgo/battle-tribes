@@ -100,7 +100,8 @@ export enum GameDataPacketOptions {
    sendVisibleBuildingSafetys = 1 << 3,
    sendVisibleRestrictedBuildingAreas = 1 << 4,
    sendVisibleWalls = 1 << 5,
-   sendVisibleWallConnections = 1 << 6
+   sendVisibleWallConnections = 1 << 6,
+   sendSubtileSupports = 1 << 7
 }
 
 // @Cleanup: A whole bunch of the data in this for the player can be deduced from the entity data array
@@ -112,10 +113,7 @@ export interface GameDataPacket {
    readonly playerKnockbacks: ReadonlyArray<PlayerKnockbackData>;
    /** All healing received by visible entities server-side */
    readonly heals: ReadonlyArray<HealData>;
-   readonly orbCompletes: ReadonlyArray<ResearchOrbCompleteData>;
    readonly playerHealth: number;
-   /** Extra debug information about a game object being tracked */
-   readonly entityDebugData?: EntityDebugData;
    readonly playerTribeData: PlayerTribeData;
    readonly enemyTribesData: ReadonlyArray<EnemyTribeData>;
    readonly hasFrostShield: boolean;

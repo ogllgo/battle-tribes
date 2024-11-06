@@ -4,7 +4,7 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGrowthParticle } from "../../particles";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -19,11 +19,11 @@ export interface PlanterBoxComponentParams {
 }
 
 interface RenderParts {
-   readonly moundRenderPart: RenderPart | null;
+   readonly moundRenderPart: VisualRenderPart | null;
 }
 
 export interface PlanterBoxComponent {
-   moundRenderPart: RenderPart | null;
+   moundRenderPart: VisualRenderPart | null;
    
    hasPlant: boolean;
    isFertilised: boolean;
@@ -60,7 +60,7 @@ function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.planterBox, never>): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,
@@ -74,7 +74,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    let renderPart: TexturedRenderPart | null;
    if (planterBoxComponentParams.plantType !== -1) {
       renderPart = createMoundRenderPart(planterBoxComponentParams.plantType);
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
    }
@@ -141,7 +141,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          planterBoxComponent.moundRenderPart = createMoundRenderPart(plantType);
          
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(planterBoxComponent.moundRenderPart);
+         renderInfo.attachRenderPart(planterBoxComponent.moundRenderPart);
       }
    } else if (planterBoxComponent.moundRenderPart !== null) {
       const renderInfo = getEntityRenderInfo(entity);

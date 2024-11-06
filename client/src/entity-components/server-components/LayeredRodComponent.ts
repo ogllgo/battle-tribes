@@ -173,7 +173,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredR
       renderPart.offset.x = naturalBendX * layer;
       renderPart.offset.y = naturalBendY * layer;
 
-      entityConfig.renderInfo.attachRenderThing(renderPart);
+      entityConfig.renderInfo.attachRenderPart(renderPart);
    }
 
    return {

@@ -9,7 +9,7 @@ import { ServerComponentParams } from "./entity-components/components";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
 import { removeLightsAttachedToEntity, removeLightsAttachedToRenderPart } from "./lights";
-import { thingIsRenderPart } from "./render-parts/render-parts";
+import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { registerDirtyEntity, removeEntityFromDirtyArray } from "./rendering/render-part-matrices";
 import { getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
@@ -26,6 +26,8 @@ export let playerInstance: EntityID | null = null;
 
 export const layers = new Array<Layer>();
 
+export let surfaceLayer: Layer;
+export let undergroundLayer: Layer;
 let currentLayer: Layer;
 
 const entityTypes: Partial<Record<EntityID, EntityType>> = {};
@@ -38,6 +40,12 @@ export function setPlayerInstance(entity: EntityID | null): void {
 }
 
 export function addLayer(layer: Layer): void {
+   if (layers.length === 0) {
+      surfaceLayer = layer;
+   } else {
+      undergroundLayer = layer;
+   }
+   
    layers.push(layer);
 }
 
@@ -190,7 +198,7 @@ export function removeEntity(entity: EntityID, isDeath: boolean): void {
 
    for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
       const renderPart = renderInfo.allRenderThings[i];
-      if (thingIsRenderPart(renderPart)) {
+      if (thingIsVisualRenderPart(renderPart)) {
          removeLightsAttachedToRenderPart(renderPart.id);
       }
    }

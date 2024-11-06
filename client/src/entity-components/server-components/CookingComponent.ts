@@ -1,6 +1,6 @@
 import { Point, randFloat } from "battletribes-shared/utils";
 import Board from "../../Board";
-import { Light, addLight, attachLightToEntity } from "../../lights";
+import { Light, attachLightToEntity, createLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
@@ -54,17 +54,16 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking,
 
 function onLoad(entity: EntityID): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
-   cookingComponent.light = {
-      offset: new Point(0, 0),
-      intensity: 1,
-      strength: 3.5,
-      radius: 40,
-      r: 0,
-      g: 0,
-      b: 0
-   };
-   const lightID = addLight(cookingComponent.light);
-   attachLightToEntity(lightID, entity);
+   cookingComponent.light = createLight(
+      new Point(0, 0),
+      1,
+      3.5,
+      40,
+      0,
+      0,
+      0
+   );
+   attachLightToEntity(cookingComponent.light, entity);
 }
 
 function onTick(entity: EntityID): void {

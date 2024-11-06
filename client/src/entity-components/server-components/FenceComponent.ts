@@ -6,7 +6,7 @@ import { StructureComponentArray } from "./StructureComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
 import { EntityID } from "../../../../shared/src/entities";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface FenceComponentParams {}
@@ -14,7 +14,7 @@ export interface FenceComponentParams {}
 interface RenderParts {}
 
 export interface FenceComponent {
-   readonly railRenderParts: [RenderPart | null, RenderPart | null, RenderPart | null, RenderPart | null];
+   readonly railRenderParts: [VisualRenderPart | null, VisualRenderPart | null, VisualRenderPart | null, VisualRenderPart | null];
    
    connectedSidesBitset: number;
 }
@@ -35,7 +35,7 @@ function createParamsFromData(): FenceComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          1,
@@ -109,7 +109,7 @@ const addRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: Rail
    renderPart.offset.y = offsetY;
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    const idx = getRailIdx(railBit);
    fenceComponent.railRenderParts[idx] = renderPart;

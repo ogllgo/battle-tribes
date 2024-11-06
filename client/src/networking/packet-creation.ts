@@ -76,6 +76,10 @@ export function createPlayerDataPacket(): ArrayBuffer {
    if (OPTIONS.showWallConnections) {
       gameDataOptions |= GameDataPacketOptions.sendVisibleWallConnections;
    }
+   if (OPTIONS.showSubtileSupports) {
+      gameDataOptions |= GameDataPacketOptions.sendSubtileSupports;
+   }
+   
    packet.addNumber(gameDataOptions);
    
    return packet.buffer;

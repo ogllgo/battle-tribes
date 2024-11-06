@@ -54,7 +54,7 @@ function createParamsFromData(reader: PacketReader): TreeComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tree, never>): RenderParts {
    const treeComponentParams = entityConfig.serverComponents[ServerComponentType.tree];
    
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

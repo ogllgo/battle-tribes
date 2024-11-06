@@ -3,7 +3,7 @@ import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -26,7 +26,7 @@ export interface TunnelComponent {
    topDoorOpenProgress: number;
    bottomDoorOpenProgress: number;
    
-   readonly doorRenderParts: Record<number, RenderPart>;
+   readonly doorRenderParts: Record<number, VisualRenderPart>;
 }
 
 const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 48 * 48) / 2;
@@ -86,7 +86,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
    );
 
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -114,7 +114,7 @@ const addDoor = (tunnelComponent: TunnelComponent, transformComponent: Transform
    tunnelComponent.doorRenderParts[doorBit] = renderPart;
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    // @Temporary
    playSound("spike-place.mp3", 0.5, 1, transformComponent.position);

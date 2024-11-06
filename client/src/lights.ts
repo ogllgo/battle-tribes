@@ -1,11 +1,15 @@
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
 import Board from "./Board";
-import { entityExists, getEntityRenderInfo } from "./world";
+import { entityExists, getEntityLayer, getEntityRenderInfo } from "./world";
 import { createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace } from "./rendering/matrices";
+import Layer from "./Layer";
+import { EntityID } from "../../shared/src/entities";
+import { RenderPart } from "./render-parts/render-parts";
 
-type LightID = number;
+export type LightID = number;
 
 export interface Light {
+   readonly id: number;
    readonly offset: Point;
    intensity: number;
    /** Number of tiles which the light extends from */
@@ -16,90 +20,133 @@ export interface Light {
    b: number;
 }
 
-let lightIDCounter = 0;
+interface LightRenderPartInfo {
+   readonly renderPart: RenderPart;
+   // We store the entity for the render part on the light instead of the render part to save memory (the vast majority of render parts won't have lights on them)
+   readonly entity: EntityID;
+}
 
-const lights = new Array<Light>();
-const lightIDs = new Array<LightID>();
+let lightIDCounter = 0;
+   
 const lightRecord: Record<LightID, Light> = {};
 
 const lightToEntityRecord: Partial<Record<LightID, number>> = {};
 const entityToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
 
-const lightToRenderPartRecord: Partial<Record<LightID, number>> = {};
+const lightToRenderPartRecord: Partial<Record<LightID, LightRenderPartInfo>> = {};
 const renderPartToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
 
-export function getLights(): ReadonlyArray<Light> {
-   return lights;
+const getLightLayer = (light: Light): Layer => {
+   const attachedEntity = lightToEntityRecord[light.id];
+   if (typeof attachedEntity !== "undefined") {
+      return getEntityLayer(attachedEntity);
+   }
+
+   const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
+   if (typeof attachedRenderPartInfo !== "undefined") {
+      return getEntityLayer(attachedRenderPartInfo.entity);
+   }
+
+   throw new Error();
 }
 
-export function addLight(light: Light): LightID {
-   lights.push(light);
+export function createLight(offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
+   const lightID = lightIDCounter++;
+
+   return {
+      id: lightID,
+      offset: offset,
+      intensity: intensity,
+      strength: strength,
+      radius: radius,
+      r: r,
+      g: g,
+      b: b
+   };
+}
+
+const addLightToLayer = (light: Light, layer: Layer): void => {
+   // Make sure the light doesn't already exist
+   assert(typeof lightRecord[light.id] === "undefined")
    
-   const lightID = lightIDCounter;
-   lightIDs.push(lightID);
-   lightIDCounter++;
-
-   lightRecord[lightID] = light;
-
-   return lightID;
+   layer.lights.push(light);
+   lightRecord[light.id] = light;
 }
 
-export function attachLightToEntity(lightID: LightID, entityID: number): void {
-   lightToEntityRecord[lightID] = entityID;
+export function attachLightToEntity(light: Light, entity: EntityID): void {
+   const layer = getEntityLayer(entity);
+   addLightToLayer(light, layer);
+   
+   lightToEntityRecord[light.id] = entity;
 
-   const lightIDs = entityToLightsRecord[entityID];
+   const lightIDs = entityToLightsRecord[entity];
    if (typeof lightIDs === "undefined") {
-      entityToLightsRecord[entityID] = [lightID];
+      entityToLightsRecord[entity] = [light.id];
    } else {
-      lightIDs.push(lightID);
+      lightIDs.push(light.id);
    }
 }
 
-export function attachLightToRenderPart(lightID: LightID, renderPartID: number): void {
-   lightToRenderPartRecord[lightID] = renderPartID;
+// @Cleanup: the 3 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
+export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: EntityID, layer: Layer): void {
+   addLightToLayer(light, layer);
+   
+   lightToRenderPartRecord[light.id] = {
+      renderPart: renderPart,
+      entity: entity
+   };
 
-   const lightIDs = renderPartToLightsRecord[renderPartID];
+   const lightIDs = renderPartToLightsRecord[renderPart.id];
    if (typeof lightIDs === "undefined") {
-      renderPartToLightsRecord[renderPartID] = [lightID];
+      renderPartToLightsRecord[renderPart.id] = [light.id];
    } else {
-      lightIDs.push(lightID);
+      lightIDs.push(light.id);
    }
 }
 
 export function removeLight(light: Light): void {
-   const idx = lights.indexOf(light);
+   const layer = getLightLayer(light);
+   
+   const idx = layer.lights.indexOf(light);
    if (idx === -1) {
       return;
    }
    
-   const lightID = lightIDs[idx];
-   
-   lights.splice(idx, 1);
-   lightIDs.splice(idx, 1);
+   layer.lights.splice(idx, 1);
 
-   const entityID = lightToEntityRecord[lightID];
-   delete lightToEntityRecord[lightID];
+   const entityID = lightToEntityRecord[light.id];
+   delete lightToEntityRecord[light.id];
    if (typeof entityID !== "undefined") {
-      const idx = entityToLightsRecord[entityID]!.indexOf(lightID);
+      const idx = entityToLightsRecord[entityID]!.indexOf(light.id);
       entityToLightsRecord[entityID]!.splice(idx, 1);
       if (entityToLightsRecord[entityID]!.length === 0) {
          delete entityToLightsRecord[entityID];
       }
+
+      return;
    }
 
-   const renderPartID = lightToRenderPartRecord[lightID];
-   delete lightToRenderPartRecord[lightID];
-   if (typeof renderPartID !== "undefined") {
-      const idx = renderPartToLightsRecord[renderPartID]!.indexOf(lightID);
+   const renderPartInfo = lightToRenderPartRecord[light.id];
+   delete lightToRenderPartRecord[light.id];
+
+   // If the light was attached to a render light, register the light's removal from that render part
+   if (typeof renderPartInfo !== "undefined") {
+      const renderPartID = renderPartInfo.renderPart.id;
+      
+      const idx = renderPartToLightsRecord[renderPartID]!.indexOf(light.id);
       renderPartToLightsRecord[renderPartID]!.splice(idx, 1);
       if (renderPartToLightsRecord[renderPartID]!.length === 0) {
          delete renderPartToLightsRecord[renderPartID];
       }
+
+      return;
    }
+
+   throw new Error();
 }
 
-export function removeLightsAttachedToEntity(entityID: number): void {
-   const lightIDs = entityToLightsRecord[entityID];
+export function removeLightsAttachedToEntity(entity: EntityID): void {
+   const lightIDs = entityToLightsRecord[entity];
    if (typeof lightIDs === "undefined") {
       return;
    }
@@ -124,13 +171,11 @@ export function removeLightsAttachedToRenderPart(renderPartID: number): void {
    }
 }
 
-export function getLightPositionMatrix(lightIdx: number): Matrix3x3 {
-   const light = lights[lightIdx];
-   const lightID = lightIDs[lightIdx];
-   
-   const attachedRenderPartID = lightToRenderPartRecord[lightID];
-   if (typeof attachedRenderPartID !== "undefined") {
-      const renderPart = Board.renderPartRecord[attachedRenderPartID];
+export function getLightPositionMatrix(light: Light): Matrix3x3 {
+   const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
+   if (typeof attachedRenderPartInfo !== "undefined") {
+      const renderPartID = attachedRenderPartInfo.renderPart.id;
+      const renderPart = Board.renderPartRecord[renderPartID];
 
       // @Speed @Copynpaste
       const matrix = createTranslationMatrix(light.offset.x, light.offset.y);
@@ -142,7 +187,7 @@ export function getLightPositionMatrix(lightIdx: number): Matrix3x3 {
       return matrix;
    }
 
-   const attachedEntity = lightToEntityRecord[lightID];
+   const attachedEntity = lightToEntityRecord[light.id];
    if (typeof attachedEntity !== "undefined" && entityExists(attachedEntity)) {
       // @Speed @Copynpaste
       const matrix = createTranslationMatrix(light.offset.x, light.offset.y);

@@ -53,7 +53,7 @@ function createParamsFromData(reader: PacketReader): FishComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.fish, never>): RenderParts {
    const fishComponentParams = entityConfig.serverComponents[ServerComponentType.fish];
    
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

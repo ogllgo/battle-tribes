@@ -12,7 +12,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { createEntityFromConfig } from "../../Entity";
+import { createEntity } from "../../Entity";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks } from "../../world";
@@ -126,7 +126,7 @@ const merge = (slime1: EntityID, slime2: EntityID): void => {
       config.components[ServerComponentType.transform].position.x = (slime1TransformComponent.position.x + slime2TransformComponent.position.x) / 2;
       config.components[ServerComponentType.transform].position.y = (slime1TransformComponent.position.y + slime2TransformComponent.position.y) / 2;
       config.components[ServerComponentType.slime].orbSizes = orbSizes;
-      createEntityFromConfig(config, getEntityLayer(slime1), 0);
+      createEntity(config, getEntityLayer(slime1), 0);
       
       destroyEntity(slime1);
    } else {

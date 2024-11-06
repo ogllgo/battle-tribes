@@ -7,7 +7,7 @@ import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../comp
 import { applyAbsoluteKnockback, PhysicsComponentArray } from "../components/PhysicsComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemQuakeConfig } from "../entities/guardian-gem-quake";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
 
 const enum Vars {
@@ -76,7 +76,7 @@ export default class GuardianCrystalSlamAI {
             config.components[ServerComponentType.transform].position.x = x;
             config.components[ServerComponentType.transform].position.y = y;
             config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-            createEntityFromConfig(config, layer, spawnDelayTicks);
+            createEntity(config, layer, spawnDelayTicks);
          }
       }
    }

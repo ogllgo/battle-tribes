@@ -2,12 +2,12 @@ import { angle, lerp } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "../../../../shared/src/entities";
-import RenderPart from "../../render-parts/RenderPart";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityConfig } from "../ComponentArray";
+import { RenderPart } from "../../render-parts/render-parts";
 
 export interface FenceGateComponentParams {
    readonly openProgress: number;
@@ -69,7 +69,7 @@ function createParamsFromData(reader: PacketReader): FenceGateComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          1,
@@ -84,7 +84,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       0,
       getTextureArrayIndex("entities/fence-gate/fence-gate-door.png")
    );
-   renderInfo.attachRenderThing(doorRenderPart);
+   renderInfo.attachRenderPart(doorRenderPart);
 
    return {
       doorRenderPart: doorRenderPart

@@ -49,7 +49,7 @@ function onLoad(entity: EntityID): void {
    );
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    for (let i = 0; i < 2; i++) {
       createGemQuakeProjectile(transformComponent);

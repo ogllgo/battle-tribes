@@ -2,7 +2,7 @@ import { HealingTotemTargetData, ServerComponentType } from "battletribes-shared
 import { Settings } from "battletribes-shared/settings";
 import { Point, angle, distance, lerp, randInt } from "battletribes-shared/utils";
 import { createHealingParticle } from "../../particles";
-import { Light, addLight, attachLightToEntity, removeLight } from "../../lights";
+import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
@@ -61,7 +61,7 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,
@@ -92,17 +92,16 @@ function onTick(entity: EntityID): void {
             const offsetX = -12 * (i === 0 ? 1 : -1);
             const offsetY = 8;
 
-            const light: Light = {
-               offset: new Point(offsetX, offsetY),
-               intensity: 0,
-               strength: 0.6,
-               radius: 0.1,
-               r: 0.15,
-               g: 1,
-               b: 0
-            };
-            const lightID = addLight(light);
-            attachLightToEntity(lightID, entity);
+            const light = createLight(
+               new Point(offsetX, offsetY),
+               0,
+               0.6,
+               0.1,
+               0.15,
+               1,
+               0
+            );
+            attachLightToEntity(light, entity);
 
             healingTotemComponent.eyeLights.push(light);
          }

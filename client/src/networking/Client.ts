@@ -2,7 +2,6 @@ import { BuildingPlanData, PotentialBuildingPlanData, TribeWallData } from "batt
 import { CircularHitboxData, GameDataPacket, HitFlags, RectangularHitboxData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { distance, Point, randFloat } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { BlueprintType } from "battletribes-shared/components";
 import { PlayerTribeData, TechID } from "battletribes-shared/techs";
 import { STRUCTURE_TYPES } from "battletribes-shared/structures";
 import { TribeType } from "battletribes-shared/tribes";
@@ -12,10 +11,9 @@ import { Tile } from "../Tile";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { HealthBar_setHasFrostShield } from "../components/game/HealthBar";
 import Camera from "../Camera";
-import { isDev } from "../utils";
 import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
-import { createDamageNumber, createHealNumber, createResearchNumber, setVisibleBuildingSafetys } from "../text-canvas";
+import { createDamageNumber, createHealNumber, setVisibleBuildingSafetys } from "../text-canvas";
 import { playSound } from "../sound";
 import { updateTechTree } from "../components/game/tech-tree/TechTree";
 import { TechInfocard_setSelectedTech } from "../components/game/TechInfocard";
@@ -313,10 +311,6 @@ abstract class Client {
    }
 
    public static processGameDataPacket(gameDataPacket: GameDataPacket): void {
-      if (isDev()) {
-         Game.setGameObjectDebugData(gameDataPacket.entityDebugData);
-      }
-
       // this.updateTribe(gameDataPacket.playerTribeData);
       // Game.enemyTribes = gameDataPacket.enemyTribesData;
       // @Hack: shouldn't do always
@@ -422,11 +416,6 @@ abstract class Client {
                playSound("repair.mp3", 0.4, 1, new Point(healData.entityPositionX, healData.entityPositionY));
             }
          }
-      }
-
-      // Register orb completes
-      for (const orbCompleteData of gameDataPacket.orbCompletes) {
-         createResearchNumber(orbCompleteData.x, orbCompleteData.y, orbCompleteData.amount);
       }
 
       if (gameDataPacket.pickedUpItem) {

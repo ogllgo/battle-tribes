@@ -9,7 +9,7 @@ import { Biome, TileType } from "battletribes-shared/tiles";
 import { randInt, UtilVars } from "battletribes-shared/utils";
 import { turnAngle, stopEntity } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -120,7 +120,7 @@ const createSpit = (slime: EntityID, slimeComponent: SlimeComponent): void => {
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
    config.components[ServerComponentType.physics].selfVelocity.x = 500 * Math.sin(transformComponent.rotation);
    config.components[ServerComponentType.physics].selfVelocity.y = 500 * Math.cos(transformComponent.rotation);
-   createEntityFromConfig(config, getEntityLayer(slime), 0);
+   createEntity(config, getEntityLayer(slime), 0);
 }
 
 // @Incomplete @Speed: Figure out why this first faster function seemingly gets called way less than the second one

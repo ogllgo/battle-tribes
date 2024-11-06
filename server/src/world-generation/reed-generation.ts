@@ -3,7 +3,7 @@ import { TileType } from "battletribes-shared/tiles";
 import Layer from "../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createReedConfig } from "../entities/reed";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { WaterTileGenerationInfo } from "./river-generation";
 import { distance } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
@@ -70,7 +70,7 @@ export function generateReeds(riverMainTiles: ReadonlyArray<WaterTileGenerationI
             const config = createReedConfig();
             config.components[ServerComponentType.transform].position.x = x;
             config.components[ServerComponentType.transform].position.y = y;
-            createEntityFromConfig(config, surfaceLayer, 0);
+            createEntity(config, surfaceLayer, 0);
          }
       }
    }

@@ -2,7 +2,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { lerp, randFloat, randInt } from "battletribes-shared/utils";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { getEntityAgeTicks, getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -22,14 +22,14 @@ export interface RockSpikeComponentParams {
 }
 
 export interface RenderParts {
-   readonly renderPart: RenderPart;
+   readonly renderPart: VisualRenderPart;
 }
 
 export interface RockSpikeComponent {
    size: number;
    readonly lifetime: number;
    
-   readonly renderPart: RenderPart;
+   readonly renderPart: VisualRenderPart;
 }
 
 const enum Vars {
@@ -81,7 +81,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(SPRITE_TEXTURE_SOURCES[rockSpikeComponentParams.size])
    );
    renderPart.scale = ENTRANCE_SCALE;
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart

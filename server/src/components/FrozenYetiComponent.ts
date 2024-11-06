@@ -11,7 +11,7 @@ import { Biome } from "battletribes-shared/tiles";
 import { getAngleDifference, entityIsInVisionRange, getEntitiesInRange, stopEntity } from "../ai-shared";
 import { createRockSpikeConfig, ROCK_SPIKE_HITBOX_SIZES } from "../entities/projectiles/rock-spike";
 import { createSnowballConfig } from "../entities/snowball";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
@@ -292,7 +292,7 @@ const createRockSpikes = (frozenYeti: EntityID, frozenYetiComponent: FrozenYetiC
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(frozenYeti), 0);
+      createEntity(config, getEntityLayer(frozenYeti), 0);
    }
    frozenYetiComponent.rockSpikeInfoArray = [];
 }
@@ -313,7 +313,7 @@ const spawnSnowball = (frozenYeti: EntityID, size: SnowballSize): void => {
    config.components[ServerComponentType.transform].position.y = position.y;
    config.components[ServerComponentType.physics].externalVelocity.x = velocityMagnitude * Math.sin(angle);
    config.components[ServerComponentType.physics].externalVelocity.y = velocityMagnitude * Math.cos(angle);
-   createEntityFromConfig(config, getEntityLayer(frozenYeti), 0);
+   createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
 const throwSnow = (frozenYeti: EntityID): void => {

@@ -2,7 +2,7 @@ import { createWebGLProgram, gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../ubos";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { RenderPart, renderPartIsTextured, thingIsRenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart, renderPartIsTextured, thingIsVisualRenderPart } from "../../render-parts/render-parts";
 
 const enum Vars {
    ATTRIBUTES_PER_VERTEX = 17,
@@ -217,7 +217,7 @@ export function createEntityShaders(): void {
    gl.bindVertexArray(null);
 }
 
-export function calculateRenderPartDepth(renderPart: RenderPart, renderInfo: EntityRenderInfo): number {
+export function calculateRenderPartDepth(renderPart: VisualRenderPart, renderInfo: EntityRenderInfo): number {
    return renderInfo.renderHeight + renderPart.zIndex * 0.0001;
 }
 
@@ -228,7 +228,7 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
 
    for (let j = 0; j < renderInfo.allRenderThings.length; j++) {
       const renderPart = renderInfo.allRenderThings[j];
-      if (!thingIsRenderPart(renderPart)) {
+      if (!thingIsVisualRenderPart(renderPart)) {
          continue;
       }
       
@@ -416,7 +416,7 @@ const clearRenderPartInVertexData = (vertexData: Float32Array, renderPartIdx: nu
 export function clearEntityInVertexData(renderInfo: EntityRenderInfo, vertexData: Float32Array, renderPartIdx: number): void {
    for (let j = 0; j < renderInfo.allRenderThings.length; j++) {
       const renderPart = renderInfo.allRenderThings[j];
-      if (!thingIsRenderPart(renderPart)) {
+      if (!thingIsVisualRenderPart(renderPart)) {
          continue;
       }
 

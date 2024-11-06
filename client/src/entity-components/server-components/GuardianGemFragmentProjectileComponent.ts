@@ -3,7 +3,7 @@ import { EntityID } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGenericGemParticle } from "../../particles";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -18,11 +18,11 @@ export interface GuardianGemFragmentProjectileComponentParams {
 }
 
 interface RenderParts {
-   readonly renderPart: RenderPart;
+   readonly renderPart: VisualRenderPart;
 }
 
 export interface GuardianGemFragmentProjectileComponent {
-   readonly renderPart: RenderPart;
+   readonly renderPart: VisualRenderPart;
 }
 
 const TEXTURE_SOURCES = [
@@ -88,7 +88,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       }
    }
 
-   renderInfo.attachRenderThing(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart

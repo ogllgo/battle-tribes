@@ -4,7 +4,7 @@ import Particle from "./Particle";
 import { highMonocolourBufferContainer, highTexturedBufferContainer, lowMonocolourBufferContainer, lowTexturedBufferContainer } from "./rendering/webgl/particle-rendering";
 import ObjectBufferContainer from "./rendering/ObjectBufferContainer";
 import { tempFloat32ArrayLength1 } from "./webgl";
-import { RenderPart } from "./render-parts/render-parts";
+import { VisualRenderPart } from "./render-parts/render-parts";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { getFrameProgress } from "./Game";
 
@@ -23,7 +23,7 @@ abstract class Board {
    public static clientTicks = 0;
    public static time: number;
 
-   public static renderPartRecord: Record<number, RenderPart> = {};
+   public static renderPartRecord: Record<number, VisualRenderPart> = {};
 
    // @Cleanup This is too messy. Perhaps combine all into one
    // public static readonly particles = new Array<Particle>();

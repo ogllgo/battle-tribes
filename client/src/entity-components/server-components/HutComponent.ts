@@ -5,7 +5,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSound } from "../../sound";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
@@ -20,19 +20,19 @@ export interface HutComponentParams {
 }
 
 interface RenderParts {
-   readonly doorRenderParts: ReadonlyArray<RenderPart>;
-   readonly recallMarker: RenderPart | null;
+   readonly doorRenderParts: ReadonlyArray<VisualRenderPart>;
+   readonly recallMarker: VisualRenderPart | null;
 }
 
 export interface HutComponent {
-   readonly doorRenderParts: ReadonlyArray<RenderPart>;
+   readonly doorRenderParts: ReadonlyArray<VisualRenderPart>;
    
    // @Memory: Don't need to store
    /** Amount the door should swing outwards from 0 to 1 */
    doorSwingAmount: number;
    isRecalling: boolean;
 
-   recallMarker: RenderPart | null;
+   recallMarker: VisualRenderPart | null;
 }
 
 export const WORKER_HUT_SIZE = 88;
@@ -111,7 +111,7 @@ const createRecallMarker = (): TexturedRenderPart => {
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.hut, never>): RenderParts {
    return {
-      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<RenderPart>,
+      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
       recallMarker: entityConfig.serverComponents[ServerComponentType.hut].isRecalling ? createRecallMarker() : null
    };
 }
@@ -178,7 +178,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       if (hutComponent.recallMarker === null) {
          hutComponent.recallMarker = createRecallMarker();
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(hutComponent.recallMarker);
+         renderInfo.attachRenderPart(hutComponent.recallMarker);
       }
 
       let opacity = Math.sin(getEntityAgeTicks(entity) / Settings.TPS * 5) * 0.5 + 0.5;

@@ -46,7 +46,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    )
    mainRenderPart.addTag("buildingMaterialComponent:material");
 
-   renderInfo.attachRenderThing(mainRenderPart);
+   renderInfo.attachRenderPart(mainRenderPart);
 
    return {};
 }

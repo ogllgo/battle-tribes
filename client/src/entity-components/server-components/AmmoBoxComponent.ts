@@ -10,7 +10,7 @@ import { getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { EntityConfig } from "../ComponentArray";
 
 export interface AmmoBoxComponentParams {
@@ -19,17 +19,17 @@ export interface AmmoBoxComponentParams {
 }
 
 export interface RenderParts {
-   readonly ammoWarningRenderPart: RenderPart | null;
+   readonly ammoWarningRenderPart: VisualRenderPart | null;
 }
 
 export interface AmmoBoxComponent {
    ammoType: TurretAmmoType | null;
    ammoRemaining: number;
 
-   ammoWarningRenderPart: RenderPart | null;
+   ammoWarningRenderPart: VisualRenderPart | null;
 }
 
-const createAmmoWarningRenderPart = (): RenderPart => {
+const createAmmoWarningRenderPart = (): VisualRenderPart => {
    const renderPart = new TexturedRenderPart(
       null,
       999,
@@ -64,10 +64,10 @@ function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.ammoBox, never>): RenderParts {
-   let ammoWarningRenderPart: RenderPart | null;
+   let ammoWarningRenderPart: VisualRenderPart | null;
    if (entityConfig.serverComponents[ServerComponentType.ammoBox].ammoType === null) {
       ammoWarningRenderPart = createAmmoWarningRenderPart();
-      renderInfo.attachRenderThing(ammoWarningRenderPart);
+      renderInfo.attachRenderPart(ammoWarningRenderPart);
    } else {
       ammoWarningRenderPart = null;
    }
@@ -105,7 +105,7 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: EntityID, am
          ammoBoxComponent.ammoWarningRenderPart.inheritParentRotation = false;
 
          const renderInfo = getEntityRenderInfo(entity);
-         renderInfo.attachRenderThing(ammoBoxComponent.ammoWarningRenderPart);
+         renderInfo.attachRenderPart(ammoBoxComponent.ammoWarningRenderPart);
       }
 
       ammoBoxComponent.ammoWarningRenderPart.opacity = (Math.sin(Board.serverTicks / 15) * 0.5 + 0.5) * 0.4 + 0.4;

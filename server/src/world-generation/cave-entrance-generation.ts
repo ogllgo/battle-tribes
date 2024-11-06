@@ -5,7 +5,7 @@ import { Biome, SubtileType, TileType } from "battletribes-shared/tiles";
 import { lerp, randInt, randItem, TileIndex } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createGuardianConfig } from "../entities/mobs/guardian";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { markTileAsUnspawnable } from "../entity-spawning";
 import { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { getEntityType, surfaceLayer } from "../world";
@@ -222,7 +222,7 @@ export function spawnGuardians(): void {
                config.components[ServerComponentType.transform].position.x = x;
                config.components[ServerComponentType.transform].position.y = y;
                config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-               createEntityFromConfig(config, surfaceLayer, 0);
+               createEntity(config, surfaceLayer, 0);
                break;
             }
          }

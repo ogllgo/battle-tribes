@@ -15,7 +15,7 @@ import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory } from "../components/InventoryComponent";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./game-data-packets";
 import { createItem } from "../items";
@@ -184,7 +184,7 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
    config.components[ServerComponentType.transform].position.x = spawnPosition.x;
    config.components[ServerComponentType.transform].position.y = spawnPosition.y;
    config.components[ServerComponentType.tribe].tribe = playerClient.tribe;
-   const player = createEntityFromConfig(config, layer, 0);
+   const player = createEntity(config, layer, 0);
 
    playerClient.instance = player;
 
@@ -433,7 +433,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
    config.components[ServerComponentType.transform].rotation = rotation;
-   createEntityFromConfig(config, playerClient.lastLayer, 0);
+   createEntity(config, playerClient.lastLayer, 0);
 }
 
 export function processToggleSimulationPacket(playerClient: PlayerClient, reader: PacketReader): void {

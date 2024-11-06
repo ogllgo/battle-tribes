@@ -13,7 +13,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import { stopEntity, moveEntityToPosition } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { createSnowballConfig } from "../entities/snowball";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
@@ -206,7 +206,7 @@ const throwSnowball = (yeti: EntityID, size: SnowballSize, throwAngle: number): 
    config.components[ServerComponentType.transform].position.y = position.y;
    config.components[ServerComponentType.physics].externalVelocity.x += velocityMagnitude * Math.sin(angle);
    config.components[ServerComponentType.physics].externalVelocity.y += velocityMagnitude * Math.cos(angle);
-   createEntityFromConfig(config, getEntityLayer(yeti), 0);
+   createEntity(config, getEntityLayer(yeti), 0);
 }
 
 const throwSnow = (yeti: EntityID, target: EntityID): void => {

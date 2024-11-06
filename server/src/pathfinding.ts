@@ -1,7 +1,7 @@
 import { PathfindingNodeIndex, VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { distBetweenPointAndRectangle, angle, calculateDistanceSquared, Point, distBetweenPointAndRectangularBox } from "battletribes-shared/utils";
+import { angle, calculateDistanceSquared, Point, distBetweenPointAndRectangularBox } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
 import OPTIONS from "./options";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";

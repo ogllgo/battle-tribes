@@ -2,7 +2,7 @@ import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } fro
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityID, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { createEntityFromConfig } from "../../Entity";
+import { createEntity } from "../../Entity";
 import Layer from "../../Layer";
 import { BerryBushComponent, BerryBushComponentArray } from "../../components/BerryBushComponent";
 import { ItemType } from "battletribes-shared/items/items";
@@ -72,7 +72,7 @@ export function dropBerryOverEntity(entity: EntityID): void {
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
    config.components[ServerComponentType.physics].externalVelocity.x = 40 * Math.sin(spawnDirection + velocityDirectionOffset);
    config.components[ServerComponentType.physics].externalVelocity.y = 40 * Math.cos(spawnDirection + velocityDirectionOffset);
-   createEntityFromConfig(config, getEntityLayer(entity), 0);
+   createEntity(config, getEntityLayer(entity), 0);
 }
 
 export function dropBerry(berryBush: EntityID, multiplier: number): void {

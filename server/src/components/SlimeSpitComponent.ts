@@ -6,7 +6,7 @@ import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { createSpitPoisonAreaConfig } from "../entities/projectiles/spit-poison-area";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Settings } from "../../../shared/src/settings";
@@ -66,7 +66,7 @@ function preRemove(spit: EntityID): void {
       config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
       config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
       config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntityFromConfig(config, getEntityLayer(spit), 0);
+      createEntity(config, getEntityLayer(spit), 0);
    }
 }
 

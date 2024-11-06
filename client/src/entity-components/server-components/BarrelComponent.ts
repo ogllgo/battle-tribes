@@ -24,7 +24,7 @@ export const BarrelComponentArray = new ServerComponentArray<BarrelComponent, Ba
 });
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

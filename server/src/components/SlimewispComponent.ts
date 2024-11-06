@@ -7,7 +7,7 @@ import { UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { createSlimeConfig } from "../entities/mobs/slime";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
@@ -63,7 +63,7 @@ function onTick(slimewisp: EntityID): void {
                config.components[ServerComponentType.transform].position.x = (transformComponent.position.x + mergingSlimewispTransformComponent.position.x) / 2;
                config.components[ServerComponentType.transform].position.y = (transformComponent.position.y + mergingSlimewispTransformComponent.position.y) / 2;
                config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-               createEntityFromConfig(config, layer, 0);
+               createEntity(config, layer, 0);
             
                destroyEntity(slimewisp);
                destroyEntity(mergingSlimewisp);

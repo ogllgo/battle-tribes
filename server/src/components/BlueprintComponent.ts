@@ -1,7 +1,6 @@
 import { BlueprintType, BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityID } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
-import { placeVirtualBuilding } from "../ai-tribe-building/ai-building";
 import { getBlueprintEntityType } from "../entities/blueprint-entity";
 import { StructureComponentArray } from "./StructureComponent";
 import { calculateStructureConnectionInfo } from "battletribes-shared/structures";
@@ -11,7 +10,7 @@ import { HutComponentArray } from "./HutComponent";
 import { Item, ITEM_INFO_RECORD, HammerItemInfo } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./TransformComponent";
 import { createDoorConfig } from "../entities/structures/door";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { createEmbrasureConfig } from "../entities/structures/embrasure";
 import { createBallistaConfig } from "../entities/structures/ballista";
 import { createSlingTurretConfig } from "../entities/structures/sling-turret";
@@ -20,8 +19,6 @@ import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
-import { cloneHitbox, Hitbox } from "../../../shared/src/boxes/boxes";
-import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -57,46 +54,17 @@ export class BlueprintComponent {
 
 export const BlueprintComponentArray = new ComponentArray<BlueprintComponent>(ServerComponentType.blueprint, true, {
    onJoin: onJoin,
-   onRemove: onRemove,
    getDataLength: getDataLength,
    addDataToPacket: addDataToPacket
 });
 
 function onJoin(entityID: EntityID): void {
-   const transformComponent = TransformComponentArray.getComponent(entityID);
-   const tribeComponent = TribeComponentArray.getComponent(entityID);
    const blueprintComponent = BlueprintComponentArray.getComponent(entityID);
-
-   const virtualEntityID = tribeComponent.tribe.virtualEntityIDCounter++;
-
-   // @Copynpaste from blueprint-entity 
-   let hitboxes: Array<Hitbox>;
-   if (blueprintComponent.associatedEntityID !== 0) {
-      const structureTransformComponent = TransformComponentArray.getComponent(blueprintComponent.associatedEntityID);
-
-      hitboxes = [];
-      for (const hitbox of structureTransformComponent.hitboxes) {
-         hitboxes.push(cloneHitbox(hitbox));
-      }
-   } else {
-      const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
-      hitboxes = createNormalStructureHitboxes(entityType);
-   }
-
-   const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
-   placeVirtualBuilding(tribeComponent.tribe, transformComponent.position, transformComponent.rotation, entityType, hitboxes, virtualEntityID);
-   tribeComponent.tribe.buildingsAreDirty = true;
 
    if (StructureComponentArray.hasComponent(blueprintComponent.associatedEntityID)) {
       const structureComponent = StructureComponentArray.getComponent(blueprintComponent.associatedEntityID);
       structureComponent.activeBlueprint = entityID;
    }
-}
-
-function onRemove(entityID: EntityID): void {
-   const tribeComponent = TribeComponentArray.getComponent(entityID);
-   const blueprintComponent = BlueprintComponentArray.getComponent(entityID);
-   tribeComponent.tribe.removeVirtualBuilding(blueprintComponent.virtualEntityID);
 }
 
 const upgradeBuilding = (building: EntityID): void => {
@@ -125,7 +93,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneDoor: {
@@ -133,7 +101,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.woodenEmbrasure: {
@@ -141,7 +109,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneEmbrasure: {
@@ -149,7 +117,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.ballista: {
@@ -157,7 +125,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.slingTurret: {
@@ -165,7 +133,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.woodenTunnel: {
@@ -173,7 +141,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneTunnel: {
@@ -181,7 +149,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.fenceGate: {
@@ -189,7 +157,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
 
          destroyEntity(blueprintComponent.associatedEntityID);
          
@@ -200,7 +168,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         const hut = createEntityFromConfig(config, getEntityLayer(blueprintEntity), 0);
+         const hut = createEntity(config, getEntityLayer(blueprintEntity), 0);
 
          // Remove the previous hut
          destroyEntity(blueprintComponent.associatedEntityID);

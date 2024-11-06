@@ -4,7 +4,7 @@ import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../ubos";
 import { createImage } from "../../textures";
 import { RenderableType, addRenderable } from "../render-loop";
-import { RenderPart, renderPartIsTextured } from "../../render-parts/render-parts";
+import { VisualRenderPart, renderPartIsTextured } from "../../render-parts/render-parts";
 import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
 import { calculateRenderPartDepth } from "./entity-rendering";
@@ -16,7 +16,7 @@ const enum Vars {
 export interface RenderPartOverlayGroup {
    readonly entity: EntityID;
    readonly textureSource: string;
-   readonly renderParts: Array<RenderPart>;
+   readonly renderParts: Array<VisualRenderPart>;
 }
 
 // @Cleanup: shouldn't be exported
@@ -45,7 +45,7 @@ const getOverlayRenderHeight = (overlay: RenderPartOverlayGroup): number => {
    return minDepth - 0.0001;
 }
 
-export function createRenderPartOverlayGroup(entity: EntityID, textureSource: string, renderParts: Array<RenderPart>): RenderPartOverlayGroup {
+export function createRenderPartOverlayGroup(entity: EntityID, textureSource: string, renderParts: Array<VisualRenderPart>): RenderPartOverlayGroup {
    const overlay: RenderPartOverlayGroup = {
       entity: entity,
       textureSource: textureSource,

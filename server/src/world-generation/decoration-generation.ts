@@ -4,7 +4,7 @@ import { TileType, TileTypeString } from "battletribes-shared/tiles";
 import { randInt, randFloat, TileIndex } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges, getTilesInRange, getTileX, getTileY, tileIsInWorldIncludingEdges } from "../Layer";
 import { createDecorationConfig } from "../entities/decoration";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { pushJoinBuffer, surfaceLayer } from "../world";
 
 const enum Vars {
@@ -28,7 +28,7 @@ const createDecoration = (x: number, y: number, decorationType: DecorationType):
    config.components[ServerComponentType.transform].position.y = y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
    config.components[ServerComponentType.decoration].decorationType = decorationType;
-   createEntityFromConfig(config, surfaceLayer, 0);
+   createEntity(config, surfaceLayer, 0);
 
    pushJoinBuffer(false);
 }

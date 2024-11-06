@@ -8,11 +8,12 @@ import { Point, randFloat, randInt, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 import Chunk from "./Chunk";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { Light, LightID } from "./lights";
 import Particle from "./Particle";
 import { RenderLayer } from "./render-layers";
 import { RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import { addRenderable, removeRenderable, RenderableType } from "./rendering/render-loop";
-import { renderLayerIsChunkRendered, registerChunkRenderedEntity, removeChunkRenderedEntity } from "./rendering/webgl/chunked-entity-rendering";
+import { renderLayerIsChunkRendered, registerChunkRenderedEntity, removeChunkRenderedEntity, createRenderLayerChunkDataRecord, createModifiedChunkIndicesArray } from "./rendering/webgl/chunked-entity-rendering";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "./rendering/webgl/particle-rendering";
 import { recalculateWallSubtileRenderData, WALL_TILE_TEXTURE_SOURCE_RECORD } from "./rendering/webgl/solid-tile-rendering";
 import { recalculateTileShadows, TileShadowType } from "./rendering/webgl/tile-shadow-rendering";
@@ -67,7 +68,16 @@ export default class Layer {
    public readonly chunks: ReadonlyArray<Chunk>;
 
    public readonly wallSubtileVariants: Partial<Record<TileIndex, number>> = {};
+   
+   private readonly worldInfo: WorldInfo;
 
+   public readonly lights = new Array<Light>();
+
+   // For chunked entity rendering
+   public readonly renderLayerChunkDataRecord = createRenderLayerChunkDataRecord();
+   /** Each render layer contains a set of which chunks have been modified */
+   public modifiedChunkIndicesArray = createModifiedChunkIndicesArray();
+   
    constructor(idx: number, tiles: ReadonlyArray<Tile>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
       this.idx = idx;
       this.wallSubtileTypes = wallSubtileTypes;
@@ -106,6 +116,23 @@ export default class Layer {
             }
          }
       }
+
+      this.worldInfo = {
+         chunks: this.chunks,
+         wallSubtileTypes: this.wallSubtileTypes,
+         getEntityCallback: (entity: EntityID): EntityInfo => {
+            const transformComponent = TransformComponentArray.getComponent(entity);
+
+            return {
+               type: getEntityType(entity),
+               position: transformComponent.position,
+               rotation: transformComponent.rotation,
+               id: entity,
+               hitboxes: transformComponent.hitboxes
+            };
+         },
+         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex)
+      };
    }
 
    private recalculateRenderChunkWalls(renderChunkX: number, renderChunkY: number): void {
@@ -252,6 +279,11 @@ export default class Layer {
       return this.wallSubtileTypes[subtileIndex] !== SubtileType.none;
    }
 
+   /** Returns if the given subtile can support a wall but is mined out */
+   public subtileIsMined(subtileIndex: number): boolean {
+      return this.wallSubtileTypes[subtileIndex] === SubtileType.none && this.wallSubtileDamageTakenMap.has(subtileIndex);
+   }
+
    public getWallSubtileType(subtileX: number, subtileY: number): SubtileType {
       const subtileIndex = getSubtileIndex(subtileX, subtileY);
       return this.wallSubtileTypes[subtileIndex];
@@ -278,7 +310,7 @@ export default class Layer {
 
    public addEntityToRendering(entity: EntityID, renderLayer: RenderLayer, renderHeight: number): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
-         registerChunkRenderedEntity(entity, renderLayer);
+         registerChunkRenderedEntity(entity, this, renderLayer);
       } else {
          addRenderable(this, RenderableType.entity, entity, renderLayer, renderHeight);
       }
@@ -286,27 +318,13 @@ export default class Layer {
 
    public removeEntityFromRendering(entity: EntityID, renderLayer: RenderLayer): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
-         removeChunkRenderedEntity(entity, renderLayer);
+         removeChunkRenderedEntity(entity, this, renderLayer);
       } else {
          removeRenderable(this, entity, renderLayer);
       }
    }
 
    public getWorldInfo(): WorldInfo {
-      return {
-         chunks: this.chunks,
-         wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: EntityID): EntityInfo => {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-
-            return {
-               type: getEntityType(entity),
-               position: transformComponent.position,
-               rotation: transformComponent.rotation,
-               id: entity,
-               hitboxes: transformComponent.hitboxes
-            };
-         }
-      }
+      return this.worldInfo;
    }
 }

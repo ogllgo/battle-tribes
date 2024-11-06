@@ -88,7 +88,7 @@ export function createWebGLProgram(gl: WebGL2RenderingContext, vertexShaderText:
       }
       if (isDev() && !gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
          console.warn("ERROR compiling fragment shader!");
-         throw new Error(gl.getShaderInfoLog(fragmentShader)!);
+         throw new Error(gl.getShaderInfoLog(fragmentShader)!); 
       }
       throw new Error("ERROR linking program! " + gl.getProgramInfoLog(program));
    }

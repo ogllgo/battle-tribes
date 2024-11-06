@@ -38,8 +38,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          0,
          getTextureArrayIndex("entities/bracings/wooden-vertical-post.png")
       );
-
-      renderInfo.attachRenderThing(renderPart);
+      renderPart.addTag("bracingsComponent:vertical");
+      renderInfo.attachRenderPart(renderPart);
    }
 
    // Horizontal bar connecting the vertical ones
@@ -49,8 +49,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0,
       getTextureArrayIndex("entities/bracings/wooden-horizontal-post.png")
    );
+   horizontalBar.addTag("bracingsComponent:horizontal");
    horizontalBar.opacity = 0.5;
-   renderInfo.attachRenderThing(horizontalBar);
+   renderInfo.attachRenderPart(horizontalBar);
 
    return {};
 }

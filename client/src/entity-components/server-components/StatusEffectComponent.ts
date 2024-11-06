@@ -7,7 +7,7 @@ import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolourParticleToBufferContainer, ParticleColour } from "../../rendering/webgl/particle-rendering";
-import { Light, addLight, attachLightToEntity, removeLight } from "../../lights";
+import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityID } from "../../../../shared/src/entities";
@@ -144,17 +144,16 @@ function onTick(entity: EntityID): void {
    const fireStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.burning);
    if (fireStatusEffect !== null) {
       if (statusEffectComponent.burningLight === null) {
-         statusEffectComponent.burningLight = {
-            offset: new Point(0, 0),
-            intensity: 1,
-            strength: 2.5,
-            radius: 0.3,
-            r: 0,
-            g: 0,
-            b: 0
-         };
-         const lightID = addLight(statusEffectComponent.burningLight);
-         attachLightToEntity(lightID, entity);
+         statusEffectComponent.burningLight = createLight(
+            new Point(0, 0),
+            1,
+            2.5,
+            0.3,
+            0,
+            0,
+            0
+         );
+         attachLightToEntity(statusEffectComponent.burningLight, entity);
       }
       
       // Ember particles

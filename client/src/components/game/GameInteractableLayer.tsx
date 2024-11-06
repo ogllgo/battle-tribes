@@ -40,7 +40,7 @@ import { createBracingsComponentParams } from "../../entity-components/server-co
 import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
 import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
 import { TribeComponentArray, createTribeComponentParams } from "../../entity-components/server-components/TribeComponent";
-import { thingIsRenderPart } from "../../render-parts/render-parts";
+import { thingIsVisualRenderPart } from "../../render-parts/render-parts";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -1255,7 +1255,7 @@ const tickItem = (itemType: ItemType): void => {
          // Modify all the render part's opacity
          for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
             const renderThing = renderInfo.allRenderThings[i];
-            if (thingIsRenderPart(renderThing)) {
+            if (thingIsVisualRenderPart(renderThing)) {
                renderThing.opacity *= 0.5;
             }
          }

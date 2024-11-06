@@ -3,12 +3,12 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
 import { Point, angle, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
-import { Light, addLight, attachLightToEntity, removeLightsAttachedToEntity } from "../../lights";
+import { Light, attachLightToEntity, createLight, removeLightsAttachedToEntity } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createLeafParticle, createSprintParticle, createTitleObtainParticle, LeafParticleSize } from "../../particles";
 import { createRenderPartOverlayGroup } from "../../rendering/webgl/overlay-rendering";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
@@ -34,13 +34,13 @@ export interface TribeMemberComponentParams {
 }
 
 interface RenderParts {
-   readonly bodyRenderPart: RenderPart;
-   readonly limbRenderParts: ReadonlyArray<RenderPart>;
+   readonly bodyRenderPart: VisualRenderPart;
+   readonly limbRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export interface TribeMemberComponent {
-   readonly bodyRenderPart: RenderPart;
-   readonly handRenderParts: ReadonlyArray<RenderPart>;
+   readonly bodyRenderPart: VisualRenderPart;
+   readonly handRenderParts: ReadonlyArray<VisualRenderPart>;
    
    warpaintType: number | null;
    
@@ -360,7 +360,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0,
       getTextureArrayIndex(getBodyTextureSource(entityConfig.entityType, tribeComponentParams.tribeType))
    );
-   renderInfo.attachRenderThing(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    if (tribeComponentParams.tribeType === TribeType.goblins) {
       if (warPaintType !== null) {
@@ -379,7 +379,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
             getTextureArrayIndex(textureSource)
          );
          warpaintRenderPart.addTag("tribeMemberComponent:warpaint");
-         renderInfo.attachRenderThing(warpaintRenderPart);
+         renderInfo.attachRenderPart(warpaintRenderPart);
       } else {
          console.warn("bad");
       }
@@ -395,7 +395,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       leftEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
       leftEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
       leftEarRenderPart.setFlipX(true);
-      renderInfo.attachRenderThing(leftEarRenderPart);
+      renderInfo.attachRenderPart(leftEarRenderPart);
 
       // Right ear
       const rightEarRenderPart = new TexturedRenderPart(
@@ -407,11 +407,11 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       rightEarRenderPart.addTag("tribeMemberComponent:ear");
       rightEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
       rightEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
-      renderInfo.attachRenderThing(rightEarRenderPart);
+      renderInfo.attachRenderPart(rightEarRenderPart);
    }
 
    // Hands
-   const limbRenderParts = new Array<RenderPart>();
+   const limbRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const attachPoint = new RenderAttachPoint(
          null,
@@ -422,7 +422,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          attachPoint.setFlipX(true);
       }
       attachPoint.addTag("inventoryUseComponent:attachPoint");
-      renderInfo.attachRenderThing(attachPoint);
+      renderInfo.attachRenderPart(attachPoint);
       
       const handRenderPart = new TexturedRenderPart(
          attachPoint,
@@ -432,7 +432,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       );
       limbRenderParts.push(handRenderPart);
       handRenderPart.addTag("inventoryUseComponent:hand");
-      renderInfo.attachRenderThing(handRenderPart);
+      renderInfo.attachRenderPart(handRenderPart);
    }
 
    return {
@@ -456,7 +456,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMem
 const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, entity: EntityID): void => {
    // Remove previous effects
    const renderInfo = getEntityRenderInfo(entity);
-   const previousRenderParts = renderInfo.getRenderThings("tribeMemberComponent:fromTitle") as Array<RenderPart>;
+   const previousRenderParts = renderInfo.getRenderThings("tribeMemberComponent:fromTitle") as Array<VisualRenderPart>;
    for (let i = 0; i < previousRenderParts.length; i++) {
       const renderPart = previousRenderParts[i];
       renderInfo.removeRenderPart(renderPart);
@@ -480,18 +480,17 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
                const offsetX = 16 * (i === 0 ? -1 : 1);
                const offsetY = 20;
                
-               const light: Light = {
-                  offset: new Point(offsetX, offsetY),
-                  intensity: 0.4,
-                  strength: 0.4,
-                  radius: 0,
-                  r: 1.75,
-                  g: 0,
-                  b: 0
-               };
+               const light = createLight(
+                  new Point(offsetX, offsetY),
+                  0.4,
+                  0.4,
+                  0,
+                  1.75,
+                  0,
+                  0
+               );
                tribeMemberComponent.deathbringerEyeLights.push(light);
-               const lightID = addLight(light);
-               attachLightToEntity(lightID, entity);
+               attachLightToEntity(light, entity);
             }
             
             break;
@@ -516,7 +515,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
             renderPart.offset.x = offsetX;
             renderPart.offset.y = offsetY;
 
-            renderInfo.attachRenderThing(renderPart);
+            renderInfo.attachRenderPart(renderPart);
             break;
          }
          // Create shrewd eyes
@@ -549,7 +548,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
                renderPart.offset.x = (xo - 5 * 4 / 2) * (i === 1 ? 1 : -1);
                renderPart.offset.y = yo - 5 * 4 / 2;
 
-               renderInfo.attachRenderThing(renderPart);
+               renderInfo.attachRenderPart(renderPart);
             }
             
             break;
@@ -575,7 +574,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
                renderPart.offset.x = (radius + radiusAdd) * Math.sin(angle);
                renderPart.offset.y = (radius + radiusAdd) * Math.cos(angle);
 
-               renderInfo.attachRenderThing(renderPart);
+               renderInfo.attachRenderPart(renderPart);
             }
             break;
          }
@@ -591,7 +590,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
             const radius = getTribesmanRadius(entity);
             renderPart.offset.y = radius - 2;
 
-            renderInfo.attachRenderThing(renderPart);
+            renderInfo.attachRenderPart(renderPart);
             break;
          }
          case TribesmanTitle.builder: {
@@ -599,11 +598,11 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
             // Create a dirty shine on body render parts
             // 
             
-            const bodyRenderPart = renderInfo.getRenderThing("tribeMemberComponent:body") as RenderPart;
+            const bodyRenderPart = renderInfo.getRenderThing("tribeMemberComponent:body") as VisualRenderPart;
             const bodyOverlayGroup = createRenderPartOverlayGroup(entity, "overlays/dirt.png", [bodyRenderPart]);
             renderInfo.renderPartOverlayGroups.push(bodyOverlayGroup);
 
-            const handRenderParts = renderInfo.getRenderThings("tribeMemberComponent:hand", 2) as Array<RenderPart>;
+            const handRenderParts = renderInfo.getRenderThings("tribeMemberComponent:hand", 2) as Array<VisualRenderPart>;
             for (let i = 0; i < handRenderParts.length; i++) {
                const renderPart = handRenderParts[i];
                const handOverlayGroup = createRenderPartOverlayGroup(entity, "overlays/dirt.png", [renderPart]);
@@ -620,7 +619,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
                getTextureArrayIndex("entities/miscellaneous/tribesman-health-patch.png")
             );
             renderPart.addTag("tribeMemberComponent:fromTitle");
-            renderInfo.attachRenderThing(renderPart);
+            renderInfo.attachRenderPart(renderPart);
             break;
          }
       }

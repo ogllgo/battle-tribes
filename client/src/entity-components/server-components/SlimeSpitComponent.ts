@@ -1,5 +1,5 @@
 import { PacketReader } from "battletribes-shared/packets";
-import { RenderPart } from "../../render-parts/render-parts";
+import { VisualRenderPart } from "../../render-parts/render-parts";
 import { Settings } from "battletribes-shared/settings";
 import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
@@ -15,7 +15,7 @@ import { EntityConfig } from "../ComponentArray";
 export interface SlimeSpitComponentParams {}
 
 export interface SlimeSpitComponent {
-   readonly renderParts: ReadonlyArray<RenderPart>;
+   readonly renderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, never>(ServerComponentType.slimeSpit, true, {
@@ -33,7 +33,7 @@ function createParamsFromData(): SlimeSpitComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitComponent {
-   const renderParts = new Array<RenderPart>();
+   const renderParts = new Array<VisualRenderPart>();
 
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
@@ -44,7 +44,7 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart1.opacity = 0.75;
-   entityConfig.renderInfo.attachRenderThing(renderPart1);
+   entityConfig.renderInfo.attachRenderPart(renderPart1);
    renderParts.push(renderPart1);
 
    const renderPart2 = new TexturedRenderPart(
@@ -54,7 +54,7 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart2.opacity = 0.75;
-   entityConfig.renderInfo.attachRenderThing(renderPart2);
+   entityConfig.renderInfo.attachRenderPart(renderPart2);
    renderParts.push(renderPart2);
 
    return {

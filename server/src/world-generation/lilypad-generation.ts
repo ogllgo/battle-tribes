@@ -3,7 +3,7 @@ import { TileType } from "battletribes-shared/tiles";
 import { isTooCloseToSteppingStone } from "../Chunk";
 import { createLilypadConfig } from "../entities/lilypad";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { randInt } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { EntityType } from "battletribes-shared/entities";
@@ -61,7 +61,7 @@ export function generateLilypads(): void {
             config.components[ServerComponentType.transform].position.x = x;
             config.components[ServerComponentType.transform].position.y = y;
             config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-            createEntityFromConfig(config, surfaceLayer, 0);
+            createEntity(config, surfaceLayer, 0);
 
             // Immediately add the entity so that distance checks work
             pushJoinBuffer(false);

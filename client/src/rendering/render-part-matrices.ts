@@ -1,7 +1,7 @@
 import { EntityRenderInfo } from "../EntityRenderInfo";
 import { createIdentityMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
-import { RenderParent, RenderThing } from "../render-parts/render-parts";
+import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
@@ -178,7 +178,7 @@ const calculateAndOverrideEntityModelMatrix = (renderInfo: EntityRenderInfo): vo
    translateMatrix(renderInfo.modelMatrix, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
 }
 
-const calculateAndOverrideRenderThingMatrix = (thing: RenderThing): void => {
+const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    const matrix = thing.modelMatrix;
 
    // Rotation

@@ -69,6 +69,7 @@ import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
 import { createCollapseParticles } from "./collapses";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/webgl/subtile-support-rendering";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -160,10 +161,12 @@ const main = (currentTime: number): void => {
    }
 }
 
-const renderLayer = (layer: Layer, frameProgress: number): void => {
+const renderLayer = (layer: Layer): void => {
    if (layer === getCurrentLayer()) {
       renderText();
    }
+
+   // @Incomplete: A whole lot of these are not layer specific
 
    renderTileShadows(layer, TileShadowType.dropdownShadow);
 
@@ -181,9 +184,10 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
       renderChunkBorders(Camera.minVisibleRenderChunkX, Camera.maxVisibleRenderChunkX, Camera.minVisibleRenderChunkY, Camera.maxVisibleRenderChunkY, RENDER_CHUNK_SIZE, 2);
    }
 
+   // @Incomplete: Not layer specific
    renderHealingBeams();
 
-   refreshChunkedEntityRenderingBuffers();
+   refreshChunkedEntityRenderingBuffers(layer);
 
    const visibleRiverRenderChunks = calculateVisibleRiverInfo();
    resetRenderOrder();
@@ -234,6 +238,11 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
    }
 
    renderGhostEntities();
+      
+   renderLighting(layer);
+   if (OPTIONS.debugLights) {
+      renderLightingDebug(layer);
+   }
 }
 
 abstract class Game {
@@ -260,14 +269,9 @@ abstract class Game {
    // @Hack @Cleanup: remove this!
    public static playerID: number;
    
-   public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | undefined): void {
-      if (typeof newEntityDebugData === "undefined") {
-         entityDebugData = null;
-         setDebugInfoDebugData(null);
-      } else {
-         entityDebugData = newEntityDebugData;
-         setDebugInfoDebugData(entityDebugData);
-      }
+   public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
+      entityDebugData = newEntityDebugData;
+      setDebugInfoDebugData(entityDebugData);
    }
 
    public static getEntityDebugData(): EntityDebugData | null {
@@ -384,6 +388,7 @@ abstract class Game {
             createGrassBlockerShaders();
             createLightDebugShaders();
             createTileBreakProgressShaders();
+            createSubtileSupportShaders();
             if (isDev()) {
                setupFrameGraph();
             }
@@ -485,11 +490,11 @@ abstract class Game {
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {
-         renderLayer(layers[1], frameProgress);
+         renderLayer(layers[1]);
          renderDarkening();
-         renderLayer(layers[0], frameProgress);
+         renderLayer(layers[0]);
       } else {
-         renderLayer(layers[1], frameProgress);
+         renderLayer(layers[1]);
       }
 
       if (isDev()) {
@@ -502,10 +507,9 @@ abstract class Game {
             Client.sendTrackEntity(0);
          }
       }
-      
-      renderLighting();
-      if (OPTIONS.debugLights) {
-         renderLightingDebug();
+
+      if (OPTIONS.showSubtileSupports) {
+         renderSubtileSupports();
       }
 
       updateDebugScreenFPS();

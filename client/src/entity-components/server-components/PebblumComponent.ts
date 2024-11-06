@@ -31,7 +31,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/pebblum/pebblum-nose.png")
    )
    nose.offset.y = 12;
-   renderInfo.attachRenderThing(nose);
+   renderInfo.attachRenderPart(nose);
 
    // Body
    const body = new TexturedRenderPart(
@@ -41,7 +41,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/pebblum/pebblum-body.png")
    )
    body.offset.y = -8;
-   renderInfo.attachRenderThing(body);
+   renderInfo.attachRenderPart(body);
 
    return {};
 }

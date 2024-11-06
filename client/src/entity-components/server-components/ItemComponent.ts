@@ -40,7 +40,7 @@ function createParamsFromData(reader: PacketReader): ItemComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.item, never>): RenderParts {
    const itemComponentParams = entityConfig.serverComponents[ServerComponentType.item];
       
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

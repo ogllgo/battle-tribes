@@ -11,6 +11,7 @@ export const BREAK_PROGRESS_TEXTURE_SOURCES: ReadonlyArray<string> = [
 ];
 
 let program: WebGLProgram;
+// @Incomplete
 let vao: WebGLVertexArrayObject;
 
 let textureArray: WebGLTexture;
@@ -89,7 +90,7 @@ export function renderTileBreakProgress(layer: Layer): void {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
          const subtileIndex = getSubtileIndex(subtileX, subtileY);
          const damageTaken = layer.wallSubtileDamageTakenMap.get(subtileIndex);
-         if (typeof damageTaken === "undefined") {
+         if (typeof damageTaken === "undefined" || !layer.subtileIsWall(subtileX, subtileY)) {
             continue;
          }
 

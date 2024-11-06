@@ -6,9 +6,9 @@ import { getAngleDiff } from "battletribes-shared/utils";
 import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray, hasSpaceForRecipe } from "../../../components/InventoryComponent";
-import { TribesmanAIComponent, TribesmanAIComponentArray, TribesmanPathType, itemThrowIsOnCooldown } from "../../../components/TribesmanAIComponent";
-import { calculateRadialAttackTargets, repairBuilding, throwItem, } from "../tribe-member";
-import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
+import { TribesmanAIComponentArray, TribesmanPathType, itemThrowIsOnCooldown } from "../../../components/TribesmanAIComponent";
+import { calculateRadialAttackTargets, throwItem, } from "../tribe-member";
+import { InventoryUseComponentArray, repairBuilding, setLimbActions } from "../../../components/InventoryUseComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship, recruitTribesman } from "../../../components/TribeComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
@@ -606,8 +606,9 @@ export function tickTribesman(tribesman: EntityID): void {
          // Find the target
          const targets = calculateRadialAttackTargets(tribesman, getTribesmanAttackOffset(tribesman), getTribesmanAttackRadius(tribesman));
          if (targets.includes(closestBlueprint)) {
-            const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-            repairBuilding(tribesman, closestBlueprint, useInfo.selectedItemSlot, InventoryName.hotbar);
+            const limb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+            const item = useInfo.associatedInventory.itemSlots[useInfo.selectedItemSlot]!;
+            repairBuilding(tribesman, closestBlueprint, limb, item);
          }
          
          return;

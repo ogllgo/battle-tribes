@@ -20,7 +20,7 @@ export const SlingTurretComponentArray = new ServerComponentArray<SlingTurretCom
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    // Base
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,
@@ -37,7 +37,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/sling-turret/sling-turret-plate.png")
    );
    plateRenderPart.addTag("turretComponent:pivoting");
-   renderInfo.attachRenderThing(plateRenderPart);
+   renderInfo.attachRenderPart(plateRenderPart);
 
    // Sling
    const slingRenderPart = new TexturedRenderPart(
@@ -47,7 +47,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/sling-turret/sling-turret-sling.png")
    );
    slingRenderPart.addTag("turretComponent:aiming");
-   renderInfo.attachRenderThing(slingRenderPart);
+   renderInfo.attachRenderPart(slingRenderPart);
 
    return {};
 }

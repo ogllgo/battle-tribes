@@ -5,7 +5,7 @@ import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { createZombieConfig } from "../entities/mobs/zombie";
-import { createEntityFromConfig } from "../Entity";
+import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
@@ -80,7 +80,7 @@ const spawnZombie = (tombstone: EntityID, tombstoneComponent: TombstoneComponent
    config.components[ServerComponentType.transform].position.x = tombstoneComponent.zombieSpawnPositionX;
    config.components[ServerComponentType.transform].position.y = tombstoneComponent.zombieSpawnPositionY;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   createEntityFromConfig(config, getEntityLayer(tombstone), 0);
+   createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
    tombstoneComponent.isSpawningZombie = false;
@@ -140,7 +140,7 @@ function preRemove(tombstone: EntityID): void {
    config.components[ServerComponentType.transform].position.x = tombstoneTransformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = tombstoneTransformComponent.position.y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   createEntityFromConfig(config, getEntityLayer(tombstone), 0);
+   createEntity(config, getEntityLayer(tombstone), 0);
 }
 
 function getDataLength(entity: EntityID): number {

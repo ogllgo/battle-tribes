@@ -62,6 +62,11 @@ export interface WorldInfo {
    readonly chunks: Chunks;
    readonly wallSubtileTypes: Readonly<Float32Array>;
    getEntityCallback(entity: EntityID): EntityInfo;
+   subtileIsMined(subtileIndex: number): boolean;
+}
+
+export function entityIsStructure(entityType: EntityType): boolean {
+   return STRUCTURE_TYPES.indexOf(entityType as StructureType) !== -1;
 }
 
 export function createEmptyStructureConnectionInfo(): StructureConnectionInfo {
@@ -405,12 +410,16 @@ const getNearbyTileCornerSubtiles = (regularPlacePosition: Point): ReadonlyArray
 }
 
 const checkSubtileForWall = (subtileX: number, subtileY: number, worldInfo: WorldInfo): boolean => {
+   // A subtile can support bracings if it:
+   // - Is in the world
+   // - Is mined out
+   
    if (!subtileIsInWorld(subtileX, subtileY)) {
       return false;
    }
 
    const subtileIndex = getSubtileIndex(subtileX, subtileY);
-   return worldInfo.wallSubtileTypes[subtileIndex] !== SubtileType.none;
+   return worldInfo.subtileIsMined(subtileIndex);
 }
 
 const cornerIsPlaceable = (cornerSubtileX: number, cornerSubtileY: number, worldInfo: WorldInfo): boolean => {
@@ -431,7 +440,7 @@ const cornerIsPlaceable = (cornerSubtileX: number, cornerSubtileY: number, world
       numConnected++;
    }
 
-   return numConnected >= 1 && numConnected <= 3;
+   return numConnected >= 1 && numConnected <= 4;
 }
 
 const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {

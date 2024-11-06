@@ -51,7 +51,7 @@ function createParamsFromData(reader: PacketReader): DecorationComponentParams {
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.decoration, never>): RenderParts {
    const decorationComponentParams = entityConfig.serverComponents[ServerComponentType.decoration];
    
-   renderInfo.attachRenderThing(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
          0,

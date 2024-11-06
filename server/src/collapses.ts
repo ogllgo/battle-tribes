@@ -2,14 +2,17 @@ import { Settings } from "../../shared/src/settings";
 import { getSubtileX, getSubtileY, subtileIsInWorld, getSubtileIndex } from "../../shared/src/subtiles";
 import { SubtileType } from "../../shared/src/tiles";
 import { customTickIntervalHasPassed, distance } from "../../shared/src/utils";
+import { TransformComponent } from "./components/TransformComponent";
 import Layer from "./Layer";
-import PlayerClient from "./server/PlayerClient";
+import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
 import { getGameTicks, layers } from "./world";
 
 const enum Vars {
    MAX_SUPPORT = 100,
+   // @Temporary
    /** The amount that support is reduced each time the tile moves in. */
-   SUPPORT_REDUCTION = 10,
+   SUPPORT_REDUCTION = 0,
+   // SUPPORT_REDUCTION = 10,
    COLLAPSE_THRESHOLD = 50,
    COLLAPSE_WARNING_TIME_TICKS = 5 * Settings.TPS
 }
@@ -240,7 +243,8 @@ export function runCollapses(): void {
    }
    
    // Once a second, check for new collapses
-   if (getGameTicks() % Settings.TPS === 0) {
+   // @Temporary
+   if (getGameTicks() % Settings.TPS === 0 && 1 + 1 === 1) {
       for (const layer of layers) {
          for (const pair of layer.minedSubtileInfoMap) {
             const minedSubtileInfo = pair[1];
@@ -290,4 +294,41 @@ export function getPlayerNearbyCollapses(playerClient: PlayerClient): ReadonlyAr
    }
 
    return nearbyCollapses;
+}
+
+export function registerEntitySupports(transformComponent: TransformComponent): void {
+   // @Incomplete
+
+   for (const hitbox of transformComponent.hitboxes) {
+      
+   }
+}
+
+export function deregisterEntitySupports(transformComponent: TransformComponent): void {
+   // @Incomplete
+}
+
+export function getVisibleSubtileSupports(playerClient: PlayerClient): ReadonlyArray<number> {
+   // @Copynpaste
+   const minVisibleX = playerClient.lastPlayerPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleX = playerClient.lastPlayerPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
+   const minVisibleY = playerClient.lastPlayerPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleY = playerClient.lastPlayerPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
+
+   const supports = new Array<number>();
+   
+   const minSubtileX = (minVisibleX / Settings.TILE_SIZE) << 2;
+   const maxSubtileX = (maxVisibleX / Settings.TILE_SIZE) << 2;
+   const minSubtileY = (minVisibleY / Settings.TILE_SIZE) << 2;
+   const maxSubtileY = (maxVisibleY / Settings.TILE_SIZE) << 2;
+   for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+      for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (playerClient.lastLayer.subtileIsMined(subtileIndex)) {
+            supports.push(subtileIndex);
+         }
+      }
+   }
+
+   return supports;
 }

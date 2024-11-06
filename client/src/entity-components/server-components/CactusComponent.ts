@@ -108,7 +108,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       0,
       getTextureArrayIndex("entities/cactus/cactus.png")
    );
-   renderInfo.attachRenderThing(baseRenderPart);
+   renderInfo.attachRenderPart(baseRenderPart);
 
    return {};
 }
@@ -211,7 +211,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       const offsetDirection = flowerInfo.column * Math.PI / 4;
       renderPart.offset.x = flowerInfo.height * Math.sin(offsetDirection);
       renderPart.offset.y = flowerInfo.height * Math.cos(offsetDirection);
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    // Limbs
@@ -226,7 +226,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       )
       limbRenderPart.offset.x = CACTUS_RADIUS * Math.sin(limbInfo.direction);
       limbRenderPart.offset.y = CACTUS_RADIUS * Math.cos(limbInfo.direction);
-      renderInfo.attachRenderThing(limbRenderPart);
+      renderInfo.attachRenderPart(limbRenderPart);
       
       if (typeof limbInfo.flower !== "undefined") {
          const flowerInfo = limbInfo.flower;
@@ -239,7 +239,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          )
          flowerRenderPart.offset.x = flowerInfo.height * Math.sin(flowerInfo.direction);
          flowerRenderPart.offset.y = flowerInfo.height * Math.cos(flowerInfo.direction);
-         renderInfo.attachRenderThing(flowerRenderPart);
+         renderInfo.attachRenderPart(flowerRenderPart);
       }
    }
 }

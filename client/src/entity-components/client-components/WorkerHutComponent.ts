@@ -30,7 +30,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       0,
       getTextureArrayIndex("entities/worker-hut/worker-hut.png")
    );
-   renderInfo.attachRenderThing(hutRenderPart);
+   renderInfo.attachRenderPart(hutRenderPart);
 
    // Door
    const doorRenderPart = new TexturedRenderPart(
@@ -40,7 +40,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/worker-hut/worker-hut-door.png")
    );
    doorRenderPart.addTag("hutComponent:door");
-   renderInfo.attachRenderThing(doorRenderPart);
+   renderInfo.attachRenderPart(doorRenderPart);
 
    return {};
 }

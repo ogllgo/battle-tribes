@@ -64,7 +64,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityConfig.serverComponents[ServerComponentType.berryBush].numBerries])
    );
    renderPart.addTag("berryBushComponent:renderPart");
-   renderInfo.attachRenderThing(renderPart)
+   renderInfo.attachRenderPart(renderPart)
 
    return {
       renderPart: renderPart

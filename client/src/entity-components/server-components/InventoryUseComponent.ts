@@ -10,7 +10,7 @@ import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferConta
 import { animateLimb, createCraftingAnimationParticles, createMedicineAnimationParticles, generateRandomLimbPosition, updateBandageRenderPart, updateCustomItemRenderPart } from "../../limb-animations";
 import { createBlockParticle, createDeepFrostHeartBloodParticles } from "../../particles";
 import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool } from "battletribes-shared/items/items";
-import { RenderPart, RenderThing } from "../../render-parts/render-parts";
+import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
@@ -66,13 +66,13 @@ export interface InventoryUseComponent {
    readonly limbInfos: Array<LimbInfo>;
 
    readonly limbAttachPoints: Array<RenderAttachPoint>;
-   readonly limbRenderParts: Array<RenderPart>;
+   readonly limbRenderParts: Array<VisualRenderPart>;
    readonly activeItemRenderParts: Record<number, TexturedRenderPart> ;
-   readonly inactiveCrossbowArrowRenderParts: Record<number, RenderPart>;
-   readonly arrowRenderParts: Record<number, RenderPart>;
+   readonly inactiveCrossbowArrowRenderParts: Record<number, VisualRenderPart>;
+   readonly arrowRenderParts: Record<number, VisualRenderPart>;
 
-   customItemRenderPart: RenderPart | null;
-   readonly bandageRenderParts: Array<RenderPart>;
+   customItemRenderPart: VisualRenderPart | null;
+   readonly bandageRenderParts: Array<VisualRenderPart>;
 }
 
 /** Decimal percentage of total attack animation time spent doing the lunge part of the animation */
@@ -258,13 +258,13 @@ const updateLimbStateFromPacket = (reader: PacketReader, limbState: LimbState): 
    limbState.extraOffsetY = reader.readNumber();
 }
 
-const resetThing = (thing: RenderThing): void => {
+const resetThing = (thing: RenderPart): void => {
    thing.offset.x = 0;
    thing.offset.y = 0;
    thing.rotation = 0;
 }
 
-const setThingToState = (thing: RenderThing, state: LimbState): void => {
+const setThingToState = (thing: RenderPart, state: LimbState): void => {
    const direction = state.direction;
    // @Temporary @Hack
    const offset = 32 + state.extraOffset;
@@ -274,7 +274,7 @@ const setThingToState = (thing: RenderThing, state: LimbState): void => {
    thing.rotation = state.rotation;
 }
 
-const lerpThingBetweenStates = (thing: RenderThing, startState: LimbState, endState: LimbState, progress: number): void => {
+const lerpThingBetweenStates = (thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
    if (progress > 1) {
       progress = 1;
    }
@@ -315,7 +315,7 @@ const updateHeldItemRenderPart = (inventoryUseComponent: InventoryUseComponent, 
       );
 
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.attachRenderThing(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       inventoryUseComponent.activeItemRenderParts[limbIdx] = renderPart;
    }
 
@@ -503,7 +503,7 @@ function onLoad(entity: EntityID): void {
    }
    
    // @Cleanup
-   const handRenderParts = renderInfo.getRenderThings("inventoryUseComponent:hand", 2) as Array<RenderPart>;
+   const handRenderParts = renderInfo.getRenderThings("inventoryUseComponent:hand", 2) as Array<VisualRenderPart>;
    for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
       inventoryUseComponent.limbRenderParts.push(handRenderParts[limbIdx]);
    }
@@ -806,7 +806,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
                );
 
                const renderInfo = getEntityRenderInfo(entity);
-               renderInfo.attachRenderThing(inventoryUseComponent.arrowRenderParts[limbIdx]);
+               renderInfo.attachRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
             }
 
             const pullbackOffset = lerp(10, -8, Math.min(chargeProgress, 1));
