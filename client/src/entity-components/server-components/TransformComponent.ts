@@ -19,6 +19,7 @@ import { EntityID } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
+import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
 
 export interface TransformComponentParams {
    readonly position: Point;
@@ -357,7 +358,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       updateEntityPosition(transformComponent, entity);
 
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
+      registerDirtyRenderPosition(renderInfo);
    }
    
    transformComponent.collisionBit = reader.readNumber();

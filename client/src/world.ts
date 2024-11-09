@@ -10,7 +10,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import Layer from "./Layer";
 import { removeLightsAttachedToEntity, removeLightsAttachedToRenderPart } from "./lights";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
-import { registerDirtyEntity, removeEntityFromDirtyArray } from "./rendering/render-part-matrices";
+import { registerDirtyRenderInfo, registerDirtyRenderPosition, removeEntityFromDirtyArrays } from "./rendering/render-part-matrices";
 import { getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
@@ -166,7 +166,7 @@ export function createEntity(entity: EntityID, entityType: EntityType, layer: La
       // }
    }
    
-   registerDirtyEntity(renderInfo);
+   registerDirtyRenderInfo(renderInfo);
 
    return {
       renderInfo: renderInfo
@@ -191,7 +191,7 @@ export function removeEntity(entity: EntityID, isDeath: boolean): void {
       }
    }
    
-   removeEntityFromDirtyArray(renderInfo);
+   removeEntityFromDirtyArrays(renderInfo);
 
    // Remove any attached lights
    removeLightsAttachedToEntity(entity);

@@ -7,8 +7,8 @@ import { removeRenderable } from "./rendering/render-loop";
 import { VisualRenderPart, RenderPart, thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { createIdentityMatrix } from "./rendering/matrices";
 import { NUM_RENDER_LAYERS, RenderLayer } from "./render-layers";
-import { registerDirtyEntity, renderParentIsHitbox } from "./rendering/render-part-matrices";
-import { entityExists, getEntityLayer, getEntityType } from "./world";
+import { registerDirtyRenderInfo, renderParentIsHitbox } from "./rendering/render-part-matrices";
+import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
 
 export interface ComponentTint {
@@ -51,7 +51,8 @@ export class EntityRenderInfo {
    public shakeAmount = 0;
 
    /** Whether or not the entity has changed visually at all since its last dirty check */
-   public isDirty = true;
+   public renderPartsAreDirty = false;
+   public renderPositionIsDirty = false;
 
    public tintR = 0;
    public tintG = 0;
@@ -98,7 +99,7 @@ export class EntityRenderInfo {
          Board.renderPartRecord[renderPart.id] = renderPart;
       }
 
-      this.dirty();
+      registerDirtyRenderInfo(this);
    }
 
    public removeRenderPart(renderPart: VisualRenderPart): void {
@@ -171,18 +172,6 @@ export class EntityRenderInfo {
             this.tintG += tint.tintG;
             this.tintB += tint.tintB;
          }
-      }
-   }
-
-   // @Cleanup: This just seems like an unnecessary wrapper for registerDirtyEntity
-   public dirty(): void {
-      if (!this.isDirty) {
-         if (!entityExists(this.associatedEntity)) {
-            throw new Error("Tried to dirty an entity which does not exist!");
-         }
-         
-         registerDirtyEntity(this);
-         this.isDirty = true;
       }
    }
 }

@@ -6,6 +6,7 @@ import { lerp, Point } from "../../../../shared/src/utils";
 import { Light, attachLightToRenderPart, createLight } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playSound } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
@@ -428,19 +429,19 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    if (actualRubyGemActivation !== guardianComponent.rubyGemActivation) {
       setColours(guardianComponent.rubyRenderParts, guardianComponent.rubyLights, actualRubyGemActivation, actualRubyGemActivation, 0, 0);
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
    }
    const actualEmeraldGemActivation = lerp(emeraldGemActivation, 1, limbEmeraldGemActivation);
    if (actualEmeraldGemActivation !== guardianComponent.emeraldGemActivation) {
       setColours(guardianComponent.emeraldRenderParts, guardianComponent.emeraldLights, actualEmeraldGemActivation, 0, actualEmeraldGemActivation, 0);
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
    }
    const actualAmethystGemActivation = lerp(amethystGemActivation, 1, limbAmethystGemActivation);
    if (actualAmethystGemActivation !== guardianComponent.amethystGemActivation) {
       setColours(guardianComponent.amethystRenderParts, guardianComponent.amethystLights, actualAmethystGemActivation, actualAmethystGemActivation * 0.9, actualAmethystGemActivation * 0.2, actualAmethystGemActivation * 0.9);
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
    }
 
    guardianComponent.rubyGemActivation = actualRubyGemActivation;
@@ -488,7 +489,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          light.b += limbAmethystGemActivation * 0.5;
       }
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
    }
 
    guardianComponent.limbRubyGemActivation = limbRubyGemActivation;

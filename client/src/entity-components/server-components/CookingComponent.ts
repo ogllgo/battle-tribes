@@ -63,9 +63,12 @@ function onLoad(entity: EntityID): void {
       1,
       1.5,
       40,
-      0.2,
-      0.1,
-      0
+      1,
+      0.7,
+      0.4
+      // 1,
+      // 0,
+      // 0
    );
    attachLightToEntity(cookingComponent.light, entity);
 }

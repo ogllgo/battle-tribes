@@ -42,7 +42,7 @@ export interface ComponentArrayFunctions<T extends object, RenderParts extends o
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
    onSpawn?(entity: EntityID): void;
    onTick?(entity: EntityID): void;
-   /** Called when a packet is skipped and there is no data to update from */
+   /** Called when a packet is skipped and there is no data to update from, so we must extrapolate all the game logic */
    onUpdate?(entity: EntityID): void;
    onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
    onHit?(entity: EntityID, hitData: Readonly<HitData>): void;

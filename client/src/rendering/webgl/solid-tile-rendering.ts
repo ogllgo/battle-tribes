@@ -21,17 +21,17 @@ export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string |
    [TileType.stone]: "tiles/stone.png",
    [TileType.stoneWallFloor]: "tiles/stone-wall-floor.png"
 };
-const FLOOR_TILE_TO_TEXURE_ARRAY_INDEX_RECORD: Partial<Record<TileType, number | null>> = {};
+const FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<TileType, number | null>> = {};
 (() => {
    let i = 0;
    for (let tileType: TileType = 0; tileType < TileType._LENGTH_; tileType++) {
       const textureSource = FLOOR_TILE_TEXTURE_SOURCE_RECORD[tileType];
       if (typeof textureSource !== "undefined") {
          if (textureSource !== null) {
-            FLOOR_TILE_TO_TEXURE_ARRAY_INDEX_RECORD[tileType] = i;
+            FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD[tileType] = i;
             i++;
          } else {
-            FLOOR_TILE_TO_TEXURE_ARRAY_INDEX_RECORD[tileType] = null;
+            FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD[tileType] = null;
          }
       }
    }
@@ -42,18 +42,18 @@ export const WALL_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<SubtileType, Readon
    [SubtileType.sandstoneWall]: ["tiles/sandstone.png"],
    [SubtileType.stoneWall]: ["tiles/stone-wall-1.png", "tiles/stone-wall-2.png"]
 };
-const WALL_SUBTILE_TO_TEXURE_ARRAY_INDEX_RECORD: Partial<Record<SubtileType, Array<number>>> = {};
+const WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<SubtileType, Array<number>>> = {};
 (() => {
    let i = 0;
    for (let subtileType: SubtileType = 0; subtileType < SubtileType._LENGTH_; subtileType++) {
       const textureSources = WALL_TILE_TEXTURE_SOURCE_RECORD[subtileType];
       if (typeof textureSources !== "undefined") {
-         if (typeof WALL_SUBTILE_TO_TEXURE_ARRAY_INDEX_RECORD[subtileType] === "undefined") {
-            WALL_SUBTILE_TO_TEXURE_ARRAY_INDEX_RECORD[subtileType] = [];
+         if (typeof WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD[subtileType] === "undefined") {
+            WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD[subtileType] = [];
          }
          
          for (let j = 0; j < textureSources.length; j++) {
-            WALL_SUBTILE_TO_TEXURE_ARRAY_INDEX_RECORD[subtileType]!.push(i);
+            WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD[subtileType]!.push(i);
             i++;
          }
       }
@@ -270,7 +270,7 @@ const updateFloorVertexData = (data: Float32Array, layer: Layer, renderChunkX: n
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tile = layer.getTile(tileIndex);
 
-         const textureIndex = FLOOR_TILE_TO_TEXURE_ARRAY_INDEX_RECORD[tile.type];
+         const textureIndex = FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD[tile.type];
          if (typeof textureIndex === "undefined") {
             throw new Error(tile.type.toString());
          }
@@ -323,7 +323,7 @@ const updateWallVertexData = (data: Float32Array, layer: Layer, renderChunkX: nu
             continue;
          }
 
-         const textureIndexes = WALL_SUBTILE_TO_TEXURE_ARRAY_INDEX_RECORD[subtileType];
+         const textureIndexes = WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD[subtileType];
          if (typeof textureIndexes === "undefined") {
             throw new Error(subtileType.toString());
          }

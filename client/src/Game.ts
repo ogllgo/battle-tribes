@@ -11,7 +11,7 @@ import { createEntityShaders } from "./rendering/webgl/entity-rendering";
 import Client, { getQueuedGameDataPackets } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, getMouseTargetEntity, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
-import { createWebGLContext, gl, resizeCanvas } from "./webgl";
+import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
 import { toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderDamageBoxes, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
@@ -29,7 +29,7 @@ import Tribe from "./Tribe";
 import OPTIONS from "./options";
 import { RENDER_CHUNK_SIZE, createRenderChunks } from "./rendering/render-chunks";
 import { registerFrame, updateFrameGraph } from "./components/game/dev/FrameGraph";
-import { createNightShaders, renderLighting, updateDarknessDistortions } from "./rendering/webgl/lighting-rendering";
+import { createNightShaders, renderLighting } from "./rendering/webgl/lighting-rendering";
 import { renderGhostEntities } from "./rendering/webgl/entity-ghost-rendering";
 import { setupFrameGraph } from "./rendering/webgl/frame-graph-rendering";
 import { createTextureAtlases } from "./texture-atlases/texture-atlases";
@@ -53,7 +53,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { updateRenderInfoRenderPosition, updateRenderInfosFromTransformComponents, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { cleanRenderPositions, markMovingRenderPositions, updateRenderInfoRenderPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { processGameDataPacket } from "./networking/packet-processing";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
@@ -68,7 +68,6 @@ import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darke
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
 import { createCollapseParticles } from "./collapses";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/webgl/subtile-support-rendering";
 
 // @Cleanup: remove.
@@ -77,6 +76,12 @@ let _frameProgress = Number.EPSILON;
 let listenersHaveBeenCreated = false;
 
 let entityDebugData: EntityDebugData | null = null;
+
+export let gameFramebuffer: WebGLFramebuffer;
+export let gameFramebufferTexture: WebGLTexture;
+
+let lastTextureWidth = 0;
+let lastTextureHeight = 0;
 
 // @Cleanup: remove.
 export function getFrameProgress(): number {
@@ -360,6 +365,9 @@ abstract class Game {
             // Done after creating texture atlases as the data from them is used in a ubo
             createUBOs();
 
+            // @Cleanup: Move to separate function
+            gameFramebuffer = gl.createFramebuffer()!;
+
             // Create shaders
             createSolidTileShaders();
             createRiverShaders();
@@ -442,7 +450,6 @@ abstract class Game {
       renderCursorTooltip();
 
       createCollapseParticles();
-      updateDarknessDistortions();
 
       if (isDev()) refreshDebugInfo();
    }
@@ -463,7 +470,20 @@ abstract class Game {
       }
       lastRenderTime = currentRenderTime;
 
-      // Clear the canvas
+      gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
+   
+      if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
+         gameFramebufferTexture = createTexture(windowWidth, windowHeight);
+   
+         lastTextureWidth = windowWidth;
+         lastTextureHeight = windowHeight;
+      
+         // Attach the texture as the first color attachment
+         const attachmentPoint = gl.COLOR_ATTACHMENT0;
+         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, gameFramebufferTexture, 0);
+      }
+
+      // Reset the framebuffer
       gl.clearColor(1, 1, 1, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -473,9 +493,8 @@ abstract class Game {
       // @Cleanup: move to update function in camera
       // Update the camera
       if (playerInstance !== null) {
-         const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerRenderInfo = getEntityRenderInfo(playerInstance);
-         updateRenderInfoRenderPosition(playerTransformComponent, playerRenderInfo, frameProgress);
+         updateRenderInfoRenderPosition(playerRenderInfo, frameProgress);
 
          Camera.updatePosition();
          Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
@@ -486,7 +505,8 @@ abstract class Game {
 
       updateUBOs();
 
-      updateRenderInfosFromTransformComponents(frameProgress);
+      markMovingRenderPositions();
+      cleanRenderPositions(frameProgress);
       updateRenderPartMatrices();
 
       // @Hack

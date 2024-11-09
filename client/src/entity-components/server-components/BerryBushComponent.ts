@@ -11,6 +11,7 @@ import { randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
 import { playSound } from "../../sound";
 import { EntityConfig } from "../ComponentArray";
+import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 
 export interface BerryBushComponentParams {
    readonly numBerries: number;
@@ -88,9 +89,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    berryBushComponent.numBerries = reader.readNumber();
 
    berryBushComponent.renderPart.switchTextureSource(BERRY_BUSH_TEXTURE_SOURCES[berryBushComponent.numBerries]);
-   // @Bug: not working!
+   
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.dirty();
+   registerDirtyRenderInfo(renderInfo);
 }
 
 function onHit(entity: EntityID): void {

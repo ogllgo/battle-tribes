@@ -4,6 +4,7 @@ import { createTexture, createWebGLProgram, getCirclePoint, gl, windowHeight, wi
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { getTexture } from "../../textures";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
+import { gameFramebuffer } from "../../Game";
 
 const NUM_CIRCLE_POINTS = 20;
 
@@ -295,18 +296,18 @@ export function renderGrassBlockers(): void {
 
    const vertices = calculateGrassBlockerVertices(grassBlockers);
 
+   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+
    if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
       frameBufferTexture = createTexture(windowWidth, windowHeight);
 
       lastTextureWidth = windowWidth;
       lastTextureHeight = windowHeight;
-   }
-
-   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
    
-   // Attach the texture as the first color attachment
-   const attachmentPoint = gl.COLOR_ATTACHMENT0;
-   gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, frameBufferTexture, 0);
+      // Attach the texture as the first color attachment
+      const attachmentPoint = gl.COLOR_ATTACHMENT0;
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, frameBufferTexture, 0);
+   }
 
    // 
    // FRAMEBUFFER RENDERING
@@ -341,7 +342,7 @@ export function renderGrassBlockers(): void {
    // 
    
    gl.useProgram(renderProgram);
-   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+   gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
    
    gl.enable(gl.BLEND);
    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

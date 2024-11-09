@@ -9,6 +9,7 @@ import { getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
+import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 
 const enum Vars {
    NATURAL_DRIFT = 20 / Settings.TPS
@@ -224,7 +225,7 @@ function onTick(entity: EntityID): void {
    updateOffsets(layeredRodComponent, entity);
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.dirty();
+   registerDirtyRenderInfo(renderInfo);
 }
 
 function onCollision(entity: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, pushingHitbox: Hitbox): void {
@@ -265,7 +266,7 @@ function onCollision(entity: EntityID, collidingEntity: EntityID, _pushedHitbox:
    updateOffsets(layeredRodComponent, entity);
 
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.dirty();
+   registerDirtyRenderInfo(renderInfo);
 }
 
 function padData(reader: PacketReader): void {

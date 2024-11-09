@@ -34,6 +34,7 @@ import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
 import { setVisibleSubtileSupports, SubtileSupportInfo } from "../rendering/webgl/subtile-support-rendering";
 import { createResearchNumber } from "../text-canvas";
+import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -361,6 +362,11 @@ export function processEntityCreationData(entity: EntityID, reader: PacketReader
 
    registerBasicEntityInfo(entity, entityType, spawnTicks, layer, creationInfo.renderInfo);
    
+   // @Hack? In both this and the placeable entity ghost entity stuff, after calling createEntity, we either set the renderPosition
+   // or mark that it should be updated. So perhaps it would be better if in the createEntity function we deduce the initial value of renderPosition,
+   // which would remove the need for these two behaviours.
+   registerDirtyRenderPosition(creationInfo.renderInfo);
+   
    // @Incomplete: add components to component arrays here
    
    // Call onLoad functions
@@ -428,7 +434,7 @@ const processEntityUpdateData = (entity: EntityID, reader: PacketReader): void =
    // If you're updating the entity, then the server must have had some reason to send the data, so we should always consider the entity dirty.
    // @Incomplete: Are there some situations where this isn't the case?
    const renderInfo = getEntityRenderInfo(entity);
-   renderInfo.dirty();
+   registerDirtyRenderInfo(renderInfo);
 }
 
 export function processGameDataPacket(reader: PacketReader): void {

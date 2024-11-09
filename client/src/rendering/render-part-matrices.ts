@@ -5,11 +5,11 @@ import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
-import { EntityID } from "../../../shared/src/entities";
 import { TransformComponent, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
+let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
 
 /* ------------------------ */
 /* Matrix Utility Functions */
@@ -126,18 +126,37 @@ export function translateMatrix(matrix: Matrix3x3, tx: number, ty: number): void
    matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
 }
 
-export function registerDirtyEntity(renderInfo: EntityRenderInfo): void {
-   dirtyEntityRenderInfos.push(renderInfo);
-}
+export function registerDirtyRenderInfo(renderInfo: EntityRenderInfo): void {
+   if (!renderInfo.renderPartsAreDirty) {
+      renderInfo.renderPartsAreDirty = true;
 
-export function removeEntityFromDirtyArray(renderInfo: EntityRenderInfo): void {
-   const idx = dirtyEntityRenderInfos.indexOf(renderInfo);
-   if (idx !== -1) {
-      dirtyEntityRenderInfos.splice(idx, 1);
+      dirtyEntityRenderInfos.push(renderInfo);
    }
 }
 
-export function updateRenderInfoRenderPosition(transformComponent: TransformComponent, renderInfo: EntityRenderInfo, frameProgress: number): void {
+export function registerDirtyRenderPosition(renderInfo: EntityRenderInfo): void {
+   if (!renderInfo.renderPositionIsDirty) {
+      renderInfo.renderPositionIsDirty = true;
+
+      dirtyEntityRenderPositions.push(renderInfo);
+   }
+}
+
+export function removeEntityFromDirtyArrays(renderInfo: EntityRenderInfo): void {
+   let idx = dirtyEntityRenderInfos.indexOf(renderInfo);
+   if (idx !== -1) {
+      dirtyEntityRenderInfos.splice(idx, 1);
+   }
+   
+   idx = dirtyEntityRenderPositions.indexOf(renderInfo);
+   if (idx !== -1) {
+      dirtyEntityRenderPositions.splice(idx, 1);
+   }
+}
+
+export function updateRenderInfoRenderPosition(renderInfo: EntityRenderInfo, frameProgress: number): void {
+   const transformComponent = TransformComponentArray.getComponent(renderInfo.associatedEntity);
+   
    renderInfo.rotation = transformComponent.rotation;
    
    const renderPosition = renderInfo.renderPosition;
@@ -147,8 +166,8 @@ export function updateRenderInfoRenderPosition(transformComponent: TransformComp
    if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity)) {
       const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
       
-      renderPosition.x += physicsComponent.selfVelocity.x * frameProgress * Settings.I_TPS;
-      renderPosition.y += physicsComponent.selfVelocity.y * frameProgress * Settings.I_TPS;
+      renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+      renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
    }
 
    // Shake
@@ -159,15 +178,26 @@ export function updateRenderInfoRenderPosition(transformComponent: TransformComp
    }
 }
 
-export function updateRenderInfosFromTransformComponents(frameProgress: number): void {
-   for (let i = 0; i < TransformComponentArray.activeEntities.length; i++) {
-      const entity = TransformComponentArray.activeEntities[i];
-      const transformComponent = TransformComponentArray.activeComponents[i];
+/** Marks all render positions which will move due to the frame progress */
+export function markMovingRenderPositions(): void {
+   for (let i = 0; i < PhysicsComponentArray.entities.length; i++) {
+      const entity = PhysicsComponentArray.entities[i];
 
       const renderInfo = getEntityRenderInfo(entity);
-
-      updateRenderInfoRenderPosition(transformComponent, renderInfo, frameProgress);
+      registerDirtyRenderPosition(renderInfo);
    }
+}
+
+
+export function cleanRenderPositions(frameProgress: number): void {
+   for (let i = 0; i < dirtyEntityRenderPositions.length; i++) {
+      const renderInfo = dirtyEntityRenderPositions[i];
+
+      updateRenderInfoRenderPosition(renderInfo, frameProgress);
+      renderInfo.renderPositionIsDirty = false;
+   }
+
+   dirtyEntityRenderPositions = [];
 }
 
 const calculateAndOverrideEntityModelMatrix = (renderInfo: EntityRenderInfo): void => {
@@ -259,7 +289,7 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo): void {
       updateChunkRenderedEntity(renderInfo, renderInfo.renderLayer);
    }
 
-   renderInfo.isDirty = false;
+   renderInfo.renderPartsAreDirty = false;
 }
 
 export function updateRenderPartMatrices(): void {

@@ -5,11 +5,12 @@ import { entityExists, getEntityRenderInfo } from "../../world";
 import { EntityID } from "../../../../shared/src/entities";
 import { renderEntities } from "./entity-rendering";
 import { cleanEntityRenderInfo } from "../render-part-matrices";
+import { gameFramebuffer } from "../../Game";
 
 let renderProgram: WebGLProgram;
 
-let frameBuffer: WebGLFramebuffer;
-let frameBufferTexture: WebGLTexture;
+let framebuffer: WebGLFramebuffer;
+let framebufferTexture: WebGLTexture;
 
 let lastTextureWidth = 0;
 let lastTextureHeight = 0;
@@ -106,7 +107,7 @@ export function createStructureHighlightShaders(): void {
 
    #define PI 3.14159265358979323846
 
-   uniform sampler2D u_framebufferTexure;
+   uniform sampler2D u_framebufferTexture;
    uniform float u_isSelected;
    uniform vec2 u_originPosition;
 
@@ -121,7 +122,7 @@ export function createStructureHighlightShaders(): void {
    }
 
    void main() {
-      vec4 framebufferColour = texture(u_framebufferTexure, v_texCoord);
+      vec4 framebufferColour = texture(u_framebufferTexture, v_texCoord);
       
       if (framebufferColour.a > 0.0) {
          if (u_isSelected > 0.5) {
@@ -157,7 +158,7 @@ export function createStructureHighlightShaders(): void {
 
    // Framebuffer shit
    
-   frameBuffer = gl.createFramebuffer()!;
+   framebuffer = gl.createFramebuffer()!;
 
    framebufferVertexData = new Float32Array(12);
    framebufferVertexData[2] = 1;
@@ -178,18 +179,18 @@ export function renderEntitySelection(): void {
    // Framebuffer Program
    // 
 
-   gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
    if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
-      frameBufferTexture = createTexture(windowWidth, windowHeight);
+      framebufferTexture = createTexture(windowWidth, windowHeight);
 
       lastTextureWidth = windowWidth;
       lastTextureHeight = windowHeight;
-   }
    
-   // Attach the texture as the first color attachment
-   const attachmentPoint = gl.COLOR_ATTACHMENT0;
-   gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, frameBufferTexture, 0);
+      // Attach the texture as the first color attachment
+      const attachmentPoint = gl.COLOR_ATTACHMENT0;
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, framebufferTexture, 0);
+   }
 
    // Reset the previous texture
    gl.clearColor(0, 0, 0, 0);
@@ -276,7 +277,7 @@ export function renderEntitySelection(): void {
    // 
    
    gl.useProgram(renderProgram);
-   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+   gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
    
    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -293,7 +294,7 @@ export function renderEntitySelection(): void {
    gl.uniform2f(originPositionUniformLocation, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
 
    gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, frameBufferTexture);
+   gl.bindTexture(gl.TEXTURE_2D, framebufferTexture);
 
    gl.drawArrays(gl.TRIANGLES, 0, 6);
 

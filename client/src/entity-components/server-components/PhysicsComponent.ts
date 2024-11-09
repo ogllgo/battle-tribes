@@ -15,6 +15,7 @@ import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } fr
 import { entityIsInRiver, getEntityTile, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
+import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
 
 export interface PhysicsComponentParams {
    readonly selfVelocity: Point;
@@ -137,7 +138,8 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): voi
       // Mark entity's position as updated
       updateEntityPosition(transformComponent, entity);
       const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.dirty();
+      registerDirtyRenderInfo(renderInfo);
+      registerDirtyRenderPosition(renderInfo);
    }
 
    if (isNaN(transformComponent.position.x)) {
