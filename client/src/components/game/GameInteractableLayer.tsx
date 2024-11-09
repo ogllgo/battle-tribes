@@ -13,7 +13,7 @@ import Client from "../../networking/Client";
 import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../networking/packet-creation";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
-import { getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
+import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
@@ -41,6 +41,8 @@ import { createBuildingMaterialComponentParams } from "../../entity-components/s
 import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
 import { TribeComponentArray, createTribeComponentParams } from "../../entity-components/server-components/TribeComponent";
 import { thingIsVisualRenderPart } from "../../render-parts/render-parts";
+import { createCookingComponentParams } from "../../entity-components/server-components/CookingComponent";
+import { createCampfireComponentParams } from "../../entity-components/server-components/CampfireComponent";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -1229,6 +1231,18 @@ const tickItem = (itemType: ItemType): void => {
                }
                case ServerComponentType.bracings: {
                   components[componentType] = createBracingsComponentParams();
+                  break;
+               }
+               case ServerComponentType.inventory: {
+                  components[componentType] = createInventoryComponentParams({});
+                  break;
+               }
+               case ServerComponentType.cooking: {
+                  components[componentType] = createCookingComponentParams(0, false);
+                  break;
+               }
+               case ServerComponentType.campfire: {
+                  components[componentType] = createCampfireComponentParams();
                   break;
                }
                default: {

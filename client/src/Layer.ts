@@ -8,7 +8,7 @@ import { Point, randFloat, randInt, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 import Chunk from "./Chunk";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { Light, LightID } from "./lights";
+import { Light } from "./lights";
 import Particle from "./Particle";
 import { RenderLayer } from "./render-layers";
 import { RENDER_CHUNK_SIZE } from "./rendering/render-chunks";

@@ -12,7 +12,7 @@ export interface Light {
    readonly id: number;
    readonly offset: Point;
    intensity: number;
-   /** Number of tiles which the light extends from */
+   /** Number of tiles from the source it takes for the light's intensity to halve */
    strength: number;
    radius: number;
    r: number;

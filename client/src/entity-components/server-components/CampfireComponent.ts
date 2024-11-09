@@ -18,8 +18,12 @@ export const CampfireComponentArray = new ServerComponentArray<CampfireComponent
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): CampfireComponentParams {
+export function createCampfireComponentParams(): CampfireComponentParams {
    return {};
+}
+
+function createParamsFromData(): CampfireComponentParams {
+   return createCampfireComponentParams();
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {

@@ -199,6 +199,12 @@ export const InventoryComponentArray = new ServerComponentArray<InventoryCompone
    updatePlayerFromData: updatePlayerFromData
 });
 
+export function createInventoryComponentParams(inventories: Partial<Record<InventoryName, Inventory>>): InventoryComponentParams {
+   return {
+      inventories: inventories
+   };
+}
+
 function createParamsFromData(reader: PacketReader): InventoryComponentParams {
    const inventories: Partial<Record<InventoryName, Inventory>> = {};
    const numInventories = reader.readNumber();
@@ -207,9 +213,7 @@ function createParamsFromData(reader: PacketReader): InventoryComponentParams {
       inventories[inventory.name] = inventory;
    }
 
-   return {
-      inventories: inventories
-   };
+   return createInventoryComponentParams(inventories);
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory, never>): InventoryComponent {

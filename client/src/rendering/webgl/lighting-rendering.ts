@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp, randFloat } from "battletribes-shared/utils";
+import { lerp, Point, randFloat, randSign } from "battletribes-shared/utils";
 import { createTexture, createWebGLProgram, gl, windowHeight, windowWidth } from "../../webgl";
 import Board from "../../Board";
 import OPTIONS from "../../options";
@@ -12,8 +12,13 @@ import { TileType } from "../../../../shared/src/tiles";
 
 const enum Vars {
    MAX_LIGHTS = 64,
-   /** Number of tiles that the dropdown's light extends */
-   DROPDOWN_LIGHT_STRENGTH = 10
+   DROPDOWN_LIGHT_STRENGTH = 6,
+
+   /** The half-width and half-height of the area the distortion triangles occupy */
+   DISTORTION_TRIANGLE_VISIBLE_AREA = 2500,
+   DISTORTION_TRIANGLE_SPAWN_DIST = 1.1,
+   DISTORTION_TRIANGLE_TELEPORT_DIST = 1.3,
+   DISTORTION_TRIANGLE_MAX_SIZE = 800
 }
 
 interface RectLight {
@@ -36,8 +41,6 @@ interface DistortionTriangle {
    readonly g: number;
    readonly b: number;
    readonly a: number;
-   ageTicks: number;
-   readonly lifetimeTicks: number;
 }
 
 const NIGHT_LIGHT = 0.4;
@@ -59,6 +62,64 @@ let darkenFactorUniformLocation: WebGLUniformLocation;
 const distortionTriangles = new Array<DistortionTriangle>();
 
 let distortionProgram: WebGLProgram;
+
+const generateDistortionTriangleSpawnPosition = (): Point => {
+   let x = Camera.position.x;
+   let y = Camera.position.y;
+
+   const spawnOffset = Vars.DISTORTION_TRIANGLE_VISIBLE_AREA * Vars.DISTORTION_TRIANGLE_SPAWN_DIST;
+   x += spawnOffset * randFloat(-1, 1);
+   y += spawnOffset * randFloat(-1, 1);
+
+   return new Point(x, y);
+}
+
+const generateDistortionTriangleTeleportPosition = (): Point => {
+   let x = Camera.position.x;
+   let y = Camera.position.y;
+
+   const spawnOffset = Vars.DISTORTION_TRIANGLE_VISIBLE_AREA * Vars.DISTORTION_TRIANGLE_SPAWN_DIST;
+
+   if (Math.random() < 0.5) {
+      // Left and right sides
+      x += spawnOffset * randSign();
+      y += spawnOffset * randFloat(-1, 1);
+   } else {
+      // Top and bottom sides
+      x += spawnOffset * randFloat(-1, 1);
+      y += spawnOffset * randSign();
+   }
+
+   return new Point(x, y);
+}
+
+const getDistortionTriangleXDistFactor = (x: number): number => {
+   return Math.abs((x - Camera.position.x) / Vars.DISTORTION_TRIANGLE_VISIBLE_AREA);
+}
+
+const getDistortionTriangleYDistFactor = (y: number): number => {
+   return Math.abs((y - Camera.position.y) / Vars.DISTORTION_TRIANGLE_VISIBLE_AREA);
+}
+
+const distortionTriangleIsInTeleportRange = (distortionTriangle: DistortionTriangle): boolean => {
+   const boundsMinX = Math.min(distortionTriangle.x1, distortionTriangle.x2, distortionTriangle.x3);
+   const boundsMaxX = Math.max(distortionTriangle.x1, distortionTriangle.x2, distortionTriangle.x3);
+   const boundsMinY = Math.min(distortionTriangle.y1, distortionTriangle.y2, distortionTriangle.y3);
+   const boundsMaxY = Math.max(distortionTriangle.y1, distortionTriangle.y2, distortionTriangle.y3);
+
+   return (getDistortionTriangleXDistFactor(boundsMinX) >= Vars.DISTORTION_TRIANGLE_TELEPORT_DIST && getDistortionTriangleXDistFactor(boundsMaxX) >= Vars.DISTORTION_TRIANGLE_TELEPORT_DIST) ||
+          (getDistortionTriangleYDistFactor(boundsMinY) >= Vars.DISTORTION_TRIANGLE_TELEPORT_DIST && getDistortionTriangleYDistFactor(boundsMaxY) >= Vars.DISTORTION_TRIANGLE_TELEPORT_DIST);
+}
+
+const generateDistortionTriangleVelocity = (): Point => {
+   let vx = randFloat(0.15, 1) * randSign();
+   let vy = randFloat(0.15, 1) * randSign();
+
+   vx *= 100;
+   vy *= 100;
+
+   return new Point(vx, vy);
+}
 
 export function createNightShaders(): void {
    const darknessVertexShaderText = `#version 300 es
@@ -151,8 +212,8 @@ export function createNightShaders(): void {
          mat3 positionMatrix = u_lightPositionMatrices[i];
          vec2 lightPos = (positionMatrix * vec3(1.0, 1.0, 1.0)).xy;
 
-         float intensity = u_lightIntensities[i];
-         float strength = u_lightStrengths[i] * TILE_SIZE;
+         float lightIntensity = u_lightIntensities[i];
+         float strength = u_lightStrengths[i];
          float radius = u_lightRadii[i];
 
          float dist = distance(v_position, lightPos);
@@ -161,10 +222,9 @@ export function createNightShaders(): void {
             dist = 0.0;
          }
 
-         float sampleIntensity = (1.0 - dist / strength) * intensity;
-         if (sampleIntensity > 0.0) {
-            float intensitySquared = sampleIntensity * sampleIntensity;
-            totalLightIntensity += intensitySquared;
+         float intensity = exp(-dist / 64.0 / strength) * lightIntensity;
+         if (intensity > 0.0) {
+            totalLightIntensity += intensity;
          }
       }
 
@@ -180,13 +240,12 @@ export function createNightShaders(): void {
       }
 
       if (minDistFromRectLight < 999999.9) {
-         float intensity = 1.0;
-         float strength = ${Vars.DROPDOWN_LIGHT_STRENGTH.toFixed(1)} * TILE_SIZE;
+         float lightIntensity = 1.0;
+         float strength = ${Vars.DROPDOWN_LIGHT_STRENGTH.toFixed(1)};
 
-         float sampleIntensity = (1.0 - minDistFromRectLight / strength) * intensity;
-         if (sampleIntensity > 0.0) {
-            float intensitySquared = sampleIntensity * sampleIntensity;
-            totalLightIntensity += intensitySquared;
+         float intensity = exp(-minDistFromRectLight / 64.0 / strength) * lightIntensity;
+         if (intensity > 0.0) {
+            totalLightIntensity += intensity;
          }
       }
 
@@ -244,8 +303,8 @@ export function createNightShaders(): void {
          mat3 positionMatrix = u_lightPositionMatrices[i];
          vec2 lightPos = (positionMatrix * vec3(1.0, 1.0, 1.0)).xy;
 
-         float intensity = u_lightIntensities[i];
-         float strength = u_lightStrengths[i] * TILE_SIZE;
+         float lightIntensity = u_lightIntensities[i];
+         float strength = u_lightStrengths[i];
          float radius = u_lightRadii[i];
          vec3 colour = u_lightColours[i];
 
@@ -255,12 +314,11 @@ export function createNightShaders(): void {
             dist = 0.0;
          }
 
-         float sampleIntensity = (1.0 - dist / strength) * intensity;
-         if (sampleIntensity > 0.0) {
-            float intensitySquared = sampleIntensity * sampleIntensity;
-            r += colour.r * intensitySquared;
-            g += colour.g * intensitySquared;
-            b += colour.b * intensitySquared;
+         float intensity = exp(-dist / 64.0 / strength) * lightIntensity;
+         if (intensity > 0.0) {
+            r += colour.r * intensity;
+            g += colour.g * intensity;
+            b += colour.b * intensity;
          }
       }
 
@@ -311,16 +369,18 @@ export function createNightShaders(): void {
       uniform float u_zoom;
    };
 
-   layout(location = 0) in vec2 a_vertPosition;
+   layout(location = 0) in vec2 a_position;
    layout(location = 1) in vec4 a_colour;
 
-   out vec2 v_vertPosition;
+   out vec2 v_texCoord;
    out vec4 v_colour;
 
    void main() {
-      gl_Position = vec4(a_vertPosition * 1000.0 / u_halfWindowSize, 0.0, 1.0);
+      vec2 screenPos = (a_position - u_playerPos) * u_zoom;
+      vec2 clipSpacePos = screenPos / u_halfWindowSize;
+      gl_Position = vec4(clipSpacePos, 0.0, 1.0);
 
-      v_vertPosition = a_vertPosition;
+      v_texCoord = (clipSpacePos + 1.0) * 0.5;
       v_colour = a_colour;
    }
    `;
@@ -330,16 +390,15 @@ export function createNightShaders(): void {
    
    uniform sampler2D u_darknessFramebufferTexure;
 
-   #define DARKNESS_THRESHOLD 0.9
+   #define DARKNESS_THRESHOLD 0.75
    
-   in vec2 v_vertPosition;
+   in vec2 v_texCoord;
    in vec4 v_colour;
 
    out vec4 outputColour;
 
    void main() {
-      vec2 texCoord = (v_vertPosition + 1.0) * 0.5;
-      vec4 darknessColour = texture(u_darknessFramebufferTexure, texCoord);
+      vec4 darknessColour = texture(u_darknessFramebufferTexure, v_texCoord);
       
       if (darknessColour.a >= DARKNESS_THRESHOLD) {
          outputColour = v_colour;
@@ -406,6 +465,36 @@ export function createNightShaders(): void {
 
    gl.useProgram(distortionProgram);
    gl.uniform1i(distortionProgramDarknessTextureUniformLocation, 0);
+   
+   // Create initial distortion triangles
+   for (let i = 0; i < 5000; i++) {
+      const spawnPos = generateDistortionTriangleSpawnPosition();
+      
+      const x1 = spawnPos.x;
+      const y1 = spawnPos.y;
+      const x2 = x1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+      const y2 = y1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+      const x3 = x1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+      const y3 = y1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+      
+      const velocity = generateDistortionTriangleVelocity();
+      
+      const distortionTriangle: DistortionTriangle = {
+         x1: x1,
+         y1: y1,
+         x2: x2,
+         y2: y2,
+         x3: x3,
+         y3: y3,
+         vx: velocity.x,
+         vy: velocity.y,
+         r: randFloat(0.1, 0.15),
+         g: randFloat(0.1, 0.15),
+         b: randFloat(0.1, 0.15),
+         a: randFloat(0.005, 0.02)
+      };
+      distortionTriangles.push(distortionTriangle);
+   }
 }
 
 /** Returns the minimum light level for the layer */
@@ -431,10 +520,11 @@ const getVisibleRectLights = (layer: Layer): ReadonlyArray<RectLight> => {
       return [];
    }
    
-   const minTileX = Math.floor((Camera.minVisibleX - Vars.DROPDOWN_LIGHT_STRENGTH * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const maxTileX = Math.floor((Camera.maxVisibleX + Vars.DROPDOWN_LIGHT_STRENGTH * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const minTileY = Math.floor((Camera.minVisibleY - Vars.DROPDOWN_LIGHT_STRENGTH * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const maxTileY = Math.floor((Camera.maxVisibleY + Vars.DROPDOWN_LIGHT_STRENGTH * Settings.TILE_SIZE) / Settings.TILE_SIZE);
+   const dropdownLightSpreadRange = Math.pow(Vars.DROPDOWN_LIGHT_STRENGTH, 2);
+   const minTileX = Math.floor((Camera.minVisibleX - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
+   const maxTileX = Math.floor((Camera.maxVisibleX + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
+   const minTileY = Math.floor((Camera.minVisibleY - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
+   const maxTileY = Math.floor((Camera.maxVisibleY + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
 
    // Check the surface layer for dropdown tiles
    const rectLights = new Array<RectLight>();
@@ -462,9 +552,6 @@ export function updateDarknessDistortions(): void {
    for (let i = 0; i < distortionTriangles.length; i++) {
       const distortionTriangle = distortionTriangles[i];
 
-      distortionTriangle.vx += randFloat(-0.3, 0.3) * Settings.I_TPS;
-      distortionTriangle.vy += randFloat(-0.3, 0.3) * Settings.I_TPS;
-
       const posAddX = distortionTriangle.vx * Settings.I_TPS;
       const posAddY = distortionTriangle.vy * Settings.I_TPS;
       
@@ -475,51 +562,20 @@ export function updateDarknessDistortions(): void {
       distortionTriangle.x3 += posAddX;
       distortionTriangle.y3 += posAddY;
 
-      distortionTriangle.ageTicks++;
-      if (distortionTriangle.ageTicks >= distortionTriangle.lifetimeTicks) {
-         distortionTriangles.splice(i, 1);
-         i--;
+      if (distortionTriangleIsInTeleportRange(distortionTriangle)) {
+         const newPos = generateDistortionTriangleTeleportPosition();
+
+         distortionTriangle.x1 = newPos.x;
+         distortionTriangle.y1 = newPos.y;
+         distortionTriangle.x2 = distortionTriangle.x1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+         distortionTriangle.y2 = distortionTriangle.y1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+         distortionTriangle.x3 = distortionTriangle.x1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+         distortionTriangle.y3 = distortionTriangle.y1 + randFloat(-Vars.DISTORTION_TRIANGLE_MAX_SIZE, Vars.DISTORTION_TRIANGLE_MAX_SIZE);
+
+         const newVelocity = generateDistortionTriangleVelocity();
+         distortionTriangle.vx = newVelocity.x;
+         distortionTriangle.vy = newVelocity.y;
       }
-   }
-   
-   // Create distortion triangles
-   let numTrigsToCreate = Math.random() * 500 / Settings.TPS;
-   while (Math.random() < (numTrigsToCreate--)) {
-      const x1 = randFloat(-1, 1);
-      const y1 = randFloat(-1, 1);
-      const x2 = x1 + randFloat(-0.2, 0.2);
-      const y2 = y1 + randFloat(-0.2, 0.2);
-      const x3 = x1 + randFloat(-0.2, 0.2);
-      const y3 = y1 + randFloat(-0.2, 0.2);
-
-      let vx = randFloat(-1, 1);
-      let vy = randFloat(-1, 1);
-      // Weight towards stationary
-      vx *= vx;
-      vy *= vy;
-      vx *= vx;
-      vy *= vy;
-
-      vx *= 0.5;
-      vy *= 0.5;
-      
-      const distortionTriangle: DistortionTriangle = {
-         x1: x1,
-         y1: y1,
-         x2: x2,
-         y2: y2,
-         x3: x3,
-         y3: y3,
-         vx: vx,
-         vy: vy,
-         r: randFloat(0.1, 0.45),
-         g: randFloat(0.1, 0.34),
-         b: randFloat(0.1, 0.34),
-         a: randFloat(0.02, 0.06),
-         ageTicks: 0,
-         lifetimeTicks: Math.floor(randFloat(0.3, 1) * Settings.TPS)
-      };
-      distortionTriangles.push(distortionTriangle);
    }
 }
 

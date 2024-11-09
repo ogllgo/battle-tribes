@@ -151,7 +151,7 @@ export function createEntityShaders(): void {
          }
       }
    
-      if (u_overrideAlphaWithOne > 0.5) {
+      if (u_overrideAlphaWithOne > 0.5 && outputColour.a > 0.0) {
          outputColour.a = 1.0;
       } else {
          outputColour.a *= v_opacity;

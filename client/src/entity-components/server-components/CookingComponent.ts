@@ -31,15 +31,19 @@ export const CookingComponentArray = new ServerComponentArray<CookingComponent, 
    updateFromData: updateFromData
 });
 
+export function createCookingComponentParams(heatingProgress: number, isCooking: boolean): CookingComponentParams {
+   return {
+      heatingProgress: heatingProgress,
+      isCooking: isCooking
+   };
+}
+
 function createParamsFromData(reader: PacketReader): CookingComponentParams {
    const heatingProgress = reader.readNumber();
    const isCooking = reader.readBoolean();
    reader.padOffset(3);
 
-   return {
-      heatingProgress: heatingProgress,
-      isCooking: isCooking
-   };
+   return createCookingComponentParams(heatingProgress, isCooking);
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking, never>): CookingComponent {
@@ -57,10 +61,10 @@ function onLoad(entity: EntityID): void {
    cookingComponent.light = createLight(
       new Point(0, 0),
       1,
-      3.5,
+      1.5,
       40,
-      0,
-      0,
+      0.2,
+      0.1,
       0
    );
    attachLightToEntity(cookingComponent.light, entity);

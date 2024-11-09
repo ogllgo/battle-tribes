@@ -311,7 +311,7 @@ export function clamp(num: number, min: number, max: number): number {
 }
 
 export function randSign(): number {
-   return Math.random() < 0.5 ? 1 : 0;
+   return Math.random() < 0.5 ? 1 : -1;
 }
 
 export function distance(x1: number, y1: number, x2: number, y2: number): number {
