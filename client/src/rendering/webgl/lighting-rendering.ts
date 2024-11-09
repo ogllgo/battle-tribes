@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp } from "battletribes-shared/utils";
+import { lerp, randFloat } from "battletribes-shared/utils";
 import { createTexture, createWebGLProgram, gl, windowHeight, windowWidth } from "../../webgl";
 import Board from "../../Board";
 import OPTIONS from "../../options";
@@ -23,6 +23,23 @@ interface RectLight {
    readonly height: number;
 }
 
+interface DistortionTriangle {
+   x1: number;
+   y1: number;
+   x2: number;
+   y2: number;
+   x3: number;
+   y3: number;
+   vx: number;
+   vy: number;
+   readonly r: number;
+   readonly g: number;
+   readonly b: number;
+   readonly a: number;
+   ageTicks: number;
+   readonly lifetimeTicks: number;
+}
+
 const NIGHT_LIGHT = 0.4;
 
 let darknessProgram: WebGLProgram;
@@ -38,6 +55,10 @@ let colourProgram: WebGLProgram;
 let darknessVAO: WebGLVertexArrayObject;
 
 let darkenFactorUniformLocation: WebGLUniformLocation;
+
+const distortionTriangles = new Array<DistortionTriangle>();
+
+let distortionProgram: WebGLProgram;
 
 export function createNightShaders(): void {
    const darknessVertexShaderText = `#version 300 es
@@ -277,6 +298,58 @@ export function createNightShaders(): void {
    }
    `;
 
+   // 
+   // DISTORTION SHADERS
+   // 
+
+   const distortionVertexShader = `#version 300 es
+   precision mediump float;
+   
+   layout(std140) uniform Camera {
+      uniform vec2 u_playerPos;
+      uniform vec2 u_halfWindowSize;
+      uniform float u_zoom;
+   };
+
+   layout(location = 0) in vec2 a_vertPosition;
+   layout(location = 1) in vec4 a_colour;
+
+   out vec2 v_vertPosition;
+   out vec4 v_colour;
+
+   void main() {
+      gl_Position = vec4(a_vertPosition * 1000.0 / u_halfWindowSize, 0.0, 1.0);
+
+      v_vertPosition = a_vertPosition;
+      v_colour = a_colour;
+   }
+   `;
+
+   const distortionFragmentShader = `#version 300 es
+   precision mediump float;
+   
+   uniform sampler2D u_darknessFramebufferTexure;
+
+   #define DARKNESS_THRESHOLD 0.9
+   
+   in vec2 v_vertPosition;
+   in vec4 v_colour;
+
+   out vec4 outputColour;
+
+   void main() {
+      vec2 texCoord = (v_vertPosition + 1.0) * 0.5;
+      vec4 darknessColour = texture(u_darknessFramebufferTexure, texCoord);
+      
+      if (darknessColour.a >= DARKNESS_THRESHOLD) {
+         outputColour = v_colour;
+         outputColour.a *= 1.0 - ((1.0 - darknessColour.a) / (1.0 - DARKNESS_THRESHOLD));
+      } else {
+         outputColour = vec4(0.0);
+      }
+   }
+   `;
+
    darknessProgram = createWebGLProgram(gl, darknessVertexShaderText, darknessFragmentShaderText);
    bindUBOToProgram(gl, darknessProgram, UBOBindingIndex.CAMERA);
    
@@ -325,6 +398,14 @@ export function createNightShaders(): void {
    gl.enableVertexAttribArray(0);
 
    gl.bindVertexArray(null);
+
+   distortionProgram = createWebGLProgram(gl, distortionVertexShader, distortionFragmentShader);
+   bindUBOToProgram(gl, distortionProgram, UBOBindingIndex.CAMERA);
+   
+   const distortionProgramDarknessTextureUniformLocation = gl.getUniformLocation(darknessFramebufferProgram, "u_darknessFramebufferTexure")!;
+
+   gl.useProgram(distortionProgram);
+   gl.uniform1i(distortionProgramDarknessTextureUniformLocation, 0);
 }
 
 /** Returns the minimum light level for the layer */
@@ -374,6 +455,72 @@ const getVisibleRectLights = (layer: Layer): ReadonlyArray<RectLight> => {
    }
 
    return rectLights;
+}
+
+export function updateDarknessDistortions(): void {
+   // Update existing distortion triangles
+   for (let i = 0; i < distortionTriangles.length; i++) {
+      const distortionTriangle = distortionTriangles[i];
+
+      distortionTriangle.vx += randFloat(-0.3, 0.3) * Settings.I_TPS;
+      distortionTriangle.vy += randFloat(-0.3, 0.3) * Settings.I_TPS;
+
+      const posAddX = distortionTriangle.vx * Settings.I_TPS;
+      const posAddY = distortionTriangle.vy * Settings.I_TPS;
+      
+      distortionTriangle.x1 += posAddX;
+      distortionTriangle.y1 += posAddY;
+      distortionTriangle.x2 += posAddX;
+      distortionTriangle.y2 += posAddY;
+      distortionTriangle.x3 += posAddX;
+      distortionTriangle.y3 += posAddY;
+
+      distortionTriangle.ageTicks++;
+      if (distortionTriangle.ageTicks >= distortionTriangle.lifetimeTicks) {
+         distortionTriangles.splice(i, 1);
+         i--;
+      }
+   }
+   
+   // Create distortion triangles
+   let numTrigsToCreate = Math.random() * 500 / Settings.TPS;
+   while (Math.random() < (numTrigsToCreate--)) {
+      const x1 = randFloat(-1, 1);
+      const y1 = randFloat(-1, 1);
+      const x2 = x1 + randFloat(-0.2, 0.2);
+      const y2 = y1 + randFloat(-0.2, 0.2);
+      const x3 = x1 + randFloat(-0.2, 0.2);
+      const y3 = y1 + randFloat(-0.2, 0.2);
+
+      let vx = randFloat(-1, 1);
+      let vy = randFloat(-1, 1);
+      // Weight towards stationary
+      vx *= vx;
+      vy *= vy;
+      vx *= vx;
+      vy *= vy;
+
+      vx *= 0.5;
+      vy *= 0.5;
+      
+      const distortionTriangle: DistortionTriangle = {
+         x1: x1,
+         y1: y1,
+         x2: x2,
+         y2: y2,
+         x3: x3,
+         y3: y3,
+         vx: vx,
+         vy: vy,
+         r: randFloat(0.1, 0.45),
+         g: randFloat(0.1, 0.34),
+         b: randFloat(0.1, 0.34),
+         a: randFloat(0.02, 0.06),
+         ageTicks: 0,
+         lifetimeTicks: Math.floor(randFloat(0.3, 1) * Settings.TPS)
+      };
+      distortionTriangles.push(distortionTriangle);
+   }
 }
 
 export function renderLighting(layer: Layer): void {
@@ -484,6 +631,32 @@ export function renderLighting(layer: Layer): void {
       gl.bindTexture(gl.TEXTURE_2D, darknessFramebufferTexture);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // Render darkness distortions
+
+      gl.useProgram(distortionProgram);
+
+      const vertices = new Array<number>();
+      for (const distortionTriangle of distortionTriangles) {
+         vertices.push(
+            distortionTriangle.x1, distortionTriangle.y1, distortionTriangle.r, distortionTriangle.g, distortionTriangle.b, distortionTriangle.a,
+            distortionTriangle.x2, distortionTriangle.y2, distortionTriangle.r, distortionTriangle.g, distortionTriangle.b, distortionTriangle.a,
+            distortionTriangle.x3, distortionTriangle.y3, distortionTriangle.r, distortionTriangle.g, distortionTriangle.b, distortionTriangle.a
+         );
+      }
+
+      // @Speed
+      const buffer = gl.createBuffer()!;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 6 * Float32Array.BYTES_PER_ELEMENT, 0);
+      gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 6 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+      gl.enableVertexAttribArray(0);
+      gl.enableVertexAttribArray(1);
+      
+      gl.drawArrays(gl.TRIANGLES, 0, distortionTriangles.length * 3);
    }
 
    gl.bindVertexArray(darknessVAO);

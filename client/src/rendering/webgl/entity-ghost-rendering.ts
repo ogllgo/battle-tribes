@@ -1,6 +1,4 @@
 import { Point } from "battletribes-shared/utils";
-import { EntityType } from "battletribes-shared/entities";
-import { StructureType } from "battletribes-shared/structures";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { renderEntities } from "./entity-rendering";
 import { gl } from "../../webgl";
@@ -63,36 +61,6 @@ export const PARTIAL_OPACITY = 0.5;
 
 let ghostRenderInfo: EntityRenderInfo | null = null;
 
-// @Cleanup: is this used? or the right spot for this?
-export const ENTITY_TYPE_TO_GHOST_TYPE_MAP: Record<StructureType, GhostType> = {
-   [EntityType.campfire]: GhostType.campfire,
-   [EntityType.furnace]: GhostType.furnace,
-   [EntityType.tribeTotem]: GhostType.tribeTotem,
-   [EntityType.workbench]: GhostType.workbench,
-   [EntityType.barrel]: GhostType.barrel,
-   [EntityType.workerHut]: GhostType.workerHut,
-   [EntityType.warriorHut]: GhostType.warriorHut,
-   [EntityType.researchBench]: GhostType.researchBench,
-   [EntityType.planterBox]: GhostType.planterBox,
-   [EntityType.floorSpikes]: GhostType.woodenFloorSpikes,
-   [EntityType.wallSpikes]: GhostType.woodenWallSpikes,
-   [EntityType.floorPunjiSticks]: GhostType.floorPunjiSticks,
-   [EntityType.wallPunjiSticks]: GhostType.wallPunjiSticks,
-   [EntityType.door]: GhostType.woodenDoor,
-   [EntityType.embrasure]: GhostType.woodenEmbrasure,
-   [EntityType.wall]: GhostType.woodenWall,
-   [EntityType.tunnel]: GhostType.woodenTunnel,
-   [EntityType.ballista]: GhostType.ballista,
-   [EntityType.slingTurret]: GhostType.slingTurret,
-   [EntityType.healingTotem]: GhostType.healingTotem,
-   [EntityType.fence]: GhostType.fence,
-   [EntityType.fenceGate]: GhostType.fenceGate,
-   [EntityType.frostshaper]: GhostType.frostshaper,
-   [EntityType.stonecarvingTable]: GhostType.stonecarvingTable,
-   // @Hack
-   [EntityType.bracings]: GhostType.stonecarvingTable
-};
-
 export function setGhostRenderInfo(renderInfo: EntityRenderInfo | null): void {
    ghostRenderInfo = renderInfo;
 }
@@ -145,7 +113,7 @@ export function renderGhostEntities(): void {
    //          const idealness = calculatePotentialPlanIdealness(potentialPlan, stats);
    
    //          ghostInfos.push({
-   //             position: new Point(potentialPlan.x, potentialPlan.y),
+   //             position: new Point(potentialPlan.x, potentialPlan.y),q
    //             rotation: potentialPlan.rotation,
    //             ghostType: ENTITY_TYPE_TO_GHOST_TYPE_MAP[potentialPlan.buildingType],
    //             opacity: lerp(0.15, 0.6, idealness),

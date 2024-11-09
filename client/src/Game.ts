@@ -29,7 +29,7 @@ import Tribe from "./Tribe";
 import OPTIONS from "./options";
 import { RENDER_CHUNK_SIZE, createRenderChunks } from "./rendering/render-chunks";
 import { registerFrame, updateFrameGraph } from "./components/game/dev/FrameGraph";
-import { createNightShaders, renderLighting } from "./rendering/webgl/lighting-rendering";
+import { createNightShaders, renderLighting, updateDarknessDistortions } from "./rendering/webgl/lighting-rendering";
 import { renderGhostEntities } from "./rendering/webgl/entity-ghost-rendering";
 import { setupFrameGraph } from "./rendering/webgl/frame-graph-rendering";
 import { createTextureAtlases } from "./texture-atlases/texture-atlases";
@@ -442,6 +442,7 @@ abstract class Game {
       renderCursorTooltip();
 
       createCollapseParticles();
+      updateDarknessDistortions();
 
       if (isDev()) refreshDebugInfo();
    }
