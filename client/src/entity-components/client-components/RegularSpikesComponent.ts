@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID, EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
@@ -55,12 +55,12 @@ function createComponent(): RegularSpikesComponent {
    return {};
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("wooden-spikes-hit.mp3", 0.2, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("wooden-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
 }

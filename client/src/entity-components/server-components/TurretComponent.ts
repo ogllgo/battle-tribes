@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
 import { lerp } from "battletribes-shared/utils";
 import { playSound } from "../../sound";
@@ -87,7 +87,7 @@ const getChargeTextureSource = (entityType: TurretType, chargeProgress: number):
    }
 }
 
-const getProjectilePullbackAmount = (entity: EntityID, chargeProgress: number): number => {
+const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): number => {
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
          return lerp(0, -21, chargeProgress);
@@ -100,7 +100,7 @@ const getProjectilePullbackAmount = (entity: EntityID, chargeProgress: number): 
    }
 }
 
-const playFireSound = (entity: EntityID): void => {
+const playFireSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    switch (getEntityType(entity) as TurretType) {
@@ -115,7 +115,7 @@ const playFireSound = (entity: EntityID): void => {
    }
 }
 
-const getProjectileTextureSource = (entity: EntityID): string => {
+const getProjectileTextureSource = (entity: Entity): string => {
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
          return "projectiles/sling-rock.png";
@@ -173,7 +173,7 @@ const updateAimDirection = (turretComponent: TurretComponent, aimDirection: numb
    }
 }
 
-const shouldShowProjectile = (entity: EntityID, chargeProgress: number, reloadProgress: number): boolean => {
+const shouldShowProjectile = (entity: Entity, chargeProgress: number, reloadProgress: number): boolean => {
    switch (getEntityType(entity)) {
       case EntityType.ballista: {
          const ammoBoxComponent = AmmoBoxComponentArray.getComponent(entity);
@@ -186,7 +186,7 @@ const shouldShowProjectile = (entity: EntityID, chargeProgress: number, reloadPr
    }
 }
 
-const projectileHasRandomRotation = (entity: EntityID): boolean => {
+const projectileHasRandomRotation = (entity: Entity): boolean => {
    switch (getEntityType(entity)) {
       case EntityType.ballista: {
          const ammoBoxComponent = AmmoBoxComponentArray.getComponent(entity);
@@ -199,7 +199,7 @@ const projectileHasRandomRotation = (entity: EntityID): boolean => {
    }
 }
 
-const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: EntityID, chargeProgress: number, reloadProgress: number): void => {
+const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: Entity, chargeProgress: number, reloadProgress: number): void => {
    if (shouldShowProjectile(entity, chargeProgress, reloadProgress)) {
       const textureSource = getProjectileTextureSource(entity);
       if (turretComponent.projectileRenderPart === null) {
@@ -238,7 +238,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const turretComponent = TurretComponentArray.getComponent(entity);
    
    const aimDirection = reader.readNumber();

@@ -30,7 +30,7 @@ layout(std140) uniform ${UBO_NAME_RECORD[UBOBindingIndex.ENTITY_TEXTURE_ATLAS]} 
 `;
 
 const cameraData = new Float32Array(8);
-let cameraBuffer: WebGLBuffer;
+let cameraBuffer: WebGLBuffer;   
 
 // @Cleanup: Copy and paste
 const cameraDataTechTree = new Float32Array(8);

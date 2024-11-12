@@ -1,4 +1,4 @@
-import { ClientComponentType } from "./client-components";
+import { ClientComponentType } from "./client-component-types";
 import { ComponentArray, ComponentArrayFunctions, ComponentArrayType } from "./ComponentArray";
 
 export default class ClientComponentArray<

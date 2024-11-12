@@ -13,7 +13,7 @@ import { entityIsTribesman } from "./entities/tribes/tribe-member";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { yetiSpawnPositionIsValid } from "./components/YetiComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { getEntityType, getLayerByType, isNight, LayerType, pushJoinBuffer } from "./world";
+import { getEntityType, getLayerByType, isNight, LayerType, pushJoinBuffer, undergroundLayer } from "./world";
 import { EntityConfig } from "./components";
 import { createCowConfig } from "./entities/mobs/cow";
 import { createBerryBushConfig } from "./entities/resources/berry-bush";
@@ -33,6 +33,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import Tribe from "./Tribe";
 import { createTreeConfig } from "./entities/resources/tree";
 import { entityIsStructure } from "../../shared/src/structures";
+import { createGlurbConfig } from "./entities/mobs/glurb";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -105,7 +106,6 @@ const SPAWN_INFOS = [
    //    minSpawnDistance: 45,
    //    usesSpawnDistribution: true
    // },
-   // @Temporary
    {
       layerType: LayerType.surface,
       entityType: EntityType.tombstone,
@@ -190,7 +190,6 @@ const SPAWN_INFOS = [
       minSpawnDistance: 150,
       usesSpawnDistribution: false
    },
-   // @Temporary
    {
       layerType: LayerType.surface,
       entityType: EntityType.frozenYeti,
@@ -250,7 +249,19 @@ const SPAWN_INFOS = [
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       usesSpawnDistribution: false
-   }
+   },
+   // {
+   //    layerType: LayerType.underground,
+   //    entityType: EntityType.glurb,
+   //    spawnRate: 0.0025,
+   //    maxDensity: 0.005,
+   //    spawnableTileTypes: [TileType.stone],
+   //    minPackSize: 1,
+   //    maxPackSize: 1,
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 100,
+   //    usesSpawnDistribution: true
+   // }
 ] satisfies ReadonlyArray<EntitySpawnInfo>;
 
 export type SpawningEntityType = (typeof SPAWN_INFOS)[number]["entityType"];
@@ -418,6 +429,7 @@ const spawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y:
       case EntityType.lilypad: config = createLilypadConfig(); break;
       case EntityType.golem: config = createGolemConfig(); break;
       case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true)); break;
+      // case EntityType.glurb: config = createGlurbConfig(); break;
       // @Robustness
       default: {
          console.log(EntityTypeString[entityType])
@@ -596,9 +608,14 @@ export function spawnInitialEntities(): void {
          runSpawnEvent(spawnInfo);
 
          if (++numSpawnAttempts >= 9999) {
-               console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
+            console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
             break;
          }
       }
    }
+
+   const e = createGlurbConfig();
+   e.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 800;
+   e.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+   createEntity(e, undergroundLayer, 0);
 }

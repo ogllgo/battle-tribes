@@ -1,5 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
@@ -65,7 +65,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(entity);
    
    const material = reader.readNumber();

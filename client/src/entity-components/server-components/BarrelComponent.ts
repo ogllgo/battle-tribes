@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { playBuildingHitSound, playSound } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -48,12 +48,12 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playBuildingHitSound(transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
 }

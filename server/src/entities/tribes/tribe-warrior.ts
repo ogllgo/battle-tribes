@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ScarInfo, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { randInt, Point } from "battletribes-shared/utils";
 import { TribesmanAIComponent, TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";

@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Packet } from "battletribes-shared/packets";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -24,7 +24,7 @@ export const BerryBushComponentArray = new ComponentArray<BerryBushComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);
    if (berryBushComponent.numBerries >= 5) {
       return;
@@ -43,7 +43,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const berryComponent = BerryBushComponentArray.getComponent(entity);
 
    packet.addNumber(berryComponent.numBerries);

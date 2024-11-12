@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import Tribe from "../Tribe";
 import { ComponentArray } from "./ComponentArray";
@@ -34,7 +34,7 @@ export const TribeComponentArray = new ComponentArray<TribeComponent>(ServerComp
    addDataToPacket: addDataToPacket
 });
 
-export function getEntityRelationship(entity: EntityID, comparingEntity: EntityID): EntityRelationship {
+export function getEntityRelationship(entity: Entity, comparingEntity: Entity): EntityRelationship {
    // More complex if the entity is an AI tribesman: take into account the personal relationship between the entities
    if (TribesmanAIComponentArray.hasComponent(entity) && TribeMemberComponentArray.hasComponent(comparingEntity)) {
       return getTribesmanRelationship(entity, comparingEntity);
@@ -135,12 +135,12 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    packet.addNumber(tribeComponent.tribe.id);
 }
 
-export function recruitTribesman(tribesman: EntityID, newTribe: Tribe): void {
+export function recruitTribesman(tribesman: Entity, newTribe: Tribe): void {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    tribeComponent.tribe = newTribe;
 }

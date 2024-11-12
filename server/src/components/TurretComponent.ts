@@ -1,5 +1,5 @@
 import { AMMO_INFO_RECORD, ServerComponentType, TURRET_AMMO_TYPES, TurretAmmoType, TurretEntityType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { SLING_TURRET_RELOAD_TIME_TICKS, SLING_TURRET_SHOT_COOLDOWN_TICKS } from "../entities/structures/sling-turret";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
@@ -59,7 +59,7 @@ const getAimArcSize = (turretEntityType: TurretEntityType): number => {
    }
 }
 
-const getAmmoType = (turret: EntityID): TurretAmmoType | null => {
+const getAmmoType = (turret: Entity): TurretAmmoType | null => {
    const inventoryComponent = InventoryComponentArray.getComponent(turret);
    const ammoBoxInventory = getInventory(inventoryComponent, InventoryName.ammoBoxInventory);
 
@@ -79,7 +79,7 @@ const getAmmoType = (turret: EntityID): TurretAmmoType | null => {
    return item.type as TurretAmmoType;
 }
 
-const entityIsTargetted = (turret: EntityID, entity: EntityID): boolean => {
+const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
    if (getEntityType(entity) === EntityType.itemEntity) {
       return false;
    }
@@ -137,10 +137,10 @@ const entityIsTargetted = (turret: EntityID, entity: EntityID): boolean => {
    return false;
 }
 
-const getTarget = (turret: EntityID, visibleEntities: ReadonlyArray<EntityID>): EntityID | null => {
+const getTarget = (turret: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const turretTransformComponent = TransformComponentArray.getComponent(turret);
    
-   let closestValidTarget: EntityID;
+   let closestValidTarget: Entity;
    let minDist = 9999999.9;
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
@@ -163,7 +163,7 @@ const getTarget = (turret: EntityID, visibleEntities: ReadonlyArray<EntityID>): 
    return null;
 }
 
-const attemptAmmoLoad = (ballista: EntityID): void => {
+const attemptAmmoLoad = (ballista: Entity): void => {
    const ballistaComponent = AmmoBoxComponentArray.getComponent(ballista);
    
    const ammoType = getAmmoType(ballista);
@@ -173,11 +173,11 @@ const attemptAmmoLoad = (ballista: EntityID): void => {
       ballistaComponent.ammoRemaining = AMMO_INFO_RECORD[ammoType].ammoMultiplier;
 
       const inventoryComponent = InventoryComponentArray.getComponent(ballista);
-      consumeItemTypeFromInventory(inventoryComponent, InventoryName.ammoBoxInventory, ammoType, 1);
+      consumeItemTypeFromInventory(ballista, inventoryComponent, InventoryName.ammoBoxInventory, ammoType, 1);
    }
 }
 
-const createProjectile = (turret: EntityID, transformComponent: TransformComponent, fireDirection: number, ammoType: TurretAmmoType): void => {
+const createProjectile = (turret: Entity, transformComponent: TransformComponent, fireDirection: number, ammoType: TurretAmmoType): void => {
    const tribeComponent = TribeComponentArray.getComponent(turret);
    const tribe = tribeComponent.tribe;
    
@@ -213,7 +213,7 @@ const createProjectile = (turret: EntityID, transformComponent: TransformCompone
    config.components[ServerComponentType.physics].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
 }
 
-const fire = (turret: EntityID, ammoType: TurretAmmoType): void => {
+const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
    const transformComponent = TransformComponentArray.getComponent(turret);
    const turretComponent = TurretComponentArray.getComponent(turret);
 
@@ -236,7 +236,7 @@ const fire = (turret: EntityID, ammoType: TurretAmmoType): void => {
    }
 }
 
-function onTick(turret: EntityID): void {
+function onTick(turret: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(turret);
    const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
    const turretComponent = TurretComponentArray.getComponent(turret);
@@ -315,7 +315,7 @@ function onTick(turret: EntityID): void {
    }
 }
 
-const getShotCooldownTicks = (turret: EntityID): number => {
+const getShotCooldownTicks = (turret: Entity): number => {
    const entityType = getEntityType(turret);
    switch (entityType) {
       case EntityType.ballista: {
@@ -331,7 +331,7 @@ const getShotCooldownTicks = (turret: EntityID): number => {
    throw new Error("Unknown turret type " + entityType);
 }
 
-const getReloadTimeTicks = (turret: EntityID): number => {
+const getReloadTimeTicks = (turret: Entity): number => {
    const entityType = getEntityType(turret);
    switch (entityType) {
       case EntityType.ballista: {
@@ -347,7 +347,7 @@ const getReloadTimeTicks = (turret: EntityID): number => {
    throw new Error("Unknown turret type " + entityType);
 }
 
-const getChargeProgress = (turret: EntityID): number => {
+const getChargeProgress = (turret: Entity): number => {
    // @Incomplete?
    // const ballistaComponent = BallistaComponentArray.getComponent(ballista.id);
    // if (ballistaComponent.ammoRemaining === 0) {
@@ -364,7 +364,7 @@ const getChargeProgress = (turret: EntityID): number => {
    return 1 - turretComponent.fireCooldownTicks / shotCooldownTicks;
 }
 
-const getReloadProgress = (turret: EntityID): number => {
+const getReloadProgress = (turret: Entity): number => {
    // @Incomplete?
    // const ballistaComponent = BallistaComponentArray.getComponent(ballista.id);
    // if (ballistaComponent.ammoRemaining === 0) {
@@ -387,7 +387,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const turretComponent = TurretComponentArray.getComponent(entity);
 
    packet.addNumber(turretComponent.aimDirection);

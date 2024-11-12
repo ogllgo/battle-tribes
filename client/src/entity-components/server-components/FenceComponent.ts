@@ -5,7 +5,7 @@ import { getEntityRenderInfo } from "../../world";
 import { StructureComponentArray } from "./StructureComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
@@ -54,7 +54,7 @@ function createComponent(): FenceComponent {
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const fenceComponent = FenceComponentArray.getComponent(entity);
    updateRails(fenceComponent, entity);
 }
@@ -68,7 +68,7 @@ const getRailIdx = (railBit: RailBit): number => {
    }
 }
 
-const addRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: RailBit): void => {
+const addRail = (fenceComponent: FenceComponent, entity: Entity, railBit: RailBit): void => {
    let textureSource: string;
    let offsetX: number;
    let offsetY: number;
@@ -115,7 +115,7 @@ const addRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: Rail
    fenceComponent.railRenderParts[idx] = renderPart;
 }
 
-const removeRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: RailBit): void => {
+const removeRail = (fenceComponent: FenceComponent, entity: Entity, railBit: RailBit): void => {
    const idx = getRailIdx(railBit);
 
    const renderPart = fenceComponent.railRenderParts[idx];
@@ -128,7 +128,7 @@ const removeRail = (fenceComponent: FenceComponent, entity: EntityID, railBit: R
    fenceComponent.railRenderParts[idx] = null;
 }
 
-const checkBit = (fenceComponent: FenceComponent, entity: EntityID, bit: RailBit, connectedSidesBitset: number): void => {
+const checkBit = (fenceComponent: FenceComponent, entity: Entity, bit: RailBit, connectedSidesBitset: number): void => {
    if ((fenceComponent.connectedSidesBitset & bit) === 0 && (connectedSidesBitset & bit) !== 0) {
       addRail(fenceComponent, entity, bit);
    }
@@ -138,7 +138,7 @@ const checkBit = (fenceComponent: FenceComponent, entity: EntityID, bit: RailBit
    }
 }
 
-const updateRails = (fenceComponent: FenceComponent, entity: EntityID): void => {
+const updateRails = (fenceComponent: FenceComponent, entity: Entity): void => {
    const structureComponent = StructureComponentArray.getComponent(entity);
    const connectedSidesBitset = structureComponent.connectedSidesBitset;
    
@@ -152,7 +152,7 @@ const updateRails = (fenceComponent: FenceComponent, entity: EntityID): void => 
 
 function padData(): void {}
 
-function updateFromData(_reader: PacketReader, entity: EntityID): void {
+function updateFromData(_reader: PacketReader, entity: Entity): void {
    const fenceComponent = FenceComponentArray.getComponent(entity);
    updateRails(fenceComponent, entity);
 }

@@ -3,7 +3,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { updateHealthBar } from "../../components/game/HealthBar";
 import { discombobulate } from "../../components/game/GameInteractableLayer";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { getEntityRenderInfo, playerInstance } from "../../world";
@@ -72,7 +72,7 @@ const calculateRedness = (healthComponent: HealthComponent): number => {
    return redness;
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    
    const previousRedness = calculateRedness(healthComponent);
@@ -86,7 +86,7 @@ function onTick(entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
       
    const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
@@ -104,7 +104,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    
    healthComponent.health = reader.readNumber();
@@ -118,7 +118,7 @@ function updatePlayerFromData(reader: PacketReader): void {
    updateHealthBar(healthComponent.health);
 }
 
-function calculateTint(entity: EntityID): ComponentTint {
+function calculateTint(entity: Entity): ComponentTint {
    const healthComponent = HealthComponentArray.getComponent(entity);
    const redness = calculateRedness(healthComponent);
 

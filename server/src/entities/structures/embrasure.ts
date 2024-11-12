@@ -1,5 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createEmbrasureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
@@ -50,7 +50,7 @@ export function createEmbrasureConfig(tribe: Tribe, material: BuildingMaterial, 
    };
 }
 
-export function onEmbrasureCollision(collidingEntity: EntityID, pushedHitboxIdx: number): void {
+export function onEmbrasureCollision(collidingEntity: Entity, pushedHitboxIdx: number): void {
    if (getEntityType(collidingEntity) === EntityType.woodenArrow) {
       // @Incomplete?
       // const arrowComponent = ProjectileComponentArray.getComponent(collidingEntity.id);

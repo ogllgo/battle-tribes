@@ -10,7 +10,7 @@ import { getAvailableCraftingStations } from "../entities/tribes/tribe-member";
 import PlayerClient from "./PlayerClient";
 import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./game-data-packets";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { InventoryComponentArray, addItemToInventory, craftRecipe, getInventory, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable } from "../components/InventoryComponent";
 import { TribeComponentArray, recruitTribesman } from "../components/TribeComponent";
@@ -42,7 +42,7 @@ const PLAYER_SPAWN_POSITION_PADDING = 300;
 
 const playerClients = new Array<PlayerClient>();
 
-const dirtyEntities = new Set<EntityID>();
+const dirtyEntities = new Set<Entity>();
 
 export function getPlayerClients(): ReadonlyArray<PlayerClient> {
    return playerClients;
@@ -61,7 +61,7 @@ export function getPlayerClientFromInstanceID(instanceID: number): PlayerClient 
 }
 
 // @Cleanup: better to be done by the player component array
-export function getPlayerFromUsername(username: string): EntityID | null {
+export function getPlayerFromUsername(username: string): Entity | null {
    for (let i = 0; i < playerClients.length; i++) {
       const playerClient = playerClients[i];
 
@@ -139,7 +139,7 @@ const processPlayerCraftingPacket = (playerClient: PlayerClient, recipeIndex: nu
    }
 
    if (inventoryComponentCanAffordRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot)) {
-      craftRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);
+      craftRecipe(player, inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);
    }
 }
 
@@ -240,7 +240,7 @@ const processStudyPacket = (playerClient: PlayerClient, studyAmount: number): vo
    }
 }
 
-const processModifyBuildingPacket = (playerClient: PlayerClient, structure: EntityID, data: number): void => {
+const processModifyBuildingPacket = (playerClient: PlayerClient, structure: Entity, data: number): void => {
    if (!entityExists(playerClient.instance)) {
       return;
    }
@@ -248,7 +248,7 @@ const processModifyBuildingPacket = (playerClient: PlayerClient, structure: Enti
    modifyBuilding(playerClient.instance, structure, data);
 }
 
-const processDeconstructPacket = (playerClient: PlayerClient, structure: EntityID): void => {
+const processDeconstructPacket = (playerClient: PlayerClient, structure: Entity): void => {
    if (!entityExists(structure)) {
       return;
    }
@@ -269,7 +269,7 @@ const processDeconstructPacket = (playerClient: PlayerClient, structure: EntityI
    }
 }
 
-const processStructureInteractPacket = (playerClient: PlayerClient, structure: EntityID, interactData: number): void => {
+const processStructureInteractPacket = (playerClient: PlayerClient, structure: Entity, interactData: number): void => {
    if (!entityExists(playerClient.instance) || !entityExists(structure)) {
       return;
    }
@@ -295,7 +295,7 @@ const processStructureInteractPacket = (playerClient: PlayerClient, structure: E
    }
 }
 
-const processStructureUninteractPacket = (playerClient: PlayerClient, structure: EntityID): void => {
+const processStructureUninteractPacket = (playerClient: PlayerClient, structure: Entity): void => {
    if (!entityExists(playerClient.instance) || !entityExists(playerClient.instance)) {
       return;
    }
@@ -308,7 +308,7 @@ const processStructureUninteractPacket = (playerClient: PlayerClient, structure:
    }
 }
 
-const processRecruitTribesmanPacket = (playerClient: PlayerClient, tribesman: EntityID): void => {
+const processRecruitTribesmanPacket = (playerClient: PlayerClient, tribesman: Entity): void => {
    if (!entityExists(playerClient.instance) || !entityExists(tribesman)) {
       return;
    }
@@ -334,13 +334,14 @@ const processRespondToTitleOfferPacket = (playerClient: PlayerClient, title: Tri
 }
 
 const devGiveItem = (playerClient: PlayerClient, itemType: ItemType, amount: number): void => {
-   if (!entityExists(playerClient.instance)) {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
       return;
    }
 
-   const inventoryComponent = InventoryComponentArray.getComponent(playerClient.instance);
+   const inventoryComponent = InventoryComponentArray.getComponent(player);
    const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   addItemToInventory(inventory, itemType, amount);
+   addItemToInventory(player, inventory, itemType, amount);
 }
 
 const devSummonEntity = (playerClient: PlayerClient, summonPacket: EntitySummonPacket): void => {
@@ -408,7 +409,7 @@ const devRemoveTitle = (playerClient: PlayerClient, title: TribesmanTitle): void
    removeTitle(player, title);
 }
 
-export function addPlayerClient(playerClient: PlayerClient, player: EntityID, layer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): void {
+export function addPlayerClient(playerClient: PlayerClient, player: Entity, layer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): void {
    playerClients.push(playerClient);
 
    const socket = playerClient.socket;
@@ -516,7 +517,7 @@ export function addPlayerClient(playerClient: PlayerClient, player: EntityID, la
 
 
 
-const shouldShowDamageNumber = (playerClient: PlayerClient, attackingEntity: EntityID | null): boolean => {
+const shouldShowDamageNumber = (playerClient: PlayerClient, attackingEntity: Entity | null): boolean => {
    if (attackingEntity === null) {
       return false;
    }
@@ -559,7 +560,7 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
    return viewingPlayerClients;
 }
 
-export function registerEntityHit(hitEntity: EntityID, attackingEntity: EntityID | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
+export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
    const hitEntityTransformComponent = TransformComponentArray.getComponent(hitEntity);
    const viewingPlayers = getPlayersViewingPosition(hitEntityTransformComponent.boundingAreaMinX, hitEntityTransformComponent.boundingAreaMaxX, hitEntityTransformComponent.boundingAreaMinY, hitEntityTransformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {
@@ -593,7 +594,7 @@ export function registerPlayerKnockback(playerID: number, knockback: number, kno
    }
 }
 
-export function registerEntityHeal(healedEntity: EntityID, healer: EntityID, healAmount: number): void {
+export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
    const transformComponent = TransformComponentArray.getComponent(healedEntity);
    const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {
@@ -614,7 +615,7 @@ export function registerEntityHeal(healedEntity: EntityID, healer: EntityID, hea
    }
 }
 
-export function registerEntityRemoval(entity: EntityID): void {
+export function registerEntityRemoval(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {
@@ -639,7 +640,7 @@ export function registerResearchOrbComplete(orbCompleteData: ResearchOrbComplete
    }
 }
 
-export function registerEntityTickEvent(entity: EntityID, tickEvent: EntityTickEvent): void {
+export function registerEntityTickEvent(entity: Entity, tickEvent: EntityTickEvent): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {
@@ -652,7 +653,7 @@ export function registerEntityTickEvent(entity: EntityID, tickEvent: EntityTickE
    }
 }
 
-export function registerPlayerDroppedItemPickup(player: EntityID): void {
+export function registerPlayerDroppedItemPickup(player: Entity): void {
    const playerClient = getPlayerClientFromInstanceID(player);
    if (playerClient !== null) {
       playerClient.hasPickedUpItem = true;
@@ -661,14 +662,14 @@ export function registerPlayerDroppedItemPickup(player: EntityID): void {
    }
 }
 
-export function forcePlayerTeleport(player: EntityID, position: Point): void {
+export function forcePlayerTeleport(player: Entity, position: Point): void {
    const playerClient = getPlayerClientFromInstanceID(player);
    if (playerClient !== null) {
       playerClient.socket.emit("force_position_update", position.package());
    }
 }
 
-export function registerDirtyEntity(entity: EntityID): void {
+export function registerDirtyEntity(entity: Entity): void {
    if (dirtyEntities.has(entity)) {
       return;
    }

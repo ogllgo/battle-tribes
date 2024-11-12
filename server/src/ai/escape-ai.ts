@@ -1,9 +1,9 @@
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { EscapeAIComponentArray } from "../components/EscapeAIComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 
-export function registerAttackingEntity(entity: EntityID, attackingEntity: EntityID): void {
+export function registerAttackingEntity(entity: Entity, attackingEntity: Entity): void {
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
 
    const idx = escapeAIComponent.attackingEntities.indexOf(attackingEntity);
@@ -15,7 +15,7 @@ export function registerAttackingEntity(entity: EntityID, attackingEntity: Entit
    }
 }
 
-export function runFromAttackingEntity(entity: EntityID, attackingEntity: EntityID, acceleration: number, turnSpeed: number): void {
+export function runFromAttackingEntity(entity: Entity, attackingEntity: Entity, acceleration: number, turnSpeed: number): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    const attackingEntityTransformComponent = TransformComponentArray.getComponent(attackingEntity);
@@ -28,12 +28,12 @@ export function runFromAttackingEntity(entity: EntityID, attackingEntity: Entity
    physicsComponent.turnSpeed = turnSpeed;
 }
 
-export function chooseEscapeEntity(entity: EntityID, visibleEntities: ReadonlyArray<EntityID>): EntityID | null {
+export function chooseEscapeEntity(entity: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
    
    let minDistance = Number.MAX_SAFE_INTEGER;
-   let escapeEntity: EntityID | null = null;
+   let escapeEntity: Entity | null = null;
    for (let i = 0; i < escapeAIComponent.attackingEntities.length; i++) {
       const attackingEntity = escapeAIComponent.attackingEntities[i];
 

@@ -6,7 +6,7 @@ import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "
 import { TribesmanPathType, TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, pathfind, smoothPath, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, pathIsClear } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { distance, angle } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
@@ -28,7 +28,7 @@ const enum Vars {
    SLOW_ACCELERATION = 200
 }
 
-export function getTribesmanVisionRange(tribesman: EntityID): number {
+export function getTribesmanVisionRange(tribesman: Entity): number {
    if (getEntityType(tribesman)! === EntityType.tribeWorker) {
       return TRIBE_WORKER_VISION_RANGE;
    } else {
@@ -37,7 +37,7 @@ export function getTribesmanVisionRange(tribesman: EntityID): number {
 }
 
 /** How far away from the entity the attack is done */
-export function getTribesmanAttackOffset(tribesman: EntityID): number {
+export function getTribesmanAttackOffset(tribesman: Entity): number {
    if (getEntityType(tribesman)! === EntityType.tribeWorker) {
       return 40;
    } else {
@@ -46,7 +46,7 @@ export function getTribesmanAttackOffset(tribesman: EntityID): number {
 }
 
 /** Max distance from the attack position that the attack will be registered from */
-export function getTribesmanAttackRadius(tribesman: EntityID): number {
+export function getTribesmanAttackRadius(tribesman: Entity): number {
    if (getEntityType(tribesman)! === EntityType.tribeWorker) {
       return 40;
    } else {
@@ -55,7 +55,7 @@ export function getTribesmanAttackRadius(tribesman: EntityID): number {
 }
 
 /** How far the tribesman wants to be away from their target when attacking */
-export function getTribesmanDesiredAttackRange(tribesman: EntityID): number {
+export function getTribesmanDesiredAttackRange(tribesman: Entity): number {
    if (getEntityType(tribesman)! === EntityType.tribeWorker) {
       return 45;
    } else {
@@ -63,7 +63,7 @@ export function getTribesmanDesiredAttackRange(tribesman: EntityID): number {
    }
 }
 
-export function getTribesmanRadius(tribesman: EntityID): number {
+export function getTribesmanRadius(tribesman: Entity): number {
    if (getEntityType(tribesman)! === EntityType.tribeWorker) {
       return TRIBE_WORKER_RADIUS;
    } else {
@@ -71,7 +71,7 @@ export function getTribesmanRadius(tribesman: EntityID): number {
    }
 }
 
-const isCollidingWithCoveredSpikes = (tribesman: EntityID): boolean => {
+const isCollidingWithCoveredSpikes = (tribesman: Entity): boolean => {
    const layer = getEntityLayer(tribesman);
    const collisionPairs = layer.getEntityCollisionPairs(tribesman);
 
@@ -89,7 +89,7 @@ const isCollidingWithCoveredSpikes = (tribesman: EntityID): boolean => {
    return false;
 }
 
-const getAccelerationMultiplier = (tribesman: EntityID): number => {
+const getAccelerationMultiplier = (tribesman: Entity): number => {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
    
@@ -119,7 +119,7 @@ export function getTribesmanAcceleration(tribesmanID: number): number {
    return Vars.ACCELERATION * getAccelerationMultiplier(tribesmanID);
 }
 
-export function positionIsSafeForTribesman(tribesman: EntityID, x: number, y: number): boolean {
+export function positionIsSafeForTribesman(tribesman: Entity, x: number, y: number): boolean {
    const layer = getEntityLayer(tribesman);
    const visibleEntitiesFromItem = getEntitiesInRange(layer, x, y, getTribesmanVisionRange(tribesman));
 
@@ -133,7 +133,7 @@ export function positionIsSafeForTribesman(tribesman: EntityID, x: number, y: nu
    return true;
 }
 
-const shouldRecalculatePath = (tribesman: EntityID, goalX: number, goalY: number, goalRadiusNodes: number): boolean => {
+const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, goalRadiusNodes: number): boolean => {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
 
    if (tribesmanComponent.path.length === 0) {
@@ -167,7 +167,7 @@ const shouldRecalculatePath = (tribesman: EntityID, goalX: number, goalY: number
    }
 }
 
-const openDoors = (tribesman: EntityID, tribe: Tribe): void => {
+const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
@@ -197,7 +197,7 @@ const openDoors = (tribesman: EntityID, tribe: Tribe): void => {
    }
 }
 
-const continueCurrentPath = (tribesman: EntityID, goalX: number, goalY: number): boolean => {
+const continueCurrentPath = (tribesman: Entity, goalX: number, goalY: number): boolean => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
    const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
@@ -271,12 +271,12 @@ const continueCurrentPath = (tribesman: EntityID, goalX: number, goalY: number):
    }
 }
 
-export function clearTribesmanPath(tribesman: EntityID): void {
+export function clearTribesmanPath(tribesman: Entity): void {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
    tribesmanComponent.isPathfinding = false;
 }
 
-const getPotentialBlockingTribesmen = (tribesman: EntityID): ReadonlyArray<EntityID> => {
+const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
@@ -285,7 +285,7 @@ const getPotentialBlockingTribesmen = (tribesman: EntityID): ReadonlyArray<Entit
    const minChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y - Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y + Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    
-   const blockingTribesmen = new Array<EntityID>();
+   const blockingTribesmen = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -306,14 +306,14 @@ const getPotentialBlockingTribesmen = (tribesman: EntityID): ReadonlyArray<Entit
    return blockingTribesmen;
 }
 
-const convertEntityPathfindingGroupID = (entity: EntityID, oldGroupID: number, newGroupID: number): void => {
+const convertEntityPathfindingGroupID = (entity: Entity, oldGroupID: number, newGroupID: number): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (const node of transformComponent.occupiedPathfindingNodes) {
       replacePathfindingNodeGroupID(node, oldGroupID, newGroupID);
    }
 }
 
-const preparePathfinding = (targetEntity: EntityID, tribe: Tribe, blockingTribesman: ReadonlyArray<EntityID>): void => {
+const preparePathfinding = (targetEntity: Entity, tribe: Tribe, blockingTribesman: ReadonlyArray<Entity>): void => {
    // Ignore the target
    if (targetEntity !== 0) {
       if (entityCanBlockPathfinding(targetEntity)) {
@@ -329,7 +329,7 @@ const preparePathfinding = (targetEntity: EntityID, tribe: Tribe, blockingTribes
    }
 }
 
-const cleanupPathfinding = (targetEntity: EntityID | 0, tribe: Tribe, blockingTribesman: ReadonlyArray<EntityID>): void => {
+const cleanupPathfinding = (targetEntity: Entity | 0, tribe: Tribe, blockingTribesman: ReadonlyArray<Entity>): void => {
    // Reset the target
    if (targetEntity !== 0) {
       // @Speed: Some places which call this have access to the entity already
@@ -346,7 +346,7 @@ const cleanupPathfinding = (targetEntity: EntityID | 0, tribe: Tribe, blockingTr
    }
 }
 
-export function pathfindToPosition(tribesman: EntityID, goalX: number, goalY: number, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
+export function pathfindToPosition(tribesman: Entity, goalX: number, goalY: number, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
    
    tribesmanComponent.pathType = pathType;
@@ -390,7 +390,7 @@ export function pathfindToPosition(tribesman: EntityID, goalX: number, goalY: nu
 
 // @Cleanup: these two functions do much the same thing. which one to keep?
 
-export function entityIsAccessible(tribesman: EntityID, entity: EntityID, tribe: Tribe, goalRadius: number): boolean {
+export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tribe, goalRadius: number): boolean {
    const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
    preparePathfinding(entity, tribe, blockingTribesmen);
 
@@ -402,7 +402,7 @@ export function entityIsAccessible(tribesman: EntityID, entity: EntityID, tribe:
    return isAccessible;
 }
 
-export function pathToEntityExists(tribesman: EntityID, huntedEntity: EntityID, tribe: Tribe, goalRadius: number): boolean {
+export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, tribe: Tribe, goalRadius: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
    

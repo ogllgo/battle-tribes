@@ -214,6 +214,15 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.bracings]: {
       name: "Bracings"
+   },
+   [EntityType.fireTorch]: {
+      name: "Fire Torch"
+   },
+   [EntityType.spikyBastard]: {
+      name: "Spiky Bastard"
+   },
+   [EntityType.glurb]: {
+      name: "Glurb"
    }
 };
 

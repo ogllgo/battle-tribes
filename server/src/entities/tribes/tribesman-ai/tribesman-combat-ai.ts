@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { Point, distance } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, stopEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
@@ -33,7 +33,7 @@ const EXTRA_BOW_COOLDOWNS: Partial<Record<EntityType, number>> = {
 };
 
 // @Incomplete
-const doMeleeAttack = (tribesman: EntityID): void => {
+const doMeleeAttack = (tribesman: Entity): void => {
    // @Speed: Do the check for if the item is on cooldown before doing the expensive radial attack calculations
 
    // // Find the attack target
@@ -63,7 +63,7 @@ const getItemAttackExecuteTimeSeconds = (item: Item): number => {
    return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) / Settings.TPS;
 }
 
-const getMostDamagingItemSlot = (tribesman: EntityID, huntedEntity: EntityID): number => {
+const getMostDamagingItemSlot = (tribesman: Entity, huntedEntity: Entity): number => {
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
@@ -96,7 +96,7 @@ const getMostDamagingItemSlot = (tribesman: EntityID, huntedEntity: EntityID): n
    return bestItemSlot;
 }
 
-const getNearbyEmbrasureUsePoints = (tribesman: EntityID): ReadonlyArray<Point> => {
+const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
@@ -131,7 +131,7 @@ const getNearbyEmbrasureUsePoints = (tribesman: EntityID): ReadonlyArray<Point> 
    return usePoints;
 }
 
-const getClosestEmbrasureUsePoint = (tribesman: EntityID, usePoints: ReadonlyArray<Point>): Point => {
+const getClosestEmbrasureUsePoint = (tribesman: Entity, usePoints: ReadonlyArray<Point>): Point => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
 
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -149,7 +149,7 @@ const getClosestEmbrasureUsePoint = (tribesman: EntityID, usePoints: ReadonlyArr
    return closestPoint;
 }
 
-export function huntEntity(tribesman: EntityID, huntedEntity: EntityID, isAggressive: boolean): void {
+export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive: boolean): void {
    // @Cleanup: Refactor to not be so big
    
    // @Incomplete: Only accounts for hotbar

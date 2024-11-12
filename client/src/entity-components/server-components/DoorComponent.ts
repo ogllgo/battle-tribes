@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DoorToggleType, EntityID } from "battletribes-shared/entities";
+import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { playSound } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -70,7 +70,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const toggleType = reader.readNumber();
    const openProgress = reader.readNumber();
    
@@ -87,7 +87,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    doorComponent.openProgress = openProgress;
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound("wooden-wall-hit.mp3", 0.3, 1, transformComponent.position);
@@ -102,7 +102,7 @@ function onHit(entity: EntityID): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound("wooden-wall-break.mp3", 0.4, 1, transformComponent.position);

@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
@@ -12,10 +12,10 @@ const ARROW_DESTROY_DISTANCE = Math.sqrt(Math.pow(ARROW_WIDTH / 2, 2) + Math.pow
 
 /** Add to projectiles to make them not damage their owner and be able to be blocked. */
 export class ProjectileComponent {
-   public readonly creator: EntityID;
+   public readonly creator: Entity;
    public isBlocked = false;
 
-   constructor(creator: EntityID) {
+   constructor(creator: Entity) {
       this.creator = creator;
    }
 }
@@ -29,7 +29,7 @@ export const ProjectileComponentArray = new ComponentArray<ProjectileComponent>(
    addDataToPacket: addDataToPacket
 });
 
-function onTick(projectile: EntityID): void {
+function onTick(projectile: Entity): void {
    // @Hack
    const entityType = getEntityType(projectile);
    if (entityType !== EntityType.guardianSpikyBall) {

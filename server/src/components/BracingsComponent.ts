@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { EntityID } from "../../../shared/src/entities";
+import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { deregisterEntitySupports, registerEntitySupports } from "../collapses";
 import { ComponentArray } from "./ComponentArray";
@@ -14,18 +14,18 @@ export const BracingsComponentArray = new ComponentArray<BracingsComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    registerEntitySupports(transformComponent);
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    deregisterEntitySupports(transformComponent);
 }
 
-function getDataLength(_entity: EntityID): number {
+function getDataLength(_entity: Entity): number {
    return Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {}
+function addDataToPacket(packet: Packet, entity: Entity): void {}

@@ -1,4 +1,4 @@
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { moveEntityToEntity } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "../components/AIHelperComponent";
 import { GuardianComponent, GuardianComponentArray } from "../components/GuardianComponent";
@@ -6,7 +6,7 @@ import { GuardianSpikyBallComponentArray } from "../components/GuardianSpikyBall
 import { HealthComponentArray } from "../components/HealthComponent";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 
-const entityIsTargetted = (guardianComponent: GuardianComponent, target: EntityID, targetTransformComponent: TransformComponent): boolean => {
+const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity, targetTransformComponent: TransformComponent): boolean => {
    if (!HealthComponentArray.hasComponent(target)) {
       return false;
    }
@@ -25,8 +25,8 @@ const entityIsTargetted = (guardianComponent: GuardianComponent, target: EntityI
    return guardianComponent.homeTiles.includes(entityTile);
 }
 
-const getTarget = (transformComponent: TransformComponent, guardianComponent: GuardianComponent, aiHelperComponent: AIHelperComponent): EntityID | null => {
-   let target: EntityID | null = null;
+const getTarget = (transformComponent: TransformComponent, guardianComponent: GuardianComponent, aiHelperComponent: AIHelperComponent): Entity | null => {
+   let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
    
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -51,7 +51,7 @@ export default class GuardianAI {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
    }
-   public getTarget(guardian: EntityID): EntityID | null {
+   public getTarget(guardian: Entity): Entity | null {
       const transformComponent = TransformComponentArray.getComponent(guardian);
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       const aiHelperComponent = AIHelperComponentArray.getComponent(guardian);
@@ -60,7 +60,7 @@ export default class GuardianAI {
       return target;
    }
    
-   public run(guardian: EntityID, target: EntityID): void {
+   public run(guardian: Entity, target: Entity): void {
       // Move towards the target
       moveEntityToEntity(guardian, target, this.acceleration, this.turnSpeed);
    }

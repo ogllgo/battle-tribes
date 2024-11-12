@@ -1,4 +1,4 @@
-import { EntityID, EntityType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
@@ -11,11 +11,11 @@ import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
 export class SnowballComponent {
-   public readonly yeti: EntityID;
+   public readonly yeti: Entity;
    public readonly size: SnowballSize;
    public readonly lifetimeTicks = Math.floor(randFloat(10, 15) * Settings.TPS);
 
-   constructor(yeti: EntityID, size: SnowballSize) {
+   constructor(yeti: Entity, size: SnowballSize) {
       this.yeti = yeti;
       this.size = size;
    }
@@ -34,13 +34,13 @@ export const SnowballComponentArray = new ComponentArray<SnowballComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    /** Set the snowball to spin */
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    physicsComponent.angularVelocity = randFloat(1, 2) * Math.PI * randSign();
 }
 
-function onTick(snowball: EntityID): void {
+function onTick(snowball: Entity): void {
    const snowballComponent = SnowballComponentArray.getComponent(snowball);
    
    // @Incomplete. we use physics component angular velocity now, but that doesn't decrease over time!
@@ -64,7 +64,7 @@ function onTick(snowball: EntityID): void {
    }
 }
 
-function onHitboxCollision(snowball: EntityID, collidingEntity: EntityID, snowballHitbox: Hitbox, pushedHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHitbox: Hitbox, pushedHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.snowball) {
       return;
@@ -105,7 +105,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const snowballComponent = SnowballComponentArray.getComponent(entity);
    packet.addNumber(snowballComponent.size);
 }

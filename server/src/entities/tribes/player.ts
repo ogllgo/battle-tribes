@@ -1,14 +1,13 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { onTribeMemberHurt } from "./tribe-member";
-import { consumeItemFromSlot, consumeItemType, countItemType, getInventory, pickupItemEntity, InventoryComponentArray, InventoryComponent } from "../../components/InventoryComponent";
+import { consumeItemFromSlot, consumeItemType, countItemType, getInventory, InventoryComponentArray, InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
 import { TunnelComponentArray, updateTunnelDoorBitset } from "../../components/TunnelComponent";
 import { PlanterBoxComponentArray, fertilisePlanterBox, placePlantInPlanterBox } from "../../components/PlanterBoxComponent";
-import { registerPlayerDroppedItemPickup } from "../../server/player-clients";
 import { HutComponentArray } from "../../components/HutComponent";
 import { SpikesComponentArray } from "../../components/SpikesComponent";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
@@ -80,19 +79,19 @@ export function createPlayerConfig(tribe: Tribe, username: string): EntityConfig
    };
 }
 
-export function onPlayerHurt(player: EntityID, attackingEntity: EntityID): void {
+export function onPlayerHurt(player: Entity, attackingEntity: Entity): void {
    onTribeMemberHurt(player, attackingEntity);
 }
 
 // @Cleanup: ton of copy and paste between these functions
 
-export function startChargingBow(player: EntityID, inventoryName: InventoryName): void {
+export function startChargingBow(player: Entity, inventoryName: InventoryName): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
    const limb = inventoryUseComponent.getLimbInfo(inventoryName);
    limb.action = LimbAction.chargeBow;
 }
 
-export function startChargingSpear(player: EntityID, inventoryName: InventoryName): void {
+export function startChargingSpear(player: Entity, inventoryName: InventoryName): void {
    const inventoryComponent = InventoryComponentArray.getComponent(player);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
 
@@ -110,7 +109,7 @@ export function startChargingSpear(player: EntityID, inventoryName: InventoryNam
    limb.currentActionRate = 1;
 }
 
-export function startChargingBattleaxe(player: EntityID, inventoryName: InventoryName): void {
+export function startChargingBattleaxe(player: Entity, inventoryName: InventoryName): void {
    const inventoryComponent = InventoryComponentArray.getComponent(player);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
 
@@ -127,7 +126,7 @@ export function startChargingBattleaxe(player: EntityID, inventoryName: Inventor
    useInfo.action = LimbAction.chargeBattleaxe;
 }
 
-const modifyTunnel = (player: EntityID, tunnel: EntityID): void => {
+const modifyTunnel = (player: Entity, tunnel: Entity): void => {
    const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
    if (tunnelComponent.doorBitset !== 0b00 && tunnelComponent.doorBitset !== 0b01 && tunnelComponent.doorBitset !== 0b10) {
       return;
@@ -138,7 +137,7 @@ const modifyTunnel = (player: EntityID, tunnel: EntityID): void => {
       return;
    }
 
-   consumeItemType(inventoryComponent, ItemType.wood, 2);
+   consumeItemType(player, inventoryComponent, ItemType.wood, 2);
    
    switch (tunnelComponent.doorBitset) {
       case 0b00: {
@@ -167,7 +166,7 @@ const modifyTunnel = (player: EntityID, tunnel: EntityID): void => {
    }
 }
 
-const modifyHut = (hut: EntityID): void => {
+const modifyHut = (hut: Entity): void => {
    const hutComponent = HutComponentArray.getComponent(hut);
 
    if (!hutComponent.isRecalling) {
@@ -186,7 +185,7 @@ const modifyHut = (hut: EntityID): void => {
    }
 }
 
-const modifySpikes = (player: EntityID, spikes: EntityID): void => {
+const modifySpikes = (player: Entity, spikes: Entity): void => {
    const spikesComponent = SpikesComponentArray.getComponent(spikes);
    
    // Can only cover non-covered floor spikes
@@ -200,12 +199,12 @@ const modifySpikes = (player: EntityID, spikes: EntityID): void => {
       return;
    }
 
-   consumeItemType(inventoryComponent, ItemType.leaf, 5);
+   consumeItemType(player, inventoryComponent, ItemType.leaf, 5);
 
    spikesComponent.isCovered = true;
 }
 
-const modifyPlanterBox = (player: EntityID, planterBox: EntityID, plantType: PlanterBoxPlant): void => {
+const modifyPlanterBox = (player: Entity, planterBox: Entity, plantType: PlanterBoxPlant): void => {
    // Don't place plant if there's already a plant
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    if (entityExists(planterBoxComponent.plantEntity)) {
@@ -222,10 +221,10 @@ const modifyPlanterBox = (player: EntityID, planterBox: EntityID, plantType: Pla
    const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
-   consumeItemFromSlot(hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
+   consumeItemFromSlot(player, hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
 }
 
-export function modifyBuilding(player: EntityID, structure: EntityID, data: number): void {
+export function modifyBuilding(player: Entity, structure: Entity, data: number): void {
    const structureEntityType = getEntityType(structure)!;
    switch (structureEntityType) {
       case EntityType.tunnel: {
@@ -257,7 +256,7 @@ export function modifyBuilding(player: EntityID, structure: EntityID, data: numb
             const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
-            consumeItemFromSlot(hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
+            consumeItemFromSlot(player, hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
          } else {
             modifyPlanterBox(player, structure, data);
          }

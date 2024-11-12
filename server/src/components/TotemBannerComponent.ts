@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, TribeTotemBanner } from "battletribes-shared/entities";
+import { Entity, TribeTotemBanner } from "battletribes-shared/entities";
 import { randInt } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { TRIBE_TOTEM_POSITIONS } from "../entities/structures/tribe-totem";
@@ -42,14 +42,14 @@ export function removeBannerFromTotem(bannerComponent: TotemBannerComponent, hut
    delete bannerComponent.banners[hutNum];
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const totemBannerComponent = TotemBannerComponentArray.getComponent(entity);
 
    const numBanners = Object.keys(totemBannerComponent.banners).length;
    return 2 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * numBanners;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const totemBannerComponent = TotemBannerComponentArray.getComponent(entity);
 
    const banners = Object.values(totemBannerComponent.banners);

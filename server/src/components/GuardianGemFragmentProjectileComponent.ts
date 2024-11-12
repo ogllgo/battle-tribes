@@ -1,6 +1,6 @@
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -29,18 +29,18 @@ export const GuardianGemFragmentProjectileComponentArray = new ComponentArray<Gu
    addDataToPacket: addDataToPacket
 });
 
-function onTick(fragment: EntityID): void {
+function onTick(fragment: Entity): void {
    const age = getEntityAgeTicks(fragment);
    if (age >= Settings.TPS * 0.75) {
       destroyEntity(fragment);
    }
 }
 
-function onWallCollision(fragment: EntityID): void {
+function onWallCollision(fragment: Entity): void {
    destroyEntity(fragment);
 }
 
-function onHitboxCollision(fragment: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "gemFragmentProjectile")) {
@@ -71,7 +71,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const guardianGemFragmentProjectileComponent = GuardianGemFragmentProjectileComponentArray.getComponent(entity);
    packet.addNumber(guardianGemFragmentProjectileComponent.fragmentShape);
    packet.addNumber(guardianGemFragmentProjectileComponent.gemType);

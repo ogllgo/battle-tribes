@@ -2,7 +2,7 @@ import { ScarInfo } from "battletribes-shared/components";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -79,7 +79,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT * numScars);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
    
    const numScars = reader.readNumber();

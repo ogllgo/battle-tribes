@@ -1,6 +1,6 @@
 import { EntityInfo } from "../../shared/src/board-interface";
 import { GrassTileInfo, RiverFlowDirectionsRecord, RiverSteppingStoneData, WaterRockData } from "../../shared/src/client-server-types";
-import { EntityID } from "../../shared/src/entities";
+import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { WorldInfo } from "../../shared/src/structures";
 import { SubtileType } from "../../shared/src/tiles";
@@ -11,7 +11,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { Light } from "./lights";
 import Particle from "./Particle";
 import { RenderLayer } from "./render-layers";
-import { RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
+import { RENDER_CHUNK_SIZE, RenderChunkRiverInfo } from "./rendering/render-chunks";
 import { addRenderable, removeRenderable, RenderableType } from "./rendering/render-loop";
 import { renderLayerIsChunkRendered, registerChunkRenderedEntity, removeChunkRenderedEntity, createRenderLayerChunkDataRecord, createModifiedChunkIndicesArray } from "./rendering/webgl/chunked-entity-rendering";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "./rendering/webgl/particle-rendering";
@@ -77,6 +77,11 @@ export default class Layer {
    public readonly renderLayerChunkDataRecord = createRenderLayerChunkDataRecord();
    /** Each render layer contains a set of which chunks have been modified */
    public modifiedChunkIndicesArray = createModifiedChunkIndicesArray();
+
+   // @Speed: Polymorphism
+   public riverInfoArray = new Array<RenderChunkRiverInfo | null>();
+
+   public readonly slimeTrailPixels = new Map<number, number>();
    
    constructor(idx: number, tiles: ReadonlyArray<Tile>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
       this.idx = idx;
@@ -120,7 +125,7 @@ export default class Layer {
       this.worldInfo = {
          chunks: this.chunks,
          wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: EntityID): EntityInfo => {
+         getEntityCallback: (entity: Entity): EntityInfo => {
             const transformComponent = TransformComponentArray.getComponent(entity);
 
             return {
@@ -308,7 +313,7 @@ export default class Layer {
       return direction;
    }
 
-   public addEntityToRendering(entity: EntityID, renderLayer: RenderLayer, renderHeight: number): void {
+   public addEntityToRendering(entity: Entity, renderLayer: RenderLayer, renderHeight: number): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
          registerChunkRenderedEntity(entity, this, renderLayer);
       } else {
@@ -316,7 +321,7 @@ export default class Layer {
       }
    }
 
-   public removeEntityFromRendering(entity: EntityID, renderLayer: RenderLayer): void {
+   public removeEntityFromRendering(entity: Entity, renderLayer: RenderLayer): void {
       if (renderLayerIsChunkRendered(renderLayer)) {
          removeChunkRenderedEntity(entity, this, renderLayer);
       } else {

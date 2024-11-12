@@ -1,5 +1,5 @@
 import { PathfindingNodeIndex, VisibleChunkBounds } from "battletribes-shared/client-server-types";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { angle, calculateDistanceSquared, Point, distBetweenPointAndRectangularBox } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
@@ -15,18 +15,19 @@ import { getEntityType, getGameTicks } from "./world";
 
 const enum Vars {
    NODE_ACCESSIBILITY_RESOLUTION = 3,
+   // @Hack?
    WALL_TILE_OCCUPIED_ID = 3427823
 }
 
 const activeGroupIDs = new Array<number>();
 
-let dirtyPathfindingEntities = new Array<EntityID>();
+let dirtyPathfindingEntities = new Array<Entity>();
 
-export function addDirtyPathfindingEntity(entity: EntityID): void {
+export function addDirtyPathfindingEntity(entity: Entity): void {
    dirtyPathfindingEntities.push(entity);
 }
 
-export function removeDirtyPathfindingEntity(entity: EntityID): void {
+export function removeDirtyPathfindingEntity(entity: Entity): void {
    for (let i = 0 ; i < dirtyPathfindingEntities.length; i++) {
       const currentEntity = dirtyPathfindingEntities[i];
       if (currentEntity === entity) {
@@ -767,7 +768,7 @@ export function getVisiblePathfindingNodeOccupances(visibleChunkBounds: VisibleC
    return occupances;
 }
 
-export function entityCanBlockPathfinding(entity: EntityID): boolean {
+export function entityCanBlockPathfinding(entity: Entity): boolean {
    const entityType = getEntityType(entity);
    return entityType !== EntityType.itemEntity
       && entityType !== EntityType.slimeSpit
@@ -776,7 +777,7 @@ export function entityCanBlockPathfinding(entity: EntityID): boolean {
       && entityType !== EntityType.blueprintEntity;
 }
 
-export function getEntityPathfindingGroupID(entity: EntityID): number {
+export function getEntityPathfindingGroupID(entity: Entity): number {
    switch (getEntityType(entity)!) {
       case EntityType.door:
       case EntityType.player:
@@ -791,7 +792,7 @@ export function getEntityPathfindingGroupID(entity: EntityID): number {
    }
 }
 
-export function updateEntityPathfindingNodeOccupance(entity: EntityID): void {
+export function updateEntityPathfindingNodeOccupance(entity: Entity): void {
    const pathfindingGroupID = getEntityPathfindingGroupID(entity);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -828,7 +829,7 @@ export function updateDynamicPathfindingNodes(): void {
    dirtyPathfindingEntities = [];
 }
 
-export function clearEntityPathfindingNodes(entity: EntityID): void {
+export function clearEntityPathfindingNodes(entity: Entity): void {
    const groupID = getEntityPathfindingGroupID(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    

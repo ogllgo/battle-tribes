@@ -3,11 +3,13 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { randFloat, angle } from "../../../../shared/src/utils";
-import { createRockParticle, createRockSpeckParticle } from "../../particles";
+import { createEmberParticle, createRockParticle, createRockSpeckParticle, createSmokeParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
+import Board from "../../Board";
+import { CookingComponentArray } from "./CookingComponent";
 
 export interface FurnaceComponentParams {}
 
@@ -23,12 +25,17 @@ export const FurnaceComponentArray = new ServerComponentArray<FurnaceComponent, 
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
+   onTick: onTick,
    onHit: onHit,
    onDie: onDie
 });
 
-function createParamsFromData(): FurnaceComponentParams {
+export function createFurnaceComponentParams(): FurnaceComponentParams {
    return {};
+}
+
+function createParamsFromData(): FurnaceComponentParams {
+   return createFurnaceComponentParams();
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
@@ -52,7 +59,36 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID): void {
+function onTick(entity: Entity): void {
+   const cookingComponent = CookingComponentArray.getComponent(entity);
+   if (cookingComponent.isCooking) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+
+      // Smoke particles
+      if (Board.tickIntervalHasPassed(0.17)) {
+         const spawnOffsetMagnitude = 20 * Math.random();
+         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         createSmokeParticle(spawnPositionX, spawnPositionY, 48);
+      }
+
+      // Ember particles
+      if (Board.tickIntervalHasPassed(0.05)) {
+         let spawnPositionX = transformComponent.position.x - 30 * Math.sin(transformComponent.rotation);
+         let spawnPositionY = transformComponent.position.y - 30 * Math.cos(transformComponent.rotation);
+
+         const spawnOffsetMagnitude = 11 * Math.random();
+         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+
+         createEmberParticle(spawnPositionX, spawnPositionY, transformComponent.rotation + Math.PI + randFloat(-0.8, 0.8), randFloat(80, 120), 0, 0);
+      }
+   }
+}
+
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 2; i++) {
@@ -78,7 +114,7 @@ function onHit(entity: EntityID): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 5; i++) {

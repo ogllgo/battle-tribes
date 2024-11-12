@@ -1,6 +1,6 @@
 import { DecorationType, ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 export class DecorationComponent {
@@ -20,7 +20,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const decorationComponent = DecorationComponentArray.getComponent(entity);
 
    packet.addNumber(decorationComponent.decorationType);

@@ -13,7 +13,7 @@ import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, 
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
-import { toggleSettingsMenu } from "./components/game/GameScreen";
+import { GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderDamageBoxes, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
 import { clearServerTicks, updateDebugScreenFPS, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
@@ -69,6 +69,7 @@ import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
 import { createCollapseParticles } from "./collapses";
 import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/webgl/subtile-support-rendering";
+import { createSlimeTrailShaders, renderSlimeTrails, updateSlimeTrails } from "./rendering/webgl/slime-trail-rendering";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -117,6 +118,7 @@ const main = (currentTime: number): void => {
                Board.updateParticles();
    
                processGameDataPacket(packet);
+               GameScreen_update();
    
                updateTextNumbers();
                Board.updateTickCallbacks();
@@ -170,6 +172,8 @@ const renderLayer = (layer: Layer): void => {
    if (layer === getCurrentLayer()) {
       renderText();
    }
+   
+   resetRenderOrder();
 
    // @Incomplete: A whole lot of these are not layer specific
 
@@ -192,15 +196,16 @@ const renderLayer = (layer: Layer): void => {
    // @Incomplete: Not layer specific
    renderHealingBeams();
 
+   renderSlimeTrails(layer);
+
    refreshChunkedEntityRenderingBuffers(layer);
 
-   const visibleRiverRenderChunks = calculateVisibleRiverInfo();
-   resetRenderOrder();
+   const visibleRiverRenderChunks = calculateVisibleRiverInfo(layer);
 
-   renderLowerRiverFeatures(visibleRiverRenderChunks);
+   renderLowerRiverFeatures(layer, visibleRiverRenderChunks);
    // Render everything up to fish
    renderNextRenderables(layer, RenderLayer.fish);
-   renderUpperRiverFeatures(visibleRiverRenderChunks);
+   renderUpperRiverFeatures(layer, visibleRiverRenderChunks);
    if (OPTIONS.showParticles) {
       renderMonocolourParticles(ParticleRenderLayer.low);
       renderTexturedParticles(ParticleRenderLayer.low);
@@ -217,6 +222,7 @@ const renderLayer = (layer: Layer): void => {
    // Render everything else
    renderNextRenderables(layer, MAX_RENDER_LAYER);
 
+   // @Cleanup: should this only be for the current layer?
    renderEntitySelection();
    
    renderForcefield();
@@ -397,6 +403,7 @@ abstract class Game {
             createLightDebugShaders();
             createTileBreakProgressShaders();
             createSubtileSupportShaders();
+            createSlimeTrailShaders();
             if (isDev()) {
                setupFrameGraph();
             }
@@ -450,6 +457,7 @@ abstract class Game {
       renderCursorTooltip();
 
       createCollapseParticles();
+      updateSlimeTrails();
 
       if (isDev()) refreshDebugInfo();
    }

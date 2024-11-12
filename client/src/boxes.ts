@@ -36,6 +36,11 @@ export class ClientHitbox<T extends BoxType = BoxType> implements Hitbox<T> {
 
    public lastUpdateTicks = Board.serverTicks;
 
+   public boundsMinX = 0;
+   public boundsMaxX = 0;
+   public boundsMinY = 0;
+   public boundsMaxY = 0;
+
    constructor(box: BoxFromType[T], mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>, localID: number) {
       this.box = box;
       this.localID = localID;

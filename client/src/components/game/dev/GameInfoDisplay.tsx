@@ -5,6 +5,7 @@ import Board from "../../../Board";
 import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { sendToggleSimulationPacket } from "../../../networking/packet-creation";
+import { getCurrentLayer } from "../../../world";
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
 
@@ -236,6 +237,7 @@ const GameInfoDisplay = () => {
       <ul className="area">
          <li>{TransformComponentArray.entities.length} Entities</li>
          <li>{Board.lowMonocolourParticles.length + Board.lowTexturedParticles.length + Board.highMonocolourParticles.length + Board.highTexturedParticles.length} Particles</li>
+         <li>{getCurrentLayer().lights.length} Lights</li>
       </ul>
 
       <ul className="area">

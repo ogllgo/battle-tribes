@@ -8,14 +8,14 @@ import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
 import { getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
-import { EntityID } from "../../../../../shared/src/entities";
+import { Entity } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../../../entity-components/server-components/PhysicsComponent";
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
-export let updateDebugInfoEntity: (entity: EntityID | null) => void = () => {};
+export let updateDebugInfoEntity: (entity: Entity | null) => void = () => {};
 
 export let setDebugInfoDebugData: (debugData: EntityDebugData | null) => void = () => {};
 
@@ -56,7 +56,7 @@ const TileDebugInfo = ({ layer, tile }: TileDebugInfoProps) => {
 }
 
 interface EntityDebugInfoProps {
-   readonly entity: EntityID;
+   readonly entity: Entity;
    readonly debugData: EntityDebugData | null;
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
@@ -124,7 +124,7 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
 
 const DebugInfo = () => {
    const [tile, setTile] = useState<Tile | null>(null);
-   const [entity, setEntity] = useState<EntityID | null>(null);
+   const [entity, setEntity] = useState<Entity | null>(null);
    const debugData = useRef<EntityDebugData | null>(null);
    const [, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -135,7 +135,7 @@ const DebugInfo = () => {
          setTile(tile);
       }
       
-      updateDebugInfoEntity = (entity: EntityID | null): void => {
+      updateDebugInfoEntity = (entity: Entity | null): void => {
          setEntity(entity);
       }
 

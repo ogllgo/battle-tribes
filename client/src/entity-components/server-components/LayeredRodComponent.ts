@@ -3,7 +3,7 @@ import ColouredRenderPart, { RenderPartColour } from "../../render-parts/Coloure
 import { Colour, hueShift, lerp, multiColourLerp } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
@@ -186,7 +186,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredR
    };
 }
 
-const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: EntityID): void => {
+const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: Entity): void => {
    const bendMagnitude = Math.sqrt(layeredRodComponent.bendX * layeredRodComponent.bendX + layeredRodComponent.bendY * layeredRodComponent.bendY);
    const bendProgress = bendMagnitude / MAX_BEND;
    const naturalBendMultiplier = 1 - bendProgress;
@@ -203,7 +203,7 @@ const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: EntityI
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    if (layeredRodComponent.bendX === 0 && layeredRodComponent.bendY === 0) {
       LayeredRodComponentArray.queueComponentDeactivate(entity);
@@ -228,7 +228,7 @@ function onTick(entity: EntityID): void {
    registerDirtyRenderInfo(renderInfo);
 }
 
-function onCollision(entity: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, pushingHitbox: Hitbox): void {
+function onCollision(entity: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, pushingHitbox: Hitbox): void {
    if (getEntityType(collidingEntity) === EntityType.tree) {
       return;
    }

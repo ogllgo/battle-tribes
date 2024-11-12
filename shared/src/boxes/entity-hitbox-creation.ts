@@ -249,6 +249,12 @@ export function createBracingHitboxes(): Array<Hitbox> {
    return hitboxes;
 }
 
+export function createFireTorchHitboxes(): Array<Hitbox> {
+   const box = new CircularBox(new Point(0, 0), 0, 10);
+   const hitbox = createHitbox(box, 0.55, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   return [hitbox];
+}
+
 
 /*
 Generic creation functions
@@ -281,6 +287,7 @@ export function createNormalStructureHitboxes(entityType: StructureType): Array<
       case EntityType.campfire:          return createCampfireHitboxes();
       case EntityType.frostshaper:       return createFrostshaperHitboxes();
       case EntityType.stonecarvingTable: return createStonecarvingTableHitboxes();
+      case EntityType.fireTorch:         return createFireTorchHitboxes();
       case EntityType.bracings: {
          throw new Error();
       }

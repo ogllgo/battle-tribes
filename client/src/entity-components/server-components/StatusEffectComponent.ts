@@ -10,7 +10,7 @@ import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolou
 import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { getEntityRenderInfo, playerInstance } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
@@ -92,7 +92,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEf
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    
@@ -266,7 +266,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numStatusEffects);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
 
    const previousHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
@@ -310,7 +310,7 @@ function updatePlayerFromData(reader: PacketReader): void {
    updateFromData(reader, playerInstance!);
 }
 
-function calculateTint(entity: EntityID): ComponentTint {
+function calculateTint(entity: Entity): ComponentTint {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    if (hasStatusEffect(statusEffectComponent, StatusEffect.freezing)) {
       return createComponentTint(-0.15, 0, 0.5);

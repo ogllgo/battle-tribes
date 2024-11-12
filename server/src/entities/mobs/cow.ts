@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { registerAttackingEntity } from "../../ai/escape-ai";
@@ -9,7 +9,7 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -43,7 +43,7 @@ const FOLLOW_CHANCE_PER_SECOND = 0.2;
 
 export const COW_GRAZE_TIME_TICKS = 5 * Settings.TPS;
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
@@ -82,6 +82,6 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-export function onCowHurt(cow: EntityID, attackingEntity: EntityID): void {
+export function onCowHurt(cow: Entity, attackingEntity: Entity): void {
    registerAttackingEntity(cow, attackingEntity);
 }

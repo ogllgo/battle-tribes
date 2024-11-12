@@ -1,4 +1,4 @@
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -40,7 +40,7 @@ function createComponent(): WoodenArrowComponent {
    return {};
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    // Create arrow break particles
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);

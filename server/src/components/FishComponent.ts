@@ -1,4 +1,4 @@
-import { EntityID, EntityType, FishColour, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, FishColour, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { FishVars, unfollowLeader } from "../entities/mobs/fish";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -43,7 +43,7 @@ export class FishComponent {
    public flailTimer = 0;
    public secondsOutOfWater = 0;
 
-   public leader: EntityID | null = null;
+   public leader: Entity | null = null;
    public attackTargetID = 0;
 }
 
@@ -58,7 +58,7 @@ export const FishComponentArray = new ComponentArray<FishComponent>(ServerCompon
    addDataToPacket: addDataToPacket
 });
 
-const move = (fish: EntityID, direction: number): void => {
+const move = (fish: Entity, direction: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const layer = getEntityLayer(fish);
@@ -91,7 +91,7 @@ const move = (fish: EntityID, direction: number): void => {
    }
 }
 
-const followLeader = (fish: EntityID, leader: EntityID): void => {
+const followLeader = (fish: Entity, leader: Entity): void => {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
    tribeMemberComponent.fishFollowerIDs.push(fish);
 }
@@ -112,7 +112,7 @@ const entityIsWearingFishlordSuit = (entityID: number): boolean => {
    return typeof armour !== "undefined" && armour.type === ItemType.fishlord_suit;
 }
 
-function onTick(fish: EntityID): void {
+function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
@@ -219,7 +219,7 @@ function onTick(fish: EntityID): void {
 
    // Herd AI
    // @Incomplete: Make fish steer away from land
-   const herdMembers = new Array<EntityID>();
+   const herdMembers = new Array<Entity>();
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.fish) {
@@ -239,11 +239,11 @@ function onTick(fish: EntityID): void {
    wanderAI.run(fish);
 }
 
-function preRemove(fish: EntityID): void {
+function preRemove(fish: Entity): void {
    createItemsOverEntity(fish, ItemType.raw_fish, 1);
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    // Remove the fish from its leaders' follower array
    const fishComponent = FishComponentArray.getComponent(entity);
    if (fishComponent.leader !== null) {
@@ -255,7 +255,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const fishComponent = FishComponentArray.getComponent(entity);
 
    packet.addNumber(fishComponent.colour);

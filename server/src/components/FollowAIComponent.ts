@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { getDistanceFromPointToEntity, moveEntityToPosition, stopEntity, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists } from "../world";
@@ -30,7 +30,7 @@ export const FollowAIComponentArray = new ComponentArray<FollowAIComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-export function updateFollowAIComponent(entity: EntityID, visibleEntities: ReadonlyArray<EntityID>, interestDuration: number): void {
+export function updateFollowAIComponent(entity: Entity, visibleEntities: ReadonlyArray<Entity>, interestDuration: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
 
    if (followAIComponent.followCooldownTicks > 0) {
@@ -54,7 +54,7 @@ export function updateFollowAIComponent(entity: EntityID, visibleEntities: Reado
    }
 }
 
-export function startFollowingEntity(entity: EntityID, followedEntity: EntityID, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number): void {
+export function startFollowingEntity(entity: Entity, followedEntity: Entity, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    followAIComponent.followTargetID = followedEntity;
    followAIComponent.followCooldownTicks = newFollowCooldownTicks;
@@ -64,7 +64,7 @@ export function startFollowingEntity(entity: EntityID, followedEntity: EntityID,
    moveEntityToPosition(entity, followedEntityTransformComponent.position.x, followedEntityTransformComponent.position.y, acceleration, turnSpeed);
 };
 
-export function continueFollowingEntity(entity: EntityID, followTarget: EntityID, acceleration: number, turnSpeed: number): void {
+export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -89,7 +89,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
 
    packet.addNumber(followAIComponent.followTargetID);

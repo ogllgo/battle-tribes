@@ -1,5 +1,5 @@
 import { BlueprintType, BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getBlueprintEntityType } from "../entities/blueprint-entity";
 import { StructureComponentArray } from "./StructureComponent";
@@ -43,10 +43,10 @@ const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
 export class BlueprintComponent {
    public readonly blueprintType: BlueprintType;
    public workProgress = 0;
-   public associatedEntityID: EntityID;
-   public readonly virtualEntityID: EntityID = 0;
+   public associatedEntityID: Entity;
+   public readonly virtualEntityID: Entity = 0;
 
-   constructor(blueprintType: BlueprintType, associatedEntityID: EntityID) {
+   constructor(blueprintType: BlueprintType, associatedEntityID: Entity) {
       this.blueprintType = blueprintType;
       this.associatedEntityID = associatedEntityID;
    }
@@ -58,7 +58,7 @@ export const BlueprintComponentArray = new ComponentArray<BlueprintComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entityID: EntityID): void {
+function onJoin(entityID: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entityID);
 
    if (StructureComponentArray.hasComponent(blueprintComponent.associatedEntityID)) {
@@ -67,14 +67,14 @@ function onJoin(entityID: EntityID): void {
    }
 }
 
-const upgradeBuilding = (building: EntityID): void => {
+const upgradeBuilding = (building: Entity): void => {
    const materialComponent = BuildingMaterialComponentArray.getComponent(building);
    if (materialComponent.material < BuildingMaterial.stone) {
       upgradeMaterial(building, materialComponent);
    }
 }
 
-const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: BlueprintComponent): void => {
+const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: BlueprintComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(blueprintEntity);
    const tribeComponent = TribeComponentArray.getComponent(blueprintEntity);
    const tribe = tribeComponent.tribe;
@@ -199,7 +199,7 @@ const completeBlueprint = (blueprintEntity: EntityID, blueprintComponent: Bluepr
    }
 }
 
-export function doBlueprintWork(blueprintEntity: EntityID, hammerItem: Item): void {
+export function doBlueprintWork(blueprintEntity: Entity, hammerItem: Item): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(blueprintEntity);
    
    const hammerItemInfo = ITEM_INFO_RECORD[hammerItem.type] as HammerItemInfo;
@@ -214,7 +214,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
 
    packet.addNumber(blueprintComponent.blueprintType);

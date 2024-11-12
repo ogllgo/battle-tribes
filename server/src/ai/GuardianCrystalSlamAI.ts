@@ -1,5 +1,5 @@
 import { GuardianCrystalSlamStage, ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { lerp, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, stopEntity, turnToPosition } from "../ai-shared";
@@ -39,7 +39,7 @@ export default class GuardianCrystalSlamAI {
       this.turnSpeed = turnSpeed;
    }
    
-   private slam(guardian: EntityID): void {
+   private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
       applyAbsoluteKnockback(guardian, 150, transformComponent.rotation + UtilVars.PI);
@@ -81,7 +81,7 @@ export default class GuardianCrystalSlamAI {
       }
    }
 
-   private setLimbDirection(guardian: EntityID, direction: number, offset: number, guardianComponent: GuardianComponent): void {
+   private setLimbDirection(guardian: Entity, direction: number, offset: number, guardianComponent: GuardianComponent): void {
       for (let i = 0; i < guardianComponent.limbHitboxes.length; i++) {
          const hitbox = guardianComponent.limbHitboxes[i];
          const box = hitbox.box;
@@ -96,7 +96,7 @@ export default class GuardianCrystalSlamAI {
       physicsComponent.hitboxesAreDirty = true;
    }
    
-   public run(guardian: EntityID, targetX: number, targetY: number): void {
+   public run(guardian: Entity, targetX: number, targetY: number): void {
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {
          this.windupProgressTicks++;

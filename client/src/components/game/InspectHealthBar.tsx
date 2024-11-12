@@ -9,24 +9,24 @@ import { getEntityRenderInfo, playerInstance } from "../../world";
 import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 
 const Y_OFFSET = -50;
 
-let InspectHealthBar_setEntity: (entity: EntityID | null) => void = () => {};
+let InspectHealthBar_setEntity: (entity: Entity | null) => void = () => {};
 let InspectHealthBar_setPos: (x: number, y: number) => void;
 let InspectHealthBar_setHealth: (health: number) => void;
 let InspectHealthBar_setOpacity: (opacity: number) => void;
 
 const InspectHealthBar = () => {
-   const [entity, setEntity] = useState<EntityID | null>(null);
+   const [entity, setEntity] = useState<Entity | null>(null);
    const [x, setX] = useState(0);
    const [y, setY] = useState(0);
    const [health, setHealth] = useState(0);
    const [opacity, setOpacity] = useState(1);
    
    useEffect(() => {
-      InspectHealthBar_setEntity = (entity: EntityID | null): void => {
+      InspectHealthBar_setEntity = (entity: Entity | null): void => {
          setEntity(entity);
       }
       InspectHealthBar_setPos = (x: number, y: number): void => {

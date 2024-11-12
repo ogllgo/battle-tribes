@@ -1,4 +1,4 @@
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
@@ -161,7 +161,7 @@ const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
 
 
 
-export function getTribesmanRadius(tribesman: EntityID): number {
+export function getTribesmanRadius(tribesman: Entity): number {
    const entityType = getEntityType(tribesman);
    switch (entityType) {
       case EntityType.player:
@@ -177,7 +177,7 @@ export function getTribesmanRadius(tribesman: EntityID): number {
    }
 }
 
-const getSecondsSinceLastAttack = (entity: EntityID): number => {
+const getSecondsSinceLastAttack = (entity: Entity): number => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
    let maxLastTicks = 0;
@@ -453,7 +453,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMem
    };
 }
 
-const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, entity: EntityID): void => {
+const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, entity: Entity): void => {
    // Remove previous effects
    const renderInfo = getEntityRenderInfo(entity);
    const previousRenderParts = renderInfo.getRenderThings("tribeMemberComponent:fromTitle") as Array<VisualRenderPart>;
@@ -626,7 +626,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
    }
 }
 
-const updateTitles = (tribeMemberComponent: TribeMemberComponent, entity: EntityID, newTitles: ReadonlyArray<TitleGenerationInfo>): void => {
+const updateTitles = (tribeMemberComponent: TribeMemberComponent, entity: Entity, newTitles: ReadonlyArray<TitleGenerationInfo>): void => {
    if (titlesAreDifferent(tribeMemberComponent.titles, newTitles)) {
       // If at least 1 title is added, do particle effects
       if (titlesArrayHasExtra(newTitles, tribeMemberComponent.titles)) {
@@ -650,7 +650,7 @@ const updateTitles = (tribeMemberComponent: TribeMemberComponent, entity: Entity
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
    if (tribeMemberComponent.deathbringerEyeLights.length > 0) {
       const eyeFlashProgress = Math.min(getSecondsSinceLastAttack(entity) / 0.5, 1)
@@ -725,7 +725,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numTitles);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
    tribeMemberComponent.warpaintType = readWarpaint(reader);
@@ -761,7 +761,7 @@ function updatePlayerFromData(reader: PacketReader): void {
    TitlesTab_setTitles(titles);
 }
    
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Blood pool particle
@@ -814,7 +814,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);

@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.throwingProjectile
    | ServerComponentType.battleaxeProjectile;
 
-export function createBattleaxeProjectileConfig(tribe: Tribe, tribeMember: EntityID, itemID: number | null): EntityConfig<ComponentTypes> {
+export function createBattleaxeProjectileConfig(tribe: Tribe, tribeMember: Entity, itemID: number | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 32), 0.6, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -49,7 +49,7 @@ export function createBattleaxeProjectileConfig(tribe: Tribe, tribeMember: Entit
    };
 }
 
-export function onBattleaxeProjectileCollision(battleaxe: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onBattleaxeProjectileCollision(battleaxe: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // Don't hurt the entity who threw the spear
    const spearComponent = ThrowingProjectileComponentArray.getComponent(battleaxe);
    if (collidingEntity === spearComponent.tribeMember) {

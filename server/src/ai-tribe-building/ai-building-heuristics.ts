@@ -1,5 +1,5 @@
 import { PotentialPlanSafetyData } from "battletribes-shared/ai-building-types";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import Tribe from "../Tribe";
 import { SafetyNode, addHitboxesOccupiedNodes, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
@@ -27,7 +27,7 @@ const BASE_BUILDING_WEIGHTS: Record<InfrastructureBuildingType, number> = {
    [EntityType.workbench]: 2
 };
 
-export function buildingIsInfrastructure(entity: EntityID): boolean {
+export function buildingIsInfrastructure(entity: Entity): boolean {
    const entityType = getEntityType(entity);
    return entityType !== EntityType.wall && entityType !== EntityType.embrasure && entityType !== EntityType.door && entityType !== EntityType.tunnel;
 }
@@ -184,7 +184,7 @@ const getAverageBuildingNodeSafety = (tribe: Tribe, occupiedIndexes: Set<SafetyN
    return averageSafety / occupiedIndexes.size;
 }
 
-export function getBuildingSafety(tribe: Tribe, building: EntityID, safetyInfo: PotentialPlanSafetyData | null): number {
+export function getBuildingSafety(tribe: Tribe, building: Entity, safetyInfo: PotentialPlanSafetyData | null): number {
    const entityType = getEntityType(building) as InfrastructureBuildingType;
    if (BASE_BUILDING_WEIGHTS[entityType] === undefined) {
       throw new Error("Base buliding weight not defined for entity type " + EntityTypeString[entityType]);

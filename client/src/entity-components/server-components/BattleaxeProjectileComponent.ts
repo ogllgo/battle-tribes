@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
 import { playSound, attachSoundToEntity } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface BattleaxeProjectileComponentParams {}
@@ -26,18 +26,18 @@ function createComponent(): BattleaxeProjectileComponent {
    return {};
 }
 
-const playWhoosh = (entity: EntityID): void => {
+const playWhoosh = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    const soundInfo = playSound("air-whoosh.mp3", 0.25, 1, transformComponent.position);
    attachSoundToEntity(soundInfo.sound, entity);
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    playWhoosh(entity);
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    if (Board.tickIntervalHasPassed(0.25)) {
       playWhoosh(entity);
    }

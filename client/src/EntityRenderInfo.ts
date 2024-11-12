@@ -1,10 +1,10 @@
 import { Point } from "battletribes-shared/utils";
-import { EntityID, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Board from "./Board";
 import { removeLightsAttachedToRenderPart } from "./lights";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
-import { VisualRenderPart, RenderPart, thingIsVisualRenderPart } from "./render-parts/render-parts";
+import { VisualRenderPart, RenderPart } from "./render-parts/render-parts";
 import { createIdentityMatrix } from "./rendering/matrices";
 import { NUM_RENDER_LAYERS, RenderLayer } from "./render-layers";
 import { registerDirtyRenderInfo, renderParentIsHitbox } from "./rendering/render-part-matrices";
@@ -33,7 +33,7 @@ const calculateRenderDepthFromLayer = (renderLayer: RenderLayer): number => {
 
 /** Internally contains all the information required to render an entity to the screen. */
 export class EntityRenderInfo {
-   public readonly associatedEntity: EntityID;
+   public readonly associatedEntity: Entity;
    public readonly renderLayer: RenderLayer;
    public readonly renderHeight: number;
 
@@ -58,7 +58,7 @@ export class EntityRenderInfo {
    public tintG = 0;
    public tintB = 0;
 
-   constructor(associatedEntity: EntityID, renderLayer: RenderLayer) {
+   constructor(associatedEntity: Entity, renderLayer: RenderLayer) {
       this.associatedEntity = associatedEntity;
       this.renderLayer = renderLayer;
       this.renderHeight = calculateRenderDepthFromLayer(renderLayer);
@@ -95,9 +95,7 @@ export class EntityRenderInfo {
          renderPart.parent.children.push(renderPart);
       }
       
-      if (thingIsVisualRenderPart(renderPart)) {
-         Board.renderPartRecord[renderPart.id] = renderPart;
-      }
+      Board.renderPartRecord[renderPart.id] = renderPart;
 
       registerDirtyRenderInfo(this);
    }
@@ -110,7 +108,7 @@ export class EntityRenderInfo {
          return;
       }
       
-      removeLightsAttachedToRenderPart(renderPart.id);
+      removeLightsAttachedToRenderPart(renderPart);
 
       delete Board.renderPartRecord[renderPart.id];
       

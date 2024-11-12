@@ -4,7 +4,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { angle, randFloat } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
@@ -48,7 +48,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
@@ -64,7 +64,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 35);

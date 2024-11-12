@@ -1,6 +1,6 @@
 import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
 import { PlanterBoxPlant, ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, randFloat, randInt, randItem } from "../../../../shared/src/utils";
@@ -108,7 +108,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.plant, n
    };
 }
 
-function onSpawn(entity: EntityID): void {
+function onSpawn(entity: Entity): void {
    // Create dirt particles
    
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -140,7 +140,7 @@ const getPlantTextureSource = (plant: PlanterBoxPlant, growthProgress: number, n
    return textureSource;
 }
 
-const updatePlantRenderPart = (plantComponent: PlantComponent, entity: EntityID, numFruits: number): void => {
+const updatePlantRenderPart = (plantComponent: PlantComponent, entity: Entity, numFruits: number): void => {
    if (plantComponent.plant !== null) {
       const textureSource = getPlantTextureSource(plantComponent.plant, plantComponent.growthProgress, numFruits);
       if (plantComponent.plantRenderPart === null) {
@@ -164,7 +164,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(entity);
    
    plantComponent.plant = reader.readNumber();
@@ -174,7 +174,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    updatePlantRenderPart(plantComponent, entity, numFruit);
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const plantComponent = PlantComponentArray.getComponent(entity);
 
@@ -231,7 +231,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const plantComponent = PlantComponentArray.getComponent(entity);
 

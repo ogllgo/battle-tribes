@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
@@ -20,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.throwingProjectile
    | ServerComponentType.spearProjectile;
 
-export function createSpearProjectileConfig(tribeMember: EntityID, itemID: number | null): EntityConfig<ComponentTypes> {
+export function createSpearProjectileConfig(tribeMember: Entity, itemID: number | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 60, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -43,7 +43,7 @@ export function createSpearProjectileConfig(tribeMember: EntityID, itemID: numbe
    };
 }
 
-export function onSpearProjectileCollision(spear: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onSpearProjectileCollision(spear: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // Don't hurt friendlies
    const spearComponent = ThrowingProjectileComponentArray.getComponent(spear);
    if (entityExists(spearComponent.tribeMember) && getEntityRelationship(spearComponent.tribeMember, collidingEntity) === EntityRelationship.friendly) {

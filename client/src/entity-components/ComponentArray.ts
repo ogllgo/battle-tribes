@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
@@ -20,7 +20,7 @@ let componentArrayIDCounter = 0;
 /** Contains information useful for creating components. */
 export type EntityConfig<ServerComponentTypes extends ServerComponentType, ClientComponentTypes extends ClientComponentType> = {
    /** Currently this is used to create lights and sometimes attach components in the createComponent function */
-   readonly entity: EntityID;
+   readonly entity: Entity;
    readonly entityType: EntityType;
    readonly layer: Layer;
    readonly renderInfo: EntityRenderInfo;
@@ -38,17 +38,17 @@ export interface ComponentArrayFunctions<T extends object, RenderParts extends o
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
    createComponent(config: EntityConfig<never, never>, renderParts: RenderParts): T;
    /** Called once when the entity is being created, just after all the components are created from their params */
-   onLoad?(entity: EntityID): void;
+   onLoad?(entity: Entity): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
-   onSpawn?(entity: EntityID): void;
-   onTick?(entity: EntityID): void;
+   onSpawn?(entity: Entity): void;
+   onTick?(entity: Entity): void;
    /** Called when a packet is skipped and there is no data to update from, so we must extrapolate all the game logic */
-   onUpdate?(entity: EntityID): void;
-   onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   onHit?(entity: EntityID, hitData: Readonly<HitData>): void;
-   onRemove?(entity: EntityID): void;
+   onUpdate?(entity: Entity): void;
+   onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
+   onHit?(entity: Entity, hitData: Readonly<HitData>): void;
+   onRemove?(entity: Entity): void;
    /** Called when the entity dies, not when the entity leaves the player's vision. */
-   onDie?(entity: EntityID): void;
+   onDie?(entity: Entity): void;
 }
 
 type ComponentTypeForArray = {
@@ -71,21 +71,21 @@ export abstract class ComponentArray<
    public readonly id = componentArrayIDCounter++;
    private readonly isActiveByDefault: boolean;
    
-   public entities = new Array<EntityID>();
+   public entities = new Array<Entity>();
    public components = new Array<T>();
 
    /** Maps entity IDs to component indexes */
-   private entityToIndexMap: Partial<Record<EntityID, number>> = {};
+   private entityToIndexMap: Partial<Record<Entity, number>> = {};
    /** Maps component indexes to entity IDs */
-   private indexToEntityMap: Partial<Record<number, EntityID>> = {};
+   private indexToEntityMap: Partial<Record<number, Entity>> = {};
    
    public activeComponents = new Array<T>();
-   public activeEntities = new Array<EntityID>();
+   public activeEntities = new Array<Entity>();
 
    /** Maps entity IDs to component indexes */
-   private activeEntityToIndexMap: Record<EntityID, number> = {};
+   private activeEntityToIndexMap: Record<Entity, number> = {};
    /** Maps component indexes to entity IDs */
-   private activeIndexToEntityMap: Record<number, EntityID> = {};
+   private activeIndexToEntityMap: Record<number, Entity> = {};
 
    private deactivateBuffer = new Array<number>();
 
@@ -96,14 +96,14 @@ export abstract class ComponentArray<
    // but is that really the right approach? What would be the benefits? That was my original reason for making the
    // createRenderParts thing.
    public readonly createComponent: (config: EntityConfig<never, never>, renderParts: RenderParts) => T;
-   public onLoad?(entity: EntityID): void;
-   public onSpawn?(entity: EntityID): void;
-   public onTick?: (entity: EntityID) => void;
-   public onUpdate?: (entity: EntityID) => void;
-   public onCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   public onHit?(entity: EntityID, hitData: Readonly<HitData>): void;
-   public onDie?(entity: EntityID): void;
-   public onRemove?(entity: EntityID): void;
+   public onLoad?(entity: Entity): void;
+   public onSpawn?(entity: Entity): void;
+   public onTick?: (entity: Entity) => void;
+   public onUpdate?: (entity: Entity) => void;
+   public onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
+   public onHit?(entity: Entity, hitData: Readonly<HitData>): void;
+   public onDie?(entity: Entity): void;
+   public onRemove?(entity: Entity): void;
 
    constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, RenderParts>) {
       this.isActiveByDefault = isActiveByDefault;
@@ -130,7 +130,7 @@ export abstract class ComponentArray<
       }
    }
 
-   public addComponent(entityID: EntityID, component: T): void {
+   public addComponent(entityID: Entity, component: T): void {
       // Put new entry at end and update the maps
       const newIndex = this.components.length;
       this.entityToIndexMap[entityID] = newIndex;
@@ -143,7 +143,7 @@ export abstract class ComponentArray<
       }
    }
 
-   public removeComponent(entityID: EntityID): void {
+   public removeComponent(entityID: Entity): void {
 		// Copy element at end into deleted element's place to maintain density
       const indexOfRemovedEntity = this.entityToIndexMap[entityID]!;
       this.components[indexOfRemovedEntity] = this.components[this.components.length - 1];
@@ -165,15 +165,15 @@ export abstract class ComponentArray<
       }
    }
 
-   public getComponent(entity: EntityID): T {
+   public getComponent(entity: Entity): T {
       return this.components[this.entityToIndexMap[entity]!];
    }
 
-   public hasComponent(entity: EntityID): boolean {
+   public hasComponent(entity: Entity): boolean {
       return typeof this.entityToIndexMap[entity] !== "undefined";
    }
 
-   public activateComponent(component: T, entity: EntityID): void {
+   public activateComponent(component: T, entity: Entity): void {
       if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
          return;
       }
@@ -187,7 +187,7 @@ export abstract class ComponentArray<
       this.activeEntities.push(entity);
    }
 
-   private deactivateComponent(entity: EntityID): void {
+   private deactivateComponent(entity: Entity): void {
       // Copy element at end into deleted element's place to maintain density
       const indexOfRemovedEntity = this.activeEntityToIndexMap[entity];
       this.activeComponents[indexOfRemovedEntity] = this.activeComponents[this.activeComponents.length - 1];
@@ -205,7 +205,7 @@ export abstract class ComponentArray<
       this.activeEntities.pop();
    }
 
-   public queueComponentDeactivate(entity: EntityID): void {
+   public queueComponentDeactivate(entity: Entity): void {
       this.deactivateBuffer.push(entity);
    }
 
@@ -234,7 +234,7 @@ export function getServerComponentArray(componentType: ServerComponentType): Ser
    return serverComponentArrayRecord[componentType];
 }
 
-export function updateEntity(entity: EntityID): void {
+export function updateEntity(entity: Entity): void {
    for (let i = 0; i < componentArrays.length; i++) {
       const componentArray = componentArrays[i];
       if (typeof componentArray.onUpdate === "undefined") {

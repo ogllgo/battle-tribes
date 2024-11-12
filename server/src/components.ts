@@ -73,6 +73,10 @@ import { SlingTurretComponent } from "./components/SlingTurretComponent";
 import { BarrelComponent } from "./components/BarrelComponent";
 import { CampfireComponent } from "./components/CampfireComponent";
 import { FurnaceComponent } from "./components/FurnaceComponent";
+import { FireTorchComponent } from "./components/FireTorchComponent";
+import { SpikyBastardComponent } from "./components/SpikyBastardComponent";
+import { GlurbComponent } from "./components/GlurbComponent";
+import { TetheredHitboxComponent } from "./components/TetheredHitboxComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -131,6 +135,7 @@ const ComponentClassRecord = {
    [ServerComponentType.tribeWarrior]: () => TribeWarriorComponent,
    [ServerComponentType.craftingStation]: () => CraftingStationComponent,
    [ServerComponentType.transform]: () => TransformComponent,
+   [ServerComponentType.tetheredHitbox]: () => TetheredHitboxComponent,
    [ServerComponentType.projectile]: () => ProjectileComponent,
    [ServerComponentType.iceArrow]: () => IceArrowComponent,
    [ServerComponentType.layeredRod]: () => LayeredRodComponent,
@@ -149,7 +154,10 @@ const ComponentClassRecord = {
    [ServerComponentType.slingTurret]: () => SlingTurretComponent,
    [ServerComponentType.barrel]: () => BarrelComponent,
    [ServerComponentType.campfire]: () => CampfireComponent,
-   [ServerComponentType.furnace]: () => FurnaceComponent
+   [ServerComponentType.furnace]: () => FurnaceComponent,
+   [ServerComponentType.fireTorch]: () => FireTorchComponent,
+   [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
+   [ServerComponentType.glurb]: () => GlurbComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

@@ -1,4 +1,4 @@
-import { EntityID, TreeSize } from "battletribes-shared/entities";
+import { Entity, TreeSize } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
@@ -80,7 +80,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const treeComponent = TreeComponentArray.getComponent(entity);
 
@@ -121,7 +121,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const treeComponent = TreeComponentArray.getComponent(entity);
 

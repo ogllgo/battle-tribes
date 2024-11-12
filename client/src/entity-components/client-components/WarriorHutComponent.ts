@@ -1,4 +1,4 @@
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -56,12 +56,12 @@ function createComponent(): WarriorHutComponent {
    return {};
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playBuildingHitSound(transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
 }

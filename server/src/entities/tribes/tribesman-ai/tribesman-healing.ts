@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, LimbAction } from "battletribes-shared/entities";
+import { Entity, LimbAction } from "battletribes-shared/entities";
 import { stopEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
@@ -31,7 +31,7 @@ export function getHealingItemUseInfo(tribesmanID: number): HealingItemUseInfo |
    return null;
 }
 
-export function continueTribesmanHealing(tribesmanID: EntityID, healingItemUseInfo: HealingItemUseInfo): void {
+export function continueTribesmanHealing(tribesmanID: Entity, healingItemUseInfo: HealingItemUseInfo): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesmanID);
    const limbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    limbInfo.selectedItemSlot = healingItemUseInfo.itemSlot;

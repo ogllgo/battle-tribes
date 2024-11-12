@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randInt, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
@@ -30,7 +30,7 @@ export const KrumblidComponentArray = new ComponentArray<KrumblidComponent>(Serv
    preRemove: preRemove
 });
 
-function onTick(krumblid: EntityID): void {
+function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
    
    // Escape AI
@@ -76,6 +76,6 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-export function preRemove(krumblid: EntityID): void {
+export function preRemove(krumblid: Entity): void {
    createItemsOverEntity(krumblid, ItemType.leather, randInt(2, 3));
 }

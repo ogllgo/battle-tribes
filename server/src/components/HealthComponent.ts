@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { PlayerCauseOfDeath, EntityType, EntityID } from "battletribes-shared/entities";
+import { PlayerCauseOfDeath, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { Point, clamp } from "battletribes-shared/utils";
@@ -53,7 +53,7 @@ export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerCo
    addDataToPacket: addDataToPacket
 });
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    
    // Update local invulnerability hashes
@@ -81,7 +81,7 @@ export function canDamageEntity(healthComponent: HealthComponent, attackHash: st
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function damageEntity(entity: EntityID, attackingEntity: EntityID | null, damage: number, causeOfDeath: PlayerCauseOfDeath, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+export function damageEntity(entity: Entity, attackingEntity: Entity | null, damage: number, causeOfDeath: PlayerCauseOfDeath, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
    const healthComponent = HealthComponentArray.getComponent(entity);
 
    const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
@@ -236,7 +236,7 @@ export function damageEntity(entity: EntityID, attackingEntity: EntityID | null,
    return true;
 }
 
-export function healEntity(entity: EntityID, healAmount: number, healer: EntityID): void {
+export function healEntity(entity: Entity, healAmount: number, healer: Entity): void {
    if (healAmount <= 0) {
       return;
    }
@@ -265,7 +265,7 @@ export function addLocalInvulnerabilityHash(healthComponent: HealthComponent, ha
    }
 }
 
-export function getEntityHealth(entity: EntityID): number {
+export function getEntityHealth(entity: Entity): number {
    const healthComponent = HealthComponentArray.getComponent(entity);
    return healthComponent.health;
 }

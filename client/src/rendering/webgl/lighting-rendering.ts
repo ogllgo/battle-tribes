@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, randFloat, randSign } from "battletribes-shared/utils";
-import { createTexture, createWebGLProgram, gl, windowHeight, windowWidth } from "../../webgl";
+import { lerp } from "battletribes-shared/utils";
+import { createWebGLProgram, gl } from "../../webgl";
 import Board from "../../Board";
 import OPTIONS from "../../options";
 import { getLightPositionMatrix } from "../../lights";
@@ -186,9 +186,6 @@ export function createNightShaders(): void {
             r += colour.r * intensity;
             g += colour.g * intensity;
             b += colour.b * intensity;
-            // r += 0.5 * intensity;
-            // g += 0.5;
-            // b += 0.5;
          }
       }
 
@@ -333,10 +330,10 @@ const getVisibleRectLights = (layer: Layer): ReadonlyArray<RectLight> => {
    }
    
    const dropdownLightSpreadRange = Math.pow(Vars.DROPDOWN_LIGHT_STRENGTH, 2);
-   const minTileX = Math.floor((Camera.minVisibleX - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const maxTileX = Math.floor((Camera.maxVisibleX + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const minTileY = Math.floor((Camera.minVisibleY - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
-   const maxTileY = Math.floor((Camera.maxVisibleY + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE);
+   const minTileX = Math.max(Math.floor((Camera.minVisibleX - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE);
+   const maxTileX = Math.min(Math.floor((Camera.maxVisibleX + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
+   const minTileY = Math.max(Math.floor((Camera.minVisibleY - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE);
+   const maxTileY = Math.min(Math.floor((Camera.maxVisibleY + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
 
    // Check the surface layer for dropdown tiles
    const rectLights = new Array<RectLight>();

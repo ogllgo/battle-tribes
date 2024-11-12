@@ -5,7 +5,7 @@ import { angle, Point, randFloat, randInt } from "battletribes-shared/utils";
 import { Box, BoxType, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { ClientBlockBox, ClientDamageBox } from "../../boxes";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { InventoryName } from "battletribes-shared/items/items";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
@@ -42,12 +42,12 @@ export interface DamageBoxComponent {
 }
 
 interface DamageBoxCollisionInfo {
-   readonly collidingEntity: EntityID;
+   readonly collidingEntity: Entity;
    readonly collidingBox: ClientDamageBox | ClientBlockBox;
 }
 
 // @Hack: this whole thing is cursed
-const getCollidingBox = (entity: EntityID, box: Box): DamageBoxCollisionInfo | null => {
+const getCollidingBox = (entity: Entity, box: Box): DamageBoxCollisionInfo | null => {
    const layer = getEntityLayer(entity);
    
    // @Hack
@@ -339,7 +339,7 @@ const onPlayerBlock = (limb: LimbInfo): void => {
    GameInteractableLayer_setItemRestTime(limb.inventoryName, limb.selectedItemSlot, AttackVars.SHIELD_BLOCK_REST_TIME_TICKS);
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    if (entity !== playerInstance) {
       return;
    }
@@ -398,7 +398,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(12 * Float32Array.BYTES_PER_ELEMENT * numRectangularBlockBoxes);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
    
    // @Speed @Garbage

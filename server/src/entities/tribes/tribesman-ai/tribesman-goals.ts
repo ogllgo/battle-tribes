@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { TechInfo, getTechChain } from "battletribes-shared/techs";
@@ -88,7 +88,8 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.stonecarvingTable]: null,
    [ItemType.woodenShield]: null,
    [ItemType.slingshot]: null,
-   [ItemType.woodenBracings]: null
+   [ItemType.woodenBracings]: null,
+   [ItemType.fireTorch]: null
 };
 
 export const enum TribesmanGoalType {
@@ -196,7 +197,7 @@ export type TribesmanGoal = TribesmanCraftGoal | TribesmanPlaceGoal | TribesmanU
 //    return true;
 // }
 
-const planIsAvailable = (tribesman: EntityID, plan: BuildingPlan): boolean => {
+const planIsAvailable = (tribesman: Entity, plan: BuildingPlan): boolean => {
    if (plan.assignedTribesmanID !== 0) {
       return plan.assignedTribesmanID === tribesman;
    }
@@ -212,7 +213,7 @@ interface BuildingPosition {
 }
 
 // @Cleanup: large amount of copy and paste from building-plans
-const generateRandomNearbyPosition = (tribesman: EntityID, entityType: StructureType): BuildingPosition => {
+const generateRandomNearbyPosition = (tribesman: Entity, entityType: StructureType): BuildingPosition => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    
    let attempts = 0;
@@ -273,7 +274,7 @@ const goalsIncludeCraftingItem = (goals: ReadonlyArray<TribesmanGoal>, itemType:
    return false;
 }
 
-const createItemGatherGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, hotbarInventory: Inventory, itemTypesToGather: ReadonlyArray<ItemType>): void => {
+const createItemGatherGoal = (goals: Array<TribesmanGoal>, tribesman: Entity, hotbarInventory: Inventory, itemTypesToGather: ReadonlyArray<ItemType>): void => {
    for (let i = 0; i < itemTypesToGather.length; i++) {
       const itemType = itemTypesToGather[i];
 
@@ -314,7 +315,7 @@ const createItemGatherGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, 
    });
 }
 
-const createGoalForRecipe = (goals: Array<TribesmanGoal>, tribesman: EntityID, tribe: Tribe, recipe: CraftingRecipe, itemTypesToGather: ReadonlyArray<ItemType>): void => {
+const createGoalForRecipe = (goals: Array<TribesmanGoal>, tribesman: Entity, tribe: Tribe, recipe: CraftingRecipe, itemTypesToGather: ReadonlyArray<ItemType>): void => {
    goals.unshift({
       type: TribesmanGoalType.craftRecipe,
       recipe: recipe,
@@ -343,7 +344,7 @@ const createGoalForRecipe = (goals: Array<TribesmanGoal>, tribesman: EntityID, t
    }
 }
 
-const createCraftGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, itemType: ItemType): void => {
+const createCraftGoal = (goals: Array<TribesmanGoal>, tribesman: Entity, itemType: ItemType): void => {
    // Start with the lowest-level not bottom intermediate products and work up to the final product
 
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
@@ -367,7 +368,7 @@ const createCraftGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, itemT
    }
 }
 
-const getNextTechRequiredForItem = (tribesman: EntityID, itemType: ItemType): TechInfo | null => {
+const getNextTechRequiredForItem = (tribesman: Entity, itemType: ItemType): TechInfo | null => {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribe = tribeComponent.tribe;
 
@@ -392,7 +393,7 @@ const tribeHasResearchBench = (tribe: Tribe): boolean => {
    return false;
 }
 
-const createTechResearchGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, tribe: Tribe, tech: TechInfo): void => {
+const createTechResearchGoal = (goals: Array<TribesmanGoal>, tribesman: Entity, tribe: Tribe, tech: TechInfo): void => {
    goals.unshift({
       type: TribesmanGoalType.researchTech,
       isPersonalPlan: false,
@@ -419,7 +420,7 @@ const createTechResearchGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID
    }
 }
 
-const createBuildingPlaceGoal = (goals: Array<TribesmanGoal>, tribesman: EntityID, hotbarInventory: Inventory, placeableItemType: PlaceableItemType): void => {
+const createBuildingPlaceGoal = (goals: Array<TribesmanGoal>, tribesman: Entity, hotbarInventory: Inventory, placeableItemType: PlaceableItemType): void => {
    const buildingRecipe = forceGetItemRecipe(placeableItemType);
    
    // @Incomplete: account for barrel resources
@@ -487,7 +488,7 @@ const createBuildingPlaceGoal = (goals: Array<TribesmanGoal>, tribesman: EntityI
 }
 
 /** Gets a tribesman's goals in order of which should be done first */
-export function getTribesmanGoals(tribesman: EntityID, hotbarInventory: Inventory): ReadonlyArray<TribesmanGoal> {
+export function getTribesmanGoals(tribesman: Entity, hotbarInventory: Inventory): ReadonlyArray<TribesmanGoal> {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribe = tribeComponent.tribe;
 

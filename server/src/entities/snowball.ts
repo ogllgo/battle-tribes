@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { SnowballSize, EntityType, EntityID, SNOWBALL_SIZES } from "battletribes-shared/entities";
+import { SnowballSize, EntityType, Entity, SNOWBALL_SIZES } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../components/HealthComponent";
@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const MAX_HEALTHS: ReadonlyArray<number> = [1, 3];
 
-export function createSnowballConfig(yeti: EntityID, size: SnowballSize): EntityConfig<ComponentTypes> {
+export function createSnowballConfig(yeti: Entity, size: SnowballSize): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);

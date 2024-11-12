@@ -8,14 +8,14 @@ import { randInt } from "battletribes-shared/utils";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
 import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
@@ -76,6 +76,9 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
    
    const numCircularHitboxes = reader.readNumber();
    for (let i = 0; i < numCircularHitboxes; i++) {
+      const x = reader.readNumber();
+      const y = reader.readNumber();
+      const rotation = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -94,6 +97,9 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       const offset = new Point(offsetX, offsetY);
       const box = new CircularBox(offset, 0, radius);
       box.scale = scale;
+      box.position.x = x;
+      box.position.y = y;
+      box.rotation = rotation;
       
       const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
       hitboxes.push(hitbox);
@@ -102,6 +108,8 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
    // Update rectangular hitboxes
    const numRectangularHitboxes = reader.readNumber();
    for (let i = 0; i < numRectangularHitboxes; i++) {
+      const x = reader.readNumber();
+      const y = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -122,6 +130,8 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       const offset = new Point(offsetX, offsetY);
       const box = new RectangularBox(offset, width, height, rotation);
       box.scale = scale;
+      box.position.x = x;
+      box.position.y = y;
 
       const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
       hitboxes.push(hitbox);
@@ -160,7 +170,7 @@ export function removeHitboxFromEntity(transformComponent: TransformComponent, h
    transformComponent.hitboxMap.delete(localID);
 }
 
-export function entityIsInRiver(transformComponent: TransformComponent, entity: EntityID): boolean {
+export function entityIsInRiver(transformComponent: TransformComponent, entity: Entity): boolean {
    const layer = getEntityLayer(entity);
    const tile = getEntityTile(layer, transformComponent);
    if (tile.type !== TileType.water) {
@@ -214,7 +224,7 @@ const updateHitboxes = (transformComponent: TransformComponent): void => {
 }
 
 /** Recalculates which chunks the game object is contained in */
-const updateContainingChunks = (transformComponent: TransformComponent, entity: EntityID): void => {
+const updateContainingChunks = (transformComponent: TransformComponent, entity: Entity): void => {
    const layer = getEntityLayer(entity);
    const containingChunks = new Set<Chunk>();
    
@@ -257,8 +267,8 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
    }
 }
 
-export function updateEntityPosition(transformComponent: TransformComponent, entity: EntityID): void {
-   updateHitboxes(transformComponent);
+export function updateEntityPosition(transformComponent: TransformComponent, entity: Entity): void {
+   // updateHitboxes(transformComponent);
    updateContainingChunks(transformComponent, entity);
 }
 
@@ -298,12 +308,12 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    updateEntityPosition(transformComponent, entity);
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (const chunk of transformComponent.chunks) {
       chunk.removeEntity(entity);
@@ -337,13 +347,13 @@ function padData(reader: PacketReader): void {
    reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
 
    const numCircularHitboxes = reader.readNumber();
-   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT * numCircularHitboxes);
+   reader.padOffset(13 * Float32Array.BYTES_PER_ELEMENT * numCircularHitboxes);
 
    const numRectangularHitboxes = reader.readNumber();
-   reader.padOffset(12 * Float32Array.BYTES_PER_ELEMENT * numRectangularHitboxes);
+   reader.padOffset(14 * Float32Array.BYTES_PER_ELEMENT * numRectangularHitboxes);
 }
    
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    const positionX = reader.readNumber();
@@ -355,8 +365,6 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       transformComponent.position.y = positionY;
       transformComponent.rotation = rotation;
       
-      updateEntityPosition(transformComponent, entity);
-
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);
       registerDirtyRenderPosition(renderInfo);
@@ -381,6 +389,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const numCircularHitboxes = reader.readNumber();
    let couldBeRemovedCircularHitboxes = numCircularHitboxes !== numExistingCircular;
    for (let i = 0; i < numCircularHitboxes; i++) {
+      const x = reader.readNumber();
+      const y = reader.readNumber();
+      const rotation = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -402,7 +413,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
       if (typeof hitbox === "undefined") {
          const offset = new Point(offsetX, offsetY);
          const box = new CircularBox(offset, 0, radius);
+         // @Cleanup: The way box properties are set is way too spread out
          box.scale = scale;
+         box.rotation = rotation;
          const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
          addHitboxToEntity(transformComponent, hitbox);
 
@@ -413,13 +426,15 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          const box = hitbox.box as CircularBox;
          
          // Update the existing hitbox
+         box.position.x = x;
+         box.position.y = y;
+         box.rotation = rotation;
          box.radius = radius;
          box.offset.x = offsetX;
          box.offset.y = offsetY;
          box.scale = scale;
          hitbox.collisionType = collisionType;
          hitbox.lastUpdateTicks = Board.serverTicks;
-         updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
       }
    }
 
@@ -427,6 +442,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    const numRectangularHitboxes = reader.readNumber();
    let couldBeRemovedRectangularHitboxes = numRectangularHitboxes !== numExistingRectangular;
    for (let i = 0; i < numRectangularHitboxes; i++) {
+      const x = reader.readNumber();
+      const y = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -461,6 +478,8 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          const box = hitbox.box as RectangularBox;
          
          // Update the existing hitbox
+         box.position.x = x;
+         box.position.y = y;
          box.width = width;
          box.height = height;
          box.relativeRotation = rotation;
@@ -469,7 +488,9 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
          box.scale = scale;
          hitbox.collisionType = collisionType;
          hitbox.lastUpdateTicks = Board.serverTicks;
+         // @Bug: remove this, but make sure to add in rotation for circular hitboxes first
          updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+         updateVertexPositionsAndSideAxes(box);
       }
    }
 
@@ -492,6 +513,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 
    // Update containing chunks
+   // @Copynpaste
 
    // @Speed
    // @Speed

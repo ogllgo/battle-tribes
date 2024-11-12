@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSound } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
@@ -62,12 +62,12 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("slime-spit.mp3", 0.5, 1, transformComponent.position);
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const slimeSpitComponent = SlimeSpitComponentArray.getComponent(entity);
    slimeSpitComponent.renderParts[0].rotation += 1.5 * Math.PI / Settings.TPS;
    slimeSpitComponent.renderParts[1].rotation -= 1.5 * Math.PI / Settings.TPS;
@@ -87,7 +87,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    for (let i = 0; i < 15; i++) {
       createPoisonParticle(entity);
    }

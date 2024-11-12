@@ -1,6 +1,6 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PlantComponent, PlantComponentArray } from "../components/PlantComponent";
 import { dropBerryOverEntity } from "./resources/berry-bush";
@@ -24,7 +24,7 @@ const PLANT_HEALTHS: Record<PlanterBoxPlant, number> = {
    [PlanterBoxPlant.iceSpikes]: 5,
 };
 
-export function createPlantConfig(plantType: PlanterBoxPlant, planterBox: EntityID): EntityConfig<ComponentTypes> {
+export function createPlantConfig(plantType: PlanterBoxPlant, planterBox: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -47,7 +47,7 @@ export function createPlantConfig(plantType: PlanterBoxPlant, planterBox: Entity
    };
 }
 
-export function dropBerryBushCropBerries(plant: EntityID, multiplier: number): void {
+export function dropBerryBushCropBerries(plant: Entity, multiplier: number): void {
    const plantComponent = PlantComponentArray.getComponent(plant);
    if (plantComponent.numFruit === 0) {
       return;
@@ -60,7 +60,7 @@ export function dropBerryBushCropBerries(plant: EntityID, multiplier: number): v
    plantComponent.numFruit--;
 }
 
-export function onPlantHit(plant: EntityID): void {
+export function onPlantHit(plant: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(plant);
 
    plantComponent.fruitRandomGrowthTicks = 0;

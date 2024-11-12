@@ -1,4 +1,4 @@
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import Layer from "./Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "./components";
@@ -15,7 +15,7 @@ const getComponentTypes = <ComponentTypes extends ServerComponentType>(component
    return Object.keys(componentConfig.components).map(Number) as Array<ComponentTypes>;
 }
 
-export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig<ComponentTypes>, layer: Layer, joinDelayTicks: number): EntityID {
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig<ComponentTypes>, layer: Layer, joinDelayTicks: number): Entity {
    const id = idCounter++;
    // @Hack
    const componentTypes = getComponentTypes(entityConfig);

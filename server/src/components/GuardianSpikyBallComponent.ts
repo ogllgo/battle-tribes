@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -26,7 +26,7 @@ export const GuardianSpikyBallComponentArray = new ComponentArray<GuardianSpikyB
    addDataToPacket: addDataToPacket
 });
 
-function onTick(spikyBall: EntityID): void {
+function onTick(spikyBall: Entity): void {
    const guardianSpikyBallComponent = GuardianSpikyBallComponentArray.getComponent(spikyBall);
 
    const ageTicks = getEntityAgeTicks(spikyBall);
@@ -35,12 +35,12 @@ function onTick(spikyBall: EntityID): void {
    }
 }
 
-function onWallCollision(spikyBall: EntityID): void {
+function onWallCollision(spikyBall: Entity): void {
    const spikyBallComponent = GuardianSpikyBallComponentArray.getComponent(spikyBall);
    spikyBallComponent.lifetime -= Math.floor(Settings.TPS * randFloat(0.2, 0.4));
 }
 
-function onHitboxCollision(spikyBall: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
    const entityType = getEntityType(collidingEntity);
    if (entityType === EntityType.guardianSpikyBall || entityType === EntityType.guardian) {
       return;
@@ -66,4 +66,4 @@ function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {}
+function addDataToPacket(packet: Packet, entity: Entity): void {}

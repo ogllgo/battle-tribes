@@ -5,7 +5,7 @@ import { randInt, randItem } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { playSound } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
@@ -73,7 +73,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const tribeComponent = TribeComponentArray.getComponent(entity);
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
@@ -128,7 +128,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);

@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { lerp, randFloat, randInt } from "battletribes-shared/utils";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { getEntityAgeTicks, getEntityRenderInfo } from "../../world";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Board from "../../Board";
@@ -98,7 +98,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.rockSpik
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(entity);
    
    // 
@@ -174,7 +174,7 @@ function onLoad(entity: EntityID): void {
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(entity);
    const renderInfo = getEntityRenderInfo(entity);
 
@@ -199,7 +199,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(entity);
    
    rockSpikeComponent.size = reader.readNumber();

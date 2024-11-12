@@ -3,7 +3,7 @@ import Board from "./Board";
 import { entityExists, getEntityLayer, getEntityRenderInfo } from "./world";
 import { createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace } from "./rendering/matrices";
 import Layer from "./Layer";
-import { EntityID } from "../../shared/src/entities";
+import { Entity } from "../../shared/src/entities";
 import { RenderPart } from "./render-parts/render-parts";
 
 export type LightID = number;
@@ -23,7 +23,7 @@ export interface Light {
 interface LightRenderPartInfo {
    readonly renderPart: RenderPart;
    // We store the entity for the render part on the light instead of the render part to save memory (the vast majority of render parts won't have lights on them)
-   readonly entity: EntityID;
+   readonly entity: Entity;
 }
 
 let lightIDCounter = 0;
@@ -73,10 +73,10 @@ const addLightToLayer = (light: Light, layer: Layer): void => {
    lightRecord[light.id] = light;
 }
 
-export function attachLightToEntity(light: Light, entity: EntityID): void {
+export function attachLightToEntity(light: Light, entity: Entity): void {
    const layer = getEntityLayer(entity);
    addLightToLayer(light, layer);
-   
+
    lightToEntityRecord[light.id] = entity;
 
    const lightIDs = entityToLightsRecord[entity];
@@ -88,7 +88,7 @@ export function attachLightToEntity(light: Light, entity: EntityID): void {
 }
 
 // @Cleanup: the 3 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
-export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: EntityID, layer: Layer): void {
+export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity, layer: Layer): void {
    addLightToLayer(light, layer);
    
    lightToRenderPartRecord[light.id] = {
@@ -145,7 +145,7 @@ export function removeLight(light: Light): void {
    throw new Error();
 }
 
-export function removeLightsAttachedToEntity(entity: EntityID): void {
+export function removeLightsAttachedToEntity(entity: Entity): void {
    const lightIDs = entityToLightsRecord[entity];
    if (typeof lightIDs === "undefined") {
       return;
@@ -158,8 +158,8 @@ export function removeLightsAttachedToEntity(entity: EntityID): void {
    }
 }
 
-export function removeLightsAttachedToRenderPart(renderPartID: number): void {
-   const lightIDs = renderPartToLightsRecord[renderPartID];
+export function removeLightsAttachedToRenderPart(renderPart: RenderPart): void {
+   const lightIDs = renderPartToLightsRecord[renderPart.id];
    if (typeof lightIDs === "undefined") {
       return;
    }

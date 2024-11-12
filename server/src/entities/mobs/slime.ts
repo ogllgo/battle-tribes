@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { SlimeSize, EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
+import { SlimeSize, EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, lerp } from "battletribes-shared/utils";
@@ -18,7 +18,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks } from "../../world";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import WanderAI from "../../ai/WanderAI";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
@@ -34,7 +34,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export interface SlimeEntityAnger {
    angerAmount: number;
-   readonly target: EntityID;
+   readonly target: Entity;
 }
 
 interface AngerPropagationInfo {
@@ -58,7 +58,7 @@ const MAX_HEALTH: ReadonlyArray<number> = [10, 20, 35];
 export const SLIME_SPEED_MULTIPLIERS: ReadonlyArray<number> = [2.5, 1.75, 1];
 const VISION_RANGES = [200, 250, 300];
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.swamp;
 }
 
@@ -94,7 +94,7 @@ export function createSlimeConfig(size: SlimeSize): EntityConfig<ComponentTypes>
    };
 }
 
-const merge = (slime1: EntityID, slime2: EntityID): void => {
+const merge = (slime1: Entity, slime2: Entity): void => {
    // Prevents both slimes from calling this function
    if (entityIsFlaggedForDestruction(slime2)) return;
 
@@ -146,7 +146,7 @@ const merge = (slime1: EntityID, slime2: EntityID): void => {
 /**
  * Determines whether the slime wants to merge with the other slime.
  */
-const wantsToMerge = (slimeComponent1: SlimeComponent, slime2: EntityID): boolean => {
+const wantsToMerge = (slimeComponent1: SlimeComponent, slime2: Entity): boolean => {
    const slimeComponent2 = SlimeComponentArray.getComponent(slime2);
    
    // Don't try to merge with larger slimes
@@ -156,7 +156,7 @@ const wantsToMerge = (slimeComponent1: SlimeComponent, slime2: EntityID): boolea
    return mergeWant >= SLIME_MAX_MERGE_WANT[slimeComponent1.size];
 }
 
-export function onSlimeCollision(slime: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onSlimeCollision(slime: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Merge with slimes
@@ -187,7 +187,7 @@ export function onSlimeCollision(slime: EntityID, collidingEntity: EntityID, col
    }
 }
 
-const addEntityAnger = (slime: EntityID, entity: EntityID, amount: number, propagationInfo: AngerPropagationInfo): void => {
+const addEntityAnger = (slime: Entity, entity: Entity, amount: number, propagationInfo: AngerPropagationInfo): void => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
 
    let alreadyIsAngry = false;
@@ -214,7 +214,7 @@ const addEntityAnger = (slime: EntityID, entity: EntityID, amount: number, propa
    }
 }
 
-const propagateAnger = (slime: EntityID, angeredEntity: EntityID, amount: number, propagationInfo: AngerPropagationInfo = { chainLength: 0, propagatedEntityIDs: new Set() }): void => {
+const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, propagationInfo: AngerPropagationInfo = { chainLength: 0, propagatedEntityIDs: new Set() }): void => {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const slimeComponent = SlimeComponentArray.getComponent(slime);
 
@@ -252,7 +252,7 @@ const propagateAnger = (slime: EntityID, angeredEntity: EntityID, amount: number
    }
 }
 
-export function onSlimeHurt(slime: EntityID, attackingEntity: EntityID): void {
+export function onSlimeHurt(slime: Entity, attackingEntity: Entity): void {
    const attackingEntityType = getEntityType(attackingEntity);
    if (attackingEntityType === EntityType.iceSpikes || attackingEntityType === EntityType.cactus) return;
 

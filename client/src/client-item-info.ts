@@ -497,6 +497,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Wooden Bracings",
       description: "Supports the surrounding stone's mental health, preventing them from collapsing."
+   },
+   [ItemType.fireTorch]: {
+      entityTextureSource: "items/small/fire-torch.png",
+      textureSource: "items/large/fire-torch.png",
+      toolTextureSource: "",
+      name: "Fire Torch",
+      description: "Provides a temporary light source."
    }
 };
 

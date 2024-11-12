@@ -1,6 +1,6 @@
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { createEmptyStructureConnectionInfo, StructureType } from "battletribes-shared/structures";
 import { EntityConfig } from "../components";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
@@ -43,7 +43,7 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): StructureT
    }
 }
 
-export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: EntityID): EntityConfig<ComponentTypes> {
+export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.none);
    transformComponent.collisionBit = COLLISION_BITS.none;
    transformComponent.collisionMask = 0;

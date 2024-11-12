@@ -52,8 +52,6 @@ export interface RenderChunkWallBorderInfo {
    vertexData: Float32Array;
 }
 
-// @Speed: Polymorphism
-let riverInfoArray: Array<RenderChunkRiverInfo | null>;
 // @Hack
 // @Speed: Polymorphism
 let tileShadowInfoArrays = new Array<Record<TileShadowType, Array<RenderChunkTileShadowInfo | null>>>();
@@ -65,8 +63,8 @@ export function getRenderChunkIndex(renderChunkX: number, renderChunkY: number):
    return y * (WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION * 2) + x;
 }
 
-export function getRenderChunkRiverInfo(renderChunkX: number, renderChunkY: number): RenderChunkRiverInfo | null {
-   return riverInfoArray[getRenderChunkIndex(renderChunkX, renderChunkY)];
+export function getRenderChunkRiverInfo(layer: Layer, renderChunkX: number, renderChunkY: number): RenderChunkRiverInfo | null {
+   return layer.riverInfoArray[getRenderChunkIndex(renderChunkX, renderChunkY)];
 }
 
 export function getRenderChunkWallBorderInfo(layer: Layer, renderChunkX: number, renderChunkY: number): RenderChunkWallBorderInfo {
@@ -132,14 +130,14 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
    createTileRenderChunks(layer);
 
    // River info
-   riverInfoArray = [];
+   layer.riverInfoArray = [];
    for (let renderChunkY = -RENDER_CHUNK_EDGE_GENERATION; renderChunkY < WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION; renderChunkY++) {
       for (let renderChunkX = -RENDER_CHUNK_EDGE_GENERATION; renderChunkX < WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION; renderChunkX++) {
          const waterRocks = (waterRocksChunked.hasOwnProperty(renderChunkX) && waterRocksChunked[renderChunkX].hasOwnProperty(renderChunkY)) ? waterRocksChunked[renderChunkX][renderChunkY] : [];
          const edgeSteppingStones = (edgeSteppingStonesChunked.hasOwnProperty(renderChunkX) && edgeSteppingStonesChunked[renderChunkX].hasOwnProperty(renderChunkY)) ? edgeSteppingStonesChunked[renderChunkX][renderChunkY] : [];
 
          const data = calculateRiverRenderChunkData(layer, renderChunkX, renderChunkY, waterRocks, edgeSteppingStones);
-         riverInfoArray.push(data);
+         layer.riverInfoArray.push(data);
       }
    }
 

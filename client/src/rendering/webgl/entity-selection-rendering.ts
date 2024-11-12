@@ -2,7 +2,7 @@ import { getHighlightedEntityID, getSelectedEntityID } from "../../entity-select
 import { createWebGLProgram, gl, windowWidth, windowHeight, createTexture } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { entityExists, getEntityRenderInfo } from "../../world";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { renderEntities } from "./entity-rendering";
 import { cleanEntityRenderInfo } from "../render-part-matrices";
 import { gameFramebuffer } from "../../Game";
@@ -45,7 +45,7 @@ let framebufferVertexData: Float32Array;
 // }
 
 // @Temporary
-export function getClosestGroupNum(entity: EntityID): number {
+export function getClosestGroupNum(entity: Entity): number {
    return 1;
 }
 

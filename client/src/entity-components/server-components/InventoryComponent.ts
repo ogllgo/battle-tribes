@@ -1,5 +1,5 @@
 import { InventoryComponentData, ServerComponentType } from "../../../../shared/src/components";
-import { EntityID, LimbAction } from "../../../../shared/src/entities";
+import { Entity, LimbAction } from "../../../../shared/src/entities";
 import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType, ItemTypeString } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { getHotbarSelectedItemSlot, getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
@@ -280,7 +280,7 @@ function padData(reader: PacketReader): void {
    }
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    updateInventories(inventoryComponent, reader, false);
 }

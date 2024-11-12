@@ -6,7 +6,7 @@ import { createImage } from "../../textures";
 import { RenderableType, addRenderable } from "../render-loop";
 import { VisualRenderPart, renderPartIsTextured } from "../../render-parts/render-parts";
 import { getEntityLayer, getEntityRenderInfo } from "../../world";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { calculateRenderPartDepth } from "./entity-rendering";
 
 const enum Vars {
@@ -14,7 +14,7 @@ const enum Vars {
 }
 
 export interface RenderPartOverlayGroup {
-   readonly entity: EntityID;
+   readonly entity: Entity;
    readonly textureSource: string;
    readonly renderParts: Array<VisualRenderPart>;
 }
@@ -45,7 +45,7 @@ const getOverlayRenderHeight = (overlay: RenderPartOverlayGroup): number => {
    return minDepth - 0.0001;
 }
 
-export function createRenderPartOverlayGroup(entity: EntityID, textureSource: string, renderParts: Array<VisualRenderPart>): RenderPartOverlayGroup {
+export function createRenderPartOverlayGroup(entity: Entity, textureSource: string, renderParts: Array<VisualRenderPart>): RenderPartOverlayGroup {
    const overlay: RenderPartOverlayGroup = {
       entity: entity,
       textureSource: textureSource,

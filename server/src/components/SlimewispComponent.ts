@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, SlimeSize } from "battletribes-shared/entities";
+import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { UtilVars } from "battletribes-shared/utils";
@@ -32,7 +32,7 @@ export const SlimewispComponentArray = new ComponentArray<SlimewispComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(slimewisp: EntityID): void {
+function onTick(slimewisp: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);
 
    const tileIndex = getEntityTile(transformComponent);

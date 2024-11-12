@@ -1,10 +1,10 @@
 import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ItemType } from "battletribes-shared/items/items";
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { Biome, SubtileType, TileType } from "battletribes-shared/tiles";
+import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { readCrossbowLoadProgressRecord } from "../entity-components/server-components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { ItemRequirements } from "battletribes-shared/items/crafting-recipes";
@@ -35,6 +35,7 @@ import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
 import { setVisibleSubtileSupports, SubtileSupportInfo } from "../rendering/webgl/subtile-support-rendering";
 import { createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
+import { Biome } from "../../../shared/src/biomes";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -328,7 +329,7 @@ const processPlayerUpdateData = (reader: PacketReader): void => {
       // Hotbar_updateLeftThrownBattleaxeItemID(leftThrownBattleaxeItemID);
 }
 
-export function processEntityCreationData(entity: EntityID, reader: PacketReader): void {
+export function processEntityCreationData(entity: Entity, reader: PacketReader): void {
    // @Cleanup: might be able to be cleaned up by making a separate processPlayerCreationData
    
    const entityType = reader.readNumber() as EntityType;
@@ -362,7 +363,7 @@ export function processEntityCreationData(entity: EntityID, reader: PacketReader
 
    registerBasicEntityInfo(entity, entityType, spawnTicks, layer, creationInfo.renderInfo);
    
-   // @Hack? In both this and the placeable entity ghost entity stuff, after calling createEntity, we either set the renderPosition
+   // @Cleanup: In both this and the placeable entity ghost entity stuff, after calling createEntity, we either set the renderPosition
    // or mark that it should be updated. So perhaps it would be better if in the createEntity function we deduce the initial value of renderPosition,
    // which would remove the need for these two behaviours.
    registerDirtyRenderPosition(creationInfo.renderInfo);
@@ -410,7 +411,7 @@ export function processEntityCreationData(entity: EntityID, reader: PacketReader
    }
 }
 
-const processEntityUpdateData = (entity: EntityID, reader: PacketReader): void => {
+const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => {
    // Skip entity type and spawn ticks
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -556,7 +557,7 @@ export function processGameDataPacket(reader: PacketReader): void {
    const numEntities = reader.readNumber();
    const visibleEntities = [];
    for (let i = 0; i < numEntities; i++) {
-      const entityID = reader.readNumber() as EntityID;
+      const entityID = reader.readNumber() as Entity;
       visibleEntities.push(entityID);
       if (entityID === playerInstanceID) {
          if (playerInstance === null) {
@@ -571,7 +572,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       }
    }
 
-   const entitiesToRemove = new Set<EntityID>();
+   const entitiesToRemove = new Set<Entity>();
 
    // @Incomplete?
    // @Hack @Speed: remove once carmack networking is in place
@@ -683,7 +684,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       });
    }
 
-   const visibleEntityDeathIDs = new Array<EntityID>();
+   const visibleEntityDeathIDs = new Array<Entity>();
    const numVisibleDeaths = reader.readNumber();
    for (let i = 0; i < numVisibleDeaths; i++) {
       const id = reader.readNumber();

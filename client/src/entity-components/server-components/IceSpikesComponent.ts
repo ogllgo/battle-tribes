@@ -4,7 +4,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { addMonocolourParticleToBufferContainer, ParticleColour, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import Particle from "../../Particle";
@@ -91,7 +91,7 @@ const createIceSpeckProjectile = (transformComponent: TransformComponent): void 
    Board.lowMonocolourParticles.push(particle);
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create ice particles on hit
@@ -102,7 +102,7 @@ function onHit(entity: EntityID): void {
    playSound("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 15; i++) {

@@ -1,6 +1,6 @@
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -32,7 +32,7 @@ const getLife = (ageTicks: number): number => {
    return ageTicks < Vars.TICKS_BEFORE_RECEED ? 1 : 1 - (ageTicks - Vars.TICKS_BEFORE_RECEED) / (Vars.LIFETIME_TICKS - Vars.TICKS_BEFORE_RECEED);
 }
 
-function onTick(quake: EntityID): void {
+function onTick(quake: Entity): void {
    const age = getEntityAgeTicks(quake);
 
    if (age >= Vars.TICKS_BEFORE_RECEED) {
@@ -52,7 +52,7 @@ function onTick(quake: EntityID): void {
    }
 }
 
-function onHitboxCollision(guardian: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "gemQuake")) {
@@ -68,7 +68,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const age = getEntityAgeTicks(entity);
    const life = getLife(age);
    packet.addNumber(life);

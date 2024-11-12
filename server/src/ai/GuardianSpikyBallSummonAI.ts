@@ -1,5 +1,5 @@
 import { GuardianSpikyBallSummonStage, ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { UtilVars, randFloat, randInt } from "battletribes-shared/utils";
 import { stopEntity, turnToPosition } from "../ai-shared";
@@ -17,7 +17,7 @@ const enum Vars {
    LIMB_DIRECTION = UtilVars.PI * 0.5
 }
 
-const createSpikyBall = (guardian: EntityID, targetX: number, targetY: number): void => {
+const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): void => {
    const layer = getEntityLayer(guardian);
    
    // Find a valid spawn spot for the spiky ball
@@ -70,7 +70,7 @@ export default class GuardianSpikyBallSummonAI {
       this.turnSpeed = turnSpeed;
    }
    
-   public run(guardian: EntityID, targetX: number, targetY: number): void {
+   public run(guardian: Entity, targetX: number, targetY: number): void {
       const physicsComponent = PhysicsComponentArray.getComponent(guardian);
       stopEntity(physicsComponent);
       turnToPosition(guardian, targetX, targetY, this.turnSpeed);

@@ -1,5 +1,5 @@
 import { PlanterBoxPlant, ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -99,7 +99,7 @@ const createGrowthParticleInEntity = (transformComponent: TransformComponent): v
    createGrowthParticle(pos.x, pos.y);
 }
    
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    if (planterBoxComponent.isFertilised && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.35)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
@@ -111,7 +111,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    
    const plantType = reader.readNumber();

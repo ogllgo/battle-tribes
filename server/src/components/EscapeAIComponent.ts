@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 // @Incomplete: Remove this component
@@ -26,7 +26,7 @@ export function updateEscapeAIComponent(escapeAIComponent: EscapeAIComponent, at
    }
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
 
    let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -36,7 +36,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
 
    packet.addNumber(escapeAIComponent.attackingEntities.length);

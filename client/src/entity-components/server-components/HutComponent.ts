@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, lerp } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -127,7 +127,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.hut, nev
    };
 }
 
-function updateDoors(hutComponent: HutComponent, entity: EntityID): void {
+function updateDoors(hutComponent: HutComponent, entity: Entity): void {
    for (let i = 0; i < hutComponent.doorRenderParts.length; i++) {
       const renderPart = hutComponent.doorRenderParts[i];
       
@@ -156,7 +156,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const hutComponent = HutComponentArray.getComponent(entity);
    
    const lastDoorSwingTicks = reader.readNumber();

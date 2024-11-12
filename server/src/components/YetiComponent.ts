@@ -1,9 +1,9 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { SnowThrowStage, YETI_SNOW_THROW_COOLDOWN } from "../entities/mobs/yeti";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, SnowballSize } from "battletribes-shared/entities";
+import { Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import { randFloat, randInt, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
@@ -45,7 +45,7 @@ const MIN_TERRITORY_SIZE = 50;
 const MAX_TERRITORY_SIZE = 100;
 
 // /** Stores which tiles belong to which yetis' territories */
-const yetiTerritoryTiles: Partial<Record<TileIndex, EntityID>> = {};
+const yetiTerritoryTiles: Partial<Record<TileIndex, Entity>> = {};
 
 export class YetiComponent {
    public readonly territory: ReadonlyArray<TileIndex>;
@@ -53,7 +53,7 @@ export class YetiComponent {
    // Stores the ids of all entities which have recently attacked the yeti
    public readonly attackingEntities: Partial<Record<number, YetiTargetInfo>> = {};
 
-   public attackTarget: EntityID = 0;
+   public attackTarget: Entity = 0;
    public isThrowingSnow = false;
    public snowThrowStage: SnowThrowStage = SnowThrowStage.windup;
    public snowThrowAttackProgress = 1;
@@ -156,7 +156,7 @@ const generateYetiTerritoryTiles = (originTileX: number, originTileY: number): R
    return territoryTiles;
 }
 
-const registerYetiTerritory = (yeti: EntityID, territory: ReadonlyArray<TileIndex>): void => {
+const registerYetiTerritory = (yeti: Entity, territory: ReadonlyArray<TileIndex>): void => {
    for (const tileIndex of territory) {
       yetiTerritoryTiles[tileIndex] = yeti;
    }
@@ -174,7 +174,7 @@ const removeYetiTerritory = (tileIndex: TileIndex): void => {
    delete yetiTerritoryTiles[tileIndex];
 }
 
-function onJoin(yeti: EntityID): void {
+function onJoin(yeti: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(yeti);
    
    const tileIndex = getEntityTile(transformComponent);
@@ -185,7 +185,7 @@ function onJoin(yeti: EntityID): void {
    registerYetiTerritory(yeti, territory);
 }
 
-const throwSnowball = (yeti: EntityID, size: SnowballSize, throwAngle: number): void => {
+const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
    
    const angle = throwAngle + randFloat(-Vars.SNOW_THROW_ARC, Vars.SNOW_THROW_ARC);
@@ -209,7 +209,7 @@ const throwSnowball = (yeti: EntityID, size: SnowballSize, throwAngle: number): 
    createEntity(config, getEntityLayer(yeti), 0);
 }
 
-const throwSnow = (yeti: EntityID, target: EntityID): void => {
+const throwSnow = (yeti: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    
@@ -232,7 +232,7 @@ const throwSnow = (yeti: EntityID, target: EntityID): void => {
 }
 
 // @Speed: hasComponent in here takes up about 1% of CPU time
-const getYetiTarget = (yeti: EntityID, visibleEntities: ReadonlyArray<EntityID>): EntityID | null => {
+const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const yetiComponent = YetiComponentArray.getComponent(yeti);
 
    // @Speed
@@ -246,7 +246,7 @@ const getYetiTarget = (yeti: EntityID, visibleEntities: ReadonlyArray<EntityID>)
    }
    
    let mostDamageDealt = 0;
-   let target: EntityID | null = null;
+   let target: Entity | null = null;
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
 
@@ -292,7 +292,7 @@ const getYetiTarget = (yeti: EntityID, visibleEntities: ReadonlyArray<EntityID>)
    return target;
 }
 
-function onTick(yeti: EntityID): void {
+function onTick(yeti: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);
    const yetiComponent = YetiComponentArray.getComponent(yeti);
@@ -372,7 +372,7 @@ function onTick(yeti: EntityID): void {
    // Eat raw beef and leather
    {
       let minDist = Number.MAX_SAFE_INTEGER;
-      let closestFoodItem: EntityID | null = null;
+      let closestFoodItem: Entity | null = null;
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
          const entity = aiHelperComponent.visibleEntities[i];
          if (getEntityType(entity) !== EntityType.itemEntity) {
@@ -408,12 +408,12 @@ function onTick(yeti: EntityID): void {
    wanderAI.run(yeti);
 }
 
-export function preRemove(yeti: EntityID): void {
+export function preRemove(yeti: Entity): void {
    createItemsOverEntity(yeti, ItemType.raw_beef, randInt(4, 7));
    createItemsOverEntity(yeti, ItemType.yeti_hide, randInt(2, 3));
 }
 
-function onRemove(yeti: EntityID): void {
+function onRemove(yeti: Entity): void {
    // Remove territory
    const yetiComponent = YetiComponentArray.getComponent(yeti);
    for (let i = 0; i < yetiComponent.territory.length; i++) {
@@ -426,7 +426,7 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const yetiComponent = YetiComponentArray.getComponent(entity);
    packet.addBoolean(entityExists(yetiComponent.attackTarget));
    packet.padOffset(3);

@@ -6,18 +6,19 @@ import { ItemComponentArray } from "./ItemComponent";
 import { CraftingRecipe, CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { addInventoryDataToPacket, getInventoryDataLength } from "../server/game-data-packets";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 import { destroyEntity, getEntityLayer } from "../world";
+import { registerDirtyEntity } from "../server/player-clients";
 
 export interface InventoryOptions {
    readonly acceptsPickedUpItems: boolean;
    readonly isDroppedOnDeath: boolean;
-   /** Whether or not the inventory is included in packets sent to enemy players. */
+   /** Whether or not the inventory is included in packets sent to players in enemy tribes. */
    readonly isSentToEnemyPlayers: boolean;
 }
 
@@ -42,7 +43,7 @@ export const InventoryComponentArray = new ComponentArray<InventoryComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-const dropInventory = (entity: EntityID, inventory: Inventory, dropRange: number): void => {
+const dropInventory = (entity: Entity, inventory: Inventory, dropRange: number): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < inventory.items.length; i++) {
       const item = inventory.items[i];
@@ -62,7 +63,7 @@ const dropInventory = (entity: EntityID, inventory: Inventory, dropRange: number
    }
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    
    for (let i = 0; i < inventoryComponent.droppableInventories.length; i++) {
@@ -139,14 +140,14 @@ export function getItemTypeSlot(inventory: Inventory, itemType: ItemType): numbe
  * @param itemEntity The dropped item to attempt to pick up
  * @returns Whether some non-zero amount of the item was picked up or not
  */
-export function pickupItemEntity(pickingUpEntityID: number, itemEntity: EntityID): boolean {
-   if (!itemEntityCanBePickedUp(itemEntity, pickingUpEntityID)) return false;
+export function pickupItemEntity(pickingUpEntity: Entity, itemEntity: Entity): boolean {
+   if (!itemEntityCanBePickedUp(itemEntity, pickingUpEntity)) return false;
    
-   const inventoryComponent = InventoryComponentArray.getComponent(pickingUpEntityID);
+   const inventoryComponent = InventoryComponentArray.getComponent(pickingUpEntity);
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
 
    for (const inventory of inventoryComponent.accessibleInventories) {
-      const amountPickedUp = addItemToInventory(inventory, itemComponent.itemType, itemComponent.amount);
+      const amountPickedUp = addItemToInventory(pickingUpEntity, inventory, itemComponent.itemType, itemComponent.amount);
       itemComponent.amount -= amountPickedUp;
 
       // When all of the item stack is picked up, don't attempt to add to any other inventories.
@@ -168,11 +169,11 @@ export function pickupItemEntity(pickingUpEntityID: number, itemEntity: EntityID
  * Adds as much of an item as possible to any/all available inventories.
  * @returns The number of items added.
  */
-export function addItem(inventoryComponent: InventoryComponent, item: Item): number {
+export function addItem(entity: Entity, inventoryComponent: InventoryComponent, item: Item): number {
    let amountAdded = 0;
 
    for (const inventory of inventoryComponent.accessibleInventories) {
-      amountAdded += addItemToInventory(inventory, item.type, item.count);
+      amountAdded += addItemToInventory(entity, inventory, item.type, item.count);
 
       if (amountAdded === item.count) {
          break;
@@ -186,7 +187,7 @@ export function addItem(inventoryComponent: InventoryComponent, item: Item): num
  * Adds as much of an item as possible to a specific inventory.
  * @returns The number of items added to the inventory
  */
-export function addItemToInventory(inventory: Inventory, itemType: ItemType, itemAmount: number): number {
+export function addItemToInventory(entity: Entity, inventory: Inventory, itemType: ItemType, itemAmount: number): number {
    let remainingAmountToAdd = itemAmount;
    let amountAdded = 0;
 
@@ -206,6 +207,9 @@ export function addItemToInventory(inventory: Inventory, itemType: ItemType, ite
             item.count += maxAddAmount;
             remainingAmountToAdd -= maxAddAmount;
             amountAdded += maxAddAmount;
+            if (maxAddAmount > 0) {
+               registerDirtyEntity(entity);
+            }
 
             if (remainingAmountToAdd === 0) return amountAdded;
          }
@@ -234,6 +238,9 @@ export function addItemToInventory(inventory: Inventory, itemType: ItemType, ite
       }
    }
 
+   if (amountAdded > 0) {
+      registerDirtyEntity(entity);
+   }
    return amountAdded;
 }
 
@@ -244,7 +251,7 @@ export function addItemToInventory(inventory: Inventory, itemType: ItemType, ite
  * @param amount The amount of item to attempt to add.
  * @returns The number of items added to the item slot.
  */
-export function addItemToSlot(inventoryComponent: InventoryComponent, inventoryName: InventoryName, itemSlot: number, itemType: ItemType, amount: number): number {
+export function addItemToSlot(entity: Entity, inventoryComponent: InventoryComponent, inventoryName: InventoryName, itemSlot: number, itemType: ItemType, amount: number): number {
    const inventory = getInventory(inventoryComponent, inventoryName);
    
    if (itemSlot < 1 || itemSlot > inventory.width * inventory.height) {
@@ -266,6 +273,7 @@ export function addItemToSlot(inventoryComponent: InventoryComponent, inventoryN
          
          amountAdded = Math.min(amount, stackSize - item.count);
          item.count += amountAdded;
+         registerDirtyEntity(entity);
       } else {
          // Unstackable items cannot be stacked (crazy right), so no more can be added
          return 0;
@@ -275,6 +283,7 @@ export function addItemToSlot(inventoryComponent: InventoryComponent, inventoryN
 
       const item = createItem(itemType, amount);
       inventory.addItem(item, itemSlot);
+      registerDirtyEntity(entity);
    }
 
    return amountAdded;
@@ -284,7 +293,7 @@ export function addItemToSlot(inventoryComponent: InventoryComponent, inventoryN
  * Attempts to consume a certain amount of an item type from an inventory.
  * @returns The number of items consumed from the inventory.
 */
-export function consumeItemTypeFromInventory(inventoryComponent: InventoryComponent, inventoryName: InventoryName, itemType: ItemType, amount: number): number {
+export function consumeItemTypeFromInventory(entity: Entity, inventoryComponent: InventoryComponent, inventoryName: InventoryName, itemType: ItemType, amount: number): number {
    const inventory = getInventory(inventoryComponent, inventoryName);
    
    let remainingAmountToConsume = amount;
@@ -301,29 +310,31 @@ export function consumeItemTypeFromInventory(inventoryComponent: InventoryCompon
 
       if (item.count === 0) {
          inventory.removeItem(itemSlot);
+         registerDirtyEntity(entity);
       }
    }
 
    return totalAmountConsumed;
 }
 
-export function consumeItemType(inventoryComponent: InventoryComponent, itemType: ItemType, amount: number) {
+export function consumeItemType(entity: Entity, inventoryComponent: InventoryComponent, itemType: ItemType, amount: number) {
    let amountRemainingToConsume = amount;
 
    for (let i = 0; i < inventoryComponent.inventories.length, amountRemainingToConsume > 0; i++) {
       const inventory = inventoryComponent.inventories[i];
-      amountRemainingToConsume -= consumeItemTypeFromInventory(inventoryComponent, inventory.name, itemType, amountRemainingToConsume);
+      amountRemainingToConsume -= consumeItemTypeFromInventory(entity, inventoryComponent, inventory.name, itemType, amountRemainingToConsume);
    }
 }
 
 /**
  * @returns The amount of items consumed
  */
-export function consumeItemFromSlot(inventory: Inventory, itemSlot: number, amount: number): number {
+export function consumeItemFromSlot(entity: Entity, inventory: Inventory, itemSlot: number, amount: number): number {
    const item = inventory.itemSlots[itemSlot];
    if (typeof item === "undefined") return 0;
 
    item.count -= amount;
+   registerDirtyEntity(entity);
 
    // If all items have been removed, delete that item
    if (item.count <= 0) {
@@ -431,21 +442,21 @@ export function recipeCraftingStationIsAvailable(availableCraftingStations: Read
    return availableCraftingStations.indexOf(recipe.craftingStation) !== -1;
 }
 
-export function craftRecipe(inventoryComponent: InventoryComponent, recipe: CraftingRecipe, outputInventoryName: InventoryName): void {
+export function craftRecipe(entity: Entity, inventoryComponent: InventoryComponent, recipe: CraftingRecipe, outputInventoryName: InventoryName): void {
    // Consume ingredients
    for (const [ingredientType, ingredientCount] of Object.entries(recipe.ingredients).map(entry => [Number(entry[0]), entry[1]]) as ReadonlyArray<[ItemType, number]>) {
       for (let remainingAmountToConsume = ingredientCount, i = 0; remainingAmountToConsume > 0 && i < inventoryComponent.inventories.length; i++) {
          const inventory = inventoryComponent.inventories[i];
-         remainingAmountToConsume -= consumeItemTypeFromInventory(inventoryComponent, inventory.name, ingredientType, ingredientCount);
+         remainingAmountToConsume -= consumeItemTypeFromInventory(entity, inventoryComponent, inventory.name, ingredientType, ingredientCount);
       }
    }
 
    // Add product to output inventory
    const outputInventory = getInventory(inventoryComponent, outputInventoryName);
-   addItemToInventory(outputInventory, recipe.product, recipe.yield);
+   addItemToInventory(entity, outputInventory, recipe.product, recipe.yield);
 }
 
-function getDataLength(entity: EntityID, player: EntityID): number {
+function getDataLength(entity: Entity, player: Entity): number {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const relationship = getEntityRelationship(entity, player);
 
@@ -461,7 +472,7 @@ function getDataLength(entity: EntityID, player: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID, player: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity, player: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const relationship = getEntityRelationship(entity, player);
 

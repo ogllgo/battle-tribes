@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randItem } from "../../../../shared/src/utils";
 import { createGemQuakeProjectile } from "../../particles";
@@ -37,7 +37,7 @@ function createComponent(): GuardianGemQuakeComponent {
    return {};
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
    
@@ -60,7 +60,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    // @Incomplete?
    const guardianGemFragmentProjectileComponent = GuardianGemQuakeComponentArray.getComponent(entity);
    const life = reader.readNumber();

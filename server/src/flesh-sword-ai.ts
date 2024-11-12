@@ -1,12 +1,12 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, lerp, randItem, angle, TileIndex } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { Biome } from "battletribes-shared/tiles";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { entityHasReachedPosition } from "./ai-shared";
 import { getEntityLayer, getEntityType } from "./world";
+import { Biome } from "../../shared/src/biomes";
 
 const FLESH_SWORD_VISION_RANGE = 250;
 
@@ -15,7 +15,7 @@ const FLESH_SWORD_ESCAPE_MOVE_SPEED = 50;
 
 const FLESH_SWORD_WANDER_RATE = 0.3;
 
-const getVisibleEntities = (itemEntity: EntityID): ReadonlyArray<EntityID> => {
+const getVisibleEntities = (itemEntity: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
    const layer = getEntityLayer(itemEntity);
    
@@ -24,7 +24,7 @@ const getVisibleEntities = (itemEntity: EntityID): ReadonlyArray<EntityID> => {
    const minChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y - FLESH_SWORD_VISION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const maxChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y + FLESH_SWORD_VISION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
 
-   const entitiesInVisionRange = new Array<EntityID>();
+   const entitiesInVisionRange = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -45,11 +45,11 @@ const getVisibleEntities = (itemEntity: EntityID): ReadonlyArray<EntityID> => {
 }
 
 /** Returns the entity the flesh sword should run away from, or null if there are none */
-const getRunTarget = (itemEntity: EntityID, visibleEntities: ReadonlyArray<EntityID>): EntityID | null => {
+const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
 
    let closestRunTargetDistance = Number.MAX_SAFE_INTEGER;
-   let runTarget: EntityID | null = null;
+   let runTarget: Entity | null = null;
 
    for (const entity of visibleEntities) {
       const entityType = getEntityType(entity);
@@ -67,7 +67,7 @@ const getRunTarget = (itemEntity: EntityID, visibleEntities: ReadonlyArray<Entit
    return runTarget;
 }
 
-const getTileWanderTargets = (itemEntity: EntityID): Array<TileIndex> => {
+const getTileWanderTargets = (itemEntity: Entity): Array<TileIndex> => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
    const layer = getEntityLayer(itemEntity);
 
@@ -104,7 +104,7 @@ interface FleshSwordInfo {
 
 const FLESH_SWORD_INFO: Partial<Record<number, FleshSwordInfo>> = {};
 
-export function runFleshSwordAI(itemEntity: EntityID) {
+export function runFleshSwordAI(itemEntity: Entity) {
    const info = FLESH_SWORD_INFO[itemEntity];
    if (typeof info === "undefined") {
       console.warn("Dropped item isn't a flesh sword.");
@@ -207,13 +207,13 @@ export function runFleshSwordAI(itemEntity: EntityID) {
    }
 }
 
-export function addFleshSword(itemEntity: EntityID): void {
+export function addFleshSword(itemEntity: Entity): void {
    FLESH_SWORD_INFO[itemEntity] = {
       internalWiggleTicks: 0,
       tileTargetPosition: null
    };
 }
 
-export function removeFleshSword(entity: EntityID): void {
+export function removeFleshSword(entity: Entity): void {
    delete FLESH_SWORD_INFO[entity];
 }

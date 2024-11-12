@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
@@ -53,7 +53,7 @@ function createComponent(): SlimewispComponent {
    return {};
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    const layer = getEntityLayer(entity);
@@ -72,7 +72,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, RADIUS);
@@ -82,7 +82,7 @@ function onHit(entity: EntityID): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, RADIUS);

@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DoorToggleType, EntityID } from "battletribes-shared/entities";
+import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, angle, lerp } from "battletribes-shared/utils";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
@@ -49,7 +49,7 @@ const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 48 * 48) / 2;
 const angleToCenter = angle(16, 48);
 
 // @Hack @Hack @HACK
-const updateDoorOpenProgress = (tunnel: EntityID, tunnelComponent: TunnelComponent, doorType: DoorType): void => {
+const updateDoorOpenProgress = (tunnel: Entity, tunnelComponent: TunnelComponent, doorType: DoorType): void => {
    const openProgress = doorType === DoorType.top ? tunnelComponent.topDoorOpenProgress : tunnelComponent.bottomDoorOpenProgress;
    const toggleType = doorType === DoorType.top ? tunnelComponent.topDoorToggleType : tunnelComponent.bottomDoorToggleType;
    const doorBit = doorType === DoorType.top ? 0b01 : 0b10;
@@ -104,7 +104,7 @@ const updateDoorOpenProgress = (tunnel: EntityID, tunnelComponent: TunnelCompone
    }
 }
 
-function onTick(tunnel: EntityID): void {
+function onTick(tunnel: Entity): void {
    // @Incomplete: Hard hitboxes
    
    const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
@@ -153,7 +153,7 @@ function onTick(tunnel: EntityID): void {
    }
 }
 
-export function toggleTunnelDoor(tunnel: EntityID, doorBit: number): void {
+export function toggleTunnelDoor(tunnel: Entity, doorBit: number): void {
    const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
    if ((tunnelComponent.doorBitset & doorBit) === 0) {
       return;
@@ -191,7 +191,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const tunnelComponent = TunnelComponentArray.getComponent(entity);
    
    packet.addNumber(tunnelComponent.doorBitset);
@@ -199,7 +199,7 @@ function addDataToPacket(packet: Packet, entity: EntityID): void {
    packet.addNumber(tunnelComponent.bottomDoorOpenProgress);
 }
 
-export function updateTunnelDoorBitset(tunnel: EntityID, doorBitset: number): void {
+export function updateTunnelDoorBitset(tunnel: Entity, doorBitset: number): void {
    const transformComponent = TransformComponentArray.getComponent(tunnel);
    const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
 

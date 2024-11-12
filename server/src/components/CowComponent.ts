@@ -1,4 +1,4 @@
-import { CowSpecies, EntityID, EntityType } from "battletribes-shared/entities";
+import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randFloat, randInt } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
@@ -70,7 +70,7 @@ export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponen
    preRemove: preRemove
 });
 
-const poop = (cow: EntityID, cowComponent: CowComponent): void => {
+const poop = (cow: Entity, cowComponent: CowComponent): void => {
    cowComponent.poopProductionCooldownTicks = randInt(Vars.MIN_POOP_PRODUCTION_COOLDOWN, Vars.MAX_POOP_PRODUCTION_COOLDOWN);
    
    // Shit it out
@@ -91,7 +91,7 @@ const poop = (cow: EntityID, cowComponent: CowComponent): void => {
    registerEntityTickEvent(cow, event);
 }
 
-export function updateCowComponent(cow: EntityID, cowComponent: CowComponent): void {
+export function updateCowComponent(cow: Entity, cowComponent: CowComponent): void {
    if (cowComponent.poopProductionCooldownTicks > 0) {
       cowComponent.poopProductionCooldownTicks--;
    } else if (cowComponent.bowelFullness >= Vars.MIN_POOP_PRODUCTION_FULLNESS) {
@@ -108,7 +108,7 @@ export function updateCowComponent(cow: EntityID, cowComponent: CowComponent): v
    }
 }
 
-const graze = (cow: EntityID, cowComponent: CowComponent): void => {
+const graze = (cow: Entity, cowComponent: CowComponent): void => {
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
    stopEntity(physicsComponent);
    
@@ -136,8 +136,8 @@ const graze = (cow: EntityID, cowComponent: CowComponent): void => {
    }
 }
 
-const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyArray<EntityID>): ReadonlyArray<EntityID> => {
-   const herdMembers = new Array<EntityID>();
+const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
+   const herdMembers = new Array<Entity>();
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
       if (getEntityType(entity) === EntityType.cow) {
@@ -150,7 +150,7 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
    return herdMembers;
 }
 
-const chaseAndEatBerry = (cow: EntityID, cowComponent: CowComponent, berryItemEntity: EntityID, acceleration: number): boolean => {
+const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEntity: Entity, acceleration: number): boolean => {
    if (entitiesAreColliding(cow, berryItemEntity) !== CollisionVars.NO_COLLISION) {
       eatBerry(berryItemEntity, cowComponent);
       return true;
@@ -162,7 +162,7 @@ const chaseAndEatBerry = (cow: EntityID, cowComponent: CowComponent, berryItemEn
    return false;
 }
 
-const entityIsHoldingBerry = (entity: EntityID): boolean => {
+const entityIsHoldingBerry = (entity: Entity): boolean => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
    for (let i = 0 ; i < inventoryUseComponent.limbInfos.length; i++) {
@@ -177,11 +177,11 @@ const entityIsHoldingBerry = (entity: EntityID): boolean => {
    return false;
 }
 
-const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<EntityID>): EntityID | null => {
+const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const wantsToFollow = entityWantsToFollow(followAIComponent);
    
    let currentTargetIsHoldingBerry = false;
-   let target: EntityID | null = null;
+   let target: Entity | null = null;
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
 
@@ -201,7 +201,7 @@ const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: 
    return target;
 }
 
-function onTick(cow: EntityID): void {
+function onTick(cow: Entity): void {
    const cowComponent = CowComponentArray.getComponent(cow);
    updateCowComponent(cow, cowComponent);
 
@@ -252,7 +252,7 @@ function onTick(cow: EntityID): void {
    if (getEntityHealth(cow) < CowVars.MAX_HEALTH) {
       // Attempt to find a berry bush
       if (!entityExists(cowComponent.targetBushID)) {
-         let target: EntityID | null = null;
+         let target: Entity | null = null;
          let minDistance = Number.MAX_SAFE_INTEGER;
          for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
             const berryBush = aiHelperComponent.visibleEntities[i];
@@ -346,14 +346,14 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
    
    packet.addNumber(cowComponent.species);
    packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / COW_GRAZE_TIME_TICKS : -1);
 }
 
-export function eatBerry(berryItemEntity: EntityID, cowComponent: CowComponent): void {
+export function eatBerry(berryItemEntity: Entity, cowComponent: CowComponent): void {
    cowComponent.bowelFullness += Vars.BERRY_FULLNESS_VALUE;
    
    destroyEntity(berryItemEntity);
@@ -363,7 +363,7 @@ export function wantsToEatBerries(cowComponent: CowComponent): boolean {
    return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
 }
 
-function preRemove(cow: EntityID): void {
+function preRemove(cow: Entity): void {
    createItemsOverEntity(cow, ItemType.raw_beef, randInt(2, 3));
    createItemsOverEntity(cow, ItemType.leather, randInt(1, 2));
 }

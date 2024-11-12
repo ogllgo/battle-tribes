@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
@@ -27,7 +27,7 @@ type ComponentTypes = ServerComponentType.transform
 const ARROW_WIDTH = 5 * 4;
 const ARROW_HEIGHT = 14 * 4;
 
-export function createIceArrowConfig(tribe: Tribe, creator: EntityID): EntityConfig<ComponentTypes> {
+export function createIceArrowConfig(tribe: Tribe, creator: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), ARROW_WIDTH, ARROW_HEIGHT, 0), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -54,7 +54,7 @@ export function createIceArrowConfig(tribe: Tribe, creator: EntityID): EntityCon
    };
 }
 
-export function onIceArrowCollision(arrow: EntityID, collidingEntity: EntityID): void {
+export function onIceArrowCollision(arrow: Entity, collidingEntity: Entity): void {
    // Don't damage any friendly entities
    if (getEntityRelationship(arrow, collidingEntity) === EntityRelationship.friendly) {
       return;

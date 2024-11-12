@@ -1,6 +1,6 @@
 import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { angle } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
@@ -50,7 +50,7 @@ function createComponent(): EmbrasureComponent {
    return {};
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound("wooden-wall-hit.mp3", 0.3, 1, transformComponent.position);
@@ -69,7 +69,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound("wooden-wall-break.mp3", 0.4, 1, transformComponent.position);

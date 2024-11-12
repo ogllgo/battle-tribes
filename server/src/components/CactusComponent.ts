@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { CactusBodyFlowerData, CactusLimbData, EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { CactusBodyFlowerData, CactusLimbData, Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
@@ -28,7 +28,7 @@ export const CactusComponentArray = new ComponentArray<CactusComponent>(ServerCo
    preRemove: preRemove
 });
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
    let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -46,7 +46,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
    packet.addNumber(cactusComponent.flowers.length);
@@ -74,7 +74,7 @@ function addDataToPacket(packet: Packet, entity: EntityID): void {
    }
 }
 
-function onHitboxCollision(cactus: EntityID, collidingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       destroyEntity(collidingEntity);
       return;
@@ -96,6 +96,6 @@ function onHitboxCollision(cactus: EntityID, collidingEntity: EntityID, actingHi
    addLocalInvulnerabilityHash(healthComponent, "cactus", 0.3);
 }
 
-function preRemove(cactus: EntityID): void {
+function preRemove(cactus: Entity): void {
    createItemsOverEntity(cactus, ItemType.cactus_spine, randInt(2, 5));
 }

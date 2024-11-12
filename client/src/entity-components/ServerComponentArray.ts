@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { EntityID } from "../../../shared/src/entities";
+import { Entity } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
 import { ComponentTint } from "../EntityRenderInfo";
 import { ComponentArray, ComponentArrayFunctions, ComponentArrayType } from "./ComponentArray";
@@ -12,12 +12,12 @@ interface ServerComponentArrayFunctions<
    createParamsFromData(reader: PacketReader): ComponentParams;
    padData(reader: PacketReader): void;
    // Note: reader is before entity as every function will need the reader, but not all are guaranteed to need the entity
-   updateFromData(reader: PacketReader, entity: EntityID): void;
+   updateFromData(reader: PacketReader, entity: Entity): void;
    /** Updates the player instance from server data */
    updatePlayerFromData?(reader: PacketReader, isInitialData: boolean): void;
    /** Called on the player instance after all components are updated from server data */
    updatePlayerAfterData?(): void;
-   calculateTint?(entity: EntityID): ComponentTint;
+   calculateTint?(entity: Entity): ComponentTint;
 }
 
 export default class ServerComponentArray<
@@ -29,10 +29,10 @@ export default class ServerComponentArray<
 > extends ComponentArray<T, RenderParts, ComponentArrayType.server, ComponentType> implements ServerComponentArrayFunctions<T, ComponentParams, RenderParts> {
    public createParamsFromData: (reader: PacketReader) => ComponentParams;
    public padData: (reader: PacketReader) => void;
-   public updateFromData: (reader: PacketReader, entity: EntityID) => void;
+   public updateFromData: (reader: PacketReader, entity: Entity) => void;
    public updatePlayerFromData?(reader: PacketReader, isInitialData: boolean): void;
    public updatePlayerAfterData?(): void;
-   public calculateTint?(entity: EntityID): ComponentTint;
+   public calculateTint?(entity: Entity): ComponentTint;
 
    constructor(componentType: ComponentType, isActiveByDefault: boolean, functions: ServerComponentArrayFunctions<T, ComponentParams, RenderParts>) {
       super(ComponentArrayType.server, componentType, isActiveByDefault, functions);

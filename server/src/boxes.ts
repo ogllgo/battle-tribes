@@ -1,9 +1,9 @@
 import { BlockBox, BlockType, BoxFromType, BoxType, DamageBox, GenericCollisionBoxInfo, GenericCollisionBoxType } from "battletribes-shared/boxes/boxes";
 import { LimbInfo } from "./components/InventoryUseComponent";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { InventoryName } from "battletribes-shared/items/items";
 
-type CollisionCallback = (attacker: EntityID, victim: EntityID, limb: LimbInfo, collidingDamageBox: ServerDamageBox | null) => void;
+type CollisionCallback = (attacker: Entity, victim: Entity, limb: LimbInfo, collidingDamageBox: ServerDamageBox | null) => void;
 
 export interface DamageBoxCallbacks {
    readonly onCollisionEnter?: CollisionCallback;
@@ -33,7 +33,7 @@ export class ServerDamageBox<T extends BoxType = BoxType> extends GenericCollisi
 export class ServerBlockBox<T extends BoxType = BoxType> extends GenericCollisionBox<T> implements BlockBox<T> {
    public hasBlocked = false;
    public blockType = BlockType.toolBlock;
-   public collidingEntity: EntityID | null = null;
+   public collidingEntity: Entity | null = null;
 }
 
 export function getCollisionBoxType(collisionBox: ServerDamageBox | ServerBlockBox): GenericCollisionBoxType {

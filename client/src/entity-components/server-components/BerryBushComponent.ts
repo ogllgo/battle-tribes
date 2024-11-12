@@ -3,7 +3,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "./TransformComponent";
@@ -83,18 +83,18 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);
    
    berryBushComponent.numBerries = reader.readNumber();
 
    berryBushComponent.renderPart.switchTextureSource(BERRY_BUSH_TEXTURE_SOURCES[berryBushComponent.numBerries]);
-   
+
    const renderInfo = getEntityRenderInfo(entity);
    registerDirtyRenderInfo(renderInfo);
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    const moveDirection = 2 * Math.PI * Math.random();
@@ -112,7 +112,7 @@ function onHit(entity: EntityID): void {
    playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 6; i++) {

@@ -10,7 +10,6 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { HitboxCollisionBit } from "battletribes-shared/collision";
 import { getGameTicks, getTribes, LayerType, surfaceLayer, undergroundLayer } from "../world";
 import Layer from "../Layer";
-import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 const enum Vars {
@@ -50,7 +49,8 @@ const BUILDING_SAFETY: Record<StructureType, number> = {
    [EntityType.furnace]: 10,
    [EntityType.frostshaper]: 10,
    [EntityType.stonecarvingTable]: 10,
-   [EntityType.bracings]: 3
+   [EntityType.bracings]: 3,
+   [EntityType.fireTorch]: 3
 };
 
 export function createRestrictedBuildingArea(position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea {

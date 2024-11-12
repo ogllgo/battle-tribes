@@ -1,7 +1,7 @@
 import { Colour, Point, randFloat } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 export class LayeredRodComponent {
@@ -31,7 +31,7 @@ function getDataLength(): number {
    return 7 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    
    // Num layers

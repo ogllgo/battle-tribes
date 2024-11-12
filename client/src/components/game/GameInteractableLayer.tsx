@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
-import { EntityID, LimbAction } from "../../../../shared/src/entities";
-import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo } from "../../../../shared/src/items/items";
+import { Entity, LimbAction } from "../../../../shared/src/entities";
+import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { calculateStructurePlaceInfo } from "../../../../shared/src/structures";
@@ -30,7 +30,7 @@ import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./me
 import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance, registerBasicEntityInfo } from "../../world";
+import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../entity-components/server-components/TribeMemberComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -43,13 +43,19 @@ import { TribeComponentArray, createTribeComponentParams } from "../../entity-co
 import { thingIsVisualRenderPart } from "../../render-parts/render-parts";
 import { createCookingComponentParams } from "../../entity-components/server-components/CookingComponent";
 import { createCampfireComponentParams } from "../../entity-components/server-components/CampfireComponent";
+import { createFurnaceComponentParams } from "../../entity-components/server-components/FurnaceComponent";
+import { createSpikesComponentParams } from "../../entity-components/server-components/SpikesComponent";
+import HeldItemSlot from "./HeldItemSlot";
+import { createFireTorchComponentParams } from "../../entity-components/server-components/FireTorchComponent";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
    durationTicks: number;
 }
 
-export interface GameInteractableLayerProps {
+interface GameInteractableLayerProps {
+   readonly hotbar: Inventory;
+   readonly heldItemSlot: Inventory;
    readonly cinematicModeIsEnabled: boolean;
 }
 
@@ -111,7 +117,7 @@ let attackBufferTime = 0;
 let bufferedInputType = BufferedInputType.attack;
 let bufferedInputInventory = InventoryName.hotbar;
 
-let placeableEntityGhost: EntityID = 0;
+let placeableEntityGhost: Entity = 0;
 
 const createItemRestTimes = (num: number): Array<ItemRestTime> => {
    const restTimes = new Array<ItemRestTime>();
@@ -822,7 +828,10 @@ export function onItemSelect(itemType: ItemType): void {
    const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "placeable": {
-         latencyGameState.playerIsPlacingEntity = true;
+         const torchTrait = ITEM_TRAITS_RECORD[itemType].torch;
+         if (typeof torchTrait === "undefined") {
+            latencyGameState.playerIsPlacingEntity = true;
+         }
          break;
       }
    }
@@ -1245,6 +1254,18 @@ const tickItem = (itemType: ItemType): void => {
                   components[componentType] = createCampfireComponentParams();
                   break;
                }
+               case ServerComponentType.furnace: {
+                  components[componentType] = createFurnaceComponentParams();
+                  break;
+               }
+               case ServerComponentType.spikes: {
+                  components[componentType] = createSpikesComponentParams(false);
+                  break;
+               }
+               case ServerComponentType.fireTorch: {
+                  components[componentType] = createFireTorchComponentParams();
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }
@@ -1357,11 +1378,17 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       GameInteractableLayer_getHotbarRestTimes = () => {
          return hotbarItemRestTimes.current;
       }
-   }, []);
-   
-   const onMouseMove = useCallback((e: React.MouseEvent) => {
-      setMouseX(e.clientX);
-      setMouseY(e.clientY);
+
+      const moveListener = (e: MouseEvent) => {
+         setMouseX(e.clientX)
+         setMouseY(e.clientY);
+      }
+
+      document.addEventListener("mousemove", moveListener);
+
+      return () => {
+         document.removeEventListener("mousemove", moveListener);
+      }
    }, []);
 
    const onContextMenu = useCallback((e: React.MouseEvent) => {
@@ -1369,13 +1396,15 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
    }, []);
 
    return <>
-      <div id="game-interactable-layer" draggable={false} onMouseMove={onMouseMove} onMouseDown={onGameMouseDown} onMouseUp={onGameMouseUp} onContextMenu={onContextMenu}></div>
+      <div id="game-interactable-layer" draggable={false} onMouseDown={onGameMouseDown} onMouseUp={onGameMouseUp} onContextMenu={onContextMenu}></div>
+
+      <HeldItemSlot heldItemSlot={props.heldItemSlot} mouseX={mouseX} mouseY={mouseY} />
       
       <AttackChargeBar mouseX={mouseX} mouseY={mouseY} chargeElapsedTicks={hotbarChargeElapsedTicks} chargeDuration={hotbarChargeDuration} />
       <AttackChargeBar mouseX={mouseX} mouseY={mouseY + 18} chargeElapsedTicks={offhandChargeElapsedTicks} chargeDuration={offhandChargeDuration} />
 
       {!props.cinematicModeIsEnabled ? (
-         <Hotbar hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
+         <Hotbar hotbar={props.hotbar} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
       ) : undefined}
    </>
 }

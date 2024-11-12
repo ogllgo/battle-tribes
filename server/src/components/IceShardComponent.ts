@@ -1,7 +1,7 @@
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Point, randFloat } from "battletribes-shared/utils";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -27,7 +27,7 @@ export const IceShardComponentArray = new ComponentArray<IceShardComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-function onTick(iceShard: EntityID): void {
+function onTick(iceShard: Entity): void {
    const iceShardComponent = IceShardComponentArray.getComponent(iceShard);
    
    // @Cleanup @Speed: Don't even need a component for this, just do it based on age with a random chance
@@ -43,7 +43,7 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-const entityIsIceSpikes = (entity: EntityID): boolean => {
+const entityIsIceSpikes = (entity: Entity): boolean => {
    switch (getEntityType(entity)) {
       case EntityType.iceSpikes: {
          return true;
@@ -58,7 +58,7 @@ const entityIsIceSpikes = (entity: EntityID): boolean => {
    }
 }
 
-function onHitboxCollision(iceShard: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }

@@ -1,5 +1,5 @@
-import { Biome } from "battletribes-shared/tiles";
 import { TileType } from "battletribes-shared/tiles";
+import { Biome } from "../../shared/src/biomes";
 
 export class Tile {
    public readonly x: number;

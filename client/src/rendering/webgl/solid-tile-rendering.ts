@@ -9,6 +9,7 @@ import { layers } from "../../world";
 
 export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string | null>> = {
    [TileType.grass]: "tiles/grass.png",
+   [TileType.water]: null,
    [TileType.rock]: "tiles/rock.png",
    [TileType.snow]: "tiles/snow.png",
    [TileType.ice]: "tiles/ice.png",

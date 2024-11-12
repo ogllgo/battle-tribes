@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
+import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -54,7 +54,7 @@ export interface FrozenYetiRockSpikeInfo {
    readonly size: number;
 }
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getTileTypeAtPosition(x, y) === TileType.fimbultur;
 }
 
@@ -98,7 +98,7 @@ export function createFrozenYetiConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-export function onFrozenYetiCollision(frozenYeti: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onFrozenYetiCollision(frozenYeti: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    
    if (collidingEntity === null || collidingEntityType === EntityType.iceSpikes) {
@@ -130,7 +130,7 @@ export function onFrozenYetiCollision(frozenYeti: EntityID, collidingEntity: Ent
    }
 }
 
-export function onFrozenYetiHurt(frozenYeti: EntityID, attackingEntity: EntityID, damage: number): void {
+export function onFrozenYetiHurt(frozenYeti: Entity, attackingEntity: Entity, damage: number): void {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
 
    // Update/create the entity's targetInfo record

@@ -11,7 +11,7 @@ const CookingInventory = () => {
    const cookingEntity = getSelectedEntity();
    const cookingComponent = CookingComponentArray.getComponent(cookingEntity);
    const inventoryComponent = InventoryComponentArray.getComponent(cookingEntity);
-
+   
    const fuelInventory = getInventory(inventoryComponent, InventoryName.fuelInventory)!;
    const ingredientInventory = getInventory(inventoryComponent, InventoryName.ingredientInventory)!;
    const outputInventory = getInventory(inventoryComponent, InventoryName.outputInventory)!;

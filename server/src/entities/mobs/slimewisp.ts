@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, TileIndex } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -8,7 +8,7 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import WanderAI from "../../ai/WanderAI";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -26,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const RADIUS = 16;
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.swamp;
 }
 

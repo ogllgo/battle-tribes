@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
@@ -55,7 +55,7 @@ const enum Vars {
 export class ZombieComponent {
    /** The type of the zombie, 0-3 */
    public readonly zombieType: number;
-   public readonly tombstone: EntityID;
+   public readonly tombstone: Entity;
 
    /** Maps the IDs of entities which have attacked the zombie to the number of ticks that they should remain in the object for */
    public readonly attackingEntityIDs: Partial<Record<number, number>> = {};
@@ -67,7 +67,7 @@ export class ZombieComponent {
    /** Ticks since the visible hurt entity was last hit */
    public visibleHurtEntityTicks = 0;
    
-   constructor(zombieType: number, tombstone: EntityID) {
+   constructor(zombieType: number, tombstone: Entity) {
       this.zombieType = zombieType;
       this.tombstone = tombstone;
    }
@@ -92,7 +92,7 @@ const tribesmanIsWearingMeatSuit = (entityID: number): boolean => {
    return typeof armour !== "undefined" && armour.type === ItemType.meat_suit;
 }
 
-export function zombieShouldAttackEntity(zombie: EntityID, entity: EntityID): boolean {
+export function zombieShouldAttackEntity(zombie: Entity, entity: Entity): boolean {
    if (!HealthComponentArray.hasComponent(entity)) {
       return false;
    }
@@ -112,12 +112,12 @@ export function zombieShouldAttackEntity(zombie: EntityID, entity: EntityID): bo
    return entityIsStructure(entityType);
 }
 
-const getTarget = (zombie: EntityID, aiHelperComponent: AIHelperComponent): EntityID | null => {
+const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
    
    // Attack the closest target in vision range
    let minDist = Number.MAX_SAFE_INTEGER;
-   let target: EntityID | null = null;
+   let target: Entity | null = null;
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (zombieShouldAttackEntity(zombie, entity)) {
@@ -139,7 +139,7 @@ const getTarget = (zombie: EntityID, aiHelperComponent: AIHelperComponent): Enti
 
    // Investigate recent hits
    let mostRecentHitTicks = ZombieVars.CHASE_PURSUE_TIME_TICKS - Vars.DAMAGE_INVESTIGATE_TIME_TICKS - 1;
-   let damageSourceEntity: EntityID | null = null;
+   let damageSourceEntity: Entity | null = null;
    // @Speed
    for (const attackingEntity of Object.keys(zombieComponent.attackingEntityIDs).map(idString => Number(idString))) {
       const hitTicks = zombieComponent.attackingEntityIDs[attackingEntity]!;
@@ -152,7 +152,7 @@ const getTarget = (zombie: EntityID, aiHelperComponent: AIHelperComponent): Enti
    return damageSourceEntity;
 }
 
-const doMeleeAttack = (zombie: EntityID, target: EntityID): void => {
+const doMeleeAttack = (zombie: Entity, target: Entity): void => {
    // Find the attack target
    const attackTargets = calculateRadialAttackTargets(zombie, Vars.ATTACK_OFFSET, Vars.ATTACK_RADIUS);
 
@@ -170,7 +170,7 @@ const doMeleeAttack = (zombie: EntityID, target: EntityID): void => {
 
 // @Incomplete: bite wind-up
 
-const doBiteAttack = (zombie: EntityID, target: EntityID): void => {
+const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    
@@ -196,7 +196,7 @@ const doBiteAttack = (zombie: EntityID, target: EntityID): void => {
    }
 }
 
-const doAttack = (zombie: EntityID, target: EntityID): void => {
+const doAttack = (zombie: Entity, target: Entity): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(zombie);
 
    // If holding an item, do a melee attack
@@ -208,8 +208,8 @@ const doAttack = (zombie: EntityID, target: EntityID): void => {
    }
 }
 
-const findHerdMembers = (visibleEntities: ReadonlyArray<EntityID>): ReadonlyArray<EntityID> => {
-   const herdMembers = new Array<EntityID>();
+const findHerdMembers = (visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
+   const herdMembers = new Array<Entity>();
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
       if (getEntityType(entity) === EntityType.zombie) {
@@ -219,7 +219,7 @@ const findHerdMembers = (visibleEntities: ReadonlyArray<EntityID>): ReadonlyArra
    return herdMembers;
 }
 
-function onTick(zombie: EntityID): void {
+function onTick(zombie: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
    zombieComponent.visibleHurtEntityTicks++;
 
@@ -264,7 +264,7 @@ function onTick(zombie: EntityID): void {
    // Eat raw beef and fish
    {
       let minDist = Number.MAX_SAFE_INTEGER;
-      let closestFoodItem: EntityID | null = null;
+      let closestFoodItem: Entity | null = null;
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
          const entity = aiHelperComponent.visibleEntities[i];
          if (getEntityType(entity) !== EntityType.itemEntity) {
@@ -329,12 +329,12 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(entity);
    packet.addNumber(zombieComponent.zombieType);
 }
 
-function onHitboxCollision(zombie: EntityID, collidingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(zombie: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
    // Pick up item entities
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       pickupItemEntity(zombie, collidingEntity);
@@ -364,7 +364,7 @@ function onHitboxCollision(zombie: EntityID, collidingEntity: EntityID, actingHi
    physicsComponent.externalVelocity.y += 100 * Math.cos(flinchDirection);
 }
 
-function preRemove(zombie: EntityID): void {
+function preRemove(zombie: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
    if (zombieComponent.tombstone !== 0 && TombstoneComponentArray.hasComponent(zombieComponent.tombstone)) {
       const tombstoneComponent = TombstoneComponentArray.getComponent(zombieComponent.tombstone);

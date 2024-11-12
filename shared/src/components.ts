@@ -71,6 +71,7 @@ export enum ServerComponentType {
    fenceGate,
    craftingStation,
    transform,
+   tetheredHitbox,
    projectile,
    iceArrow,
    layeredRod,
@@ -89,7 +90,10 @@ export enum ServerComponentType {
    slingTurret,
    barrel,
    campfire,
-   furnace
+   furnace,
+   fireTorch,
+   spikyBastard,
+   glurb
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -147,6 +151,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.fenceGate]: "fence gate",
    [ServerComponentType.craftingStation]: "crafting station",
    [ServerComponentType.transform]: "transform",
+   [ServerComponentType.tetheredHitbox]: "Tethered Hitbox Component",
    [ServerComponentType.projectile]: "projectile",
    [ServerComponentType.iceArrow]: "ice arrow",
    [ServerComponentType.layeredRod]: "layered rod",
@@ -171,7 +176,10 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    // @Cleanup: should probably be client component
    [ServerComponentType.campfire]: "Campfire",
    // @Cleanup: should probably be client component
-   [ServerComponentType.furnace]: "Furnace"
+   [ServerComponentType.furnace]: "Furnace",
+   [ServerComponentType.fireTorch]: "Fire Torch",
+   [ServerComponentType.spikyBastard]: "Spiky Bastard",
+   [ServerComponentType.glurb]: "Glurb"
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -247,7 +255,10 @@ export const EntityComponents = {
    [EntityType.guardianGemQuake]: [ServerComponentType.transform, ServerComponentType.guardianGemQuake],
    [EntityType.guardianGemFragmentProjectile]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.guardianGemFragmentProjectile],
    [EntityType.guardianSpikyBall]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.statusEffect, ServerComponentType.health, ServerComponentType.guardianSpikyBall],
-   [EntityType.bracings]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial, ServerComponentType.bracings]
+   [EntityType.bracings]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial, ServerComponentType.bracings],
+   [EntityType.fireTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fireTorch],
+   [EntityType.spikyBastard]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.spikyBastard],
+   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurb]
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

@@ -1,6 +1,6 @@
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage, GuardianSpikyBallSummonStage, ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
 import { Light, attachLightToRenderPart, createLight } from "../../lights";
@@ -410,7 +410,7 @@ const setColours = (renderParts: ReadonlyArray<VisualRenderPart>, lights: Readon
    }
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
    
    const rubyGemActivation = reader.readNumber();

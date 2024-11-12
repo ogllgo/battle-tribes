@@ -9,7 +9,7 @@ import { RenderChunkRiverInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkMaxTileX, 
 import { Tile } from "../../Tile";
 import { UBOBindingIndex, bindUBOToProgram } from "../ubos";
 import Layer, { getTileIndexIncludingEdges, tileIsWithinEdge } from "../../Layer";
-import { layers } from "../../world";
+import { layers, undergroundLayer } from "../../world";
 
 const SHALLOW_WATER_COLOUR = [118/255, 185/255, 242/255] as const;
 const DEEP_WATER_COLOUR = [86/255, 141/255, 184/255] as const;
@@ -51,6 +51,7 @@ const riverSteppingStoneVAOs = new Array<WebGLVertexArrayObject>();
 const riverSteppingStoneVertexCounts = new Array<number>();
 
 let baseProgramOpacityUniformLocation: WebGLUniformLocation;
+let baseProgramIsUndergroundUniformLocation: WebGLUniformLocation;
 
 export function createRiverSteppingStoneData(riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>): void {
    // Group the stepping stones
@@ -134,6 +135,7 @@ export function createRiverShaders(): void {
    uniform sampler2D u_baseTexture;
 
    uniform float u_opacity;
+   uniform bool u_isUnderground;
     
    in vec2 v_coord;
    in float v_topLeftLandDistance;
@@ -156,6 +158,13 @@ export function createRiverShaders(): void {
       vec4 textureColour = texture(u_baseTexture, v_coord);
    
       outputColour = colourWithAlpha * textureColour;
+
+      if (u_isUnderground) {
+         outputColour.rgb *= 0.8;
+      }
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -209,6 +218,9 @@ export function createRiverShaders(): void {
          outputColour = texture(u_texture2, v_texCoord);
       }
       outputColour.a *= v_opacity;
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -279,6 +291,8 @@ export function createRiverShaders(): void {
       }
    
       outputColour.a *= 0.4;
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -350,6 +364,9 @@ export function createRiverShaders(): void {
       if (distanceFromCenter >= 0.166) {
          outputColour.a *= mix(1.0, 0.0, (distanceFromCenter - 0.166) * 3.0);
       }
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -485,6 +502,9 @@ export function createRiverShaders(): void {
       opacitySubtract = pow(opacitySubtract, 1.2);
    
       outputColour.a -= opacitySubtract;
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -549,6 +569,9 @@ export function createRiverShaders(): void {
       multiplier = clamp(multiplier, 0.0, 1.0);
       multiplier = pow(multiplier, 0.35);
       outputColour.a *= multiplier;
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -614,6 +637,7 @@ export function createRiverShaders(): void {
 
    const baseTextureUniformLocation = gl.getUniformLocation(baseProgram, "u_baseTexture")!;
    baseProgramOpacityUniformLocation = gl.getUniformLocation(baseProgram, "u_opacity")!;
+   baseProgramIsUndergroundUniformLocation = gl.getUniformLocation(baseProgram, "u_isUnderground")!;
 
    gl.useProgram(baseProgram);
    gl.uniform1i(baseTextureUniformLocation, 0);
@@ -1353,7 +1377,7 @@ export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number
    gl.bindBuffer(gl.ARRAY_BUFFER, highlightsBuffer);
    gl.bufferData(gl.ARRAY_BUFFER, highlightsVertexData, gl.STATIC_DRAW);
 
-   const noiseVertexData = calculateNoiseVertexData(waterTiles);
+   const noiseVertexData = calculateNoiseVertexData(layer, waterTiles);
    const noiseBuffer = gl.createBuffer()!;
    gl.bindBuffer(gl.ARRAY_BUFFER, noiseBuffer);
    gl.bufferData(gl.ARRAY_BUFFER, noiseVertexData, gl.STATIC_DRAW);
@@ -1400,13 +1424,24 @@ export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number
    };
 }
 
-const calculateNoiseVertexData = (waterTiles: ReadonlyArray<Tile>): Float32Array => {
-   const vertexData = new Float32Array(waterTiles.length * 6 * 8);
+const calculateNoiseVertexData = (layer: Layer, waterTiles: ReadonlyArray<Tile>): Float32Array => {
+   let numInstances = 0;
+   for (const tile of waterTiles) {
+      const flowDirectionIdx = layer.getRiverFlowDirection(tile.x, tile.y);
+      if (flowDirectionIdx > 0) {
+         numInstances++;
+      }
+   }
+   
+   const vertexData = new Float32Array(numInstances * 6 * 8);
    
    for (let i = 0; i < waterTiles.length; i++) {
       const tile = waterTiles[i];
-      // @Hack
-      const flowDirection = layers[0].getRiverFlowDirection(tile.x, tile.y);
+      const flowDirectionIdx = layer.getRiverFlowDirection(tile.x, tile.y);
+      if (flowDirectionIdx === 0) {
+         continue;
+      }
+      const flowDirection = flowDirectionIdx - 1;
       
       const x1 = (tile.x - 0.5) * Settings.TILE_SIZE;
       const x2 = (tile.x + 1.5) * Settings.TILE_SIZE;
@@ -1590,23 +1625,23 @@ const calculateHighlightsVertexData = (waterTiles: ReadonlyArray<Tile>): Float32
       vertexData[dataOffset + 23] = 0;
       vertexData[dataOffset + 24] = fadeOffset;
 
-      vertexData[dataOffset + 25] = x1;
+      vertexData[dataOffset + 25] = x2;
       vertexData[dataOffset + 26] = y2;
       vertexData[dataOffset + 27] = 1;
-      vertexData[dataOffset + 28] = 0;
+      vertexData[dataOffset + 28] = 1;
       vertexData[dataOffset + 29] = fadeOffset;
    }
 
    return vertexData;
 }
 
-export function calculateVisibleRiverInfo(): ReadonlyArray<RenderChunkRiverInfo> {
+export function calculateVisibleRiverInfo(layer: Layer): ReadonlyArray<RenderChunkRiverInfo> {
    // @Speed: Garbage collection
    const riverInfoArray = new Array<RenderChunkRiverInfo>();
 
    for (let renderChunkX = Camera.minVisibleRenderChunkX; renderChunkX <= Camera.maxVisibleRenderChunkX; renderChunkX++) {
       for (let renderChunkY = Camera.minVisibleRenderChunkY; renderChunkY <= Camera.maxVisibleRenderChunkY; renderChunkY++) {
-         const riverInfo = getRenderChunkRiverInfo(renderChunkX, renderChunkY);
+         const riverInfo = getRenderChunkRiverInfo(layer, renderChunkX, renderChunkY);
          if (riverInfo !== null) {
             riverInfoArray.push(riverInfo);
          }
@@ -1616,7 +1651,7 @@ export function calculateVisibleRiverInfo(): ReadonlyArray<RenderChunkRiverInfo>
    return riverInfoArray;
 }
 
-export function renderLowerRiverFeatures(visibleRenderChunks: ReadonlyArray<RenderChunkRiverInfo>): void {
+export function renderLowerRiverFeatures(layer: Layer, visibleRenderChunks: ReadonlyArray<RenderChunkRiverInfo>): void {
    // 
    // Base program
    // 
@@ -1624,9 +1659,11 @@ export function renderLowerRiverFeatures(visibleRenderChunks: ReadonlyArray<Rend
    gl.useProgram(baseProgram);
 
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    gl.uniform1f(baseProgramOpacityUniformLocation, 1);
+   gl.uniform1f(baseProgramIsUndergroundUniformLocation, layer === undergroundLayer ? 1 : 1);
 
    // Bind water base texture
    const baseTexture = getTexture("miscellaneous/river/water-base.png");
@@ -1683,7 +1720,7 @@ export function renderLowerRiverFeatures(visibleRenderChunks: ReadonlyArray<Rend
    gl.bindVertexArray(null);
 }
 
-export function renderUpperRiverFeatures(visibleRenderChunks: ReadonlyArray<RenderChunkRiverInfo>): void {
+export function renderUpperRiverFeatures(layer: Layer, visibleRenderChunks: ReadonlyArray<RenderChunkRiverInfo>): void {
    // Calculate visible stepping stone groups
    const steppingStoneGroupIDs = new Array<number>();
    for (const chunk of visibleRenderChunks) {
@@ -1701,9 +1738,11 @@ export function renderUpperRiverFeatures(visibleRenderChunks: ReadonlyArray<Rend
    gl.useProgram(baseProgram);
 
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug required for transparency now... but why? gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA used to work fine
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    gl.uniform1f(baseProgramOpacityUniformLocation, 0.6);
+   gl.uniform1f(baseProgramIsUndergroundUniformLocation, layer === undergroundLayer ? 1 : 1);
 
    // Bind water base texture
    const baseTexture = getTexture("miscellaneous/river/water-base.png");

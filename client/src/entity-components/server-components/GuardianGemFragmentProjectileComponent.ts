@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGenericGemParticle } from "../../particles";
@@ -101,7 +101,7 @@ function createComponent(_entityConfig: EntityConfig<never, never>, renderParts:
    };
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const guardianGemFragmentProjectileComponent = GuardianGemFragmentProjectileComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
 

@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PlanterBoxPlant, TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
@@ -85,7 +85,7 @@ let hoveredEntityID = -1;
 let highlightedEntity = -1;
 let selectedEntityID = -1;
 
-const getInventoryMenuType = (entity: EntityID): InventoryMenuType | null => {
+const getInventoryMenuType = (entity: Entity): InventoryMenuType | null => {
    switch (getEntityType(entity)) {
       case EntityType.barrel: return InventoryMenuType.barrel;
       case EntityType.tribeWorker:
@@ -113,7 +113,7 @@ const getTunnelDoorSide = (groupNum: number): TunnelDoorSide => {
    }
 }
 
-const getEntityInteractAction = (entity: EntityID): InteractAction | null => {
+const getEntityInteractAction = (entity: Entity): InteractAction | null => {
    const selectedItem = getPlayerSelectedItem();
 
    // Toggle tunnel doors
@@ -190,7 +190,7 @@ const getEntityInteractAction = (entity: EntityID): InteractAction | null => {
    return null;
 }
 
-const interactWithEntity = (entity: EntityID, action: InteractAction): void => {
+const interactWithEntity = (entity: Entity, action: InteractAction): void => {
    switch (action.type) {
       case InteractActionType.openBuildMenu: {
          // Select the entity and open the build menu
@@ -282,7 +282,7 @@ export function resetInteractableEntityIDs(): void {
    selectedEntityID = -1;
 }
 
-export function getSelectedEntity(): EntityID {
+export function getSelectedEntity(): Entity {
    if (!entityExists(selectedEntityID)) {
       throw new Error("Can't select: Entity with ID " + selectedEntityID + " doesn't exist");
    }
@@ -376,7 +376,7 @@ const getPlantGhostType = (plantType: PlanterBoxPlant): GhostType => {
 }
 
 // @Cleanup: setGhostInfo called at every return
-const updateHighlightedEntity = (entity: EntityID | null): void => {
+const updateHighlightedEntity = (entity: Entity | null): void => {
    if (entity === null) {
       // @Incomplete
       // setGhostInfo(null);

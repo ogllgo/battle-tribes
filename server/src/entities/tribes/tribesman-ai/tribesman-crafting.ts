@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import Tribe from "../../../Tribe";
 import { stopEntity, turnEntityToEntity } from "../../../ai-shared";
@@ -16,7 +16,7 @@ import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityType, getGameTicks } from "../../../world";
 
-const buildingMatchesCraftingStation = (building: EntityID, craftingStation: CraftingStation): boolean => {
+const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
 }
 
@@ -31,13 +31,13 @@ export function craftingStationExists(tribe: Tribe, craftingStation: CraftingSta
    return false;
 }
 
-const getClosestCraftingStation = (tribesman: EntityID, tribe: Tribe, craftingStation: CraftingStation): EntityID => {
+const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: CraftingStation): Entity => {
    // @Incomplete: slime
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    
    // @Speed
-   let closestStation: EntityID | undefined;
+   let closestStation: Entity | undefined;
    let minDist = Number.MAX_SAFE_INTEGER;
    for (let i = 0; i < tribe.buildings.length; i++) {
       const building = tribe.buildings[i];
@@ -59,7 +59,7 @@ const getClosestCraftingStation = (tribesman: EntityID, tribe: Tribe, craftingSt
    throw new Error();
 }
 
-export function goCraftItem(tribesman: EntityID, recipe: CraftingRecipe, tribe: Tribe): boolean {
+export function goCraftItem(tribesman: Entity, recipe: CraftingRecipe, tribe: Tribe): boolean {
    const availableCraftingStations = getAvailableCraftingStations(tribesman);
    if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
       // Move to the crafting station
@@ -112,7 +112,7 @@ export function goCraftItem(tribesman: EntityID, recipe: CraftingRecipe, tribe: 
       if (tribesmanComponent.currentCraftingTicks >= recipe.aiCraftTimeTicks) {
          // Craft the item
          const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-         craftRecipe(inventoryComponent, recipe, InventoryName.hotbar);
+         craftRecipe(tribesman, inventoryComponent, recipe, InventoryName.hotbar);
 
          tribesmanComponent.currentCraftingTicks = 0;
       }

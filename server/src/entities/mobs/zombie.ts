@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
@@ -15,7 +15,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
@@ -37,11 +37,11 @@ type ComponentTypes = ServerComponentType.transform
 
 const MAX_HEALTH = 20;
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-export function createZombieConfig(isGolden: boolean, tombstone: EntityID): EntityConfig<ComponentTypes> {
+export function createZombieConfig(isGolden: boolean, tombstone: Entity): EntityConfig<ComponentTypes> {
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
    const transformComponent = new TransformComponent(CollisionGroup.default);
@@ -87,7 +87,7 @@ export function createZombieConfig(isGolden: boolean, tombstone: EntityID): Enti
    };
 }
 
-export function onZombieHurt(zombie: EntityID, attackingEntity: EntityID): void {
+export function onZombieHurt(zombie: Entity, attackingEntity: Entity): void {
    // @Cleanup: too many ifs. generalise
    const attackingEntityType = getEntityType(attackingEntity);
    if (HealthComponentArray.hasComponent(attackingEntity) && attackingEntityType !== EntityType.iceSpikes && attackingEntityType !== EntityType.cactus && attackingEntityType !== EntityType.floorSpikes && attackingEntityType !== EntityType.wallSpikes && attackingEntityType !== EntityType.floorPunjiSticks && attackingEntityType !== EntityType.wallPunjiSticks) {
@@ -96,7 +96,7 @@ export function onZombieHurt(zombie: EntityID, attackingEntity: EntityID): void 
    }
 }
 
-export function onZombieVisibleEntityHurt(zombie: EntityID, hurtEntity: EntityID): void {
+export function onZombieVisibleEntityHurt(zombie: Entity, hurtEntity: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
 
    zombieComponent.visibleHurtEntityID = hurtEntity;

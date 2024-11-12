@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
@@ -38,7 +38,7 @@ export const SlimeSpitComponentArray = new ComponentArray<SlimeSpitComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onTick(spit: EntityID): void {
+function onTick(spit: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(spit);
 
    const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
@@ -52,12 +52,12 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const slimeSpitComponent = SlimeSpitComponentArray.getComponent(entity);
    packet.addNumber(slimeSpitComponent.size);
 }
 
-function preRemove(spit: EntityID): void {
+function preRemove(spit: Entity): void {
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    if (spitComponent.size === 1) {
       const transformComponent = TransformComponentArray.getComponent(spit);
@@ -70,7 +70,7 @@ function preRemove(spit: EntityID): void {
    }
 }
 
-function onHitboxCollision(spit: EntityID, collidingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(spit: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.slime || collidingEntityType === EntityType.slimewisp || !HealthComponentArray.hasComponent(collidingEntity)) {
       return;

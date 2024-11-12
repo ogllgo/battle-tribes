@@ -2,7 +2,7 @@ import { angle } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { clearTribesmanPath, getTribesmanAcceleration, getTribesmanVisionRange } from "./tribesman-ai-utils";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 
@@ -22,7 +22,7 @@ export function tribesmanShouldEscape(entityType: EntityType, healthComponent: H
    }
 }
 
-export function escapeFromEnemies(tribesman: EntityID, visibleEnemies: ReadonlyArray<EntityID>, visibleHostileMobs: ReadonlyArray<EntityID>): void {
+export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArray<Entity>, visibleHostileMobs: ReadonlyArray<Entity>): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    
    // Calculate the escape position based on the position of all visible enemies

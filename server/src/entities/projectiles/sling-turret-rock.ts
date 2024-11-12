@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import {ServerComponentType } from "battletribes-shared/components";
-import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
+import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
@@ -19,7 +19,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.projectile;
 
-export function createSlingTurretRockConfig(owner: EntityID): EntityConfig<ComponentTypes> {
+export function createSlingTurretRockConfig(owner: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default)
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 64, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
@@ -45,7 +45,7 @@ export function createSlingTurretRockConfig(owner: EntityID): EntityConfig<Compo
 }
 
 // @Cleanup: Copy and paste
-export function onSlingTurretRockCollision(slingTurretRock: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onSlingTurretRockCollision(slingTurretRock: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
    const relationship = getEntityRelationship(slingTurretRock, collidingEntity);
    if (relationship === EntityRelationship.friendly) {

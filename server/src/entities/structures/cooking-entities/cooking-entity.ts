@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "webgl-test-shared/dist/entities";
+import { Entity, EntityType } from "webgl-test-shared/dist/entities";
 import { Settings } from "webgl-test-shared/dist/settings";
 import { FuelSourceItemType } from "webgl-test-shared/dist/cooking-info";
 import { InventoryComponentArray, addItemToInventory, consumeItemTypeFromInventory, getInventory } from "../../../components/InventoryComponent";
@@ -66,7 +66,7 @@ const getHeatingRecipeByIngredientType = (heatingEntityType: EntityType, ingredi
    return null;
 }
 
-export function tickCookingEntity(entity: EntityID): void {
+export function tickCookingEntity(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
 

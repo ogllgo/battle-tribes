@@ -5,7 +5,7 @@ import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSound } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { CowSpecies, EntityID } from "battletribes-shared/entities";
+import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityLayer } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
@@ -90,7 +90,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, nev
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const cowComponent = CowComponentArray.getComponent(entity);
 
@@ -111,7 +111,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
    
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
@@ -132,7 +132,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    cowComponent.grazeProgress = grazeProgress;
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
          
    // Blood pool particles
@@ -153,7 +153,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    playSound("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < 3; i++) {
       createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 35);

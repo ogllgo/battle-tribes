@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -58,7 +58,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.research
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
    if (researchBenchComponent.isOccupied && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.3)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
@@ -71,7 +71,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
    researchBenchComponent.isOccupied = reader.readBoolean();
    reader.padOffset(3);

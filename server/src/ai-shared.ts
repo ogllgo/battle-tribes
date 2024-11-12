@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex } from "battletribes-shared/utils";
@@ -19,14 +19,14 @@ const WALL_AVOIDANCE_MULTIPLIER = 1.5;
 const testCircularBox = new CircularBox(new Point(0, 0), 0, -1);
 
 // @Cleanup: Only used in tribesman.ts, so move there.
-export function getClosestAccessibleEntity(entity: EntityID, entities: ReadonlyArray<EntityID>): EntityID {
+export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArray<Entity>): Entity {
    if (entities.length === 0) {
       throw new Error("No entities in array");
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   let closestEntity!: EntityID;
+   let closestEntity!: Entity;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const currentEntity of entities) {
       const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
@@ -65,7 +65,7 @@ export function stopEntity(physicsComponent: PhysicsComponent): void {
    physicsComponent.acceleration.y = 0;
 }
 
-export function turnToPosition(entity: EntityID, x: number, y: number, turnSpeed: number): void {
+export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -79,7 +79,7 @@ export function stopTurning(physicsComponent: PhysicsComponent): void {
    physicsComponent.turnSpeed = 0;
 }
 
-export function moveEntityToPosition(entity: EntityID, positionX: number, positionY: number, acceleration: number, turnSpeed: number): void {
+export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -90,18 +90,18 @@ export function moveEntityToPosition(entity: EntityID, positionX: number, positi
    physicsComponent.targetRotation = targetDirection;
    physicsComponent.turnSpeed = turnSpeed;
 }
-export function turnEntityToEntity(entity: EntityID, targetEntity: EntityID, turnSpeed: number): void {
+export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    turnToPosition(entity, targetTransformComponent.position.x, targetTransformComponent.position.y, turnSpeed);
 }
 
 // @Cleanup: unused?
-export function moveEntityToEntity(entity: EntityID, targetEntity: EntityID, acceleration: number, turnSpeed: number): void {
+export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceleration: number, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    moveEntityToPosition(entity, targetTransformComponent.position.x, targetTransformComponent.position.y, acceleration, turnSpeed);
 }
 
-export function entityHasReachedPosition(entity: EntityID, positionX: number, positionY: number): boolean {
+export function entityHasReachedPosition(entity: Entity, positionX: number, positionY: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
@@ -116,7 +116,7 @@ export function entityHasReachedPosition(entity: EntityID, positionX: number, po
 }
 
 // @Cleanup @Robustness: Maybe separate this into 4 different functions? (for separation, alignment, etc.)
-export function runHerdAI(entity: EntityID, herdMembers: ReadonlyArray<EntityID>, visionRange: number, turnRate: number, minSeparationDistance: number, separationInfluence: number, alignmentInfluence: number, cohesionInfluence: number): void {
+export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, visionRange: number, turnRate: number, minSeparationDistance: number, separationInfluence: number, alignmentInfluence: number, cohesionInfluence: number): void {
    // 
    // Find the closest herd member and calculate other data
    // 
@@ -130,7 +130,7 @@ export function runHerdAI(entity: EntityID, herdMembers: ReadonlyArray<EntityID>
    let centerX = 0;
    let centerY = 0;
 
-   let closestHerdMember: EntityID | undefined;
+   let closestHerdMember: Entity | undefined;
    let minDist = Number.MAX_SAFE_INTEGER;
    let numHerdMembers = 0;
    for (let i = 0; i < herdMembers.length; i++) {
@@ -386,7 +386,7 @@ export function getAllowedPositionRadialTiles(layer: Layer, position: Point, rad
    return tiles;
 }
 
-export function entityIsInVisionRange(position: Point, visionRange: number, entity: EntityID): boolean {
+export function entityIsInVisionRange(position: Point, visionRange: number, entity: Entity): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    if (Math.pow(position.x - transformComponent.position.x, 2) + Math.pow(position.y - transformComponent.position.y, 2) <= Math.pow(visionRange, 2)) {
@@ -407,7 +407,7 @@ export function entityIsInVisionRange(position: Point, visionRange: number, enti
    return false;
 }
 
-export function getEntitiesInRange(layer: Layer, x: number, y: number, range: number): Array<EntityID> {
+export function getEntitiesInRange(layer: Layer, x: number, y: number, range: number): Array<Entity> {
    const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -420,7 +420,7 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
    const visionRangeSquared = Math.pow(range, 2);
    
    const seenIDs = new Set<number>();
-   const entities = new Array<EntityID>();
+   const entities = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -530,7 +530,7 @@ export function angleIsInRange(angle: number, minAngle: number, maxAngle: number
    return distFromMinToAngle < distFromMinToMax;
 }
 
-export function getTurnSmoothingMultiplier(entity: EntityID, targetDirection: number): number {
+export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: number): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const dotProduct = Math.sin(transformComponent.rotation) * Math.sin(targetDirection) + Math.cos(transformComponent.rotation) * Math.cos(targetDirection);
    if (dotProduct <= 0) {
@@ -597,7 +597,7 @@ const lineIntersectsRectangularHitbox = (lineX1: number, lineY1: number, lineX2:
    return true;
 }
 
-const entityAffectsLineOfSight = (entity: EntityID): boolean => {
+const entityAffectsLineOfSight = (entity: Entity): boolean => {
    return !ProjectileComponentArray.hasComponent(entity);
 }
 
@@ -621,7 +621,7 @@ const lineIntersectsCircularHitbox = (lineX1: number, lineY1: number, lineX2: nu
    );
 }
 
-const entityIntersectsLineOfSight = (entity: EntityID, originEntity: EntityID, targetEntity: EntityID): boolean => {
+const entityIntersectsLineOfSight = (entity: Entity, originEntity: Entity, targetEntity: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const originEntityTransformComponent = TransformComponentArray.getComponent(originEntity);
    const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
@@ -650,7 +650,7 @@ const entityIntersectsLineOfSight = (entity: EntityID, originEntity: EntityID, t
    return false;
 }
 
-export function entityIsInLineOfSight(originEntity: EntityID, targetEntity: EntityID, ignoredPathfindingGroupID: number): boolean {
+export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity, ignoredPathfindingGroupID: number): boolean {
    const originEntityTransformComponent = TransformComponentArray.getComponent(originEntity);
    const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
    const layer = getEntityLayer(originEntity);
@@ -695,7 +695,7 @@ export function entityIsInLineOfSight(originEntity: EntityID, targetEntity: Enti
    return true;
 }
 
-export function getDistanceFromPointToEntity(point: Point, entity: EntityID): number {
+export function getDistanceFromPointToEntity(point: Point, entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    let minDistance = Math.sqrt(Math.pow(point.x - transformComponent.position.x, 2) + Math.pow(point.y - transformComponent.position.y, 2));

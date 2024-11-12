@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribeMemberComponentArray } from "../../../components/TribeMemberComponent";
@@ -6,7 +6,7 @@ import { getItemGiftAppreciation, TribesmanAIComponentArray } from "../../../com
 import { InventoryName } from "battletribes-shared/items/items";
 import { getEntityType } from "../../../world";
 
-export function getGiftableItemSlot(tribesman: EntityID): number {
+export function getGiftableItemSlot(tribesman: Entity): number {
    // @Incomplete: don't gift items useful to the tribesman
    
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
@@ -30,11 +30,11 @@ export function getGiftableItemSlot(tribesman: EntityID): number {
    return bestItemSlot;
 }
 
-export function getRecruitTarget(tribesman: EntityID, visibleEntities: ReadonlyArray<EntityID>): EntityID | null {
+export function getRecruitTarget(tribesman: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
    
    let maxRelations = -100;
-   let closestAcquaintance: EntityID | null = null;
+   let closestAcquaintance: Entity | null = null;
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
       if (getEntityType(entity) === EntityType.player || !TribeMemberComponentArray.hasComponent(entity)) {

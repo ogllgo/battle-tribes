@@ -5,7 +5,7 @@ import { getInventory, InventoryComponentArray } from "../server-components/Inve
 import { getEntityRenderInfo } from "../../world";
 import { InventoryUseComponentArray } from "../server-components/InventoryUseComponent";
 import ClientComponentArray from "../ClientComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { ClientComponentType } from "../client-component-types";
 
 export interface EquipmentComponentParams {}
@@ -101,14 +101,14 @@ function createComponent(): EquipmentComponent {
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const equipmentComponent = EquipmentComponentArray.getComponent(entity);
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);
 }
 
 /** Updates the current armour render part based on the entity's inventory component */
-const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: EntityID): void => {
+const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: Entity): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;
    
@@ -136,7 +136,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
 }
 
 // @Cleanup: Copy and paste from armour
-const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: EntityID): void => {
+const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: Entity): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot)!;
    
@@ -172,7 +172,7 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const equipmentComponent = EquipmentComponentArray.getComponent(entity);
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);

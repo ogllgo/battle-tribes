@@ -5,7 +5,7 @@ import { lerp } from "battletribes-shared/utils";
 import { createAcidParticle, createPoisonBubble } from "../../particles";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 
@@ -48,7 +48,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
 
@@ -80,7 +80,7 @@ function onTick(entity: EntityID): void {
    createAcidParticle(x, y);
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
    spitPoisonAreaComponent.trackSource.disconnect();
 }

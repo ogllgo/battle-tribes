@@ -5,7 +5,7 @@ import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault, getEntityFootprint, positionIsAccessible } from "../../../pathfinding";
 import { pathfindToPosition, clearTribesmanPath, getTribesmanRadius, getTribesmanVisionRange } from "./tribesman-ai-utils";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt, distance } from "battletribes-shared/utils";
 import { getTileX, getTileY } from "../../../Layer";
 import Tribe from "../../../Tribe";
@@ -15,7 +15,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { getEntityLayer, getEntityType, isNight } from "../../../world";
 
 
-const generateTribeAreaPatrolPosition = (tribesman: EntityID, tribe: Tribe): Point | null => {
+const generateTribeAreaPatrolPosition = (tribesman: Entity, tribe: Tribe): Point | null => {
    // Filter tiles in tribe area
    const potentialTiles = tribe.getArea();
 
@@ -39,7 +39,7 @@ const generateTribeAreaPatrolPosition = (tribesman: EntityID, tribe: Tribe): Poi
    return null;
 }
 
-const generateRandomExplorePosition = (tribesman: EntityID, tribe: Tribe): Point | null => {
+const generateRandomExplorePosition = (tribesman: Entity, tribe: Tribe): Point | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
@@ -87,7 +87,7 @@ const generateRandomExplorePosition = (tribesman: EntityID, tribe: Tribe): Point
    return null;
 }
 
-const generatePatrolPosition = (tribesman: EntityID, tribe: Tribe, goal: TribesmanGoal | null): Point | null => {
+const generatePatrolPosition = (tribesman: Entity, tribe: Tribe, goal: TribesmanGoal | null): Point | null => {
    switch (getEntityType(tribesman)) {
       case EntityType.tribeWorker: {
          if (goal === null || isNight()) {
@@ -104,7 +104,7 @@ const generatePatrolPosition = (tribesman: EntityID, tribe: Tribe, goal: Tribesm
    throw new Error();
 }
 
-export function tribesmanDoPatrol(tribesman: EntityID, goal: TribesmanGoal | null): boolean {
+export function tribesmanDoPatrol(tribesman: Entity, goal: TribesmanGoal | null): boolean {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
    
    if (tribesmanAIComponent.targetPatrolPositionX === -1 && Math.random() < 0.3 / Settings.TPS) {

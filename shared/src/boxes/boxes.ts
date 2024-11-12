@@ -8,7 +8,9 @@ export const enum HitboxFlag {
    NON_GRASS_BLOCKING,
    // @Cleanup @Speed: This seems like it's central collision logic, perhaps instead change into a "collidesWithWalls" boolean on hitbox objects?
    IGNORES_WALL_COLLISIONS,
-   GUARDIAN_LIMB_HITBOX
+   GUARDIAN_LIMB_HITBOX,
+   GLURB_HEAD_SEGMENT,
+   GLURB_TAIL_SEGMENT
 }
 
 export const enum HitboxCollisionType {
@@ -39,6 +41,11 @@ export interface Hitbox<T extends BoxType = BoxType> extends BoxWrapper<T> {
    readonly collisionBit: HitboxCollisionBit;
    readonly collisionMask: number;
    readonly flags: ReadonlyArray<HitboxFlag>;
+   // @Memory: entities without physics components don't need these 4.
+   boundsMinX: number;
+   boundsMaxX: number;
+   boundsMinY: number;
+   boundsMaxY: number;
 }
 
 export interface GenericCollisionBoxInfo<T extends BoxType = BoxType> extends BoxWrapper<T> {
@@ -71,7 +78,11 @@ export function createHitbox<T extends BoxType>(box: BoxFromType[T], mass: numbe
       collisionType: collisionType,
       collisionBit: collisionBit,
       collisionMask: collisionMask,
-      flags: flags
+      flags: flags,
+      boundsMinX: 0,
+      boundsMaxX: 0,
+      boundsMinY: 0,
+      boundsMaxY: 0
    };
 }
 

@@ -11,7 +11,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -174,7 +174,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const golemComponent = GolemComponentArray.getComponent(entity);
@@ -210,7 +210,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
    
    const wakeProgress = reader.readNumber();
@@ -243,7 +243,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
 }

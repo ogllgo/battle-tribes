@@ -1,7 +1,7 @@
 import { WaterRockData, RiverSteppingStoneData, RIVER_STEPPING_STONE_SIZES, ServerTileUpdateData } from "battletribes-shared/client-server-types";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Biome, SubtileType, TileType } from "battletribes-shared/tiles";
+import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { distance, Point, TileIndex } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
 import { addTileToCensus } from "./census";
@@ -19,6 +19,7 @@ import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detect
 import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
 import { registerMinedSubtile, MinedSubtileInfo } from "./collapses";
 import { getSubtileIndex } from "../../shared/src/subtiles";
+import { Biome } from "../../shared/src/biomes";
 
 // @Cleanup: same as WaterTileGenerationInfo
 export interface RiverFlowDirection {
@@ -173,7 +174,7 @@ export default class Layer {
       this.worldInfo = {
          chunks: this.chunks,
          wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: EntityID): EntityInfo => {
+         getEntityCallback: (entity: Entity): EntityInfo => {
             const transformComponent = TransformComponentArray.getComponent(entity);
 
             return {
@@ -209,7 +210,7 @@ export default class Layer {
          this.wallSubtileTypes[subtileIndex] = SubtileType.none;
          registerMinedSubtile(this, subtileIndex, previousSubtileType);
       }
-      
+
       this.wallSubtileUpdates.push({
          subtileIndex: subtileIndex,
          subtileType: this.wallSubtileTypes[subtileIndex],
@@ -260,6 +261,15 @@ export default class Layer {
       const tileX = Math.floor(x / Settings.TILE_SIZE);
       const tileY = Math.floor(y / Settings.TILE_SIZE);
       return this.getTileXYType(tileX, tileY);
+   }
+
+   public getSubtileType(subtileIndex: number): SubtileType {
+      return this.wallSubtileTypes[subtileIndex];
+   }
+
+   public getSubtileXYType(subtileX: number, subtileY: number): SubtileType {
+      const subtileIndex = getSubtileIndex(subtileX, subtileY);
+      return this.wallSubtileTypes[subtileIndex];
    }
 
    public subtileIsWall(subtileIndex: number): boolean {
@@ -321,7 +331,7 @@ export default class Layer {
       return this.collisionGroupChunks[collisionGroup][chunkIndex];
    }
 
-   public getEntityCollisionPairs(entity: EntityID): ReadonlyArray<EntityPairCollisionInfo> {
+   public getEntityCollisionPairs(entity: Entity): ReadonlyArray<EntityPairCollisionInfo> {
       return this.globalCollisionInfo[entity] || [];
    }
 
@@ -364,7 +374,7 @@ export default class Layer {
       const minChunkY = Math.max(Math.min(Math.floor((position.y - 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
       const maxChunkY = Math.max(Math.min(Math.floor((position.y + 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
 
-      const checkedEntities = new Set<EntityID>();
+      const checkedEntities = new Set<Entity>();
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -386,7 +396,7 @@ export default class Layer {
       return minDistance;
    }
 
-   public getEntitiesAtPosition(x: number, y: number): Array<EntityID> {
+   public getEntitiesAtPosition(x: number, y: number): Array<Entity> {
       if (!positionIsInWorld(x, y)) {
          throw new Error("Position isn't in the board");
       }
@@ -397,7 +407,7 @@ export default class Layer {
       const chunkX = Math.floor(x / Settings.CHUNK_UNITS);
       const chunkY = Math.floor(y / Settings.CHUNK_UNITS);
 
-      const entities = new Array<EntityID>();
+      const entities = new Array<Entity>();
       
       const chunk = this.getChunk(chunkX, chunkY);
       for (const entity of chunk.entities) {
@@ -413,7 +423,7 @@ export default class Layer {
       return entities;
    }
 
-   public getEntitiesInRange(x: number, y: number, range: number): Array<EntityID> {
+   public getEntitiesInRange(x: number, y: number, range: number): Array<Entity> {
       const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
       const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
       const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -423,8 +433,8 @@ export default class Layer {
       const position = new Point(x, y);
       
       // @Speed: garbage collection
-      const checkedEntities = new Set<EntityID>();
-      const entities = new Array<EntityID>();
+      const checkedEntities = new Set<Entity>();
+      const entities = new Array<Entity>();
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {

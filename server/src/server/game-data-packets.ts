@@ -1,6 +1,6 @@
 import { GameDataPacketOptions, VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
-import { EntityID, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { TechUnlockProgress } from "battletribes-shared/techs";
 import Layer, { getTileX, getTileY } from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
@@ -45,7 +45,7 @@ export function addInventoryDataToPacket(packet: Packet, inventory: Inventory): 
    }
 }
 
-export function getEntityDataLength(entity: EntityID, player: EntityID | null): number {
+export function getEntityDataLength(entity: Entity, player: Entity | null): number {
    let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
 
    for (let i = 0; i < ComponentArrays.length; i++) {
@@ -59,7 +59,7 @@ export function getEntityDataLength(entity: EntityID, player: EntityID | null): 
    return lengthBytes;
 }
 
-export function addEntityDataToPacket(packet: Packet, entity: EntityID, player: EntityID | null): void {
+export function addEntityDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
    // Entity ID, type, spawn time, and layer
    packet.addNumber(entity);
    packet.addNumber(getEntityType(entity)!);
@@ -141,7 +141,7 @@ const getVisibleMinedSubtiles = (playerClient: PlayerClient): ReadonlyArray<numb
    return minedSubtiles;
 }
 
-export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<EntityID>): ArrayBuffer {
+export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<Entity>): ArrayBuffer {
    // @Cleanup: The mined subtile system here exists really only to send particles. Can be entirely encompassed in a server particles system!
 
    const playerIsAlive = entityExists(playerClient.instance);
@@ -554,7 +554,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    return packet.buffer;
 }
 
-export function createInitialGameDataPacket(player: EntityID, spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
+export function createInitialGameDataPacket(player: Entity, spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT * 5;
    // Layers
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;

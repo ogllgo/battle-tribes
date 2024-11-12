@@ -1,6 +1,6 @@
 import { CircleDebugData, EntityDebugData, LineDebugData, PathData, TileHighlightData } from "battletribes-shared/client-server-types";
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { getTechByID } from "battletribes-shared/techs";
 import { TRIBESMAN_COMMUNICATION_RANGE } from "./entities/tribes/tribesman-ai/tribesman-ai";
 import { TribesmanGoalType } from "./entities/tribes/tribesman-ai/tribesman-goals";
@@ -12,7 +12,7 @@ import { ItemTypeString, ITEM_INFO_RECORD, PlaceableItemInfo } from "battletribe
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
 
-export function createEntityDebugData(entity: EntityID): EntityDebugData {
+export function createEntityDebugData(entity: Entity): EntityDebugData {
    const lines = new Array<LineDebugData>();
    const circles = new Array<CircleDebugData>();
    const tileHighlights = new Array<TileHighlightData>();
@@ -127,7 +127,7 @@ export function getEntityDebugDataLength(debugData: EntityDebugData): number {
    return lengthBytes;
 }
 
-export function addEntityDebugDataToPacket(packet: Packet, entity: EntityID, debugData: EntityDebugData): void {
+export function addEntityDebugDataToPacket(packet: Packet, entity: Entity, debugData: EntityDebugData): void {
    packet.addNumber(entity);
 
    packet.addNumber(debugData.lines.length);

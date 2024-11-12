@@ -1,4 +1,4 @@
-import { CactusBodyFlowerData, CactusFlowerSize, CactusLimbData, CactusLimbFlowerData, EntityID } from "battletribes-shared/entities";
+import { CactusBodyFlowerData, CactusFlowerSize, CactusLimbData, CactusLimbFlowerData, Entity } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createCactusSpineParticle, createFlowerParticle } from "../../particles";
@@ -139,7 +139,7 @@ function padData(reader: PacketReader): void {
 }
 
 // @Garbage
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const cactusComponent = CactusComponentArray.getComponent(entity);
    
    const flowers = new Array<CactusBodyFlowerData>();
@@ -244,7 +244,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create cactus spine particles when hurt
@@ -256,7 +256,7 @@ function onHit(entity: EntityID): void {
    playSound("cactus-hit.mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const cactusComponent = CactusComponentArray.getComponent(entity);
 

@@ -1,5 +1,5 @@
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { ItemComponent, ItemComponentArray } from "../components/ItemComponent";
@@ -16,7 +16,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
    | ServerComponentType.item;
 
-export function createItemEntityConfig(itemType: ItemType, amount: number, throwingEntity: EntityID | null): EntityConfig<ComponentTypes> {
+export function createItemEntityConfig(itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), Settings.ITEM_SIZE, Settings.ITEM_SIZE, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -36,12 +36,12 @@ export function createItemEntityConfig(itemType: ItemType, amount: number, throw
    };
 }
 
-export function addItemEntityPlayerPickupCooldown(itemEntity: EntityID, entityID: number, cooldownDuration: number): void {
+export function addItemEntityPlayerPickupCooldown(itemEntity: Entity, entityID: number, cooldownDuration: number): void {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
    itemComponent.entityPickupCooldowns[entityID] = cooldownDuration;
 }
 
-export function itemEntityCanBePickedUp(itemEntity: EntityID, entityID: EntityID): boolean {
+export function itemEntityCanBePickedUp(itemEntity: Entity, entityID: Entity): boolean {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
    return typeof itemComponent.entityPickupCooldowns[entityID] === "undefined";
 }

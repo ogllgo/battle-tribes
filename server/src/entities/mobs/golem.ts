@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { distance, Point } from "battletribes-shared/utils";
@@ -136,7 +136,7 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
 }
 
 // @Cleanup: Copy and paste from frozen-yeti
-export function onGolemHurt(golem: EntityID, attackingEntity: EntityID, damage: number): void {
+export function onGolemHurt(golem: Entity, attackingEntity: Entity, damage: number): void {
    if (!HealthComponentArray.hasComponent(attackingEntity)) {
       return;
    }
@@ -159,7 +159,7 @@ export function onGolemHurt(golem: EntityID, attackingEntity: EntityID, damage: 
    }
 }
 
-export function onGolemCollision(golem: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onGolemCollision(golem: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }

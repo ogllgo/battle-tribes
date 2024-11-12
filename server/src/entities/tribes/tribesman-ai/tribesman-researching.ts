@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, LimbAction } from "battletribes-shared/entities";
+import { Entity, LimbAction } from "battletribes-shared/entities";
 import { TechInfo } from "battletribes-shared/techs";
 import { moveEntityToPosition, getDistanceFromPointToEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
@@ -11,7 +11,7 @@ import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getTribesmanSlowAcceleration, getTribesmanAcceleration, getTribesmanRadius } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 
-const getOccupiedResearchBenchID = (tribesman: EntityID, tribeComponent: TribeComponent): EntityID => {
+const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
       const bench = tribeComponent.tribe.researchBenches[i];
       if (canResearchAtBench(bench, tribesman)) {
@@ -22,7 +22,7 @@ const getOccupiedResearchBenchID = (tribesman: EntityID, tribeComponent: TribeCo
    return 0;
 }
 
-const getAvailableResearchBenchID = (tribesman: EntityID, tribeComponent: TribeComponent): EntityID => {
+const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    
    let id = 0;
@@ -46,7 +46,7 @@ const getAvailableResearchBenchID = (tribesman: EntityID, tribeComponent: TribeC
    return id;
 }
 
-export function goResearchTech(tribesman: EntityID, tech: TechInfo): boolean {
+export function goResearchTech(tribesman: Entity, tech: TechInfo): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

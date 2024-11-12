@@ -4,7 +4,7 @@ import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
 import { getCurrentLayer } from "./world";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { EntityID } from "../../shared/src/entities";
+import { Entity } from "../../shared/src/entities";
 
 // @Memory
 export const ROCK_HIT_SOUNDS: ReadonlyArray<string> = ["rock-hit-1.mp3", "rock-hit-2.mp3", "rock-hit-3.mp3", "rock-hit-4.mp3", "rock-hit-5.mp3", "rock-hit-6.mp3"];
@@ -21,7 +21,7 @@ export interface Sound {
 
 interface SoundAttachInfo {
    readonly sound: Sound;
-   readonly entity: EntityID;
+   readonly entity: Entity;
 }
 
 const activeSounds = new Array<Sound>();
@@ -321,7 +321,7 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
    };
 }
 
-export function attachSoundToEntity(sound: Sound, entity: EntityID): void {
+export function attachSoundToEntity(sound: Sound, entity: Entity): void {
    entityAttachedSounds.push({
       sound: sound,
       entity: entity

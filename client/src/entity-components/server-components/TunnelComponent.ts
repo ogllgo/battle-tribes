@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -102,7 +102,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel, 
    };
 }
 
-const addDoor = (tunnelComponent: TunnelComponent, transformComponent: TransformComponent, entity: EntityID, doorBit: number): void => {
+const addDoor = (tunnelComponent: TunnelComponent, transformComponent: TransformComponent, entity: Entity, doorBit: number): void => {
    const renderPart = new TexturedRenderPart(
       null,
       0,
@@ -133,7 +133,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const tunnelComponent = TunnelComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    

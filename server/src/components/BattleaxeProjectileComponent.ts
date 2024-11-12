@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { lerp } from "battletribes-shared/utils";
 import { entitiesAreColliding, CollisionVars } from "../collision";
@@ -24,7 +24,7 @@ export const BattleaxeProjectileComponentArray = new ComponentArray<BattleaxePro
    addDataToPacket: addDataToPacket
 });
 
-function onTick(battleaxe: EntityID): void {
+function onTick(battleaxe: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(battleaxe);
 
    const ageTicks = getEntityAgeTicks(battleaxe);

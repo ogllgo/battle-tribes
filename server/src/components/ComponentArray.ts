@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -13,29 +13,29 @@ const enum ComponentArrayPriority {
 
 interface ComponentArrayTickFunction {
    readonly tickInterval: number;
-   func(entity: EntityID): void;
+   func(entity: Entity): void;
 }
 
 interface ComponentArrayFunctions {
    /** Called after all the components for an entity are created, before the entity has joined the world. */
-   onInitialise?(config: EntityConfig<ServerComponentType>, entity: EntityID): void;
-   onJoin?(entity: EntityID): void;
+   onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity): void;
+   onJoin?(entity: Entity): void;
    readonly onTick?: ComponentArrayTickFunction;
    /** Called whenever the entity collides with a wall */
-   onWallCollision?(entity: EntityID): void;
-   onEntityCollision?(actingEntity: EntityID, receivingEntity: EntityID): void;
-   onHitboxCollision?(actingEntity: EntityID, receivingEntity: EntityID, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void;
+   onWallCollision?(entity: Entity): void;
+   onEntityCollision?(actingEntity: Entity, receivingEntity: Entity): void;
+   onHitboxCollision?(actingEntity: Entity, receivingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void;
    /**Called immediately after an entity is marked for removal. */
-   preRemove?(entity: EntityID): void;
+   preRemove?(entity: Entity): void;
    /**
     * Called just before the entity is removed from the world.
     * Should be used to clean up all data related to the entity, so that the entity no longer exists in the world.
    */
-   onRemove?(entity: EntityID): void;
+   onRemove?(entity: Entity): void;
    // @Cleanup: make getDataLength not return an extra float length
    /** Returns the length of the data that would be added to the packet */
-   getDataLength(entity: EntityID, player: EntityID | null): number;
-   addDataToPacket(packet: Packet, entity: EntityID, player: EntityID | null): void;
+   getDataLength(entity: Entity, player: Entity | null): number;
+   addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void;
 }
 
 export const ComponentArrays = new Array<ComponentArray>();
@@ -54,33 +54,33 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    public bufferedComponentJoinTicksRemaining = new Array<number>();
 
    /** Maps entity IDs to component indexes */
-   private entityToIndexMap: Partial<Record<EntityID, number>> = {};
+   private entityToIndexMap: Partial<Record<Entity, number>> = {};
    /** Maps component indexes to entity IDs */
-   private indexToEntityMap: Partial<Record<number, EntityID>> = {};
+   private indexToEntityMap: Partial<Record<number, Entity>> = {};
    
    public activeComponents = new Array<T>();
-   public activeEntities = new Array<EntityID>();
+   public activeEntities = new Array<Entity>();
 
    /** Maps entity IDs to component indexes */
-   private activeEntityToIndexMap: Record<EntityID, number> = {};
+   private activeEntityToIndexMap: Record<Entity, number> = {};
    /** Maps component indexes to entity IDs */
-   private activeIndexToEntityMap: Record<number, EntityID> = {};
+   private activeIndexToEntityMap: Record<number, Entity> = {};
 
    private componentBufferIDs = new Array<number>();
 
    private deactivateBuffer = new Array<number>();
 
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash. (Can't add components to the join buffer while iterating it). solution: make it not crash
-   public onInitialise?(config: EntityConfig<ServerComponentType>, entity: EntityID): void;
-   public onJoin?(entity: EntityID): void;
+   public onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity): void;
+   public onJoin?(entity: Entity): void;
    public onTick?: ComponentArrayTickFunction;
-   public onWallCollision?(entity: EntityID): void;
-   public onEntityCollision?(entity: EntityID, collidingEntity: EntityID): void;
-   public onHitboxCollision?(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionPoint: Point): void;
-   public preRemove?(entity: EntityID): void;
-   public onRemove?(entity: EntityID): void;
-   public getDataLength: (entity: EntityID, player: EntityID | null) => number;
-   public addDataToPacket: (packet: Packet, entity: EntityID, player: EntityID | null) => void;
+   public onWallCollision?(entity: Entity): void;
+   public onEntityCollision?(entity: Entity, collidingEntity: Entity): void;
+   public onHitboxCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionPoint: Point): void;
+   public preRemove?(entity: Entity): void;
+   public onRemove?(entity: Entity): void;
+   public getDataLength: (entity: Entity, player: Entity | null) => number;
+   public addDataToPacket: (packet: Packet, entity: Entity, player: Entity | null) => void;
    
    constructor(componentType: C, isActiveByDefault: boolean, functions: ComponentArrayFunctions) {
       this.componentType = componentType;
@@ -102,7 +102,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       ComponentArrayRecord[componentType] = this as any;
    }
    
-   public addComponent(entity: EntityID, component: T, joinDelayTicks: number): void {
+   public addComponent(entity: Entity, component: T, joinDelayTicks: number): void {
       if (typeof this.entityToIndexMap[entity] !== "undefined") {
          throw new Error("Component added to same entity twice.");
       }
@@ -174,11 +174,11 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       }
    }
 
-   public getComponent(entity: EntityID): T {
+   public getComponent(entity: Entity): T {
       return this.components[this.entityToIndexMap[entity]!];
    }
 
-   public removeComponent(entity: EntityID): void {
+   public removeComponent(entity: Entity): void {
 		// Copy element at end into deleted element's place to maintain density
       const indexOfRemovedEntity = this.entityToIndexMap[entity]!;
       this.components[indexOfRemovedEntity] = this.components[this.components.length - 1];
@@ -198,11 +198,11 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       }
    }
 
-   public hasComponent(entity: EntityID): boolean {
+   public hasComponent(entity: Entity): boolean {
       return typeof this.entityToIndexMap[entity] !== "undefined";
    }
 
-   public activateComponent(component: T, entity: EntityID): void {
+   public activateComponent(component: T, entity: Entity): void {
       if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
          return;
       }
@@ -216,7 +216,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.activeEntities.push(entity);
    }
 
-   private deactivateComponent(entity: EntityID): void {
+   private deactivateComponent(entity: Entity): void {
       // Copy element at end into deleted element's place to maintain density
       const indexOfRemovedEntity = this.activeEntityToIndexMap[entity];
       this.activeComponents[indexOfRemovedEntity] = this.activeComponents[this.activeComponents.length - 1];
@@ -234,7 +234,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.activeEntities.pop();
    }
 
-   public queueComponentDeactivate(entity: EntityID): void {
+   public queueComponentDeactivate(entity: Entity): void {
       this.deactivateBuffer.push(entity);
    }
 
@@ -321,6 +321,10 @@ export function sortComponentArrays(): void {
       [ServerComponentType.slingTurret]: ComponentArrayPriority.medium,
       [ServerComponentType.campfire]: ComponentArrayPriority.medium,
       [ServerComponentType.furnace]: ComponentArrayPriority.medium,
+      [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
+      [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurb]: ComponentArrayPriority.medium,
+      [ServerComponentType.tetheredHitbox]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

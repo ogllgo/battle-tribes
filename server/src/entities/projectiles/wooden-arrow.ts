@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
-import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
+import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
@@ -19,7 +19,7 @@ import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform | ServerComponentType.physics | ServerComponentType.tribe | ServerComponentType.projectile;
 
-export function createWoodenArrowConfig(tribe: Tribe, owner: EntityID): EntityConfig<ComponentTypes> {
+export function createWoodenArrowConfig(tribe: Tribe, owner: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 64, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
@@ -44,7 +44,7 @@ export function createWoodenArrowConfig(tribe: Tribe, owner: EntityID): EntityCo
 }
 
 // @Cleanup: Copy and paste
-export function onWoodenArrowCollision(arrow: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
    const relationship = getEntityRelationship(arrow, collidingEntity);
    if (relationship === EntityRelationship.friendly) {

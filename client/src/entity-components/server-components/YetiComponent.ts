@@ -7,7 +7,7 @@ import { playSound } from "../../sound";
 import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
@@ -103,7 +103,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti, ne
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const yetiComponent = YetiComponentArray.getComponent(entity);
 
@@ -132,7 +132,7 @@ function onTick(entity: EntityID): void {
    yetiComponent.lastAttackProgress = yetiComponent.attackProgress;
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound(randItem(HURT_SOUNDS), 0.7, 1, transformComponent.position.copy());
@@ -151,7 +151,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound(randItem(DEATH_SOUNDS), 0.7, 1, transformComponent.position.copy());
 
@@ -177,7 +177,7 @@ const updatePaws = (yetiComponent: YetiComponent): void => {
    }
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const yetiComponent = YetiComponentArray.getComponent(entity);
    
    const isAttacking = reader.readBoolean();

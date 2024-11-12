@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DoorToggleType, EntityID } from "battletribes-shared/entities";
+import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, lerp } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -33,7 +33,7 @@ export const DoorComponentArray = new ComponentArray<DoorComponent>(ServerCompon
 const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 64 * 64) / 2;
 const angleToCenter = angle(16, 64);
 
-const updateDoorOpenProgress = (door: EntityID, doorComponent: DoorComponent): void => {
+const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(door);
    
    const rotation = doorComponent.closedRotation + lerp(0, -Math.PI/2 + 0.1, doorComponent.openProgress);
@@ -51,7 +51,7 @@ const updateDoorOpenProgress = (door: EntityID, doorComponent: DoorComponent): v
    physicsComponent.hitboxesAreDirty = true;
 }
 
-function onTick(door: EntityID): void {
+function onTick(door: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(door);
    const doorComponent = DoorComponentArray.getComponent(door);
    
@@ -81,7 +81,7 @@ function onTick(door: EntityID): void {
    }
 }
 
-export function toggleDoor(door: EntityID): void {
+export function toggleDoor(door: Entity): void {
    const doorComponent = DoorComponentArray.getComponent(door);
 
    // Don't toggle if already in the middle of opening/closing
@@ -109,14 +109,14 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const doorComponent = DoorComponentArray.getComponent(entity);
 
    packet.addNumber(doorComponent.toggleType);
    packet.addNumber(doorComponent.openProgress);
 }
 
-export function doorIsClosed(door: EntityID): boolean {
+export function doorIsClosed(door: Entity): boolean {
    const doorComponent = DoorComponentArray.getComponent(door);
    return doorComponent.openProgress === 0;
 }

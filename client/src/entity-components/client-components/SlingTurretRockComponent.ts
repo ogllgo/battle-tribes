@@ -1,4 +1,4 @@
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createArrowDestroyParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
@@ -43,7 +43,7 @@ function createComponent(): SlingTurretRockComponent {
    return {};
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create arrow break particles

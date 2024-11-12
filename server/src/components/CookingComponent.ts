@@ -1,12 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType, ItemTypeString } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { InventoryComponentArray, getInventory, consumeItemTypeFromInventory, addItemToInventory } from "./InventoryComponent";
 import { CookingIngredientItemType, FuelSourceItemType } from "battletribes-shared/items/cooking-info";
 import { getEntityType } from "../world";
+import { registerDirtyEntity } from "../server/player-clients";
 
 export interface HeatingRecipe {
    readonly ingredientType: CookingIngredientItemType;
@@ -88,7 +89,7 @@ const getHeatingRecipeByIngredientType = (heatingEntityType: EntityType, ingredi
    return null;
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const cookingComponent = CookingComponentArray.getComponent(entity);
 
@@ -98,6 +99,14 @@ function onTick(entity: EntityID): void {
    const ingredient = ingredientInventory.itemSlots[1];
    if (typeof ingredient !== "undefined") {
       cookingComponent.currentRecipe = getHeatingRecipeByIngredientType(getEntityType(entity)!, ingredient.type);
+   }
+   
+   if (cookingComponent.remainingHeatSeconds > 0) {
+      registerDirtyEntity(entity);
+   }
+   cookingComponent.remainingHeatSeconds -= Settings.I_TPS;
+   if (cookingComponent.remainingHeatSeconds < 0) {
+      cookingComponent.remainingHeatSeconds = 0;
    }
    
    if (cookingComponent.currentRecipe !== null) {
@@ -111,25 +120,26 @@ function onTick(entity: EntityID): void {
             }
    
             cookingComponent.remainingHeatSeconds += FUEL_SOURCES[fuel.type as keyof typeof FUEL_SOURCES];
-            consumeItemTypeFromInventory(inventoryComponent, InventoryName.fuelInventory, fuel.type, 1);
+            registerDirtyEntity(entity);
+            consumeItemTypeFromInventory(entity, inventoryComponent, InventoryName.fuelInventory, fuel.type, 1);
          }
       }
 
       if (cookingComponent.remainingHeatSeconds > 0) {
          cookingComponent.heatingTimer += Settings.I_TPS;
+         registerDirtyEntity(entity);
+         
          if (cookingComponent.heatingTimer >= cookingComponent.currentRecipe.cookTime) {
             // Remove from ingredient inventory and add to output inventory
 
-            consumeItemTypeFromInventory(inventoryComponent, InventoryName.ingredientInventory, cookingComponent.currentRecipe.ingredientType, cookingComponent.currentRecipe.ingredientAmount);
+            consumeItemTypeFromInventory(entity, inventoryComponent, InventoryName.ingredientInventory, cookingComponent.currentRecipe.ingredientType, cookingComponent.currentRecipe.ingredientAmount);
 
             const outputInventory = getInventory(inventoryComponent, InventoryName.outputInventory);
-            addItemToInventory(outputInventory, cookingComponent.currentRecipe.productType, cookingComponent.currentRecipe.productAmount);
+            addItemToInventory(entity, outputInventory, cookingComponent.currentRecipe.productType, cookingComponent.currentRecipe.productAmount);
 
             cookingComponent.heatingTimer = 0;
             cookingComponent.currentRecipe = null;
          }
-
-         cookingComponent.remainingHeatSeconds -= Settings.I_TPS;
       }
    }
 }
@@ -138,7 +148,7 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
 
    // Heating progress

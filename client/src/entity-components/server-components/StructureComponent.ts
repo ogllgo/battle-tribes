@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID, EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { playSound } from "../../sound";
 import { getEntityType } from "../../world";
@@ -49,7 +49,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.structur
    };
 }
 
-function onSpawn(entity: EntityID): void {
+function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    switch (getEntityType(entity)) {
       case EntityType.wall: {
@@ -93,7 +93,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
 
    structureComponent.hasActiveBlueprint = reader.readBoolean();

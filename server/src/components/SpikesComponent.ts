@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 export class SpikesComponent {
@@ -16,7 +16,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const spikesComponent = SpikesComponentArray.getComponent(entity);
    packet.addBoolean(spikesComponent.isCovered);
    packet.padOffset(3);

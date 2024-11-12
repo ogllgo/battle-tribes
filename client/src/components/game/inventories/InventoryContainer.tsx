@@ -1,4 +1,4 @@
-import { Inventory, InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import ItemSlot, { ItemSlotCallbackInfo } from "./ItemSlot";
 import { useRef } from "react";
 import { ItemRestTime } from "../GameInteractableLayer";
@@ -33,6 +33,18 @@ const getPlaceholderImg = (inventory: Inventory): any | undefined => {
    }
 }
 
+const getItemSlotType = (inventory: Inventory | null, itemSlot: number): ItemType | null => {
+   if (inventory === null) {
+      return null;
+   }
+
+   const item = inventory.getItem(itemSlot);
+   if (item === null) {
+      return null;
+   }
+   return item.type;
+}
+
 const InventoryContainer = ({ entityID, inventory, className, itemSlotClassNameCallback, selectedItemSlot, isBordered, isManipulable = true, itemRestTimes, onMouseDown, onMouseOver, onMouseOut, onMouseMove }: InventoryProps) => {
    const inventoryWidthRef = useRef<number | null>(null);
    const inventoryHeightRef = useRef<number | null>(null);
@@ -59,9 +71,8 @@ const InventoryContainer = ({ entityID, inventory, className, itemSlotClassNameC
          const itemSlotIdx = y * width + x;
          const itemSlot = itemSlotIdx + 1;
 
-         // let callbackInfo: 
          const callbackInfo: ItemSlotCallbackInfo = {
-            itemType: inventory?.getItem(itemSlot)?.type || null,
+            itemType: getItemSlotType(inventory, itemSlot),
             itemSlot: itemSlot
          };
 

@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { RockSpikeComponent, RockSpikeComponentArray } from "../../components/RockSpikeComponent";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -18,7 +18,7 @@ type ComponentTypes = ServerComponentType.transform
 const MASSES = [1, 1.75, 2.5];
 export const ROCK_SPIKE_HITBOX_SIZES = [12 * 2, 16 * 2, 20 * 2];
 
-export function createRockSpikeConfig(size: number, frozenYeti: EntityID): EntityConfig<ComponentTypes> {
+export function createRockSpikeConfig(size: number, frozenYeti: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.exclusiveDamaging);
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, ROCK_SPIKE_HITBOX_SIZES[size]), MASSES[size], HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -34,7 +34,7 @@ export function createRockSpikeConfig(size: number, frozenYeti: EntityID): Entit
    };
 }
 
-export function onRockSpikeProjectileCollision(rockSpikeProjectile: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onRockSpikeProjectileCollision(rockSpikeProjectile: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    const rockSpikeProjectileComponent = RockSpikeComponentArray.getComponent(rockSpikeProjectile);
 
    // Don't hurt the yeti which created the spike

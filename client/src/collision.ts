@@ -3,7 +3,7 @@ import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } f
 import { Point } from "battletribes-shared/utils";
 import { HitboxCollisionType, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
@@ -31,7 +31,7 @@ type CollisionPairs = Record<number, Record<number, EntityPairCollisionInfo | nu
 //    break;
 // }
 
-const resolveHardCollision = (entity: EntityID, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollision = (entity: Entity, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // Transform the entity out of the hitbox
@@ -51,7 +51,7 @@ const resolveHardCollision = (entity: EntityID, pushInfo: CollisionPushInfo): vo
    physicsComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
 }
 
-const resolveSoftCollision = (entity: EntityID, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveSoftCollision = (entity: Entity, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
       const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -65,7 +65,7 @@ const resolveSoftCollision = (entity: EntityID, pushingHitbox: Hitbox, pushInfo:
    }
 }
 
-export function collide(entity: EntityID, collidingEntity: EntityID, pushedHitbox: Hitbox, pushingHitbox: Hitbox, isPushed: boolean): void {
+export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, isPushed: boolean): void {
    if (isPushed && PhysicsComponentArray.hasComponent(entity)) {
       const pushInfo = getCollisionPushInfo(pushedHitbox.box, pushingHitbox.box);
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
@@ -85,7 +85,7 @@ export function collide(entity: EntityID, collidingEntity: EntityID, pushedHitbo
    }
 }
 
-const getEntityPairCollisionInfo = (entity1: EntityID, entity2: EntityID): EntityPairCollisionInfo | null => {
+const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPairCollisionInfo | null => {
    const transformComponent1 = TransformComponentArray.getComponent(entity1);
    const transformComponent2 = TransformComponentArray.getComponent(entity2);
    
@@ -128,11 +128,11 @@ const getEntityPairCollisionInfo = (entity1: EntityID, entity2: EntityID): Entit
    return null;
 }
 
-const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs, minEntity: EntityID, maxEntity: EntityID): boolean => {
+const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs, minEntity: Entity, maxEntity: Entity): boolean => {
    return typeof collisionPairs[minEntity] !== "undefined" && typeof collisionPairs[minEntity][maxEntity] !== "undefined";
 }
 
-const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: EntityID, chunk: Chunk): void => {
+const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: Entity, chunk: Chunk): void => {
    for (let k = 0; k < chunk.entities.length; k++) {
       const entity2 = chunk.entities[k];
       // @Speed
@@ -217,7 +217,7 @@ export function resolvePlayerCollisions(): void {
    resolveCollisionPairs(collisionPairs, true);
 }
 
-export function resolveWallCollisions(entity: EntityID): void {
+export function resolveWallCollisions(entity: Entity): void {
    const layer = getEntityLayer(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {

@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
@@ -11,7 +11,7 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { Biome, TileType } from "battletribes-shared/tiles";
+import { TileType } from "battletribes-shared/tiles";
 import Layer from "../../Layer";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
@@ -19,6 +19,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { Biome } from "../../../../shared/src/biomes";
 
 const enum Vars {
    TILE_VALIDATION_PADDING = 20
@@ -56,7 +57,7 @@ const positionIsOnlyNearWater = (layer: Layer, x: number, y: number): boolean =>
    return true;
 }
 
-function tileIsValidCallback(entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
    if (!layer.positionHasWall(x, y) || layer.getBiomeAtPosition(x, y) !== Biome.river) {
       return false;
    }
@@ -106,7 +107,7 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
 }
 
 // @Cleanup: shouldn't be exported
-export function unfollowLeader(fish: EntityID, leader: EntityID): void {
+export function unfollowLeader(fish: Entity, leader: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
    const idx = tribeMemberComponent.fishFollowerIDs.indexOf(fish);
    if (idx !== -1) {
@@ -114,13 +115,13 @@ export function unfollowLeader(fish: EntityID, leader: EntityID): void {
    }
 }
 
-export function onFishLeaderHurt(fish: EntityID, attackingEntity: EntityID): void {
+export function onFishLeaderHurt(fish: Entity, attackingEntity: Entity): void {
    if (HealthComponentArray.hasComponent(attackingEntity)) {
       const fishComponent = FishComponentArray.getComponent(fish);
       fishComponent.attackTargetID = attackingEntity;
    }
 }
 
-export function onFishHurt(fish: EntityID, attackingEntity: EntityID): void {
+export function onFishHurt(fish: Entity, attackingEntity: Entity): void {
    registerAttackingEntity(fish, attackingEntity);
 }

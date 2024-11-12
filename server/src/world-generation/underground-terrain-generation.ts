@@ -1,12 +1,13 @@
 import { RiverSteppingStoneData, WaterRockData } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
-import { Biome, SubtileType, TileType } from "battletribes-shared/tiles";
+import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { distance, smoothstep } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges } from "../Layer";
-import { generateOctavePerlinNoise } from "../perlin-noise";
+import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { WaterTileGenerationInfo } from "./river-generation";
 import { TerrainGenerationInfo } from "./surface-terrain-generation";
 import { setWallInSubtiles } from "./terrain-generation-utils";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9
@@ -64,6 +65,8 @@ export function generateUndergroundTerrain(surfaceTerrainGenerationInfo: Terrain
 
    const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
    const dropdownClosenessArray = generateDropdownClosenessArray(surfaceTerrainGenerationInfo);
+
+   const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
    
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
       for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
@@ -74,13 +77,18 @@ export function generateUndergroundTerrain(surfaceTerrainGenerationInfo: Terrain
 
          weight *= 1 - dropdownCloseness;
          
-         tileBiomes[tileIndex] = Biome.mountains;
+         tileBiomes[tileIndex] = Biome.caves;
 
          if (weight > 0.57) {
             tileTypes[tileIndex] = TileType.stoneWallFloor;
             setWallInSubtiles(subtileTypes, tileX, tileY, SubtileType.stoneWall);
          } else {
-            tileTypes[tileIndex] = TileType.stone;
+            const waterWeight = waterGenerationNoise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+            if (weight < 0.5 && weight > 0.45 && waterWeight > 0.65) {
+               tileTypes[tileIndex] = TileType.water;
+            } else {
+               tileTypes[tileIndex] = TileType.stone;
+            }
          }
       }
    }

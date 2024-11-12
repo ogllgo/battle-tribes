@@ -5,7 +5,7 @@ import { NUM_RENDER_LAYERS, RenderLayer } from "../render-layers";
 import { renderChunkedEntities, renderLayerIsChunkRendered } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo, layers } from "../world";
 import Layer from "../Layer";
-import { EntityID } from "../../../shared/src/entities";
+import { Entity } from "../../../shared/src/entities";
 import { gl } from "../webgl";
 
 export const enum RenderableType {
@@ -14,7 +14,7 @@ export const enum RenderableType {
    overlay
 }
 
-type Renderable = EntityID | Particle | RenderPartOverlayGroup;
+type Renderable = Entity | Particle | RenderPartOverlayGroup;
 
 type RenderableArrays = Array<Array<RenderableInfo>>;
 
@@ -109,10 +109,11 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
             renderChunkedEntities(layer, renderLayer);
          } else {
             gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            // @Hack :DarkTransparencyBug
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
             // @Speed @Hack: surely we could just only push the render info to the array in the case of entities...?
-            const renderInfos = (renderables as Array<EntityID>).map(entity => getEntityRenderInfo(entity));
+            const renderInfos = (renderables as Array<Entity>).map(entity => getEntityRenderInfo(entity));
             renderEntities(renderInfos);
 
             gl.disable(gl.BLEND);

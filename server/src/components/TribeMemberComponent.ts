@@ -1,5 +1,5 @@
 import { ServerComponentType  } from "battletribes-shared/components";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { TitleGenerationInfo, TribesmanTitle, TRIBESMAN_TITLE_RECORD } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { lerp, randInt } from "battletribes-shared/utils";
@@ -121,17 +121,17 @@ function onInitialise(config: EntityConfig<ServerComponentType.health | ServerCo
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.offhand);
 }
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    tribeComponent.tribe.registerNewTribeMember(entity);
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    tribeComponent.tribe.registerTribeMemberDeath(entity);
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
    let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
@@ -140,7 +140,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
    packet.addNumber(tribeMemberComponent.warPaintType !== null ? tribeMemberComponent.warPaintType : -1);
@@ -153,7 +153,7 @@ function addDataToPacket(packet: Packet, entity: EntityID): void {
    }
 }
 
-export function awardTitle(tribesman: EntityID, title: TribesmanTitle): void {
+export function awardTitle(tribesman: Entity, title: TribesmanTitle): void {
    // @Temporary
    if (1+1===2)return;
    
@@ -183,7 +183,7 @@ export function awardTitle(tribesman: EntityID, title: TribesmanTitle): void {
    }
 }
 
-export function acceptTitleOffer(player: EntityID, title: TribesmanTitle): void {
+export function acceptTitleOffer(player: Entity, title: TribesmanTitle): void {
    const playerComponent = PlayerComponentArray.getComponent(player);
    if (playerComponent.titleOffer === null || playerComponent.titleOffer !== title) {
       return;
@@ -197,7 +197,7 @@ export function acceptTitleOffer(player: EntityID, title: TribesmanTitle): void 
    playerComponent.titleOffer = null;
 }
 
-export function rejectTitleOffer(player: EntityID, title: TribesmanTitle): void {
+export function rejectTitleOffer(player: Entity, title: TribesmanTitle): void {
    const playerComponent = PlayerComponentArray.getComponent(player);
    if (playerComponent.titleOffer === null || playerComponent.titleOffer === title) {
       playerComponent.titleOffer = null;
@@ -235,7 +235,7 @@ export function hasTitle(entityID: number, title: TribesmanTitle): boolean {
    return false;
 }
 
-export function forceAddTitle(entityID: EntityID, title: TribesmanTitle): void {
+export function forceAddTitle(entityID: Entity, title: TribesmanTitle): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entityID);
    
    // Make sure they don't already have the title
@@ -251,7 +251,7 @@ export function forceAddTitle(entityID: EntityID, title: TribesmanTitle): void {
    tribeMemberComponent.titles.push(titleGenerationInfo);
 }
 
-export function removeTitle(entityID: EntityID, title: TribesmanTitle): void {
+export function removeTitle(entityID: Entity, title: TribesmanTitle): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entityID);
 
    for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
@@ -265,7 +265,7 @@ export function removeTitle(entityID: EntityID, title: TribesmanTitle): void {
 }
 
 // @Cleanup: Move to tick function
-const tickInventoryUseInfo = (tribeMember: EntityID, inventoryUseInfo: LimbInfo): void => {
+const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): void => {
    switch (inventoryUseInfo.action) {
       case LimbAction.eat:
       case LimbAction.useMedicine: {
@@ -309,7 +309,7 @@ const tickInventoryUseInfo = (tribeMember: EntityID, inventoryUseInfo: LimbInfo)
    }
 }
 
-function onTick(tribeMember: EntityID): void {
+function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    const layer = getEntityLayer(tribeMember);
    
@@ -403,7 +403,7 @@ function onTick(tribeMember: EntityID): void {
    }
 }
 
-function onEntityCollision(tribeMember: EntityID, collidingEntity: EntityID): void {
+function onEntityCollision(tribeMember: Entity, collidingEntity: Entity): void {
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       const itemComponent = ItemComponentArray.getComponent(collidingEntity);
       

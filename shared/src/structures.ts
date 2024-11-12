@@ -1,5 +1,5 @@
 import { Chunks, EntityInfo, getChunk } from "./board-interface";
-import { EntityID, EntityType } from "./entities";
+import { Entity, EntityType } from "./entities";
 import { estimateCollidingEntities } from "./hitbox-collision";
 import { createBracingHitboxes, createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
 import { boxIsCircular, Hitbox } from "./boxes/boxes";
@@ -23,7 +23,7 @@ const enum Vars {
    COLLISION_EPSILON = 0.01
 }
 
-export const STRUCTURE_TYPES = [EntityType.wall, EntityType.door, EntityType.embrasure, EntityType.floorSpikes, EntityType.wallSpikes, EntityType.floorPunjiSticks, EntityType.wallPunjiSticks, EntityType.ballista, EntityType.slingTurret, EntityType.tunnel, EntityType.tribeTotem, EntityType.workerHut, EntityType.warriorHut, EntityType.barrel, EntityType.workbench, EntityType.researchBench, EntityType.healingTotem, EntityType.planterBox, EntityType.furnace, EntityType.campfire, EntityType.fence, EntityType.fenceGate, EntityType.frostshaper, EntityType.stonecarvingTable, EntityType.bracings] as const;
+export const STRUCTURE_TYPES = [EntityType.wall, EntityType.door, EntityType.embrasure, EntityType.floorSpikes, EntityType.wallSpikes, EntityType.floorPunjiSticks, EntityType.wallPunjiSticks, EntityType.ballista, EntityType.slingTurret, EntityType.tunnel, EntityType.tribeTotem, EntityType.workerHut, EntityType.warriorHut, EntityType.barrel, EntityType.workbench, EntityType.researchBench, EntityType.healingTotem, EntityType.planterBox, EntityType.furnace, EntityType.campfire, EntityType.fence, EntityType.fenceGate, EntityType.frostshaper, EntityType.stonecarvingTable, EntityType.bracings, EntityType.fireTorch] as const;
 export type StructureType = typeof STRUCTURE_TYPES[number];
 
 export const enum SnapDirection {
@@ -61,7 +61,7 @@ export interface StructureConnectionInfo {
 export interface WorldInfo {
    readonly chunks: Chunks;
    readonly wallSubtileTypes: Readonly<Float32Array>;
-   getEntityCallback(entity: EntityID): EntityInfo;
+   getEntityCallback(entity: Entity): EntityInfo;
    subtileIsMined(subtileIndex: number): boolean;
 }
 

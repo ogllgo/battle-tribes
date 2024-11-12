@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { createIceSpeckProjectile, createSnowflakeParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface IceArrowComponentParams {}
@@ -26,7 +26,7 @@ function createComponent(): IceArrowComponent {
    return {};
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    if (Math.random() < 30 / Settings.TPS) {
@@ -41,7 +41,7 @@ function onTick(entity: EntityID): void {
    // @Incomplete: Need snow speck particles
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
       createIceSpeckProjectile(transformComponent);

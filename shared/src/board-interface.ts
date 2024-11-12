@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "./entities";
+import { Entity, EntityType } from "./entities";
 import { Hitbox } from "./boxes/boxes";
 import { Settings } from "./settings";
 import { Point } from "./utils";
@@ -12,7 +12,7 @@ export interface EntityInfo<T extends EntityType = EntityType> {
 }
 
 export interface ChunkInfo {
-   readonly entities: Array<EntityID>;
+   readonly entities: Array<Entity>;
 }
 
 // @Cleanup: don't expose to outside packages

@@ -1,5 +1,5 @@
 import { randFloat, randInt } from "battletribes-shared/utils";
-import { EntityID, FishColour } from "battletribes-shared/entities";
+import { Entity, FishColour } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TileType } from "battletribes-shared/tiles";
@@ -72,7 +72,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.fish, ne
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    
@@ -96,7 +96,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Blood particles
@@ -108,7 +108,7 @@ function onHit(entity: EntityID): void {
    playSound("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    createBloodParticleFountain(entity, 0.1, 0.8);

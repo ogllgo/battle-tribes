@@ -7,6 +7,7 @@ import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { TransformComponent, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
+import { Point } from "../../../shared/src/utils";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
@@ -60,6 +61,16 @@ const rotateMatrix = (matrix: Matrix3x3, rotation: number): void => {
    matrix[6] = b20 * a00 + b21 * a10 + b22 * a20;
    matrix[7] = b20 * a01 + b21 * a11 + b22 * a21;
    matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
+}
+
+// @Cleanup: This should probably be a function stored on the render part
+export function getRenderPartRenderPosition(renderPart: RenderPart): Point {
+   const matrix = renderPart.modelMatrix;
+   
+   const x = matrix[6];
+   const y = matrix[7];
+
+   return new Point(x, y);
 }
 
 const scaleMatrix = (matrix: Matrix3x3, sx: number, sy: number): void => {
@@ -237,20 +248,18 @@ const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Ma
    const matrix = createIdentityMatrix();
 
    // Rotation
-   overrideWithRotationMatrix(matrix, hitbox.box.relativeRotation);
+   overrideWithRotationMatrix(matrix, hitbox.box.rotation);
    
    // Scale
    const scale = hitbox.box.scale;
    scaleMatrix(matrix, scale, scale);
    
-   // @Speed: Can probably get rid of this flip multiplication by doing the translation before scaling
-   let tx = hitbox.box.offset.x;
-   let ty = hitbox.box.offset.y;
+   const tx = hitbox.box.position.x;
+   const ty = hitbox.box.position.y;
    
    // Translation
    translateMatrix(matrix, tx, ty);
 
-   matrixMultiplyInPlace(entityModelMatrix, matrix);
    return matrix;
 }
 

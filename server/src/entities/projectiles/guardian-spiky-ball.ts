@@ -3,7 +3,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { EntityConfig } from "../../components";
@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.projectile
    | ServerComponentType.guardianSpikyBall;
 
-export function createGuardianSpikyBallConfig(creator: EntityID): EntityConfig<ComponentTypes> {
+export function createGuardianSpikyBallConfig(creator: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(CollisionGroup.default);
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 20), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);

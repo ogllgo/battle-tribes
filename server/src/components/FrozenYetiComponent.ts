@@ -1,5 +1,5 @@
 import { Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
-import { EntityID, EntityType, FrozenYetiAttackType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
+import { Entity, EntityType, FrozenYetiAttackType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { FROZEN_YETI_BITE_COOLDOWN, FROZEN_YETI_GLOBAL_ATTACK_COOLDOWN, FROZEN_YETI_ROAR_COOLDOWN, FROZEN_YETI_SNOWBALL_THROW_COOLDOWN, FROZEN_YETI_STOMP_COOLDOWN, FrozenYetiRockSpikeInfo, FrozenYetiTargetInfo, FrozenYetiVars } from "../entities/mobs/frozen-yeti";
 import { ComponentArray } from "./ComponentArray";
@@ -7,7 +7,6 @@ import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Biome } from "battletribes-shared/tiles";
 import { getAngleDifference, entityIsInVisionRange, getEntitiesInRange, stopEntity } from "../ai-shared";
 import { createRockSpikeConfig, ROCK_SPIKE_HITBOX_SIZES } from "../entities/projectiles/rock-spike";
 import { createSnowballConfig } from "../entities/snowball";
@@ -21,6 +20,7 @@ import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "./ItemComponent";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -71,7 +71,7 @@ export const FrozenYetiComponentArray = new ComponentArray<FrozenYetiComponent>(
    addDataToPacket: addDataToPacket
 });
 
-const shouldTargetEntity = (layer: Layer, entity: EntityID): boolean => {
+const shouldTargetEntity = (layer: Layer, entity: Entity): boolean => {
    if (!HealthComponentArray.hasComponent(entity)) {
       return false;
    }
@@ -83,10 +83,10 @@ const shouldTargetEntity = (layer: Layer, entity: EntityID): boolean => {
    return layer.tileBiomes[entityTileIndex] === Biome.tundra && entityType !== EntityType.itemEntity && entityType !== EntityType.frozenYeti && entityType !== EntityType.yeti && entityType !== EntityType.iceSpikes && entityType !== EntityType.snowball
 }
 
-const findTargets = (frozenYeti: EntityID, visibleEntities: ReadonlyArray<EntityID>): ReadonlyArray<EntityID> => {
+const findTargets = (frozenYeti: Entity, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
    const layer = getEntityLayer(frozenYeti);
    
-   const targets = new Array<EntityID>();
+   const targets = new Array<Entity>();
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
 
@@ -109,7 +109,7 @@ const findTargets = (frozenYeti: EntityID, visibleEntities: ReadonlyArray<Entity
    return targets;
 }
 
-const getAttackType = (frozenYeti: EntityID, target: EntityID, angleToTarget: number, numTargets: number): FrozenYetiAttackType => {
+const getAttackType = (frozenYeti: Entity, target: Entity, angleToTarget: number, numTargets: number): FrozenYetiAttackType => {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
    
    if (frozenYetiComponent.globalAttackCooldownTimer > 0) {
@@ -162,7 +162,7 @@ const clearAttack = (frozenYetiComponent: FrozenYetiComponent): void => {
  * Stomp
  * @param targets Whomst to stomp
  */
-const generateRockSpikeAttackInfo = (frozenYeti: EntityID, targets: ReadonlyArray<EntityID>): Array<FrozenYetiRockSpikeInfo> => {
+const generateRockSpikeAttackInfo = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): Array<FrozenYetiRockSpikeInfo> => {
    // @Speed: Garbage collection
 
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
@@ -284,7 +284,7 @@ const generateRockSpikeAttackInfo = (frozenYeti: EntityID, targets: ReadonlyArra
    return rockSpikeInfoArray;
 }
 
-const createRockSpikes = (frozenYeti: EntityID, frozenYetiComponent: FrozenYetiComponent): void => {
+const createRockSpikes = (frozenYeti: Entity, frozenYetiComponent: FrozenYetiComponent): void => {
    for (const info of frozenYetiComponent.rockSpikeInfoArray) {
       const position = new Point(info.positionX, info.positionY);
 
@@ -297,7 +297,7 @@ const createRockSpikes = (frozenYeti: EntityID, frozenYetiComponent: FrozenYetiC
    frozenYetiComponent.rockSpikeInfoArray = [];
 }
 
-const spawnSnowball = (frozenYeti: EntityID, size: SnowballSize): void => {
+const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
    
    const angle = transformComponent.rotation + randFloat(-1, 1);
@@ -316,7 +316,7 @@ const spawnSnowball = (frozenYeti: EntityID, size: SnowballSize): void => {
    createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
-const throwSnow = (frozenYeti: EntityID): void => {
+const throwSnow = (frozenYeti: Entity): void => {
    // Large snowballs
    for (let i = 0; i < 3; i++) {
       spawnSnowball(frozenYeti, SnowballSize.large);
@@ -334,7 +334,7 @@ const throwSnow = (frozenYeti: EntityID): void => {
    physicsComponent.externalVelocity.y += 50 * Math.cos(transformComponent.rotation + Math.PI);
 }
 
-const duringRoar = (frozenYeti: EntityID, targets: ReadonlyArray<EntityID>): void => {
+const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
    
    for (const entity of targets) {
@@ -360,7 +360,7 @@ const duringRoar = (frozenYeti: EntityID, targets: ReadonlyArray<EntityID>): voi
    }
 }
 
-const doBiteAttack = (frozenYeti: EntityID, angleToTarget: number): void => {
+const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
    
    const x = transformComponent.position.x + Vars.BITE_ATTACK_OFFSET * Math.sin(transformComponent.rotation);
@@ -387,7 +387,7 @@ const doBiteAttack = (frozenYeti: EntityID, angleToTarget: number): void => {
    }
 }
 
-function onTick(frozenYeti: EntityID): void {
+function onTick(frozenYeti: Entity): void {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
    
    // Remove targets which are dead or have been out of aggro long enough
@@ -450,7 +450,7 @@ function onTick(frozenYeti: EntityID): void {
    
    // If any target has dealt damage to the yeti, choose the target based on which one has dealt the most damage to it
    // Otherwise attack the closest target
-   let target: EntityID | null = null; 
+   let target: Entity | null = null; 
    if (Object.keys(frozenYetiComponent.attackingEntities).length === 0) {
       // Choose based on distance
       let minDist = Number.MAX_SAFE_INTEGER;
@@ -665,14 +665,14 @@ function onTick(frozenYeti: EntityID): void {
    }
 }
 
-function preRemove(frozenYeti: EntityID): void {
+function preRemove(frozenYeti: Entity): void {
    createItemsOverEntity(frozenYeti, ItemType.raw_beef, randInt(13, 18));
 
    createItemsOverEntity(frozenYeti, ItemType.deepfrost_heart, randInt(2, 3));
    createItemsOverEntity(frozenYeti, ItemType.yeti_hide, randInt(5, 7));
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
 
    let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
@@ -681,7 +681,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
 
    packet.addNumber(frozenYetiComponent.attackType);

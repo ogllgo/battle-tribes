@@ -7,7 +7,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
@@ -87,7 +87,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.ammoBox,
    };
 }
 
-const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: EntityID, ammoType: TurretAmmoType | null): void => {
+const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammoType: TurretAmmoType | null): void => {
    if (ammoType === null) {
       ammoBoxComponent.ammoType = null;
 
@@ -126,7 +126,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const ammoBoxComponent = AmmoBoxComponentArray.getComponent(entity);
    
    const ammoType = reader.readNumber();

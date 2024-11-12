@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { BODY_GENERATION_RADIUS, GOLEM_WAKE_TIME_TICKS, GolemVars } from "../entities/mobs/golem";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { randFloat, lerp, randInt } from "battletribes-shared/utils";
@@ -101,9 +101,9 @@ export const GolemComponentArray = new ComponentArray<GolemComponent>(ServerComp
 //    rockInfo.hitbox.offset.y = rockInfo.sleepOffsetY;
 // }
 
-const getTarget = (golemComponent: GolemComponent): EntityID => {
+const getTarget = (golemComponent: GolemComponent): Entity => {
    let mostDamage = 0;
-   let mostDamagingEntity!: EntityID;
+   let mostDamagingEntity!: Entity;
    for (const _targetID of Object.keys(golemComponent.attackingEntities)) {
       const target = Number(_targetID);
 
@@ -120,7 +120,7 @@ const getTarget = (golemComponent: GolemComponent): EntityID => {
    return mostDamagingEntity;
 }
 
-const shiftRocks = (golem: EntityID, golemComponent: GolemComponent): void => {
+const shiftRocks = (golem: Entity, golemComponent: GolemComponent): void => {
    for (let i = 0; i < golemComponent.rockInfoArray.length; i++) {
       const rockInfo = golemComponent.rockInfoArray[i];
 
@@ -144,7 +144,7 @@ const shiftRocks = (golem: EntityID, golemComponent: GolemComponent): void => {
    physicsComponent.hitboxesAreDirty = true;
 }
 
-const summonPebblums = (golem: EntityID, golemComponent: GolemComponent, target: EntityID): void => {
+const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(golem);
    const layer = getEntityLayer(golem);
    
@@ -166,7 +166,7 @@ const summonPebblums = (golem: EntityID, golemComponent: GolemComponent, target:
    }
 }
 
-const updateGolemHitboxPositions = (golem: EntityID, golemComponent: GolemComponent, wakeProgress: number): void => {
+const updateGolemHitboxPositions = (golem: Entity, golemComponent: GolemComponent, wakeProgress: number): void => {
    for (let i = 0; i < golemComponent.rockInfoArray.length; i++) {
       const rockInfo = golemComponent.rockInfoArray[i];
 
@@ -178,7 +178,7 @@ const updateGolemHitboxPositions = (golem: EntityID, golemComponent: GolemCompon
    physicsComponent.hitboxesAreDirty = true;
 }
 
-function onTick(golem: EntityID): void {
+function onTick(golem: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(golem);
    
    // Remove targets which are dead or have been out of aggro long enough
@@ -279,7 +279,7 @@ function onTick(golem: EntityID): void {
    physicsComponent.turnSpeed = Math.PI / 1.5;
 }
 
-function preRemove(golem: EntityID): void {
+function preRemove(golem: Entity): void {
    createItemsOverEntity(golem, ItemType.living_rock, randInt(10, 20));
 }
 
@@ -287,7 +287,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
 
    packet.addNumber(golemComponent.wakeTimerTicks / GOLEM_WAKE_TIME_TICKS);

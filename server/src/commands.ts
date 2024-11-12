@@ -1,6 +1,4 @@
-import { PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
-import { Settings } from "battletribes-shared/settings";
-import { Biome } from "battletribes-shared/tiles";
+import { PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { parseCommand } from "battletribes-shared/commands";
 import { damageEntity, healEntity } from "./components/HealthComponent";
@@ -12,16 +10,17 @@ import { forcePlayerTeleport, getPlayerFromUsername } from "./server/player-clie
 import { TribeComponentArray } from "./components/TribeComponent";
 import { ItemType, getItemTypeFromString } from "battletribes-shared/items/items";
 import { getRandomPositionInEntity, TransformComponentArray } from "./components/TransformComponent";
+import { Biome } from "../../shared/src/biomes";
 
 const ENTITY_SPAWN_RANGE = 200;
 
-const killPlayer = (player: EntityID): void => {
+const killPlayer = (player: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
    const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, null, 999999, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
-const damagePlayer = (player: EntityID, damage: number): void => {
+const damagePlayer = (player: Entity, damage: number): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
    const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, null, damage, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
@@ -32,22 +31,22 @@ const setTime = (time: number): void => {
    // Board.time = time;
 }
 
-const giveItem = (player: EntityID, itemType: ItemType, amount: number): void => {
+const giveItem = (player: Entity, itemType: ItemType, amount: number): void => {
    if (amount === 0) {
       return;
    }
 
    const item = createItem(itemType, amount);
-   addItem(InventoryComponentArray.getComponent(player), item);
+   addItem(player, InventoryComponentArray.getComponent(player), item);
 }
 
-const tp = (player: EntityID, x: number, y: number): void => {
+const tp = (player: Entity, x: number, y: number): void => {
    const newPosition = new Point(x, y);
    forcePlayerTeleport(player, newPosition);
 }
 
 // @Incomplete
-// const tpBiome = (player: EntityID, biomeName: Biome): void => {
+// const tpBiome = (player: Entity, biomeName: Biome): void => {
 //    const potentialTiles = getTilesOfBiome(biomeName);
 //    if (potentialTiles.length === 0) {
 //       console.warn(`No available tiles of biome '${biomeName}' to teleport to.`);
@@ -72,7 +71,7 @@ const tp = (player: EntityID, x: number, y: number): void => {
 //    forcePlayerTeleport(player, newPosition);
 // }
 
-export function registerCommand(command: string, player: EntityID): void {
+export function registerCommand(command: string, player: Entity): void {
    const commandComponents = parseCommand(command);
    const numParameters = commandComponents.length - 1;
 

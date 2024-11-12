@@ -1,5 +1,4 @@
 import { craftingMenuIsOpen } from "./components/game/menus/CraftingMenu";
-import { setHeldItemVisualPosition } from "./components/game/HeldItem";
 import { InventorySelector_inventoryIsOpen } from "./components/game/inventories/InventorySelector";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { getInventory, InventoryComponentArray } from "./entity-components/server-components/InventoryComponent";
@@ -22,8 +21,6 @@ export function leftClickItemSlot(e: MouseEvent, entityID: number, inventory: In
       const heldItem = heldItemInventory.itemSlots[1];
       if (typeof heldItem === "undefined") {
          sendItemPickupPacket(entityID, inventory.name, itemSlot, clickedItem.count);
-   
-         setHeldItemVisualPosition(e.clientX, e.clientY);
       } else {
          // If both the held item and the clicked item are of the same type, attempt to add the held item to the clicked item
          if (clickedItem.type === heldItem.type) {
@@ -59,8 +56,6 @@ export function rightClickItemSlot(e: MouseEvent, entityID: number, inventory: I
          const pickupCount = Math.ceil(numItemsInSlot / 2);
 
          sendItemPickupPacket(entityID, inventory.name, itemSlot, pickupCount);
-   
-         setHeldItemVisualPosition(e.clientX, e.clientY);
       } else {
          // If both the held item and the clicked item are of the same type, attempt to drop 1 of the held item
          if (clickedItem.type === heldItem.type) {
@@ -107,4 +102,30 @@ export function countItemTypesInInventory(inventory: Inventory, itemType: ItemTy
    }
    
    return count;
+}
+
+export function inventoriesAreDifferent(inventory1: Inventory, inventory2: Inventory): boolean {
+   if (inventory1.width !== inventory2.width || inventory1.height !== inventory2.height) {
+      return true;
+   }
+
+   for (let itemSlot = 1; itemSlot <= inventory1.width; itemSlot++) {
+      const item1 = inventory1.getItem(itemSlot);
+      const item2 = inventory2.getItem(itemSlot);
+
+      // If one of them is null but the other isn't
+      if ((item1 === null) !== (item2 === null)) {
+         return true;
+      }
+
+      if (item1 !== null && item2 !== null) {
+         if (item1.count !== item2.count
+          || item1.id !== item2.id
+          || item1.type !== item2.type) {
+            return true;
+         }
+      }
+   }
+
+   return false;
 }

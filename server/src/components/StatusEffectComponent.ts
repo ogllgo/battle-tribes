@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/status-effects";
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
@@ -102,7 +102,7 @@ export function clearStatusEffects(entityID: number): void {
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    for (let i = 0; i < statusEffectComponent.activeStatusEffectTypes.length; i++) {
       const statusEffect = statusEffectComponent.activeStatusEffectTypes[i];
@@ -158,12 +158,12 @@ function onTick(entity: EntityID): void {
    }
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    return 2 * Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * statusEffectComponent.activeStatusEffectTypes.length;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
 
    packet.addNumber(statusEffectComponent.activeStatusEffectTypes.length);

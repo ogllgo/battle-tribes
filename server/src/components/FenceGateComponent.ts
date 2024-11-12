@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DoorToggleType, EntityID } from "battletribes-shared/entities";
+import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, lerp } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
@@ -34,7 +34,7 @@ const doorHeight = 16;
 const doorHalfDiagonalLength = Math.sqrt(doorHeight * doorHeight + doorWidth * doorWidth) / 2;
 const angleToCenter = angle(doorHeight, doorWidth);
 
-const updateDoorOpenProgress = (fenceGate: EntityID, fenceGateComponent: FenceGateComponent): void => {
+const updateDoorOpenProgress = (fenceGate: Entity, fenceGateComponent: FenceGateComponent): void => {
    const baseRotation = Math.PI/2;
    const rotation = baseRotation - lerp(0, Math.PI/2 - 0.1, fenceGateComponent.openProgress);
    
@@ -51,7 +51,7 @@ const updateDoorOpenProgress = (fenceGate: EntityID, fenceGateComponent: FenceGa
    hitbox.relativeRotation = rotation - Math.PI/2;
 }
 
-function onTick(fenceGate: EntityID): void {
+function onTick(fenceGate: Entity): void {
    // @Incomplete: Hard hitboxes
    
    const fenceGateComponent = FenceGateComponentArray.getComponent(fenceGate);
@@ -78,7 +78,7 @@ function onTick(fenceGate: EntityID): void {
    }
 }
 
-export function toggleFenceGateDoor(fenceGate: EntityID): void {
+export function toggleFenceGateDoor(fenceGate: Entity): void {
    const fenceGateComponent = FenceGateComponentArray.getComponent(fenceGate);
    if (fenceGateComponent.toggleType !== DoorToggleType.none) {
       return;
@@ -102,7 +102,7 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const fenceGateComponent = FenceGateComponentArray.getComponent(entity);
 
    packet.addNumber(fenceGateComponent.toggleType);

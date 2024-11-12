@@ -1,4 +1,4 @@
-import { DeathInfo, EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { DeathInfo, Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { PlayerComponentArray } from "./components/PlayerComponent";
 
 abstract class TombstoneDeathManager {
@@ -6,7 +6,7 @@ abstract class TombstoneDeathManager {
 
    private static readonly deathInfos = new Array<DeathInfo>();
    
-   public static registerNewDeath(player: EntityID, causeOfDeath: PlayerCauseOfDeath): void {
+   public static registerNewDeath(player: Entity, causeOfDeath: PlayerCauseOfDeath): void {
       // If the max number of deaths has been exceeded, remove the first one
       if (this.deathInfos.length === this.MAX_TRACKED_DEATHS) {
          this.deathInfos.shift();

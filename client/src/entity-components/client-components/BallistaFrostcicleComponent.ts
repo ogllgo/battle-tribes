@@ -1,4 +1,4 @@
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -42,7 +42,7 @@ function createComponent(): BallistaFrostcicleComponent {
    return {};
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create arrow break particles

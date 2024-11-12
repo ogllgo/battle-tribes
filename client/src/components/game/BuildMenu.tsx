@@ -1,5 +1,5 @@
 import { BlueprintType, BuildingMaterial } from "battletribes-shared/components";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { deselectSelectedEntity, getSelectedEntityID } from "../../entity-selection";
 import Camera from "../../Camera";
@@ -68,9 +68,9 @@ interface MenuOption {
    readonly ghostType: GhostType;
    readonly optionType: OptionType;
    readonly costs: ReadonlyArray<OptionCost>;
-   readonly blueprintType: BlueprintType | ((entity: EntityID) => BlueprintType) | null;
-   readonly isClickable?: (entity: EntityID) => boolean;
-   readonly isHighlighted?: (entity: EntityID) => boolean;
+   readonly blueprintType: BlueprintType | ((entity: Entity) => BlueprintType) | null;
+   readonly isClickable?: (entity: Entity) => boolean;
+   readonly isHighlighted?: (entity: Entity) => boolean;
    readonly deselectsOnClick: boolean;
 }
 
@@ -131,7 +131,7 @@ const playerIsHoldingHammer = (): boolean => {
    return heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "hammer";
 }
 
-const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
+const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
    if (!StructureComponentArray.hasComponent(entity) || !TribeComponentArray.hasComponent(entity)) {
       return [];
    }
@@ -189,7 +189,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          imageHeight: 24,
          ghostType: DOOR_GHOST_TYPES[wallComponent.material],
          optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: EntityID) => {
+         blueprintType: (wall: Entity) => {
             const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
             return DOOR_BLUEPRINT_TYPES[buildingMaterialComponent.material];
          },
@@ -203,7 +203,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          imageHeight: 20,
          ghostType: EMBRASURE_GHOST_TYPES[wallComponent.material],
          optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: EntityID) => {
+         blueprintType: (wall: Entity) => {
             const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
             return EMBRASURE_BLUEPRINT_TYPES[buildingMaterialComponent.material];
          },
@@ -217,7 +217,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          imageHeight: 64,
          ghostType: TUNNEL_GHOST_TYPES[wallComponent.material],
          optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: EntityID) => {
+         blueprintType: (wall: Entity) => {
             const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
             return TUNNEL_BLUEPRINT_TYPES[buildingMaterialComponent.material];
          },
@@ -241,7 +241,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
             itemType: ItemType.wood,
             amount: 2
          }],
-         isClickable: (tunnel: EntityID): boolean => {
+         isClickable: (tunnel: Entity): boolean => {
             const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
             return tunnelComponent.doorBitset < 0b11;
          },
@@ -259,7 +259,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          ghostType: GhostType.coverLeaves,
          optionType: OptionType.modify,
          blueprintType: null,
-         isClickable: (entity: EntityID): boolean => {
+         isClickable: (entity: Entity): boolean => {
             const spikesComponent = SpikesComponentArray.getComponent(entity);
             return !spikesComponent.isCovered;
          },
@@ -320,7 +320,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          optionType: OptionType.modify,
          blueprintType: null,
          costs: [],
-         isHighlighted: (hut: EntityID): boolean => {
+         isHighlighted: (hut: Entity): boolean => {
             const hutComponent = HutComponentArray.getComponent(hut);
             return hutComponent.isRecalling;
          },
@@ -340,7 +340,7 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
          optionType: OptionType.modify,
          blueprintType: null,
          costs: [],
-         isClickable: (entity: EntityID): boolean => {
+         isClickable: (entity: Entity): boolean => {
             const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
             return planterBoxComponent.hasPlant;
          },
@@ -369,13 +369,13 @@ const getMenuOptions = (entity: EntityID): ReadonlyArray<MenuOption> => {
    return options;
 }
 
-export function entityCanOpenBuildMenu(entity: EntityID): boolean {
+export function entityCanOpenBuildMenu(entity: Entity): boolean {
    const menuOptions = getMenuOptions(entity);
    return menuOptions.length > 0;
 }
 
 // @Cleanup: copy paste of shared function
-const snapRotationToPlayer = (structure: EntityID, rotation: number): number => {
+const snapRotationToPlayer = (structure: Entity, rotation: number): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
 
@@ -389,7 +389,7 @@ const snapRotationToPlayer = (structure: EntityID, rotation: number): number => 
    return snapRotation;
 }
 
-const getGhostRotation = (building: EntityID, ghostType: GhostType): number => {
+const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
    switch (ghostType) {
       case GhostType.tunnelDoor: {
@@ -519,7 +519,7 @@ const BuildMenu = () => {
       hoveredGhostType = null;
    }
 
-   const click = useCallback((building: EntityID, options: ReadonlyArray<MenuOption>): void => {
+   const click = useCallback((building: Entity, options: ReadonlyArray<MenuOption>): void => {
       if (hoveredOptionIdx === null || building === null) {
          return;
       }

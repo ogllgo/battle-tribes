@@ -21,10 +21,12 @@ import { DoorComponentArray, DoorComponentParams } from "./server-components/Doo
 import { EscapeAIComponentArray, EscapeAIComponentParams } from "./server-components/EscapeAIComponent";
 import { FenceComponentArray, FenceComponentParams } from "./server-components/FenceComponent";
 import { FenceGateComponentArray, FenceGateComponentParams } from "./server-components/FenceGateComponent";
+import { FireTorchComponentArray, FireTorchComponentParams } from "./server-components/FireTorchComponent";
 import { FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
 import { FollowAIComponentArray, FollowAIComponentParams } from "./server-components/FollowAIComponent";
 import { FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
 import { FurnaceComponentArray, FurnaceComponentParams } from "./server-components/FurnaceComponent";
+import { GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
 import { GolemComponentArray, GolemComponentParams } from "./server-components/GolemComponent";
 import { GuardianComponentArray, GuardianComponentParams } from "./server-components/GuardianComponent";
 import { GuardianGemFragmentProjectileComponentArray, GuardianGemFragmentProjectileComponentParams } from "./server-components/GuardianGemFragmentProjectileComponent";
@@ -56,9 +58,11 @@ import { SlingTurretComponentArray, SlingTurretComponentParams } from "./server-
 import { SnowballComponentArray, SnowballComponentParams } from "./server-components/SnowballComponent";
 import { SpearProjectileComponentArray, SpearProjectileComponentParams } from "./server-components/SpearProjectileComponent";
 import { SpikesComponentArray, SpikesComponentParams } from "./server-components/SpikesComponent";
+import { SpikyBastardComponentArray, SpikyBastardComponentParams } from "./server-components/SpikyBastardComponent";
 import { SpitPoisonAreaComponentArray, SpitPoisonAreaComponentParams } from "./server-components/SpitPoisonAreaComponent";
 import { StatusEffectComponentArray, StatusEffectComponentParams } from "./server-components/StatusEffectComponent";
 import { StructureComponentArray, StructureComponentParams } from "./server-components/StructureComponent";
+import { TetheredHitboxComponentArray, TetheredHitboxComponentParams } from "./server-components/TetheredHitboxComponent";
 import { ThrowingProjectileComponentArray, ThrowingProjectileComponentParams } from "./server-components/ThrowingProjectileComponent";
 import { TombstoneComponentArray, TombstoneComponentParams } from "./server-components/TombstoneComponent";
 import { TotemBannerComponentArray, TotemBannerComponentParams } from "./server-components/TotemBannerComponent";
@@ -149,6 +153,10 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.barrel]: BarrelComponentArray,
    [ServerComponentType.campfire]: CampfireComponentArray,
    [ServerComponentType.furnace]: FurnaceComponentArray,
+   [ServerComponentType.fireTorch]: FireTorchComponentArray,
+   [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
+   [ServerComponentType.glurb]: GlurbComponentArray,
+   [ServerComponentType.tetheredHitbox]: TetheredHitboxComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -225,6 +233,10 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.barrel]: (): BarrelComponentParams => 0 as any,
    [ServerComponentType.campfire]: (): CampfireComponentParams => 0 as any,
    [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
+   [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
+   [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
+   [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
+   [ServerComponentType.tetheredHitbox]: (): TetheredHitboxComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

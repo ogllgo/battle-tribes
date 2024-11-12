@@ -1,5 +1,5 @@
 import { Point, angle, lerp, randFloat, randInt, randItem, randSign } from "battletribes-shared/utils";
-import { CactusFlowerSize, EntityID } from "battletribes-shared/entities";
+import { CactusFlowerSize, Entity } from "battletribes-shared/entities";
 import Particle from "./Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer } from "./rendering/webgl/particle-rendering";
 import Board from "./Board";
@@ -65,7 +65,7 @@ export function createBloodParticle(size: BloodParticleSize, spawnPositionX: num
 
 const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 
-export function createBloodParticleFountain(entity: EntityID, interval: number, speedMultiplier: number): void {
+export function createBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
    const offset = 2 * Math.PI * Math.random();
    const transformComponent = TransformComponentArray.getComponent(entity);
 
@@ -123,7 +123,7 @@ export function createLeafParticle(spawnPositionX: number, spawnPositionY: numbe
    Board.lowTexturedParticles.push(particle);
 }
 
-export function createFootprintParticle(entity: EntityID, numFootstepsTaken: number, footstepOffset: number, size: number, lifetime: number): void {
+export function createFootprintParticle(entity: Entity, numFootstepsTaken: number, footstepOffset: number, size: number, lifetime: number): void {
    const footstepAngleOffset = numFootstepsTaken % 2 === 0 ? Math.PI : 0;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -600,8 +600,8 @@ export function createWaterSplashParticle(spawnPositionX: number, spawnPositionY
    Board.lowMonocolourParticles.push(particle);
 }
 
-export function createSmokeParticle(spawnPositionX: number, spawnPositionY: number): void {
-   const lifetime = 1.5;
+export function createSmokeParticle(spawnPositionX: number, spawnPositionY: number, size: number): void {
+   const lifetime = randFloat(1.5, 2);
    
    const particle = new Particle(lifetime);
    particle.getOpacity = (): number => {
@@ -612,13 +612,15 @@ export function createSmokeParticle(spawnPositionX: number, spawnPositionY: numb
       return 1 + deathProgress * 2;
    }
 
+   const velocity = Point.fromVectorForm(30, 2 * Math.PI * Math.random());
+
    addTexturedParticleToBufferContainer(
       particle,
       ParticleRenderLayer.high,
-      64, 64,
+      size, size,
       spawnPositionX, spawnPositionY,
-      0, 30,
-      0, 80,
+      velocity.x, velocity.y,
+      0, 0,
       0,
       2 * Math.PI * Math.random(),
       0,
@@ -630,7 +632,7 @@ export function createSmokeParticle(spawnPositionX: number, spawnPositionY: numb
    Board.highTexturedParticles.push(particle);
 }
 
-export function createEmberParticle(spawnPositionX: number, spawnPositionY: number, initialMoveDirection: number, moveSpeed: number): void {
+export function createEmberParticle(spawnPositionX: number, spawnPositionY: number, initialMoveDirection: number, moveSpeed: number, vAddX: number, vAddY: number): void {
    const lifetime = randFloat(0.6, 1.2);
 
    const velocityX = moveSpeed * Math.sin(initialMoveDirection);
@@ -654,7 +656,7 @@ export function createEmberParticle(spawnPositionX: number, spawnPositionY: numb
       ParticleRenderLayer.high,
       4, 4,
       spawnPositionX, spawnPositionY,
-      velocityX, velocityY,
+      velocityX + vAddX, velocityY + vAddY,
       accelerationX, accelerationY,
       0,
       2 * Math.PI * Math.random(),
@@ -1675,7 +1677,7 @@ export function createAcidParticle(spawnPositionX: number, spawnPositionY: numbe
 const POISON_COLOUR_LOW = [34/255, 12/255, 0];
 const POISON_COLOUR_HIGH = [77/255, 173/255, 38/255];
 
-export function createPoisonParticle(entity: EntityID): void {
+export function createPoisonParticle(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Calculate spawn position

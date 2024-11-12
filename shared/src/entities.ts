@@ -1,5 +1,5 @@
 /** Unique identifier for each entity */
-export type EntityID = number;
+export type Entity = number;
 
 export const enum EntityType {
    cow,
@@ -71,7 +71,10 @@ export const enum EntityType {
    guardianGemQuake,
    guardianGemFragmentProjectile,
    guardianSpikyBall,
-   bracings
+   bracings,
+   fireTorch,
+   spikyBastard,
+   glurb
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -144,7 +147,10 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.guardianGemQuake]: "guardian gem quake",
    [EntityType.guardianGemFragmentProjectile]: "Guardian Gem Fragment Projectile",
    [EntityType.guardianSpikyBall]: "Guardian Spiky Ball",
-   [EntityType.bracings]: "Bracings"
+   [EntityType.bracings]: "Bracings",
+   [EntityType.fireTorch]: "Fire Torch",
+   [EntityType.spikyBastard]: "Spiky Bastard",
+   [EntityType.glurb]: "Glurb",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

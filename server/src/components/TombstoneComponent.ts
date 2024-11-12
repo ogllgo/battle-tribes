@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -43,7 +43,7 @@ export const TombstoneComponentArray = new ComponentArray<TombstoneComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-const generateZombieSpawnPosition = (tombstone: EntityID): Point => {
+const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
    
    const seenIs = new Array<number>();
@@ -71,7 +71,7 @@ const generateZombieSpawnPosition = (tombstone: EntityID): Point => {
    }
 }
 
-const spawnZombie = (tombstone: EntityID, tombstoneComponent: TombstoneComponent): void => {
+const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent): void => {
    // Note: tombstone type 0 is the golden tombstone
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
@@ -86,7 +86,7 @@ const spawnZombie = (tombstone: EntityID, tombstoneComponent: TombstoneComponent
    tombstoneComponent.isSpawningZombie = false;
 }
 
-export function tickTombstone(tombstone: EntityID): void {
+export function tickTombstone(tombstone: Entity): void {
    // If in the daytime, chance to crumble
    if (!isNight()) {
       const dayProgress = (getGameTime() - 6) / 12;
@@ -122,7 +122,7 @@ export function tickTombstone(tombstone: EntityID): void {
    }
 }
 
-function preRemove(tombstone: EntityID): void {
+function preRemove(tombstone: Entity): void {
    // 60% chance to spawn zombie
    if (Math.random() < 0.4) {
       return;
@@ -143,7 +143,7 @@ function preRemove(tombstone: EntityID): void {
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    
    let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
@@ -158,7 +158,7 @@ const getZombieSpawnProgress = (tombstoneComponent: TombstoneComponent): number 
    return tombstoneComponent.isSpawningZombie ? tombstoneComponent.zombieSpawnTimer / Vars.ZOMBIE_SPAWN_TIME : -1;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
 
    packet.addNumber(tombstoneComponent.tombstoneType);

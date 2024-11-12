@@ -1,4 +1,4 @@
-import { EntityID, SNOWBALL_SIZES, SnowballSize } from "battletribes-shared/entities";
+import { Entity, SNOWBALL_SIZES, SnowballSize } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { randFloat, randInt } from "battletribes-shared/utils";
@@ -76,7 +76,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.snowball
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    if ((physicsComponent.selfVelocity.x !== 0 || physicsComponent.selfVelocity.y !== 0) && physicsComponent.selfVelocity.lengthSquared() > 2500) {
@@ -128,7 +128,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
    Board.lowMonocolourParticles.push(particle);
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const snowballComponent = SnowballComponentArray.getComponent(entity);
    
@@ -142,7 +142,7 @@ function onHit(entity: EntityID): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const snowballComponent = SnowballComponentArray.getComponent(entity);
 

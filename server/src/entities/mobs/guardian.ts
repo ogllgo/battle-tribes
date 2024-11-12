@@ -3,7 +3,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, TileIndex } from "battletribes-shared/utils";
 import GuardianAI from "../../ai/GuardianAI";
 import GuardianCrystalBurstAI from "../../ai/GuardianCrystalBurstAI";
@@ -26,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.aiHelper
    | ServerComponentType.guardian;
 
-function tileIsValidCallback(entity: EntityID, _layer: Layer, tileIndex: TileIndex): boolean {
+function tileIsValidCallback(entity: Entity, _layer: Layer, tileIndex: TileIndex): boolean {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
    return guardianComponent.homeTiles.includes(tileIndex);
 }

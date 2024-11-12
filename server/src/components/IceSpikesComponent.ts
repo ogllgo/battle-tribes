@@ -1,9 +1,9 @@
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import Layer, { positionIsInWorld } from "../Layer";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createEntity } from "../Entity";
@@ -30,9 +30,9 @@ export class IceSpikesComponent {
    public readonly maxChildren = randInt(0, 3);
    public numChildrenIceSpikes = 0;
    public iceSpikeGrowProgressTicks = 0;
-   public rootIceSpike: EntityID;
+   public rootIceSpike: Entity;
 
-   constructor(rootIceSpikes: EntityID) {
+   constructor(rootIceSpikes: Entity) {
       this.rootIceSpike = rootIceSpikes;
    }
 }
@@ -49,7 +49,7 @@ export const IceSpikesComponentArray = new ComponentArray<IceSpikesComponent>(Se
    addDataToPacket: addDataToPacket
 });
 
-function onInitialise(config: EntityConfig<ServerComponentType.iceSpikes>, entity: EntityID): void {
+function onInitialise(config: EntityConfig<ServerComponentType.iceSpikes>, entity: Entity): void {
    if (config.components[ServerComponentType.iceSpikes].rootIceSpike === 0) {
       config.components[ServerComponentType.iceSpikes].rootIceSpike = entity;
    }
@@ -64,7 +64,7 @@ const canGrow = (iceSpikesComponent: IceSpikesComponent): boolean => {
    return rootIceSpikesComponent.numChildrenIceSpikes < rootIceSpikesComponent.maxChildren;
 }
 
-const grow = (iceSpikes: EntityID): void => {
+const grow = (iceSpikes: Entity): void => {
    // @Speed: Garbage collection
 
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
@@ -103,7 +103,7 @@ const grow = (iceSpikes: EntityID): void => {
    }
 }
 
-function onTick(iceSpikes: EntityID): void {
+function onTick(iceSpikes: Entity): void {
    const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
    if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE / Settings.TPS) {
       iceSpikesComponent.iceSpikeGrowProgressTicks++;
@@ -113,7 +113,7 @@ function onTick(iceSpikes: EntityID): void {
    }
 }
 
-function preRemove(iceSpikes: EntityID): void {
+function preRemove(iceSpikes: Entity): void {
    if (Math.random() < 0.5) {
       createItemsOverEntity(iceSpikes, ItemType.frostcicle, 1);
    }
@@ -132,7 +132,7 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 /** Forces an ice spike to immediately grow its maximum number of children */
-const forceMaxGrowIceSpike = (iceSpikes: EntityID): void => {
+const forceMaxGrowIceSpike = (iceSpikes: Entity): void => {
    const rootIceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
    
    const connectedIceSpikes = [iceSpikes];
@@ -167,7 +167,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
    }
 }
 
-function onHitboxCollision(iceSpikes: EntityID, collidingEntity: EntityID, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti || collidingEntityType === EntityType.snowball) {
       return;

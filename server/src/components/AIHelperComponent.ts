@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Chunk from "../Chunk";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
@@ -40,13 +40,13 @@ export class AIHelperComponent {
    public visibleChunkBounds = [999, 999, 999, 999];
    public visibleChunks = new Array<Chunk>();
 
-   public readonly potentialVisibleEntities = new Array<EntityID>();
+   public readonly potentialVisibleEntities = new Array<Entity>();
    /** The number of times each potential visible game object appears in the mob's visible chunks */
    public readonly potentialVisibleEntityAppearances = new Array<number>();
 
    public readonly ignoreDecorativeEntities = true;
    public visionRange: number;
-   public visibleEntities = new Array<EntityID>();
+   public visibleEntities = new Array<Entity>();
 
    public readonly ais: AIRecord = {};
 
@@ -87,7 +87,7 @@ export const AIHelperComponentArray = new ComponentArray<AIHelperComponent>(Serv
    addDataToPacket: addDataToPacket
 });
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    for (let i = 0; i < aiHelperComponent.visibleChunks.length; i++) {
       const chunk = aiHelperComponent.visibleChunks[i];
@@ -105,7 +105,7 @@ const boxIsVisible = (transformComponent: TransformComponent, box: Box, visionRa
    }
 }
 
-const entityIsVisible = (transformComponent: TransformComponent, checkEntity: EntityID, visionRange: number): boolean => {
+const entityIsVisible = (transformComponent: TransformComponent, checkEntity: Entity, visionRange: number): boolean => {
    const checkEntityTransformComponent = TransformComponentArray.getComponent(checkEntity);
 
    const xDiff = transformComponent.position.x - checkEntityTransformComponent.position.x;
@@ -126,10 +126,10 @@ const entityIsVisible = (transformComponent: TransformComponent, checkEntity: En
 }
 
 // @Speed: I'd say a good 70% of the entities here are ice spikes and decorations - unnecessary
-const calculateVisibleEntities = (entity: EntityID, aiHelperComponent: AIHelperComponent): Array<EntityID> => {
+const calculateVisibleEntities = (entity: Entity, aiHelperComponent: AIHelperComponent): Array<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   const visibleEntities = new Array<EntityID>();
+   const visibleEntities = new Array<Entity>();
 
    const potentialVisibleEntities = aiHelperComponent.potentialVisibleEntities;
    const visionRange = aiHelperComponent.visionRange;
@@ -144,16 +144,16 @@ const calculateVisibleEntities = (entity: EntityID, aiHelperComponent: AIHelperC
    return visibleEntities;
 }
 
-const entityIsDecorative = (entity: EntityID): boolean => {
+const entityIsDecorative = (entity: Entity): boolean => {
    const entityType = getEntityType(entity);
    return entityType === EntityType.grassStrand || entityType === EntityType.reed;
 }
 
-export function entityIsNoticedByAI(aiHelperComponent: AIHelperComponent, entity: EntityID): boolean {
+export function entityIsNoticedByAI(aiHelperComponent: AIHelperComponent, entity: Entity): boolean {
    return !aiHelperComponent.ignoreDecorativeEntities || !entityIsDecorative(entity);
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    // @Speed: Not all entities with this component need this always.
    // Slimewisp: can pass with once per second
    

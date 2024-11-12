@@ -1,6 +1,6 @@
 import { PotentialBuildingPlanData } from "battletribes-shared/ai-building-types";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { TechID, TechTreeUnlockProgress, TechInfo, getTechByID, TECHS } from "battletribes-shared/techs";
@@ -352,16 +352,16 @@ class Tribe {
 
    public isRemoveable = false;
 
-   public totem: EntityID | null = null;
+   public totem: Entity | null = null;
    
    // /** Stores all tribe huts belonging to the tribe */
-   private readonly huts = new Array<EntityID>();
+   private readonly huts = new Array<Entity>();
 
-   public barrels = new Array<EntityID>();
+   public barrels = new Array<Entity>();
 
-   public readonly researchBenches = new Array<EntityID>();
+   public readonly researchBenches = new Array<Entity>();
 
-   public readonly buildings = new Array<EntityID>();
+   public readonly buildings = new Array<Entity>();
    public buildingsAreDirty = true;
 
    // @Cleanup: unify these two
@@ -419,7 +419,7 @@ class Tribe {
       addTribe(this);
    }
 
-   public addBuilding(building: EntityID): void {
+   public addBuilding(building: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(building);
       
       const occupiedSafetyNodes = new Set<SafetyNode>();
@@ -479,7 +479,7 @@ class Tribe {
       }
    }
 
-   public removeBuilding(building: EntityID): void {
+   public removeBuilding(building: Entity): void {
       this.buildings.splice(this.buildings.indexOf(building), 1);
 
       const virtualBuilding = this.virtualBuildingRecord[building];
@@ -703,17 +703,17 @@ class Tribe {
       return this.totem !== null;
    }
 
-   public respawnTribesman(hut: EntityID): void {
+   public respawnTribesman(hut: Entity): void {
       this.respawnTimesRemaining.push(RESPAWN_TIME_TICKS);
       this.respawnHutIDs.push(hut);
    }
 
-   public instantRespawnTribesman(hut: EntityID): void {
+   public instantRespawnTribesman(hut: Entity): void {
       this.respawnTimesRemaining.push(1);
       this.respawnHutIDs.push(hut);
    }
 
-   public createNewTribesman(hut: EntityID): void {
+   public createNewTribesman(hut: Entity): void {
       // Make sure the hut doesn't already have a tribesman or is in the process of respawning one
       const hutComponent = HutComponentArray.getComponent(hut);
       if (hutComponent.hasSpawnedTribesman || this.respawnHutIDs.indexOf(hut) !== -1) {
@@ -753,13 +753,13 @@ class Tribe {
 
    // @Cleanup
    
-   public registerNewTribeMember(tribesman: EntityID): void {
+   public registerNewTribeMember(tribesman: Entity): void {
       this.isRemoveable = true;
       // this.friendlyTribesmenIDs.push(tribeMember.id);
       this.tribesmanIDs.push(tribesman);
    }
 
-   public registerTribeMemberDeath(tribesman: EntityID): void {
+   public registerTribeMemberDeath(tribesman: Entity): void {
       const idx = this.tribesmanIDs.indexOf(tribesman);
       if (idx !== -1) {
          this.tribesmanIDs.splice(idx, 1);
@@ -870,7 +870,7 @@ class Tribe {
       return Object.keys(this.area).length;
    }
 
-   public hasBarrel(barrel: EntityID): boolean {
+   public hasBarrel(barrel: Entity): boolean {
       return this.barrels.includes(barrel);
    }
 

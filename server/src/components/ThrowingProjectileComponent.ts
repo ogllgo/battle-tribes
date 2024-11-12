@@ -1,14 +1,14 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { InventoryComponentArray } from "./InventoryComponent";
 import { entityExists } from "../world";
 
 export class ThrowingProjectileComponent {
-   readonly tribeMember: EntityID;
+   readonly tribeMember: Entity;
    readonly itemID: number | null;
 
-   constructor(tribeMember: EntityID, itemID: number | null) {
+   constructor(tribeMember: Entity, itemID: number | null) {
       this.tribeMember = tribeMember;
       this.itemID = itemID;
    }
@@ -20,7 +20,7 @@ export const ThrowingProjectileComponentArray = new ComponentArray<ThrowingProje
    addDataToPacket: addDataToPacket
 });
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const throwingProjectileComponent = ThrowingProjectileComponentArray.getComponent(entity);
    if (!entityExists(throwingProjectileComponent.tribeMember) || throwingProjectileComponent.itemID === null) {
       return;

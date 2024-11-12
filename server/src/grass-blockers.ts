@@ -1,13 +1,13 @@
 import { Settings } from "battletribes-shared/settings";
 import { GrassBlocker, GrassBlockerCircle, GrassBlockerRectangle, blockerIsCircluar } from "battletribes-shared/grass-blockers";
 import Chunk from "./Chunk";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { boxIsCircular, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { entityExists, surfaceLayer } from "./world";
 
 const blockers = new Array<GrassBlocker>();
-const blockerAssociatedEntities = new Array<EntityID>();
+const blockerAssociatedEntities = new Array<Entity>();
 
 const enum Vars {
    GRASS_FULL_REGROW_TICKS = Settings.TPS * 60,
@@ -82,7 +82,7 @@ export function updateGrassBlockers(): void {
    }
 }
 
-export function createStructureGrassBlockers(structure: EntityID): void {
+export function createStructureGrassBlockers(structure: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(structure);
    
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {

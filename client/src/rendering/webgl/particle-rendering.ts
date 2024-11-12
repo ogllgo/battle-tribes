@@ -144,6 +144,8 @@ export function createParticleShaders(): void {
    
    void main() {
       outputColour = vec4(v_colour, v_opacity);
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
    
@@ -292,6 +294,8 @@ export function createParticleShaders(): void {
       }
    
       outputColour.a *= v_opacity;
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
 
@@ -529,7 +533,8 @@ export function renderMonocolourParticles(renderLayer: ParticleRenderLayer): voi
    gl.useProgram(monocolourProgram);
 
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    const halfParticleSizeBuffers = bufferContainer.getBuffers(0);
    const positionBuffers = bufferContainer.getBuffers(1);
@@ -657,7 +662,8 @@ export function renderTexturedParticles(renderLayer: ParticleRenderLayer): void 
    gl.useProgram(texturedProgram);
 
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    gl.activeTexture(gl.TEXTURE0);
    const texture = getTexture("miscellaneous/particle-texture-atlas.png");

@@ -19,7 +19,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processUseItemPacket } from "./packet-processing";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -29,13 +29,14 @@ import generateSurfaceTerrain from "../world-generation/surface-terrain-generati
 import { generateLilypads } from "../world-generation/lilypad-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { createLayers, destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, layers, pushJoinBuffer, surfaceLayer, tickGameTime, updateEntities, updateTribes } from "../world";
+import { createLayers, destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, layers, pushJoinBuffer, surfaceLayer, tickGameTime, tickEntities, updateTribes } from "../world";
 import { generateUndergroundTerrain } from "../world-generation/underground-terrain-generation";
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { createGuardianConfig } from "../entities/mobs/guardian";
 import { getTileIndexIncludingEdges } from "../Layer";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
+import { generateSpikyBastards } from "../world-generation/spiky-bastard-generation";
 
 /*
 
@@ -44,7 +45,7 @@ node --prof-process isolate-0xnnnnnnnnnnnn-v8.log > processed.txt
 
 */
 
-const entityIsHiddenFromPlayer = (entity: EntityID, playerTribe: Tribe): boolean => {
+const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean => {
    if (SpikesComponentArray.hasComponent(entity) && TribeComponentArray.hasComponent(entity)) {
       const tribeComponent = TribeComponentArray.getComponent(entity);
       const spikesComponent = SpikesComponentArray.getComponent(entity);
@@ -57,10 +58,10 @@ const entityIsHiddenFromPlayer = (entity: EntityID, playerTribe: Tribe): boolean
    return false;
 }
 
-const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<EntityID> => {
+const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
    const layer = playerClient.lastLayer;
    
-   const entities = new Set<EntityID>();
+   const entities = new Set<Entity>();
       
    // @Copynpaste
    const minVisibleX = playerClient.lastPlayerPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
@@ -143,6 +144,7 @@ class GameServer {
       generateDecorations();
       generateReeds(surfaceTerrainGenerationInfo.riverMainTiles);
       generateLilypads();
+      generateSpikyBastards();
       spawnGuardians();
 
       this.server = new Server({
@@ -297,7 +299,7 @@ class GameServer {
          updateGrassBlockers();
          runCollapses();
          
-         updateEntities();
+         tickEntities();
          updateDynamicPathfindingNodes();
 
          for (const layer of layers) {
@@ -347,7 +349,7 @@ class GameServer {
       
          const visibleEntities = getPlayerVisibleEntities(playerClient);
          
-         const entitiesToSend = new Set<EntityID>();
+         const entitiesToSend = new Set<Entity>();
 
          // Send all newly visible entities
          // @Speed

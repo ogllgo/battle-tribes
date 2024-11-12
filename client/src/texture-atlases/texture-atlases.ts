@@ -337,6 +337,14 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/bracings/wooden-horizontal-post.png",
    "entities/bracings/stone-vertical-post.png",
    "entities/bracings/stone-horizontal-post.png",
+   "entities/fire-torch/fire-torch.png",
+   "entities/spiky-bastard/spiky-bastard-1.png",
+   "entities/spiky-bastard/spiky-bastard-2.png",
+   "entities/spiky-bastard/spiky-bastard-3.png",
+   "entities/glurb/glurb-head-segment.png",
+   "entities/glurb/glurb-middle-segment.png",
+   "entities/glurb/glurb-tail-segment.png",
+   "entities/glurb/glurb-eye.png",
 ];
 
 const addTextureSource = (textureSource: string): void => {

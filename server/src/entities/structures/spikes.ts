@@ -1,5 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -88,7 +88,7 @@ export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial,
 }
 
 // @Cleanup: Copy and paste
-export function onSpikesCollision(spikes: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // @Incomplete: Why is this condition neeeded? Shouldn't be able to be placed colliding with other structures anyway.
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.floorSpikes || collidingEntityType === EntityType.wallSpikes || collidingEntityType === EntityType.door || collidingEntityType === EntityType.wall) {

@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { registerAttackingEntity } from "../../ai/escape-ai";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -7,7 +7,7 @@ import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -39,7 +39,7 @@ const KRUMBLID_SIZE = 48;
 
 const FOLLOW_CHANCE_PER_SECOND = 0.3;
 
-function positionIsValidCallback(_entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.desert;
 }
 
@@ -78,6 +78,6 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-export function onKrumblidHurt(cow: EntityID, attackingEntity: EntityID): void {
+export function onKrumblidHurt(cow: Entity, attackingEntity: Entity): void {
    registerAttackingEntity(cow, attackingEntity);
 }

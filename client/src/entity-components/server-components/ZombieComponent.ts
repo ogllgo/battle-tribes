@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { angle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSound } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -82,7 +82,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.zombie, 
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    if (Math.random() < 0.1 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       playSound("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
@@ -97,7 +97,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Blood pool particle
@@ -117,7 +117,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    playSound("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);

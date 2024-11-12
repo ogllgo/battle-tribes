@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -51,7 +51,7 @@ export function createPebblumConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-export function onPebblumCollision(pebblum: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onPebblumCollision(pebblum: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
    if (collidingEntity !== pebblumComponent.targetEntityID) {
       return;

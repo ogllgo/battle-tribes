@@ -1,6 +1,6 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { HealthComponentArray } from "./HealthComponent";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -20,7 +20,7 @@ export const BuildingMaterialComponentArray = new ComponentArray<BuildingMateria
    addDataToPacket: addDataToPacket
 });
 
-export function upgradeMaterial(structure: EntityID, materialComponent: BuildingMaterialComponent): void {
+export function upgradeMaterial(structure: Entity, materialComponent: BuildingMaterialComponent): void {
    materialComponent.material++;
 
    const health = materialComponent.healths[materialComponent.material];
@@ -36,7 +36,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(entity);
 
    packet.addNumber(buildingMaterialComponent.material);

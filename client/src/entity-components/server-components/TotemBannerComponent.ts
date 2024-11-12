@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, TribeTotemBanner } from "battletribes-shared/entities";
+import { Entity, TribeTotemBanner } from "battletribes-shared/entities";
 import { TribeType } from "battletribes-shared/tribes";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
@@ -133,7 +133,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numBanners);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const totemBannerComponent = TotemBannerComponentArray.getComponent(entity);
    
    // @Garbage
@@ -180,12 +180,12 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playBuildingHitSound(transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
 }

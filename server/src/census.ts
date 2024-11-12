@@ -1,5 +1,6 @@
-import { EntityID, EntityType, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
-import { TileType, Biome, NUM_TILE_TYPES, NUM_BIOMES } from "battletribes-shared/tiles";
+import { Entity, EntityType, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
+import { TileType, NUM_TILE_TYPES } from "battletribes-shared/tiles";
+import { Biome } from "../../shared/src/biomes";
 import Layer from "./Layer";
 import { TileIndex } from "battletribes-shared/utils";
 import { getEntityType } from "./world";
@@ -24,7 +25,7 @@ const tileCensus: TileCensus = {
    })(),
    biomes: (() => {
       const biomes: Partial<Record<Biome, Array<TileIndex>>> = {};
-      for (let biome: Biome = 0; biome < NUM_BIOMES; biome++) {
+      for (let biome: Biome = 0; biome < Biome._LENGTH_; biome++) {
          biomes[biome] = [];
       }
       return biomes as Record<Biome, Array<TileIndex>>;
@@ -34,12 +35,12 @@ const tileCensus: TileCensus = {
 /** Stores the IDs of all entities that are being tracked in the census */
 const trackedEntityIDs = new Set<number>();
 
-export function addEntityToCensus(entity: EntityID, entityType: EntityType): void {
+export function addEntityToCensus(entity: Entity, entityType: EntityType): void {
    entityCounts[entityType]++;
    trackedEntityIDs.add(entity);
 }
 
-export function removeEntityFromCensus(entity: EntityID): void {
+export function removeEntityFromCensus(entity: Entity): void {
    if (!trackedEntityIDs.has(entity)) return;
    
    const entityType = getEntityType(entity)!;

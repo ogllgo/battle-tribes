@@ -1,6 +1,6 @@
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { BlueprintType, BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
-import { EntityType, EntityID, LimbAction } from "battletribes-shared/entities";
+import { EntityType, Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureConnectionInfo, StructureType, calculateStructurePlaceInfo } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -60,6 +60,7 @@ import { createFrostshaperConfig } from "../structures/frostshaper";
 import { createStonecarvingTableConfig } from "../structures/stonecarving-table";
 import { createBracingsConfig } from "../structures/bracings";
 import { Hitbox } from "../../../../shared/src/boxes/boxes";
+import { createFireTorchConfig } from "../structures/fire-torch";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -72,7 +73,7 @@ export type ConnectedEntityIDs = [number, number, number, number];
 
 export const VACUUM_RANGE = 85;
 
-const getDamageMultiplier = (entity: EntityID): number => {
+const getDamageMultiplier = (entity: Entity): number => {
    let multiplier = 1;
 
    if (TribeMemberComponentArray.hasComponent(entity)) {
@@ -93,7 +94,7 @@ const getDamageMultiplier = (entity: EntityID): number => {
    return multiplier;
 }
 
-export function calculateItemDamage(entity: EntityID, item: Item | null, attackEffectiveness: AttackEffectiveness, attackIsBlocked: boolean): number {
+export function calculateItemDamage(entity: Entity, item: Item | null, attackEffectiveness: AttackEffectiveness, attackIsBlocked: boolean): number {
    if (attackEffectiveness === AttackEffectiveness.stopped) {
       return 0;
    }
@@ -155,7 +156,7 @@ export function calculateItemDamage(entity: EntityID, item: Item | null, attackE
    return damage * getDamageMultiplier(entity);
 }
 
-const getRepairTimeMultiplier = (tribeMember: EntityID): number => {
+const getRepairTimeMultiplier = (tribeMember: Entity): number => {
    let multiplier = 1;
    
    if (getEntityType(tribeMember) === EntityType.tribeWarrior) {
@@ -165,7 +166,7 @@ const getRepairTimeMultiplier = (tribeMember: EntityID): number => {
    return multiplier;
 }
 
-export function getSwingTimeMultiplier(entity: EntityID, targetEntity: EntityID, item: Item | null): number {
+export function getSwingTimeMultiplier(entity: Entity, targetEntity: Entity, item: Item | null): number {
    let swingTimeMultiplier = 1;
 
    if (TribeComponentArray.hasComponent(entity)) {
@@ -191,7 +192,7 @@ export function getSwingTimeMultiplier(entity: EntityID, targetEntity: EntityID,
 
 // @Cleanup: Rename function. shouldn't be 'attack'
 // @Cleanup: Not just for tribe members, move to different file
-export function calculateRadialAttackTargets(entity: EntityID, attackOffset: number, attackRadius: number): ReadonlyArray<EntityID> {
+export function calculateRadialAttackTargets(entity: Entity, attackOffset: number, attackRadius: number): ReadonlyArray<Entity> {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    
@@ -240,7 +241,8 @@ export function placeBuilding(tribe: Tribe, layer: Layer, position: Point, rotat
       case EntityType.fenceGate: config = createFenceGateConfig(tribe, connectionInfo); break;
       case EntityType.frostshaper: config = createFrostshaperConfig(tribe, connectionInfo); break;
       case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, connectionInfo); break;
-      case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood);
+      case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood); break;
+      case EntityType.fireTorch: config = createFireTorchConfig(tribe, connectionInfo); break;
    }
    
    config.components[ServerComponentType.transform].position.x = position.x;
@@ -249,7 +251,7 @@ export function placeBuilding(tribe: Tribe, layer: Layer, position: Point, rotat
    createEntity(config, layer, 0);
 }
 
-export function useItem(tribeMember: EntityID, item: Item, inventoryName: InventoryName, itemSlot: number): void {
+export function useItem(tribeMember: Entity, item: Item, inventoryName: InventoryName, itemSlot: number): void {
    const itemCategory = ITEM_TYPE_RECORD[item.type];
 
    const inventoryComponent = InventoryComponentArray.getComponent(tribeMember);
@@ -310,7 +312,7 @@ export function useItem(tribeMember: EntityID, item: Item, inventoryName: Invent
          const limb = inventoryUseComponent.getLimbInfo(inventoryName)
          
          healEntity(tribeMember, itemInfo.healAmount, tribeMember);
-         consumeItemFromSlot(inventory, itemSlot, 1);
+         consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
 
          limb.lastEatTicks = getGameTicks();
 
@@ -350,7 +352,7 @@ export function useItem(tribeMember: EntityID, item: Item, inventoryName: Invent
          placeBuilding(tribeComponent.tribe, getEntityLayer(tribeMember), placeInfo.position, placeInfo.rotation, placeInfo.entityType, structureInfo, placeInfo.hitboxes);
 
          const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
-         consumeItemFromSlot(inventory, itemSlot, 1);
+         consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
 
          break;
       }
@@ -485,7 +487,7 @@ export function useItem(tribeMember: EntityID, item: Item, inventoryName: Invent
          config.components[ServerComponentType.physics].externalVelocity.y = entityPhysicsComponent.selfVelocity.y + entityPhysicsComponent.externalVelocity.y + velocityMagnitude * Math.cos(transformComponent.rotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
-         consumeItemFromSlot(inventory, itemSlot, 1);
+         consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
 
          // Once thrown, the limb goes back to doing nothing
          limbInfo.action = LimbAction.none;
@@ -528,7 +530,7 @@ export function useItem(tribeMember: EntityID, item: Item, inventoryName: Invent
    }
 }
 
-export function tribeMemberCanPickUpItem(tribeMember: EntityID, itemType: ItemType): boolean {
+export function tribeMemberCanPickUpItem(tribeMember: Entity, itemType: ItemType): boolean {
    const inventoryComponent = InventoryComponentArray.getComponent(tribeMember);
    const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
@@ -547,7 +549,7 @@ export function tribeMemberCanPickUpItem(tribeMember: EntityID, itemType: ItemTy
    return false;
 }
 
-export function onTribeMemberHurt(tribeMember: EntityID, attackingEntity: EntityID): void {
+export function onTribeMemberHurt(tribeMember: Entity, attackingEntity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(tribeMember);
    tribeComponent.tribe.addAttackingEntity(attackingEntity);
    
@@ -562,11 +564,11 @@ export function entityIsTribesman(entityType: EntityType): boolean {
    return entityType === EntityType.player || entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior;
 }
 
-export function wasTribeMemberKill(attackingEntity: EntityID | null): boolean {
+export function wasTribeMemberKill(attackingEntity: Entity | null): boolean {
    return attackingEntity !== null && TribeComponentArray.hasComponent(attackingEntity);
 }
 
-const blueprintTypeMatchesBuilding = (structure: EntityID, blueprintType: BlueprintType): boolean => {
+const blueprintTypeMatchesBuilding = (structure: Entity, blueprintType: BlueprintType): boolean => {
    const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
 
    const entityType = getEntityType(structure)!;
@@ -629,7 +631,7 @@ const blueprintTypeMatchesBuilding = (structure: EntityID, blueprintType: Bluepr
 }
 
 // @Hack
-const getFenceGatePlaceDirection = (fence: EntityID): number | null => {
+const getFenceGatePlaceDirection = (fence: Entity): number | null => {
    const structureComponent = StructureComponentArray.getComponent(fence);
 
    // Top and bottom fence connections
@@ -646,7 +648,7 @@ const getFenceGatePlaceDirection = (fence: EntityID): number | null => {
    return transformComponent.rotation + normalDirectionOffset;
 }
 
-export function placeBlueprint(tribeMember: EntityID, structure: EntityID, blueprintType: BlueprintType, dynamicRotation: number): void {
+export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprintType: BlueprintType, dynamicRotation: number): void {
    if (!blueprintTypeMatchesBuilding(structure, blueprintType)) {
       return;
    }
@@ -703,7 +705,7 @@ export function placeBlueprint(tribeMember: EntityID, structure: EntityID, bluep
          config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
          
-         consumeItemType(inventoryComponent, upgradeMaterialItemType, 5);
+         consumeItemType(tribeMember, inventoryComponent, upgradeMaterialItemType, 5);
          break;
       }
       case BlueprintType.warriorHutUpgrade: {
@@ -724,8 +726,8 @@ export function placeBlueprint(tribeMember: EntityID, structure: EntityID, bluep
          config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
 
-         consumeItemType(inventoryComponent, ItemType.rock, 25);
-         consumeItemType(inventoryComponent, ItemType.wood, 15);
+         consumeItemType(tribeMember, inventoryComponent, ItemType.rock, 25);
+         consumeItemType(tribeMember, inventoryComponent, ItemType.wood, 15);
 
          break;
       }
@@ -756,12 +758,12 @@ export function placeBlueprint(tribeMember: EntityID, structure: EntityID, bluep
          config.components[ServerComponentType.transform].rotation = rotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
 
-         consumeItemType(inventoryComponent, ItemType.wood, 5);
+         consumeItemType(tribeMember, inventoryComponent, ItemType.wood, 5);
       }
    }
 }
 
-export function getAvailableCraftingStations(tribeMember: EntityID): ReadonlyArray<CraftingStation> {
+export function getAvailableCraftingStations(tribeMember: Entity): ReadonlyArray<CraftingStation> {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    const layer = getEntityLayer(tribeMember);
    
@@ -806,7 +808,7 @@ export function getAvailableCraftingStations(tribeMember: EntityID): ReadonlyArr
 
 // @Cleanup: why need 2?
 
-export function onTribeMemberCollision(tribesman: EntityID, collidingEntity: EntityID): void {
+export function onTribeMemberCollision(tribesman: Entity, collidingEntity: Entity): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.berryBush || collidingEntityType === EntityType.tree) {
       const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
@@ -814,7 +816,7 @@ export function onTribeMemberCollision(tribesman: EntityID, collidingEntity: Ent
    }
 }
 
-export function throwItem(tribesman: EntityID, inventoryName: InventoryName, itemSlot: number, dropAmount: number, throwDirection: number): void {
+export function throwItem(tribesman: Entity, inventoryName: InventoryName, itemSlot: number, dropAmount: number, throwDirection: number): void {
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const inventory = getInventory(inventoryComponent, inventoryName);
 
@@ -827,7 +829,7 @@ export function throwItem(tribesman: EntityID, inventoryName: InventoryName, ite
    const tribesmanPhysicsComponent = PhysicsComponentArray.getComponent(tribesman);
    
    const itemType = item.type;
-   const amountRemoved = consumeItemFromSlot(inventory, itemSlot, dropAmount);
+   const amountRemoved = consumeItemFromSlot(tribesman, inventory, itemSlot, dropAmount);
 
    const dropPosition = transformComponent.position.copy();
    dropPosition.x += Vars.ITEM_THROW_OFFSET * Math.sin(throwDirection);

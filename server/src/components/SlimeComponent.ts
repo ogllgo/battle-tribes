@@ -1,11 +1,11 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType, SlimeSize } from "battletribes-shared/entities";
+import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { SLIME_MAX_MERGE_WANT, SLIME_MERGE_TIME, SLIME_MERGE_WEIGHTS, SLIME_RADII, SLIME_SPEED_MULTIPLIERS, SPIT_CHARGE_TIME_TICKS, SPIT_COOLDOWN_TICKS, SlimeEntityAnger } from "../entities/mobs/slime";
 import Layer from "../Layer";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { Biome, TileType } from "battletribes-shared/tiles";
+import { TileType } from "battletribes-shared/tiles";
 import { randInt, UtilVars } from "battletribes-shared/utils";
 import { turnAngle, stopEntity } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
@@ -17,6 +17,7 @@ import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "./ItemComponent";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -72,12 +73,12 @@ export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComp
    addDataToPacket: addDataToPacket
 });
 
-const updateAngerTarget = (slime: EntityID): EntityID | null => {
+const updateAngerTarget = (slime: Entity): Entity | null => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
 
    // Target the entity which the slime is angry with the most
    let maxAnger = 0;
-   let target: EntityID;
+   let target: Entity;
    for (let i = 0; i < slimeComponent.angeredEntities.length; i++) {
       const angerInfo = slimeComponent.angeredEntities[i];
 
@@ -109,7 +110,7 @@ const updateAngerTarget = (slime: EntityID): EntityID | null => {
    return target!;
 }
 
-const createSpit = (slime: EntityID, slimeComponent: SlimeComponent): void => {
+const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const x = transformComponent.position.x + SLIME_RADII[slimeComponent.size] * Math.sin(transformComponent.rotation);
    const y = transformComponent.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(transformComponent.rotation);
@@ -125,7 +126,7 @@ const createSpit = (slime: EntityID, slimeComponent: SlimeComponent): void => {
 
 // @Incomplete @Speed: Figure out why this first faster function seemingly gets called way less than the second one
 
-const getEnemyChaseTargetID = (slime: EntityID): number => {
+const getEnemyChaseTargetID = (slime: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
@@ -154,7 +155,7 @@ const getEnemyChaseTargetID = (slime: EntityID): number => {
    return closestEnemyID;
 }
 
-const getChaseTargetID = (slime: EntityID): number => {
+const getChaseTargetID = (slime: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
@@ -204,7 +205,7 @@ const slimeWantsToMerge = (slimeComponent: SlimeComponent): boolean => {
    return mergeWant >= SLIME_MAX_MERGE_WANT[slimeComponent.size];
 }
 
-function onTick(slime: EntityID): void {
+function onTick(slime: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
 
@@ -292,12 +293,12 @@ function onTick(slime: EntityID): void {
    wanderAI.run(slime);
 }
 
-function preRemove(slime: EntityID): void {
+function preRemove(slime: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
    createItemsOverEntity(slime, ItemType.slimeball, randInt(...SLIME_DROP_AMOUNTS[slimeComponent.size]));
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -307,7 +308,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
    packet.addNumber(slimeComponent.size);

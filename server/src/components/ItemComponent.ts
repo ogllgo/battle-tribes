@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
 import { removeFleshSword } from "../flesh-sword-ai";
 import { ItemType } from "battletribes-shared/items/items";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityLayer } from "../world";
 import { createItemEntityConfig } from "../entities/item-entity";
@@ -21,9 +21,9 @@ export class ItemComponent {
    /** Stores which entities are on cooldown to pick up the item, and their remaining cooldowns */
    readonly entityPickupCooldowns: Partial<Record<number, number>> = {};
 
-   public throwingEntity: EntityID | null = null;
+   public throwingEntity: Entity | null = null;
 
-   constructor(itemType: ItemType, amount: number, throwingEntity: EntityID | null) {
+   constructor(itemType: ItemType, amount: number, throwingEntity: Entity | null) {
       this.itemType = itemType;
       this.amount = amount;
 
@@ -44,7 +44,7 @@ export const ItemComponentArray = new ComponentArray<ItemComponent>(ServerCompon
    addDataToPacket: addDataToPacket
 });
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    // Remove flesh sword item entities
    const itemComponent = ItemComponentArray.getComponent(entity);
    if (itemComponent.itemType === ItemType.flesh_sword) {
@@ -52,7 +52,7 @@ function onRemove(entity: EntityID): void {
    }
 }
 
-function onTick(itemEntity: EntityID): void {
+function onTick(itemEntity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
    
    // @Speed
@@ -74,12 +74,12 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(entity);
    packet.addNumber(itemComponent.itemType);
 }
 
-export function createItemsOverEntity(entity: EntityID, itemType: ItemType, amount: number): void {
+export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < amount; i++) {
       const position = getRandomPositionInEntity(transformComponent);

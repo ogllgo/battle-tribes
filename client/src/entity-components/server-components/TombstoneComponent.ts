@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DeathInfo, EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { DeathInfo, Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
@@ -102,7 +102,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tombston
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    if (tombstoneComponent.zombieSpawnProgress !== -1) {
       // Create zombie digging particles
@@ -132,7 +132,7 @@ function padData(reader: PacketReader): void {
    }
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
@@ -148,7 +148,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 4; i++) {
@@ -171,7 +171,7 @@ function onHit(entity: EntityID): void {
    playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 8; i++) {

@@ -300,6 +300,18 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    [EntityType.bracings]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
+   },
+   [EntityType.fireTorch]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.spikyBastard]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.glurb]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
    }
 };
 

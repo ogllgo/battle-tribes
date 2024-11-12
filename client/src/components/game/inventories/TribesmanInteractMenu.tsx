@@ -9,7 +9,7 @@ import Client from "../../../networking/Client";
 import { InventoryName, itemTypeIsArmour, itemTypeIsBackpack } from "battletribes-shared/items/items";
 import { TribeComponentArray } from "../../../entity-components/server-components/TribeComponent";
 import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
-import { EntityID } from "../../../../../shared/src/entities";
+import { Entity } from "../../../../../shared/src/entities";
 import { TribesmanAIComponentArray } from "../../../entity-components/server-components/TribesmanAIComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
@@ -123,7 +123,7 @@ const RelationSlider = (props: RelationSliderProps) => {
 }
 
 interface TribesmanInfocardProps {
-   readonly tribesman: EntityID;
+   readonly tribesman: Entity;
 }
 
 const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {

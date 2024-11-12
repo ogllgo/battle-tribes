@@ -1,5 +1,5 @@
 import { lerp, randFloat, randInt } from "battletribes-shared/utils";
-import { EntityID, SlimeSize } from "battletribes-shared/entities";
+import { Entity, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
@@ -143,7 +143,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.slime, n
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    const layer = getEntityLayer(entity);
@@ -188,7 +188,7 @@ function onTick(entity: EntityID): void {
    }
 }
 
-const createOrb = (slimeComponent: SlimeComponent, entity: EntityID, size: SlimeSize): void => {
+const createOrb = (slimeComponent: SlimeComponent, entity: Entity, size: SlimeSize): void => {
    const orbInfo: SlimeOrbInfo = {
       size: size,
       rotation: 2 * Math.PI * Math.random(),
@@ -224,7 +224,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numOrbs);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
    
    // @Incomplete: change render parts when this happens?
@@ -273,7 +273,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    }
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
@@ -290,7 +290,7 @@ function onHit(entity: EntityID): void {
    playSound("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 

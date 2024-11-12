@@ -1,4 +1,4 @@
-import { EntityID, TreeSize } from "battletribes-shared/entities";
+import { Entity, TreeSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { GrassBlockerCircle } from "battletribes-shared/grass-blockers";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -38,7 +38,7 @@ export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerCompon
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const treeComponent = TreeComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    
@@ -51,7 +51,7 @@ function onJoin(entity: EntityID): void {
    addGrassBlocker(blocker, entity);
 }
 
-function preRemove(tree: EntityID): void {
+function preRemove(tree: Entity): void {
    const treeComponent = TreeComponentArray.getComponent(tree);
 
    createItemsOverEntity(tree, ItemType.wood, randInt(...WOOD_DROP_AMOUNTS[treeComponent.treeSize]));
@@ -66,7 +66,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const treeComponent = TreeComponentArray.getComponent(entity);
    packet.addNumber(treeComponent.treeSize);
 }

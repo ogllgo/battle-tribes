@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { Light, attachLightToEntity, createLight } from "../../lights";
 import { createGenericGemParticle } from "../../particles";
@@ -31,7 +31,7 @@ function createComponent(): GuardianSpikyBallComponent {
    return {};
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const renderPart = new TexturedRenderPart(
       null,
       0,
@@ -61,7 +61,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("guardian-spiky-ball-death.mp3", 0.4, 1, transformComponent.position);
 

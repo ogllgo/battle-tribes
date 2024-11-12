@@ -3,7 +3,7 @@ import { Point, customTickIntervalHasPassed, lerp, randInt } from "battletribes-
 import { Settings } from "battletribes-shared/settings";
 import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import Board from "../../Board";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { playSound } from "../../sound";
@@ -47,7 +47,7 @@ export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsCompon
    physicsComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
 }
 
-const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): void => {
+const applyPhysics = (physicsComponent: PhysicsComponent, entity: Entity): void => {
    if (isNaN(physicsComponent.selfVelocity.x)) {
       throw new Error("Self velocity was NaN.");
    }
@@ -88,8 +88,10 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): voi
    // Apply river flow to external velocity
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
-      physicsComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection);
-      physicsComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection);
+      if (flowDirection > 0) {
+         physicsComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
+         physicsComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
+      }
    }
 
    let shouldUpdate = false;
@@ -148,7 +150,7 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: EntityID): voi
    }
 }
 
-const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: EntityID): void => {
+const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    for (const hitbox of transformComponent.hitboxes) {
@@ -223,7 +225,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.physics,
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -267,7 +269,7 @@ function onTick(entity: EntityID): void {
    }
 }
 
-function onUpdate(entity: EntityID): void {
+function onUpdate(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    applyPhysics(physicsComponent, entity);
@@ -284,7 +286,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    physicsComponent.selfVelocity.x = reader.readNumber();

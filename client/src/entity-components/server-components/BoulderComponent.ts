@@ -1,7 +1,7 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -75,7 +75,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 2; i++) {
@@ -96,7 +96,7 @@ function onHit(entity: EntityID): void {
    playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < 5; i++) {

@@ -1,6 +1,6 @@
 import { distance } from "battletribes-shared/utils";
 import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbSize } from "battletribes-shared/research";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Board from "./Board";
@@ -32,7 +32,7 @@ const ORB_NUM_PARTICLES = [2, 4, 7];
 const ORB_COMPLETE_SOUND_PITCHES = [1, 0.85, 0.7];
 const ORB_PARTICLES_PER_SECOND = [2, 3.5, 6];
 
-const generateResearchOrb = (researchBench: EntityID): ResearchOrb => {
+const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
    const transformComponent = TransformComponentArray.getComponent(researchBench);
 
    const position = getRandomPointInEntity(transformComponent);

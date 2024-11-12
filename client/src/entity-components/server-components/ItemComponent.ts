@@ -3,7 +3,7 @@ import { createDeepFrostHeartBloodParticles } from "../../particles";
 import { ItemType } from "battletribes-shared/items/items";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
@@ -58,7 +58,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.item, ne
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(entity);
    
    // Make the deep frost heart item spew blue blood particles

@@ -156,6 +156,9 @@ export function createEntityShaders(): void {
       } else {
          outputColour.a *= v_opacity;
       }
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
 

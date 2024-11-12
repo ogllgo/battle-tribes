@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getHoveredEntityID } from "../../entity-selection";
 import { calculateStructurePlaceInfo } from "battletribes-shared/structures";
@@ -130,7 +130,7 @@ const calculateVertices = (renderingInfo: TurretRangeRenderingInfo): ReadonlyArr
    return vertices;
 }
 
-const getTurretItemType = (turret: EntityID): ItemType => {
+const getTurretItemType = (turret: Entity): ItemType => {
    switch (getEntityType(turret)) {
       case EntityType.ballista: return ItemType.ballista;
       case EntityType.slingTurret: return ItemType.sling_turret;

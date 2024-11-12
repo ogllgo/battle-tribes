@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TechInfo } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -19,7 +19,7 @@ const ORB_COMPLETE_TICKS = Math.floor(RESEARCH_ORB_COMPLETE_TIME * Settings.TPS)
 
 export class ResearchBenchComponent {
    public isOccupied = false;
-   public occupee: EntityID = 0;
+   public occupee: Entity = 0;
 
    // @Incomplete: reset back to id sentinel value when not looking for a bench
    /** ID of any tribemsan currently on the way to the bench to research */
@@ -37,7 +37,7 @@ export const ResearchBenchComponentArray = new ComponentArray<ResearchBenchCompo
    addDataToPacket: addDataToPacket
 });
 
-function onTick(researchBench: EntityID): void {
+function onTick(researchBench: Entity): void {
    // @Speed: This runs every tick, but this condition only activates rarely when the bench is being used.
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    if (researchBenchComponent.isOccupied) {
@@ -57,7 +57,7 @@ function onTick(researchBench: EntityID): void {
    }
 }
 
-export function attemptToOccupyResearchBench(researchBench: EntityID, researcher: EntityID): void {
+export function attemptToOccupyResearchBench(researchBench: Entity, researcher: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    if (researchBenchComponent.isOccupied) {
       return;
@@ -68,7 +68,7 @@ export function attemptToOccupyResearchBench(researchBench: EntityID, researcher
    researchBenchComponent.preemptiveOccupeeID = 0;
 }
 
-export function deoccupyResearchBench(researchBench: EntityID, researcher: EntityID): void {
+export function deoccupyResearchBench(researchBench: Entity, researcher: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    if (researcher !== researchBenchComponent.occupee) {
       return;
@@ -79,25 +79,25 @@ export function deoccupyResearchBench(researchBench: EntityID, researcher: Entit
    researchBenchComponent.orbCompleteProgressTicks = 0;
 }
 
-export function canResearchAtBench(researchBench: EntityID, researcher: EntityID): boolean {
+export function canResearchAtBench(researchBench: Entity, researcher: Entity): boolean {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    return researchBenchComponent.occupee === researcher;
 }
 
 /** Whether or not a tribesman should try to mvoe to research at this bench */
-export function shouldMoveToResearchBench(researchBench: EntityID, researcher: EntityID): boolean {
+export function shouldMoveToResearchBench(researchBench: Entity, researcher: Entity): boolean {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
 
    // Try to move if it isn't occupied and isn't being preemprively moved to by another tribesman
    return !researchBenchComponent.isOccupied && (researchBenchComponent.preemptiveOccupeeID === 0 || researchBenchComponent.preemptiveOccupeeID === researcher);
 }
 
-export function markPreemptiveMoveToBench(researchBench: EntityID, researcher: EntityID): void {
+export function markPreemptiveMoveToBench(researchBench: Entity, researcher: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
    researchBenchComponent.preemptiveOccupeeID = researcher;
 }
 
-const getResearchTimeMultiplier = (researcher: EntityID): number => {
+const getResearchTimeMultiplier = (researcher: Entity): number => {
    let multiplier = 1;
 
    if (hasTitle(researcher, TribesmanTitle.shrewd)) {
@@ -112,7 +112,7 @@ const getResearchTimeMultiplier = (researcher: EntityID): number => {
 }
 
 // @Cleanup: Should this be in tribesman.ts?
-export function continueResearching(researchBench: EntityID, researcher: EntityID, tech: TechInfo): void {
+export function continueResearching(researchBench: Entity, researcher: Entity, tech: TechInfo): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
 
    researchBenchComponent.orbCompleteProgressTicks++;
@@ -142,7 +142,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
    
    packet.addBoolean(researchBenchComponent.isOccupied);

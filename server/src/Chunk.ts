@@ -1,6 +1,6 @@
 import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { GrassBlocker } from "battletribes-shared/grass-blockers";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { distance } from "battletribes-shared/utils";
 import { surfaceLayer } from "./world";
@@ -8,10 +8,10 @@ import { surfaceLayer } from "./world";
 // @Cleanup @Memory: A lot of these properties aren't used by collision chunks
 class Chunk {
    /** Stores all entities inside the chunk */
-   public readonly entities = new Array<EntityID>();
+   public readonly entities = new Array<Entity>();
 
    /** Stores all mobs which have the chunk in their vision range */
-   public readonly viewingEntities = new Array<EntityID>();
+   public readonly viewingEntities = new Array<Entity>();
 
    public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 

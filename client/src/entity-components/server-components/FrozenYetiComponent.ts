@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, FrozenYetiAttackType } from "battletribes-shared/entities";
+import { Entity, FrozenYetiAttackType } from "battletribes-shared/entities";
 import { angle, lerp, randFloat, randInt } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { BloodParticleSize, createBiteParticle, createBlueBloodParticle, createBlueBloodParticleFountain, createBlueBloodPoolParticle, createRockParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
@@ -209,7 +209,7 @@ const createRoarParticles = (transformComponent: TransformComponent): void => {
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    if (playerInstance === null) {
       return;
    }
@@ -454,7 +454,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numRockSpikes);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
    const attackType = reader.readNumber();
@@ -500,7 +500,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    frozenYetiComponent.stageProgress = stageProgress;
 }
 
-function onHit(entity: EntityID, hitData: HitData): void {
+function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Blood pool particle
@@ -516,7 +516,7 @@ function onHit(entity: EntityID, hitData: HitData): void {
    }
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    for (let i = 0; i < 4; i++) {

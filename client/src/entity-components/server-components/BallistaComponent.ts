@@ -4,7 +4,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, BALLISTA_GEAR_X, BALLISTA_GEAR_Y } from "../../utils";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { randItem } from "../../../../shared/src/utils";
 import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS } from "../../sound";
@@ -109,14 +109,14 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // @Temporary
    playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // @Temporary

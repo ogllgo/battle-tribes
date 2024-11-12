@@ -1,5 +1,5 @@
 import { HitFlags } from "battletribes-shared/client-server-types";
-import { EntityID, LimbAction, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, LimbAction, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { AttackEffectiveness, calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsTool, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
@@ -29,7 +29,7 @@ const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
 }
 
-const isBerryBushWithBerries = (entity: EntityID): boolean => {
+const isBerryBushWithBerries = (entity: Entity): boolean => {
    switch (getEntityType(entity)) {
       case EntityType.berryBush: {
          const berryBushComponent = BerryBushComponentArray.getComponent(entity);
@@ -45,7 +45,7 @@ const isBerryBushWithBerries = (entity: EntityID): boolean => {
    }
 }
 
-const isBerryBush = (entity: EntityID): boolean => {
+const isBerryBush = (entity: Entity): boolean => {
    switch (getEntityType(entity)) {
       case EntityType.berryBush: {
          return true;
@@ -60,7 +60,7 @@ const isBerryBush = (entity: EntityID): boolean => {
    }
 }
 
-const getPlantGatherAmount = (tribeman: EntityID, plant: EntityID, gloves: Item | null): number => {
+const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | null): number => {
    let amount = 1;
 
    if (hasTitle(tribeman, TribesmanTitle.berrymuncher) && isBerryBush(plant)) {
@@ -84,7 +84,7 @@ const getPlantGatherAmount = (tribeman: EntityID, plant: EntityID, gloves: Item 
    return amount;
 }
 
-const gatherPlant = (plant: EntityID, attacker: EntityID, gloves: Item | null): void => {
+const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
    const plantTransformComponent = TransformComponentArray.getComponent(plant);
    
    if (isBerryBushWithBerries(plant)) {
@@ -158,7 +158,7 @@ export function calculateItemKnockback(item: Item | null, attackIsBlocked: boole
 }
 
 // @Cleanup: (?) Pass in the item to use directly instead of passing in the item slot and inventory name
-export function attemptAttack(attacker: EntityID, victim: EntityID, limbInfo: LimbInfo): boolean {
+export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbInfo): boolean {
    // @Cleanup: instead use getHeldItem
    // Find the selected item
    let item: Item | undefined | null = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
@@ -211,7 +211,7 @@ export function attemptAttack(attacker: EntityID, victim: EntityID, limbInfo: Li
    return true;
 }
 
-export function beginSwing(attackingEntity: EntityID, itemSlot: number, inventoryName: InventoryName): boolean {
+export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryName: InventoryName): boolean {
    // Global attack cooldown
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(attackingEntity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
@@ -287,10 +287,10 @@ const getEntityAttackPriority = (entityType: EntityType): number => {
 }
 
 // @Cleanup: Not just for tribe members, move to different file
-export function calculateAttackTarget(tribeMember: EntityID, targetEntities: ReadonlyArray<EntityID>, attackableEntityRelationshipMask: number): EntityID | null {
+export function calculateAttackTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>, attackableEntityRelationshipMask: number): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    
-   let closestEntity: EntityID | null = null;
+   let closestEntity: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;
    let maxAttackPriority = 0;
    for (const targetEntity of targetEntities) {
@@ -332,10 +332,10 @@ export function calculateAttackTarget(tribeMember: EntityID, targetEntities: Rea
 }
 
 
-export function calculateRepairTarget(tribeMember: EntityID, targetEntities: ReadonlyArray<EntityID>): EntityID | null {
+export function calculateRepairTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
 
-   let closestEntity: EntityID | null = null;
+   let closestEntity: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const targetEntity of targetEntities) {
       // Don't attack entities without health components
@@ -369,10 +369,10 @@ export function calculateRepairTarget(tribeMember: EntityID, targetEntities: Rea
 }
 
 
-export function calculateBlueprintWorkTarget(tribeMember: EntityID, targetEntities: ReadonlyArray<EntityID>): EntityID | null {
+export function calculateBlueprintWorkTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
 
-   let closestEntity: EntityID | null = null;
+   let closestEntity: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const targetEntity of targetEntities) {
       // Don't attack entities without health components

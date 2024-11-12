@@ -6,7 +6,7 @@ import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
 import { getEntityLayer } from "../../world";
 import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../server-components/TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -60,7 +60,7 @@ function createComponent(entityConfig: EntityConfig<never, ClientComponentType.f
    }
 }
 
-const createFootstepSound = (entity: EntityID): void => {
+const createFootstepSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    
@@ -91,7 +91,7 @@ const createFootstepSound = (entity: EntityID): void => {
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const footprintComponent = FootprintComponentArray.getComponent(entity);

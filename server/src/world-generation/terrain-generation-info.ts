@@ -1,4 +1,5 @@
-import { TileType, Biome, SubtileType } from "battletribes-shared/tiles";
+import { TileType, SubtileType } from "battletribes-shared/tiles";
+import { Biome } from "../../../shared/src/biomes";
 
 export interface TileGenerationRequirements {
    readonly noise?: {
@@ -51,7 +52,7 @@ export const BIOME_GENERATION_PRIORITY = [
    Biome.grasslands
 ];
 
-const BIOME_GENERATION_INFO: Record<Biome, BiomeGenerationInfo> = {
+const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
    [Biome.magmaFields]: {
       spawnRequirements: null,
       floorTiles: [

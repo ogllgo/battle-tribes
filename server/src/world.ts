@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { tickTribes } from "./ai-tribe-building/ai-building";
 import Layer from "./Layer";
@@ -37,16 +37,16 @@ let ticks = 0;
 /** The time of day the server is currently in. Interval: [0, 24) */
 let time = Vars.START_TIME;
 
-const entityTypes: Partial<Record<EntityID, EntityType>> = {};
-const entityLayers: Partial<Record<EntityID, Layer>> = {};
-const entitySpawnTicks: Partial<Record<EntityID, number>> = {};
-const entityComponentTypes: Partial<Record<EntityID, ReadonlyArray<ServerComponentType>>> = {};
+const entityTypes: Partial<Record<Entity, EntityType>> = {};
+const entityLayers: Partial<Record<Entity, Layer>> = {};
+const entitySpawnTicks: Partial<Record<Entity, number>> = {};
+const entityComponentTypes: Partial<Record<Entity, ReadonlyArray<ServerComponentType>>> = {};
 
 const tribes = new Array<Tribe>();
 
 // Array of join infos, sorted by the ticks remaining until they join.
 const entityJoinBuffer = new Array<EntityJoinInfo>();
-const entityRemoveBuffer = new Array<EntityID>();
+const entityRemoveBuffer = new Array<Entity>();
 
 export function createLayers(surfaceTerrainGenerationInfo: TerrainGenerationInfo, undergroundTerrainGenerationInfo: TerrainGenerationInfo): void {
    surfaceLayer = new Layer(surfaceTerrainGenerationInfo);
@@ -119,20 +119,20 @@ export function tickGameTime(): void {
    }
 }
 
-export function getEntityType(entity: EntityID): EntityType | undefined {
+export function getEntityType(entity: Entity): EntityType | undefined {
    return entityTypes[entity];
 }
 
 /** Cleanup: obscure, only used in 1 situation. Rework so we can remove this */
-export function validateEntity(entity: EntityID): EntityID | 0 {
+export function validateEntity(entity: Entity): Entity | 0 {
    return typeof entityTypes[entity] !== "undefined" ? entity : 0;
 }
 
-export function entityExists(entity: EntityID): boolean {
+export function entityExists(entity: Entity): boolean {
    return typeof entityTypes[entity] !== "undefined";
 }
 
-export function getEntityLayer(entity: EntityID): Layer {
+export function getEntityLayer(entity: Entity): Layer {
    const layer = entityLayers[entity];
    if (typeof layer === "undefined") {
       throw new Error("Entity doesn't exist!");
@@ -140,14 +140,14 @@ export function getEntityLayer(entity: EntityID): Layer {
    return layer;
 }
 
-export function getEntityAgeTicks(entity: EntityID): number {
+export function getEntityAgeTicks(entity: Entity): number {
    if (typeof entitySpawnTicks[entity] === "undefined") {
       throw new Error();
    }
    return ticks - entitySpawnTicks[entity]!;
 }
 
-export function getEntitySpawnTicks(entity: EntityID): number {
+export function getEntitySpawnTicks(entity: Entity): number {
    const spawnTicks = entitySpawnTicks[entity];
    if (typeof spawnTicks === "undefined") {
       throw new Error("Entity doesn't exist!");
@@ -155,7 +155,7 @@ export function getEntitySpawnTicks(entity: EntityID): number {
    return spawnTicks;
 }
 
-export function getEntityComponentTypes(entity: EntityID): ReadonlyArray<ServerComponentType> {
+export function getEntityComponentTypes(entity: Entity): ReadonlyArray<ServerComponentType> {
    return entityComponentTypes[entity]!;
 }
 
@@ -246,11 +246,11 @@ export function destroyFlaggedEntities(): void {
    entityRemoveBuffer.length = 0;
 }
 
-export function entityIsFlaggedForDestruction(entity: EntityID): boolean {
+export function entityIsFlaggedForDestruction(entity: Entity): boolean {
    return entityRemoveBuffer.indexOf(entity) !== -1;
 }
 
-export function destroyEntity(entity: EntityID): void {
+export function destroyEntity(entity: Entity): void {
    // @Temporary
    const entityType = getEntityType(entity);
    if (typeof entityType === "undefined") {
@@ -285,7 +285,7 @@ export function destroyEntity(entity: EntityID): void {
    }
 }
 
-export function addEntityToJoinBuffer(entity: EntityID, entityType: EntityType, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
+export function addEntityToJoinBuffer(entity: Entity, entityType: EntityType, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
    // Find a spot for the entity
    
    const joinInfo: EntityJoinInfo = {
@@ -308,7 +308,7 @@ export function addEntityToJoinBuffer(entity: EntityID, entityType: EntityType, 
    entityJoinBuffer.splice(insertIdx, 0, joinInfo);
 }
 
-export function updateEntities(): void {
+export function tickEntities(): void {
    const gameTicks = getGameTicks();
    for (const componentArray of ComponentArrays) {
       if (typeof componentArray.onTick !== "undefined" && gameTicks % componentArray.onTick.tickInterval === 0) {
@@ -323,7 +323,7 @@ export function updateEntities(): void {
    }
 }
 
-export function changeEntityLayer(entity: EntityID, newLayer: Layer): void {
+export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const previousLayer = getEntityLayer(entity);
 

@@ -2,7 +2,7 @@ import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/compon
 import { ComponentArray } from "./ComponentArray";
 import { PlantComponentArray } from "./PlantComponent";
 import { Settings } from "battletribes-shared/settings";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createPlantConfig } from "../entities/plant";
 import { createEntity } from "../Entity";
@@ -14,7 +14,7 @@ const enum Vars {
 }
 
 export class PlanterBoxComponent {
-   public plantEntity: EntityID = 0;
+   public plantEntity: Entity = 0;
    public remainingFertiliserTicks = 0;
 
    /** Plant type that AI tribesman will attempt to place in the planter box */
@@ -31,7 +31,7 @@ export const PlanterBoxComponentArray = new ComponentArray<PlanterBoxComponent>(
    addDataToPacket: addDataToComponent
 });
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    // When a planter box is destroyed, destroy the plant that was in it
    
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
@@ -40,7 +40,7 @@ function onRemove(entity: EntityID): void {
    destroyEntity(plant);
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    if (planterBoxComponent.remainingFertiliserTicks > 0) {
       planterBoxComponent.remainingFertiliserTicks--;
@@ -51,7 +51,7 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToComponent(packet: Packet, entity: EntityID): void {
+function addDataToComponent(packet: Packet, entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    
    let plantType = -1;
@@ -68,7 +68,7 @@ function addDataToComponent(packet: Packet, entity: EntityID): void {
    packet.padOffset(3);
 }
 
-export function placePlantInPlanterBox(planterBox: EntityID, plantType: PlanterBoxPlant): void {
+export function placePlantInPlanterBox(planterBox: Entity, plantType: PlanterBoxPlant): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
 

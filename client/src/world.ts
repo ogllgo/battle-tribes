@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../shared/src/components";
-import { EntityID, EntityType } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
 import Chunk from "./Chunk";
@@ -9,8 +9,7 @@ import { ServerComponentParams } from "./entity-components/components";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
 import { removeLightsAttachedToEntity, removeLightsAttachedToRenderPart } from "./lights";
-import { thingIsVisualRenderPart } from "./render-parts/render-parts";
-import { registerDirtyRenderInfo, registerDirtyRenderPosition, removeEntityFromDirtyArrays } from "./rendering/render-part-matrices";
+import { registerDirtyRenderInfo, removeEntityFromDirtyArrays } from "./rendering/render-part-matrices";
 import { getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
@@ -22,7 +21,7 @@ export interface EntityCreationInfo {
 // Doing it this way by importing the value directly (instead of calling a function to get it) will cause some overhead when accessing it,
 // but this is in the client so these optimisations are less important. The ease-of-use is worth it
 /** The player entity associated with the current player. If null, then the player is dead */
-export let playerInstance: EntityID | null = null;
+export let playerInstance: Entity | null = null;
 
 export const layers = new Array<Layer>();
 
@@ -30,12 +29,12 @@ export let surfaceLayer: Layer;
 export let undergroundLayer: Layer;
 let currentLayer: Layer;
 
-const entityTypes: Partial<Record<EntityID, EntityType>> = {};
-const entitySpawnTicks: Partial<Record<EntityID, number>> = {};
-const entityLayers: Partial<Record<EntityID, Layer>> = {};
-const entityRenderInfos: Partial<Record<EntityID, EntityRenderInfo>> = {};
+const entityTypes: Partial<Record<Entity, EntityType>> = {};
+const entitySpawnTicks: Partial<Record<Entity, number>> = {};
+const entityLayers: Partial<Record<Entity, Layer>> = {};
+const entityRenderInfos: Partial<Record<Entity, EntityRenderInfo>> = {};
 
-export function setPlayerInstance(entity: EntityID | null): void {
+export function setPlayerInstance(entity: Entity | null): void {
    playerInstance = entity;
 }
 
@@ -57,18 +56,18 @@ export function getCurrentLayer(): Layer {
    return currentLayer;
 }
 
-export function getEntityAgeTicks(entity: EntityID): number {
+export function getEntityAgeTicks(entity: Entity): number {
    if (typeof entitySpawnTicks[entity] === "undefined") {
       throw new Error();
    }
    return Board.serverTicks - entitySpawnTicks[entity]!;
 }
 
-export function getEntityLayer(entity: EntityID): Layer {
+export function getEntityLayer(entity: Entity): Layer {
    return entityLayers[entity]!;
 }
 
-export function getEntityType(entity: EntityID): EntityType {
+export function getEntityType(entity: Entity): EntityType {
    const entityType = entityTypes[entity];
    if (typeof entityType === "undefined") {
       throw new Error("Entity '" + entity + "' does not exist");
@@ -76,15 +75,15 @@ export function getEntityType(entity: EntityID): EntityType {
    return entityType;
 }
 
-export function getEntityRenderInfo(entity: EntityID): EntityRenderInfo {
+export function getEntityRenderInfo(entity: Entity): EntityRenderInfo {
    return entityRenderInfos[entity]!;
 }
 
-export function entityExists(entity: EntityID): boolean {
+export function entityExists(entity: Entity): boolean {
    return typeof entityLayers[entity] !== "undefined";
 }
 
-export function registerBasicEntityInfo(entity: EntityID, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo): void {
+export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo): void {
    entityTypes[entity] = entityType;
    entitySpawnTicks[entity] = spawnTicks;
    entityLayers[entity] = layer;
@@ -107,7 +106,7 @@ export interface EntityPreCreationInfo {
 }
 
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
-export function createEntity(entity: EntityID, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo): EntityCreationInfo {
+export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo): EntityCreationInfo {
    const renderLayer = getEntityRenderLayer(entityType, preCreationInfo);
    const renderInfo = new EntityRenderInfo(entity, renderLayer);
    
@@ -173,7 +172,7 @@ export function createEntity(entity: EntityID, entityType: EntityType, layer: La
    };
 }
 
-export function removeEntity(entity: EntityID, isDeath: boolean): void {
+export function removeEntity(entity: Entity, isDeath: boolean): void {
    const renderInfo = getEntityRenderInfo(entity);
    
    const layer = getEntityLayer(entity);
@@ -198,9 +197,7 @@ export function removeEntity(entity: EntityID, isDeath: boolean): void {
 
    for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
       const renderPart = renderInfo.allRenderThings[i];
-      if (thingIsVisualRenderPart(renderPart)) {
-         removeLightsAttachedToRenderPart(renderPart.id);
-      }
+      removeLightsAttachedToRenderPart(renderPart);
    }
 
    const componentArrays = getComponentArrays();
@@ -226,7 +223,7 @@ export function removeEntity(entity: EntityID, isDeath: boolean): void {
    delete entityRenderInfos[entity];
 }
 
-export function changeEntityLayer(entity: EntityID, newLayer: Layer): void {
+export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const previousLayer = getEntityLayer(entity);
 

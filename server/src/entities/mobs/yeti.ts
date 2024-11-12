@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityType, PlayerCauseOfDeath, EntityID } from "battletribes-shared/entities";
-import { Point, TileIndex } from "battletribes-shared/utils";
+import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { Point } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
@@ -16,7 +16,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { Biome } from "battletribes-shared/tiles";
+import { Biome } from "battletribes-shared/biomes";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 
@@ -39,7 +39,7 @@ export enum SnowThrowStage {
    return
 }
 
-function positionIsValidCallback(entity: EntityID, layer: Layer, x: number, y: number): boolean {
+function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
    const tileX = Math.floor(x / Settings.TILE_SIZE);
    const tileY = Math.floor(y / Settings.TILE_SIZE);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
@@ -78,7 +78,7 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-export function onYetiCollision(yeti: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onYetiCollision(yeti: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Don't damage ice spikes
@@ -115,7 +115,7 @@ export function onYetiCollision(yeti: EntityID, collidingEntity: EntityID, colli
    }
 }
 
-export function onYetiHurt(yeti: EntityID, attackingEntity: EntityID, damage: number): void {
+export function onYetiHurt(yeti: Entity, attackingEntity: Entity, damage: number): void {
    const yetiComponent = YetiComponentArray.getComponent(yeti);
 
    const attackingEntityInfo = yetiComponent.attackingEntities[attackingEntity];

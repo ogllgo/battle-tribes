@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
@@ -14,7 +14,7 @@ import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "
 import { HealthComponentArray } from "./HealthComponent";
 
 interface DamageBoxCollisionInfo {
-   readonly collidingEntity: EntityID;
+   readonly collidingEntity: Entity;
    readonly collidingDamageBox: ServerDamageBox;
 }
 
@@ -53,7 +53,7 @@ export const DamageBoxComponentArray = new ComponentArray<DamageBoxComponent>(Se
 });
 
 // @Hack: this whole thing is cursed
-const getCollidingCollisionBox = (entity: EntityID, blockBox: ServerBlockBox): DamageBoxCollisionInfo | null => {
+const getCollidingCollisionBox = (entity: Entity, blockBox: ServerBlockBox): DamageBoxCollisionInfo | null => {
    const layer = getEntityLayer(entity);
    
    // @Hack
@@ -87,7 +87,7 @@ const getCollidingCollisionBox = (entity: EntityID, blockBox: ServerBlockBox): D
    return null;
 }
 
-const shouldRepairBuilding = (entity: EntityID, comparingEntity: EntityID): boolean => {
+const shouldRepairBuilding = (entity: Entity, comparingEntity: Entity): boolean => {
    if (getEntityRelationship(entity, comparingEntity) !== EntityRelationship.friendlyBuilding) {
       return false;
    }
@@ -102,7 +102,7 @@ const shouldRepairBuilding = (entity: EntityID, comparingEntity: EntityID): bool
    return healthComponent.health < healthComponent.maxHealth;
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const layer = getEntityLayer(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
@@ -195,7 +195,7 @@ function onTick(entity: EntityID): void {
    }
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
 
    let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
@@ -218,7 +218,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    // @Speed: can be made faster if we pre-filter which damage boxes are circular and rectangular
    
    const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);

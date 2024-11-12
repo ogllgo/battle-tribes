@@ -7,8 +7,8 @@ import Tribe, { BuildingPlan } from "../Tribe";
 import { EntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { TribesmanGoal } from "../entities/tribes/tribesman-ai/tribesman-goals";
 import { CRAFTING_RECIPES } from "battletribes-shared/items/crafting-recipes";
-import { Item, ItemType } from "battletribes-shared/items/items";
-import { EntityID } from "battletribes-shared/entities";
+import { ItemType } from "battletribes-shared/items/items";
+import { Entity } from "battletribes-shared/entities";
 import { tickTribesman } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
@@ -93,7 +93,8 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.stonecarvingTable]: 6,
    [ItemType.woodenShield]: 3,
    [ItemType.slingshot]: 1,
-   [ItemType.woodenBracings]: 1
+   [ItemType.woodenBracings]: 1,
+   [ItemType.fireTorch]: 1
 };
 
 export const enum TribesmanPathType {
@@ -105,7 +106,7 @@ export const enum TribesmanPathType {
 
 export class TribesmanAIComponent {
    /** ID of the hut which spawned the tribesman */
-   public hut: EntityID = 0;
+   public hut: Entity = 0;
 
    public currentAIType = TribesmanAIType.idle;
    
@@ -162,7 +163,7 @@ export const TribesmanAIComponentArray = new ComponentArray<TribesmanAIComponent
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
    tribesmanAIComponent.lastEnemyLineOfSightTicks = getGameTicks();
 }
@@ -171,7 +172,7 @@ function getDataLength(): number {
    return 7 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID, player: EntityID | null): void {
+function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
 
    let craftingProgress: number;
@@ -235,7 +236,7 @@ export function adjustTribeRelations(attackedTribe: Tribe, attackingTribe: Tribe
    }
 }
 
-export function adjustTribesmanRelationsAfterHurt(tribesman: EntityID, attackingTribesman: EntityID): void {
+export function adjustTribesmanRelationsAfterHurt(tribesman: Entity, attackingTribesman: Entity): void {
    if (!TribeComponentArray.hasComponent(attackingTribesman)) {
       return;
    }
@@ -247,7 +248,7 @@ export function adjustTribesmanRelationsAfterHurt(tribesman: EntityID, attacking
 }
 
 // @Incomplete @Bug: this doesn't do anything rn as the data is lost when the tribesman is removed. need to keep track of it across tribesman lives.
-export function adjustTribesmanRelationsAfterKill(tribesman: EntityID, attackingTribesman: EntityID): void {
+export function adjustTribesmanRelationsAfterKill(tribesman: Entity, attackingTribesman: Entity): void {
    if (!TribeComponentArray.hasComponent(attackingTribesman)) {
       return;
    }
@@ -258,12 +259,12 @@ export function adjustTribesmanRelationsAfterKill(tribesman: EntityID, attacking
    adjustTribeRelations(tribeComponent.tribe, otherTribeComponent.tribe, tribesman, -200, -200);
 }
 
-export function adjustTribesmanRelationsAfterGift(tribesman: EntityID, giftingTribesman: EntityID, giftItemType: ItemType, giftItemAmount: number): void {
+export function adjustTribesmanRelationsAfterGift(tribesman: Entity, giftingTribesman: Entity, giftItemType: ItemType, giftItemAmount: number): void {
    const adjustment = GIFT_APPRECIATION_WEIGHTS[giftItemType] * giftItemAmount;
    adjustTribesmanRelations(tribesman, giftingTribesman, adjustment);
 }
 
-export function getTribesmanRelationship(tribesman: EntityID, comparingTribesman: EntityID): EntityRelationship {
+export function getTribesmanRelationship(tribesman: Entity, comparingTribesman: Entity): EntityRelationship {
    // If the two tribesman are of the same tribe, they are friendly
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const otherTribeComponent = TribeComponentArray.getComponent(comparingTribesman);
@@ -297,7 +298,7 @@ export function itemThrowIsOnCooldown(tribesmanComponent: TribesmanAIComponent):
    return ticksSinceThrow <= Vars.ITEM_THROW_COOLDOWN_TICKS;
 }
 
-function onRemove(worker: EntityID): void {
+function onRemove(worker: Entity): void {
    // 
    // Attempt to respawn the tribesman when it is killed
    // 

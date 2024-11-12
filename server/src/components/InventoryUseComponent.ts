@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
 import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, PickaxeItemInfo } from "battletribes-shared/items/items";
@@ -88,7 +88,7 @@ export class InventoryUseComponent {
 
    public globalAttackCooldown = 0;
 
-   public createLimb(entity: EntityID, associatedInventory: Inventory): void {
+   public createLimb(entity: Entity, associatedInventory: Inventory): void {
       const limbDamageBox = new ServerDamageBox(new CircularBox(new Point(0, 0), 0, 12), associatedInventory.name, false);
       const heldItemDamageBox = new ServerDamageBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
       const blockBox = new ServerBlockBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
@@ -160,7 +160,7 @@ export const InventoryUseComponentArray = new ComponentArray<InventoryUseCompone
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    
@@ -183,7 +183,7 @@ export function getHeldItem(limbInfo: LimbInfo): Item | null {
    return typeof item !== "undefined" ? item : null;
 }
 
-const setLimb = (entity: EntityID, limb: LimbInfo, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+const setLimb = (entity: Entity, limb: LimbInfo, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
    const flipMultiplier = isFlipped ? -1 : 1;
    const limbDamageBox = limb.limbDamageBox;
 
@@ -202,7 +202,7 @@ const setLimb = (entity: EntityID, limb: LimbInfo, limbDirection: number, extraO
    updateBox(limb.blockBox.box, limbBox.position.x, limbBox.position.y, limbBox.rotation);
 }
 
-const lerpLimbBetweenStates = (entity: EntityID, limbInfo: LimbInfo, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void => {
+const lerpLimbBetweenStates = (entity: Entity, limbInfo: LimbInfo, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void => {
    const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
    const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
    const rotation = lerp(startingLimbState.rotation, targetLimbState.rotation, progress);
@@ -211,11 +211,11 @@ const lerpLimbBetweenStates = (entity: EntityID, limbInfo: LimbInfo, startingLim
    setLimb(entity, limbInfo, direction, extraOffset, rotation, extraOffsetX, extraOffsetY, isFlipped);
 }
 
-const setLimbToState = (entity: EntityID, limbInfo: LimbInfo, state: LimbState, isFlipped: boolean): void => {
+const setLimbToState = (entity: Entity, limbInfo: LimbInfo, state: LimbState, isFlipped: boolean): void => {
    setLimb(entity, limbInfo, state.direction, state.extraOffset, state.rotation, state.extraOffsetX, state.extraOffsetY, isFlipped);
 }
 
-export function onBlockBoxCollisionWithDamageBox(attacker: EntityID, victim: EntityID, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox, collidingDamageBox: ServerDamageBox): void {
+export function onBlockBoxCollisionWithDamageBox(attacker: Entity, victim: Entity, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox, collidingDamageBox: ServerDamageBox): void {
    const victimInventoryUseComponent = InventoryUseComponentArray.getComponent(attacker);
    const attackerLimb = victimInventoryUseComponent.getLimbInfo(collidingDamageBox.associatedLimbInventoryName);
 
@@ -250,7 +250,7 @@ export function onBlockBoxCollisionWithDamageBox(attacker: EntityID, victim: Ent
    blockBoxLimb.blockType = blockBox.blockType;
 }
 
-export function onBlockBoxCollisionWithProjectile(blockingEntity: EntityID, projectile: EntityID, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox): void {
+export function onBlockBoxCollisionWithProjectile(blockingEntity: Entity, projectile: Entity, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox): void {
    blockBox.hasBlocked = true;
    // @Copynpaste
    blockBoxLimb.lastBlockTick = getGameTicks();
@@ -274,7 +274,7 @@ export function onBlockBoxCollisionWithProjectile(blockingEntity: EntityID, proj
    }
 }
 
-export function onDamageBoxCollision(attacker: EntityID, victim: EntityID, limb: LimbInfo): void {
+export function onDamageBoxCollision(attacker: Entity, victim: Entity, limb: LimbInfo): void {
    if (!HealthComponentArray.hasComponent(victim)) {
       return;
    }
@@ -292,7 +292,7 @@ export function onDamageBoxCollision(attacker: EntityID, victim: EntityID, limb:
    attemptAttack(attacker, victim, limb);
 }
 
-const getRepairAmount = (tribeMember: EntityID, hammerItem: Item): number => {
+const getRepairAmount = (tribeMember: Entity, hammerItem: Item): number => {
    const itemInfo = ITEM_INFO_RECORD[hammerItem.type] as HammerItemInfo;
    let repairAmount = itemInfo.repairAmount;
 
@@ -303,7 +303,7 @@ const getRepairAmount = (tribeMember: EntityID, hammerItem: Item): number => {
    return Math.round(repairAmount);
 }
 
-export function workOnBlueprint(tribeMember: EntityID, targetEntity: EntityID, attackingLimb: LimbInfo, item: Item): boolean {
+export function workOnBlueprint(tribeMember: Entity, targetEntity: Entity, attackingLimb: LimbInfo, item: Item): boolean {
    // Deactivate the damage boxes
    attackingLimb.limbDamageBox.isActive = false;
    attackingLimb.heldItemDamageBox.isActive = false;
@@ -318,7 +318,7 @@ export function workOnBlueprint(tribeMember: EntityID, targetEntity: EntityID, a
    return false;
 }
 
-export function repairBuilding(tribeMember: EntityID, targetEntity: EntityID, attackingLimb: LimbInfo, item: Item): boolean {
+export function repairBuilding(tribeMember: Entity, targetEntity: Entity, attackingLimb: LimbInfo, item: Item): boolean {
    // Deactivate the damage boxes
    attackingLimb.limbDamageBox.isActive = false;
    attackingLimb.heldItemDamageBox.isActive = false;
@@ -382,7 +382,7 @@ const cancelAttack = (limb: LimbInfo): void => {
    limb.heldItemDamageBox.isActive = false;
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
       inventoryUseComponent.globalAttackCooldown--;
@@ -608,7 +608,7 @@ export function addCrossbowLoadProgressRecordToPacket(packet: Packet, useInfo: L
    }
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
    let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -625,7 +625,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
    packet.addNumber(inventoryUseComponent.limbInfos.length);

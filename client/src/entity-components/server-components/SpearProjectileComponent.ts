@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSound } from "../../sound";
@@ -44,7 +44,7 @@ function createComponent(): SpearProjectileComponent {
    return {};
 }
 
-function onSpawn(entity: EntityID): void {
+function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("spear-throw.mp3", 0.4, 1, transformComponent.position);
 }
@@ -53,7 +53,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("spear-hit.mp3", 0.4, 1, transformComponent.position);
 }

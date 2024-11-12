@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, LimbAction } from "battletribes-shared/entities";
+import { Entity, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { calculateStructureConnectionInfo } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -32,7 +32,7 @@ const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
 }
 
-export function goPlaceBuilding(tribesman: EntityID, hotbarInventory: Inventory, tribe: Tribe, goal: TribesmanPlaceGoal): boolean {
+export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, goal: TribesmanPlaceGoal): boolean {
    const plan = goal.plan;
    
    const entityType = (ITEM_INFO_RECORD[plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
@@ -108,7 +108,7 @@ export function goPlaceBuilding(tribesman: EntityID, hotbarInventory: Inventory,
             awardTitle(tribesman, TribesmanTitle.builder);
          }
 
-         consumeItemFromSlot(hotbarInventory, goal.placeableItemSlot, 1);
+         consumeItemFromSlot(tribesman, hotbarInventory, goal.placeableItemSlot, 1);
          
          useInfo.lastAttackTicks = getGameTicks();
       } else {
@@ -137,7 +137,7 @@ export function goPlaceBuilding(tribesman: EntityID, hotbarInventory: Inventory,
    return false;
 }
 
-export function goUpgradeBuilding(tribesman: EntityID, goal: TribesmanUpgradeGoal): void {
+export function goUpgradeBuilding(tribesman: Entity, goal: TribesmanUpgradeGoal): void {
    const plan = goal.plan;
    const building = plan.baseBuildingID;
    
@@ -190,11 +190,11 @@ export function goUpgradeBuilding(tribesman: EntityID, goal: TribesmanUpgradeGoa
    tribesmanComponent.currentAIType = TribesmanAIType.building;
 }
 
-export function attemptToRepairBuildings(tribesman: EntityID, hammerItemSlot: number): boolean {
+export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
-   let closestDamagedBuilding: EntityID | undefined;
+   let closestDamagedBuilding: Entity | undefined;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const entity of aiHelperComponent.visibleEntities) {
       const relationship = getEntityRelationship(tribesman, entity);

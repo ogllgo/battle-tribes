@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { NUM_RENDER_LAYERS, RenderLayer } from "../../render-layers";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { clearEntityInVertexData, EntityRenderingVars, getEntityRenderingProgram, setRenderInfoInVertexData } from "./entity-rendering";
@@ -15,8 +15,8 @@ type ChunkedRenderLayer = typeof CHUNKED_RENDER_LAYERS[number];
 export type RenderLayerChunkDataRecord = Record<ChunkedRenderLayer, Partial<Record<number, ChunkData>>>;
 
 interface ChunkData {
-   readonly entityIDToBufferIndexRecord: Partial<Record<EntityID, number>>;
-   readonly bufferIndexToEntityIDRecord: Partial<Record<number, EntityID>>;
+   readonly entityIDToBufferIndexRecord: Partial<Record<Entity, number>>;
+   readonly bufferIndexToEntityIDRecord: Partial<Record<number, Entity>>;
    readonly vertexData: Float32Array;
    readonly indexData: Uint16Array;
    readonly vertexBuffer: WebGLBuffer;
@@ -149,7 +149,7 @@ const getChunkIndex = (chunkX: number, chunkY: number): number => {
    return chunkY * Settings.BOARD_SIZE + chunkX;
 }
 
-const getEntityChunkIndex = (entity: EntityID): number => {
+const getEntityChunkIndex = (entity: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    const chunkX = Math.floor(transformComponent.position.x / Settings.CHUNK_UNITS);
@@ -190,7 +190,7 @@ const registerBufferChange = (layer: Layer, renderLayer: ChunkedRenderLayer, chu
    }
 }
 
-export function registerChunkRenderedEntity(entity: EntityID, layer: Layer, renderLayer: ChunkedRenderLayer): void {
+export function registerChunkRenderedEntity(entity: Entity, layer: Layer, renderLayer: ChunkedRenderLayer): void {
    const renderInfo = getEntityRenderInfo(entity);
    
    const chunkDatas = layer.renderLayerChunkDataRecord[renderLayer];
@@ -214,7 +214,7 @@ export function registerChunkRenderedEntity(entity: EntityID, layer: Layer, rend
    setRenderInfoInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);
 }
 
-export function removeChunkRenderedEntity(entity: EntityID, layer: Layer, renderLayer: ChunkedRenderLayer): void {
+export function removeChunkRenderedEntity(entity: Entity, layer: Layer, renderLayer: ChunkedRenderLayer): void {
    const renderInfo = getEntityRenderInfo(entity);
 
    const chunkDatas = layer.renderLayerChunkDataRecord[renderLayer];

@@ -1,5 +1,5 @@
 import { RiverSteppingStoneData } from "battletribes-shared/client-server-types";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 import { getEntityType } from "./world";
 
@@ -7,9 +7,9 @@ class Chunk {
    public readonly x: number;
    public readonly y: number;
 
-   public readonly entities = new Array<EntityID>();
-   public readonly nonGrassEntities = new Array<EntityID>();
-   public readonly physicsEntities = new Array<EntityID>();
+   public readonly entities = new Array<Entity>();
+   public readonly nonGrassEntities = new Array<Entity>();
+   public readonly physicsEntities = new Array<Entity>();
 
    public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
@@ -18,7 +18,7 @@ class Chunk {
       this.y = y;
    }
 
-   public addEntity(entity: EntityID): void {
+   public addEntity(entity: Entity): void {
       this.entities.push(entity);
 
       if (PhysicsComponentArray.hasComponent(entity)) {
@@ -30,7 +30,7 @@ class Chunk {
       }
    }
 
-   public removeEntity(entity: EntityID): void {
+   public removeEntity(entity: Entity): void {
       const idx = this.entities.indexOf(entity);
       this.entities.splice(idx, 1);
 

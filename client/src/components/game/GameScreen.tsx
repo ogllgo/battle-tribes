@@ -1,10 +1,8 @@
-import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ChatBox from "./ChatBox";
 import NerdVision from "./dev/NerdVision";
 import HealthBar from "./HealthBar";
-import Hotbar from "./inventories/Hotbar";
 import CraftingMenu from "./menus/CraftingMenu";
-import HeldItem from "./HeldItem";
 import DeathScreen from "./DeathScreen";
 import BackpackInventoryMenu from "./inventories/BackpackInventory";
 import TechTree from "./tech-tree/TechTree";
@@ -18,10 +16,13 @@ import { AppState } from "../App";
 import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
 import { Mutable } from "../../../../shared/src/utils";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
-import Client from "../../networking/Client";
-import AttackChargeBar from "./AttackChargeBar";
 import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-creation";
+import { copyInventory, Inventory, InventoryName } from "../../../../shared/src/items/items";
+import { Settings } from "../../../../shared/src/settings";
+import { playerInstance } from "../../world";
+import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
+import { inventoriesAreDifferent } from "../../inventory-manipulation";
 
 export const enum GameInteractState {
    none,
@@ -36,6 +37,8 @@ export let toggleCinematicMode: () => void;
 
 export let gameScreenSetIsDead: (isDead: boolean) => void = () => {};
 
+export let GameScreen_update: () => void = () => {};
+
 interface GameScreenProps {
    setAppState(appState: AppState): void;
 }
@@ -45,6 +48,9 @@ const GameScreen = (props: GameScreenProps) => {
    const [isDead, setIsDead] = useState(false);
    const [cinematicModeIsEnabled, setCinematicModeIsEnabled] = useState(false);
    const [interactState, setInteractState] = useState(GameInteractState.none);
+
+   const [hotbar, setHotbar] = useState(new Inventory(Settings.INITIAL_PLAYER_HOTBAR_SIZE, 1, InventoryName.hotbar));
+   const [heldItemSlot, setHeldItemSlot] = useState(new Inventory(1, 1, InventoryName.heldItemSlot));
    
    const summonPacketRef = useRef<Mutable<EntitySummonPacket> | null>(null);
 
@@ -80,6 +86,24 @@ const GameScreen = (props: GameScreenProps) => {
    }, []);
 
    useEffect(() => {
+      GameScreen_update = (): void => {
+         if (playerInstance !== null) {
+            const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+            
+            const entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+            if (entityHotbar !== null && inventoriesAreDifferent(hotbar, entityHotbar)) {
+               setHotbar(copyInventory(entityHotbar));
+            }
+            
+            const entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
+            if (entityHeldItemSlot !== null && inventoriesAreDifferent(heldItemSlot, entityHeldItemSlot)) {
+               setHeldItemSlot(copyInventory(entityHeldItemSlot));
+            }
+         }
+      }
+   }, [hotbar, heldItemSlot]);
+
+   useEffect(() => {
       if (cinematicModeIsEnabled) {
          toggleCinematicMode = () => {
             setCinematicModeIsEnabled(false);
@@ -96,7 +120,7 @@ const GameScreen = (props: GameScreenProps) => {
    }, [settingsIsOpen]);
    
    return <>
-      <GameInteractableLayer cinematicModeIsEnabled={cinematicModeIsEnabled} />
+      <GameInteractableLayer hotbar={hotbar} heldItemSlot={heldItemSlot} cinematicModeIsEnabled={cinematicModeIsEnabled} />
    
       <ChatBox />
 
@@ -108,8 +132,6 @@ const GameScreen = (props: GameScreenProps) => {
       {/* Note: BackpackInventoryMenu must be exactly before CraftingMenu because of CSS hijinks */}
       <BackpackInventoryMenu />
       <CraftingMenu />
-
-      <HeldItem />
 
       {isDead ? (
          <DeathScreen setAppState={props.setAppState} />

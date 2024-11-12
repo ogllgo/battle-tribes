@@ -1,6 +1,6 @@
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { getSelectedEntityID } from "../entity-selection";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { GameDataPacketOptions } from "battletribes-shared/client-server-types";
 import OPTIONS from "../options";
 import { windowHeight, windowWidth } from "../webgl";
@@ -196,7 +196,7 @@ export function sendToggleSimulationPacket(isSimulating: boolean): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendPlaceBlueprintPacket(structure: EntityID, blueprintType: BlueprintType): void {
+export function sendPlaceBlueprintPacket(structure: Entity, blueprintType: BlueprintType): void {
    const packet = new Packet(PacketType.placeBlueprint, 3 * Float32Array.BYTES_PER_ELEMENT);
 
    packet.addNumber(structure);

@@ -1,6 +1,6 @@
 import { Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import PlayerClient from "./PlayerClient";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
@@ -161,7 +161,7 @@ export function processDevGiveItemPacket(playerClient: PlayerClient, reader: Pac
 
    const inventoryComponent = InventoryComponentArray.getComponent(playerClient.instance);
    const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   addItemToInventory(inventory, itemType, amount);
+   addItemToInventory(player, inventory, itemType, amount);
 }
 
 export function processRespawnPacket(playerClient: PlayerClient): void {
@@ -343,7 +343,7 @@ export function processItemPickupPacket(playerClient: PlayerClient, reader: Pack
       return;
    }
 
-   const entity = reader.readNumber() as EntityID;
+   const entity = reader.readNumber() as Entity;
    if (!entityExists(entity)) {
       return;
    }
@@ -368,7 +368,7 @@ export function processItemPickupPacket(playerClient: PlayerClient, reader: Pack
    }
 
    // Remove the item from its previous inventory
-   const amountConsumed = consumeItemFromSlot(targetInventory, itemSlot, amount);
+   const amountConsumed = consumeItemFromSlot(entity, targetInventory, itemSlot, amount);
 
    // Hold the item
    // Copy it as the consumeItemFromSlot function modifies the original item's count
@@ -382,7 +382,7 @@ export function processItemReleasePacket(playerClient: PlayerClient, reader: Pac
       return;
    }
 
-   const entity = reader.readNumber() as EntityID;
+   const entity = reader.readNumber() as Entity;
    if (!entityExists(entity)) {
       return;
    }
@@ -402,10 +402,10 @@ export function processItemReleasePacket(playerClient: PlayerClient, reader: Pac
    const targetInventoryComponent = InventoryComponentArray.getComponent(entity);
 
    // Add the item to the inventory
-   const amountAdded = addItemToSlot(targetInventoryComponent, inventoryName, itemSlot, heldItem.type, amount);
+   const amountAdded = addItemToSlot(entity, targetInventoryComponent, inventoryName, itemSlot, heldItem.type, amount);
 
    // If all of the item was added, clear the held item
-   consumeItemTypeFromInventory(inventoryComponent, InventoryName.heldItemSlot, heldItem.type, amountAdded);
+   consumeItemTypeFromInventory(entity, inventoryComponent, InventoryName.heldItemSlot, heldItem.type, amountAdded);
 }
 
 export function processEntitySummonPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -443,7 +443,7 @@ export function processToggleSimulationPacket(playerClient: PlayerClient, reader
 }
 
 // @Cleanup: name, and there is already a shared definition
-const snapRotationToPlayer = (player: EntityID, placePosition: Point, rotation: number): number => {
+const snapRotationToPlayer = (player: Entity, placePosition: Point, rotation: number): number => {
    const transformComponent = TransformComponentArray.getComponent(player);
    const playerDirection = transformComponent.position.calculateAngleBetween(placePosition);
    let snapRotation = playerDirection - rotation;
@@ -456,7 +456,7 @@ const snapRotationToPlayer = (player: EntityID, placePosition: Point, rotation: 
 }
 
 export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: PacketReader): void {
-   const structure = reader.readNumber() as EntityID;
+   const structure = reader.readNumber() as Entity;
    const blueprintType = reader.readNumber() as BlueprintType;
    
    if (!entityExists(playerClient.instance) || !entityExists(structure)) {

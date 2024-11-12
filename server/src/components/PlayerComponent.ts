@@ -1,7 +1,7 @@
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { getPlayerClientFromInstanceID } from "../server/player-clients";
 import { sendRespawnDataPacket } from "../server/packet-processing";
@@ -26,7 +26,7 @@ export const PlayerComponentArray = new ComponentArray<PlayerComponent>(ServerCo
    addDataToPacket: addDataToPacket
 });
 
-function onJoin(player: EntityID): void {
+function onJoin(player: Entity): void {
    const playerClient = getPlayerClientFromInstanceID(player);
    if (playerClient !== null && !playerClient.isAlive) {
       sendRespawnDataPacket(playerClient);
@@ -34,7 +34,7 @@ function onJoin(player: EntityID): void {
    }
 }
 
-function onRemove(player: EntityID): void {
+function onRemove(player: Entity): void {
    const playerClient = getPlayerClientFromInstanceID(player);
    if (playerClient !== null) {
       playerClient.isAlive = false;
@@ -45,7 +45,7 @@ function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT + 100;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(entity);
 
    // @Hack: hardcoded

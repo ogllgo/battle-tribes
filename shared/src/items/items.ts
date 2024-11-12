@@ -72,7 +72,8 @@ export const enum ItemType {
    stonecarvingTable,
    woodenShield,
    slingshot,
-   woodenBracings
+   woodenBracings,
+   fireTorch
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -144,7 +145,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.stonecarvingTable]: "stonecarving_table",
    [ItemType.woodenShield]: "Wooden Shield",
    [ItemType.slingshot]: "Slingshot",
-   [ItemType.woodenBracings]: "Wooden Bracings"
+   [ItemType.woodenBracings]: "Wooden Bracings",
+   [ItemType.fireTorch]: "Fire Torch"
 };
 
 const numItemTypes = Object.keys(ItemTypeString).length;
@@ -273,20 +275,36 @@ export interface ItemInfoRecord {
    slingshot: SlingshotItemInfo;
 }
 
+interface TorchItemTrait {
+   readonly burnTimeSeconds: number;
+   readonly lightIntensity: number;
+   readonly lightStrength: number;
+   readonly lightRadius: number;
+   readonly lightR: number;
+   readonly lightG: number;
+   readonly lightB: number;
+}
+
+interface ItemTraitRecord {
+   torch: TorchItemTrait;
+}
+
+type ItemTraits = Partial<{ [T in keyof ItemTraitRecord]: ItemTraitRecord[T] }>;
+
 export interface AttackInfo {
    readonly attackPattern: AttackPatternInfo | null;
    readonly attackTimings: AttackTimingsInfo;
    readonly heldItemDamageBoxInfo: LimbHeldItemDamageBoxInfo | null;
 }
 
-const UNARMED_ATTACK_INFO: AttackInfo = {
+const UNARMED_ATTACK_INFO: Readonly<AttackInfo> = {
    attackPattern: DEFAULT_ATTACK_PATTERN,
    attackTimings: DEFAULT_ATTACK_TIMINGS,
    heldItemDamageBoxInfo: null
-}
+};
 
 /** If an entry is null, then that item category can't attack. */
-const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, AttackInfo> = {
+const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<AttackInfo>> = {
    material: {
       attackPattern: DEFAULT_ATTACK_PATTERN,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
@@ -445,7 +463,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.stonecarvingTable]: "placeable",
    [ItemType.woodenShield]: "shield",
    [ItemType.slingshot]: "slingshot",
-   [ItemType.woodenBracings]: "placeable"
+   [ItemType.woodenBracings]: "placeable",
+   [ItemType.fireTorch]: "placeable"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -817,8 +836,95 @@ export const ITEM_INFO_RECORD = {
    [ItemType.woodenBracings]: {
       stackSize: 99,
       entityType: EntityType.bracings
+   },
+   [ItemType.fireTorch]: {
+      stackSize: 99,
+      entityType: EntityType.fireTorch
    }
 } satisfies { [T in ItemType]: ItemInfo<T> };
+
+export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
+   [ItemType.wood]: {},
+   [ItemType.workbench]: {},
+   [ItemType.wooden_sword]: {},
+   [ItemType.wooden_axe]: {},
+   [ItemType.wooden_pickaxe]: {},
+   [ItemType.berry]: {},
+   [ItemType.raw_beef]: {},
+   [ItemType.cooked_beef]: {},
+   [ItemType.rock]: {},
+   [ItemType.stone_sword]: {},
+   [ItemType.stone_axe]: {},
+   [ItemType.stone_pickaxe]: {},
+   [ItemType.stone_hammer]: {},
+   [ItemType.leather]: {},
+   [ItemType.leather_backpack]: {},
+   [ItemType.cactus_spine]: {},
+   [ItemType.yeti_hide]: {},
+   [ItemType.frostcicle]: {},
+   [ItemType.slimeball]: {},
+   [ItemType.eyeball]: {},
+   [ItemType.flesh_sword]: {},
+   [ItemType.tribe_totem]: {},
+   [ItemType.worker_hut]: {},
+   [ItemType.barrel]: {},
+   [ItemType.frost_armour]: {},
+   [ItemType.campfire]: {},
+   [ItemType.furnace]: {},
+   [ItemType.wooden_bow]: {},
+   [ItemType.meat_suit]: {},
+   [ItemType.deepfrost_heart]: {},
+   [ItemType.deepfrost_sword]: {},
+   [ItemType.deepfrost_pickaxe]: {},
+   [ItemType.deepfrost_axe]: {},
+   [ItemType.deepfrost_armour]: {},
+   [ItemType.raw_fish]: {},
+   [ItemType.cooked_fish]: {},
+   [ItemType.fishlord_suit]: {},
+   [ItemType.gathering_gloves]: {},
+   [ItemType.throngler]: {},
+   [ItemType.leather_armour]: {},
+   [ItemType.spear]: {},
+   [ItemType.paper]: {},
+   [ItemType.research_bench]: {},
+   [ItemType.wooden_wall]: {},
+   [ItemType.wooden_hammer]: {},
+   [ItemType.stone_battleaxe]: {},
+   [ItemType.living_rock]: {},
+   [ItemType.planter_box]: {},
+   [ItemType.reinforced_bow]: {},
+   [ItemType.crossbow]: {},
+   [ItemType.ice_bow]: {},
+   [ItemType.poop]: {},
+   [ItemType.wooden_spikes]: {},
+   [ItemType.punji_sticks]: {},
+   [ItemType.ballista]: {},
+   [ItemType.sling_turret]: {},
+   [ItemType.healing_totem]: {},
+   [ItemType.leaf]: {},
+   [ItemType.herbal_medicine]: {},
+   [ItemType.leaf_suit]: {},
+   [ItemType.seed]: {},
+   [ItemType.gardening_gloves]: {},
+   [ItemType.wooden_fence]: {},
+   [ItemType.fertiliser]: {},
+   [ItemType.frostshaper]: {},
+   [ItemType.stonecarvingTable]: {},
+   [ItemType.woodenShield]: {},
+   [ItemType.slingshot]: {},
+   [ItemType.woodenBracings]: {},
+   [ItemType.fireTorch]: {
+      torch: {
+         burnTimeSeconds: 15,
+         lightIntensity: 0.9,
+         lightStrength: 1.5,
+         lightRadius: 10,
+         lightR: 1,
+         lightG: 0.6,
+         lightB: 0.35
+      }
+   }
+};
 
 // Some typescript wizardry
 type ExcludeNonPlaceableItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "placeable" ? T : never;
@@ -865,6 +971,20 @@ export interface InventoryData {
    height: number;
    readonly itemSlots: ItemSlots;
    readonly name: InventoryName;
+}
+
+export class Item {
+   /** Unique identifier for the item */
+   public readonly id: number;
+   
+   public type: ItemType;
+   public count: number;
+
+   constructor(itemType: ItemType, count: number, id: number) {
+      this.type = itemType;
+      this.count = count;
+      this.id = id;
+   }
 }
 
 export class Inventory {
@@ -925,18 +1045,18 @@ export class Inventory {
    }
 }
 
-export class Item {
-   /** Unique identifier for the item */
-   public readonly id: number;
-   
-   public type: ItemType;
-   public count: number;
+/** Returns a shallow copy of an inventory. */
+export function copyInventory(inventory: Inventory): Inventory {
+   const newInventory = new Inventory(inventory.width, inventory.height, inventory.name);
 
-   constructor(itemType: ItemType, count: number, id: number) {
-      this.type = itemType;
-      this.count = count;
-      this.id = id;
+   for (let itemSlot = 1; itemSlot <= inventory.width * inventory.height; itemSlot++) {
+      const item = inventory.itemSlots[itemSlot];
+      if (typeof item !== "undefined") {
+         newInventory.addItem(item, itemSlot);
+      }
    }
+
+   return newInventory;
 }
 
 /**

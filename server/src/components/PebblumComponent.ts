@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { moveEntityToPosition, stopEntity } from "../ai-shared";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -14,7 +14,7 @@ const enum Vars {
 export class PebblumComponent {
    public targetEntityID: number;
    
-   constructor(targetEntity: EntityID) {
+   constructor(targetEntity: Entity) {
       this.targetEntityID = targetEntity;
    }
 }
@@ -28,7 +28,7 @@ export const PebblumComponentArray = new ComponentArray<PebblumComponent>(Server
    addDataToPacket: addDataToPacket
 });
 
-function onTick(pebblum: EntityID): void {
+function onTick(pebblum: Entity): void {
    const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
    
    const target = pebblumComponent.targetEntityID;

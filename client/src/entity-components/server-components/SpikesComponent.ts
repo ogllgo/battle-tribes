@@ -8,7 +8,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { EntityConfig } from "../ComponentArray";
 
 export interface SpikesComponentParams {
@@ -36,13 +36,17 @@ export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, Sp
    updateFromData: updateFromData
 });
 
+export function createSpikesComponentParams(isCovered: boolean): SpikesComponentParams {
+   return {
+      isCovered: isCovered
+   };
+}
+
 function createParamsFromData(reader: PacketReader): SpikesComponentParams {
    const isCovered = reader.readBoolean();
    reader.padOffset(3);
 
-   return {
-      isCovered: isCovered
-   };
+   return createSpikesComponentParams(isCovered);
 }
 
 const createLeafRenderPart = (isSmall: boolean): VisualRenderPart => {
@@ -87,7 +91,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes, 
    };
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const spikesComponent = SpikesComponentArray.getComponent(entity);
    updateLeafRenderParts(spikesComponent);
 }
@@ -104,7 +108,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const spikesComponent = SpikesComponentArray.getComponent(entity);
    
    const isCoveredBefore = spikesComponent.isCovered;

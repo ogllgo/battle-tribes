@@ -3,10 +3,10 @@ import { randFloat } from "battletribes-shared/utils";
 import { playSound } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
-import { EntityID } from "../../shared/src/entities";
+import { Entity } from "../../shared/src/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
-export function playBowFireSound(sourceEntity: EntityID, bowItemType: ItemType): void {
+export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
    const transformComponent = TransformComponentArray.getComponent(sourceEntity);
    
    switch (bowItemType) {
@@ -25,7 +25,7 @@ export function playBowFireSound(sourceEntity: EntityID, bowItemType: ItemType):
    }
 }
 
-const processTickEvent = (entity: EntityID, tickEvent: EntityTickEvent): void => {
+const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    switch (tickEvent.type) {

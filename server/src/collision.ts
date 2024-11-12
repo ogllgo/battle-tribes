@@ -1,4 +1,4 @@
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
@@ -17,7 +17,7 @@ export const enum CollisionVars {
 /**
  * @returns A number where the first 8 bits hold the index of the entity's colliding hitbox, and the next 8 bits hold the index of the other entity's colliding hitbox
 */
-export function entitiesAreColliding(entity1: EntityID, entity2: EntityID): number {
+export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
    const transformComponent1 = TransformComponentArray.getComponent(entity1);
    const transformComponent2 = TransformComponentArray.getComponent(entity2);
    
@@ -107,7 +107,7 @@ const resolveSoftCollision = (transformComponent: TransformComponent, physicsCom
    physicsComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
 }
 
-export function collide(pushedEntity: EntityID, pushingEntity: EntityID, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
+export function collide(pushedEntity: Entity, pushingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
    const pushedEntityTransformComponent = TransformComponentArray.getComponent(pushedEntity);
    const pushingEntityTransformComponent = TransformComponentArray.getComponent(pushingEntity);
    
@@ -189,7 +189,7 @@ export function collide(pushedEntity: EntityID, pushingEntity: EntityID, collidi
 }
 
 /** If no collision is found, does nothing. */
-export function resolveWallCollision(entity: EntityID, hitbox: Hitbox, subtileX: number, subtileY: number): void {
+export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: number, subtileY: number): void {
    // @Speed
    const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
    updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);

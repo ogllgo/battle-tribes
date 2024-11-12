@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { addDirtyPathfindingEntity, entityCanBlockPathfinding, removeDirtyPathfindingEntity } from "../pathfinding";
@@ -11,8 +11,8 @@ import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType, undergroundLayer } from "../world";
 
 // @Cleanup: Variable names
-const a = new Array<number>();
-const b = new Array<number>();
+const a = [0];
+const b = [0];
 for (let i = 0; i < 8; i++) {
    const angle = i / 4 * Math.PI;
    a.push(Math.sin(angle));
@@ -65,7 +65,7 @@ export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(Server
    addDataToPacket: addDataToPacket
 });
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    if (physicsComponent.pathfindingNodesAreDirty) {
       removeDirtyPathfindingEntity(entity);
@@ -81,7 +81,7 @@ const cleanRotation = (transformComponent: TransformComponent): void => {
    }
 }
 
-const turnEntity = (entity: EntityID, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const turnEntity = (entity: Entity, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
    const previousRotation = transformComponent.rotation;
 
    transformComponent.rotation += physicsComponent.angularVelocity * Settings.I_TPS;
@@ -125,7 +125,7 @@ const turnEntity = (entity: EntityID, transformComponent: TransformComponent, ph
    }
 }
 
-const applyPhysics = (entity: EntityID, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const applyPhysics = (entity: Entity, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
    // @Speed: There are a whole bunch of conditions in here which rely on physicsComponent.isAffectedByFriction,
    // which is only set at the creation of an entity. To remove these conditions we could probably split the physics
    // entities into two groups, and call two different applyPhysicsFriction and applyPhysicsNoFriction functions to
@@ -234,7 +234,7 @@ const applyPhysics = (entity: EntityID, transformComponent: TransformComponent, 
    }
 }
 
-const dirtifyPathfindingNodes = (entity: EntityID, physicsComponent: PhysicsComponent): void => {
+const dirtifyPathfindingNodes = (entity: Entity, physicsComponent: PhysicsComponent): void => {
    if (!physicsComponent.pathfindingNodesAreDirty && entityCanBlockPathfinding(entity)) {
       addDirtyPathfindingEntity(entity);
       physicsComponent.pathfindingNodesAreDirty = true;
@@ -271,7 +271,7 @@ const resolveBorderCollisions = (transformComponent: TransformComponent, physics
    }
 }
 
-const updatePosition = (entity: EntityID, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const updatePosition = (entity: Entity, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
    // @Cleanup: aren't both these the same?
    if (physicsComponent.hitboxesAreDirty) {
       // @Incomplete: if hitboxes are dirty, should still resolve wall tile collisions, etc.
@@ -304,6 +304,7 @@ const updatePosition = (entity: EntityID, transformComponent: TransformComponent
 
       // If the entity is outside the world border after resolving border collisions, throw an error
       if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
+         console.warn(transformComponent.hitboxes);
          throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)!] + ".");
       }
    
@@ -327,7 +328,7 @@ const updatePosition = (entity: EntityID, transformComponent: TransformComponent
    }
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -336,7 +337,7 @@ function onTick(entity: EntityID): void {
    updatePosition(entity, transformComponent, physicsComponent);
 }
 
-export function applyKnockback(entity: EntityID, knockback: number, knockbackDirection: number): void {
+export function applyKnockback(entity: Entity, knockback: number, knockbackDirection: number): void {
    if (!PhysicsComponentArray.hasComponent(entity)) {
       return;
    }
@@ -357,7 +358,7 @@ export function applyKnockback(entity: EntityID, knockback: number, knockbackDir
    }
 }
 
-export function applyAbsoluteKnockback(entity: EntityID, knockback: number, knockbackDirection: number): void {
+export function applyAbsoluteKnockback(entity: Entity, knockback: number, knockbackDirection: number): void {
    if (!PhysicsComponentArray.hasComponent(entity)) {
       return;
    }
@@ -380,7 +381,7 @@ function getDataLength(): number {
    return 8 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    packet.addNumber(physicsComponent.selfVelocity.x);

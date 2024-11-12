@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists, getEntityLayer } from "../world";
@@ -27,7 +27,7 @@ export const HealingTotemComponentArray = new ComponentArray<HealingTotemCompone
    addDataToPacket: addDataToPacket
 });
 
-const getHealingTargets = (healingTotem: EntityID): ReadonlyArray<EntityID> => {
+const getHealingTargets = (healingTotem: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(healingTotem);
    const layer = getEntityLayer(healingTotem);
    
@@ -36,7 +36,7 @@ const getHealingTargets = (healingTotem: EntityID): ReadonlyArray<EntityID> => {
    const minChunkY = Math.max(Math.floor((transformComponent.position.y - Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), 0);
    const maxChunkY = Math.min(Math.floor((transformComponent.position.y + Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
-   const targets = new Array<EntityID>();
+   const targets = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -72,7 +72,7 @@ const getHealingTargets = (healingTotem: EntityID): ReadonlyArray<EntityID> => {
    return targets;
 }
 
-const idIsInHealTargets = (id: number, healTargets: ReadonlyArray<EntityID>): boolean => {
+const idIsInHealTargets = (id: number, healTargets: ReadonlyArray<Entity>): boolean => {
    for (let i = 0; i < healTargets.length; i++) {
       const entity = healTargets[i];
       if (entity === id) {
@@ -82,7 +82,7 @@ const idIsInHealTargets = (id: number, healTargets: ReadonlyArray<EntityID>): bo
    return false;
 }
 
-const healTargetIsInIDs = (target: EntityID, ids: ReadonlyArray<number>): boolean => {
+const healTargetIsInIDs = (target: Entity, ids: ReadonlyArray<number>): boolean => {
    for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       if (id === target) {
@@ -92,7 +92,7 @@ const healTargetIsInIDs = (target: EntityID, ids: ReadonlyArray<number>): boolea
    return false;
 }
 
-function onTick(healingTotem: EntityID): void {
+function onTick(healingTotem: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(healingTotem);
    
    // @Speed: shouldn't call every tick
@@ -130,7 +130,7 @@ function onTick(healingTotem: EntityID): void {
    }
 }
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
 
    let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -139,7 +139,7 @@ function getDataLength(entity: EntityID): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
 
    packet.addNumber(healingTotemComponent.healTargetIDs.length);

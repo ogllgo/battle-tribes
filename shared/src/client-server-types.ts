@@ -10,18 +10,9 @@ import { HitboxCollisionType, HitboxFlag } from "./boxes/boxes";
 import { InventoryName, ItemType } from "./items/items";
 import { StatusEffect } from "./status-effects";
 import { EnemyTribeData, PlayerTribeData, TechID } from "./techs";
-import { Biome, TileType } from "./tiles";
+import { TileType } from "./tiles";
 import { TribesmanTitle } from "./titles";
 import { TribeType } from "./tribes";
-
-export interface ServerTileData {
-   // @Cleanup @Bandwidth: We don't need to send the x and y coordinates of a tile
-   readonly x: number;
-   readonly y: number;
-   readonly type: TileType;
-   readonly biome: Biome;
-   readonly isWall: boolean;
-}
 
 export type ServerTileUpdateData = {
    readonly layerIdx: number;

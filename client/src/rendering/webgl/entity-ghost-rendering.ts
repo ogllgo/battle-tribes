@@ -128,7 +128,8 @@ export function renderGhostEntities(): void {
    }
 
    gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    renderEntities(renderInfos);
 

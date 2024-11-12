@@ -1,4 +1,4 @@
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
 import { playSound } from "../../sound";
 import { ClientComponentType } from "../client-component-types";
@@ -55,7 +55,7 @@ function createComponent(): RandomSoundComponent {
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const randomSoundComponent = RandomSoundComponentArray.getComponent(entity);
    if (randomSoundComponent.maxSoundIntervalTicks === 0) {
       return;

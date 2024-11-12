@@ -1,4 +1,4 @@
-import { EntityID, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
@@ -86,7 +86,7 @@ export function createWallPunjiSticksConfig(tribe: Tribe, connectionInfo: Struct
    };
 }
 
-export function onPunjiSticksCollision(punjiSticks: EntityID, collidingEntity: EntityID, collisionPoint: Point): void {
+export function onPunjiSticksCollision(punjiSticks: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    // @Incomplete: Why is this condition neeeded? Shouldn't be able to be placed colliding with other structures anyway.
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.floorSpikes || collidingEntityType === EntityType.wallSpikes || collidingEntityType === EntityType.door || collidingEntityType === EntityType.wall) {

@@ -1,5 +1,5 @@
 import { GuardianCrystalBurstStage, ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { lerp, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { stopEntity, turnToPosition } from "../ai-shared";
@@ -21,7 +21,7 @@ const enum Vars {
    FRAGMENTS_PER_SECOND = 60
 }
 
-const createFragmentProjectile = (guardian: EntityID): void => {
+const createFragmentProjectile = (guardian: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
 
    const offsetDirection = transformComponent.rotation + randFloat(-0.2, 0.2);
@@ -59,7 +59,7 @@ export default class GuardianCrystalBurstAI {
    }
 
    // @Copynpaste
-   private setLimbDirection(guardian: EntityID, direction: number, offset: number, guardianComponent: GuardianComponent): void {
+   private setLimbDirection(guardian: Entity, direction: number, offset: number, guardianComponent: GuardianComponent): void {
       for (let i = 0; i < guardianComponent.limbHitboxes.length; i++) {
          const hitbox = guardianComponent.limbHitboxes[i];
          const box = hitbox.box;
@@ -74,7 +74,7 @@ export default class GuardianCrystalBurstAI {
       physicsComponent.hitboxesAreDirty = true;
    }
    
-   public run(guardian: EntityID, targetX: number, targetY: number): void {
+   public run(guardian: Entity, targetX: number, targetY: number): void {
       turnToPosition(guardian, targetX, targetY, this.turnSpeed);
 
       // Stop moving

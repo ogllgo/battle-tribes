@@ -5,7 +5,7 @@ import { ComponentArray } from "./ComponentArray";
 import { ConnectedEntityIDs } from "../entities/tribes/tribe-member";
 import { Mutable } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -53,7 +53,7 @@ const removeConnectionWithStructure = (structureID: number, connectedStructureID
    }
 }
 
-function onJoin(entity: EntityID): void {
+function onJoin(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    tribeComponent.tribe.addBuilding(entity);
 
@@ -80,7 +80,7 @@ function onJoin(entity: EntityID): void {
    }
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    tribeComponent.tribe.removeBuilding(entity);
 
@@ -103,7 +103,7 @@ function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
    packet.addBoolean(BlueprintComponentArray.hasComponent(structureComponent.activeBlueprint));
    packet.padOffset(3);

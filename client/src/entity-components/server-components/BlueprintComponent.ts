@@ -6,7 +6,7 @@ import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlas
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
@@ -315,7 +315,7 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
    ]
 };
 
-const createWoodenBlueprintWorkParticleEffects = (entity: EntityID): void => {
+const createWoodenBlueprintWorkParticleEffects = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    for (let i = 0; i < 2; i++) {
@@ -389,7 +389,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprin
    };
 }
 
-const updatePartialTexture = (entity: EntityID): void => {
+const updatePartialTexture = (entity: Entity): void => {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
    const blueprintType = blueprintComponent.blueprintType;
    const blueprintProgress = blueprintComponent.lastBlueprintProgress;
@@ -441,7 +441,7 @@ const updatePartialTexture = (entity: EntityID): void => {
    }
 }
 
-function onLoad(entity: EntityID): void {
+function onLoad(entity: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
 
    updatePartialTexture(entity);
@@ -469,7 +469,7 @@ function onLoad(entity: EntityID): void {
 }
 
 
-function onSpawn(entity: EntityID): void {
+function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("blueprint-place.mp3", 0.4, 1, transformComponent.position);
 }
@@ -510,7 +510,7 @@ const getCurrentBlueprintProgressTexture = (blueprintType: BlueprintType, bluepr
    return progressTextureInfoArray[progressTextureInfoArray.length - 1];
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
    
    blueprintComponent.blueprintType = reader.readNumber();
@@ -569,7 +569,7 @@ function updateFromData(reader: PacketReader, entity: EntityID): void {
    blueprintComponent.lastBlueprintProgress = blueprintProgress;
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    playSound("blueprint-work.mp3", 0.4, 1, transformComponent.position);

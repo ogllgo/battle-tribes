@@ -1,4 +1,4 @@
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randInt } from "battletribes-shared/utils";
 import { entityHasReachedPosition, moveEntityToPosition, stopEntity } from "../ai-shared";
@@ -8,7 +8,7 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import Layer from "../Layer";
 import { getEntityLayer } from "../world";
 
-export type WanderAITileIsValidCallback = (entity: EntityID, layer: Layer, x: number, y: number) => boolean;
+export type WanderAITileIsValidCallback = (entity: Entity, layer: Layer, x: number, y: number) => boolean;
 
 export default class WanderAI {
    public acceleration: number;
@@ -32,7 +32,7 @@ export default class WanderAI {
       return physicsComponent.selfVelocity.x === 0 && physicsComponent.selfVelocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
    }
    
-   public run(entity: EntityID): void {
+   public run(entity: Entity): void {
       const physicsComponent = PhysicsComponentArray.getComponent(entity);
       
       if (this.targetPositionX !== -1) {

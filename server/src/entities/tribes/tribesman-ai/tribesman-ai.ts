@@ -1,5 +1,5 @@
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
 import { getAngleDiff } from "battletribes-shared/utils";
@@ -53,7 +53,7 @@ export const PLANT_TO_SEED_RECORD: Record<PlanterBoxPlant, ItemType> = {
    [PlanterBoxPlant.iceSpikes]: ItemType.frostcicle
 };
 
-const getCommunicationTargets = (tribesman: EntityID): ReadonlyArray<EntityID> => {
+const getCommunicationTargets = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
@@ -64,7 +64,7 @@ const getCommunicationTargets = (tribesman: EntityID): ReadonlyArray<EntityID> =
 
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    
-   const communcationTargets = new Array<EntityID>();
+   const communcationTargets = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -88,7 +88,7 @@ const getCommunicationTargets = (tribesman: EntityID): ReadonlyArray<EntityID> =
 
 // @Cleanup: unused?
 /** Called while fighting an enemy, it calls other tribesman to move to the position of the fighting */
-const sendCallToArmsMessage = (tribesman: EntityID, communicationTargets: ReadonlyArray<EntityID>, targetEntity: EntityID): void => {
+const sendCallToArmsMessage = (tribesman: Entity, communicationTargets: ReadonlyArray<Entity>, targetEntity: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    
    for (let i = 0; i < communicationTargets.length; i++) {
@@ -101,7 +101,7 @@ const sendCallToArmsMessage = (tribesman: EntityID, communicationTargets: Readon
    }
 }
 
-const sendHelpMessage = (communicatingTribesman: EntityID, communicationTargets: ReadonlyArray<EntityID>): void => {
+const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: ReadonlyArray<Entity>): void => {
    const transformComponent = TransformComponentArray.getComponent(communicatingTribesman);
    
    for (let i = 0; i < communicationTargets.length; i++) {
@@ -226,7 +226,7 @@ const sendHelpMessage = (communicatingTribesman: EntityID, communicationTargets:
 //    return didPathfind;
 // }
 
-const grabBarrelFood = (tribesman: EntityID, barrel: EntityID): void => {
+const grabBarrelFood = (tribesman: Entity, barrel: Entity): void => {
    // 
    // Grab the food stack with the highest total heal amount
    // 
@@ -261,11 +261,11 @@ const grabBarrelFood = (tribesman: EntityID, barrel: EntityID): void => {
 
    const tribesmanInventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(tribesmanInventoryComponent, InventoryName.hotbar);
-   addItemToInventory(hotbarInventory, food.type, food.count);
-   consumeItemFromSlot(barrelInventory, foodItemSlot, 999);
+   addItemToInventory(tribesman, hotbarInventory, food.type, food.count);
+   consumeItemFromSlot(tribesman, barrelInventory, foodItemSlot, 999);
 }
 
-const barrelHasFood = (barrel: EntityID): boolean => {
+const barrelHasFood = (barrel: Entity): boolean => {
    const inventoryComponent = InventoryComponentArray.getComponent(barrel);
    const inventory = getInventory(inventoryComponent, InventoryName.inventory);
 
@@ -281,7 +281,7 @@ const barrelHasFood = (barrel: EntityID): boolean => {
    return false;
 }
 
-const getAvailableHut = (tribe: Tribe): EntityID | null => {
+const getAvailableHut = (tribe: Tribe): Entity | null => {
    for (let i = 0; i < tribe.buildings.length; i++) {
       const building = tribe.buildings[i];
       if (!HutComponentArray.hasComponent(building)) {
@@ -303,7 +303,7 @@ const getSeedItemSlot = (hotbarInventory: Inventory, plantType: PlanterBoxPlant)
 }
 
 // @Cleanup: Remove to tribesmanAIComponent
-export function tickTribesman(tribesman: EntityID): void {
+export function tickTribesman(tribesman: Entity): void {
    // @Cleanup: This is an absolutely massive function
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
@@ -377,10 +377,10 @@ export function tickTribesman(tribesman: EntityID): void {
    // @Cleanup: A perhaps combine the visible enemies and visible hostile mobs arrays?
 
    // Categorise visible entities
-   const visibleEnemies = new Array<EntityID>();
-   const visibleEnemyBuildings = new Array<EntityID>();
-   const visibleHostileMobs = new Array<EntityID>();
-   const visibleItemEntities = new Array<EntityID>();
+   const visibleEnemies = new Array<Entity>();
+   const visibleEnemyBuildings = new Array<Entity>();
+   const visibleHostileMobs = new Array<Entity>();
+   const visibleItemEntities = new Array<Entity>();
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
 
@@ -555,7 +555,7 @@ export function tickTribesman(tribesman: EntityID): void {
       
       // @Cleanup: Move messy logic out of main function
       // @Speed: Loops through all visible entities
-      let closestBlueprint: EntityID | undefined;
+      let closestBlueprint: Entity | undefined;
       let minDistance = Number.MAX_SAFE_INTEGER;
       for (const entity of aiHelperComponent.visibleEntities) {
          if (getEntityType(entity) !== EntityType.blueprintEntity) {
@@ -839,7 +839,7 @@ export function tickTribesman(tribesman: EntityID): void {
 
          const amountUsed = tribeComponent.tribe.useItemInTechResearch(researchGoal.tech, item.type, item.count);
          if (amountUsed > 0) {
-            consumeItemFromSlot(hotbarInventory, itemSlot, amountUsed);
+            consumeItemFromSlot(tribesman, hotbarInventory, itemSlot, amountUsed);
          }
       }
 
@@ -851,7 +851,7 @@ export function tickTribesman(tribesman: EntityID): void {
    // Replace plants in planter boxes
    // @Speed
    {
-      let closestReplantablePlanterBox: EntityID | undefined;
+      let closestReplantablePlanterBox: Entity | undefined;
       let seedItemSlot: number | undefined;
       let minDist = Number.MAX_SAFE_INTEGER;
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -909,7 +909,7 @@ export function tickTribesman(tribesman: EntityID): void {
             const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
-            consumeItemFromSlot(hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
+            consumeItemFromSlot(tribesman, hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
          } else {
             const planterBoxTransformComponent = TransformComponentArray.getComponent(closestReplantablePlanterBox);
 
@@ -943,7 +943,7 @@ export function tickTribesman(tribesman: EntityID): void {
 
    // Grab food from barrel
    if (getHealingItemUseInfo(tribesman) === null && !inventoryIsFull(hotbarInventory)) {
-      let closestBarrelWithFood: EntityID | undefined;
+      let closestBarrelWithFood: Entity | undefined;
       let minDist = Number.MAX_SAFE_INTEGER;
       for (const entity of aiHelperComponent.visibleEntities) {
          if (getEntityType(entity) === EntityType.barrel) {

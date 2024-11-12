@@ -1,6 +1,6 @@
 import { ScarInfo, ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 export class TribeWarriorComponent {
@@ -16,12 +16,12 @@ export const TribeWarriorComponentArray = new ComponentArray<TribeWarriorCompone
    addDataToPacket: addDataToPacket
 });
 
-function getDataLength(entity: EntityID): number {
+function getDataLength(entity: Entity): number {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
    return 2 * Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * tribeWarriorComponent.scars.length;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
 
    packet.addNumber(tribeWarriorComponent.scars.length);

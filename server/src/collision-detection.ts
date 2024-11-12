@@ -1,5 +1,5 @@
 import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/collision-groups";
-import { EntityID, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision";
@@ -7,11 +7,11 @@ import { TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
 import { getEntityType } from "./world";
 
-type EntityCollisionPair = [pushingEntity: EntityID, pushedEntity: EntityID];
+type EntityCollisionPair = [pushingEntity: Entity, pushedEntity: Entity];
 export type HitboxCollisionPair = [pushingHitboxIdx: number, pushedHitboxIdx: number];
 
 export interface EntityPairCollisionInfo {
-   readonly pushedEntity: EntityID;
+   readonly pushedEntity: Entity;
    readonly collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>;
 }
 
@@ -28,7 +28,7 @@ for (let pushingGroup: CollisionGroup = 0; pushingGroup < CollisionGroup._LENGTH
    }
 }
 
-const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, collisionInfo: GlobalCollisionInfo, pushingEntity: EntityID, pushedEntity: EntityID): void => {
+const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, collisionInfo: GlobalCollisionInfo, pushingEntity: Entity, pushedEntity: Entity): void => {
    const pushingEntityTransformComponent = TransformComponentArray.getComponent(pushingEntity);
    const pushedEntityTransformComponent = TransformComponentArray.getComponent(pushedEntity);
    

@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { randFloat } from "battletribes-shared/utils";
 import { createFlyParticle } from "../../particles";
 import { playSound } from "../../sound";
-import { EntityID, EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -62,7 +62,7 @@ function createComponent(): PunjiSticksComponent {
    };
 }
    
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const punjiSticksComponent = PunjiSticksComponentArray.getComponent(entity);
 
@@ -89,12 +89,12 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: EntityID): void {
+function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("wooden-spikes-hit.mp3", 0.3, 1, transformComponent.position);
 }
 
-function onDie(entity: EntityID): void {
+function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    playSound("wooden-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
 }

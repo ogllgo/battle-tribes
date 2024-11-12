@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -17,7 +17,7 @@ export const SpitPoisonAreaComponentArray = new ComponentArray<SpitPoisonAreaCom
    addDataToPacket: addDataToPacket
 });
 
-function onTick(spit: EntityID): void {
+function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    
    const hitbox = transformComponent.hitboxes[0];

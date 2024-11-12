@@ -1,6 +1,6 @@
 import { Hitbox, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { GuardianAttackType, ServerComponentType } from "battletribes-shared/components";
-import { EntityID, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -52,7 +52,7 @@ export class GuardianComponent {
    public ticksUntilNextAttack = randInt(Vars.MIN_ATTACK_COOLDOWN_TICKS, Vars.MAX_ATTACK_COOLDOWN_TICKS);
    public queuedAttackType = GuardianAttackType.none;
 
-   public stopSpecialAttack(guardian: EntityID): void {
+   public stopSpecialAttack(guardian: Entity): void {
       this.queuedAttackType = GuardianAttackType.none;
       this.ticksUntilNextAttack = randInt(Vars.MIN_ATTACK_COOLDOWN_TICKS, Vars.MAX_ATTACK_COOLDOWN_TICKS);
       this.setLimbGemActivations(guardian, 0, 0, 0);
@@ -68,7 +68,7 @@ export class GuardianComponent {
       aiHelperComponent.currentAIType = null;
    }
 
-   public setLimbGemActivations(guardian: EntityID, rubyActivation: number, emeraldActivation: number, amethystActivation: number): void {
+   public setLimbGemActivations(guardian: Entity, rubyActivation: number, emeraldActivation: number, amethystActivation: number): void {
       if (rubyActivation !== this.limbRubyGemActivation || emeraldActivation !== this.limbEmeraldGemActivation || amethystActivation !== this.limbAmethystGemActivation) {
          registerDirtyEntity(guardian);
       }
@@ -98,7 +98,7 @@ export function getGuardianLimbOrbitRadius(): number {
    return GuardianVars.LIMB_ORBIT_RADIUS;
 }
 
-function onJoin(guardian: EntityID): void {
+function onJoin(guardian: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(guardian);
    const transformComponent = TransformComponentArray.getComponent(guardian);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -145,7 +145,7 @@ const moveGemActivation = (guardianComponent: GuardianComponent, targetActivatio
    }
 }
 
-const updateOrbitingGuardianLimbs = (guardian: EntityID, guardianComponent: GuardianComponent): void => {
+const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: GuardianComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
    for (let i = 0; i < guardianComponent.limbHitboxes.length; i++) {
       const hitbox = guardianComponent.limbHitboxes[i];
@@ -163,7 +163,7 @@ const updateOrbitingGuardianLimbs = (guardian: EntityID, guardianComponent: Guar
    physicsComponent.hitboxesAreDirty = true;
 }
 
-const limbsAreInStagingPosition = (guardian: EntityID, guardianComponent: GuardianComponent): boolean => {
+const limbsAreInStagingPosition = (guardian: Entity, guardianComponent: GuardianComponent): boolean => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
    // @Hack
    const diffFromTarget1 = getAngleDiff(guardianComponent.limbNormalDirection, transformComponent.rotation);
@@ -171,7 +171,7 @@ const limbsAreInStagingPosition = (guardian: EntityID, guardianComponent: Guardi
    return (diffFromTarget1 >= -0.05 && diffFromTarget1 <= 0.05) || (diffFromTarget2 >= -0.05 && diffFromTarget2 <= 0.05);
 }
 
-function onTick(guardian: EntityID): void {
+function onTick(guardian: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(guardian);
    const guardianComponent = GuardianComponentArray.getComponent(guardian);
    
@@ -332,7 +332,7 @@ function getDataLength(): number {
    return 10 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
 
    packet.addNumber(guardianComponent.rubyGemActivation);
@@ -379,7 +379,7 @@ function addDataToPacket(packet: Packet, entity: EntityID): void {
    packet.addNumber(stageProgress);
 }
 
-function onHitboxCollision(guardian: EntityID, collidingEntity: EntityID, actingHitbox: Hitbox, _receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(guardian: Entity, collidingEntity: Entity, actingHitbox: Hitbox, _receivingHitbox: Hitbox, collisionPoint: Point): void {
    // Only the limbs can damage entities
    if (!actingHitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
       return;

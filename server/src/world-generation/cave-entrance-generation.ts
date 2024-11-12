@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Biome, SubtileType, TileType } from "battletribes-shared/tiles";
+import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { lerp, randInt, randItem, TileIndex } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createGuardianConfig } from "../entities/mobs/guardian";
@@ -11,6 +11,7 @@ import { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { getEntityType, surfaceLayer } from "../world";
 import { getTileDist, LocalBiomeInfo } from "./surface-terrain-generation";
 import { tileHasWallSubtile, setWallInSubtiles } from "./terrain-generation-utils";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    /** Minimum number of tiles in a mountain biome that will allow a cave to be generated */

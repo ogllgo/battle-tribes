@@ -1,7 +1,7 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useReducer, useState } from "react";
 import Game from "../../../Game";
-import { InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "./InventoryContainer";
@@ -16,6 +16,7 @@ export let Hotbar_updateRightThrownBattleaxeItemID: (rightThrownBattleaxeItemID:
 export let Hotbar_updateLeftThrownBattleaxeItemID: (leftThrownBattleaxeItemID: number) => void = () => {};
 
 interface HotbarProps {
+   readonly hotbar: Inventory;
    readonly hotbarItemRestTimes: ReadonlyArray<ItemRestTime>;
    readonly offhandItemRestTimes: ReadonlyArray<ItemRestTime>;
 }
@@ -48,7 +49,6 @@ const Hotbar = (props: HotbarProps) => {
    const playerID = playerInstance || undefined;
    
    const inventoryComponent = playerInstance !== null ? InventoryComponentArray.getComponent(playerInstance) : undefined;
-   const hotbar = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.hotbar) : null;
    const offhand = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.offhand) : null;
    const backpackSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpackSlot) : null;
    const armourSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.armourSlot) : null;
@@ -64,7 +64,7 @@ const Hotbar = (props: HotbarProps) => {
       </div>
       <div className="middle">
          <div className="inventory">
-            <InventoryContainer entityID={playerID} inventory={hotbar} itemRestTimes={props.hotbarItemRestTimes} selectedItemSlot={getHotbarSelectedItemSlot()} />
+            <InventoryContainer entityID={playerID} inventory={props.hotbar} itemRestTimes={props.hotbarItemRestTimes} selectedItemSlot={getHotbarSelectedItemSlot()} />
          </div>
       </div>
       <div className="flex-container">

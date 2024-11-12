@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { ItemType } from "battletribes-shared/items/items";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
@@ -23,7 +23,7 @@ export const SpearProjectileComponentArray = new ComponentArray<SpearProjectileC
    addDataToPacket: addDataToPacket
 });
 
-function onTick(spear: EntityID): void {
+function onTick(spear: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(spear);
 
    const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;

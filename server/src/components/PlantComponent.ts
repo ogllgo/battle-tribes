@@ -2,7 +2,7 @@ import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/compon
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
 import { PlanterBoxComponentArray } from "./PlanterBoxComponent";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "../../../shared/src/items/items";
 import { randInt } from "../../../shared/src/utils";
@@ -23,7 +23,7 @@ export const PLANT_GROWTH_TICKS: Record<PlanterBoxPlant, number> = {
 };
 
 export class PlantComponent {
-   public readonly planterBox: EntityID;
+   public readonly planterBox: Entity;
 
    public readonly plantType: PlanterBoxPlant;
    public plantGrowthTicks = 0;
@@ -31,7 +31,7 @@ export class PlantComponent {
    public numFruit = 0;
    public fruitRandomGrowthTicks = 0;
 
-   constructor(plantType: PlanterBoxPlant, planterBox: EntityID) {
+   constructor(plantType: PlanterBoxPlant, planterBox: Entity) {
       this.plantType = plantType;
       this.planterBox = planterBox;
    }
@@ -48,7 +48,7 @@ export const PlantComponentArray = new ComponentArray<PlantComponent>(ServerComp
    preRemove: preRemove
 });
 
-function preRemove(plant: EntityID): void {
+function preRemove(plant: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(plant);
 
    switch (plantComponent.plantType) {
@@ -77,7 +77,7 @@ function preRemove(plant: EntityID): void {
    }
 }
 
-function onRemove(entity: EntityID): void {
+function onRemove(entity: Entity): void {
    // Register in the planter box that the plant has been removed
    const plantComponent = PlantComponentArray.getComponent(entity);
 
@@ -101,7 +101,7 @@ const plantIsFertilised = (plantComponent: PlantComponent): boolean => {
    return planterBoxComponent.remainingFertiliserTicks > 0;
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(entity);
    if (plantComponent.plantType === null) {
       return;
@@ -138,7 +138,7 @@ function getDataLength(): number {
    return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: EntityID): void {
+function addDataToPacket(packet: Packet, entity: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(entity);
 
    let growthProgress: number;

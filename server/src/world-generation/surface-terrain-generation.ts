@@ -1,5 +1,5 @@
 import { WaterRockData, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
-import { Biome, TileType } from "battletribes-shared/tiles";
+import { TileType } from "battletribes-shared/tiles";
 import { smoothstep, TileIndex } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNoise } from "../perlin-noise";
@@ -9,6 +9,7 @@ import OPTIONS from "../options";
 import { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { setWallInSubtiles } from "./terrain-generation-utils";
+import { Biome } from "../../../shared/src/biomes";
 
 export interface TerrainGenerationInfo {
    readonly tileTypes: Float32Array;
@@ -55,7 +56,7 @@ const getBiome = (height: number, temperature: number, humidity: number): Biome 
       const biome = BIOME_GENERATION_PRIORITY[i];
       
       const generationInfo = BIOME_GENERATION_INFO[biome];
-      if (generationInfo.spawnRequirements !== null && matchesBiomeRequirements(generationInfo.spawnRequirements, height, temperature, humidity)) {
+      if (typeof generationInfo !== "undefined" && generationInfo.spawnRequirements !== null && matchesBiomeRequirements(generationInfo.spawnRequirements, height, temperature, humidity)) {
          return biome;
       }
    }
@@ -155,7 +156,7 @@ export function generateTileInfo(tileBiomes: Float32Array, tileTypes: Float32Arr
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          
          const biome = tileBiomes[tileIndex] as Biome;
-         const biomeGenerationInfo = BIOME_GENERATION_INFO[biome];
+         const biomeGenerationInfo = BIOME_GENERATION_INFO[biome]!;
 
          const floorTileGenerationInfo = getTileGenerationInfo(tileBiomes, biome, biomeGenerationInfo.floorTiles, tileX, tileY);
          if (typeof floorTileGenerationInfo === "undefined") {
@@ -285,6 +286,7 @@ const groupLocalBiomes = (tileBiomes: Readonly<Float32Array>): ReadonlyArray<Loc
 function generateSurfaceTerrain(): TerrainGenerationInfo {
    const tileBiomes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
    const tileTypes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   // @Memory: This takes up an awful lot of memory, but the number of tiles which need this information is very few
    const riverFlowDirections = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
    const tileTemperatures = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
    const tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);

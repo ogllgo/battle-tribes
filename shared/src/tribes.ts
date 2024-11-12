@@ -1,4 +1,4 @@
-import { Biome } from "./tiles";
+import { Biome } from "./biomes";
 
 export enum TribeType {
    plainspeople,

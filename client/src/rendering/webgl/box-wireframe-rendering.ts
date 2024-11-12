@@ -4,7 +4,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { getEntityRenderInfo } from "../../world";
 
 const BORDER_THICKNESS = 3;
@@ -55,7 +55,7 @@ export function createHitboxShaders(): void {
    buffer = gl.createBuffer()!;
 }
 
-const calculateBoxAdjustment = (entity: EntityID): Point => {
+const calculateBoxAdjustment = (entity: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const renderInfo = getEntityRenderInfo(entity);
 

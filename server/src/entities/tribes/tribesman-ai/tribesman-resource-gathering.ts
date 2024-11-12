@@ -1,4 +1,4 @@
-import { EntityID, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { HealthComponent, HealthComponentArray } from "../../../components/HealthComponent";
 import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
 import { InventoryComponentArray, getInventory, inventoryIsFull } from "../../../components/InventoryComponent";
@@ -18,7 +18,7 @@ import { huntEntity } from "./tribesman-combat-ai";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityType } from "../../../world";
 
-const getResourceProducts = (entity: EntityID): ReadonlyArray<ItemType> => {
+const getResourceProducts = (entity: Entity): ReadonlyArray<ItemType> => {
    switch (getEntityType(entity)) {
       case EntityType.cow: return [ItemType.leather, ItemType.raw_beef];
       case EntityType.berryBush: return [ItemType.berry];
@@ -45,7 +45,7 @@ const getResourceProducts = (entity: EntityID): ReadonlyArray<ItemType> => {
    }
 }
 
-export function entityIsResource(entity: EntityID): boolean {
+export function entityIsResource(entity: Entity): boolean {
    const resourceProducts = getResourceProducts(entity);
    return resourceProducts.length > 0;
 }
@@ -80,7 +80,7 @@ const shouldGatherPlant = (plantID: number): boolean => {
 
 // @Incomplete: when the tribesman wants to gather a resource but there isn't enough space, should make space
 
-const shouldGatherResource = (tribesman: EntityID, healthComponent: HealthComponent, inventoryIsFull: boolean, resource: EntityID, resourceProducts: ReadonlyArray<ItemType>): boolean => {
+const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponent, inventoryIsFull: boolean, resource: Entity, resourceProducts: ReadonlyArray<ItemType>): boolean => {
    if (resourceProducts.length === 0) {
       return false;
    }
@@ -113,11 +113,11 @@ const shouldGatherResource = (tribesman: EntityID, healthComponent: HealthCompon
 }
 
 export interface GatherTargetInfo {
-   readonly target: EntityID | null;
+   readonly target: Entity | null;
    readonly isPrioritised: boolean;
 }
 
-export function getGatherTarget(tribesman: EntityID, visibleEntities: ReadonlyArray<EntityID>, prioritisedItemTypes: ReadonlyArray<ItemType>): GatherTargetInfo {
+export function getGatherTarget(tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, prioritisedItemTypes: ReadonlyArray<ItemType>): GatherTargetInfo {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
@@ -128,10 +128,10 @@ export function getGatherTarget(tribesman: EntityID, visibleEntities: ReadonlyAr
    const isFull = inventoryIsFull(hotbarInventory);
    
    let minDist = Number.MAX_SAFE_INTEGER;
-   let closestResource: EntityID | undefined;
+   let closestResource: Entity | undefined;
    
    let minPrioritisedDist = Number.MAX_SAFE_INTEGER;
-   let closestPrioritisedResource: EntityID | undefined;
+   let closestPrioritisedResource: Entity | undefined;
 
    for (let i = 0; i < visibleEntities.length; i++) {
       const resource = visibleEntities[i];
@@ -172,14 +172,14 @@ export function getGatherTarget(tribesman: EntityID, visibleEntities: ReadonlyAr
    };
 }
 
-export function tribesmanGetItemPickupTarget(tribesman: EntityID, visibleItemEntities: ReadonlyArray<EntityID>, prioritisedItemTypes: ReadonlyArray<ItemType>, gatherTargetInfo: GatherTargetInfo): EntityID | null {
+export function tribesmanGetItemPickupTarget(tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, prioritisedItemTypes: ReadonlyArray<ItemType>, gatherTargetInfo: GatherTargetInfo): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const shouldEscape = tribesmanShouldEscape(getEntityType(tribesman)!, healthComponent);
    
    const goalRadius = getTribesmanRadius(tribesman);
       
-   let closestDroppedItem: EntityID | null = null;
+   let closestDroppedItem: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const itemEntity of visibleItemEntities) {
       const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
@@ -216,7 +216,7 @@ export function tribesmanGetItemPickupTarget(tribesman: EntityID, visibleItemEnt
    return closestDroppedItem;
 }
 
-export function tribesmanGoPickupItemEntity(tribesman: EntityID, pickupTarget: EntityID): void {
+export function tribesmanGoPickupItemEntity(tribesman: Entity, pickupTarget: Entity): void {
    const targetTransformComponent = TransformComponentArray.getComponent(pickupTarget);
    
    // @Temporary
@@ -233,7 +233,7 @@ export function tribesmanGoPickupItemEntity(tribesman: EntityID, pickupTarget: E
 }
 
 /** Gathers the specified item types. If the array is empty, gathers everything possible. */
-export function gatherResources(tribesman: EntityID, gatheredItemTypes: ReadonlyArray<ItemType>, visibleItemEntities: ReadonlyArray<EntityID>): boolean {
+export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyArray<ItemType>, visibleItemEntities: ReadonlyArray<Entity>): boolean {
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
    const gatherTargetInfo = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemTypes);

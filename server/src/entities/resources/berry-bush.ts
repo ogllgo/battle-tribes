@@ -1,6 +1,6 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityID, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../../Entity";
 import Layer from "../../Layer";
@@ -48,7 +48,7 @@ export function createBerryBushConfig(): EntityConfig<ComponentTypes> {
    }
 }
 
-export function dropBerryOverEntity(entity: EntityID): void {
+export function dropBerryOverEntity(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // Generate new spawn positions until we find one inside the board
@@ -75,7 +75,7 @@ export function dropBerryOverEntity(entity: EntityID): void {
    createEntity(config, getEntityLayer(entity), 0);
 }
 
-export function dropBerry(berryBush: EntityID, multiplier: number): void {
+export function dropBerry(berryBush: Entity, multiplier: number): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
    if (berryBushComponent.numBerries === 0) {
       return;
@@ -89,6 +89,6 @@ export function dropBerry(berryBush: EntityID, multiplier: number): void {
    registerDirtyEntity(berryBush);
 }
 
-export function onBerryBushHurt(berryBush: EntityID): void {
+export function onBerryBushHurt(berryBush: Entity): void {
    dropBerry(berryBush, 1);
 }

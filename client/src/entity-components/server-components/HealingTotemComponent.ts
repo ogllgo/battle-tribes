@@ -5,7 +5,7 @@ import { createHealingParticle } from "../../particles";
 import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityID } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -81,7 +81,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.healingT
    };
 }
 
-function onTick(entity: EntityID): void {
+function onTick(entity: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
    
    // Update eye lights
@@ -168,7 +168,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT * numTargets);
 }
 
-function updateFromData(reader: PacketReader, entity: EntityID): void {
+function updateFromData(reader: PacketReader, entity: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
    
    // @Garbage

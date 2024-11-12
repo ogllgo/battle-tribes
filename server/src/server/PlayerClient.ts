@@ -1,7 +1,7 @@
 import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
-import { EntityID } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import WebSocket from "ws";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
@@ -17,7 +17,7 @@ class PlayerClient {
    public readonly tribe: Tribe;
 
    /** ID of the player's entity */
-   public instance: EntityID;
+   public instance: Entity;
    public clientIsActive = false;
    public isAlive = true;
 
@@ -43,11 +43,11 @@ class PlayerClient {
    public hasPickedUpItem = false;
    public gameDataOptions = 0;
 
-   public visibleEntities = new Set<EntityID>();
-   public visibleDirtiedEntities = new Array<EntityID>();
-   public visibleRemovedEntities = new Array<EntityID>();
+   public visibleEntities = new Set<Entity>();
+   public visibleDirtiedEntities = new Array<Entity>();
+   public visibleRemovedEntities = new Array<Entity>();
 
-   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: EntityID, username: string) {
+   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string) {
       this.socket = socket;
       this.tribe = tribe;
       this.lastLayer = layer;
