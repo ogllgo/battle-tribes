@@ -89,7 +89,9 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.woodenShield]: null,
    [ItemType.slingshot]: null,
    [ItemType.woodenBracings]: null,
-   [ItemType.fireTorch]: null
+   [ItemType.fireTorch]: null,
+   [ItemType.slurb]: null,
+   [ItemType.slurbTorch]: null,
 };
 
 export const enum TribesmanGoalType {

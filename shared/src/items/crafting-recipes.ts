@@ -477,6 +477,25 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
       craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.fireTorch,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 2
+      }),
+      aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.slurbTorch,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 2,
+         [ItemType.slurb]: 2
+      }),
+      aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
    }
 ];
 

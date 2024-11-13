@@ -345,6 +345,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/glurb/glurb-middle-segment.png",
    "entities/glurb/glurb-tail-segment.png",
    "entities/glurb/glurb-eye.png",
+   "entities/slurb-torch/slurb-torch.png",
 ];
 
 const addTextureSource = (textureSource: string): void => {

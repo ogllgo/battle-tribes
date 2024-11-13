@@ -74,7 +74,8 @@ export const enum EntityType {
    bracings,
    fireTorch,
    spikyBastard,
-   glurb
+   glurb,
+   slurbTorch
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -151,6 +152,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.fireTorch]: "Fire Torch",
    [EntityType.spikyBastard]: "Spiky Bastard",
    [EntityType.glurb]: "Glurb",
+   [EntityType.slurbTorch]: "Slurb Torch",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

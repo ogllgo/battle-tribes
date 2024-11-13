@@ -21,6 +21,7 @@ export const enum PacketType {
    summonEntity,
    toggleSimulation,
    placeBlueprint,
+   craftItem,
    devGiveItem, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
@@ -34,7 +35,7 @@ export const enum PacketType {
 }
 
 // @Bandwidth: figure out a way to be tightly packed (not have to add padding)
-// @Bandwidth: split number into addFloat, addUint8, and addUint16
+// @Bandwidth: split number into addFloat, addUInt8, and addUInt16
 
 abstract class BasePacketObject {
    public currentByteOffset: number;

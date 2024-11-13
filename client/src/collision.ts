@@ -3,11 +3,11 @@ import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } f
 import { Point } from "battletribes-shared/utils";
 import { HitboxCollisionType, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
-import { getEntityLayer, playerInstance } from "./world";
+import { getEntityLayer, getEntityType, playerInstance, surfaceLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 
@@ -224,10 +224,10 @@ export function resolveWallCollisions(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[i];
       const box = hitbox.box;
       
-      const boundsMinX = transformComponent.position.x - 32;
-      const boundsMaxX = transformComponent.position.x + 32;
-      const boundsMinY = transformComponent.position.y - 32;
-      const boundsMaxY = transformComponent.position.y + 32;
+      const boundsMinX = box.calculateBoundsMinX();
+      const boundsMaxX = box.calculateBoundsMaxX();
+      const boundsMinY = box.calculateBoundsMinY();
+      const boundsMaxY = box.calculateBoundsMaxY();
       
       // @Hack: use actual bounding area
       const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);

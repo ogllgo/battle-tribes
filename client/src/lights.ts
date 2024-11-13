@@ -73,6 +73,7 @@ const addLightToLayer = (light: Light, layer: Layer): void => {
    lightRecord[light.id] = light;
 }
 
+// @Bug: Doesn't work if called in createRenderParts
 export function attachLightToEntity(light: Light, entity: Entity): void {
    const layer = getEntityLayer(entity);
    addLightToLayer(light, layer);

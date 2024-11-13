@@ -55,6 +55,7 @@ import { SlimeComponentArray, SlimeComponentParams } from "./server-components/S
 import { SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
 import { SlimewispComponentArray, SlimewispComponentParams } from "./server-components/SlimewispComponent";
 import { SlingTurretComponentArray, SlingTurretComponentParams } from "./server-components/SlingTurretComponent";
+import { SlurbTorchComponentArray, SlurbTorchComponentParams } from "./server-components/SlurbTorchComponent";
 import { SnowballComponentArray, SnowballComponentParams } from "./server-components/SnowballComponent";
 import { SpearProjectileComponentArray, SpearProjectileComponentParams } from "./server-components/SpearProjectileComponent";
 import { SpikesComponentArray, SpikesComponentParams } from "./server-components/SpikesComponent";
@@ -157,6 +158,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
    [ServerComponentType.glurb]: GlurbComponentArray,
    [ServerComponentType.tetheredHitbox]: TetheredHitboxComponentArray,
+   [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -237,6 +239,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
    [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
    [ServerComponentType.tetheredHitbox]: (): TetheredHitboxComponentParams => 0 as any,
+   [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

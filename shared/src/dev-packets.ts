@@ -84,6 +84,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.fireTorch]: {},
    [ServerComponentType.spikyBastard]: {},
    [ServerComponentType.glurb]: {},
+   [ServerComponentType.slurbTorch]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

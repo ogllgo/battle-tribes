@@ -325,6 +325,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
       [ServerComponentType.glurb]: ComponentArrayPriority.medium,
       [ServerComponentType.tetheredHitbox]: ComponentArrayPriority.medium,
+      [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

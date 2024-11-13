@@ -1,15 +1,14 @@
 import { InventoryComponentData, ServerComponentType } from "../../../../shared/src/components";
 import { Entity, LimbAction } from "../../../../shared/src/entities";
-import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType, ItemTypeString } from "../../../../shared/src/items/items";
+import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
-import { getHotbarSelectedItemSlot, getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
+import { getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
-import { CraftingMenu_updateRecipes } from "../../components/game/menus/CraftingMenu";
 import { playerInstance } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbInfoByInventoryName, InventoryUseComponent } from "./InventoryUseComponent";
+import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbInfoByInventoryName } from "./InventoryUseComponent";
 
 export interface InventoryComponentParams {
    readonly inventories: Partial<Record<InventoryName, Inventory>>;
@@ -20,11 +19,6 @@ export interface InventoryComponent {
 }
 
 const registerInventoryUpdate = (inventoryName: InventoryName): void => {
-   // @Hack
-   if (inventoryName === InventoryName.hotbar || inventoryName === InventoryName.backpack) {
-      CraftingMenu_updateRecipes();
-   }
-   
    // @Hack: There must be a better way to do this without some switch bullshit to call a hotpot of external functions
    switch (inventoryName) {
       case InventoryName.hotbar:

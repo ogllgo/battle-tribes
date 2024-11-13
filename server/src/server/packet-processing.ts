@@ -10,9 +10,9 @@ import { PlayerComponentArray } from "../components/PlayerComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
-import { calculateRadialAttackTargets, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
+import { calculateRadialAttackTargets, getAvailableCraftingStations, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
-import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory } from "../components/InventoryComponent";
+import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable } from "../components/InventoryComponent";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
@@ -24,6 +24,7 @@ import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
+import { CRAFTING_RECIPES } from "../../../shared/src/items/crafting-recipes";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -467,4 +468,28 @@ export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: 
    const structureTransformComponent = TransformComponentArray.getComponent(structure);
    const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.rotation);
    placeBlueprint(playerClient.instance, structure, blueprintType, rotation);
+}
+
+export function processPlayerCraftingPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+   
+   const recipeIndex = reader.readNumber();
+   if (recipeIndex < 0 || recipeIndex >= CRAFTING_RECIPES.length) {
+      return;
+   }
+   
+   const inventoryComponent = InventoryComponentArray.getComponent(player);
+   const craftingRecipe = CRAFTING_RECIPES[recipeIndex];
+
+   const availableCraftingStations = getAvailableCraftingStations(player);
+   if (!recipeCraftingStationIsAvailable(availableCraftingStations, craftingRecipe)) {
+      return;
+   }
+
+   if (inventoryComponentCanAffordRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot)) {
+      craftRecipe(player, inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);
+   }
 }

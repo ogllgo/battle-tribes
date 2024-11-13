@@ -20,6 +20,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
+import { TetheredHitboxComponentArray } from "./TetheredHitboxComponent";
 
 export interface TransformComponentParams {
    readonly position: Point;
@@ -268,7 +269,12 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
 }
 
 export function updateEntityPosition(transformComponent: TransformComponent, entity: Entity): void {
-   // updateHitboxes(transformComponent);
+   // @Hack?
+   if (!TetheredHitboxComponentArray.hasComponent(entity)) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      updateHitboxes(transformComponent);
+   }
+   
    updateContainingChunks(transformComponent, entity);
 }
 

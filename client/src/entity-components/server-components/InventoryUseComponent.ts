@@ -8,7 +8,7 @@ import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import Particle from "../../Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer } from "../../rendering/webgl/particle-rendering";
 import { animateLimb, createCraftingAnimationParticles, createMedicineAnimationParticles, generateRandomLimbPosition, updateBandageRenderPart, updateCustomItemRenderPart } from "../../limb-animations";
-import { createBlockParticle, createDeepFrostHeartBloodParticles, createEmberParticle, createSmokeParticle } from "../../particles";
+import { createBlockParticle, createDeepFrostHeartBloodParticles, createEmberParticle, createSlurbParticle, createSmokeParticle } from "../../particles";
 import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool, ITEM_TRAITS_RECORD } from "battletribes-shared/items/items";
 import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -574,6 +574,26 @@ function onTick(entity: Entity): void {
 
             break;
          }
+         case ItemType.slurbTorch: {
+            const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[limbIdx];
+            // @Hack: shouldn't happen in the first place
+            if (typeof activeItemRenderPart === "undefined") {
+               break;
+            }
+
+            if (Board.tickIntervalHasPassed(0.4)) {
+               const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
+               let spawnPositionX = renderPosition.x;
+               let spawnPositionY = renderPosition.y;
+
+               const spawnOffsetMagnitude = 7 * Math.random();
+               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+               spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+
+               createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+            }
+         }
       }
 
       // @Incomplete: If eating multiple foods at once, shouldn't be on the same tick interval
@@ -767,9 +787,16 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
          if (limb.torchLight === null) {
             limb.torchLight = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
             attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity, getEntityLayer(entity));
+         } else {
+            limb.torchLight.intensity = torchTrait.lightIntensity;
+            limb.torchLight.strength = torchTrait.lightStrength;
+            limb.torchLight.radius = torchTrait.lightRadius;
+            limb.torchLight.r = torchTrait.lightR;
+            limb.torchLight.g = torchTrait.lightG;
+            limb.torchLight.b = torchTrait.lightB;
          }
 
-         if (Board.tickIntervalHasPassed(0.15)) {
+         if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
             limb.torchLight.radius = torchTrait.lightRadius + randFloat(-7, 7);
          }
          

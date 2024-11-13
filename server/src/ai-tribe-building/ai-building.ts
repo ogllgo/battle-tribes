@@ -50,7 +50,8 @@ const BUILDING_SAFETY: Record<StructureType, number> = {
    [EntityType.frostshaper]: 10,
    [EntityType.stonecarvingTable]: 10,
    [EntityType.bracings]: 3,
-   [EntityType.fireTorch]: 3
+   [EntityType.fireTorch]: 3,
+   [EntityType.slurbTorch]: 3
 };
 
 export function createRestrictedBuildingArea(position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea {

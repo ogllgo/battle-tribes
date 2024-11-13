@@ -6,13 +6,12 @@ import Layer, { getTileX, getTileY } from "../Layer";
 import { registerCommand } from "../commands";
 import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "../components/TribeMemberComponent";
 import { modifyBuilding } from "../entities/tribes/player";
-import { getAvailableCraftingStations } from "../entities/tribes/tribe-member";
 import PlayerClient from "./PlayerClient";
 import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./game-data-packets";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
-import { InventoryComponentArray, addItemToInventory, craftRecipe, getInventory, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable } from "../components/InventoryComponent";
+import { InventoryComponentArray, addItemToInventory, getInventory } from "../components/InventoryComponent";
 import { TribeComponentArray, recruitTribesman } from "../components/TribeComponent";
 import { Point, randInt, randItem } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
@@ -26,7 +25,7 @@ import { BuildingMaterialComponentArray } from "../components/BuildingMaterialCo
 import { TurretComponentArray } from "../components/TurretComponent";
 import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
 import { EntitySummonPacket } from "battletribes-shared/dev-packets";
-import { CRAFTING_RECIPES, ItemRequirements } from "battletribes-shared/items/crafting-recipes";
+import { ItemRequirements } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
@@ -118,29 +117,6 @@ export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    const x = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
    const y = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
    return new Point(x, y);
-}
-
-const processPlayerCraftingPacket = (playerClient: PlayerClient, recipeIndex: number): void => {
-   const player = playerClient.instance;
-   if (!entityExists(player)) {
-      return;
-   }
-   
-   if (recipeIndex < 0 || recipeIndex >= CRAFTING_RECIPES.length) {
-      return;
-   }
-   
-   const inventoryComponent = InventoryComponentArray.getComponent(player);
-   const craftingRecipe = CRAFTING_RECIPES[recipeIndex];
-
-   const availableCraftingStations = getAvailableCraftingStations(player);
-   if (!recipeCraftingStationIsAvailable(availableCraftingStations, craftingRecipe)) {
-      return;
-   }
-
-   if (inventoryComponentCanAffordRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot)) {
-      craftRecipe(player, inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);
-   }
 }
 
 const processCommandPacket = (playerClient: PlayerClient, command: string): void => {
@@ -419,10 +395,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
 
    socket.on("deactivate", () => {
       playerClient.clientIsActive = false;
-   });
-
-   socket.on("crafting_packet", (recipeIndex: number) => {
-      processPlayerCraftingPacket(playerClient, recipeIndex);
    });
 
    socket.on("command", (command: string) => {

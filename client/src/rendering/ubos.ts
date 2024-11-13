@@ -23,7 +23,7 @@ export const ENTITY_TEXTURE_ATLAS_UBO = `
 layout(std140) uniform ${UBO_NAME_RECORD[UBOBindingIndex.ENTITY_TEXTURE_ATLAS]} {
    // @Cleanup @Speed: might be better to premultiply this by ATLAS_SLOT_SIZE if it isn't used
    float u_atlasSize;
-   // @Cleanup: Use a struct for these 2
+// @Cleanup: Use a struct for these 2
    float u_textureSlotIndexes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
    vec2 u_textureSizes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
 };

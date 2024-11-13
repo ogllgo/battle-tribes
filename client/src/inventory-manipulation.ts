@@ -120,8 +120,8 @@ export function inventoriesAreDifferent(inventory1: Inventory, inventory2: Inven
 
       if (item1 !== null && item2 !== null) {
          if (item1.count !== item2.count
-          || item1.id !== item2.id
-          || item1.type !== item2.type) {
+          || item1.id    !== item2.id
+          || item1.type  !== item2.type) {
             return true;
          }
       }

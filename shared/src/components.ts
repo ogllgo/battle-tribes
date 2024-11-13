@@ -93,7 +93,8 @@ export enum ServerComponentType {
    furnace,
    fireTorch,
    spikyBastard,
-   glurb
+   glurb,
+   slurbTorch
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -179,7 +180,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.furnace]: "Furnace",
    [ServerComponentType.fireTorch]: "Fire Torch",
    [ServerComponentType.spikyBastard]: "Spiky Bastard",
-   [ServerComponentType.glurb]: "Glurb"
+   [ServerComponentType.glurb]: "Glurb",
+   [ServerComponentType.slurbTorch]: "Slurb Torch"
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -258,7 +260,8 @@ export const EntityComponents = {
    [EntityType.bracings]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial, ServerComponentType.bracings],
    [EntityType.fireTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fireTorch],
    [EntityType.spikyBastard]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.spikyBastard],
-   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurb]
+   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurb],
+   [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

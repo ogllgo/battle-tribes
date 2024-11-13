@@ -1,11 +1,15 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
+import { ItemType } from "../../../shared/src/items/items";
 import { moveEntityToEntity, stopEntity } from "../ai-shared";
 import { CollisionVars, entitiesAreColliding } from "../collision";
-import { destroyEntity, getEntityType } from "../world";
+import { createItemEntityConfig } from "../entities/item-entity";
+import { createEntity } from "../Entity";
+import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { PhysicsComponentArray } from "./PhysicsComponent";
+import { TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
 
 export class GlurbComponent {}
 
@@ -15,7 +19,8 @@ export const GlurbComponentArray = new ComponentArray<GlurbComponent>(ServerComp
    onTick: {
       func: onTick,
       tickInterval: 1
-   }
+   },
+   preRemove: preRemove
 });
 
 function getDataLength(): number {
@@ -30,7 +35,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
-         moveEntityToEntity(glurb, entity, 350, Math.PI * 1);
+         moveEntityToEntity(glurb, entity, 450, Math.PI * 1);
 
          if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
@@ -43,7 +48,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.player) {
-         moveEntityToEntity(glurb, entity, 350, Math.PI * 1);
+         moveEntityToEntity(glurb, entity, 450, Math.PI * 1);
          
          return;
       }
@@ -51,4 +56,19 @@ function onTick(glurb: Entity): void {
 
    const physicsComponent = PhysicsComponentArray.getComponent(glurb);
    stopEntity(physicsComponent);
+}
+
+function preRemove(glurb: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(glurb);
+   const layer = getEntityLayer(glurb);
+
+   for (const hitbox of transformComponent.hitboxes) {
+      const position = getRandomPositionInBox(hitbox.box);
+      
+      const config = createItemEntityConfig(ItemType.slurb, 1, null);
+      config.components[ServerComponentType.transform].position.x = position.x;
+      config.components[ServerComponentType.transform].position.y = position.y;
+      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      createEntity(config, layer, 0);
+   }
 }

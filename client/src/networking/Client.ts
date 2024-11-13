@@ -502,12 +502,6 @@ abstract class Client {
       }
    }
 
-   public static sendCraftingPacket(recipeIndex: number): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("crafting_packet", recipeIndex);
-      }
-   }
-
    public static sendHeldItemDropPacket(dropAmount: number, dropDirection: number): void {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("held_item_drop", dropAmount, dropDirection);

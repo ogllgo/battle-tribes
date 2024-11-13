@@ -61,6 +61,7 @@ import { createStonecarvingTableConfig } from "../structures/stonecarving-table"
 import { createBracingsConfig } from "../structures/bracings";
 import { Hitbox } from "../../../../shared/src/boxes/boxes";
 import { createFireTorchConfig } from "../structures/fire-torch";
+import { createSlurbTorchConfig } from "../structures/slurb-torch";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -243,6 +244,7 @@ export function placeBuilding(tribe: Tribe, layer: Layer, position: Point, rotat
       case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, connectionInfo); break;
       case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood); break;
       case EntityType.fireTorch: config = createFireTorchConfig(tribe, connectionInfo); break;
+      case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, connectionInfo); break;
    }
    
    config.components[ServerComponentType.transform].position.x = position.x;

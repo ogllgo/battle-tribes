@@ -73,7 +73,9 @@ export const enum ItemType {
    woodenShield,
    slingshot,
    woodenBracings,
-   fireTorch
+   fireTorch,
+   slurb,
+   slurbTorch
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -146,7 +148,9 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.woodenShield]: "Wooden Shield",
    [ItemType.slingshot]: "Slingshot",
    [ItemType.woodenBracings]: "Wooden Bracings",
-   [ItemType.fireTorch]: "Fire Torch"
+   [ItemType.fireTorch]: "Fire Torch",
+   [ItemType.slurb]: "Slurb",
+   [ItemType.slurbTorch]: "Slurb Torch"
 };
 
 const numItemTypes = Object.keys(ItemTypeString).length;
@@ -276,7 +280,6 @@ export interface ItemInfoRecord {
 }
 
 interface TorchItemTrait {
-   readonly burnTimeSeconds: number;
    readonly lightIntensity: number;
    readonly lightStrength: number;
    readonly lightRadius: number;
@@ -464,7 +467,9 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.woodenShield]: "shield",
    [ItemType.slingshot]: "slingshot",
    [ItemType.woodenBracings]: "placeable",
-   [ItemType.fireTorch]: "placeable"
+   [ItemType.fireTorch]: "placeable",
+   [ItemType.slurb]: "material",
+   [ItemType.slurbTorch]: "placeable",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -840,7 +845,14 @@ export const ITEM_INFO_RECORD = {
    [ItemType.fireTorch]: {
       stackSize: 99,
       entityType: EntityType.fireTorch
-   }
+   },
+   [ItemType.slurb]: {
+      stackSize: 99
+   },
+   [ItemType.slurbTorch]: {
+      stackSize: 99,
+      entityType: EntityType.slurbTorch
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -915,15 +927,34 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.woodenBracings]: {},
    [ItemType.fireTorch]: {
       torch: {
-         burnTimeSeconds: 15,
-         lightIntensity: 0.9,
-         lightStrength: 1.5,
+         lightIntensity: 1,
+         lightStrength: 1.8,
          lightRadius: 10,
          lightR: 1,
          lightG: 0.6,
          lightB: 0.35
       }
-   }
+   },
+   [ItemType.slurb]: {
+      torch: {
+         lightIntensity: 0.6,
+         lightStrength: 0.5,
+         lightRadius: 4,
+         lightR: 1,
+         lightG: 0.1,
+         lightB: 1
+      }
+   },
+   [ItemType.slurbTorch]: {
+      torch: {
+         lightIntensity: 0.7,
+         lightStrength: 1.5,
+         lightRadius: 10,
+         lightR: 1,
+         lightG: 0.4,
+         lightB: 1
+      }
+   },
 };
 
 // Some typescript wizardry
@@ -1045,14 +1076,15 @@ export class Inventory {
    }
 }
 
-/** Returns a shallow copy of an inventory. */
+/** Returns a deep copy of an inventory. */
 export function copyInventory(inventory: Inventory): Inventory {
    const newInventory = new Inventory(inventory.width, inventory.height, inventory.name);
 
    for (let itemSlot = 1; itemSlot <= inventory.width * inventory.height; itemSlot++) {
       const item = inventory.itemSlots[itemSlot];
       if (typeof item !== "undefined") {
-         newInventory.addItem(item, itemSlot);
+         const itemCopy = new Item(item.type, item.count, item.id);
+         newInventory.addItem(itemCopy, itemSlot);
       }
    }
 

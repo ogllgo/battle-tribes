@@ -204,3 +204,11 @@ export function sendPlaceBlueprintPacket(structure: Entity, blueprintType: Bluep
 
    Client.sendPacket(packet.buffer);
 }
+
+export function sendCraftItemPacket(recipeIndex: number): void {
+   const packet = new Packet(PacketType.craftItem, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+   packet.addNumber(recipeIndex);
+
+   Client.sendPacket(packet.buffer);
+}

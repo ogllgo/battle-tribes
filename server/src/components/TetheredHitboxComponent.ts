@@ -10,8 +10,8 @@ export interface TetheredHitboxRestriction {
    
    readonly idealDistance: number;
 
-   velocityX: number;
-   velocityY: number;
+   previousX: number;
+   previousY: number;
 }
 
 export class TetheredHitboxComponent {
@@ -72,29 +72,26 @@ function onTick(entity: Entity): void {
       const springForceY = normalisedDiffY * springConstant * displacement * Settings.I_TPS;
       
       // Apply spring force
-      segmentA.velocityX += springForceX;
-      segmentA.velocityY += springForceY;
-      segmentB.velocityX -= springForceX;
-      segmentB.velocityY -= springForceY;
-
-      const relativeVelocityX = segmentB.velocityX - segmentA.velocityX;
-      const relativeVelocityY = segmentB.velocityY - segmentA.velocityY;
-
-      // Calculate damping force
-      const dampingForceX = relativeVelocityX * tetheredHitboxComponent.damping * Settings.I_TPS;
-      const dampingForceY = relativeVelocityY * tetheredHitboxComponent.damping * Settings.I_TPS;
-      
-      // Apply damping
-      segmentA.velocityX += dampingForceX;
-      segmentA.velocityY += dampingForceY;
-      segmentB.velocityX -= dampingForceX;
-      segmentB.velocityY -= dampingForceY;
+      segmentA.hitbox.box.position.x += springForceX;
+      segmentA.hitbox.box.position.y += springForceY;
+      segmentB.hitbox.box.position.x -= springForceX;
+      segmentB.hitbox.box.position.y -= springForceY;
    }
 
-   // Apply the velocity
+   // Verlet integration
    for (const restriction of tetheredHitboxComponent.restrictions) {
-      restriction.hitbox.box.position.x += restriction.velocityX * Settings.I_TPS;
-      restriction.hitbox.box.position.y += restriction.velocityY * Settings.I_TPS;
+      const velocityX = (restriction.hitbox.box.position.x - restriction.previousX) * (1 - tetheredHitboxComponent.damping);
+      const velocityY = (restriction.hitbox.box.position.y - restriction.previousY) * (1 - tetheredHitboxComponent.damping);
+      
+      const tempX = restriction.hitbox.box.position.x;
+      const tempY = restriction.hitbox.box.position.y;
+
+      restriction.hitbox.box.position.x += velocityX;
+      restriction.hitbox.box.position.y += velocityY;
+
+      // Update previous position for next frame
+      restriction.previousX = tempX;
+      restriction.previousY = tempY;
    }
 
    const physicsComponent = PhysicsComponentArray.getComponent(entity);

@@ -1872,3 +1872,48 @@ export function createGenericGemParticle(transformComponent: TransformComponent,
    );
    Board.lowMonocolourParticles.push(particle);
 }
+
+export function createSlurbParticle(spawnPositionX: number, spawnPositionY: number, initialMoveDirection: number, moveSpeed: number, vAddX: number, vAddY: number): void {
+   const lifetime = randFloat(0.4, 0.6);
+
+   const velocityX = moveSpeed * Math.sin(initialMoveDirection);
+   const velocityY = moveSpeed * Math.cos(initialMoveDirection);
+
+   const accelerationMagnitude = randFloat(0, 80);
+   const accelerationDirection = 2 * Math.PI * Math.random();
+   const accelerationX = accelerationMagnitude * Math.sin(accelerationDirection);
+   const accelerationY = accelerationDirection * Math.cos(accelerationDirection);
+   
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      const opacity = 1 - particle.age / lifetime;
+      return Math.pow(opacity, 0.3);
+   }
+
+   let r: number, g: number, b: number;
+   if (Math.random() < 0.5) {
+      r = 181/255;
+      g = 89/255;
+      b = 170/255;
+   } else {
+      r = 152/255;
+      g = 62/255;
+      b = 158/255;
+   }
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      8, 8,
+      spawnPositionX, spawnPositionY,
+      velocityX + vAddX, velocityY + vAddY,
+      accelerationX, accelerationY,
+      0,
+      2 * Math.PI * Math.random(),
+      0, 
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}

@@ -1,7 +1,6 @@
 import { getTechRequiredForItem } from "battletribes-shared/techs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
-import Client from "../../../networking/Client";
 import { windowHeight } from "../../../webgl";
 import ItemSlot, { ItemSlotCallbackInfo } from "../inventories/ItemSlot";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
@@ -16,11 +15,18 @@ import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { playerInstance } from "../../../world";
+import { sendCraftItemPacket } from "../../../networking/packet-creation";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
    readonly hoverPosition: [number, number];
    readonly craftingMenuHeight: number;
+}
+
+interface CraftingMenuProps {
+   readonly craftingOutputSlot: Inventory;
+   readonly hotbar: Inventory;
+   readonly backpack: Inventory;
 }
 
 // @Temporary?
@@ -82,23 +88,21 @@ const RecipeViewer = ({ recipe, hoverPosition, craftingMenuHeight }: RecipeViewe
 }
 
 interface IngredientProps {
+   readonly hotbar: Inventory;
    readonly ingredientType: ItemType;
    readonly amountRequiredForRecipe: number;
 }
 /**
  * An ingredient in an item's recipe.
  */
-const Ingredient = ({ ingredientType, amountRequiredForRecipe }: IngredientProps) => {
+const Ingredient = (props: IngredientProps) => {
    const [tooltipIsShown, setTooltipIsShown] = useState(false);
    
-   const itemIconSource = getItemTypeImage(ingredientType);
+   const itemIconSource = getItemTypeImage(props.ingredientType);
 
-   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
-   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
-   
    // Find whether the player has enough available ingredients to craft the recipe
-   const numIngredientsAvailableToPlayer = countItemTypesInInventory(hotbar, ingredientType);
-   const playerHasEnoughIngredients = numIngredientsAvailableToPlayer >= amountRequiredForRecipe;
+   const numIngredientsAvailableToPlayer = countItemTypesInInventory(props.hotbar, props.ingredientType);
+   const playerHasEnoughIngredients = numIngredientsAvailableToPlayer >= props.amountRequiredForRecipe;
 
    const showIngredientTooltip = () => {
       setTooltipIsShown(true);
@@ -114,23 +118,24 @@ const Ingredient = ({ ingredientType, amountRequiredForRecipe }: IngredientProps
 
          {tooltipIsShown ? (
             <div className="ingredient-tooltip">
-               <span>{CLIENT_ITEM_INFO_RECORD[ingredientType].name}</span>
+               <span>{CLIENT_ITEM_INFO_RECORD[props.ingredientType].name}</span>
             </div>
          ) : null}
       </div>
-      <span className={`ingredient-count${!playerHasEnoughIngredients ? " not-enough" : ""}`}>x{amountRequiredForRecipe}</span>
+      <span className={`ingredient-count${!playerHasEnoughIngredients ? " not-enough" : ""}`}>x{props.amountRequiredForRecipe}</span>
    </li>;
 };
 
 interface IngredientsProps {
+   readonly hotbar: Inventory;
    readonly recipe: CraftingRecipe;
 }
 /**
  * The list of ingredients in a recipe required to craft it.
  */
-const Ingredients = ({ recipe }: IngredientsProps) => {
-   const ingredientElements = recipe.ingredients.getEntries().map((entry, i) => {
-      return <Ingredient ingredientType={entry.itemType} amountRequiredForRecipe={entry.count} key={i} />
+const Ingredients = (props: IngredientsProps) => {
+   const ingredientElements = props.recipe.ingredients.getEntries().map((entry, i) => {
+      return <Ingredient hotbar={props.hotbar} ingredientType={entry.itemType} amountRequiredForRecipe={entry.count} key={i} />
    });
 
    return <ul className="ingredients">
@@ -143,31 +148,54 @@ const MIN_RECIPE_BROWSER_HEIGHT = 9;
 
 export let setCraftingMenuAvailableRecipes: (craftingRecipes: Array<CraftingRecipe>) => void = () => {};
 export let setCraftingMenuAvailableCraftingStations: (craftingStations: Set<CraftingStation>) => void = () => {};
-export let CraftingMenu_setCraftingMenuOutputItem: (item: Item | null) => void = () => {};
 export let CraftingMenu_setCraftingStation: (craftingStation: CraftingStation | null) => void = () => {};
 export let CraftingMenu_setIsVisible: (isVisible: boolean) => void;
 
 export let craftingMenuIsOpen: () => boolean;
 
-export let CraftingMenu_updateRecipes: () => void = () => {};
+const getCraftableRecipes = (hotbar: Inventory, backpack: Inventory, craftingStation: CraftingStation | null): ReadonlyArray<CraftingRecipe> => {
+   if (playerInstance === null) {
+      return [];
+   }
+   
+   const availableItemsTally = new ItemTally2();
+   tallyInventoryItems(availableItemsTally, hotbar);
+   if (backpack !== null) {
+      tallyInventoryItems(availableItemsTally, backpack);
+   }
+   
+   const craftableRecipes = new Array<CraftingRecipe>();
+   for (const recipe of CRAFTING_RECIPES) {
+      // @Cleanup: negate
+      // Make sure the recipe is craftable by the current station
+      if (!((typeof recipe.craftingStation === "undefined" && craftingStation === null) || (recipe.craftingStation === craftingStation))) {
+         continue;
+      }
+      
+      if (availableItemsTally.fullyCoversOtherTally(recipe.ingredients)) {
+         craftableRecipes.push(recipe);
+      }
+   }
 
-const CraftingMenu = () => {
+   return craftableRecipes;
+}
+
+const CraftingMenu = (props: CraftingMenuProps) => {
    const [isVisible, setIsVisible] = useState(false);
    const [craftingStation, setCraftingStation] = useState<CraftingStation | null>(null);
 
    // const [availableRecipes, setAvailableRecipes] = useState(new Array<CraftingRecipe>());
    // const [availableCraftingStations, setAvailableCraftingStations] = useState(new Set<CraftingStation>());
-   const [craftingOutputItemType, setCraftingOutputItemType] = useState<ItemType | null>(null);
-   const [craftingOutputItemAmount, setCraftingOutputItemAmount] = useState<number>(0);
 
    const [selectedRecipe, setSelectedRecipe] = useState<CraftingRecipe | null>(null);
    const selectedRecipeIndex = useRef(-1);
    
-   const craftableRecipes = useRef<Array<CraftingRecipe>>([]);
    const [hoveredRecipe, setHoveredRecipe] = useState<CraftingRecipe | null>(null);
    const [hoverPosition, setHoverPosition] = useState<[number, number] | null>(null);
    const craftingMenuRef = useRef<HTMLDivElement | null>(null);
    const craftingMenuHeightRef = useRef<number | null>(null);
+
+   const craftableRecipes = getCraftableRecipes(props.hotbar, props.backpack, craftingStation);
 
    const onCraftingMenuRefChange = useCallback((node: HTMLDivElement | null) => {
       if (node !== null) {
@@ -187,14 +215,14 @@ const CraftingMenu = () => {
    }
 
    const craftRecipe = useCallback((): void => {
-      if (selectedRecipe === null || !craftableRecipes.current.includes(selectedRecipe)) {
+      if (selectedRecipe === null || !craftableRecipes.includes(selectedRecipe)) {
          return;
       }
 
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
       playSound("craft.mp3", 0.25, 1, playerTransformComponent.position);
-      Client.sendCraftingPacket(selectedRecipeIndex.current);
+      sendCraftItemPacket(selectedRecipeIndex.current);
    }, [selectedRecipe, craftableRecipes]);
 
    const hoverRecipe = (e: MouseEvent, callbackInfo: ItemSlotCallbackInfo): void => {
@@ -219,37 +247,6 @@ const CraftingMenu = () => {
    // const pickUpCraftingOutputItem = (e: MouseEvent): void => {
    //    leftClickItemSlot(e, Player.instance!.id, definiteGameState.craftingOutputSlot!, 1);
    // }
-
-   CraftingMenu_updateRecipes = useCallback((): void => {
-      if (playerInstance === null) {
-         return;
-      }
-      
-      const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
-      const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
-      const backpack = getInventory(inventoryComponent, InventoryName.backpack);
-      
-      const availableItemsTally = new ItemTally2();
-      tallyInventoryItems(availableItemsTally, hotbar);
-      if (backpack !== null) {
-         tallyInventoryItems(availableItemsTally, backpack);
-      }
-      
-      const craftableRecipesArray = new Array<CraftingRecipe>();
-      for (const recipe of CRAFTING_RECIPES) {
-         // @Cleanup: negate
-         // Make sure the recipe is craftable by the current station
-         if (!((typeof recipe.craftingStation === "undefined" && craftingStation === null) || (recipe.craftingStation === craftingStation))) {
-            continue;
-         }
-         
-         if (availableItemsTally.fullyCoversOtherTally(recipe.ingredients)) {
-            craftableRecipesArray.push(recipe);
-         }
-      }
-
-      craftableRecipes.current = craftableRecipesArray;
-   }, [craftingStation]);
 
    // // Find which of the available recipes can be crafted
    // useEffect(() => {
@@ -292,16 +289,6 @@ const CraftingMenu = () => {
       // @Temporary
       setCraftingMenuAvailableCraftingStations = (craftingStations: Set<CraftingStation>): void => {
          // setAvailableCraftingStations(craftingStations);
-      }
-
-      CraftingMenu_setCraftingMenuOutputItem = (item: Item | null): void => {
-         if (item !== null) {
-            setCraftingOutputItemType(item.type);
-            setCraftingOutputItemAmount(item.count);
-         } else {
-            setCraftingOutputItemType(null);
-            setCraftingOutputItemAmount(0);
-         }
       }
 
       CraftingMenu_setCraftingStation = (craftingStation: CraftingStation | null): void => {
@@ -378,12 +365,9 @@ const CraftingMenu = () => {
       }
 
       const recipe = forceGetItemRecipe(callbackInfo.itemType);
-      const isCraftable = craftableRecipes.current.includes(recipe);
+      const isCraftable = craftableRecipes.includes(recipe);
       return isCraftable ? "craftable" : undefined;
    }
-
-   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
-   const craftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot)!;
 
    return <div id="crafting-menu" className="inventory" ref={onCraftingMenuRefChange}>
       {/*
@@ -412,12 +396,12 @@ const CraftingMenu = () => {
 
                <div className="ingredients-title">INGREDIENTS</div>
                
-               <Ingredients recipe={selectedRecipe} />
+               <Ingredients hotbar={props.hotbar} recipe={selectedRecipe} />
             </div>
 
             <div className="bottom">
-               <button onClick={craftRecipe} className={`craft-button${craftableRecipes.current.includes(selectedRecipe) ? " craftable" : ""}`}>CRAFT</button>
-               <ItemSlot className="crafting-output" entityID={playerInstance!} inventory={craftingOutputSlot} itemSlot={1} validItemSpecifier={() => false} />
+               <button onClick={craftRecipe} className={`craft-button${craftableRecipes.includes(selectedRecipe) ? " craftable" : ""}`}>CRAFT</button>
+               <ItemSlot className="crafting-output" entityID={playerInstance!} inventory={props.craftingOutputSlot} itemSlot={1} validItemSpecifier={() => false} />
             </div>
          </> : <>
             <div className="select-message">&#40;Select a recipe to view&#41;</div>

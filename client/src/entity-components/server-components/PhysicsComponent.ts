@@ -253,7 +253,7 @@ function onTick(entity: Entity): void {
          ParticleRenderLayer.low,
          64, 64,
          transformComponent.position.x, transformComponent.position.y,
-         0, 0,
+         0, 0, 
          0, 0,
          0,
          2 * Math.PI * Math.random(),
@@ -273,7 +273,7 @@ function onUpdate(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    applyPhysics(physicsComponent, entity);
-   
+
    // Don't resolve wall tile collisions in lightspeed mode
    if (entity !== playerInstance || !keyIsPressed("l")) { 
       resolveWallCollisions(entity);

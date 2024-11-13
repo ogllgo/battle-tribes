@@ -223,6 +223,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.glurb]: {
       name: "Glurb"
+   },
+   [EntityType.slurbTorch]: {
+      name: "Slurb Torch"
    }
 };
 

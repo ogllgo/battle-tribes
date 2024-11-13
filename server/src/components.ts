@@ -77,6 +77,7 @@ import { FireTorchComponent } from "./components/FireTorchComponent";
 import { SpikyBastardComponent } from "./components/SpikyBastardComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
 import { TetheredHitboxComponent } from "./components/TetheredHitboxComponent";
+import { SlurbTorchComponent } from "./components/SlurbTorchComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -158,6 +159,7 @@ const ComponentClassRecord = {
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
    [ServerComponentType.glurb]: () => GlurbComponent,
+   [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

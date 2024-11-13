@@ -444,7 +444,10 @@ export function recipeCraftingStationIsAvailable(availableCraftingStations: Read
 
 export function craftRecipe(entity: Entity, inventoryComponent: InventoryComponent, recipe: CraftingRecipe, outputInventoryName: InventoryName): void {
    // Consume ingredients
-   for (const [ingredientType, ingredientCount] of Object.entries(recipe.ingredients).map(entry => [Number(entry[0]), entry[1]]) as ReadonlyArray<[ItemType, number]>) {
+   for (const tallyEntry of recipe.ingredients.getEntries()) {
+      const ingredientType = tallyEntry.itemType;
+      const ingredientCount = tallyEntry.count;
+      
       for (let remainingAmountToConsume = ingredientCount, i = 0; remainingAmountToConsume > 0 && i < inventoryComponent.inventories.length; i++) {
          const inventory = inventoryComponent.inventories[i];
          remainingAmountToConsume -= consumeItemTypeFromInventory(entity, inventoryComponent, inventory.name, ingredientType, ingredientCount);

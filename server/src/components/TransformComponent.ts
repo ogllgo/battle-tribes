@@ -13,7 +13,7 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
-import { boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
@@ -221,7 +221,17 @@ export class TransformComponent {
          // Update the first hitbox in the link
          const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
          const box = tetheredHitboxComponent.restrictions[0].hitbox.box;
+
+         // @Hack
+         const tempX = box.offset.x;
+         const tempY = box.offset.y;
+         box.offset.x = 0;
+         box.offset.y = 0;
+         
          updateBox(box, this.position.x, this.position.y, this.rotation);
+
+         box.offset.x = tempX;
+         box.offset.y = tempY;
       } else {
          // Update all of them
          for (const hitbox of this.hitboxes) {
@@ -461,6 +471,15 @@ function onJoin(entity: Entity): void {
 
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.resetHitboxes(entity);
+
+   // @Hack @Cleanup
+   if (TetheredHitboxComponentArray.hasComponent(entity)) {
+      const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
+      for (const restriction of tetheredHitboxComponent.restrictions) {
+         restriction.previousX = restriction.hitbox.box.position.x;
+         restriction.previousY = restriction.hitbox.box.position.y;
+      }
+   }
    
    transformComponent.updateIsInRiver(entity);
    
@@ -589,10 +608,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
-   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
-   const box = hitbox.box;
-
+export function getRandomPositionInBox(box: Box): Point {
    if (boxIsCircular(box)) {
       return box.position.offset(box.radius * Math.random(), 2 * Math.PI * Math.random());
    } else {
@@ -602,8 +618,14 @@ export function getRandomPositionInEntity(transformComponent: TransformComponent
       const xOffset = randFloat(-halfWidth, halfWidth);
       const yOffset = randFloat(-halfHeight, halfHeight);
 
-      const x = transformComponent.position.x + rotateXAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
-      const y = transformComponent.position.y + rotateYAroundOrigin(xOffset, yOffset, transformComponent.rotation + box.rotation);
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
       return new Point(x, y);
    }
+}
+
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
+   const box = hitbox.box;
+   return getRandomPositionInBox(box);
 }

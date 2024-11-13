@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -59,8 +59,8 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
       const restriction: TetheredHitboxRestriction = {
          hitbox: hitbox,
          idealDistance: 30,
-         velocityX: 0,
-         velocityY: 0
+         previousX: 0,
+         previousY: 0
       };
       addTetheredHitboxRestriction(tetheredHitboxComponent, restriction);
    }

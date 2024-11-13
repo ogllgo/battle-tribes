@@ -51,6 +51,8 @@ const GameScreen = (props: GameScreenProps) => {
 
    const [hotbar, setHotbar] = useState(new Inventory(Settings.INITIAL_PLAYER_HOTBAR_SIZE, 1, InventoryName.hotbar));
    const [heldItemSlot, setHeldItemSlot] = useState(new Inventory(1, 1, InventoryName.heldItemSlot));
+   const [craftingOutputSlot, setCraftingOutputSlot] = useState(new Inventory(1, 1, InventoryName.craftingOutputSlot));
+   const [backpack, setBackpack] = useState(new Inventory(1, 1, InventoryName.backpack));
    
    const summonPacketRef = useRef<Mutable<EntitySummonPacket> | null>(null);
 
@@ -99,9 +101,19 @@ const GameScreen = (props: GameScreenProps) => {
             if (entityHeldItemSlot !== null && inventoriesAreDifferent(heldItemSlot, entityHeldItemSlot)) {
                setHeldItemSlot(copyInventory(entityHeldItemSlot));
             }
+            
+            const entityCraftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
+            if (entityCraftingOutputSlot !== null && inventoriesAreDifferent(craftingOutputSlot, entityCraftingOutputSlot)) {
+               setCraftingOutputSlot(copyInventory(entityCraftingOutputSlot));
+            }
+
+            const entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpack);
+            if (entityBackpackSlot !== null && inventoriesAreDifferent(backpack, entityBackpackSlot)) {
+               setBackpack(copyInventory(entityBackpackSlot));
+            }
          }
       }
-   }, [hotbar, heldItemSlot]);
+   }, [hotbar, heldItemSlot, craftingOutputSlot, backpack]);
 
    useEffect(() => {
       if (cinematicModeIsEnabled) {
@@ -131,7 +143,7 @@ const GameScreen = (props: GameScreenProps) => {
 
       {/* Note: BackpackInventoryMenu must be exactly before CraftingMenu because of CSS hijinks */}
       <BackpackInventoryMenu />
-      <CraftingMenu />
+      <CraftingMenu craftingOutputSlot={craftingOutputSlot} hotbar={hotbar} backpack={backpack} />
 
       {isDead ? (
          <DeathScreen setAppState={props.setAppState} />

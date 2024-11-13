@@ -504,6 +504,20 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Fire Torch",
       description: "Provides a temporary light source."
+   },
+   [ItemType.slurb]: {
+      entityTextureSource: "items/small/slurb.png",
+      textureSource: "items/large/slurb.png",
+      toolTextureSource: "",
+      name: "Slurb",
+      description: "Gooey. Glows a bit."
+   },
+   [ItemType.slurbTorch]: {
+      entityTextureSource: "items/small/slurb-torch.png",
+      textureSource: "items/large/slurb-torch.png",
+      toolTextureSource: "",
+      name: "Slurb Torch",
+      description: "Less powerful than a regular torch, but doesn't burn out."
    }
 };
 
