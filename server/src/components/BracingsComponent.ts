@@ -7,12 +7,9 @@ import { TransformComponentArray } from "./TransformComponent";
 
 export class BracingsComponent {}
 
-export const BracingsComponentArray = new ComponentArray<BracingsComponent>(ServerComponentType.bracings, true, {
-   onJoin: onJoin,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BracingsComponentArray = new ComponentArray<BracingsComponent>(ServerComponentType.bracings, true, getDataLength, addDataToPacket);
+BracingsComponentArray.onJoin = onJoin;
+BracingsComponentArray.onRemove = onRemove;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

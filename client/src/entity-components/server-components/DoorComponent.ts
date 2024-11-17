@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
@@ -28,7 +28,9 @@ export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorCo
    createRenderParts: createRenderParts,
    createComponent: createComponent,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): DoorComponentParams {
@@ -74,13 +76,11 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const toggleType = reader.readNumber();
    const openProgress = reader.readNumber();
    
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const doorComponent = DoorComponentArray.getComponent(entity);
-
    if (toggleType === DoorToggleType.open && doorComponent.toggleType === DoorToggleType.none) {
-      playSound("door-open.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("door-open.mp3", 0.4, 1, entity);
    } else if (toggleType === DoorToggleType.close && doorComponent.toggleType === DoorToggleType.none) {
-      playSound("door-close.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("door-close.mp3", 0.4, 1, entity);
    }
 
    doorComponent.toggleType = toggleType;
@@ -90,7 +90,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound("wooden-wall-hit.mp3", 0.3, 1, transformComponent.position);
+   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity);
 
    for (let i = 0; i < 4; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 20);
@@ -105,7 +105,7 @@ function onHit(entity: Entity): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound("wooden-wall-break.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity);
 
    for (let i = 0; i < 7; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random());

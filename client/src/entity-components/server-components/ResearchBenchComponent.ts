@@ -9,7 +9,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityAgeTicks } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
+import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
 export interface ResearchBenchComponentParams {
    readonly isOccupied: boolean;
@@ -62,7 +62,7 @@ function onTick(entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
    if (researchBenchComponent.isOccupied && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.3)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const pos = getRandomPointInEntity(transformComponent);
+      const pos = getRandomPositionInEntity(transformComponent);
       createPaperParticle(pos.x, pos.y);
    }
 }

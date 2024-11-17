@@ -6,7 +6,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
@@ -158,7 +158,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.2 / Settings.TPS) {
-      playSound("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity);
    }
 
    const slimeComponent = SlimeComponentArray.getComponent(entity);
@@ -287,7 +287,7 @@ function onHit(entity: Entity): void {
       createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSound("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -304,5 +304,5 @@ function onDie(entity: Entity): void {
       createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSound("slime-death.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("slime-death.mp3", 0.4, 1, entity);
 }

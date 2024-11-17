@@ -12,7 +12,7 @@ import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from
 import { discombobulate, GameInteractableLayer_setItemRestTime } from "../../components/game/GameInteractableLayer";
 import { AttackVars } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, playerInstance } from "../../world";
-import { getSubtileX, getSubtileY } from "../../Layer";
+import Layer, { getSubtileX, getSubtileY } from "../../Layer";
 import { createSparkParticle } from "../../particles";
 import { playSound } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
@@ -277,7 +277,7 @@ const blockPlayerAttack = (damageBox: ClientDamageBox): void => {
    discombobulate(0.2);
 }
 
-const wallBlockPlayerAttack = (damageBox: ClientDamageBox, blockingSubtileIndex: number): void => {
+const wallBlockPlayerAttack = (damageBox: ClientDamageBox, layer: Layer, blockingSubtileIndex: number): void => {
    const subtileX = getSubtileX(blockingSubtileIndex);
    const subtileY = getSubtileY(blockingSubtileIndex);
 
@@ -288,7 +288,7 @@ const wallBlockPlayerAttack = (damageBox: ClientDamageBox, blockingSubtileIndex:
       createSparkParticle(originX, originY);
    }
 
-   playSound("stone-mine-" + randInt(1, 4) + ".mp3", 0.85, 1, new Point(originX, originY));
+   playSound("stone-mine-" + randInt(1, 4) + ".mp3", 0.85, 1, new Point(originX, originY), layer);
 
    // Create rock debris particles moving towards the player on hit
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
@@ -479,7 +479,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          damageBox.isActive = isActive;
 
          if (isBlockedByWall && !damageBox.isBlockedByWall) {
-            wallBlockPlayerAttack(damageBox, blockingSubtileIndex);
+            wallBlockPlayerAttack(damageBox, getEntityLayer(entity), blockingSubtileIndex);
          }
          damageBox.isBlockedByWall = isBlockedByWall;
       }

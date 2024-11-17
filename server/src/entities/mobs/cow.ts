@@ -48,7 +48,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createCowConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 50, 100, 0), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 

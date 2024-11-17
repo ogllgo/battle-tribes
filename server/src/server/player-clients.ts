@@ -31,7 +31,7 @@ import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
-import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
+import { destroyEntity, entityExists, getEntityType, getTribe, surfaceLayer } from "../world";
 import { createItemsOverEntity } from "../components/ItemComponent";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
@@ -94,7 +94,7 @@ export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    const tribeInfo = TRIBE_INFO_RECORD[tribeType];
    for (let numAttempts = 0; numAttempts < 50; numAttempts++) {
       const biomeName = randItem(tribeInfo.biomes);
-      const biomeTiles = getTilesOfBiome(biomeName);
+      const biomeTiles = getTilesOfBiome(surfaceLayer, biomeName);
       if (biomeTiles.length === 0) {
          continue;
       }
@@ -399,11 +399,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
 
    socket.on("command", (command: string) => {
       processCommandPacket(playerClient, command);
-   });
-
-   socket.on("track_game_object", (id: number): void => {
-      // @Cleanup: shouldn't be in the server!
-      SERVER.setTrackedGameObject(id);
    });
 
    socket.on("select_tech", (techID: TechID): void => {

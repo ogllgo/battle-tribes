@@ -9,7 +9,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "./TransformComponent";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 
@@ -109,7 +109,7 @@ function onHit(entity: Entity): void {
       createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
    }
 
-   playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -129,5 +129,5 @@ function onDie(entity: Entity): void {
       createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS * Math.random(), LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
    }
 
-   playSound("berry-bush-destroy-1.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("berry-bush-destroy-1.mp3", 0.4, 1, entity);
 }

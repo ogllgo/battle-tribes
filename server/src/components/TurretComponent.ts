@@ -19,6 +19,7 @@ import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "
 import { UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular, boxIsWithinRange } from "battletribes-shared/boxes/boxes";
 import { getEntityType } from "../world";
+import { TunnelComponentArray } from "./TunnelComponent";
 
 export class TurretComponent {
    public aimDirection = 0;
@@ -30,14 +31,11 @@ export class TurretComponent {
    }
 }
 
-export const TurretComponentArray = new ComponentArray<TurretComponent>(ServerComponentType.turret, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TurretComponentArray = new ComponentArray<TurretComponent>(ServerComponentType.turret, true, getDataLength, addDataToPacket);
+TunnelComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const getVisionRange = (turretEntityType: TurretEntityType): number => {
    switch (turretEntityType) {

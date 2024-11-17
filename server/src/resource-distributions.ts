@@ -1,10 +1,8 @@
-import { EntityType, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, TileIndex } from "battletribes-shared/utils";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
-import { TransformComponentArray } from "./components/TransformComponent";
-import { getEntityType, surfaceLayer, undergroundLayer } from "./world";
-import { getEntitySpawnableTiles, getEntitySpawnInfo, SpawningEntityType } from "./entity-spawning";
+import { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
+import { getSpawnInfoSpawnableTiles } from "./entity-spawning";
+import { SPAWN_INFOS } from "./entity-spawn-info";
 
 const enum Vars {
    /** Size of each sample in tiles */
@@ -16,27 +14,27 @@ const enum Vars {
 /** How dense the sample is. The higher the number, the lower the chance of a position being generated there. */
 type SampleDensity = number;
 
-const distributions: Record<number, Array<SampleDensity>> = {};
+const distributions = new Array<Array<SampleDensity>>();
 const totalSampleDensities: Record<number, number> = {};
 
-const sampleNumSpawnableTilesRecord: Partial<Record<SpawningEntityType, ReadonlyArray<number>>> = {};
+const sampleNumSpawnableTilesRecord: Partial<Record<number, ReadonlyArray<number>>> = {};
 
-for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
+for (let i = 0; i < SPAWN_INFOS.length; i++) {
    const samples = new Array<number>();
    for (let i = 0; i < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; i++) {
       samples.push(-1);
    }
-   distributions[entityType] = samples;
+   distributions.push(samples);
 }
 
-const resetDistributions = (entityType: EntityType): void => {
-   const samples = distributions[entityType];
+const resetDistributions = (spawnInfoIdx: number): void => {
+   const samples = distributions[spawnInfoIdx];
    for (let i = 0; i < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; i++) {
       samples[i] = 0;
    }
 }
 
-const countNumSpawnableTiles = (layer: Layer, sampleX: number, sampleY: number, spawnableTiles: ReadonlySet<TileIndex>): number => {
+const countNumSpawnableTiles = (sampleX: number, sampleY: number, spawnableTiles: ReadonlySet<TileIndex>): number => {
    const originTileX = sampleX * Vars.SAMPLE_SIZE;
    const originTileY = sampleY * Vars.SAMPLE_SIZE;
    
@@ -55,21 +53,15 @@ const countNumSpawnableTiles = (layer: Layer, sampleX: number, sampleY: number, 
 }
 
 export function countTileTypesForResourceDistributions(): void {
-   for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
-      const spawnInfo = getEntitySpawnInfo(entityType);
-      if (spawnInfo === null) {
-         continue;
-      }
+   for (let i = 0; i < SPAWN_INFOS.length; i++) {
+      const spawnableTiles = getSpawnInfoSpawnableTiles(i);
 
       const numSpawnableTilesArray = new Array<number>();
-
-      const spawnableTiles = getEntitySpawnableTiles(spawnInfo.entityType as SpawningEntityType);
 
       let idx = 0;
       for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
          for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
-            let numSpawnableTiles = countNumSpawnableTiles(surfaceLayer, sampleX, sampleY, spawnableTiles);
-            numSpawnableTiles += countNumSpawnableTiles(undergroundLayer, sampleX, sampleY, spawnableTiles);
+            const numSpawnableTiles = countNumSpawnableTiles(sampleX, sampleY, spawnableTiles);
 
             numSpawnableTilesArray.push(numSpawnableTiles);
             
@@ -77,42 +69,20 @@ export function countTileTypesForResourceDistributions(): void {
          }
       }
 
-      sampleNumSpawnableTilesRecord[entityType as SpawningEntityType] = numSpawnableTilesArray;
-   }
-}
-
-const a = (): void => {
-   for (let i = 0; i < TransformComponentArray.activeEntities.length; i++) {
-      const entity = TransformComponentArray.activeEntities[i];
-
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      const sampleX = Math.floor(transformComponent.position.x / Vars.SAMPLE_UNITS);
-      const sampleY = Math.floor(transformComponent.position.y / Vars.SAMPLE_UNITS);
-
-      const sampleIdx = sampleY * Vars.SAMPLES_IN_WORLD_SIZE + sampleX;
-      distributions[getEntityType(entity)!][sampleIdx]++;
+      sampleNumSpawnableTilesRecord[i] = numSpawnableTilesArray;
    }
 }
 
 // @Speed: this is reaaaally slow. 8% of CPU usage (should be way less), and causes CPU spikes.
 export function updateResourceDistributions(): void {
-   // Reset distributions
-   for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
-      resetDistributions(entityType);
-   }
-
    // Weight the distributions to the amount of tiles
-   for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
-      const spawnInfo = getEntitySpawnInfo(entityType);
-      if (spawnInfo === null) {
-         continue;
-      }
+   for (let i = 0; i < SPAWN_INFOS.length; i++) {
+      resetDistributions(i);
       
-      const samples = distributions[entityType];
+      const samples = distributions[i];
+      const numSpawnableTilesArray = sampleNumSpawnableTilesRecord[i]!;
 
       let totalDensity = 0;
-
-      const numSpawnableTilesArray = sampleNumSpawnableTilesRecord[entityType as SpawningEntityType]!;
       
       let idx = 0;
       for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
@@ -133,15 +103,15 @@ export function updateResourceDistributions(): void {
          }
       }
 
-      totalSampleDensities[entityType] = totalDensity;
+      totalSampleDensities[i] = totalDensity;
    }
 }
 
-const getDistributionWeightedSampleIndex = (entityType: EntityType): number => {
+const getDistributionWeightedSampleIndex = (spawnInfoIdx: number): number => {
    // @Incomplete: investigate inverse
    
-   const totalDensity = totalSampleDensities[entityType];
-   const samples = distributions[entityType];
+   const totalDensity = totalSampleDensities[spawnInfoIdx];
+   const samples = distributions[spawnInfoIdx];
 
    const targetDensity = totalDensity * Math.random();
 
@@ -185,10 +155,10 @@ const getRandomSpawnableTileIndex = (sampleIdx: number, spawnableTiles: Readonly
    return spawnableTileIndexes[Math.floor(spawnableTileIndexes.length * Math.random())];
 }
 
-export function getDistributionWeightedSpawnPosition(entityType: SpawningEntityType): Point {
-   const sampleIdx = getDistributionWeightedSampleIndex(entityType);
+export function getDistributionWeightedSpawnPosition(spawnInfoIdx: number): Point {
+   const sampleIdx = getDistributionWeightedSampleIndex(spawnInfoIdx);
 
-   const spawnableTiles = getEntitySpawnableTiles(entityType)
+   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
    const tileIndex = getRandomSpawnableTileIndex(sampleIdx, spawnableTiles);
 
    const tileX = getTileX(tileIndex);

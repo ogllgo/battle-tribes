@@ -12,10 +12,7 @@ export class CraftingStationComponent {
    }
 }
 
-export const CraftingStationComponentArray = new ComponentArray<CraftingStationComponent>(ServerComponentType.craftingStation, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const CraftingStationComponentArray = new ComponentArray<CraftingStationComponent>(ServerComponentType.craftingStation, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;

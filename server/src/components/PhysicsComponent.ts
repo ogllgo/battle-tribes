@@ -55,15 +55,12 @@ export class PhysicsComponent {
    public pathfindingNodesAreDirty = false;
 }
 
-export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
+PhysicsComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+PhysicsComponentArray.onRemove = onRemove;
 
 function onRemove(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -133,7 +130,7 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
    
    // @Temporary @Hack
    if (isNaN(physicsComponent.selfVelocity.x) || isNaN(physicsComponent.selfVelocity.y)) {
-      console.warn("Entity type " + EntityTypeString[getEntityType(entity)!] + " velocity was NaN.");
+      console.warn("Entity type " + EntityTypeString[getEntityType(entity)] + " velocity was NaN.");
       physicsComponent.selfVelocity.x = 0;
       physicsComponent.selfVelocity.y = 0;
    }
@@ -305,7 +302,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
       // If the entity is outside the world border after resolving border collisions, throw an error
       if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
          console.warn(transformComponent.hitboxes);
-         throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)!] + ".");
+         throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
       }
    
       // If the object moved due to resolving border collisions, recalculate
@@ -353,7 +350,7 @@ export function applyKnockback(entity: Entity, knockback: number, knockbackDirec
    physicsComponent.externalVelocity.y += knockbackForce * Math.cos(knockbackDirection);
 
    // @Hack?
-   if (getEntityType(entity)! === EntityType.player) {
+   if (getEntityType(entity) === EntityType.player) {
       registerPlayerKnockback(entity, knockback, knockbackDirection);
    }
 }
@@ -372,7 +369,7 @@ export function applyAbsoluteKnockback(entity: Entity, knockback: number, knockb
    physicsComponent.externalVelocity.y += knockback * Math.cos(knockbackDirection);
 
    // @Hack?
-   if (getEntityType(entity)! === EntityType.player) {
+   if (getEntityType(entity) === EntityType.player) {
       registerPlayerKnockback(entity, knockback, knockbackDirection);
    }
 }

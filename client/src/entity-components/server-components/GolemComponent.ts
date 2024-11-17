@@ -5,7 +5,7 @@ import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { Light, attachLightToRenderPart, createLight } from "../../lights";
-import { playSound, ROCK_HIT_SOUNDS } from "../../sound";
+import { playSoundOnEntity, ROCK_HIT_SOUNDS } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
@@ -218,15 +218,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const isAwake = reader.readBoolean();
    reader.padOffset(3);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-
    if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
-      playSound("golem-angry.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("golem-angry.mp3", 0.4, 1, entity);
    }
    
    golemComponent.wakeProgress = wakeProgress;
 
    const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
+   const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
       const box = hitbox.box;
@@ -244,6 +243,5 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
 }

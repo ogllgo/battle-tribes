@@ -34,15 +34,12 @@ export class ItemComponent {
    }
 }
 
-export const ItemComponentArray = new ComponentArray<ItemComponent>(ServerComponentType.item, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const ItemComponentArray = new ComponentArray<ItemComponent>(ServerComponentType.item, true, getDataLength, addDataToPacket);
+ItemComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+},
+ItemComponentArray.onRemove = onRemove;
 
 function onRemove(entity: Entity): void {
    // Remove flesh sword item entities

@@ -73,16 +73,13 @@ export class ZombieComponent {
    }
 }
 
-export const ZombieComponentArray = new ComponentArray<ZombieComponent>(ServerComponentType.zombie, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   onHitboxCollision: onHitboxCollision,
-   preRemove: preRemove
-});
+export const ZombieComponentArray = new ComponentArray<ZombieComponent>(ServerComponentType.zombie, true, getDataLength, addDataToPacket);
+ZombieComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+ZombieComponentArray.onHitboxCollision = onHitboxCollision;
+ZombieComponentArray.preRemove = preRemove;
 
 const tribesmanIsWearingMeatSuit = (entityID: number): boolean => {
    const inventoryComponent = InventoryComponentArray.getComponent(entityID);
@@ -108,7 +105,7 @@ export function zombieShouldAttackEntity(zombie: Entity, entity: Entity): boolea
       return true;
    }
 
-   const entityType = getEntityType(entity)!;
+   const entityType = getEntityType(entity);
    return entityIsStructure(entityType);
 }
 

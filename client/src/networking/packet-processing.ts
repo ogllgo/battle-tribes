@@ -36,6 +36,7 @@ import { setVisibleSubtileSupports, SubtileSupportInfo } from "../rendering/webg
 import { createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
+import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -456,7 +457,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    if (playerLayer !== startLayer) {
       setCurrentLayer(layerIdx);
-      playSound("layer-change.mp3", 0.55, 1, Camera.position.copy());
+      playSound("layer-change.mp3", 0.55, 1, Camera.position.copy(), null);
    }
 
    const playerIsAlive = reader.readBoolean();
@@ -825,6 +826,21 @@ export function processGameDataPacket(reader: PacketReader): void {
 
       setVisibleSubtileSupports(subtileSupports);
    }
+
+   // Subtile supports
+   const showPathfindingNodeOccupances = reader.readBoolean();
+   reader.padOffset(3);
+   if (showPathfindingNodeOccupances) {
+      const visiblePathfindingNodeOccupances = new Array<PathfindingNodeIndex>();
+      
+      const numNodes = reader.readNumber();
+      for (let i = 0; i < numNodes; i++) {
+         const node = reader.readNumber();
+         visiblePathfindingNodeOccupances.push(node);
+      }
+
+      setVisiblePathfindingNodeOccupances(visiblePathfindingNodeOccupances);
+   }
    
    const gameDataPacket: GameDataPacket = {
       tileUpdates: tileUpdates,
@@ -851,7 +867,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       titleOffer: titleOffer,
       tickEvents: tickEvents,
       // @Incomplete
-      visiblePathfindingNodeOccupances: [],
       visibleSafetyNodes: [],
       visibleBuildingPlans: [],
       visibleBuildingSafetys: [],

@@ -90,7 +90,7 @@ export function goResearchTech(tribesman: Entity, tech: TechInfo): boolean {
       tribesmanComponent.currentAIType = TribesmanAIType.researching;
 
       // If close enough, switch to doing research
-      const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getTribesmanRadius(tribesman);
+      const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getTribesmanRadius(transformComponent);
       if (dist < 50) {
          attemptToOccupyResearchBench(bench, tribesman);
       }

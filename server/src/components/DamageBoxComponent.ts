@@ -43,14 +43,11 @@ export class DamageBoxComponent {
    }
 }
 
-export const DamageBoxComponentArray = new ComponentArray<DamageBoxComponent>(ServerComponentType.damageBox, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const DamageBoxComponentArray = new ComponentArray<DamageBoxComponent>(ServerComponentType.damageBox, true, getDataLength, addDataToPacket);
+DamageBoxComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 // @Hack: this whole thing is cursed
 const getCollidingCollisionBox = (entity: Entity, blockBox: ServerBlockBox): DamageBoxCollisionInfo | null => {

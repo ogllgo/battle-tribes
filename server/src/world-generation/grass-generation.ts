@@ -75,6 +75,7 @@ const isValidGrassPosition = (layer: Layer, x: number, y: number): boolean => {
 }
 
 export function generateGrassStrands(): void {
+   // @Speed: this takes like 6 seconds to run... not ideal
    // @Incomplete: generate in edges
    for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
       for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
@@ -94,6 +95,8 @@ export function generateGrassStrands(): void {
             const x = (tileX + Math.random()) * Settings.TILE_SIZE;
             const y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
+            // @Speed: only removes a very small amount of grass, but incurs a big cost. Is there a way we can only run this for
+            // grass tiles which border a water tile?
             if (!isValidGrassPosition(surfaceLayer, x, y)) {
                continue;
             }

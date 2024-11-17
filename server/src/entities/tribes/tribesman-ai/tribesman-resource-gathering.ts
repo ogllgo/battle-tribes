@@ -4,7 +4,6 @@ import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
 import { InventoryComponentArray, getInventory, inventoryIsFull } from "../../../components/InventoryComponent";
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
 import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
-import { TribeComponentArray } from "../../../components/TribeComponent";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
 import { clearTribesmanPath, getTribesmanRadius, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
@@ -50,18 +49,6 @@ export function entityIsResource(entity: Entity): boolean {
    return resourceProducts.length > 0;
 }
 
-const resourceIsPrioritised = (resourceProducts: ReadonlyArray<ItemType>, prioritisedItemTypes: ReadonlyArray<ItemType>): boolean => {
-   // See if any of its resource products are prioritised
-   for (let i = 0; i < resourceProducts.length; i++) {
-      const resourceProduct = resourceProducts[i];
-      if (prioritisedItemTypes.indexOf(resourceProduct) !== -1) {
-         return true;
-      }
-   }
-
-   return false;
-}
-
 const shouldGatherPlant = (plantID: number): boolean => {
    const plantComponent = PlantComponentArray.getComponent(plantID);
 
@@ -88,7 +75,7 @@ const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponen
    // If the tribesman is within the escape health threshold, make sure there wouldn't be any enemies visible while picking up the dropped item
    // @Hack: the accessibility check doesn't work for plants in planter boxes
    const resourceTransformComponent = TransformComponentArray.getComponent(resource);
-   if (tribesmanShouldEscape(getEntityType(tribesman)!, healthComponent) || !positionIsSafeForTribesman(tribesman, resourceTransformComponent.position.x, resourceTransformComponent.position.y)) {
+   if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent) || !positionIsSafeForTribesman(tribesman, resourceTransformComponent.position.x, resourceTransformComponent.position.y)) {
    // if (tribesmanShouldEscape(tribesman.type, healthComponent) || !positionIsSafeForTribesman(tribesman, resource.position.x, resource.position.y) || !entityIsAccessible(tribesman, resource, tribeComponent.tribe, getTribesmanAttackRadius(tribesman))) {
       return false;
    }
@@ -112,16 +99,10 @@ const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponen
    return true;
 }
 
-export interface GatherTargetInfo {
-   readonly target: Entity | null;
-   readonly isPrioritised: boolean;
-}
-
-export function getGatherTarget(tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, prioritisedItemTypes: ReadonlyArray<ItemType>): GatherTargetInfo {
+const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemTypes: ReadonlyArray<ItemType>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-   const tribeComponent = TribeComponentArray.getComponent(tribesman);
    
    // @Incomplete: Doesn't account for room in backpack/other
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
@@ -129,9 +110,6 @@ export function getGatherTarget(tribesman: Entity, visibleEntities: ReadonlyArra
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestResource: Entity | undefined;
-   
-   let minPrioritisedDist = Number.MAX_SAFE_INTEGER;
-   let closestPrioritisedResource: Entity | undefined;
 
    for (let i = 0; i < visibleEntities.length; i++) {
       const resource = visibleEntities[i];
@@ -143,14 +121,7 @@ export function getGatherTarget(tribesman: Entity, visibleEntities: ReadonlyArra
       
       const resourceTransformComponent = TransformComponentArray.getComponent(resource);
       const dist = transformComponent.position.calculateDistanceBetween(resourceTransformComponent.position);
-      if (tribeComponent.tribe.isAIControlled && resourceIsPrioritised(resourceProducts, prioritisedItemTypes)) {
-         if (dist < minPrioritisedDist) {
-            closestPrioritisedResource = resource;
-            minPrioritisedDist = dist;
-         }
-      } else {
-         // @Temporary?
-         // if (!SHOULD_HARVEST_CONSERVATIVELY[resource.type] && dist < minDist) {
+      if (resourceProducts.some(itemType => gatheredItemTypes.includes(itemType))) {
          if (dist < minDist) {
             closestResource = resource;
             minDist = dist;
@@ -158,26 +129,16 @@ export function getGatherTarget(tribesman: Entity, visibleEntities: ReadonlyArra
       }
    }
    
-   // Prioritise gathering resources which can be used in the tribe's building plan
-   if (typeof closestPrioritisedResource !== "undefined") {
-      return {
-         target: closestPrioritisedResource,
-         isPrioritised: true
-      };
-   }
-   
-   return {
-      target: typeof closestResource !== "undefined" ? closestResource : null,
-      isPrioritised: false
-   };
+   return typeof closestResource !== "undefined" ? closestResource : null;
 }
 
-export function tribesmanGetItemPickupTarget(tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, prioritisedItemTypes: ReadonlyArray<ItemType>, gatherTargetInfo: GatherTargetInfo): Entity | null {
+const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemTypes: ReadonlyArray<ItemType>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
-   const shouldEscape = tribesmanShouldEscape(getEntityType(tribesman)!, healthComponent);
+   const shouldEscape = tribesmanShouldEscape(getEntityType(tribesman), healthComponent);
    
-   const goalRadius = getTribesmanRadius(tribesman);
+   // @Cleanup: unused?
+   const goalRadius = getTribesmanRadius(transformComponent);
       
    let closestDroppedItem: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;
@@ -195,15 +156,8 @@ export function tribesmanGetItemPickupTarget(tribesman: Entity, visibleItemEntit
       // }
 
       const itemComponent = ItemComponentArray.getComponent(itemEntity);
-      if (!tribeMemberCanPickUpItem(tribesman, itemComponent.itemType)) {
+      if (!gatheredItemTypes.includes(itemComponent.itemType) || !tribeMemberCanPickUpItem(tribesman, itemComponent.itemType)) {
          continue;
-      }
-      
-      // If gathering is prioritised, make sure the dropped item is useful for gathering
-      if (gatherTargetInfo.isPrioritised) {
-         if (prioritisedItemTypes.indexOf(itemComponent.itemType) === -1) {
-            continue;
-         }
       }
 
       const distance = transformComponent.position.calculateDistanceBetween(itemEntityTransformComponent.position);
@@ -232,22 +186,21 @@ export function tribesmanGoPickupItemEntity(tribesman: Entity, pickupTarget: Ent
    tribesmanAIComponent.currentAIType = TribesmanAIType.pickingUpDroppedItems;
 }
 
-/** Gathers the specified item types. If the array is empty, gathers everything possible. */
+/** Controls the tribesman to gather the specified item types. */
 export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyArray<ItemType>, visibleItemEntities: ReadonlyArray<Entity>): boolean {
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
-   const gatherTargetInfo = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemTypes);
-   
-   // Pick up dropped items
-   const pickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, gatheredItemTypes, gatherTargetInfo);
-   if (pickupTarget !== null) {
-      tribesmanGoPickupItemEntity(tribesman, pickupTarget);
+   // First see if there are any items which match which we can pick up
+   const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, gatheredItemTypes);
+   if (itemPickupTarget !== null) {
+      tribesmanGoPickupItemEntity(tribesman, itemPickupTarget);
       return true;
    }
-
+   
    // Gather resources
-   if (gatherTargetInfo.target !== null) {
-      huntEntity(tribesman, gatherTargetInfo.target, false);
+   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemTypes);
+   if (harvestTarget !== null) {
+      huntEntity(tribesman, harvestTarget, false);
       return true;
    }
 

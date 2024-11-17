@@ -10,11 +10,8 @@ export class BoulderComponent {
    public readonly boulderType = randInt(0, 1);
 }
 
-export const BoulderComponentArray = new ComponentArray<BoulderComponent>(ServerComponentType.boulder, true, {
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BoulderComponentArray = new ComponentArray<BoulderComponent>(ServerComponentType.boulder, true, getDataLength, addDataToPacket);
+BoulderComponentArray.preRemove = preRemove;
 
 function preRemove(boulder: Entity): void {
    createItemsOverEntity(boulder, ItemType.rock, randInt(5, 7));

@@ -573,7 +573,7 @@ export function wasTribeMemberKill(attackingEntity: Entity | null): boolean {
 const blueprintTypeMatchesBuilding = (structure: Entity, blueprintType: BlueprintType): boolean => {
    const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
 
-   const entityType = getEntityType(structure)!;
+   const entityType = getEntityType(structure);
    
    if (entityType === EntityType.wall) {
       switch (materialComponent.material) {

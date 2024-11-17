@@ -13,7 +13,6 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { destroyEntity, entityExists } from "../../world";
 import { SpearProjectileComponent } from "../../components/SpearProjectileComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -21,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.spearProjectile;
 
 export function createSpearProjectileConfig(tribeMember: Entity, itemID: number | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 60, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

@@ -4,7 +4,7 @@ import { getEntitiesInRange, stopEntity } from "../../../ai-shared";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault, getEntityFootprint, positionIsAccessible } from "../../../pathfinding";
-import { pathfindToPosition, clearTribesmanPath, getTribesmanRadius, getTribesmanVisionRange } from "./tribesman-ai-utils";
+import { pathfindToPosition, clearTribesmanPath, getTribesmanRadius } from "./tribesman-ai-utils";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt, distance } from "battletribes-shared/utils";
 import { getTileX, getTileY } from "../../../Layer";
@@ -13,9 +13,12 @@ import { TribesmanGoal } from "./tribesman-goals";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, isNight } from "../../../world";
-
+import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 
 const generateTribeAreaPatrolPosition = (tribesman: Entity, tribe: Tribe): Point | null => {
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const layer = getEntityLayer(tribesman);
+
    // Filter tiles in tribe area
    const potentialTiles = tribe.getArea();
 
@@ -29,7 +32,8 @@ const generateTribeAreaPatrolPosition = (tribesman: Entity, tribe: Tribe): Point
       const x = (tileX + Math.random()) * Settings.TILE_SIZE;
       const y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
-      if (positionIsAccessible(x, y, tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(tribesman)))) {
+      // @Speed? This seems awful at first glance!
+      if (positionIsAccessible(layer, x, y, tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(transformComponent)))) {
          return new Point(x, y);
       }
 
@@ -41,10 +45,10 @@ const generateTribeAreaPatrolPosition = (tribesman: Entity, tribe: Tribe): Point
 
 const generateRandomExplorePosition = (tribesman: Entity, tribe: Tribe): Point | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
-   const visionRange = getTribesmanVisionRange(tribesman);
-   const footprint = getEntityFootprint(getTribesmanRadius(tribesman));
+   const footprint = getEntityFootprint(getTribesmanRadius(transformComponent));
    
    let distToTotem: number;
    if (tribe.totem !== null) {
@@ -55,7 +59,7 @@ const generateRandomExplorePosition = (tribesman: Entity, tribe: Tribe): Point |
    }
    
    for (let attempts = 0; attempts < 100; attempts++) {
-      const offsetMagnitude = visionRange * Math.random();
+      const offsetMagnitude = aiHelperComponent.visionRange * Math.random();
       const offsetDirection = 2 * Math.PI * Math.random();
 
       const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
@@ -74,7 +78,7 @@ const generateRandomExplorePosition = (tribesman: Entity, tribe: Tribe): Point |
          continue;
       }
 
-      if (!positionIsAccessible(x, y, tribe.pathfindingGroupID, footprint)) {
+      if (!positionIsAccessible(layer, x, y, tribe.pathfindingGroupID, footprint)) {
          continue;
       }
       

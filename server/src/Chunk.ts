@@ -1,9 +1,11 @@
 import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { GrassBlocker } from "battletribes-shared/grass-blockers";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { distance } from "battletribes-shared/utils";
-import { surfaceLayer } from "./world";
+import { getEntityType, surfaceLayer } from "./world";
+import { getEntitiesInRange } from "./ai-shared";
+import Layer from "./Layer";
 
 // @Cleanup @Memory: A lot of these properties aren't used by collision chunks
 class Chunk {
@@ -40,6 +42,29 @@ export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: num
                return true;
             }
          }
+      }
+   }
+
+   return false;
+}
+
+// @Cleanup: Should this be here?
+export function isTooCloseToReedOrLilypad(layer: Layer, x: number, y: number): boolean {
+   // Don't overlap with reeds at all
+   let entities = getEntitiesInRange(layer, x, y, 24);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.reed) {
+         return true;
+      }
+   }
+
+   // Only allow overlapping slightly with other lilypads
+   entities = getEntitiesInRange(layer, x, y, 24 - 6);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.lilypad) {
+         return true;
       }
    }
 

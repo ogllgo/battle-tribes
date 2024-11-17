@@ -19,12 +19,9 @@ export class PlayerComponent {
    }
 }
 
-export const PlayerComponentArray = new ComponentArray<PlayerComponent>(ServerComponentType.player, true, {
-   onJoin: onJoin,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const PlayerComponentArray = new ComponentArray<PlayerComponent>(ServerComponentType.player, true, getDataLength, addDataToPacket);
+PlayerComponentArray.onJoin = onJoin;
+PlayerComponentArray.onRemove = onRemove;
 
 function onJoin(player: Entity): void {
    const playerClient = getPlayerClientFromInstanceID(player);

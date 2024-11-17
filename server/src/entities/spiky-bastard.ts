@@ -6,7 +6,6 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { TransformComponent } from "../components/TransformComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { HealthComponent } from "../components/HealthComponent";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
@@ -18,7 +17,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.spikyBastard;
    
 export function createSpikyBastardConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.exclusiveDamaging);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 16, 32, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

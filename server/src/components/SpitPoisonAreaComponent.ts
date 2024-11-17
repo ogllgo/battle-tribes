@@ -8,14 +8,11 @@ import { destroyEntity } from "../world";
 
 export class SpitPoisonAreaComponent {}
 
-export const SpitPoisonAreaComponentArray = new ComponentArray<SpitPoisonAreaComponent>(ServerComponentType.spitPoisonArea, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SpitPoisonAreaComponentArray = new ComponentArray<SpitPoisonAreaComponent>(ServerComponentType.spitPoisonArea, true, getDataLength, addDataToPacket);
+SpitPoisonAreaComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);

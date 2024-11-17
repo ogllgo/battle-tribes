@@ -340,7 +340,7 @@ export function updatePlayerItems(): void {
             }
             case BufferedInputType.block: {
                if (limb.action === LimbAction.none && limb.heldItemType !== null) {
-                  onItemRightClickDown(limb.heldItemType, inventoryName, selectedItemSlot);
+                  onItemStartUse(limb.heldItemType, inventoryName, selectedItemSlot);
                }
                break;
             }
@@ -568,7 +568,7 @@ const onGameMouseDown = (e: React.MouseEvent): void => {
 
       const selectedItemInfo = getSelectedItemInfo();
       if (selectedItemInfo !== null) {
-         onItemRightClickDown(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
+         onItemStartUse(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
 
          // Special case: Barbarians can eat with both hands at once
          if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
@@ -576,7 +576,7 @@ const onGameMouseDown = (e: React.MouseEvent): void => {
             const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
             const offhandHeldItem = offhandInventory.getItem(1);
             if (offhandHeldItem !== null) {
-               onItemRightClickDown(offhandHeldItem.type, InventoryName.offhand, 1);
+               onItemStartUse(offhandHeldItem.type, InventoryName.offhand, 1);
             }
          }
       }
@@ -600,7 +600,7 @@ const onGameMouseUp = (e: React.MouseEvent): void => {
 
       const selectedItemInfo = getSelectedItemInfo();
       if (selectedItemInfo !== null) {
-         onItemRightClickUp(selectedItemInfo.item, selectedItemInfo.inventoryName);
+         onItemEndUse(selectedItemInfo.item, selectedItemInfo.inventoryName);
       }
    }
 }
@@ -888,7 +888,7 @@ const unuseItem = (itemType: ItemType): void => {
    }
 }
 
-const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryName, itemSlot: number): void => {
+const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, itemSlot: number): void => {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
 
@@ -971,11 +971,11 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
             const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
             limb.action = LimbAction.loadCrossbow;
             limb.lastCrossbowLoadTicks = Board.serverTicks;
-            playSound("crossbow-load.mp3", 0.4, 1, transformComponent.position);
+            playSound("crossbow-load.mp3", 0.4, 1, transformComponent.position, null);
          } else {
             // Fire crossbow
             sendItemUsePacket();
-            playSound("crossbow-fire.mp3", 0.4, 1, transformComponent.position);
+            playSound("crossbow-fire.mp3", 0.4, 1, transformComponent.position, null);
          }
          break;
       }
@@ -989,7 +989,7 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
          }
          
          sendStartItemUsePacket();
-         playSound("bow-charge.mp3", 0.4, 1, transformComponent.position);
+         playSound("bow-charge.mp3", 0.4, 1, transformComponent.position, null);
 
          break;
       }
@@ -1036,7 +1036,7 @@ const onItemRightClickDown = (itemType: ItemType, itemInventoryName: InventoryNa
    }
 }
 
-const onItemRightClickUp = (item: Item, inventoryName: InventoryName): void => {
+const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
 
@@ -1061,7 +1061,7 @@ const onItemRightClickUp = (item: Item, inventoryName: InventoryName): void => {
                sendItemUsePacket();
             } else {
                sendStopItemUsePacket();
-               playSound("error.mp3", 0.4, 1, Camera.position);
+               playSound("error.mp3", 0.4, 1, Camera.position, null);
             }
          }
          break;
@@ -1112,7 +1112,7 @@ export function selectItemSlot(itemSlot: number): void {
    // Don't switch if the player is blocking
    const playerAction = getInstancePlayerAction(InventoryName.hotbar);
    if (playerAction === LimbAction.block || playerAction === LimbAction.returnBlockToRest) {
-      playSound("error.mp3", 0.4, 1, Camera.position);
+      playSound("error.mp3", 0.4, 1, Camera.position, null);
       return;
    }
 
@@ -1134,9 +1134,14 @@ export function selectItemSlot(itemSlot: number): void {
    const newItem = hotbarInventory.itemSlots[itemSlot];
    if (typeof newItem !== "undefined") {
       onItemSelect(newItem.type);
-      if (rightMouseButtonIsPressed) {
-         onItemRightClickDown(newItem.type, InventoryName.hotbar, itemSlot);
-      }
+
+      // @Temporary
+      // I used to have the following code here:
+      // if (rightMouseButtonIsPressed) {
+      //    onItemStartUse(newItem.type, InventoryName.hotbar, itemSlot);
+      // }
+      // But I've decided that this isn't the right behaviour, as we don't want items to be
+      // able to be switched while they are being used.
    }
 
    const playerInventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);

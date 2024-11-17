@@ -14,9 +14,10 @@ interface RenderParts {}
 
 export interface WoodenArrowComponent {}
 
-export const WoodenArrowComponentArray = new ClientComponentArray<WoodenArrowComponent, RenderParts>(ClientComponentType.lilypad, true, {
+export const WoodenArrowComponentArray = new ClientComponentArray<WoodenArrowComponent, RenderParts>(ClientComponentType.woodenArrow, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   onDie: onDie
 });
 
 export function createWoodenArrowComponentParams(): WoodenArrowComponentParams {

@@ -15,10 +15,7 @@ export class BuildingMaterialComponent {
    }
 }
 
-export const BuildingMaterialComponentArray = new ComponentArray<BuildingMaterialComponent>(ServerComponentType.buildingMaterial, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BuildingMaterialComponentArray = new ComponentArray<BuildingMaterialComponent>(ServerComponentType.buildingMaterial, true, getDataLength, addDataToPacket);
 
 export function upgradeMaterial(structure: Entity, materialComponent: BuildingMaterialComponent): void {
    materialComponent.material++;

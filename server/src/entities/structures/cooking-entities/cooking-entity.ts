@@ -75,7 +75,7 @@ export function tickCookingEntity(entity: Entity): void {
    
    const ingredient = ingredientInventory.itemSlots[1];
    if (typeof ingredient !== "undefined") {
-      cookingComponent.currentRecipe = getHeatingRecipeByIngredientType(Board.getEntityType(entity)!, ingredient.type);
+      cookingComponent.currentRecipe = getHeatingRecipeByIngredientType(Board.getEntityType(entity), ingredient.type);
    }
    
    if (cookingComponent.currentRecipe !== null) {

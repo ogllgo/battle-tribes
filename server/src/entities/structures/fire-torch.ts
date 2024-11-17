@@ -10,7 +10,6 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { FireTorchComponent } from "../../components/FireTorchComponent";
 
 type ComponentTypes = ServerComponentType.transform
@@ -21,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.fireTorch;
 
 export function createFireTorchConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFireTorchHitboxes(), null); 
    
    const healthComponent = new HealthComponent(3);

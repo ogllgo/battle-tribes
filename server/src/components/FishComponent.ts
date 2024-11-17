@@ -47,16 +47,13 @@ export class FishComponent {
    public attackTargetID = 0;
 }
 
-export const FishComponentArray = new ComponentArray<FishComponent>(ServerComponentType.fish, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FishComponentArray = new ComponentArray<FishComponent>(ServerComponentType.fish, true, getDataLength, addDataToPacket);
+FishComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+FishComponentArray.preRemove = preRemove;
+FishComponentArray.onRemove = onRemove;
 
 const move = (fish: Entity, direction: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);

@@ -18,7 +18,7 @@ import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbState, SHIELD_BASH_PUSH
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { BlockType } from "../../../../shared/src/boxes/boxes";
-import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -26,6 +26,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { attachLightToRenderPart, createLight, Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
+import { getHumanoidRadius } from "./TribeMemberComponent";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -269,25 +270,23 @@ const resetThing = (thing: RenderPart): void => {
    thing.rotation = 0;
 }
 
-const setThingToState = (thing: RenderPart, state: LimbState): void => {
+const setThingToState = (entity: Entity, thing: RenderPart, state: LimbState): void => {
    const direction = state.direction;
-   // @Temporary @Hack
-   const offset = 32 + state.extraOffset;
+   const offset = getHumanoidRadius(entity) + state.extraOffset;
 
    thing.offset.x = offset * Math.sin(direction) + state.extraOffsetX;
    thing.offset.y = offset * Math.cos(direction) + state.extraOffsetY;
    thing.rotation = state.rotation;
 }
 
-const lerpThingBetweenStates = (thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
+const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
    if (progress > 1) {
       progress = 1;
    }
    
    const direction = lerp(startState.direction, endState.direction, progress);
    const extraOffset = lerp(startState.extraOffset, endState.extraOffset, progress);
-   // @Temporary @Hack
-   const offset = 32 + extraOffset;
+   const offset = getHumanoidRadius(entity) + extraOffset;
    
    thing.offset.x = offset * Math.sin(direction) + lerp(startState.extraOffsetX, endState.extraOffsetX, progress);
    thing.offset.y = offset * Math.cos(direction) + lerp(startState.extraOffsetY, endState.extraOffsetY, progress);
@@ -370,7 +369,8 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          break;
       }
       case "sword":
-      case "hammer": {
+      case "hammer":
+      case "axe": {
          offsetX = 24;
          offsetY = 24;
          rotation = 0;
@@ -394,30 +394,6 @@ const removeArrowRenderPart = (inventoryUseComponent: InventoryUseComponent, ent
       const renderInfo = getEntityRenderInfo(entity);
       renderInfo.removeRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
       delete inventoryUseComponent.arrowRenderParts[limbIdx];
-   }
-}
-
-const getHandRestingOffset = (entityType: InventoryUseEntityType): number => {
-   switch (entityType) {
-      case EntityType.player:
-      case EntityType.tribeWarrior: {
-         return 34;
-      }
-      case EntityType.tribeWorker: {
-         return 30;
-      }
-      case EntityType.zombie: {
-         return 32;
-      }
-   }
-}
-
-const getLimbRestingDirection = (entityType: InventoryUseEntityType): number => {
-   switch (entityType) {
-      case EntityType.player:
-      case EntityType.tribeWarrior:
-      case EntityType.tribeWorker: return HAND_RESTING_DIRECTION;
-      case EntityType.zombie: return ZOMBIE_HAND_RESTING_DIRECTION;
    }
 }
 
@@ -856,7 +832,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
             // @Copynpaste
             const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
             const chargeProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
-            lerpThingBetweenStates(limbRenderPart, BOW_CHARGE_DOMINANT_START_LIMB_STATE, BOW_CHARGE_DOMINANT_END_LIMB_STATE, chargeProgress);
+            lerpThingBetweenStates(entity, limbRenderPart, BOW_CHARGE_DOMINANT_START_LIMB_STATE, BOW_CHARGE_DOMINANT_END_LIMB_STATE, chargeProgress);
             updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, 0, 58, Math.PI * -0.25, true);
             
             // @Cleanup @Hack @Robustness
@@ -914,7 +890,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
             }
             inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
          } else {
-            setThingToState(limbRenderPart, BOW_CHARGE_NON_DOMINANT_LIMB_STATE);
+            setThingToState(entity, limbRenderPart, BOW_CHARGE_NON_DOMINANT_LIMB_STATE);
             removeHeldItemRenderPart(inventoryUseComponent, entity, limbIdx);
             removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
          }
@@ -925,7 +901,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
 
-         lerpThingBetweenStates(attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
+         lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -936,7 +912,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
          
-         lerpThingBetweenStates(attachPoint, SHIELD_BLOCKING_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, windupProgress);
+         lerpThingBetweenStates(entity, attachPoint, SHIELD_BLOCKING_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -947,7 +923,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
          
-         lerpThingBetweenStates(attachPoint, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BASH_PUSHED_LIMB_STATE, windupProgress);
+         lerpThingBetweenStates(entity, attachPoint, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BASH_PUSHED_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -958,7 +934,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
          
-         lerpThingBetweenStates(attachPoint, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, windupProgress);
+         lerpThingBetweenStates(entity, attachPoint, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -969,7 +945,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
 
-         lerpThingBetweenStates(attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
+         lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -980,7 +956,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const attackProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
 
-         lerpThingBetweenStates(attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, attackProgress);
+         lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, attackProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -991,14 +967,14 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
 
-         lerpThingBetweenStates(attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, animationProgress);
+         lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, animationProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
          break;
       }
       case LimbAction.none: {
-         setThingToState(attachPoint, TRIBESMAN_RESTING_LIMB_STATE);
+         setThingToState(entity, attachPoint, TRIBESMAN_RESTING_LIMB_STATE);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -1011,7 +987,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
 
          // @Copynpaste
          const endState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(attachPoint, TRIBESMAN_RESTING_LIMB_STATE, endState, animationProgress);
+         lerpThingBetweenStates(entity, attachPoint, TRIBESMAN_RESTING_LIMB_STATE, endState, animationProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -1021,7 +997,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.block: {
          // @Copynpaste
          const state = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         setThingToState(attachPoint, state);
+         setThingToState(entity, attachPoint, state);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -1037,7 +1013,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
 
          // @Copynpaste
          const startState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(attachPoint, startState, TRIBESMAN_RESTING_LIMB_STATE, animationProgress);
+         lerpThingBetweenStates(entity, attachPoint, startState, TRIBESMAN_RESTING_LIMB_STATE, animationProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -1047,7 +1023,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const chargeProgress = secondsSinceLastAction < 3 ? 1 - Math.pow(secondsSinceLastAction / 3 - 1, 2) : 1;
 
-         lerpThingBetweenStates(attachPoint, TRIBESMAN_RESTING_LIMB_STATE, SPEAR_CHARGED_LIMB_STATE, chargeProgress);
+         lerpThingBetweenStates(entity, attachPoint, TRIBESMAN_RESTING_LIMB_STATE, SPEAR_CHARGED_LIMB_STATE, chargeProgress);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
@@ -1131,7 +1107,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
 
          const insetAmount = lerp(0, 17, eatIntervalProgress);
          
-         const handRestingOffset = getHandRestingOffset(getEntityType(entity) as InventoryUseEntityType);
+         const handRestingOffset = getHumanoidRadius(entity);
          const handOffsetAmount = handRestingOffset + 4 - insetAmount;
          attachPoint.offset.x = handOffsetAmount * Math.sin(activeItemDirection);
          attachPoint.offset.y = handOffsetAmount * Math.cos(activeItemDirection);
@@ -1257,7 +1233,7 @@ function padData(reader: PacketReader): void {
 }
 
 const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
-   playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y));
+   playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y), null);
    
    for (let i = 0; i < 8; i++) {
       const offsetMagnitude = randFloat(0, 18);

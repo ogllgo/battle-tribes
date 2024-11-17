@@ -540,7 +540,7 @@ const BuildMenu = () => {
    
             if (count < cost.amount) {
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-               playSound("error.mp3", 0.4, 1, playerTransformComponent.position);
+               playSound("error.mp3", 0.4, 1, playerTransformComponent.position, null);
                return;
             }
          }

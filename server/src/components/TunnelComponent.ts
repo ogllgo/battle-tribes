@@ -36,14 +36,11 @@ export class TunnelComponent {
    public bottomDoorOpenProgress = 0;
 }
 
-export const TunnelComponentArray = new ComponentArray<TunnelComponent>(ServerComponentType.tunnel, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TunnelComponentArray = new ComponentArray<TunnelComponent>(ServerComponentType.tunnel, true, getDataLength, addDataToPacket);
+TunnelComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 48 * 48) / 2;
 const angleToCenter = angle(16, 48);

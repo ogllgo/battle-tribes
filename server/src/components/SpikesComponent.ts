@@ -7,10 +7,7 @@ export class SpikesComponent {
    public isCovered = false;
 }
 
-export const SpikesComponentArray = new ComponentArray<SpikesComponent>(ServerComponentType.spikes, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SpikesComponentArray = new ComponentArray<SpikesComponent>(ServerComponentType.spikes, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return 2 * Float32Array.BYTES_PER_ELEMENT;

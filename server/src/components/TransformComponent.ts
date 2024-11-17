@@ -1,10 +1,10 @@
 import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import Chunk from "../Chunk";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -14,7 +14,7 @@ import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPat
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
-import { getEntityLayer } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { TetheredHitboxComponentArray } from "./TetheredHitboxComponent";
@@ -54,17 +54,10 @@ export class TransformComponent {
    public collisionBit = COLLISION_BITS.default;
    // @Deprecated: Only used by client
    public collisionMask = DEFAULT_COLLISION_MASK;
-
-   // Doesn't change as that would require updating the entity and where it is in which chunks
-   public readonly collisionGroup: CollisionGroup;
    
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();
 
    public nextHitboxLocalID = 1;
-
-   constructor(collisionGroup: CollisionGroup) {
-      this.collisionGroup = collisionGroup;
-   }
 
    public updateIsInRiver(entity: Entity): void {
       const tileIndex = getEntityTile(this);
@@ -347,7 +340,8 @@ export class TransformComponent {
       chunk.entities.push(entity);
 
       const chunkIndex = layer.getChunkIndex(chunk);
-      const collisionChunk = layer.getCollisionChunkByIndex(this.collisionGroup, chunkIndex);
+      const collisionGroup = getEntityCollisionGroup(getEntityType(entity));
+      const collisionChunk = layer.getCollisionChunkByIndex(collisionGroup, chunkIndex);
       collisionChunk.entities.push(entity);
    
       const numViewingMobs = chunk.viewingEntities.length;
@@ -374,7 +368,8 @@ export class TransformComponent {
       }
 
       const chunkIndex = layer.getChunkIndex(chunk);
-      const collisionChunk = layer.getCollisionChunkByIndex(this.collisionGroup, chunkIndex);
+      const collisionGroup = getEntityCollisionGroup(getEntityType(entity));
+      const collisionChunk = layer.getCollisionChunkByIndex(collisionGroup, chunkIndex);
       idx = collisionChunk.entities.indexOf(entity);
       if (idx !== -1) {
          collisionChunk.entities.splice(idx, 1);
@@ -453,12 +448,9 @@ export class TransformComponent {
    }
 }
 
-export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, {
-   onJoin: onJoin,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
+TransformComponentArray.onJoin = onJoin;
+TransformComponentArray.onRemove = onRemove;
 
 export function getEntityTile(transformComponent: TransformComponent): TileIndex {
    const tileX = Math.floor(transformComponent.position.x / Settings.TILE_SIZE);
@@ -515,7 +507,7 @@ function getDataLength(entity: Entity): number {
    
    for (const hitbox of transformComponent.hitboxes) {
       if (boxIsCircular(hitbox.box)) {
-         lengthBytes += 13 * Float32Array.BYTES_PER_ELEMENT;
+         lengthBytes += 14 * Float32Array.BYTES_PER_ELEMENT;
       } else {
          lengthBytes += 14 * Float32Array.BYTES_PER_ELEMENT;
       }
@@ -559,6 +551,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       
       packet.addNumber(box.position.x);
       packet.addNumber(box.position.y);
+      packet.addNumber(box.relativeRotation);
       packet.addNumber(box.rotation);
       packet.addNumber(hitbox.mass);
       packet.addNumber(box.offset.x);

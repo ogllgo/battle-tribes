@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { angle, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
@@ -103,7 +103,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.1 / Settings.TPS) {
-      playSound("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, transformComponent.position);
+      playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity);
    }
 }
 
@@ -150,7 +150,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSound("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -161,5 +161,5 @@ function onDie(entity: Entity): void {
 
    createBloodParticleFountain(entity, 0.1, 1.1);
 
-   playSound("cow-die-1.mp3", 0.2, 1, transformComponent.position);
+   playSoundOnEntity("cow-die-1.mp3", 0.2, 1, entity);
 }

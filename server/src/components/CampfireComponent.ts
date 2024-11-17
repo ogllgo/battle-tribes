@@ -6,14 +6,11 @@ import { CookingComponentArray } from "./CookingComponent";
 
 export class CampfireComponent {}
 
-export const CampfireComponentArray = new ComponentArray<CampfireComponent>(ServerComponentType.campfire, true, {
-   onTick: {
-      func: onTick,
-      tickInterval: 1
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const CampfireComponentArray = new ComponentArray<CampfireComponent>(ServerComponentType.campfire, true, getDataLength, addDataToPacket);
+CampfireComponentArray.onTick = {
+   func: onTick,
+   tickInterval: 1
+};
 
 function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);

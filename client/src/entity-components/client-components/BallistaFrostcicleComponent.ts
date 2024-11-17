@@ -2,8 +2,9 @@ import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { getEntityLayer } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
@@ -51,5 +52,5 @@ function onDie(entity: Entity): void {
       createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
    }
 
-   playSound("ice-break.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("ice-break.mp3", 0.4, 1, entity);
 }

@@ -24,12 +24,9 @@ export class StructureComponent implements Mutable<StructureConnectionInfo> {
    }
 }
 
-export const StructureComponentArray = new ComponentArray<StructureComponent>(ServerComponentType.structure, true, {
-   onJoin: onJoin,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const StructureComponentArray = new ComponentArray<StructureComponent>(ServerComponentType.structure, true, getDataLength, addDataToPacket);
+StructureComponentArray.onJoin = onJoin;
+StructureComponentArray.onRemove = onRemove;
 
 const addConnection = (structureComponent: StructureComponent, connectionIdx: number, connectedEntityID: number): void => {
    structureComponent.connectedEntityIDs[connectionIdx] = connectedEntityID;

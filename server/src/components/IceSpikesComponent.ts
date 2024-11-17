@@ -37,17 +37,14 @@ export class IceSpikesComponent {
    }
 }
 
-export const IceSpikesComponentArray = new ComponentArray<IceSpikesComponent>(ServerComponentType.iceSpikes, true, {
-   onInitialise: onInitialise,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const IceSpikesComponentArray = new ComponentArray<IceSpikesComponent>(ServerComponentType.iceSpikes, true, getDataLength, addDataToPacket);
+IceSpikesComponentArray.onInitialise = onInitialise;
+IceSpikesComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+IceSpikesComponentArray.preRemove = preRemove;
+IceSpikesComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onInitialise(config: EntityConfig<ServerComponentType.iceSpikes>, entity: Entity): void {
    if (config.components[ServerComponentType.iceSpikes].rootIceSpike === 0) {

@@ -7,12 +7,11 @@ import { Light, attachLightToRenderPart, createLight } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianComponentParams {
    readonly rubyGemActivation: number;
@@ -505,42 +504,36 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       case GuardianAttackType.crystalSlam: {
          // If just starting the slam, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalSlam) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-rock-smash-charge.mp3", 0.4, 1, transformComponent.position);
+            playSoundOnEntity("guardian-rock-smash-charge.mp3", 0.4, 1, entity);
          }
 
          // If starting slam, play start sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.windup && attackStage === GuardianCrystalSlamStage.slam) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-rock-smash-start.mp3", 0.2, 1, transformComponent.position);
+            playSoundOnEntity("guardian-rock-smash-start.mp3", 0.2, 1, entity);
          }
          
          // If going from slam to return, then play the slam sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.slam && attackStage === GuardianCrystalSlamStage.return) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-rock-smash-impact.mp3", 0.65, 1, transformComponent.position);
+            playSoundOnEntity("guardian-rock-smash-impact.mp3", 0.65, 1, entity);
          }
          break;
       }
       case GuardianAttackType.crystalBurst: {
          // If just starting, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalBurst) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-rock-burst-charge.mp3", 0.4, 1, transformComponent.position);
+            playSoundOnEntity("guardian-rock-burst-charge.mp3", 0.4, 1, entity);
          }
 
          // If starting burst, play burst sound
          if (guardianComponent.attackStage === GuardianCrystalBurstStage.windup && attackStage === GuardianCrystalBurstStage.burst) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-rock-burst.mp3", 0.7, 1, transformComponent.position);
+            playSoundOnEntity("guardian-rock-burst.mp3", 0.7, 1, entity);
          }
          break;
       }
       case GuardianAttackType.summonSpikyBalls: {
          // If just starting, play focus sound
          if (attackStage === GuardianSpikyBallSummonStage.focus && guardianComponent.attackStage === GuardianSpikyBallSummonStage.windup) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            playSound("guardian-summon-focus.mp3", 0.55, 1, transformComponent.position);
+            playSoundOnEntity("guardian-summon-focus.mp3", 0.55, 1, entity);
          }
 
          for (let i = 0; i < guardianComponent.limbRenderParts.length; i++) {

@@ -18,14 +18,11 @@ export class HealingTotemComponent {
    public readonly healTargetsTicksHealed = new Array<number>();
 }
 
-export const HealingTotemComponentArray = new ComponentArray<HealingTotemComponent>(ServerComponentType.healingTotem, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const HealingTotemComponentArray = new ComponentArray<HealingTotemComponent>(ServerComponentType.healingTotem, true, getDataLength, addDataToPacket);
+HealingTotemComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const getHealingTargets = (healingTotem: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(healingTotem);

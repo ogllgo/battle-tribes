@@ -6,7 +6,7 @@ import { boxIsCircular, Hitbox } from "./boxes/boxes";
 import { Settings } from "./settings";
 import { Point, distance, getAbsAngleDiff } from "./utils";
 import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./subtiles";
-import { SubtileType } from "./tiles";
+import { CollisionGroup, getEntityCollisionGroup } from "./collision-groups";
 
 /*
 When snapping:
@@ -82,6 +82,14 @@ const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entityID = collidingEntities[i];
       const entity = worldInfo.getEntityCallback(entityID);
+
+      // Disregard decorations
+      // @Speed @Cleanup: ideally we would just exclude this collision type from the search in estimateCollidingEntities
+      const collisionGroup = getEntityCollisionGroup(entity.type);
+      if (collisionGroup === CollisionGroup.decoration) {
+         continue;
+      }
+      
       if (entity.type !== EntityType.itemEntity) {
          return false;
       }

@@ -1,36 +1,31 @@
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { randFloat } from "battletribes-shared/utils";
-import { playSound } from "./sound";
+import { playSoundOnEntity } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
-   const transformComponent = TransformComponentArray.getComponent(sourceEntity);
-   
    switch (bowItemType) {
       case ItemType.wooden_bow: {
-         playSound("bow-fire.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("bow-fire.mp3", 0.4, 1, sourceEntity);
          break;
       }
       case ItemType.reinforced_bow: {
-         playSound("reinforced-bow-fire.mp3", 0.2, 1, transformComponent.position);
+         playSoundOnEntity("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity);
          break;
       }
       case ItemType.ice_bow: {
-         playSound("ice-bow-fire.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("ice-bow-fire.mp3", 0.4, 1, sourceEntity);
          break;
       }
    }
 }
 
 const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {
-         playSound("fart.mp3", 0.3, randFloat(0.9, 1.2), transformComponent.position);
+         playSoundOnEntity("fart.mp3", 0.3, randFloat(0.9, 1.2), entity);
          break;
       }
       case EntityTickEventType.fireBow: {

@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { angle, randFloat, randInt } from "battletribes-shared/utils";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
@@ -35,7 +35,9 @@ export const ZombieComponentArray = new ServerComponentArray<ZombieComponent, Zo
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): ZombieComponentParams {
@@ -84,8 +86,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.zombie, 
 
 function onTick(entity: Entity): void {
    if (Math.random() < 0.1 / Settings.TPS) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      playSound("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
    }
 }
 
@@ -114,7 +115,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSound("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -123,5 +124,5 @@ function onDie(entity: Entity): void {
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);
 
-   playSound("zombie-die-1.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("zombie-die-1.mp3", 0.4, 1, entity);
 }

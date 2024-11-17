@@ -1,7 +1,6 @@
 import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, TileIndex } from "battletribes-shared/utils";
@@ -32,7 +31,7 @@ function tileIsValidCallback(entity: Entity, _layer: Layer, tileIndex: TileIndex
 }
 
 export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
 
    // Head
    transformComponent.addHitbox(createHitbox(new CircularBox(new Point(0, 0), 0, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);

@@ -3,10 +3,7 @@ import { ComponentArray } from "./ComponentArray";
 
 export class FurnaceComponent {}
 
-export const FurnaceComponentArray = new ComponentArray<FurnaceComponent>(ServerComponentType.furnace, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FurnaceComponentArray = new ComponentArray<FurnaceComponent>(ServerComponentType.furnace, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;

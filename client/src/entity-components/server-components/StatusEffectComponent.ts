@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { StatusEffectData } from "battletribes-shared/client-server-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, customTickIntervalHasPassed, lerp, randFloat, randItem } from "battletribes-shared/utils";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize } from "../../particles";
@@ -289,8 +289,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
-               const transformComponent = TransformComponentArray.getComponent(entity);
-               playSound("freezing.mp3", 0.4, 1, transformComponent.position)
+               playSoundOnEntity("freezing.mp3", 0.4, 1, entity);
                break;
             }
          }

@@ -83,15 +83,12 @@ export class GolemComponent {
    }
 }
 
-export const GolemComponentArray = new ComponentArray<GolemComponent>(ServerComponentType.golem, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const GolemComponentArray = new ComponentArray<GolemComponent>(ServerComponentType.golem, true, getDataLength, addDataToPacket);
+GolemComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+GolemComponentArray.preRemove = preRemove;
 
 // @Incomplete?
 // // Set initial hitbox positions (sleeping)

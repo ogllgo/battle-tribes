@@ -5,9 +5,8 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, BALLISTA_GEAR_X, BALLISTA_GEAR_Y } from "../../utils";
 import { Entity } from "../../../../shared/src/entities";
-import { TransformComponentArray } from "./TransformComponent";
 import { randItem } from "../../../../shared/src/utils";
-import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS } from "../../sound";
+import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnEntity } from "../../sound";
 import { RenderPart } from "../../render-parts/render-parts";
 
 export interface BallistaComponentParams {}
@@ -110,15 +109,11 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    // @Temporary
-   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    // @Temporary
-   playSound(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity);
 }

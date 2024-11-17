@@ -3,7 +3,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createSnowParticle, createWhiteSmokeParticle } from "../../particles";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { TransformComponentArray } from "./TransformComponent";
@@ -135,7 +135,7 @@ function onTick(entity: Entity): void {
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound(randItem(HURT_SOUNDS), 0.7, 1, transformComponent.position.copy());
+   playSoundOnEntity(randItem(HURT_SOUNDS), 0.7, 1, entity);
 
    // Blood pool particle
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
@@ -153,7 +153,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound(randItem(DEATH_SOUNDS), 0.7, 1, transformComponent.position.copy());
+   playSoundOnEntity(randItem(DEATH_SOUNDS), 0.7, 1, entity);
 
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
 

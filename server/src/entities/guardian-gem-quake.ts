@@ -1,7 +1,6 @@
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
@@ -15,7 +14,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.guardianGemQuake;
 
 export function createGuardianGemQuakeConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.exclusiveDamaging);
+   const transformComponent = new TransformComponent();
 const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 10), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

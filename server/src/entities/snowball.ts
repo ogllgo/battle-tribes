@@ -11,7 +11,6 @@ import { TransformComponent } from "../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -22,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
 const MAX_HEALTHS: ReadonlyArray<number> = [1, 3];
 
 export function createSnowballConfig(yeti: Entity, size: SnowballSize): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

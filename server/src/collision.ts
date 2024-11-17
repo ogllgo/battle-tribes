@@ -5,7 +5,7 @@ import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsCom
 import { CollisionPushInfo, collisionBitsAreCompatible, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getComponentArrayRecord } from "./components/ComponentArray";
-import { HitboxCollisionType, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType, Hitbox, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityComponentTypes, getEntityType } from "./world";
 import { HitboxCollisionPair } from "./collision-detection";
@@ -186,6 +186,15 @@ export function collide(pushedEntity: Entity, pushingEntity: Entity, collidingHi
    //    case EntityType.wallPunjiSticks: onPunjiSticksCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.embrasure: onEmbrasureCollision(pushingEntity, pushedHitboxIdx); break;
    // }
+}
+
+export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: number): boolean {
+   // @Copynpaste
+   // @Speed
+   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+   updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
+   
+   return box.isColliding(tileBox);
 }
 
 /** If no collision is found, does nothing. */

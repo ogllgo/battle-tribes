@@ -21,14 +21,11 @@ export class StatusEffectComponent {
    }
 }
 
-export const StatusEffectComponentArray = new ComponentArray<StatusEffectComponent>(ServerComponentType.statusEffect, false, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const StatusEffectComponentArray = new ComponentArray<StatusEffectComponent>(ServerComponentType.statusEffect, false, getDataLength, addDataToPacket);
+StatusEffectComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const entityIsImmuneToStatusEffect = (statusEffectComponent: StatusEffectComponent, statusEffect: StatusEffect): boolean => {
    return (statusEffectComponent.statusEffectImmunityBitset & statusEffect) !== 0;

@@ -26,14 +26,11 @@ export class TetheredHitboxComponent {
    }
 }
 
-export const TetheredHitboxComponentArray = new ComponentArray<TetheredHitboxComponent>(ServerComponentType.tetheredHitbox, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   onTick: {
-      func: onTick,
-      tickInterval: 1
-   }
-});
+export const TetheredHitboxComponentArray = new ComponentArray<TetheredHitboxComponent>(ServerComponentType.tetheredHitbox, true, getDataLength, addDataToPacket,);
+TetheredHitboxComponentArray.onTick = {
+   func: onTick,
+   tickInterval: 1
+};
 
 export function addTetheredHitboxRestriction(tetheredHitboxComponent: TetheredHitboxComponent, restriction: TetheredHitboxRestriction): void {
    tetheredHitboxComponent.restrictions.push(restriction);

@@ -27,6 +27,7 @@ const MainMenu = (props: MainMenuProps) => {
    const barbariansInputRef = useRef<HTMLInputElement | null>(null);
    const frostlingsInputRef = useRef<HTMLInputElement | null>(null);
    const goblinsInputRef = useRef<HTMLInputElement | null>(null);
+   const dwarvesInputRef = useRef<HTMLInputElement | null>(null);
    
    const getSelectedTribeType = (): TribeType => {
       if (plainspeopleInputRef.current !== null && plainspeopleInputRef.current.checked) {
@@ -37,6 +38,8 @@ const MainMenu = (props: MainMenuProps) => {
          return TribeType.frostlings;
       } else if (goblinsInputRef.current !== null && goblinsInputRef.current.checked) {
          return TribeType.goblins;
+      } else if (dwarvesInputRef.current !== null && dwarvesInputRef.current.checked) {
+         return TribeType.dwarves;
       }
       throw new Error("Not selected");
    }
@@ -91,6 +94,8 @@ const MainMenu = (props: MainMenuProps) => {
             <label htmlFor="tribe-selection-frostlings">Frostlings</label>
             <input ref={goblinsInputRef} type="radio" id="tribe-selection-goblins" name="tribe-selection"/>
             <label htmlFor="tribe-selection-goblins">Goblins</label>
+            <input ref={dwarvesInputRef} type="radio" id="tribe-selection-dwarves" name="tribe-selection"/>
+            <label htmlFor="tribe-selection-dwarves">Dwarves</label>
          </form>
          <button onClick={enterName}>Play</button>
       </div>

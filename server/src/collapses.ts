@@ -63,6 +63,7 @@ const getNeighbourSupport = (layer: Layer, subtileIndex: number): number => {
       // Returning 0 effectively skips it
       return 0;
    } else if (layer.subtileCanHaveWall(subtileIndex)) {
+      // @Cleanup: '!'
       return layer.minedSubtileInfoMap.get(subtileIndex)!.support - Vars.SUPPORT_REDUCTION;
    } else {
       return Vars.MAX_SUPPORT - Vars.SUPPORT_REDUCTION;

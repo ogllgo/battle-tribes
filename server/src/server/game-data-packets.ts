@@ -1,4 +1,4 @@
-import { GameDataPacketOptions, VisibleChunkBounds } from "battletribes-shared/client-server-types";
+import { GameDataPacketOptions, PathfindingNodeIndex, VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { TechUnlockProgress } from "battletribes-shared/techs";
@@ -21,6 +21,7 @@ import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packet
 import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes, layers, surfaceLayer } from "../world";
 import { getPlayerNearbyCollapses, getSubtileSupport, getVisibleSubtileSupports, subtileIsCollapsing } from "../collapses";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -62,7 +63,7 @@ export function getEntityDataLength(entity: Entity, player: Entity | null): numb
 export function addEntityDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
    // Entity ID, type, spawn time, and layer
    packet.addNumber(entity);
-   packet.addNumber(getEntityType(entity)!);
+   packet.addNumber(getEntityType(entity));
    // @Bandwidth: Only include when client doesn't know about this information
    packet.addNumber(getEntitySpawnTicks(entity));
    packet.addNumber(layers.indexOf(getEntityLayer(entity)));
@@ -90,7 +91,7 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
 
          // @Speed
          if (packet.currentByteOffset - start !== componentArray.getDataLength(entity, player)) {
-            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)!]}'.`)
+            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'.`)
          }
       }
    }
@@ -144,8 +145,7 @@ const getVisibleMinedSubtiles = (playerClient: PlayerClient): ReadonlyArray<numb
 export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<Entity>): ArrayBuffer {
    // @Cleanup: The mined subtile system here exists really only to send particles. Can be entirely encompassed in a server particles system!
 
-   const playerIsAlive = entityExists(playerClient.instance);
-   const player = playerClient.instance;
+   const player = entityExists(playerClient.instance) ? playerClient.instance : null;
    const layer = playerClient.lastLayer;
 
    let hotbarInventory: Inventory | undefined;
@@ -156,7 +156,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    let armourSlotInventory: Inventory | undefined;
    let offhandInventory: Inventory | undefined;
    let gloveSlotInventory: Inventory | undefined;
-   if (playerIsAlive) {
+   if (player !== null) {
       const inventoryComponent = InventoryComponentArray.getComponent(player);
       // @Copynpaste @Robustness
       hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
@@ -181,15 +181,18 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    const numEnemyTribes = tribes.filter(tribe => tribe.id !== playerClient.tribe.id).length;
 
    let hotbarUseInfo: LimbInfo | undefined;
-   if (playerIsAlive) {
-      const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerClient.instance);
+   if (player !== null) {
+      const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
       hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    }
 
-   const titleOffer = playerIsAlive ? PlayerComponentArray.getComponent(player).titleOffer : null;
+   const titleOffer = player !== null ? PlayerComponentArray.getComponent(player).titleOffer : null;
 
    const minedSubtiles = getVisibleMinedSubtiles(playerClient);
    const nearbyCollapses = getPlayerNearbyCollapses(playerClient);
+
+   const sendSubtileSupports = (playerClient.gameDataOptions & GameDataPacketOptions.sendSubtileSupports) !== 0;
+   const sendPathfindingNodeOccupances = (playerClient.gameDataOptions & GameDataPacketOptions.sendVisiblePathfindingNodeOccupances) !== 0;
    
    // Packet type
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -253,7 +256,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += debugDataLength;
 
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-   if (playerIsAlive) {
+   if (player !== null) {
       lengthBytes += getCrossbowLoadProgressRecordLength(hotbarUseInfo!);
    }
 
@@ -274,12 +277,20 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    // Subtile supports
    let visibleSubtileSupports: ReadonlyArray<number> | undefined;
-   const sendSubtileSupports = (playerClient.gameDataOptions & GameDataPacketOptions.sendSubtileSupports) !== 0;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (sendSubtileSupports) {
       visibleSubtileSupports = getVisibleSubtileSupports(playerClient);
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * visibleSubtileSupports.length;
+   }
+
+   // Pathfinding node occupances
+   let visiblePathfindingNodeOccupances: ReadonlyArray<PathfindingNodeIndex> | undefined;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   if (sendPathfindingNodeOccupances) {
+      visiblePathfindingNodeOccupances = getVisiblePathfindingNodeOccupances(playerClient);
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT * visiblePathfindingNodeOccupances.length;
    }
 
    lengthBytes = alignLengthBytes(lengthBytes);
@@ -295,7 +306,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    packet.addNumber(layers.indexOf(layer));
 
-   packet.addBoolean(playerIsAlive);
+   packet.addBoolean(player !== null);
    packet.padOffset(3);
 
    // 
@@ -432,7 +443,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       }
    }
 
-   packet.addNumber(playerIsAlive ? HealthComponentArray.getComponent(player).health : 0);
+   packet.addNumber(player !== null ? HealthComponentArray.getComponent(player).health : 0);
 
    // @Bug: Shared for all players
    if (debugData !== null) {
@@ -458,7 +469,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    packet.addBoolean(playerClient.hasPickedUpItem);
    packet.padOffset(3);
 
-   if (playerIsAlive) {
+   if (player !== null) {
       addCrossbowLoadProgressRecordToPacket(packet, hotbarUseInfo!);
    }
 
@@ -512,6 +523,16 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
          packet.addNumber(support);
       }
    }
+
+   // Pathfinding node occupances
+   packet.addBoolean(sendPathfindingNodeOccupances);
+   packet.padOffset(3);
+   if (sendPathfindingNodeOccupances) {
+      packet.addNumber(visiblePathfindingNodeOccupances!.length);
+      for (const node of visiblePathfindingNodeOccupances!) {
+         packet.addNumber(node);
+      }
+   }
    
    // const visibleTribes = getVisibleTribes(extendedVisibleChunkBounds);
 
@@ -540,8 +561,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       // tickEvents: playerClient.entityTickEvents,
 
       // @Incomplete
+      // @Incomplete
+      // @Incomplete
       // @Cleanup: Copy and paste
-      // visiblePathfindingNodeOccupances: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisiblePathfindingNodeOccupances) ? getVisiblePathfindingNodeOccupances(extendedVisibleChunkBounds) : [],
       // visibleSafetyNodes: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisibleSafetyNodes) ? getVisibleSafetyNodesData(visibleTribes, extendedVisibleChunkBounds) : [],
       // visibleBuildingPlans: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisibleBuildingPlans) ? getVisibleBuildingPlans(visibleTribes, extendedVisibleChunkBounds) : [],
       // visibleBuildingSafetys: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisibleBuildingSafetys) ? getVisibleBuildingSafetys(visibleTribes, extendedVisibleChunkBounds) : [],

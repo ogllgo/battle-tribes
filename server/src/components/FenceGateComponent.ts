@@ -19,14 +19,11 @@ export class FenceGateComponent {
    public openProgress = 0;
 }
 
-export const FenceGateComponentArray = new ComponentArray<FenceGateComponent>(ServerComponentType.fenceGate, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FenceGateComponentArray = new ComponentArray<FenceGateComponent>(ServerComponentType.fenceGate, true, getDataLength, addDataToPacket);
+FenceGateComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const doorWidth = 52;
 const doorHeight = 16;

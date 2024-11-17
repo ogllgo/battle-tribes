@@ -17,15 +17,12 @@ export class IceShardComponent {
    public readonly lifetime = randFloat(0.1, 0.2);
 }
 
-export const IceShardComponentArray = new ComponentArray<IceShardComponent>(ServerComponentType.iceShard, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const IceShardComponentArray = new ComponentArray<IceShardComponent>(ServerComponentType.iceShard, true, getDataLength, addDataToPacket);
+IceShardComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+IceShardComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(iceShard: Entity): void {
    const iceShardComponent = IceShardComponentArray.getComponent(iceShard);

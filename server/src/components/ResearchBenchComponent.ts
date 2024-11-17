@@ -28,14 +28,11 @@ export class ResearchBenchComponent {
    public orbCompleteProgressTicks = 0;
 }
 
-export const ResearchBenchComponentArray = new ComponentArray<ResearchBenchComponent>(ServerComponentType.researchBench, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const ResearchBenchComponentArray = new ComponentArray<ResearchBenchComponent>(ServerComponentType.researchBench, true, getDataLength, addDataToPacket);
+ResearchBenchComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(researchBench: Entity): void {
    // @Speed: This runs every tick, but this condition only activates rarely when the bench is being used.

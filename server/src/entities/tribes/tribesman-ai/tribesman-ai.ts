@@ -29,9 +29,10 @@ import { getGiftableItemSlot, getRecruitTarget } from "./tribesman-recruiting";
 import { escapeFromEnemies, tribesmanShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
 import { tribesmanDoPatrol } from "./tribesman-patrolling";
-import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory, ALL_ITEM_TYPES } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
+import { createItem } from "../../../items";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -109,7 +110,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
 
       // @Cleanup: bad. should only change tribesman ai in that tribesman's tick function.
       const healthComponent = HealthComponentArray.getComponent(currentTribesman);
-      if (!tribesmanShouldEscape(getEntityType(currentTribesman)!, healthComponent)) {
+      if (!tribesmanShouldEscape(getEntityType(currentTribesman), healthComponent)) {
          pathfindToPosition(currentTribesman, transformComponent.position.x, transformComponent.position.y, communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
       }
    }
@@ -356,7 +357,16 @@ export function tickTribesman(tribesman: Entity): void {
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
    const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
 
+   // @Temporary
+   if (hotbarInventory.getItem(1)?.type !== ItemType.wood) {
+      hotbarInventory.removeItem(1);
+      hotbarInventory.addItem(createItem(ItemType.wood, 99), 1);
+   } else {
+      hotbarInventory.getItem(1)!.count = 99;
+   }
+
    // Automatically equip armour from the hotbar
+   // @Speed: only do when inventory changes
    if (typeof armourInventory.itemSlots[1] === "undefined") {
       for (let i = 0; i < hotbarInventory.items.length; i++) {
          const item = hotbarInventory.items[i];
@@ -376,6 +386,8 @@ export function tickTribesman(tribesman: Entity): void {
    // @Cleanup: A nicer way to do this might be to sort the visible entities array based on the 'threat level' of each entity
    // @Cleanup: A perhaps combine the visible enemies and visible hostile mobs arrays?
 
+   // @Speed: we could store these arrays on the entity, and then when an entity is added/removed from the
+   // visible entities array we could also add/remove them to these.
    // Categorise visible entities
    const visibleEnemies = new Array<Entity>();
    const visibleEnemyBuildings = new Array<Entity>();
@@ -417,7 +429,7 @@ export function tickTribesman(tribesman: Entity): void {
    
    // Escape from enemies when low on health
    const healthComponent = HealthComponentArray.getComponent(tribesman);
-   if (tribesmanShouldEscape(getEntityType(tribesman)!, healthComponent) && (visibleEnemies.length > 0 || visibleHostileMobs.length > 0)) {
+   if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent) && (visibleEnemies.length > 0 || visibleHostileMobs.length > 0)) {
       escapeFromEnemies(tribesman, visibleEnemies, visibleHostileMobs);
 
       if (ageTicks % MESSAGE_INTERVAL_TICKS === 0) {
@@ -432,7 +444,7 @@ export function tickTribesman(tribesman: Entity): void {
       return;
    }
 
-   // @Speed
+   // @Speed: when the player interacts with the tribesman, set a variable in the tribesman
    // If the player is interacting with the tribesman, move towards the player
    for (const entity of aiHelperComponent.visibleEntities) {
       if (getEntityType(entity) !== EntityType.player) {
@@ -581,7 +593,7 @@ export function tickTribesman(tribesman: Entity): void {
          
          // @Incomplete: use pathfinding
          // @Cleanup: Copy and pasted from huntEntity. Should be combined into its own function
-         const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getTribesmanRadius(tribesman);
+         const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getTribesmanRadius(transformComponent);
          if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
             physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
@@ -894,7 +906,7 @@ export function tickTribesman(tribesman: Entity): void {
 
          // @Cleanup: copy and pasted from tribesman-combat-ai
          const desiredDistance = getTribesmanAttackRadius(tribesman);
-         const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getTribesmanRadius(tribesman);
+         const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getTribesmanRadius(transformComponent);
          if (willStopAtDesiredDistance(physicsComponent, desiredDistance, distance)) {
             // @Incomplete: turn to face direction and then place
             
@@ -931,7 +943,7 @@ export function tickTribesman(tribesman: Entity): void {
 
    // If not in an AI tribe, try to gather any resources you can indiscriminantly
    if (!tribeComponent.tribe.isAIControlled) {
-      const isGathering = gatherResources(tribesman, [], visibleItemEntities);
+      const isGathering = gatherResources(tribesman, ALL_ITEM_TYPES, visibleItemEntities);
       if (isGathering) {
          return;
       }

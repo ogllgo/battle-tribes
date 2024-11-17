@@ -1,18 +1,18 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, customTickIntervalHasPassed, lerp, randInt } from "battletribes-shared/utils";
+import { Point, assert, customTickIntervalHasPassed, lerp, randInt } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import Board from "../../Board";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
 import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
-import { entityIsInRiver, getEntityTile, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
+import { entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
@@ -47,7 +47,7 @@ export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsCompon
    physicsComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
 }
 
-const applyPhysics = (physicsComponent: PhysicsComponent, entity: Entity): void => {
+const applyPhysics = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, entity: Entity): void => {
    if (isNaN(physicsComponent.selfVelocity.x)) {
       throw new Error("Self velocity was NaN.");
    }
@@ -58,7 +58,6 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: Entity): void 
       throw new Error("External velocity is infinite.");
    }
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    const tile = getEntityTile(layer, transformComponent);
    
@@ -150,9 +149,12 @@ const applyPhysics = (physicsComponent: PhysicsComponent, entity: Entity): void 
    }
 }
 
-const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Entity): void => {
+const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
+   let hasMoved = false;
+   
+   // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
    for (const hitbox of transformComponent.hitboxes) {
       const box = hitbox.box;
       
@@ -165,22 +167,28 @@ const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Ent
       if (minX < 0) {
          transformComponent.position.x -= minX;
          physicsComponent.selfVelocity.x = 0;
+         hasMoved = true;
          // Right wall
       } else if (maxX > Settings.BOARD_UNITS) {
          transformComponent.position.x -= maxX - Settings.BOARD_UNITS;
          physicsComponent.selfVelocity.x = 0;
+         hasMoved = true;
       }
       
       // Bottom wall
       if (minY < 0) {
          transformComponent.position.y -= minY;
          physicsComponent.selfVelocity.y = 0;
+         hasMoved = true;
          // Top wall
       } else if (maxY > Settings.BOARD_UNITS) {
          transformComponent.position.y -= maxY - Settings.BOARD_UNITS;
          physicsComponent.selfVelocity.y = 0;
+         hasMoved = true;
       }
    }
+
+   return hasMoved;
 }
 
 export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent, PhysicsComponentParams, never>(ServerComponentType.physics, true, {
@@ -265,21 +273,32 @@ function onTick(entity: Entity): void {
       );
       Board.lowTexturedParticles.push(particle);
 
-      playSound("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, transformComponent.position);
+      playSoundOnEntity("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity);
    }
 }
 
 function onUpdate(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
-   applyPhysics(physicsComponent, entity);
+   applyPhysics(transformComponent, physicsComponent, entity);
 
    // Don't resolve wall tile collisions in lightspeed mode
    if (entity !== playerInstance || !keyIsPressed("l")) { 
-      resolveWallCollisions(entity);
+      const hasMoved = resolveWallCollisions(entity);
+
+      if (hasMoved) {
+         updateEntityPosition(transformComponent, entity);
+      }
    }
 
-   resolveBorderCollisions(physicsComponent, entity);
+   const hasMoved = resolveBorderCollisions(physicsComponent, entity);
+   if (hasMoved) {
+      updateEntityPosition(transformComponent, entity);
+   }
+
+   // @Incomplete: some entities are able to be outside the border!
+   assert(transformComponent.position.x >= 0 && transformComponent.position.x < Settings.BOARD_UNITS && transformComponent.position.y >= 0 && transformComponent.position.y < Settings.BOARD_UNITS, getEntityType(entity).toString());
 }
 
 function padData(reader: PacketReader): void {

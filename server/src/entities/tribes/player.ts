@@ -23,8 +23,7 @@ import Tribe from "../../Tribe";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import { PlayerComponent } from "../../components/PlayerComponent";
 import { DamageBoxComponent } from "../../components/DamageBoxComponent";
-import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -37,9 +36,23 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.inventoryUse
    | ServerComponentType.damageBox;
 
+const getHitboxRadius = (tribeType: TribeType): number => {
+   switch (tribeType) {
+      case TribeType.barbarians:
+      case TribeType.frostlings:
+      case TribeType.goblins:
+      case TribeType.plainspeople: {
+         return 32;
+      }
+      case TribeType.dwarves: {
+         return 28;
+      }
+   }
+}
+
 export function createPlayerConfig(tribe: Tribe, username: string): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 32), 1.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const transformComponent = new TransformComponent();
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -225,7 +238,7 @@ const modifyPlanterBox = (player: Entity, planterBox: Entity, plantType: Planter
 }
 
 export function modifyBuilding(player: Entity, structure: Entity, data: number): void {
-   const structureEntityType = getEntityType(structure)!;
+   const structureEntityType = getEntityType(structure);
    switch (structureEntityType) {
       case EntityType.tunnel: {
          modifyTunnel(player, structure);

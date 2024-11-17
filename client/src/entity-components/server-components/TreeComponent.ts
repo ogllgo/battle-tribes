@@ -9,7 +9,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
 import { randFloat, angle, randItem, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW } from "../../particles";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface TreeComponentParams {
@@ -114,10 +114,10 @@ function onHit(entity: Entity, hitData: HitData): void {
          createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
       }
       
-      playSound(randItem(TREE_HIT_SOUNDS), 0.4, 1, transformComponent.position);
+      playSoundOnEntity(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity);
    } else {
       // @Temporary
-      playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
    }
 }
 
@@ -152,5 +152,5 @@ function onDie(entity: Entity): void {
       createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSound(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, transformComponent.position);
+   playSoundOnEntity(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity);
 }

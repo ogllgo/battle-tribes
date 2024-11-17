@@ -9,7 +9,7 @@ import Client from "./networking/Client";
 import { getSelectedEntityID } from "./entity-selection";
 import { playSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
-import { getRandomPointInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { entityExists, getEntityType, playerInstance } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "./entity-components/server-components/TribeMemberComponent";
@@ -35,7 +35,7 @@ const ORB_PARTICLES_PER_SECOND = [2, 3.5, 6];
 const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
    const transformComponent = TransformComponentArray.getComponent(researchBench);
 
-   const position = getRandomPointInEntity(transformComponent);
+   const position = getRandomPositionInEntity(transformComponent);
    position.subtract(transformComponent.position);
    position.x *= 0.8;
    position.y *= 0.8;
@@ -103,7 +103,7 @@ const completeOrb = (): void => {
 
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
-   playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerTransformComponent.position);
+   playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerTransformComponent.position, null);
 
    // Make the player smack to the bench
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);

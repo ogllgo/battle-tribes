@@ -305,7 +305,8 @@ const ORIGINS: Record<TribeType, string> = {
    [TribeType.barbarians]: "Desert",
    [TribeType.frostlings]: "Tundra",
    [TribeType.goblins]: "Mountains",
-   [TribeType.plainspeople]: "Plains"
+   [TribeType.plainspeople]: "Plains",
+   [TribeType.dwarves]: "Caves"
 };
 
 const generateTribeName = (tribeType: TribeType): string => {
@@ -427,7 +428,7 @@ class Tribe {
       
       this.buildings.push(building);
 
-      const entityType = getEntityType(building)! as StructureType;
+      const entityType = getEntityType(building) as StructureType;
       
       this.addVirtualBuilding({
          id: building,

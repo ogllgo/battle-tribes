@@ -1,14 +1,13 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ScarInfo, ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
-import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
+import { EntityType } from "battletribes-shared/entities";
+import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { randInt, Point } from "battletribes-shared/utils";
-import { TribesmanAIComponent, TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";
-import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
+import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
+import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { entityExists } from "../../world";
 import { DamageBoxComponent } from "../../components/DamageBoxComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
@@ -20,7 +19,6 @@ import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import Tribe from "../../Tribe";
 import { TribeWarriorComponent } from "../../components/TribeWarriorComponent";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -34,9 +32,6 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.inventory
    | ServerComponentType.tribeWarrior
    | ServerComponentType.damageBox;
-
-export const TRIBE_WARRIOR_RADIUS = 32;
-export const TRIBE_WARRIOR_VISION_RANGE = 560;
 
 const generateScars = (): ReadonlyArray<ScarInfo> => {
    let numScars = 1;
@@ -58,9 +53,23 @@ const generateScars = (): ReadonlyArray<ScarInfo> => {
    return scars;
 }
 
+const getHitboxRadius = (tribeType: TribeType): number => {
+   switch (tribeType) {
+      case TribeType.barbarians:
+      case TribeType.frostlings:
+      case TribeType.goblins:
+      case TribeType.plainspeople: {
+         return 32;
+      }
+      case TribeType.dwarves: {
+         return 28;
+      }
+   }
+}
+
 export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, TRIBE_WARRIOR_RADIUS), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const transformComponent = new TransformComponent();
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -77,7 +86,7 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
 
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(TRIBE_WARRIOR_VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(560);
    
    const inventoryComponent = new InventoryComponent();
 

@@ -139,6 +139,9 @@ export function createStructureHighlightShaders(): void {
          // Transparent
          outputColour = vec4(0.0, 0.0, 0.0, 0.0);
       }
+
+      // @Hack :DarkTransparencyBug
+      outputColour.rgb *= outputColour.a;
    }
    `;
 
@@ -279,7 +282,8 @@ export function renderEntitySelection(): void {
    gl.useProgram(renderProgram);
    gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
    
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // @Hack :DarkTransparencyBug
+   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
    // @Speed
    const buffer2 = gl.createBuffer()!;

@@ -83,16 +83,13 @@ export class GuardianComponent {
    }
 }
 
-export const GuardianComponentArray = new ComponentArray<GuardianComponent>(ServerComponentType.guardian, true, {
-   onJoin: onJoin,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const GuardianComponentArray = new ComponentArray<GuardianComponent>(ServerComponentType.guardian, true, getDataLength, addDataToPacket);
+GuardianComponentArray.onJoin = onJoin;
+GuardianComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+GuardianComponentArray.onHitboxCollision = onHitboxCollision;
 
 export function getGuardianLimbOrbitRadius(): number {
    return GuardianVars.LIMB_ORBIT_RADIUS;

@@ -18,7 +18,6 @@ import { TransformComponent, TransformComponentArray } from "../../components/Tr
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { Biome } from "../../../../shared/src/biomes";
 
 const enum Vars {
@@ -75,7 +74,7 @@ function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number)
 }
 
 export function createFishConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), FISH_WIDTH, FISH_HEIGHT, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 

@@ -29,10 +29,7 @@ export class TribeComponent {
    }
 }
 
-export const TribeComponentArray = new ComponentArray<TribeComponent>(ServerComponentType.tribe, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TribeComponentArray = new ComponentArray<TribeComponent>(ServerComponentType.tribe, true, getDataLength, addDataToPacket);
 
 export function getEntityRelationship(entity: Entity, comparingEntity: Entity): EntityRelationship {
    // More complex if the entity is an AI tribesman: take into account the personal relationship between the entities
@@ -53,7 +50,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       return EntityRelationship.enemyBuilding;
    }
    
-   const entityType = getEntityType(comparingEntity)!;
+   const entityType = getEntityType(comparingEntity);
    switch (entityType) {
       case EntityType.plant: {
          const plantComponent = PlantComponentArray.getComponent(comparingEntity);

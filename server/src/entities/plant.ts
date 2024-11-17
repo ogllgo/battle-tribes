@@ -11,7 +11,6 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HealthComponent } from "../components/HealthComponent";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -25,7 +24,7 @@ const PLANT_HEALTHS: Record<PlanterBoxPlant, number> = {
 };
 
 export function createPlantConfig(plantType: PlanterBoxPlant, planterBox: Entity): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;

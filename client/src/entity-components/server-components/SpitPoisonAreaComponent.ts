@@ -36,7 +36,11 @@ function createParamsFromData(): SpitPoisonAreaComponentParams {
 function createComponent(entityConfig: EntityConfig<ServerComponentType.transform, never>): SpitPoisonAreaComponent {
    const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
 
-   const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponentParams.position);
+   const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponentParams.position, entityConfig.layer);
+   // @Temporary @Bug @Hack: FIX
+   if (audioInfo === null) {
+      throw new Error();
+   }
    const trackSource = audioInfo.trackSource;
    const sound = audioInfo.sound;
 

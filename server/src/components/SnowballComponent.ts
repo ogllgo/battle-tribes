@@ -23,16 +23,13 @@ export class SnowballComponent {
 
 const DAMAGE_VELOCITY_THRESHOLD = 100;
 
-export const SnowballComponentArray = new ComponentArray<SnowballComponent>(ServerComponentType.snowball, true, {
-   onJoin: onJoin,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SnowballComponentArray = new ComponentArray<SnowballComponent>(ServerComponentType.snowball, true, getDataLength, addDataToPacket);
+SnowballComponentArray.onJoin = onJoin;
+SnowballComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+SnowballComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onJoin(entity: Entity): void {
    /** Set the snowball to spin */

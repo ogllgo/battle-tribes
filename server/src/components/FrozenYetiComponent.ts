@@ -61,15 +61,12 @@ export class FrozenYetiComponent {
    public rockSpikeInfoArray = new Array<FrozenYetiRockSpikeInfo>();
 }
 
-export const FrozenYetiComponentArray = new ComponentArray<FrozenYetiComponent>(ServerComponentType.frozenYeti, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FrozenYetiComponentArray = new ComponentArray<FrozenYetiComponent>(ServerComponentType.frozenYeti, true, getDataLength, addDataToPacket);
+FrozenYetiComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+FrozenYetiComponentArray.preRemove = preRemove;
 
 const shouldTargetEntity = (layer: Layer, entity: Entity): boolean => {
    if (!HealthComponentArray.hasComponent(entity)) {

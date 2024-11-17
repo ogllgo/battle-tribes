@@ -1,11 +1,13 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { ItemType } from "../../../shared/src/items/items";
+import { Settings } from "../../../shared/src/settings";
+import { lerp } from "../../../shared/src/utils";
 import { moveEntityToEntity, stopEntity } from "../ai-shared";
 import { CollisionVars, entitiesAreColliding } from "../collision";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import { destroyEntity, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -13,15 +15,12 @@ import { TransformComponentArray, getRandomPositionInBox } from "./TransformComp
 
 export class GlurbComponent {}
 
-export const GlurbComponentArray = new ComponentArray<GlurbComponent>(ServerComponentType.glurb, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   onTick: {
-      func: onTick,
-      tickInterval: 1
-   },
-   preRemove: preRemove
-});
+export const GlurbComponentArray = new ComponentArray<GlurbComponent>(ServerComponentType.glurb, true, getDataLength, addDataToPacket);
+GlurbComponentArray.onTick = {
+   func: onTick,
+   tickInterval: 1
+};
+GlurbComponentArray.preRemove = preRemove;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
@@ -29,13 +28,20 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+const getAcceleration = (glurb: Entity): number => {
+   const age = getEntityAgeTicks(glurb);
+   
+   const u = (Math.sin(age * Settings.I_TPS * 6.5) + 1) * 0.5;
+   return lerp(140, 550, u);
+}
+
 function onTick(glurb: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(glurb);
 
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
-         moveEntityToEntity(glurb, entity, 450, Math.PI * 1);
+         moveEntityToEntity(glurb, entity, getAcceleration(glurb), Math.PI * 1);
 
          if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
@@ -48,7 +54,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.player) {
-         moveEntityToEntity(glurb, entity, 450, Math.PI * 1);
+         moveEntityToEntity(glurb, entity, getAcceleration(glurb), Math.PI * 1);
          
          return;
       }

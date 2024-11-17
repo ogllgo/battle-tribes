@@ -22,6 +22,7 @@ export const enum PacketType {
    toggleSimulation,
    placeBlueprint,
    craftItem,
+   devSetDebugEntity,
    devGiveItem, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT

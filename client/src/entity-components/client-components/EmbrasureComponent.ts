@@ -5,8 +5,9 @@ import { angle } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { getEntityLayer } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -53,7 +54,7 @@ function createComponent(): EmbrasureComponent {
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound("wooden-wall-hit.mp3", 0.3, 1, transformComponent.position);
+   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity);
 
    for (let i = 0; i < 4; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 20);
@@ -72,7 +73,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound("wooden-wall-break.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity);
 
    for (let i = 0; i < 7; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random());

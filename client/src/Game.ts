@@ -70,6 +70,8 @@ import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rende
 import { createCollapseParticles } from "./collapses";
 import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/webgl/subtile-support-rendering";
 import { createSlimeTrailShaders, renderSlimeTrails, updateSlimeTrails } from "./rendering/webgl/slime-trail-rendering";
+import { Entity } from "../../shared/src/entities";
+import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -239,7 +241,7 @@ const renderLayer = (layer: Layer): void => {
    renderResearchOrb();
 
    if (OPTIONS.showHitboxes) {
-      renderHitboxes();
+      renderHitboxes(layer);
    }
    if (OPTIONS.showDamageBoxes) {
       renderDamageBoxes();
@@ -527,14 +529,16 @@ abstract class Game {
       }
 
       if (isDev()) {
+         let debugEntity: Entity;
          if (entityExists(Camera.trackedEntityID) && Camera.trackedEntityID !== playerInstance) {
-            Client.sendTrackEntity(Camera.trackedEntityID);
+            debugEntity = Camera.trackedEntityID;
          } else if (nerdVisionIsVisible()) {
             const targettedEntity = getMouseTargetEntity();
-            Client.sendTrackEntity(targettedEntity !== null ? targettedEntity : 0);
+            debugEntity = targettedEntity !== null ? targettedEntity : 0;
          } else {
-            Client.sendTrackEntity(0);
+            debugEntity = 0;
          }
+         sendSetDebugEntityPacket(debugEntity);
       }
 
       if (OPTIONS.showSubtileSupports) {

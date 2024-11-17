@@ -2,8 +2,9 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { getEntityLayer } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -56,11 +57,9 @@ function createComponent(): RegularSpikesComponent {
 }
 
 function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("wooden-spikes-hit.mp3", 0.2, 1, transformComponent.position);
+   playSoundOnEntity("wooden-spikes-hit.mp3", 0.2, 1, entity);
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("wooden-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity);
 }

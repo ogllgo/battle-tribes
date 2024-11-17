@@ -11,7 +11,6 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { PlanterBoxComponent } from "../../components/PlanterBoxComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.planterBox;
 
 export function createPlanterBoxConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createPlanterBoxHitboxes(), null);
    
    const healthComponent = new HealthComponent(15);

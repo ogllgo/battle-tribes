@@ -37,11 +37,11 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
-import { entityExists, getEntityType, layers, playerInstance, removeEntity, setPlayerInstance } from "../world";
+import { entityExists, getEntityLayer, getEntityType, layers, playerInstance, removeEntity, setPlayerInstance } from "../world";
 import { getTileIndexIncludingEdges } from "../Layer";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { getComponentArrays } from "../entity-components/ComponentArray";
-import { getRandomPointInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
 
 export type GameData = {
@@ -350,9 +350,9 @@ abstract class Client {
                   }
                }
 
-               // @Incomplete
+               // @Incomplete @Hack
                if (hitData.flags & HitFlags.HIT_BY_SPIKES) {
-                  playSound("spike-stab.mp3", 0.3, 1, Point.unpackage(hitData.hitPosition));
+                  playSound("spike-stab.mp3", 0.3, 1, Point.unpackage(hitData.hitPosition), getEntityLayer(hitEntity));
                }
 
                // @Speed
@@ -403,7 +403,7 @@ abstract class Client {
             let remainingHealing = healData.healAmount;
             for (let size = 2; size >= 0;) {
                if (remainingHealing >= HEALING_PARTICLE_AMOUNTS[size]) {
-                  const position = getRandomPointInEntity(transformComponent);
+                  const position = getRandomPositionInEntity(transformComponent);
                   createHealingParticle(position, size);
                   remainingHealing -= HEALING_PARTICLE_AMOUNTS[size];
                } else {
@@ -413,20 +413,19 @@ abstract class Client {
 
             // @Hack @Incomplete: This will trigger the repair sound effect even if a hammer isn't the one healing the structure
             if (STRUCTURE_TYPES.includes(getEntityType(healedEntity) as any)) { // @Cleanup
-               playSound("repair.mp3", 0.4, 1, new Point(healData.entityPositionX, healData.entityPositionY));
+               playSound("repair.mp3", 0.4, 1, new Point(healData.entityPositionX, healData.entityPositionY), getEntityLayer(healedEntity));
             }
          }
       }
 
       if (gameDataPacket.pickedUpItem) {
-         playSound("item-pickup.mp3", 0.3, 1, Camera.position);
+         playSound("item-pickup.mp3", 0.3, 1, Camera.position, null);
       }
 
       if (typeof gameDataPacket.hotbarCrossbowLoadProgressRecord !== "undefined") {
          definiteGameState.hotbarCrossbowLoadProgressRecord = gameDataPacket.hotbarCrossbowLoadProgressRecord;
       }
 
-      setVisiblePathfindingNodeOccupances(gameDataPacket.visiblePathfindingNodeOccupances);
       setVisibleSafetyNodes(gameDataPacket.visibleSafetyNodes);
       setVisibleBuildingSafetys(gameDataPacket.visibleBuildingSafetys);
       setVisibleRestrictedBuildingAreas(gameDataPacket.visibleRestrictedBuildingAreas);
@@ -445,7 +444,7 @@ abstract class Client {
 
       if (tribeData.unlockedTechs.length > Game.tribe.unlockedTechs.length) {
          // @Incomplete: attach to camera so it doesn't decrease in loudness. Or make 'global sounds'
-         playSound("research.mp3", 0.4, 1, Camera.position);
+         playSound("research.mp3", 0.4, 1, Camera.position, null);
       }
       
       Game.tribe.hasTotem = tribeData.hasTotem;
@@ -531,12 +530,6 @@ abstract class Client {
    public static sendCommand(command: string): void {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("command", command);
-      }
-   }
-
-   public static sendTrackEntity(id: number): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("track_game_object", id);
       }
    }
 

@@ -10,11 +10,8 @@ import { applyKnockback } from "./PhysicsComponent";
 
 export class SpikyBastardComponent {}
 
-export const SpikyBastardComponentArray = new ComponentArray<SpikyBastardComponent>(ServerComponentType.spikyBastard, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   onHitboxCollision: onHitboxCollision
-});
+export const SpikyBastardComponentArray = new ComponentArray<SpikyBastardComponent>(ServerComponentType.spikyBastard, true, getDataLength, addDataToPacket,);
+SpikyBastardComponentArray.onHitboxCollision = onHitboxCollision;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;

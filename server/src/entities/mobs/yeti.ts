@@ -18,7 +18,6 @@ import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -26,8 +25,6 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
    | ServerComponentType.yeti;
-
-const YETI_SIZE = 128;
 
 const ATTACK_PURSUE_TIME_TICKS = 5 * Settings.TPS;
 
@@ -49,8 +46,8 @@ function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: num
 }
 
 export function createYetiConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, YETI_SIZE / 2), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const transformComponent = new TransformComponent();
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();

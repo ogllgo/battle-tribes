@@ -12,19 +12,16 @@ import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
 
 export class GuardianSpikyBallComponent {
-   public lifetime = Math.floor(Settings.TPS * randFloat(5, 6.5));
+   public lifetime = Math.floor(Settings.TPS * randFloat(6.5, 8));
 }
 
-export const GuardianSpikyBallComponentArray = new ComponentArray<GuardianSpikyBallComponent>(ServerComponentType.guardianSpikyBall, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onWallCollision: onWallCollision,
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const GuardianSpikyBallComponentArray = new ComponentArray<GuardianSpikyBallComponent>(ServerComponentType.guardianSpikyBall, true, getDataLength, addDataToPacket);
+GuardianSpikyBallComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+GuardianSpikyBallComponentArray.onWallCollision = onWallCollision;
+GuardianSpikyBallComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(spikyBall: Entity): void {
    const guardianSpikyBallComponent = GuardianSpikyBallComponentArray.getComponent(spikyBall);

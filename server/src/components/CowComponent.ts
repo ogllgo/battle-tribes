@@ -60,15 +60,12 @@ export class CowComponent {
    public poopProductionCooldownTicks = 0;
 }
 
-export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponentType.cow, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   preRemove: preRemove
-});
+export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponentType.cow, true, getDataLength, addDataToPacket);
+CowComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+CowComponentArray.preRemove = preRemove;
 
 const poop = (cow: Entity, cowComponent: CowComponent): void => {
    cowComponent.poopProductionCooldownTicks = randInt(Vars.MIN_POOP_PRODUCTION_COOLDOWN, Vars.MAX_POOP_PRODUCTION_COOLDOWN);

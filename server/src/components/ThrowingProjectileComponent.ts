@@ -14,11 +14,8 @@ export class ThrowingProjectileComponent {
    }
 }
 
-export const ThrowingProjectileComponentArray = new ComponentArray<ThrowingProjectileComponent>(ServerComponentType.throwingProjectile, true, {
-   onJoin: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const ThrowingProjectileComponentArray = new ComponentArray<ThrowingProjectileComponent>(ServerComponentType.throwingProjectile, true, getDataLength, addDataToPacket);
+ThrowingProjectileComponentArray.onRemove = onRemove;
 
 function onRemove(entity: Entity): void {
    const throwingProjectileComponent = ThrowingProjectileComponentArray.getComponent(entity);

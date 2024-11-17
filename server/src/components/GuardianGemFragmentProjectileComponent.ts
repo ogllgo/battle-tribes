@@ -18,16 +18,13 @@ export class GuardianGemFragmentProjectileComponent {
    public readonly tintMultiplier = randFloat(0.5, 1);
 }
 
-export const GuardianGemFragmentProjectileComponentArray = new ComponentArray<GuardianGemFragmentProjectileComponent>(ServerComponentType.guardianGemFragmentProjectile, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onWallCollision: onWallCollision,
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const GuardianGemFragmentProjectileComponentArray = new ComponentArray<GuardianGemFragmentProjectileComponent>(ServerComponentType.guardianGemFragmentProjectile, true, getDataLength, addDataToPacket);
+GuardianGemFragmentProjectileComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+GuardianGemFragmentProjectileComponentArray.onWallCollision = onWallCollision;
+GuardianGemFragmentProjectileComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(fragment: Entity): void {
    const age = getEntityAgeTicks(fragment);

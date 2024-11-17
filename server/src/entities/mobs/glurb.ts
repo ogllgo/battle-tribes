@@ -3,7 +3,6 @@ import { Point } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { GlurbComponent } from "../../components/GlurbComponent";
 import { StatusEffect } from "../../../../shared/src/status-effects";
@@ -24,7 +23,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.glurb;
    
 export function createGlurbConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const tetheredHitboxComponent = new TetheredHitboxComponent(15, 0.5);
    
    const numSegments = 5;
@@ -67,7 +66,7 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
 
    const physicsComponent = new PhysicsComponent();
    
-   const healthComponent = new HealthComponent(5);
+   const healthComponent = new HealthComponent(10);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 

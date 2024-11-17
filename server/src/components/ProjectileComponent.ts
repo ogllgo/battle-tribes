@@ -20,14 +20,11 @@ export class ProjectileComponent {
    }
 }
 
-export const ProjectileComponentArray = new ComponentArray<ProjectileComponent>(ServerComponentType.projectile, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const ProjectileComponentArray = new ComponentArray<ProjectileComponent>(ServerComponentType.projectile, true, getDataLength, addDataToPacket);
+ProjectileComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(projectile: Entity): void {
    // @Hack

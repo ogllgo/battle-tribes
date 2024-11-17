@@ -21,15 +21,12 @@ export class PlanterBoxComponent {
    public replantType: PlanterBoxPlant | null = null;
 }
 
-export const PlanterBoxComponentArray = new ComponentArray<PlanterBoxComponent>(ServerComponentType.planterBox, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToComponent
-});
+export const PlanterBoxComponentArray = new ComponentArray<PlanterBoxComponent>(ServerComponentType.planterBox, true, getDataLength, addDataToComponent);
+PlanterBoxComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+PlanterBoxComponentArray.onRemove = onRemove;
 
 function onRemove(entity: Entity): void {
    // When a planter box is destroyed, destroy the plant that was in it

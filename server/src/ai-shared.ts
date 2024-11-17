@@ -676,7 +676,7 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
          for (let i = 0; i < chunk.entities.length; i++) {
             const entity = chunk.entities[i];
             const pathfindingGroupID = getEntityPathfindingGroupID(entity);
-            if (entity === originEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(getEntityType(entity)!)) {
+            if (entity === originEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(getEntityType(entity))) {
                continue;
             }
 

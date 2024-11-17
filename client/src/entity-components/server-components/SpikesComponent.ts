@@ -1,7 +1,7 @@
 import { randFloat } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { LeafParticleSize, createLeafParticle, createLeafSpeckParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -121,10 +121,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       if (spikesComponent.isCovered) {
          // When covering trap
-         playSound("trap-cover.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("trap-cover.mp3", 0.4, 1, entity);
       } else {
          // When trap is sprung
-         playSound("trap-spring.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("trap-spring.mp3", 0.4, 1, entity);
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {

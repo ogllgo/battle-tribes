@@ -1,12 +1,12 @@
 import { WaterRockData, RiverSteppingStoneData, RIVER_STEPPING_STONE_SIZES, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { Entity } from "battletribes-shared/entities";
-import { Settings } from "battletribes-shared/settings";
+import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { distance, Point, TileIndex } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
-import { addTileToCensus } from "./census";
+import { addTileToCensus, createTileCensus } from "./census";
 import { TerrainGenerationInfo } from "./world-generation/surface-terrain-generation";
-import { markWallTileInPathfinding } from "./pathfinding";
+import { createNodeGroupIDs, markWallTileInPathfinding } from "./pathfinding";
 import OPTIONS from "./options";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { WorldInfo } from "battletribes-shared/structures";
@@ -90,6 +90,8 @@ export default class Layer {
    public readonly tileTemperatures: Float32Array;
    public readonly tileHumidities: Float32Array;
 
+   public readonly tileCensus = createTileCensus();
+
    private readonly wallSubtileTypes: Float32Array;
 
    public readonly wallSubtileDamageTakenMap = new Map<number, number>();
@@ -110,6 +112,8 @@ export default class Layer {
    public minedSubtileInfoMap = new Map<number, MinedSubtileInfo>();
 
    private readonly worldInfo: WorldInfo;
+
+   public readonly nodeGroupIDs = createNodeGroupIDs();
 
    constructor(generationInfo: TerrainGenerationInfo) {
       this.tileTypes = generationInfo.tileTypes;
@@ -147,7 +151,7 @@ export default class Layer {
                   
                   // @Incomplete: This system is outdated! Should account for wall subtiles
                   // Mark inaccessible pathfinding nodes
-                  markWallTileInPathfinding(tileX, tileY);
+                  markWallTileInPathfinding(this, tileX, tileY);
                }
             }
          }
@@ -178,7 +182,7 @@ export default class Layer {
             const transformComponent = TransformComponentArray.getComponent(entity);
 
             return {
-               type: getEntityType(entity)!,
+               type: getEntityType(entity),
                position: transformComponent.position,
                rotation: transformComponent.rotation,
                id: entity,
@@ -199,11 +203,13 @@ export default class Layer {
          damageDealt = Math.min(damage, 3);
          this.wallSubtileDamageTakenMap.set(subtileIndex, damageDealt);
       } else {
+         // @Cleanup: '!'
          const previousDamageTaken = this.wallSubtileDamageTakenMap.get(subtileIndex)!;
          damageDealt = Math.min(damage, 3 - previousDamageTaken);
          this.wallSubtileDamageTakenMap.set(subtileIndex, previousDamageTaken + damageDealt);
       }
 
+      // @Cleanup: '!'
       const damageTaken = this.wallSubtileDamageTakenMap.get(subtileIndex)!;
       if (damageTaken >= 3) {
          const previousSubtileType = this.wallSubtileTypes[subtileIndex];

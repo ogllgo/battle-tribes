@@ -4,7 +4,7 @@ import OPTIONS from "../../options";
 import Camera from "../../Camera";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { angle } from "battletribes-shared/utils";
-import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
+import { EntityDebugData, PathData, PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { nerdVisionIsVisible } from "../../components/game/dev/NerdVision";
 import { entityExists } from "../../world";
@@ -31,7 +31,7 @@ let nodeProgram: WebGLProgram;
 
 let connectorProgram: WebGLProgram;
 
-let visiblePathfindingNodeOccupances: ReadonlyArray<PathfindingNodeIndex>;
+let visiblePathfindingNodeOccupances: ReadonlyArray<PathfindingNodeIndex> = [];
 
 export function setVisiblePathfindingNodeOccupances(newVisiblePathfindingNodeOccupances: ReadonlyArray<PathfindingNodeIndex>): void {
    // @Speed: Garbage collection
@@ -176,66 +176,8 @@ const renderConnectors = (mainPathNodes: ReadonlyArray<PathfindingNodeIndex>): v
    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
 }
 
-const renderNodes = (nodeInfoArray: ReadonlyArray<NodeInfo>): void => {
+const renderNodes = (vertexData: Float32Array): void => {
    gl.useProgram(nodeProgram);
-
-   // Calculate vertices
-   let trigIdx = 0;
-   const vertexData = new Float32Array(nodeInfoArray.length * NODE_CIRCLE_VERTEX_COUNT * 6 * 3);
-   for (let i = 0; i < nodeInfoArray.length; i++) {
-      const nodeInfo = nodeInfoArray[i];
-
-      const x = (nodeInfo.node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-      const y = (Math.floor(nodeInfo.node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-      
-      const step = 2 * Math.PI / NODE_CIRCLE_VERTEX_COUNT;
-   
-      // Add the outer vertices
-      for (let radians = 0, n = 0; n < NODE_CIRCLE_VERTEX_COUNT; radians += step, n++) {
-         // @Speed: Garbage collection
-
-         const sinRadians = Math.sin(radians);
-         const cosRadians = Math.cos(radians);
-         const sinNextRadians = Math.sin(radians + step);
-         const cosNextRadians = Math.cos(radians + step);
-
-         const blX = x + (NODE_RADIUS - NODE_THICKNESS) * sinRadians;
-         const blY = y + (NODE_RADIUS - NODE_THICKNESS) * cosRadians;
-         const brX = x + (NODE_RADIUS - NODE_THICKNESS) * sinNextRadians;
-         const brY = y + (NODE_RADIUS - NODE_THICKNESS) * cosNextRadians;
-         const tlX = x + (NODE_RADIUS) * sinRadians;
-         const tlY = y + (NODE_RADIUS) * cosRadians;
-         const trX = x + (NODE_RADIUS) * sinNextRadians;
-         const trY = y + (NODE_RADIUS) * cosNextRadians;
-
-         const vertexOffset = trigIdx * 6 * 3;
-         trigIdx++;
-
-         vertexData[vertexOffset] = blX;
-         vertexData[vertexOffset + 1] = blY;
-         vertexData[vertexOffset + 2] = nodeInfo.type;
-
-         vertexData[vertexOffset + 3] = brX;
-         vertexData[vertexOffset + 4] = brY;
-         vertexData[vertexOffset + 5] = nodeInfo.type;
-
-         vertexData[vertexOffset + 6] = tlX;
-         vertexData[vertexOffset + 7] = tlY;
-         vertexData[vertexOffset + 8] = nodeInfo.type;
-
-         vertexData[vertexOffset + 9] = tlX;
-         vertexData[vertexOffset + 10] = tlY;
-         vertexData[vertexOffset + 11] = nodeInfo.type;
-
-         vertexData[vertexOffset + 12] = brX;
-         vertexData[vertexOffset + 13] = brY;
-         vertexData[vertexOffset + 14] = nodeInfo.type;
-
-         vertexData[vertexOffset + 15] = trX;
-         vertexData[vertexOffset + 16] = trY;
-         vertexData[vertexOffset + 17] = nodeInfo.type;
-      }
-   }
 
    const buffer = gl.createBuffer();
    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -247,54 +189,109 @@ const renderNodes = (nodeInfoArray: ReadonlyArray<NodeInfo>): void => {
    gl.enableVertexAttribArray(0);
    gl.enableVertexAttribArray(1);
 
-   gl.drawArrays(gl.TRIANGLES, 0, trigIdx * 6);
+   gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
+}
+
+const getDebuggedPath = (entityDebugData: EntityDebugData | null): PathData | undefined => {
+   if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
+      return entityDebugData.pathData;
+   }
+}
+
+const addNodeData = (vertexData: Float32Array, segmentIdx: number, node: PathfindingNodeIndex, type: NodeType): number => {
+   const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
+   const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
+   
+   const step = 2 * Math.PI / NODE_CIRCLE_VERTEX_COUNT;
+
+   // Add the outer vertices
+   for (let radians = 0, n = 0; n < NODE_CIRCLE_VERTEX_COUNT; radians += step, n++) {
+      // @Speed: Garbage collection
+
+      const sinRadians = Math.sin(radians);
+      const cosRadians = Math.cos(radians);
+      const sinNextRadians = Math.sin(radians + step);
+      const cosNextRadians = Math.cos(radians + step);
+
+      const blX = x + (NODE_RADIUS - NODE_THICKNESS) * sinRadians;
+      const blY = y + (NODE_RADIUS - NODE_THICKNESS) * cosRadians;
+      const brX = x + (NODE_RADIUS - NODE_THICKNESS) * sinNextRadians;
+      const brY = y + (NODE_RADIUS - NODE_THICKNESS) * cosNextRadians;
+      const tlX = x + (NODE_RADIUS) * sinRadians;
+      const tlY = y + (NODE_RADIUS) * cosRadians;
+      const trX = x + (NODE_RADIUS) * sinNextRadians;
+      const trY = y + (NODE_RADIUS) * cosNextRadians;
+
+      const vertexOffset = segmentIdx * 6 * 3;
+      segmentIdx++;
+
+      vertexData[vertexOffset] = blX;
+      vertexData[vertexOffset + 1] = blY;
+      vertexData[vertexOffset + 2] = type;
+
+      vertexData[vertexOffset + 3] = brX;
+      vertexData[vertexOffset + 4] = brY;
+      vertexData[vertexOffset + 5] = type;
+
+      vertexData[vertexOffset + 6] = tlX;
+      vertexData[vertexOffset + 7] = tlY;
+      vertexData[vertexOffset + 8] = type;
+
+      vertexData[vertexOffset + 9] = tlX;
+      vertexData[vertexOffset + 10] = tlY;
+      vertexData[vertexOffset + 11] = type;
+
+      vertexData[vertexOffset + 12] = brX;
+      vertexData[vertexOffset + 13] = brY;
+      vertexData[vertexOffset + 14] = type;
+
+      vertexData[vertexOffset + 15] = trX;
+      vertexData[vertexOffset + 16] = trY;
+      vertexData[vertexOffset + 17] = type;
+   }
+
+   return segmentIdx;
 }
 
 export function renderPathfindingNodes(): void {
-   const nodeInfoArray = new Array<NodeInfo>();
-
-   // @Speed: Remove duplicates (nodes with same position)
-   
-   if (OPTIONS.showPathfindingNodes) {
-      const minNodeX = Math.ceil(Camera.minVisibleChunkX * Settings.CHUNK_UNITS / PathfindingSettings.NODE_SEPARATION);
-      const maxNodeX = Math.floor((Camera.maxVisibleChunkX + 1) * Settings.CHUNK_UNITS / PathfindingSettings.NODE_SEPARATION);
-      const minNodeY = Math.ceil(Camera.minVisibleChunkY * Settings.CHUNK_UNITS / PathfindingSettings.NODE_SEPARATION);
-      const maxNodeY = Math.floor((Camera.maxVisibleChunkY + 1) * Settings.CHUNK_UNITS / PathfindingSettings.NODE_SEPARATION);
-
-      for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
-         for (let nodeY = minNodeY; nodeY <= maxNodeY; nodeY++) {
-            const node = nodeY * PathfindingSettings.NODES_IN_WORLD_WIDTH + nodeX;
-            if (visiblePathfindingNodeOccupances.indexOf(node) !== -1) {
-               nodeInfoArray.push({
-                  node: node,
-                  type: NodeType.occupied
-               });
-            }
-         }
-      }
-   }
-
    const entityDebugData = Game.getEntityDebugData();
-   if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID) && entityDebugData.hasOwnProperty("pathData")) {
-      for (const node of entityDebugData.pathData!.rawPathNodes) {
-         nodeInfoArray.push({
-            node: node,
-            type: NodeType.rawPath
-         });
-      }
-
-      for (const node of entityDebugData.pathData!.pathNodes) {
-         nodeInfoArray.push({
-            node: node,
-            type: NodeType.path
-         });
-      }
-   }
-
+   
    if (nerdVisionIsVisible() && entityDebugData !== null && typeof entityDebugData.pathData !== "undefined") {
       renderConnectors(entityDebugData.pathData.pathNodes);
    }
-   if (nodeInfoArray.length > 0) {
-      renderNodes(nodeInfoArray);
+
+   const debuggedPath = getDebuggedPath(entityDebugData);
+
+   let numNodes = visiblePathfindingNodeOccupances.length;
+   if (typeof debuggedPath !== "undefined") {
+      numNodes += debuggedPath.pathNodes.length + debuggedPath.rawPathNodes.length;
+   }
+   
+   if (numNodes > 0) {
+      const vertexData = new Float32Array(numNodes * NODE_CIRCLE_VERTEX_COUNT * 6 * 3);
+      let segmentIdx = 0;
+      
+      // @Speed: Remove duplicates (nodes with same position)
+      
+      if (OPTIONS.showPathfindingNodes) {
+         for (const node of visiblePathfindingNodeOccupances) {
+            segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.occupied);
+         }
+      }
+   
+      if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
+         const pathData = entityDebugData.pathData;
+         if (typeof pathData !== "undefined") {
+            for (const node of pathData.rawPathNodes) {
+               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.rawPath);
+            }
+      
+            for (const node of pathData.pathNodes) {
+               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.path);
+            }
+         }
+      }
+   
+      renderNodes(vertexData);
    }
 }

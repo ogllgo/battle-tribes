@@ -25,10 +25,7 @@ export class FollowAIComponent {
    }
 }
 
-export const FollowAIComponentArray = new ComponentArray<FollowAIComponent>(ServerComponentType.followAI, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FollowAIComponentArray = new ComponentArray<FollowAIComponent>(ServerComponentType.followAI, true, getDataLength, addDataToPacket);
 
 export function updateFollowAIComponent(entity: Entity, visibleEntities: ReadonlyArray<Entity>, interestDuration: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);

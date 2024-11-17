@@ -3,8 +3,8 @@ import { EnemyTribeData } from "battletribes-shared/techs";
 import { ServerComponentType } from "battletribes-shared/components";
 import { randFloat } from "battletribes-shared/utils";
 import Game from "../../Game";
-import { playSound } from "../../sound";
-import { getTribesmanRadius, TribeMemberComponentArray } from "./TribeMemberComponent";
+import { playSound, playSoundOnEntity } from "../../sound";
+import { getHumanoidRadius, TribeMemberComponentArray } from "./TribeMemberComponent";
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -86,9 +86,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (tribeID !== tribeComponent.tribeID && TribeMemberComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
-      playSound("conversion.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("conversion.mp3", 0.4, 1, entity);
 
-      const radius = getTribesmanRadius(entity);
+      const radius = getHumanoidRadius(entity);
       for (let i = 0; i < 10; i++) {
          const offsetDirection = 2 * Math.PI * Math.random();
          const offsetMagnitude = radius + randFloat(0, 4);

@@ -155,6 +155,11 @@ export const ItemTypeString: Record<ItemType, string> = {
 
 const numItemTypes = Object.keys(ItemTypeString).length;
 
+export const ALL_ITEM_TYPES = new Array<ItemType>();
+for (let i = 0; i < numItemTypes; i++) {
+   ALL_ITEM_TYPES.push(i);
+}
+
 export function getItemTypeFromString(itemTypeString: string): ItemType | null {
    for (let itemType: ItemType = 0; itemType < numItemTypes; itemType++) {
       if (ItemTypeString[itemType] === itemTypeString) {

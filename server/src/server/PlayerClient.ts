@@ -15,6 +15,7 @@ class PlayerClient {
    public readonly username: string;
    public readonly socket: WebSocket;
    public readonly tribe: Tribe;
+   public readonly isDev: boolean;
 
    /** ID of the player's entity */
    public instance: Entity;
@@ -47,7 +48,7 @@ class PlayerClient {
    public visibleDirtiedEntities = new Array<Entity>();
    public visibleRemovedEntities = new Array<Entity>();
 
-   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string) {
+   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string, isDev: boolean) {
       this.socket = socket;
       this.tribe = tribe;
       this.lastLayer = layer;
@@ -56,6 +57,7 @@ class PlayerClient {
       this.visibleChunkBounds = this.getVisibleChunkBounds(playerPosition, screenWidth, screenHeight);
       this.instance = instance;
       this.username = username;
+      this.isDev = isDev;
    }
 
    public getVisibleChunkBounds(playerPosition: Point, screenWidth: number, screenHeight: number): VisibleChunkBounds {

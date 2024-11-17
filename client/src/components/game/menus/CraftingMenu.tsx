@@ -221,7 +221,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
 
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
-      playSound("craft.mp3", 0.25, 1, playerTransformComponent.position);
+      playSound("craft.mp3", 0.25, 1, playerTransformComponent.position, null);
       sendCraftItemPacket(selectedRecipeIndex.current);
    }, [selectedRecipe, craftableRecipes]);
 

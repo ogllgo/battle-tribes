@@ -212,3 +212,11 @@ export function sendCraftItemPacket(recipeIndex: number): void {
 
    Client.sendPacket(packet.buffer);
 }
+
+export function sendSetDebugEntityPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.devSetDebugEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+   packet.addNumber(entity);
+
+   Client.sendPacket(packet.buffer);
+}

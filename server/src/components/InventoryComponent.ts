@@ -37,11 +37,8 @@ export class InventoryComponent {
    public readonly absentItemIDs = new Array<number>();
 }
 
-export const InventoryComponentArray = new ComponentArray<InventoryComponent>(ServerComponentType.inventory, true, {
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const InventoryComponentArray = new ComponentArray<InventoryComponent>(ServerComponentType.inventory, true, getDataLength, addDataToPacket);
+InventoryComponentArray.onRemove = onRemove;
 
 const dropInventory = (entity: Entity, inventory: Inventory, dropRange: number): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -459,9 +456,11 @@ export function craftRecipe(entity: Entity, inventoryComponent: InventoryCompone
    addItemToInventory(entity, outputInventory, recipe.product, recipe.yield);
 }
 
-function getDataLength(entity: Entity, player: Entity): number {
+function getDataLength(entity: Entity, player: Entity | null): number {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
-   const relationship = getEntityRelationship(entity, player);
+
+   // @Hack: when the player is null, whatever relationships the entity would have had with the player should be preserved.
+   const relationship = player !== null ? getEntityRelationship(entity, player) : EntityRelationship.neutral;
 
    let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {
@@ -475,9 +474,11 @@ function getDataLength(entity: Entity, player: Entity): number {
    return lengthBytes;
 }
 
-function addDataToPacket(packet: Packet, entity: Entity, player: Entity): void {
+function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
-   const relationship = getEntityRelationship(entity, player);
+
+   // @Hack: see corresponding comment above
+   const relationship = player !== null ? getEntityRelationship(entity, player) : EntityRelationship.neutral;
 
    let numSentInventories = 0;
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {

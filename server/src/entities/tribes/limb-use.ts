@@ -17,13 +17,13 @@ import { calculateItemDamage } from "./tribe-member";
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
 import { BerryBushComponentArray } from "../../components/BerryBushComponent";
 import { PlantComponentArray, plantIsFullyGrown } from "../../components/PlantComponent";
-import { TreeComponentArray, TREE_RADII } from "../../components/TreeComponent";
 import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
-import { dropBerryOverEntity, BERRY_BUSH_RADIUS } from "../resources/berry-bush";
+import { dropBerryOverEntity } from "../resources/berry-bush";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
 import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, getEntityType } from "../../world";
+import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
@@ -95,26 +95,9 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
          dropBerryOverEntity(plant);
       }
    } else {
-      // @Hack @Cleanup: Do from hitboxes
-      let plantRadius: number;
-      switch (getEntityType(plant)) {
-         case EntityType.tree: {
-            const treeComponent = TreeComponentArray.getComponent(plant);
-            plantRadius = TREE_RADII[treeComponent.treeSize];
-            break;
-         }
-         case EntityType.berryBush: {
-            plantRadius = BERRY_BUSH_RADIUS;
-            break;
-         }
-         case EntityType.plant: {
-            plantRadius = 10;
-            break;
-         }
-         default: {
-            throw new Error();
-         }
-      }
+      const plantHitbox = plantTransformComponent.hitboxes[0];
+      assertBoxIsCircular(plantHitbox.box);
+      const plantRadius = plantHitbox.box.radius;
 
       const offsetDirection = 2 * Math.PI * Math.random();
       const x = plantTransformComponent.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
@@ -166,7 +149,7 @@ export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbIn
       item = null;
    }
 
-   const targetEntityType = getEntityType(victim)!;
+   const targetEntityType = getEntityType(victim);
 
    const attackEffectiveness = calculateAttackEffectiveness(item, targetEntityType);
 
@@ -215,6 +198,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // Global attack cooldown
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(attackingEntity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
+      console.log("glob");
       return false;
    }
 
@@ -300,7 +284,7 @@ export function calculateAttackTarget(tribeMember: Entity, targetEntities: Reado
       }
 
       // @Temporary
-      const targetEntityType = getEntityType(targetEntity)!;
+      const targetEntityType = getEntityType(targetEntity);
       if (targetEntityType === EntityType.plant) {
          const plantComponent = PlantComponentArray.getComponent(targetEntity);
          if (!plantIsFullyGrown(plantComponent)) {

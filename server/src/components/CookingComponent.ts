@@ -62,14 +62,11 @@ export class CookingComponent {
    }
 }
 
-export const CookingComponentArray = new ComponentArray<CookingComponent>(ServerComponentType.cooking, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const CookingComponentArray = new ComponentArray<CookingComponent>(ServerComponentType.cooking, true, getDataLength, addDataToPacket);
+CookingComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 const getHeatingRecipeByIngredientType = (heatingEntityType: EntityType, ingredientType: ItemType): HeatingRecipe | null => {
    for (const heatingInfo of HEATING_INFO) {
@@ -98,7 +95,7 @@ function onTick(entity: Entity): void {
    
    const ingredient = ingredientInventory.itemSlots[1];
    if (typeof ingredient !== "undefined") {
-      cookingComponent.currentRecipe = getHeatingRecipeByIngredientType(getEntityType(entity)!, ingredient.type);
+      cookingComponent.currentRecipe = getHeatingRecipeByIngredientType(getEntityType(entity), ingredient.type);
    }
    
    if (cookingComponent.remainingHeatSeconds > 0) {

@@ -1,10 +1,10 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
-import { Light, attachLightToEntity, createLight } from "../../lights";
+import { attachLightToEntity, createLight } from "../../lights";
 import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
@@ -53,8 +53,7 @@ function onLoad(entity: Entity): void {
    );
    attachLightToEntity(light, entity);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("guardian-spiky-ball-spawn.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity);
 }
 
 function padData(): void {}
@@ -63,7 +62,7 @@ function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("guardian-spiky-ball-death.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("guardian-spiky-ball-death.mp3", 0.4, 1, entity);
 
    for (let i = 0; i < 10; i++) {
       const offsetMagnitude = 10 * Math.random();

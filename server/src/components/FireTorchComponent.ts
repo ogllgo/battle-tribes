@@ -6,14 +6,11 @@ import { ComponentArray } from "./ComponentArray";
 
 export class FireTorchComponent {}
 
-export const FireTorchComponentArray = new ComponentArray<FireTorchComponent>(ServerComponentType.fireTorch, true, {
-   onTick: {
-      func: onTick,
-      tickInterval: 1
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const FireTorchComponentArray = new ComponentArray<FireTorchComponent>(ServerComponentType.fireTorch, true, getDataLength, addDataToPacket);
+FireTorchComponentArray.onTick = {
+   func: onTick,
+   tickInterval: 1
+};
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;

@@ -15,14 +15,11 @@ export class BerryBushComponent {
    public berryGrowTimer = 0;
 }
 
-export const BerryBushComponentArray = new ComponentArray<BerryBushComponent>(ServerComponentType.berryBush, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BerryBushComponentArray = new ComponentArray<BerryBushComponent>(ServerComponentType.berryBush, true, getDataLength, addDataToPacket);
+BerryBushComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(entity: Entity): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);

@@ -77,15 +77,12 @@ export class AIHelperComponent {
    }
 }
 
-export const AIHelperComponentArray = new ComponentArray<AIHelperComponent>(ServerComponentType.aiHelper, true, {
-   onTick: {
-      tickInterval: 3,
-      func: onTick,
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const AIHelperComponentArray = new ComponentArray<AIHelperComponent>(ServerComponentType.aiHelper, true, getDataLength, addDataToPacket);
+AIHelperComponentArray.onTick = {
+   tickInterval: 3,
+   func: onTick,
+};
+AIHelperComponentArray.onRemove = onRemove;
 
 function onRemove(entity: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);

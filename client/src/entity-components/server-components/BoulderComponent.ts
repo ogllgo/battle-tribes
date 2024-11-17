@@ -8,7 +8,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { randFloat, randItem } from "../../../../shared/src/utils";
 import { createRockParticle, createRockSpeckParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS } from "../../sound";
+import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnEntity } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityConfig } from "../ComponentArray";
 
@@ -93,7 +93,7 @@ function onHit(entity: Entity): void {
       createRockSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -112,5 +112,5 @@ function onDie(entity: Entity): void {
       createRockSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSound(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity);
 }

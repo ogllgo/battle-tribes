@@ -15,14 +15,11 @@ const enum Vars {
 
 export class BattleaxeProjectileComponent {}
 
-export const BattleaxeProjectileComponentArray = new ComponentArray<BattleaxeProjectileComponent>(ServerComponentType.battleaxeProjectile, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BattleaxeProjectileComponentArray = new ComponentArray<BattleaxeProjectileComponent>(ServerComponentType.battleaxeProjectile, true, getDataLength, addDataToPacket);
+BattleaxeProjectileComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(battleaxe: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(battleaxe);

@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
@@ -163,11 +163,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const isRecalling = reader.readBoolean();
    reader.padOffset(3);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    // @Incomplete: What if this packet is skipped?
    if (lastDoorSwingTicks === Board.serverTicks) {
-      playSound("door-open.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("door-open.mp3", 0.4, 1, entity);
    }
    
    hutComponent.isRecalling = isRecalling;

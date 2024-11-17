@@ -5,13 +5,12 @@ import { angle, lerp } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 import { TUNNEL_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export interface TunnelComponentParams {
    readonly doorBitset: number;
@@ -102,7 +101,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel, 
    };
 }
 
-const addDoor = (tunnelComponent: TunnelComponent, transformComponent: TransformComponent, entity: Entity, doorBit: number): void => {
+const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: number): void => {
    const renderPart = new TexturedRenderPart(
       null,
       0,
@@ -117,7 +116,7 @@ const addDoor = (tunnelComponent: TunnelComponent, transformComponent: Transform
    renderInfo.attachRenderPart(renderPart);
 
    // @Temporary
-   playSound("spike-place.mp3", 0.5, 1, transformComponent.position);
+   playSoundOnEntity("spike-place.mp3", 0.5, 1, entity);
 }
 
 const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgress: number): void => {
@@ -135,25 +134,24 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const tunnelComponent = TunnelComponentArray.getComponent(entity);
-   const transformComponent = TransformComponentArray.getComponent(entity);
    
    const doorBitset = reader.readNumber();
    const topDoorOpenProgress = reader.readNumber();
    const bottomDoorOpenProgress = reader.readNumber();
 
    if ((doorBitset & 0b01) !== (tunnelComponent.doorBitset & 0b01)) {
-      addDoor(tunnelComponent, transformComponent, entity, 0b01);
+      addDoor(tunnelComponent, entity, 0b01);
    }
    if ((doorBitset & 0b10) !== (tunnelComponent.doorBitset & 0b10)) {
-      addDoor(tunnelComponent, transformComponent, entity, 0b10);
+      addDoor(tunnelComponent, entity, 0b10);
    }
 
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {
-      playSound("door-open.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("door-open.mp3", 0.4, 1, entity);
    }
    if ((topDoorOpenProgress < 1 && tunnelComponent.topDoorOpenProgress === 1) || (bottomDoorOpenProgress < 1 && tunnelComponent.bottomDoorOpenProgress === 1)) {
-      playSound("door-close.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("door-close.mp3", 0.4, 1, entity);
    }
    
    tunnelComponent.doorBitset = doorBitset;

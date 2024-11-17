@@ -12,7 +12,6 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { TunnelComponent } from "../../components/TunnelComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -25,7 +24,7 @@ type ComponentTypes = ServerComponentType.transform
 const HEALTHS = [25, 75];
 
 export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createTunnelHitboxes(), null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

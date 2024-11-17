@@ -64,17 +64,14 @@ export class YetiComponent {
       this.territory = territory;
    }
 }
-export const YetiComponentArray = new ComponentArray<YetiComponent>(ServerComponentType.yeti, true, {
-   onJoin: onJoin,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const YetiComponentArray = new ComponentArray<YetiComponent>(ServerComponentType.yeti, true, getDataLength, addDataToPacket);
+YetiComponentArray.onJoin = onJoin;
+YetiComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+},
+YetiComponentArray.preRemove = preRemove;
+YetiComponentArray.onRemove = onRemove;
 
 const tileBelongsToYetiTerritory = (tileX: number, tileY: number): boolean => {
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
@@ -292,6 +289,7 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
    return target;
 }
 
+// @Speed: there aren't that many yetis, and yet this takes like 1.5% of cpu time! get that down to like 0.1%
 function onTick(yeti: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);

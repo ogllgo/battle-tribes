@@ -5,7 +5,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGenericGemParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
@@ -110,7 +110,7 @@ function onDie(entity: Entity): void {
    }
 
    if (Math.random() < 0.5) {
-      playSound("guardian-gem-fragment-death.mp3", 0.3, 1, transformComponent.position);
+      playSoundOnEntity("guardian-gem-fragment-death.mp3", 0.3, 1, entity);
    }
 }
    

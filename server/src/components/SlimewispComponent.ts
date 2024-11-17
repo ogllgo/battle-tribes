@@ -23,14 +23,11 @@ export class SlimewispComponent {
    public mergeTimer = Vars.SLIMEWISP_MERGE_TIME;
 }
 
-export const SlimewispComponentArray = new ComponentArray<SlimewispComponent>(ServerComponentType.slimewisp, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SlimewispComponentArray = new ComponentArray<SlimewispComponent>(ServerComponentType.slimewisp, true, getDataLength, addDataToPacket);
+SlimewispComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(slimewisp: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);

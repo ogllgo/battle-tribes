@@ -17,7 +17,6 @@ import { TileType } from "battletribes-shared/tiles";
 import WanderAI from "../../ai/WanderAI";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 export const enum FrozenYetiVars {
    VISION_RANGE = 350,
@@ -59,7 +58,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createFrozenYetiConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    
    const bodyHitbox = createHitbox(new CircularBox(new Point(0, 0), 0, FrozenYetiVars.FROZEN_YETI_SIZE / 2), 4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(bodyHitbox, null);

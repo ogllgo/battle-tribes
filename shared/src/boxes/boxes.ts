@@ -101,6 +101,12 @@ export function hitboxIsCircular(hitbox: Hitbox): hitbox is Hitbox<BoxType.circu
    return typeof (hitbox.box as CircularBox).radius !== "undefined";
 }
 
+export function assertBoxIsCircular(box: Box): asserts box is CircularBox {
+   if (!boxIsCircular(box)) {
+      throw new Error();
+   }
+}
+
 export function assertBoxIsRectangular(box: Box): asserts box is RectangularBox {
    if (boxIsCircular(box)) {
       throw new Error();

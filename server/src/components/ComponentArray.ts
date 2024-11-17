@@ -11,33 +11,6 @@ const enum ComponentArrayPriority {
    high
 }
 
-interface ComponentArrayTickFunction {
-   readonly tickInterval: number;
-   func(entity: Entity): void;
-}
-
-interface ComponentArrayFunctions {
-   /** Called after all the components for an entity are created, before the entity has joined the world. */
-   onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity): void;
-   onJoin?(entity: Entity): void;
-   readonly onTick?: ComponentArrayTickFunction;
-   /** Called whenever the entity collides with a wall */
-   onWallCollision?(entity: Entity): void;
-   onEntityCollision?(actingEntity: Entity, receivingEntity: Entity): void;
-   onHitboxCollision?(actingEntity: Entity, receivingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void;
-   /**Called immediately after an entity is marked for removal. */
-   preRemove?(entity: Entity): void;
-   /**
-    * Called just before the entity is removed from the world.
-    * Should be used to clean up all data related to the entity, so that the entity no longer exists in the world.
-   */
-   onRemove?(entity: Entity): void;
-   // @Cleanup: make getDataLength not return an extra float length
-   /** Returns the length of the data that would be added to the packet */
-   getDataLength(entity: Entity, player: Entity | null): number;
-   addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void;
-}
-
 export const ComponentArrays = new Array<ComponentArray>();
 const ComponentArrayRecord = {} as { [T in ServerComponentType]: ComponentArray<object, T> };
 
@@ -45,7 +18,7 @@ export function getComponentArrayRecord(): typeof ComponentArrayRecord {
    return ComponentArrayRecord;
 }
 
-export class ComponentArray<T extends object = object, C extends ServerComponentType = ServerComponentType> implements ComponentArrayFunctions {
+export class ComponentArray<T extends object = object, C extends ServerComponentType = ServerComponentType> {
    public readonly componentType: ServerComponentType;
    private readonly isActiveByDefault: boolean;
    
@@ -71,31 +44,35 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    private deactivateBuffer = new Array<number>();
 
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash. (Can't add components to the join buffer while iterating it). solution: make it not crash
+   /** Called after all the components for an entity are created, before the entity has joined the world. */
    public onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity): void;
    public onJoin?(entity: Entity): void;
-   public onTick?: ComponentArrayTickFunction;
+   public onTick?: {
+      readonly tickInterval: number;
+      func(entity: Entity): void;
+   };
+   /** Called whenever the entity collides with a wall */
    public onWallCollision?(entity: Entity): void;
    public onEntityCollision?(entity: Entity, collidingEntity: Entity): void;
    public onHitboxCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionPoint: Point): void;
+   /** Called immediately after an entity is marked for removal. */
    public preRemove?(entity: Entity): void;
+   /**
+    * Called just before the entity is removed from the world.
+    * Should be used to clean up all data related to the entity, so that the entity no longer exists in the world.
+   */
    public onRemove?(entity: Entity): void;
+   // @Cleanup: make getDataLength not return an extra float length
+   /** Returns the length of the data that would be added to the packet */
    public getDataLength: (entity: Entity, player: Entity | null) => number;
    public addDataToPacket: (packet: Packet, entity: Entity, player: Entity | null) => void;
    
-   constructor(componentType: C, isActiveByDefault: boolean, functions: ComponentArrayFunctions) {
+   constructor(componentType: C, isActiveByDefault: boolean, getDataLength: (entity: Entity, player: Entity | null) => number, addDataToPacket: (packet: Packet, entity: Entity, player: Entity | null) => void) {
       this.componentType = componentType;
       this.isActiveByDefault = isActiveByDefault;
 
-      this.onInitialise = functions.onInitialise;
-      this.onJoin = functions.onJoin;
-      this.onTick = functions.onTick;
-      this.onWallCollision = functions.onWallCollision;
-      this.onEntityCollision = functions.onEntityCollision;
-      this.onHitboxCollision = functions.onHitboxCollision;
-      this.preRemove = functions.preRemove;
-      this.onRemove = functions.onRemove;
-      this.getDataLength = functions.getDataLength;
-      this.addDataToPacket = functions.addDataToPacket;
+      this.getDataLength = getDataLength;
+      this.addDataToPacket = addDataToPacket;
 
       ComponentArrays.push(this);
       // @Cleanup: cast

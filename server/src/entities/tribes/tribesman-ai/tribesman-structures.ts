@@ -164,7 +164,7 @@ export function goUpgradeBuilding(tribesman: Entity, goal: TribesmanUpgradeGoal)
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
 
-   const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getTribesmanRadius(tribesman);
+   const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getTribesmanRadius(transformComponent);
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
@@ -233,7 +233,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
    
-   const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getTribesmanRadius(tribesman);
+   const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getTribesmanRadius(transformComponent);
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {

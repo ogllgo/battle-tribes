@@ -18,15 +18,12 @@ const enum Vars {
 
 export class GuardianGemQuakeComponent {}
 
-export const GuardianGemQuakeComponentArray = new ComponentArray<GuardianGemQuakeComponent>(ServerComponentType.guardianGemQuake, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onHitboxCollision: onHitboxCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const GuardianGemQuakeComponentArray = new ComponentArray<GuardianGemQuakeComponent>(ServerComponentType.guardianGemQuake, true, getDataLength, addDataToPacket);
+GuardianGemQuakeComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+},
+GuardianGemQuakeComponentArray.onHitboxCollision = onHitboxCollision;
 
 const getLife = (ageTicks: number): number => {
    return ageTicks < Vars.TICKS_BEFORE_RECEED ? 1 : 1 - (ageTicks - Vars.TICKS_BEFORE_RECEED) / (Vars.LIFETIME_TICKS - Vars.TICKS_BEFORE_RECEED);

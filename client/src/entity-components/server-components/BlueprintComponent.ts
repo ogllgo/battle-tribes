@@ -1,6 +1,6 @@
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { assertUnreachable, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { createDustCloud, createLightWoodSpeckParticle, createRockParticle, createRockSpeckParticle, createSawdustCloud, createWoodShardParticle } from "../../particles";
 import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -470,8 +470,7 @@ function onLoad(entity: Entity): void {
 
 
 function onSpawn(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("blueprint-place.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("blueprint-place.mp3", 0.4, 1, entity);
 }
 
 function padData(reader: PacketReader): void {
@@ -523,7 +522,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (blueprintProgress !== blueprintComponent.lastBlueprintProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
-      playSound("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), transformComponent.position);
+      playSoundOnEntity("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity);
 
       const progressTexture = getCurrentBlueprintProgressTexture(blueprintComponent.blueprintType, blueprintProgress);
       
@@ -572,8 +571,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSound("blueprint-work.mp3", 0.4, 1, transformComponent.position);
-   playSound("structure-shaping.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("blueprint-work.mp3", 0.4, 1, entity);
+   playSoundOnEntity("structure-shaping.mp3", 0.4, 1, entity);
 
    // @Cleanup: Copy and pasted from blueprint component
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);

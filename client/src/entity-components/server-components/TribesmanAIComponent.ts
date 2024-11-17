@@ -6,7 +6,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { Entity } from "../../../../shared/src/entities";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
 import { EntityConfig } from "../ComponentArray";
@@ -84,11 +84,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSound(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, transformComponent.position);
+                  playSoundOnEntity(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, entity);
                   break;
                }
                case TribeType.barbarians: {
-                  playSound("barbarian-angry-1.mp3", 0.4, 1, transformComponent.position);
+                  playSoundOnEntity("barbarian-angry-1.mp3", 0.4, 1, entity);
                   break;
                }
             }
@@ -99,7 +99,7 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSound(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, transformComponent.position);
+                  playSoundOnEntity(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, entity);
                   break;
                }
             }
@@ -110,11 +110,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSound(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, transformComponent.position);
+                  playSoundOnEntity(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, entity);
                   break;
                }
                case TribeType.barbarians: {
-                  playSound("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, transformComponent.position);
+                  playSoundOnEntity("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, entity);
                   break;
                }
             }

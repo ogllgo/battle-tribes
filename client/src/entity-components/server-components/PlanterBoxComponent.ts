@@ -6,12 +6,12 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGrowthParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo, getEntityAgeTicks } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponent, TransformComponentArray, getRandomPointInEntity } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
 export interface PlanterBoxComponentParams {
    readonly plantType: PlanterBoxPlant | -1;
@@ -95,7 +95,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.planterB
 }
 
 const createGrowthParticleInEntity = (transformComponent: TransformComponent): void => {
-   const pos = getRandomPointInEntity(transformComponent);
+   const pos = getRandomPositionInEntity(transformComponent);
    createGrowthParticle(pos.x, pos.y);
 }
    
@@ -124,15 +124,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          createGrowthParticleInEntity(transformComponent);
       }
 
-      playSound("fertiliser.mp3", 0.6, 1, transformComponent.position);
+      playSoundOnEntity("fertiliser.mp3", 0.6, 1, entity);
    }
    planterBoxComponent.isFertilised = isFertilised;
    
    const hasPlant = plantType !== -1;
    if (hasPlant && planterBoxComponent.hasPlant !== hasPlant) {
       // Plant sound effect
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      playSound("plant.mp3", 0.4, 1, transformComponent.position);
+      playSoundOnEntity("plant.mp3", 0.4, 1, entity);
    }
    planterBoxComponent.hasPlant = hasPlant;
 

@@ -23,10 +23,11 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { InventoryName, ItemType } from "../../../../shared/src/items/items";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { InventoryComponentArray, getInventory } from "./InventoryComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { TileType } from "../../../../shared/src/tiles";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
 
 export interface TribeMemberComponentParams {
    readonly warpaintType: number | null;
@@ -161,20 +162,10 @@ const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
 
 
 
-export function getTribesmanRadius(tribesman: Entity): number {
-   const entityType = getEntityType(tribesman);
-   switch (entityType) {
-      case EntityType.player:
-      case EntityType.tribeWarrior: {
-         return 32;
-      }
-      case EntityType.tribeWorker: {
-         return 28;
-      }
-      default: {
-         throw new Error("Unknown radius for entity type " + EntityTypeString[entityType]);
-      }
-   }
+/** Gets the radius of a humanoid creature with just the one circular hitbox */
+export function getHumanoidRadius(tribesman: Entity): number {
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   return (transformComponent.hitboxes[0].box as CircularBox).radius;
 }
 
 const getSecondsSinceLastAttack = (entity: Entity): number => {
@@ -289,6 +280,9 @@ const getFistTextureSource = (entityType: EntityType, tribeType: TribeType): str
             case TribeType.barbarians: {
                return "entities/barbarians/fist.png";
             }
+            case TribeType.dwarves: {
+               return "entities/dwarves/fist.png";
+            }
             default: {
                const unreachable: never = tribeType;
                return unreachable;
@@ -335,6 +329,15 @@ const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): str
             return "entities/barbarians/player.png";
          } else {
             return "entities/barbarians/worker.png";
+         }
+      }
+      case TribeType.dwarves: {
+         if (entityType === EntityType.tribeWarrior) {
+            return "entities/dwarves/warrior.png";
+         } else if (entityType === EntityType.player) {
+            return "entities/dwarves/player.png";
+         } else {
+            return "entities/dwarves/worker.png";
          }
       }
    }
@@ -570,7 +573,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
 
                const radiusAdd = lerp(-3, -6, Math.abs(i - (numLeaves - 1) / 2) / ((numLeaves - 1) / 2));
 
-               const radius = getTribesmanRadius(entity);
+               const radius = getHumanoidRadius(entity);
                renderPart.offset.x = (radius + radiusAdd) * Math.sin(angle);
                renderPart.offset.y = (radius + radiusAdd) * Math.cos(angle);
 
@@ -587,7 +590,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribeMemberComponent, enti
             );
             renderPart.addTag("tribeMemberComponent:fromTitle");
 
-            const radius = getTribesmanRadius(entity);
+            const radius = getHumanoidRadius(entity);
             renderPart.offset.y = radius - 2;
 
             renderInfo.attachRenderPart(renderPart);
@@ -780,19 +783,19 @@ function onHit(entity: Entity, hitData: HitData): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSound(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, transformComponent.position);
+         playSoundOnEntity(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, entity);
          break;
       }
       case TribeType.plainspeople: {
-         playSound("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
          break;
       }
       case TribeType.barbarians: {
-         playSound("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
          break;
       }
       case TribeType.frostlings: {
-         playSound("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity);
          break;
       }
    }
@@ -805,7 +808,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       for (let i = 0; i < 3; i++) {
          const moveDirection = 2 * Math.PI * Math.random();
 
-         const radius = getTribesmanRadius(entity);
+         const radius = getHumanoidRadius(entity);
          const spawnPositionX = transformComponent.position.x + radius * Math.sin(moveDirection);
          const spawnPositionY = transformComponent.position.y + radius * Math.cos(moveDirection);
 
@@ -823,19 +826,19 @@ function onDie(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSound(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, transformComponent.position);
+         playSoundOnEntity(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, entity);
          break;
       }
       case TribeType.plainspeople: {
-         playSound("plainsperson-die-1.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("plainsperson-die-1.mp3", 0.4, 1, entity);
          break;
       }
       case TribeType.barbarians: {
-         playSound("barbarian-die-1.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("barbarian-die-1.mp3", 0.4, 1, entity);
          break;
       }
       case TribeType.frostlings: {
-         playSound("frostling-die.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("frostling-die.mp3", 0.4, 1, entity);
          break;
       }
    }

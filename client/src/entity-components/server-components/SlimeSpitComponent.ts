@@ -5,8 +5,7 @@ import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
-import { TransformComponentArray } from "./TransformComponent";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -63,8 +62,7 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
 }
 
 function onLoad(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("slime-spit.mp3", 0.5, 1, transformComponent.position);
+   playSoundOnEntity("slime-spit.mp3", 0.5, 1, entity);
 }
 
 function onTick(entity: Entity): void {

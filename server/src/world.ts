@@ -10,6 +10,7 @@ import { TerrainGenerationInfo } from "./world-generation/surface-terrain-genera
 import Chunk from "./Chunk";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
+import { assert } from "../../shared/src/utils";
 
 const enum Vars {
    START_TIME = 6
@@ -119,8 +120,10 @@ export function tickGameTime(): void {
    }
 }
 
-export function getEntityType(entity: Entity): EntityType | undefined {
-   return entityTypes[entity];
+export function getEntityType(entity: Entity): EntityType {
+   const entityType = entityTypes[entity];
+   assert(typeof entityType !== "undefined");
+   return entityType;
 }
 
 /** Cleanup: obscure, only used in 1 situation. Rework so we can remove this */

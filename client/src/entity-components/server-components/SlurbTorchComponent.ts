@@ -13,8 +13,8 @@ import { createSlurbParticle } from "../../particles";
 import { Settings } from "../../../../shared/src/settings";
 
 const enum Vars {
-   MIN_PARTICLE_CREATION_INTERVAL_SECONDS = 0.35,
-   MAX_PARTICLE_CREATION_INTERVAL_SECONDS = 0.85
+   MIN_PARTICLE_CREATION_INTERVAL_SECONDS = 0.45,
+   MAX_PARTICLE_CREATION_INTERVAL_SECONDS = 1.55
 }
 
 export interface SlurbTorchComponentParams {}

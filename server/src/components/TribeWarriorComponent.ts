@@ -11,10 +11,7 @@ export class TribeWarriorComponent {
    }
 }
 
-export const TribeWarriorComponentArray = new ComponentArray<TribeWarriorComponent>(ServerComponentType.tribeWarrior, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TribeWarriorComponentArray = new ComponentArray<TribeWarriorComponent>(ServerComponentType.tribeWarrior, true, getDataLength, addDataToPacket);
 
 function getDataLength(entity: Entity): number {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);

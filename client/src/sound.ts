@@ -2,9 +2,10 @@ import { Settings } from "battletribes-shared/settings";
 import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
-import { getCurrentLayer } from "./world";
+import { getCurrentLayer, getEntityLayer } from "./world";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
+import Layer from "./Layer";
 
 // @Memory
 export const ROCK_HIT_SOUNDS: ReadonlyArray<string> = ["rock-hit-1.mp3", "rock-hit-2.mp3", "rock-hit-3.mp3", "rock-hit-4.mp3", "rock-hit-5.mp3", "rock-hit-6.mp3"];
@@ -242,7 +243,9 @@ export async function loadSoundEffects(): Promise<void> {
       "stone-destroy-2.mp3",
       "wall-collapse-1.mp3",
       "wall-collapse-2.mp3",
-      "wooden-bracings-place.mp3"
+      "wooden-bracings-place.mp3",
+      "glurb-hit.mp3",
+      "glurb-death.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
@@ -278,7 +281,12 @@ export interface SoundInfo {
    readonly sound: Sound;
 }
 // @Speed: Garbage collection, unbox the source from a point
-export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point): SoundInfo {
+export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point, layer: Layer | null): SoundInfo | null {
+   // Only play sounds from the current layer
+   if (layer !== null && layer !== getCurrentLayer()) {
+      return null;
+   }
+   
    const audioBuffer = audioBuffers[filePath];
    assert(typeof audioBuffer !== "undefined");
 
@@ -321,11 +329,19 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
    };
 }
 
-export function attachSoundToEntity(sound: Sound, entity: Entity): void {
-   entityAttachedSounds.push({
-      sound: sound,
-      entity: entity
-   });
+// @Cleanup: Make this return the sound info. and make it so that the sound info is guaranteed. so if it starts in wrong layer it still plays if it goes to correct layer
+export function playSoundOnEntity(filePath: string, volume: number, pitchMultiplier: number, entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   // @Incomplete: use render position
+   const soundInfo = playSound(filePath, volume, pitchMultiplier, transformComponent.position.copy(), getEntityLayer(entity));
+   
+   if (soundInfo !== null) {
+      // Attach the sound to the entity
+      entityAttachedSounds.push({
+         sound: soundInfo.sound,
+         entity: entity
+      });
+   }
 }
 
 export function updateSoundEffectVolumes(): void {
@@ -344,8 +360,9 @@ export function updateSoundEffectVolumes(): void {
    }
 }
 
-export function playBuildingHitSound(source: Point): void {
-   playSound("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, source);
+// @Hack: There should really be unique sounds for each entity type, not one generic sound.
+export function playBuildingHitSound(entity: Entity): void {
+   playSoundOnEntity("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, entity);
 }
 
 export function playRiverSounds(): void {
@@ -366,7 +383,7 @@ export function playRiverSounds(): void {
          if (tile.type === TileType.water && Math.random() < 0.1 / Settings.TPS) {
             const x = (tileX + Math.random()) * Settings.TILE_SIZE;
             const y = (tileY + Math.random()) * Settings.TILE_SIZE;
-            playSound("water-flowing-" + randInt(1, 4) + ".mp3", 0.2, 1, new Point(x, y));
+            playSound("water-flowing-" + randInt(1, 4) + ".mp3", 0.2, 1, new Point(x, y), layer);
          }
       }
    }

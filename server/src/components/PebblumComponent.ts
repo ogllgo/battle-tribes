@@ -19,14 +19,11 @@ export class PebblumComponent {
    }
 }
 
-export const PebblumComponentArray = new ComponentArray<PebblumComponent>(ServerComponentType.pebblum, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const PebblumComponentArray = new ComponentArray<PebblumComponent>(ServerComponentType.pebblum, true, getDataLength, addDataToPacket);
+PebblumComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(pebblum: Entity): void {
    const pebblumComponent = PebblumComponentArray.getComponent(pebblum);

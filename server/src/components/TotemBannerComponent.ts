@@ -16,10 +16,7 @@ export class TotemBannerComponent {
    readonly availableBannerPositions: Array<TotemBannerPosition> = Array.from(new Set(TRIBE_TOTEM_POSITIONS));
 }
 
-export const TotemBannerComponentArray = new ComponentArray<TotemBannerComponent>(ServerComponentType.totemBanner, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TotemBannerComponentArray = new ComponentArray<TotemBannerComponent>(ServerComponentType.totemBanner, true, getDataLength, addDataToPacket);
 
 export function addBannerToTotem(bannerComponent: TotemBannerComponent, hutNum: number): void {
    if (bannerComponent.availableBannerPositions.length === 0) {

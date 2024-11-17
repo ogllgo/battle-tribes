@@ -1,7 +1,7 @@
 import { ServerComponentType  } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { TitleGenerationInfo, TribesmanTitle, TRIBESMAN_TITLE_RECORD } from "battletribes-shared/titles";
-import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
+import { TribeType } from "battletribes-shared/tribes";
 import { lerp, randInt } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
@@ -43,18 +43,15 @@ export class TribeMemberComponent {
    public lastPlantCollisionTicks = getGameTicks();
 }
 
-export const TribeMemberComponentArray = new ComponentArray<TribeMemberComponent>(ServerComponentType.tribeMember, true, {
-   onJoin: onJoin,
-   onRemove: onRemove,
-   onInitialise: onInitialise,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onEntityCollision: onEntityCollision,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TribeMemberComponentArray = new ComponentArray<TribeMemberComponent>(ServerComponentType.tribeMember, true, getDataLength, addDataToPacket);
+TribeMemberComponentArray.onJoin = onJoin;
+TribeMemberComponentArray.onRemove = onRemove;
+TribeMemberComponentArray.onInitialise = onInitialise;
+TribeMemberComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+TribeMemberComponentArray.onEntityCollision = onEntityCollision;
 
 const getHotbarSize = (entityType: TribesmanEntityType): number => {
    switch (entityType) {

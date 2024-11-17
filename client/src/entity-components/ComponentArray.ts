@@ -9,6 +9,7 @@ import { EntityRenderInfo } from "../EntityRenderInfo";
 import Layer from "../Layer";
 import { ServerComponentParams } from "./components";
 import { ClientComponentType } from "./client-component-types";
+import { assert } from "../../../shared/src/utils";
 
 export const enum ComponentArrayType {
    server,
@@ -121,10 +122,14 @@ export abstract class ComponentArray<
 
       componentArrays.push(this as unknown as ComponentArray);
       if (arrayType === ComponentArrayType.server) {
+         assert(typeof serverComponentArrayRecord[componentType as ServerComponentType] === "undefined");
+         
          // @Cleanup: casts
          serverComponentArrays.push(this as unknown as ServerComponentArray);
          serverComponentArrayRecord[componentType as ServerComponentType] = this as unknown as ServerComponentArray;
       } else {
+         assert(typeof clientComponentArrayRecord[componentType as ClientComponentType] === "undefined");
+
          // @Cleanup: casts
          clientComponentArrayRecord[componentType as ClientComponentType] = this as unknown as ClientComponentArray;
       }

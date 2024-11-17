@@ -31,12 +31,9 @@ export class TreeComponent {
    }
 }
 
-export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerComponentType.tree, true, {
-   onJoin: onJoin,
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerComponentType.tree, true, getDataLength, addDataToPacket);
+TreeComponentArray.onJoin = onJoin;
+TreeComponentArray.preRemove = preRemove;
 
 function onJoin(entity: Entity): void {
    const treeComponent = TreeComponentArray.getComponent(entity);

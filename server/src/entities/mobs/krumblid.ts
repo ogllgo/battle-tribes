@@ -17,7 +17,6 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { FollowAIComponent } from "../../components/FollowAIComponent";
 import { KrumblidComponent } from "../../components/KrumblidComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 export const enum KrumblidVars {
    VISION_RANGE = 224,
@@ -34,9 +33,6 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.followAI
    | ServerComponentType.krumblid;
 
-const MAX_HEALTH = 15;
-const KRUMBLID_SIZE = 48;
-
 const FOLLOW_CHANCE_PER_SECOND = 0.3;
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
@@ -44,13 +40,13 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, KRUMBLID_SIZE / 2), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const transformComponent = new TransformComponent();
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 24), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    
-   const healthComponent = new HealthComponent(MAX_HEALTH);
+   const healthComponent = new HealthComponent(15);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 

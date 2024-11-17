@@ -7,6 +7,7 @@ import { getSubtileX, getSubtileY } from "./Layer";
 import Particle from "./Particle";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "./rendering/webgl/particle-rendering";
 import { playSound } from "./sound";
+import { undergroundLayer } from "./world";
 
 export interface MinedSubtile {
    readonly subtileIndex: number;
@@ -82,7 +83,7 @@ export function tickCollapse(collapsingSubtileIndex: number, ageTicks: number): 
       const x = subtileX * Settings.SUBTILE_SIZE;
       const y = subtileY * Settings.SUBTILE_SIZE;
 
-      playSound("wall-collapse-" + randInt(1, 2) + ".mp3", 0.4, 1, new Point(x, y));
+      playSound("wall-collapse-" + randInt(1, 2) + ".mp3", 0.4, 1, new Point(x, y), undergroundLayer);
    }
 }
 

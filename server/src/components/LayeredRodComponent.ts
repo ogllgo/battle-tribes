@@ -22,10 +22,7 @@ export class LayeredRodComponent {
    }
 }
 
-export const LayeredRodComponentArray = new ComponentArray<LayeredRodComponent>(ServerComponentType.layeredRod, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const LayeredRodComponentArray = new ComponentArray<LayeredRodComponent>(ServerComponentType.layeredRod, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return 7 * Float32Array.BYTES_PER_ELEMENT;

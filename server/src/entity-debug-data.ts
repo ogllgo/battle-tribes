@@ -7,10 +7,10 @@ import { TribesmanGoalType } from "./entities/tribes/tribesman-ai/tribesman-goal
 import { StructureComponentArray } from "./components/StructureComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
-import { getTribesmanVisionRange } from "./entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { ItemTypeString, ITEM_INFO_RECORD, PlaceableItemInfo } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
+import { AIHelperComponentArray } from "./components/AIHelperComponent";
 
 export function createEntityDebugData(entity: Entity): EntityDebugData {
    const lines = new Array<LineDebugData>();
@@ -19,9 +19,20 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
    const debugEntries = new Array<string>();
    let pathData: PathData | undefined;
 
+   if (AIHelperComponentArray.hasComponent(entity)) {
+      const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
+
+      // Vision range
+      circles.push({
+         radius: aiHelperComponent.visionRange,
+         thickness: 8,
+         colour: [0.3, 0, 1]
+      });
+   }
+   
    if (TribesmanAIComponentArray.hasComponent(entity)) {
       const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
-
+      
       debugEntries.push("Current AI type: " + TribesmanAIType[tribesmanComponent.currentAIType]);
       
       if (tribesmanComponent.path.length > 0 && tribesmanComponent.isPathfinding) {
@@ -30,13 +41,6 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
             rawPathNodes: tribesmanComponent.rawPath
          };
       }
-
-      // Vision range
-      circles.push({
-         radius: getTribesmanVisionRange(entity),
-         thickness: 8,
-         colour: [0.3, 0, 1]
-      });
       
       // Communication range
       circles.push({
@@ -70,14 +74,14 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
                break;
             }
             case TribesmanGoalType.upgradeBuilding: {
-               goalString = "Upgrade " + EntityTypeString[getEntityType(goal.plan.baseBuildingID)!];
+               goalString = "Upgrade " + EntityTypeString[getEntityType(goal.plan.baseBuildingID)];
                break;
             }
          }
 
          goalStrings.push(goalString);
       }
-      debugEntries.push(goalStrings.join(" -> "));
+      debugEntries.push("Goals (" + tribesmanComponent.goals.length + "): " + goalStrings.join(" -> "));
    }
 
    if (TribeComponentArray.hasComponent(entity)) {

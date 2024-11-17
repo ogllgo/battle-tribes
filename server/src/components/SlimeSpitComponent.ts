@@ -27,16 +27,13 @@ export class SlimeSpitComponent {
    }
 }
 
-export const SlimeSpitComponentArray = new ComponentArray<SlimeSpitComponent>(ServerComponentType.slimeSpit, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onHitboxCollision: onHitboxCollision,
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SlimeSpitComponentArray = new ComponentArray<SlimeSpitComponent>(ServerComponentType.slimeSpit, true, getDataLength, addDataToPacket);
+SlimeSpitComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+SlimeSpitComponentArray.onHitboxCollision = onHitboxCollision;
+SlimeSpitComponentArray.preRemove = preRemove;
 
 function onTick(spit: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(spit);

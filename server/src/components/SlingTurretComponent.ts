@@ -3,10 +3,7 @@ import { ComponentArray } from "./ComponentArray";
 
 export class SlingTurretComponent {}
 
-export const SlingTurretComponentArray = new ComponentArray<SlingTurretComponent>(ServerComponentType.slingTurret, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SlingTurretComponentArray = new ComponentArray<SlingTurretComponent>(ServerComponentType.slingTurret, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;

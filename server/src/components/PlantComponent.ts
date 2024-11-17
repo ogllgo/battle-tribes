@@ -37,16 +37,13 @@ export class PlantComponent {
    }
 }
 
-export const PlantComponentArray = new ComponentArray<PlantComponent>(ServerComponentType.plant, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   preRemove: preRemove
-});
+export const PlantComponentArray = new ComponentArray<PlantComponent>(ServerComponentType.plant, true, getDataLength, addDataToPacket);
+PlantComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+PlantComponentArray.onRemove = onRemove;
+PlantComponentArray.preRemove = preRemove;
 
 function preRemove(plant: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(plant);

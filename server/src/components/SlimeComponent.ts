@@ -63,15 +63,12 @@ const SLIME_DROP_AMOUNTS: ReadonlyArray<[minDropAmount: number, maxDropAmount: n
    [6, 9] // large slime
 ];
 
-export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComponentType.slime, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   preRemove: preRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComponentType.slime, true,  getDataLength, addDataToPacket);
+SlimeComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+SlimeComponentArray.preRemove = preRemove;
 
 const updateAngerTarget = (slime: Entity): Entity | null => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);

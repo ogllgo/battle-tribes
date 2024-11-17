@@ -150,15 +150,12 @@ export class InventoryUseComponent {
    }
 }
 
-export const InventoryUseComponentArray = new ComponentArray<InventoryUseComponent>(ServerComponentType.inventoryUse, true, {
-   onJoin: onJoin,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const InventoryUseComponentArray = new ComponentArray<InventoryUseComponent>(ServerComponentType.inventoryUse, true, getDataLength, addDataToPacket);
+InventoryUseComponentArray.onJoin = onJoin;
+InventoryUseComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onJoin(entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);

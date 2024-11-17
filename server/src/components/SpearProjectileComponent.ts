@@ -14,14 +14,11 @@ const enum Vars {
 
 export class SpearProjectileComponent {}
 
-export const SpearProjectileComponentArray = new ComponentArray<SpearProjectileComponent>(ServerComponentType.spearProjectile, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const SpearProjectileComponentArray = new ComponentArray<SpearProjectileComponent>(ServerComponentType.spearProjectile, true, getDataLength, addDataToPacket);
+SpearProjectileComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(spear: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(spear);

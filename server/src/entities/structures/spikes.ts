@@ -15,7 +15,6 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -28,7 +27,7 @@ type ComponentTypes = ServerComponentType.transform
 const HEALTHS = [15, 45];
 
 export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFloorSpikesHitboxes(), null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
@@ -58,7 +57,7 @@ export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial
 }
 
 export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWallSpikesHitboxes(), null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);

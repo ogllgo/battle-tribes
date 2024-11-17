@@ -11,10 +11,7 @@ export class EscapeAIComponent {
    public readonly attackEntityTicksSinceLastAttack = new Array<number>();
 }
 
-export const EscapeAIComponentArray = new ComponentArray<EscapeAIComponent>(ServerComponentType.escapeAI, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const EscapeAIComponentArray = new ComponentArray<EscapeAIComponent>(ServerComponentType.escapeAI, true, getDataLength, addDataToPacket);
 
 export function updateEscapeAIComponent(escapeAIComponent: EscapeAIComponent, attackSubsideTicks: number): void {
    for (let i = 0; i < escapeAIComponent.attackingEntities.length; i++) {

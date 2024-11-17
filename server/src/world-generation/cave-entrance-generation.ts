@@ -200,7 +200,9 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
 export function spawnGuardians(): void {
    for (const tiles of guardianSpawnZones) {
       // Spawn 1-2 guardians in the cave
-      for (let i = 0; i < randInt(1, 2); i++) {
+      // @Temporary
+      // for (let i = 0; i < randInt(1, 2); i++) {
+      for (let i = 0; i < 1; i++) {
          for (let attempts = 0; attempts < 50; attempts++) {
             const tileIndex = randItem(tiles);
    

@@ -20,15 +20,12 @@ export class DoorComponent {
    public openProgress = 0;
 }
 
-export const DoorComponentArray = new ComponentArray<DoorComponent>(ServerComponentType.door, true, {
-   onInitialise: onInitialise,
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const DoorComponentArray = new ComponentArray<DoorComponent>(ServerComponentType.door, true, getDataLength, addDataToPacket);
+DoorComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+DoorComponentArray.onInitialise = onInitialise;
 
 const doorHalfDiagonalLength = Math.sqrt(16 * 16 + 64 * 64) / 2;
 const angleToCenter = angle(16, 64);

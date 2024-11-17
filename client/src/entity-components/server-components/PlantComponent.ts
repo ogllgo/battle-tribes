@@ -8,7 +8,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createDirtParticle, createLeafParticle, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW, LeafParticleSize } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";
@@ -213,39 +213,37 @@ function onHit(entity: Entity, hitData: HitData): void {
                createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
             }
             
-            playSound(randItem(TREE_HIT_SOUNDS), 0.4, 1, transformComponent.position);
+            playSoundOnEntity(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity);
          } else {
             // @Temporary
-            playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+            playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
          }
          break;
       }
       case PlanterBoxPlant.berryBush: {
-         playSound("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
          break;
       }
       case PlanterBoxPlant.iceSpikes: {
-         playSound("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
          break;
       }
    }
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const plantComponent = PlantComponentArray.getComponent(entity);
-
    switch (plantComponent.plant) {
       case PlanterBoxPlant.tree: {
-         playSound(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, transformComponent.position);
+         playSoundOnEntity(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity);
          break;
       }
       case PlanterBoxPlant.berryBush: {
-         playSound("berry-bush-destroy-1.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("berry-bush-destroy-1.mp3", 0.4, 1, entity);
          break;
       }
       case PlanterBoxPlant.iceSpikes: {
-         playSound("ice-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
+         playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity);
          break;
       }
    }

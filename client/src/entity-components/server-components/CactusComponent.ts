@@ -9,7 +9,7 @@ import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { randInt } from "../../../../shared/src/utils";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { EntityConfig } from "../ComponentArray";
 
 export interface CactusComponentParams {
@@ -253,14 +253,14 @@ function onHit(entity: Entity): void {
       createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
    }
 
-   playSound("cactus-hit.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("cactus-hit.mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
-   playSound("cactus-destroy.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("cactus-destroy.mp3", 0.4, 1, entity);
    
    for (const flower of cactusComponent.flowerData) {
       const offsetDirection = flower.column * Math.PI / 4;

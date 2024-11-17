@@ -1,5 +1,4 @@
 import { Hitbox } from "../../../../shared/src/boxes/boxes";
-import { CollisionGroup } from "../../../../shared/src/collision-groups";
 import { BuildingMaterial, ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
@@ -22,10 +21,11 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.buildingMaterial
    | ServerComponentType.bracings;
 
+// @Memory
 const HEALTHS = [5, 20];
 
 export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tribe, material: BuildingMaterial): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(hitboxes, null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

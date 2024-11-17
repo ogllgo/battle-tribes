@@ -7,8 +7,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
-import { playBuildingHitSound, playSound } from "../../sound";
+import { playBuildingHitSound, playSoundOnEntity } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TribeComponentArray } from "./TribeComponent";
 import { EntityConfig } from "../ComponentArray";
@@ -78,13 +77,17 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
          totemTextureSourceID = "frostling-banner.png";
          break;
       }
+      case TribeType.dwarves: {
+         totemTextureSourceID = "dwarf-banner.png";
+         break;
+      }
    }
 
    const renderPart = new TexturedRenderPart(
       null,
       2,
       banner.direction,
-      getTextureArrayIndex(`entities/tribe-ttem/${totemTextureSourceID}`)
+      getTextureArrayIndex(`entities/tribe-totem/${totemTextureSourceID}`)
    );
    const bannerOffsetAmount = BANNER_LAYER_DISTANCES[banner.layer];
    renderPart.offset.x = bannerOffsetAmount * Math.sin(banner.direction);
@@ -181,11 +184,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playBuildingHitSound(transformComponent.position);
+   playBuildingHitSound(entity);
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("building-destroy-1.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("building-destroy-1.mp3", 0.4, 1, entity);
 }

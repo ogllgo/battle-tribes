@@ -3,10 +3,10 @@ import { DeathInfo, Entity, PlayerCauseOfDeath } from "battletribes-shared/entit
 import { Settings } from "battletribes-shared/settings";
 import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
-import { playSound, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
+import { playSound, playSoundOnEntity, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityAgeTicks } from "../../world";
+import { getEntityAgeTicks, getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -41,7 +41,9 @@ export const TombstoneComponentArray = new ServerComponentArray<TombstoneCompone
    createComponent: createComponent,
    onTick: onTick,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
@@ -117,7 +119,7 @@ function onTick(entity: Entity): void {
       }
 
       if (getEntityAgeTicks(entity) % 6 === 0) {
-         playSound("zombie-dig-" + randInt(1, 5) + ".mp3", 0.15, 1, new Point(tombstoneComponent.zombieSpawnX, tombstoneComponent.zombieSpawnY));
+         playSound("zombie-dig-" + randInt(1, 5) + ".mp3", 0.15, 1, new Point(tombstoneComponent.zombieSpawnX, tombstoneComponent.zombieSpawnY), getEntityLayer(entity));
       }
    }
 }
@@ -168,7 +170,7 @@ function onHit(entity: Entity): void {
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSound(randItem(ROCK_HIT_SOUNDS), 0.3, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -188,5 +190,5 @@ function onDie(entity: Entity): void {
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSound(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, transformComponent.position);
+   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity);
 }

@@ -14,7 +14,6 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 import { BattleaxeProjectileComponent } from "../../components/BattleaxeProjectileComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -23,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.battleaxeProjectile;
 
 export function createBattleaxeProjectileConfig(tribe: Tribe, tribeMember: Entity, itemID: number | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 32), 0.6, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

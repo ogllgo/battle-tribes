@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { Point } from "battletribes-shared/utils";
-import { HitboxCollisionType, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType, Hitbox, updateBox, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
@@ -217,11 +217,16 @@ export function resolvePlayerCollisions(): void {
    resolveCollisionPairs(collisionPairs, true);
 }
 
-export function resolveWallCollisions(entity: Entity): void {
+export function resolveWallCollisions(entity: Entity): boolean {
+   let hasMoved = false;
    const layer = getEntityLayer(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
+      if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
+         continue;
+      }
+      
       const box = hitbox.box;
       
       const boundsMinX = box.calculateBoundsMinX();
@@ -252,8 +257,10 @@ export function resolveWallCollisions(entity: Entity): void {
             if (box.isColliding(tileBox)) {
                const pushInfo = getCollisionPushInfo(box, tileBox);
                resolveHardCollision(entity, pushInfo);
+               hasMoved = true;
             }
          }
       }
    }
+   return hasMoved;
 }

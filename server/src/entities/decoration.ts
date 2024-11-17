@@ -7,13 +7,12 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { TransformComponent } from "../components/TransformComponent";
 import { DecorationComponent } from "../components/DecorationComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.decoration;
 
 export function createDecorationConfig(decorationType: DecorationType): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.decoration);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 50, 100, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

@@ -8,7 +8,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import Particle from "../../Particle";
-import { playSound } from "../../sound";
+import { playSound, playSoundOnEntity } from "../../sound";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export interface IceSpikesComponentParams {}
@@ -99,7 +99,7 @@ function onHit(entity: Entity): void {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSound("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
@@ -109,5 +109,5 @@ function onDie(entity: Entity): void {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSound("ice-spikes-destroy.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity);
 }

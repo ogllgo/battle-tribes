@@ -26,14 +26,11 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { generateReeds } from "../world-generation/reed-generation";
 import generateSurfaceTerrain from "../world-generation/surface-terrain-generation";
-import { generateLilypads } from "../world-generation/lilypad-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
 import { createLayers, destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, layers, pushJoinBuffer, surfaceLayer, tickGameTime, tickEntities, updateTribes } from "../world";
 import { generateUndergroundTerrain } from "../world-generation/underground-terrain-generation";
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
-import { createGuardianConfig } from "../entities/mobs/guardian";
-import { getTileIndexIncludingEdges } from "../Layer";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { generateSpikyBastards } from "../world-generation/spiky-bastard-generation";
@@ -126,26 +123,46 @@ class GameServer {
          SRandom.seed(randInt(0, 9999999999));
       }
 
+      let a = performance.now();
+      console.log("start",a)
+
       // Setup
       sortComponentArrays();
       console.log("Generating terrain...")
       const surfaceTerrainGenerationInfo = generateSurfaceTerrain();
       const undergroundTerrainGenerationInfo = generateUndergroundTerrain(surfaceTerrainGenerationInfo);
       createLayers(surfaceTerrainGenerationInfo, undergroundTerrainGenerationInfo);
+      console.log("terrain",performance.now() - a)
+      a = performance.now();
 
       noteSpawnableTiles();
       countTileTypesForResourceDistributions();
       updateResourceDistributions();
+      console.log("resources",performance.now() - a)
+      a = performance.now();
 
       console.log("Spawning entities...");
       spawnInitialEntities();
+      console.log("initial entities",performance.now() - a)
+      a = performance.now();
       forceMaxGrowAllIceSpikes();
+      console.log("ice spikes",performance.now() - a)
+      a = performance.now();
       generateGrassStrands();
+      console.log("grass",performance.now() - a)
+      a = performance.now();
       generateDecorations();
+      console.log("decorations",performance.now() - a)
+      a = performance.now();
       generateReeds(surfaceTerrainGenerationInfo.riverMainTiles);
-      generateLilypads();
+      console.log("reeds",performance.now() - a)
+      a = performance.now();
       generateSpikyBastards();
+      console.log("spiky bastards",performance.now() - a)
+      a = performance.now();
       spawnGuardians();
+      console.log("guardians",performance.now() - a)
+      a = performance.now();
 
       this.server = new Server({
          port: Settings.SERVER_PORT
@@ -182,28 +199,10 @@ class GameServer {
                   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
                   const player = createEntity(config, layer, 0);
       
-                  playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, player, username);
+                  // @Temporary @Incomplete
+                  const isDev = true;
+                  playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, player, username, isDev);
                   addPlayerClient(playerClient, player, surfaceLayer, config);
-
-                  // setTimeout(() => {
-                  //    const range = 600;
-                  //    const minTileX = Math.max(Math.floor((spawnPosition.x - range) / Settings.TILE_SIZE), 0);
-                  //    const maxTileX = Math.min(Math.floor((spawnPosition.x + range) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
-                  //    const minTileY = Math.max(Math.floor((spawnPosition.y - range) / Settings.TILE_SIZE), 0);
-                  //    const maxTileY = Math.min(Math.floor((spawnPosition.y + range) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
-                  //    const tiles = new Array<TileIndex>();
-                  //    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
-                  //       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
-                  //          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-                  //          tiles.push(tileIndex);
-                  //       }
-                  //    }
-                     
-                  //    const config = createGuardianConfig(tiles);
-                  //    config.components[ServerComponentType.transform].position.x = spawnPosition.x + 150;
-                  //    config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-                  //    createEntityFromConfig(config, surfaceLayer, 0);
-                  // }, 500);
 
                   break;
                }
@@ -275,6 +274,12 @@ class GameServer {
                }
                case PacketType.craftItem: {
                   processPlayerCraftingPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devSetDebugEntity: {
+                  const entity: Entity = reader.readNumber();
+                  // @Cleanup: shouldn't be in the server!
+                  SERVER.setTrackedGameObject(entity);
                   break;
                }
                default: {

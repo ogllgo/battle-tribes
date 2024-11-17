@@ -20,15 +20,12 @@ const enum Vars {
 
 export class KrumblidComponent {}
 
-export const KrumblidComponentArray = new ComponentArray<KrumblidComponent>(ServerComponentType.krumblid, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   preRemove: preRemove
-});
+export const KrumblidComponentArray = new ComponentArray<KrumblidComponent>(ServerComponentType.krumblid, true, getDataLength, addDataToPacket);
+KrumblidComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
+KrumblidComponentArray.preRemove = preRemove;
 
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);

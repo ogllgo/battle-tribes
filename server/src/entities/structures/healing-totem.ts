@@ -11,7 +11,6 @@ import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { TribeComponent } from "../../components/TribeComponent";
 import { HealingTotemComponent } from "../../components/HealingTotemComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.healingTotem;
 
 export function createHealingTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createHealingTotemHitboxes(), null);
    
    const healthComponent = new HealthComponent(50);

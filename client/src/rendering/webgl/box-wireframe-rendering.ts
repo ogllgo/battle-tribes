@@ -1,11 +1,13 @@
 import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "battletribes-shared/entities";
-import { getEntityRenderInfo } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import Layer from "../../Layer";
 
 const BORDER_THICKNESS = 3;
 const HALF_BORDER_THICKNESS = BORDER_THICKNESS / 2;
@@ -211,11 +213,24 @@ const renderVertices = (vertices: Array<number>): void => {
    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
 }
 
-export function renderHitboxes(): void {
+export function renderHitboxes(layer: Layer): void {
    const vertices = new Array<number>();
    
    for (let i = 0; i < TransformComponentArray.entities.length; i++) {
       const entity = TransformComponentArray.entities[i];
+
+      // Don't show hitboxes from ohter layers
+      const entityLayer = getEntityLayer(entity);
+      if (entityLayer !== layer) {
+         continue;
+      }
+
+      const entityType = getEntityType(entity);
+      const collisionGroup = getEntityCollisionGroup(entityType);
+      if (collisionGroup === CollisionGroup.decoration) {
+         continue;
+      }
+      
       const transformComponent = TransformComponentArray.components[i];
       
       const adjustment = calculateBoxAdjustment(entity);

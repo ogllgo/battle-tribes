@@ -3,14 +3,17 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { Point } from "../../../../shared/src/utils";
+import { Point, randFloat } from "../../../../shared/src/utils";
 import { EntityConfig } from "../ComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { attachLightToRenderPart, createLight } from "../../lights";
 import { Entity } from "../../../../shared/src/entities";
-import { TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer } from "../../world";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
+import { HitData } from "../../../../shared/src/client-server-types";
+import { createSlurbParticle } from "../../particles";
+import { playSound, playSoundOnEntity } from "../../sound";
 
 export interface GlurbComponentParams {}
 
@@ -24,7 +27,9 @@ export const GlurbComponentArray = new ServerComponentArray<GlurbComponent, Glur
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
-   onTick: onTick
+   onTick: onTick,
+   onHit: onHit,
+   onDie: onDie
 });
 
 export function createGlurbComponentParams(): GlurbComponentParams {
@@ -108,4 +113,26 @@ function onTick(glurb: Entity): void {
    for (const hitbox of transformComponent.hitboxes) {
       coatSlimeTrails(layer, hitbox.box);
    }
+}
+
+function onHit(entity: Entity, hitData: HitData): void {
+   for (let i = 0; i < 10; i++) {
+      const spawnPositionX = hitData.hitPosition[0];
+      const spawnPositionY = hitData.hitPosition[1];
+      createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+   }
+
+   playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), Point.unpackage(hitData.hitPosition), getEntityLayer(entity));
+}
+
+function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const hitbox of transformComponent.hitboxes) {
+      for (let i = 0; i < 3; i++) {
+         const pos = getRandomPositionInBox(hitbox.box);
+         createSlurbParticle(pos.x, pos.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      }
+   }
+
+   playSoundOnEntity("glurb-death.mp3", 0.2, 1, entity);
 }

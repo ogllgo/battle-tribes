@@ -13,7 +13,6 @@ import { StatusEffectComponent } from "../../../components/StatusEffectComponent
 import { StructureComponent } from "../../../components/StructureComponent";
 import { TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { FurnaceComponent } from "../../../components/FurnaceComponent";
 
 type ComponentTypes = ServerComponentType.transform
@@ -26,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.furnace;
 
 export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFurnaceHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);

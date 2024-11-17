@@ -2,10 +2,9 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
 
 export interface SpearProjectileComponentParams {}
 
@@ -45,8 +44,7 @@ function createComponent(): SpearProjectileComponent {
 }
 
 function onSpawn(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("spear-throw.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("spear-throw.mp3", 0.4, 1, entity);
 }
 
 function padData(): void {}
@@ -54,6 +52,5 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   playSound("spear-hit.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("spear-hit.mp3", 0.4, 1, entity);
 }

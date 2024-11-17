@@ -17,14 +17,11 @@ export class RockSpikeComponent {
    }
 }
 
-export const RockSpikeComponentArray = new ComponentArray<RockSpikeComponent>(ServerComponentType.rockSpike, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const RockSpikeComponentArray = new ComponentArray<RockSpikeComponent>(ServerComponentType.rockSpike, true, getDataLength, addDataToPacket);
+RockSpikeComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
 function onTick(rockSpike: Entity): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(rockSpike);

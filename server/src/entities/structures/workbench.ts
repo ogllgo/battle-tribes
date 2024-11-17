@@ -12,7 +12,6 @@ import Tribe from "../../Tribe";
 import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -22,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.craftingStation;
 
 export function createWorkbenchConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(CollisionGroup.default);
+   const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWorkbenchHitboxes(), null);
    
    const healthComponent = new HealthComponent(15);

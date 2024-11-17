@@ -67,24 +67,24 @@ const createFootstepSound = (entity: Entity): void => {
    const tile = getEntityTile(layer, transformComponent);
    switch (tile.type) {
       case TileType.grass: {
-         playSound("grass-walk-" + randInt(1, 4) + ".mp3", 0.04, 1, transformComponent.position);
+         playSound("grass-walk-" + randInt(1, 4) + ".mp3", 0.04, 1, transformComponent.position, layer);
          break;
       }
       case TileType.sand: {
-         playSound("sand-walk-" + randInt(1, 4) + ".mp3", 0.02, 1, transformComponent.position);
+         playSound("sand-walk-" + randInt(1, 4) + ".mp3", 0.02, 1, transformComponent.position, layer);
          break;
       }
       case TileType.snow: {
-         playSound("snow-walk-" + randInt(1, 3) + ".mp3", 0.1, 1, transformComponent.position);
+         playSound("snow-walk-" + randInt(1, 3) + ".mp3", 0.1, 1, transformComponent.position, layer);
          break;
       }
       case TileType.rock: {
-         playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position);
+         playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position, layer);
          break;
       }
       case TileType.water: {
          if (!entityIsInRiver(transformComponent, entity)) {
-            playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position);
+            playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position, layer);
          }
          break;
       }

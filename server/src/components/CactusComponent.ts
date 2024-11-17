@@ -21,12 +21,9 @@ export class CactusComponent {
    }
 }
 
-export const CactusComponentArray = new ComponentArray<CactusComponent>(ServerComponentType.cactus, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket,
-   onHitboxCollision: onHitboxCollision,
-   preRemove: preRemove
-});
+export const CactusComponentArray = new ComponentArray<CactusComponent>(ServerComponentType.cactus, true, getDataLength, addDataToPacket);
+CactusComponentArray.onHitboxCollision = onHitboxCollision;
+CactusComponentArray.preRemove = preRemove;
 
 function getDataLength(entity: Entity): number {
    const cactusComponent = CactusComponentArray.getComponent(entity);

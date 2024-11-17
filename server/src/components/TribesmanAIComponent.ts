@@ -154,16 +154,13 @@ export class TribesmanAIComponent {
    public lastItemThrowTicks = 0;
 }
 
-export const TribesmanAIComponentArray = new ComponentArray<TribesmanAIComponent>(ServerComponentType.tribesmanAI, true, {
-   onJoin: onJoin,
-   onTick: {
-      tickInterval: 1,
-      func: tickTribesman
-   },
-   onRemove: onRemove,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const TribesmanAIComponentArray = new ComponentArray<TribesmanAIComponent>(ServerComponentType.tribesmanAI, true, getDataLength, addDataToPacket);
+TribesmanAIComponentArray.onJoin = onJoin;
+TribesmanAIComponentArray.onTick = {
+   tickInterval: 1,
+   func: tickTribesman
+};
+TribesmanAIComponentArray.onRemove = onRemove;
 
 function onJoin(entity: Entity): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);

@@ -1,11 +1,10 @@
 import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/collision-groups";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision";
 import { TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
-import { getEntityType } from "./world";
 
 type EntityCollisionPair = [pushingEntity: Entity, pushedEntity: Entity];
 export type HitboxCollisionPair = [pushingHitboxIdx: number, pushedHitboxIdx: number];
@@ -87,6 +86,21 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
 }
 
 export function resolveEntityCollisions(layer: Layer): void {
+   // @Speed: For each collision group there are plenty of 'inactive chunks', where there are 0 entities of that collision
+   // group. Skipping inactive chunks could provide a bit of a speedup.
+   // Total of 2m chunk pair checks each second for 8 true val's - not ideal!
+   // Main goal: Completely skip pair checks where both chunks are inactive. Ideally we would also be able to completely skip pair checks where only 1 chunk is inactive.
+
+   /*
+                                 v  only care about this! like 95% of pairs are useless
+                    none   one   both
+   surfaceLayer     23601  7942  1225
+   undergroundLayer 29313  3274  181
+
+   */
+   
+   // @Speed: Collision chunks literally just have an array, so why not just have them be arrays? But do the above optimisation first.
+   
    const entityCollisionPairs = new Array<EntityCollisionPair>();
    const globalCollisionInfo: GlobalCollisionInfo = {};
 

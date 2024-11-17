@@ -11,10 +11,7 @@ export class HutComponent {
    public isRecalling = false;
 }
 
-export const HutComponentArray = new ComponentArray<HutComponent>(ServerComponentType.hut, true, {
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const HutComponentArray = new ComponentArray<HutComponent>(ServerComponentType.hut, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
    return 3 * Float32Array.BYTES_PER_ELEMENT;

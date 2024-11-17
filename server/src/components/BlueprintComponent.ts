@@ -52,11 +52,8 @@ export class BlueprintComponent {
    }
 }
 
-export const BlueprintComponentArray = new ComponentArray<BlueprintComponent>(ServerComponentType.blueprint, true, {
-   onJoin: onJoin,
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const BlueprintComponentArray = new ComponentArray<BlueprintComponent>(ServerComponentType.blueprint, true, getDataLength, addDataToPacket);
+BlueprintComponentArray.onJoin = onJoin;
 
 function onJoin(entityID: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entityID);

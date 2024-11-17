@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
 import { lerp } from "battletribes-shared/utils";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ItemType } from "battletribes-shared/items/items";
 import { VisualRenderPart } from "../../render-parts/render-parts";
@@ -9,7 +9,6 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
-import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 
@@ -101,15 +100,13 @@ const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): nu
 }
 
 const playFireSound = (entity: Entity): void => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
-         playSound("sling-turret-fire.mp3", 0.2, 1, transformComponent.position);
+         playSoundOnEntity("sling-turret-fire.mp3", 0.2, 1, entity);
          break;
       }
       case EntityType.ballista: {
-         playSound("sling-turret-fire.mp3", 0.25, 0.7, transformComponent.position);
+         playSoundOnEntity("sling-turret-fire.mp3", 0.25, 0.7, entity);
          break;
       }
    }

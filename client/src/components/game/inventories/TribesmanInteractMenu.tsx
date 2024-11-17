@@ -48,6 +48,39 @@ const GOBLIN_NAMES: ReadonlyArray<string> = [
    "Slokx"
 ];
 
+const DWARF_NAMES: ReadonlyArray<string> = [
+   "Durin",
+   "Thorin",
+   "Dugim",
+   "Gimli",
+   "Baldrik",
+   "Bronin",
+   "Fundin",
+   "Garim",
+   "Nain",
+   "Marrin",
+   "Stigr",
+   "Brokk",
+   "Durrak",
+   "Grottin",
+   "Hraldir",
+   "Kromlin",
+   "Nordri",
+   "Ulgrim",
+   "Varrik",
+   "Wulfrin",
+   "Borrik",
+   "Erdrik",
+   "Thrain",
+   "Orik",
+   "Skorr",
+   "Frerin",
+   "Torrin",
+   "Zarn",
+   "Grimm",
+   "Haddar"
+];
+
 const TITLE_DISPLAY_OPTIONS: Record<TribesmanTitle, ReadonlyArray<string>> = {
    [TribesmanTitle.builder]: ["Builder", "Object Constructor", "Manipulator of Materials"],
    [TribesmanTitle.berrymuncher]: ["Berry-muncher", "Muncher of Berries"],
@@ -84,7 +117,10 @@ const UNTITLED_ADJECTIVES: ReadonlyArray<string> = [
    "Pebble",
    "Thin",
    "Anorexic",
-   "Limp"
+   "Depressed",
+   "Struggler",
+   "Limp",
+   "Lame"
 ];
 
 const getTitleByTier = (titles: ReadonlyArray<TitleGenerationInfo>, tier: number): TitleGenerationInfo | null => {
@@ -148,6 +184,9 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
       case TribeType.goblins: {
          nameArray = GOBLIN_NAMES;
          break;
+      }
+      case TribeType.dwarves: {
+         nameArray = DWARF_NAMES;
       }
    }
    

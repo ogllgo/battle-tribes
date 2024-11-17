@@ -8,14 +8,14 @@ import { randInt } from "battletribes-shared/utils";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
+import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes, Box } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
-import { Entity } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
@@ -79,6 +79,7 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
    for (let i = 0; i < numCircularHitboxes; i++) {
       const x = reader.readNumber();
       const y = reader.readNumber();
+      const relativeRotation = reader.readNumber();
       const rotation = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
@@ -100,6 +101,7 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       box.scale = scale;
       box.position.x = x;
       box.position.y = y;
+      box.relativeRotation = relativeRotation;
       box.rotation = rotation;
       
       const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
@@ -193,7 +195,28 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
    return true;
 }
 
-const updateHitboxes = (transformComponent: TransformComponent): void => {
+const updateHitboxes = (transformComponent: TransformComponent, entity: Entity): void => {
+   // @Hack?
+   if (!TetheredHitboxComponentArray.hasComponent(entity)) {
+      for (const hitbox of transformComponent.hitboxes) {
+         updateBox(hitbox.box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+      }
+   } else {
+      // @hack
+      const box = transformComponent.hitboxes[0].box;
+
+      // @Hack
+      const tempX = box.offset.x;
+      const tempY = box.offset.y;
+      box.offset.x = 0;
+      box.offset.y = 0;
+
+      updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+
+      box.offset.x = tempX;
+      box.offset.y = tempY;
+   }
+
    transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
    transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
    transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
@@ -201,7 +224,6 @@ const updateHitboxes = (transformComponent: TransformComponent): void => {
 
    for (const hitbox of transformComponent.hitboxes) {
       const box = hitbox.box;
-      updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
 
       const boundsMinX = box.calculateBoundsMinX();
       const boundsMaxX = box.calculateBoundsMaxX();
@@ -269,12 +291,7 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
 }
 
 export function updateEntityPosition(transformComponent: TransformComponent, entity: Entity): void {
-   // @Hack?
-   if (!TetheredHitboxComponentArray.hasComponent(entity)) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      updateHitboxes(transformComponent);
-   }
-   
+   updateHitboxes(transformComponent, entity);
    updateContainingChunks(transformComponent, entity);
 }
 
@@ -326,15 +343,11 @@ function onRemove(entity: Entity): void {
    }
 }
 
-// @Cleanup: copy and paste from server
-export function getRandomPointInEntity(transformComponent: TransformComponent): Point {
-   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
-   const box = hitbox.box;
-
+export function getRandomPositionInBox(box: Box): Point {
    if (boxIsCircular(box)) {
       const offsetMagnitude = box.radius * Math.random();
       const offsetDirection = 2 * Math.PI * Math.random();
-      return new Point(transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection), transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection));
+      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
    } else {
       const halfWidth = box.width / 2;
       const halfHeight = box.height / 2;
@@ -342,10 +355,18 @@ export function getRandomPointInEntity(transformComponent: TransformComponent): 
       const xOffset = randFloat(-halfWidth, halfWidth);
       const yOffset = randFloat(-halfHeight, halfHeight);
 
-      const x = transformComponent.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
-      const y = transformComponent.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
       return new Point(x, y);
    }
+}
+
+// @Cleanup: copy and paste from server
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
+   const box = hitbox.box;
+
+   return getRandomPositionInBox(box);
 }
 
 function padData(reader: PacketReader): void {
@@ -353,7 +374,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
 
    const numCircularHitboxes = reader.readNumber();
-   reader.padOffset(13 * Float32Array.BYTES_PER_ELEMENT * numCircularHitboxes);
+   reader.padOffset(14 * Float32Array.BYTES_PER_ELEMENT * numCircularHitboxes);
 
    const numRectangularHitboxes = reader.readNumber();
    reader.padOffset(14 * Float32Array.BYTES_PER_ELEMENT * numRectangularHitboxes);
@@ -397,6 +418,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    for (let i = 0; i < numCircularHitboxes; i++) {
       const x = reader.readNumber();
       const y = reader.readNumber();
+      const relativeRotation = reader.readNumber();
       const rotation = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
@@ -418,9 +440,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       const hitbox = transformComponent.hitboxMap.get(localID);
       if (typeof hitbox === "undefined") {
          const offset = new Point(offsetX, offsetY);
-         const box = new CircularBox(offset, 0, radius);
+         const box = new CircularBox(offset, rotation, radius);
          // @Cleanup: The way box properties are set is way too spread out
          box.scale = scale;
+         box.relativeRotation = relativeRotation;
          box.rotation = rotation;
          const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
          addHitboxToEntity(transformComponent, hitbox);
@@ -434,6 +457,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          // Update the existing hitbox
          box.position.x = x;
          box.position.y = y;
+         box.relativeRotation = relativeRotation;
          box.rotation = rotation;
          box.radius = radius;
          box.offset.x = offsetX;

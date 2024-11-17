@@ -12,7 +12,7 @@ import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { playSound } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 
 export interface FishComponentParams {
    readonly colour: FishColour;
@@ -105,13 +105,11 @@ function onHit(entity: Entity): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, position.x, position.y, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSound("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity);
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-
    createBloodParticleFountain(entity, 0.1, 0.8);
    
-   playSound("fish-die-1.mp3", 0.4, 1, transformComponent.position);
+   playSoundOnEntity("fish-die-1.mp3", 0.4, 1, entity);
 }

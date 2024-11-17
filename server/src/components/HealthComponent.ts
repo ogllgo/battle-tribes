@@ -44,15 +44,13 @@ export class HealthComponent {
    }
 }
 
-export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerComponentType.health, true, {
-   onTick: {
-      tickInterval: 1,
-      func: onTick
-   },
-   getDataLength: getDataLength,
-   addDataToPacket: addDataToPacket
-});
+export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerComponentType.health, true, getDataLength, addDataToPacket);
+HealthComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 
+// @Speed: 1.3% CPU time. This really doesn't need to run for 100% of entities with health components every tick
 function onTick(entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    

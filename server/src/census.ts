@@ -15,21 +15,23 @@ interface TileCensus {
    biomes: Record<Biome, Array<TileIndex>>;
 }
 
-const tileCensus: TileCensus = {
-   types: (() => {
-      const types: Partial<Record<TileType, Array<TileIndex>>> = {};
-      for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
-         types[tileType] = [];
-      }
-      return types as Record<TileType, Array<TileIndex>>;
-   })(),
-   biomes: (() => {
-      const biomes: Partial<Record<Biome, Array<TileIndex>>> = {};
-      for (let biome: Biome = 0; biome < Biome._LENGTH_; biome++) {
-         biomes[biome] = [];
-      }
-      return biomes as Record<Biome, Array<TileIndex>>;
-   })()
+export function createTileCensus(): TileCensus {
+   return {
+      types: (() => {
+         const types: Partial<Record<TileType, Array<TileIndex>>> = {};
+         for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
+            types[tileType] = [];
+         }
+         return types as Record<TileType, Array<TileIndex>>;
+      })(),
+      biomes: (() => {
+         const biomes: Partial<Record<Biome, Array<TileIndex>>> = {};
+         for (let biome: Biome = 0; biome < Biome._LENGTH_; biome++) {
+            biomes[biome] = [];
+         }
+         return biomes as Record<Biome, Array<TileIndex>>;
+      })()
+   };
 };
 
 /** Stores the IDs of all entities that are being tracked in the census */
@@ -43,7 +45,7 @@ export function addEntityToCensus(entity: Entity, entityType: EntityType): void 
 export function removeEntityFromCensus(entity: Entity): void {
    if (!trackedEntityIDs.has(entity)) return;
    
-   const entityType = getEntityType(entity)!;
+   const entityType = getEntityType(entity);
    
    if (entityCounts[entityType] <= 0) {
       console.log(entityCounts);
@@ -62,29 +64,24 @@ export function getEntityCount(entityType: EntityType): number {
 
 export function addTileToCensus(layer: Layer, tileIndex: TileIndex): void {
    const tileType = layer.tileTypes[tileIndex] as TileType;
-   tileCensus.types[tileType].push(tileIndex);
+   layer.tileCensus.types[tileType].push(tileIndex);
 
    const biome = layer.tileBiomes[tileIndex] as Biome;
-   tileCensus.biomes[biome].push(tileIndex);
+   layer.tileCensus.biomes[biome].push(tileIndex);
 }
 
 export function removeTileFromCensus(layer: Layer, tileIndex: TileIndex): void {
    const tileType = layer.tileTypes[tileIndex] as TileType;
-   tileCensus.types[tileType].splice(tileCensus.types[tileType].indexOf(tileIndex), 1);
+   layer.tileCensus.types[tileType].splice(layer.tileCensus.types[tileType].indexOf(tileIndex), 1);
 
    const biome = layer.tileBiomes[tileIndex] as Biome;
-   tileCensus.biomes[biome].splice(tileCensus.biomes[biome].indexOf(tileIndex), 1);
+   layer.tileCensus.biomes[biome].splice(layer.tileCensus.biomes[biome].indexOf(tileIndex), 1);
 }
 
-export function getTileTypeCount(tileType: TileType): number {
-   const tiles = tileCensus.types[tileType];
-   return typeof tiles !== "undefined" ? tiles.length : 0;
+export function getTilesOfType(layer: Layer, tileType: TileType): ReadonlyArray<TileIndex> {
+   return layer.tileCensus.types[tileType];
 }
 
-export function getTilesOfType(tileType: TileType): ReadonlyArray<TileIndex> {
-   return tileCensus.types[tileType];
-}
-
-export function getTilesOfBiome(biomeName: Biome): ReadonlyArray<TileIndex> {
-   return tileCensus.biomes[biomeName];
+export function getTilesOfBiome(layer: Layer, biomeName: Biome): ReadonlyArray<TileIndex> {
+   return layer.tileCensus.biomes[biomeName];
 }
