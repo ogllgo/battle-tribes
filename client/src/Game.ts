@@ -34,7 +34,7 @@ import { renderGhostEntities } from "./rendering/webgl/entity-ghost-rendering";
 import { setupFrameGraph } from "./rendering/webgl/frame-graph-rendering";
 import { createTextureAtlases } from "./texture-atlases/texture-atlases";
 import { createForcefieldShaders, renderForcefield } from "./rendering/webgl/world-border-forcefield-rendering";
-import { playRiverSounds, loadSoundEffects, updateSoundEffectVolumes } from "./sound";
+import { playRiverSounds, loadSoundEffects, updateSounds } from "./sound";
 import { createTechTreeGLContext, createTechTreeShaders, renderTechTree } from "./rendering/webgl/tech-tree-rendering";
 import { createResearchOrbShaders, renderResearchOrb } from "./rendering/webgl/research-orb-rendering";
 import { attemptToResearch, updateActiveResearchBench, updateResearchOrb } from "./research";
@@ -451,7 +451,7 @@ abstract class Game {
 
       updateTechTreeItems();
       
-      updateSoundEffectVolumes();
+      updateSounds();
       playRiverSounds();
 
       this.cursorPositionX = calculateCursorWorldPositionX(cursorX!);

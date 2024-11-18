@@ -48,6 +48,7 @@ import { createSpikesComponentParams } from "../../entity-components/server-comp
 import HeldItemSlot from "./HeldItemSlot";
 import { createFireTorchComponentParams } from "../../entity-components/server-components/FireTorchComponent";
 import { createSlurbTorchComponentParams } from "../../entity-components/server-components/SlurbTorchComponent";
+import { createBarrelComponentParams } from "../../entity-components/server-components/BarrelComponent";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -1274,6 +1275,10 @@ const tickItem = (itemType: ItemType): void => {
                }
                case ServerComponentType.slurbTorch: {
                   components[componentType] = createSlurbTorchComponentParams();
+                  break;
+               }
+               case ServerComponentType.barrel: {
+                  components[componentType] = createBarrelComponentParams();
                   break;
                }
                default: {

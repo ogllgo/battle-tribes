@@ -6,12 +6,14 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Tile } from "../../../Tile";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
-import { getCurrentLayer, getEntityType } from "../../../world";
+import { getCurrentLayer, getEntityType, playerInstance } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { Entity } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../../../entity-components/server-components/PhysicsComponent";
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
+import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import InventoryContainer from "../inventories/InventoryContainer";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -111,6 +113,17 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
 
          return <>
             <p>Health: <span className="highlight">{healthComponent.health}/{healthComponent.maxHealth}</span></p>
+         </>;
+      })() : undefined}
+
+      {InventoryComponentArray.hasComponent(entity) ? (() => {
+         const inventoryComponent = InventoryComponentArray.getComponent(entity);
+
+         return <>
+            {inventoryComponent.inventories.map(inventory => {
+               return <InventoryContainer inventory={inventory} />
+            })}
+            <p>E</p>
          </>;
       })() : undefined}
 

@@ -11,7 +11,7 @@ import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { getLayerByType, isNight, pushJoinBuffer, undergroundLayer } from "./world";
+import { getLayerByType, isNight, pushJoinBuffer, surfaceLayer, undergroundLayer } from "./world";
 import { EntityConfig } from "./components";
 import { createCowConfig } from "./entities/mobs/cow";
 import { createBerryBushConfig } from "./entities/resources/berry-bush";
@@ -367,9 +367,9 @@ export function spawnInitialEntities(): void {
    }
 
    // @Temporary
-   const tribe = new Tribe(TribeType.dwarves, true);
+   const tribe = new Tribe(TribeType.plainspeople, true);
    const a = createTribeWorkerConfig(tribe);
-   a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 800;
+   a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 - 800;
    a.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-   createEntity(a, undergroundLayer, 0);
+   createEntity(a, surfaceLayer, 0);
 }

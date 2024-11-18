@@ -35,8 +35,12 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    return {};
 }
 
-function createParamsFromData(): BarrelComponentParams {
+export function createBarrelComponentParams(): BarrelComponentParams {
    return {};
+}
+
+function createParamsFromData(): BarrelComponentParams {
+   return createBarrelComponentParams();
 }
 
 function createComponent(): BarrelComponent {

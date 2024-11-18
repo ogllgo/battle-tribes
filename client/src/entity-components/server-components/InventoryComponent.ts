@@ -15,7 +15,8 @@ export interface InventoryComponentParams {
 }
 
 export interface InventoryComponent {
-   readonly inventories: Partial<Record<InventoryName, Inventory>>;
+   readonly inventoryRecord: Partial<Record<InventoryName, Inventory>>;
+   readonly inventories: Array<Inventory>;
 }
 
 const registerInventoryUpdate = (inventoryName: InventoryName): void => {
@@ -182,7 +183,7 @@ export function updatePlayerHeldItem(inventoryName: InventoryName, heldItemSlot:
 }
 
 export function getInventory(inventoryComponent: InventoryComponent, inventoryName: InventoryName): Inventory | null {
-   return inventoryComponent.inventories[inventoryName] || null;
+   return inventoryComponent.inventoryRecord[inventoryName] || null;
 }
 
 export const InventoryComponentArray = new ServerComponentArray<InventoryComponent, InventoryComponentParams, never>(ServerComponentType.inventory, true, {
@@ -211,8 +212,11 @@ function createParamsFromData(reader: PacketReader): InventoryComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory, never>): InventoryComponent {
+   const inventoryComponentParams = entityConfig.serverComponents[ServerComponentType.inventory];
+   
    return {
-      inventories: entityConfig.serverComponents[ServerComponentType.inventory].inventories
+      inventoryRecord: inventoryComponentParams.inventories,
+      inventories: Object.values(inventoryComponentParams.inventories)
    };
 }
 
@@ -233,7 +237,7 @@ function updateInventories(inventoryComponent: InventoryComponent, reader: Packe
    // Add new inventories
    for (const inventoryNameKey of Object.keys(data.inventories)) {
       const inventoryName = Number(inventoryNameKey) as InventoryName;
-      if (typeof inventoryComponent.inventories[inventoryName] !== "undefined") {
+      if (typeof inventoryComponent.inventoryRecord[inventoryName] !== "undefined") {
          continue;
       }
 
@@ -242,7 +246,7 @@ function updateInventories(inventoryComponent: InventoryComponent, reader: Packe
          continue;
       }
 
-      inventoryComponent.inventories[inventoryName] = createInventoryFromData(inventoryData);
+      inventoryComponent.inventoryRecord[inventoryName] = createInventoryFromData(inventoryData);
       if (isPlayer) {
          registerInventoryUpdate(inventoryName);
       }
@@ -250,12 +254,12 @@ function updateInventories(inventoryComponent: InventoryComponent, reader: Packe
    
    // @Speed: Garbage collection
    // Update existing inventories
-   for (const inventoryNameKey of Object.keys(inventoryComponent.inventories)) {
+   for (const inventoryNameKey of Object.keys(inventoryComponent.inventoryRecord)) {
       const inventoryName = Number(inventoryNameKey) as InventoryName;
       const inventoryData = data.inventories[inventoryName];
       // @Hack: this shouldn't be necessary, but for some reason is needed sometimes when the player respawns
       if (typeof inventoryData !== "undefined") {
-         const inventory = inventoryComponent.inventories[inventoryName]!;
+         const inventory = inventoryComponent.inventoryRecord[inventoryName]!;
          const hasChanged = updateInventoryFromData(inventory, inventoryData, isPlayer);
          if (hasChanged && isPlayer) {
             registerInventoryUpdate(inventoryName);

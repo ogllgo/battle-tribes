@@ -13,6 +13,7 @@ import { registerDirtyRenderInfo, removeEntityFromDirtyArrays } from "./renderin
 import { getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
+import { removeEntitySounds } from "./sound";
 
 export interface EntityCreationInfo {
    readonly renderInfo: EntityRenderInfo;
@@ -194,6 +195,8 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
 
    // Remove any attached lights
    removeLightsAttachedToEntity(entity);
+
+   removeEntitySounds(entity);
 
    for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
       const renderPart = renderInfo.allRenderThings[i];

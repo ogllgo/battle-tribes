@@ -7,26 +7,30 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
 
+type SoundID = number;
+
 // @Memory
 export const ROCK_HIT_SOUNDS: ReadonlyArray<string> = ["rock-hit-1.mp3", "rock-hit-2.mp3", "rock-hit-3.mp3", "rock-hit-4.mp3", "rock-hit-5.mp3", "rock-hit-6.mp3"];
 export const ROCK_DESTROY_SOUNDS: ReadonlyArray<string> = ["rock-destroy-1.mp3", "rock-destroy-2.mp3", "rock-destroy-3.mp3"];
+
+let idCounter: SoundID = 0;
 
 let audioContext: AudioContext;
 let audioBuffers: Partial<Record<string, AudioBuffer>>;
 
 export interface Sound {
+   readonly id: SoundID;
    volume: number;
    readonly position: Point;
    readonly gainNode: GainNode;
+   isRemoved: boolean;
 }
 
-interface SoundAttachInfo {
-   readonly sound: Sound;
-   readonly entity: Entity;
-}
+// Need to know when the 
 
+// @Cleanup: remove this once the 'attach to world' thing is in place
 const activeSounds = new Array<Sound>();
-const entityAttachedSounds = new Array<SoundAttachInfo>();
+const soundsAttachedToEntities = new Map<Entity, Array<Sound>>();
 
 // Must be called after a user action
 export function createAudioContext(): void {
@@ -276,6 +280,13 @@ const calculateSoundVolume = (volume: number, position: Point): number => {
    return volume / (distanceFromPlayer * distanceFromPlayer);
 }
 
+const removeSound = (sound: Sound): void => {
+   const idx = activeSounds.indexOf(sound);
+   if (idx !== -1) {
+      activeSounds.splice(idx, 1);
+   }
+}
+
 export interface SoundInfo {
    readonly trackSource: AudioBufferSourceNode;
    readonly sound: Sound;
@@ -301,31 +312,23 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
 
    trackSource.start();
 
-   const soundInfo: Sound = {
+   const sound: Sound = {
+      id: idCounter++,
       volume: volume,
       position: source,
-      gainNode: gainNode
+      gainNode: gainNode,
+      isRemoved: false
    };
-   activeSounds.push(soundInfo);
+   activeSounds.push(sound);
 
+   // @Garbage?
    trackSource.onended = () => {
-      const idx = activeSounds.indexOf(soundInfo);
-      if (idx !== -1) {
-         activeSounds.splice(idx, 1);
-      }
-      
-      for (let i = 0; i < entityAttachedSounds.length; i++) {
-         const attachedSoundInfo = entityAttachedSounds[i];
-         if (attachedSoundInfo.sound === soundInfo) {
-            entityAttachedSounds.splice(i, 1);
-            break;
-         }
-      }
+      sound.isRemoved = true;
    }
 
    return {
       trackSource: trackSource,
-      sound: soundInfo
+      sound: sound
    };
 }
 
@@ -336,22 +339,46 @@ export function playSoundOnEntity(filePath: string, volume: number, pitchMultipl
    const soundInfo = playSound(filePath, volume, pitchMultiplier, transformComponent.position.copy(), getEntityLayer(entity));
    
    if (soundInfo !== null) {
-      // Attach the sound to the entity
-      entityAttachedSounds.push({
-         sound: soundInfo.sound,
-         entity: entity
-      });
+      if (!soundsAttachedToEntities.has(entity)) {
+         soundsAttachedToEntities.set(entity, []);
+      }
+      
+      const entityAttachedSounds = soundsAttachedToEntities.get(entity)!;
+      entityAttachedSounds.push(soundInfo.sound);
    }
 }
 
-export function updateSoundEffectVolumes(): void {
-   for (let i = 0; i < entityAttachedSounds.length; i++) {
-      const attachedSoundInfo = entityAttachedSounds[i];
+export function removeEntitySounds(entity: Entity): void {
+   const entityAttachedSounds = soundsAttachedToEntities.get(entity)!;
+   if (typeof entityAttachedSounds === "undefined") {
+      return;
+   }
 
-      const transformComponent = TransformComponentArray.getComponent(attachedSoundInfo.entity);
+   for (const sound of entityAttachedSounds) {
+      removeSound(sound);
+   }
 
-      attachedSoundInfo.sound.position.x = transformComponent.position.x;
-      attachedSoundInfo.sound.position.y = transformComponent.position.y;
+   soundsAttachedToEntities.delete(entity);
+}
+
+export function updateSounds(): void {
+   for (const pair of soundsAttachedToEntities) {
+      const entity = pair[0];
+      const entityAttachedSounds = pair[1];
+      
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      for (let i = 0; i < entityAttachedSounds.length; i++) {
+         const sound = entityAttachedSounds[i];
+         if (sound.isRemoved) {
+            removeSound(sound);
+            entityAttachedSounds.splice(i, 1);
+            i--;
+            continue;
+         }
+         
+         sound.position.x = transformComponent.position.x;
+         sound.position.y = transformComponent.position.y;
+      }
    }
    
    for (let i = 0; i < activeSounds.length; i++) {
