@@ -3,19 +3,19 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { getPlayerClientFromInstanceID } from "../server/player-clients";
 import { sendRespawnDataPacket } from "../server/packet-processing";
+import PlayerClient from "../server/PlayerClient";
 
 export class PlayerComponent {
-   public readonly username: string;
+   public readonly client: PlayerClient;
    
    /** ID of the tribesman the player is interacting with */
    public interactingEntityID = 0;
 
    public titleOffer: TribesmanTitle | null = null;
 
-   constructor(username: string) {
-      this.username = username;
+   constructor(playerClient: PlayerClient) {
+      this.client = playerClient;
    }
 }
 
@@ -24,7 +24,9 @@ PlayerComponentArray.onJoin = onJoin;
 PlayerComponentArray.onRemove = onRemove;
 
 function onJoin(player: Entity): void {
-   const playerClient = getPlayerClientFromInstanceID(player);
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   const playerClient = playerComponent.client;
+
    if (playerClient !== null && !playerClient.isAlive) {
       sendRespawnDataPacket(playerClient);
       playerClient.isAlive = true;
@@ -32,7 +34,9 @@ function onJoin(player: Entity): void {
 }
 
 function onRemove(player: Entity): void {
-   const playerClient = getPlayerClientFromInstanceID(player);
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   const playerClient = playerComponent.client;
+
    if (playerClient !== null) {
       playerClient.isAlive = false;
    }
@@ -46,5 +50,5 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(entity);
 
    // @Hack: hardcoded
-   packet.addString(playerComponent.username, 100);
+   packet.addString(playerComponent.client.username, 100);
 }

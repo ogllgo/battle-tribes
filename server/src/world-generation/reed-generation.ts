@@ -1,14 +1,13 @@
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import Layer from "../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createReedConfig } from "../entities/reed";
 import { createEntity } from "../Entity";
 import { WaterTileGenerationInfo } from "./river-generation";
 import { distance } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
-import { isTooCloseToSteppingStone } from "../Chunk";
-import { surfaceLayer } from "../world";
+import { isTooCloseToSteppingStone } from "../entity-spawn-info";
+import { surfaceLayer } from "../layers";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35

@@ -20,9 +20,12 @@ import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-creation";
 import { copyInventory, Inventory, InventoryName } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
-import { playerInstance } from "../../world";
+import { getCurrentLayer, playerInstance, surfaceLayer, undergroundLayer } from "../../world";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { inventoriesAreDifferent } from "../../inventory-manipulation";
+import LayerChangeMessage from "./LayerChangeMessage";
+import { getEntityTile, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { TileType } from "../../../../shared/src/tiles";
 
 export const enum GameInteractState {
    none,
@@ -50,9 +53,15 @@ const GameScreen = (props: GameScreenProps) => {
    const [interactState, setInteractState] = useState(GameInteractState.none);
 
    const [hotbar, setHotbar] = useState(new Inventory(Settings.INITIAL_PLAYER_HOTBAR_SIZE, 1, InventoryName.hotbar));
+   const [offhand, setOffhand] = useState(new Inventory(1, 1, InventoryName.offhand));
    const [heldItemSlot, setHeldItemSlot] = useState(new Inventory(1, 1, InventoryName.heldItemSlot));
    const [craftingOutputSlot, setCraftingOutputSlot] = useState(new Inventory(1, 1, InventoryName.craftingOutputSlot));
    const [backpack, setBackpack] = useState(new Inventory(1, 1, InventoryName.backpack));
+   const [backpackSlot, setBackpackSlot] = useState(new Inventory(1, 1, InventoryName.backpackSlot));
+   const [armourSlot, setArmourSlot] = useState(new Inventory(1, 1, InventoryName.armourSlot));
+   const [gloveSlot, setGloveSlot] = useState(new Inventory(1, 1, InventoryName.gloveSlot));
+
+   const [canAscendLayer, setCanAscendLayer] = useState(false);
    
    const summonPacketRef = useRef<Mutable<EntitySummonPacket> | null>(null);
 
@@ -92,9 +101,16 @@ const GameScreen = (props: GameScreenProps) => {
          if (playerInstance !== null) {
             const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
             
+            // @Copynpaste
+            
             const entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
             if (entityHotbar !== null && inventoriesAreDifferent(hotbar, entityHotbar)) {
                setHotbar(copyInventory(entityHotbar));
+            }
+            
+            const entityOffhand = getInventory(inventoryComponent, InventoryName.offhand);
+            if (entityOffhand !== null && inventoriesAreDifferent(offhand, entityOffhand)) {
+               setOffhand(copyInventory(entityOffhand));
             }
             
             const entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
@@ -107,13 +123,38 @@ const GameScreen = (props: GameScreenProps) => {
                setCraftingOutputSlot(copyInventory(entityCraftingOutputSlot));
             }
 
-            const entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpack);
-            if (entityBackpackSlot !== null && inventoriesAreDifferent(backpack, entityBackpackSlot)) {
-               setBackpack(copyInventory(entityBackpackSlot));
+            const entityBackpack = getInventory(inventoryComponent, InventoryName.backpack);
+            if (entityBackpack !== null && inventoriesAreDifferent(backpack, entityBackpack)) {
+               setBackpack(copyInventory(entityBackpack));
             }
+
+            const entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
+            if (entityBackpackSlot !== null && inventoriesAreDifferent(backpackSlot, entityBackpackSlot)) {
+               setBackpackSlot(copyInventory(entityBackpackSlot));
+            }
+
+            const entityArmourSlot = getInventory(inventoryComponent, InventoryName.armourSlot);
+            if (entityArmourSlot !== null && inventoriesAreDifferent(armourSlot, entityArmourSlot)) {
+               setArmourSlot(copyInventory(entityArmourSlot));
+            }
+
+            const entityGloveSlot = getInventory(inventoryComponent, InventoryName.gloveSlot);
+            if (entityGloveSlot !== null && inventoriesAreDifferent(gloveSlot, entityGloveSlot)) {
+               setGloveSlot(copyInventory(entityGloveSlot));
+            }
+
+            let canAscendLayer = false;
+            if (getCurrentLayer() === undergroundLayer) {
+               const transformComponent = TransformComponentArray.getComponent(playerInstance);
+               const tileAbove = getEntityTile(surfaceLayer, transformComponent);
+               if (tileAbove.type === TileType.dropdown) {
+                  canAscendLayer = true;
+               }
+            }
+            setCanAscendLayer(canAscendLayer);
          }
       }
-   }, [hotbar, heldItemSlot, craftingOutputSlot, backpack]);
+   }, [hotbar, offhand, heldItemSlot, craftingOutputSlot, backpack, backpackSlot, armourSlot, gloveSlot]);
 
    useEffect(() => {
       if (cinematicModeIsEnabled) {
@@ -132,7 +173,7 @@ const GameScreen = (props: GameScreenProps) => {
    }, [settingsIsOpen]);
    
    return <>
-      <GameInteractableLayer hotbar={hotbar} heldItemSlot={heldItemSlot} cinematicModeIsEnabled={cinematicModeIsEnabled} />
+      <GameInteractableLayer hotbar={hotbar} offhand={offhand} backpackSlot={backpackSlot} armourSlot={armourSlot} gloveSlot={gloveSlot} heldItemSlot={heldItemSlot} cinematicModeIsEnabled={cinematicModeIsEnabled} />
    
       <ChatBox />
 
@@ -171,6 +212,10 @@ const GameScreen = (props: GameScreenProps) => {
       <InventorySelector />
 
       <InspectHealthBar />
+
+      { canAscendLayer ? (
+         <LayerChangeMessage />
+      ) : null }
    </>;
 }
 

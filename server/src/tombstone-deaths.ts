@@ -15,7 +15,7 @@ abstract class TombstoneDeathManager {
       const playerComponent = PlayerComponentArray.getComponent(player);
       
       this.deathInfos.push({
-         username: playerComponent.username,
+         username: playerComponent.client.username,
          causeOfDeath: causeOfDeath
       });
    }

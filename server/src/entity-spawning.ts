@@ -1,4 +1,4 @@
-import { EntityType, EntityTypeString, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { randInt, randFloat, TileIndex } from "battletribes-shared/utils";
@@ -11,7 +11,7 @@ import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { getLayerByType, isNight, pushJoinBuffer, surfaceLayer, undergroundLayer } from "./world";
+import { isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
 import { createCowConfig } from "./entities/mobs/cow";
 import { createBerryBushConfig } from "./entities/resources/berry-bush";
@@ -35,6 +35,7 @@ import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn
 import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { boxIsCollidingWithSubtile } from "./collision";
+import { undergroundLayer } from "./layers";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -52,7 +53,7 @@ const findSpawnableTiles = (spawnInfo: EntitySpawnInfo): ReadonlySet<TileIndex> 
    
    // @Incomplete: accounts for tiles of all layers instead of just the ones from the layer the spawninfo is in
    for (const tileType of spawnInfo.spawnableTileTypes) {
-      const tileIndexes = getTilesOfType(getLayerByType(spawnInfo.layerType), tileType);
+      const tileIndexes = getTilesOfType(spawnInfo.layer, tileType);
       for (const tileIndex of tileIndexes) {
          if (!unspawnableTiles.has(tileIndex)) {
             spawnableTiles.add(tileIndex);
@@ -204,9 +205,8 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
    // and make fish spawn with the same colour
    
    // const cowSpecies = randInt(0, 1);
-   const layer = getLayerByType(spawnInfo.layerType);
    
-   attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, layer, spawnOriginX, spawnOriginY);
+   attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, spawnInfo.layer, spawnOriginX, spawnOriginY);
 
    // Pack spawning
  
@@ -254,7 +254,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
          const x = randInt(minX, maxX);
          const y = randInt(minY, maxY);
 
-         attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, layer, x, y);
+         attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, spawnInfo.layer, x, y);
          
          i++;
       }
@@ -262,16 +262,15 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
 }
 
 export function spawnPositionIsValid(spawnInfo: EntitySpawnInfo, positionX: number, positionY: number): boolean {
-   const layer = getLayerByType(spawnInfo.layerType);
-
    const minChunkX = Math.max(Math.min(Math.floor((positionX - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor((positionX + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const minChunkY = Math.max(Math.min(Math.floor((positionY - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const maxChunkY = Math.max(Math.min(Math.floor((positionY + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
 
+   // @Incomplete: does this include grass and reeds??
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
+         const chunk = spawnInfo.layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
             const transformComponent = TransformComponentArray.getComponent(entity);
             
@@ -351,9 +350,6 @@ export function spawnInitialEntities(): void {
    // For each spawn info object, spawn entities until no more can be spawned
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
       const spawnInfo = SPAWN_INFOS[i];
-      if (spawnInfo.entityType >= NUM_ENTITY_TYPES) {
-         throw new Error("NUM_ENTITY_TYPES too small (need at least" + (spawnInfo.entityType + 1) + ")");
-      }
       
       numSpawnAttempts = 0;
       while (spawnConditionsAreMet(i, spawnInfo)) {
@@ -367,9 +363,12 @@ export function spawnInitialEntities(): void {
    }
 
    // @Temporary
-   const tribe = new Tribe(TribeType.plainspeople, true);
-   const a = createTribeWorkerConfig(tribe);
-   a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 - 800;
-   a.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-   createEntity(a, surfaceLayer, 0);
+   setTimeout(() => {
+
+      const tribe = new Tribe(TribeType.dwarves, true);
+      const a = createTribeWorkerConfig(tribe);
+      a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 800;
+      a.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+      createEntity(a, undergroundLayer, 0);
+   }, 4000);
 }

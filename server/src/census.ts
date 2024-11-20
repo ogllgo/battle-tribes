@@ -1,38 +1,16 @@
 import { Entity, EntityType, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
 import { TileType, NUM_TILE_TYPES } from "battletribes-shared/tiles";
 import { Biome } from "../../shared/src/biomes";
-import Layer from "./Layer";
+import Layer, { getTileX, getTileY, tileIsInWorldIncludingEdges } from "./Layer";
 import { TileIndex } from "battletribes-shared/utils";
 import { getEntityType } from "./world";
+import { layers } from "./layers";
+import { Settings } from "../../shared/src/settings";
 
 const entityCounts = new Array<EntityType>();
 for (let i = 0; i < NUM_ENTITY_TYPES; i++) {
    entityCounts.push(0);
 }
-
-interface TileCensus {
-   readonly types: Record<TileType, Array<TileIndex>>;
-   biomes: Record<Biome, Array<TileIndex>>;
-}
-
-export function createTileCensus(): TileCensus {
-   return {
-      types: (() => {
-         const types: Partial<Record<TileType, Array<TileIndex>>> = {};
-         for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
-            types[tileType] = [];
-         }
-         return types as Record<TileType, Array<TileIndex>>;
-      })(),
-      biomes: (() => {
-         const biomes: Partial<Record<Biome, Array<TileIndex>>> = {};
-         for (let biome: Biome = 0; biome < Biome._LENGTH_; biome++) {
-            biomes[biome] = [];
-         }
-         return biomes as Record<Biome, Array<TileIndex>>;
-      })()
-   };
-};
 
 /** Stores the IDs of all entities that are being tracked in the census */
 const trackedEntityIDs = new Set<number>();
@@ -68,6 +46,18 @@ export function addTileToCensus(layer: Layer, tileIndex: TileIndex): void {
 
    const biome = layer.tileBiomes[tileIndex] as Biome;
    layer.tileCensus.biomes[biome].push(tileIndex);
+}
+
+export function runTileCensuses(): void {
+   for (const layer of layers) {
+      for (let tileIndex = 0; tileIndex < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS; tileIndex++) {
+         const tileX = getTileX(tileIndex);
+         const tileY = getTileY(tileIndex);
+         if (tileIsInWorldIncludingEdges(tileX, tileY)) {
+            addTileToCensus(layer, tileIndex);
+         }
+      }
+   }
 }
 
 export function removeTileFromCensus(layer: Layer, tileIndex: TileIndex): void {

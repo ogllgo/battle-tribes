@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { TotemBannerComponent, TotemBannerPosition } from "../../components/TotemBannerComponent";
+import { TotemBannerComponent } from "../../components/TotemBannerComponent";
 import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createTribeTotemHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -18,20 +18,6 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.structure
    | ServerComponentType.tribe
    | ServerComponentType.totemBanner;
-
-const NUM_TOTEM_POSITIONS = [4, 6, 8];
-
-export const TRIBE_TOTEM_POSITIONS = new Array<TotemBannerPosition>();
-for (let layerIdx = 0; layerIdx < 3; layerIdx++) {
-   const numPositions = NUM_TOTEM_POSITIONS[layerIdx];
-   for (let j = 0; j < numPositions; j++) {
-      const angle = j / numPositions * 2 * Math.PI;
-      TRIBE_TOTEM_POSITIONS.push({
-         layer: layerIdx,
-         direction: angle
-      });
-   }
-}
 
 export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();

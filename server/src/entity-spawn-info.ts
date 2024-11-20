@@ -1,14 +1,17 @@
+import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
 import { EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { entityIsStructure } from "../../shared/src/structures";
 import { TileType } from "../../shared/src/tiles";
-import { isTooCloseToReedOrLilypad, isTooCloseToSteppingStone } from "./Chunk";
+import { distance } from "../../shared/src/utils";
+import { getEntitiesInRange } from "./ai-shared";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { yetiSpawnPositionIsValid } from "./components/YetiComponent";
 import { entityIsTribesman } from "./entities/tribes/tribe-member";
 import Layer from "./Layer";
+import { surfaceLayer, undergroundLayer } from "./layers";
 import OPTIONS from "./options";
-import { LayerType, getEntityType, getLayerByType } from "./world";
+import { getEntityType } from "./world";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 2000
@@ -17,8 +20,7 @@ const enum Vars {
 export interface EntitySpawnInfo {
    /** The type of entity to spawn */
    readonly entityType: EntityType;
-   // @Hack @Cleanup: make this reference the actual layers
-   readonly layerType: LayerType;
+   readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
    /** Maximum global density per tile the entity type can have. */
@@ -36,7 +38,7 @@ export interface EntitySpawnInfo {
 export const SPAWN_INFOS = [
    {
       entityType: EntityType.cow,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.01,
       maxDensity: 0.004,
       spawnableTileTypes: [TileType.grass],
@@ -48,7 +50,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.berryBush,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.001,
       maxDensity: 0.0025,
       spawnableTileTypes: [TileType.grass],
@@ -60,7 +62,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.tree,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.013,
       maxDensity: 0.02,
       spawnableTileTypes: [TileType.grass],
@@ -82,7 +84,7 @@ export const SPAWN_INFOS = [
    // },
    {
       entityType: EntityType.tombstone,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.01,
       maxDensity: 0.003,
       spawnableTileTypes: [TileType.grass],
@@ -94,7 +96,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.boulder,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.005,
       maxDensity: 0.025,
       spawnableTileTypes: [TileType.rock],
@@ -106,7 +108,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.boulder,
-      layerType: LayerType.underground,
+      layer: undergroundLayer,
       spawnRate: 0.005,
       maxDensity: 0.025,
       spawnableTileTypes: [TileType.stone],
@@ -118,7 +120,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.cactus,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.005,
       maxDensity: 0.03,
       spawnableTileTypes: [TileType.sand],
@@ -130,7 +132,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.yeti,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.004,
       maxDensity: 0.008,
       spawnableTileTypes: [TileType.snow],
@@ -145,7 +147,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.iceSpikes,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.015,
       maxDensity: 0.06,
       spawnableTileTypes: [TileType.ice, TileType.permafrost],
@@ -157,7 +159,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.slimewisp,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.2,
       maxDensity: 0.3,
       spawnableTileTypes: [TileType.slime],
@@ -169,7 +171,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.krumblid,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.005,
       maxDensity: 0.015,
       spawnableTileTypes: [TileType.sand],
@@ -181,7 +183,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.frozenYeti,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.004,
       maxDensity: 0.008,
       spawnableTileTypes: [TileType.fimbultur],
@@ -193,7 +195,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.fish,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.015,
       maxDensity: 0.03,
       spawnableTileTypes: [TileType.water],
@@ -205,7 +207,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.lilypad,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0,
       maxDensity: 0.03,
       spawnableTileTypes: [TileType.water],
@@ -215,12 +217,12 @@ export const SPAWN_INFOS = [
       minSpawnDistance: 0,
       usesSpawnDistribution: false,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
-         return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(getLayerByType(spawnInfo.layerType), x, y);
+         return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
       }
    },
    {
       entityType: EntityType.golem,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.002,
       maxDensity: 0.004,
       spawnableTileTypes: [TileType.rock],
@@ -232,7 +234,7 @@ export const SPAWN_INFOS = [
    },
    {
       entityType: EntityType.tribeWorker,
-      layerType: LayerType.surface,
+      layer: surfaceLayer,
       spawnRate: 0.002,
       maxDensity: 0.002,
       spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
@@ -242,13 +244,12 @@ export const SPAWN_INFOS = [
       minSpawnDistance: 100,
       usesSpawnDistribution: false,
       customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
-         const layer = getLayerByType(spawnInfo.layerType);
-         return tribesmanSpawnPositionIsValid(layer, spawnOriginX, spawnOriginY);
+         return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
       }
    },
    {
       entityType: EntityType.glurb,
-      layerType: LayerType.underground,
+      layer: undergroundLayer,
       spawnRate: 0.0025,
       maxDensity: 0.004,
       spawnableTileTypes: [TileType.stone],
@@ -294,4 +295,49 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
    }
 
    return true;
+}
+
+export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: number): boolean {
+   const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = surfaceLayer.getChunk(chunkX, chunkY);
+
+         for (const steppingStone of chunk.riverSteppingStones) {
+            const dist = distance(x, y, steppingStone.positionX, steppingStone.positionY) - RIVER_STEPPING_STONE_SIZES[steppingStone.size] * 0.5;
+            
+            if (dist < checkRadius) {
+               return true;
+            }
+         }
+      }
+   }
+
+   return false;
+}
+
+const isTooCloseToReedOrLilypad = (layer: Layer, x: number, y: number): boolean => {
+   // Don't overlap with reeds at all
+   let entities = getEntitiesInRange(layer, x, y, 24);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.reed) {
+         return true;
+      }
+   }
+
+   // Only allow overlapping slightly with other lilypads
+   entities = getEntitiesInRange(layer, x, y, 24 - 6);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.lilypad) {
+         return true;
+      }
+   }
+
+   return false;
 }

@@ -19,6 +19,7 @@ import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
+import { getLayerInfo } from "../layers";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -81,7 +82,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
    const position = transformComponent.position.copy();
    const layer = getEntityLayer(blueprintEntity);
-   const connectionInfo = calculateStructureConnectionInfo(position, transformComponent.rotation, entityType, layer.getWorldInfo());
+   const connectionInfo = calculateStructureConnectionInfo(position, transformComponent.rotation, entityType, getLayerInfo(layer));
    
    // @Copynpaste
    switch (blueprintComponent.blueprintType) {

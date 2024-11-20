@@ -52,7 +52,8 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    
    const recipe = getItemRecipe(tribesmanComponent.craftingItemType);
    if (recipe === null) {
-      console.warn("No recipe");
+      // @Temporary
+      // console.warn("No recipe");
       return;
    }
    

@@ -62,6 +62,7 @@ import { createBracingsConfig } from "../structures/bracings";
 import { Hitbox } from "../../../../shared/src/boxes/boxes";
 import { createFireTorchConfig } from "../structures/fire-torch";
 import { createSlurbTorchConfig } from "../structures/slurb-torch";
+import { getLayerInfo } from "../../layers";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -340,7 +341,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
          
          const structureType = ITEM_INFO_RECORD[item.type as PlaceableItemType].entityType;
-         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getEntityLayer(tribeMember).getWorldInfo());
+         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
 
          // Make sure the placeable item can be placed
          if (!placeInfo.isValid) return;

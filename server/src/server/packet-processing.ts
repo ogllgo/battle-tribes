@@ -7,7 +7,7 @@ import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { TransformComponentArray } from "../components/TransformComponent";
+import { getEntityTile, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
 import { calculateRadialAttackTargets, getAvailableCraftingStations, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
@@ -19,12 +19,14 @@ import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./game-data-packets";
 import { createItem } from "../items";
-import { entityExists, getEntityLayer, surfaceLayer } from "../world";
+import { changeEntityLayer, entityExists, getEntityLayer } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { CRAFTING_RECIPES } from "../../../shared/src/items/crafting-recipes";
+import { surfaceLayer, undergroundLayer } from "../layers";
+import { TileType } from "../../../shared/src/tiles";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -181,7 +183,7 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
       layer = surfaceLayer;
    }
 
-   const config = createPlayerConfig(playerClient.tribe, playerClient.username);
+   const config = createPlayerConfig(playerClient.tribe, playerClient);
    config.components[ServerComponentType.transform].position.x = spawnPosition.x;
    config.components[ServerComponentType.transform].position.y = spawnPosition.y;
    config.components[ServerComponentType.tribe].tribe = playerClient.tribe;
@@ -491,5 +493,21 @@ export function processPlayerCraftingPacket(playerClient: PlayerClient, reader: 
 
    if (inventoryComponentCanAffordRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot)) {
       craftRecipe(player, inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);
+   }
+}
+
+export function processAscendPacket(playerClient: PlayerClient): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const currentLayer = getEntityLayer(player);
+   if (currentLayer === undergroundLayer) {
+      const transformComponent = TransformComponentArray.getComponent(player);
+      const tileAbove = getEntityTile(transformComponent);
+      if (surfaceLayer.getTileType(tileAbove) === TileType.dropdown) {
+         changeEntityLayer(player, surfaceLayer);
+      }
    }
 }

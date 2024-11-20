@@ -2,23 +2,23 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { tickTribes } from "./ai-tribe-building/ai-building";
 import Layer from "./Layer";
-import { removeEntityFromCensus } from "./census";
+import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityRemoval } from "./server/player-clients";
 import Tribe from "./Tribe";
-import { TerrainGenerationInfo } from "./world-generation/surface-terrain-generation";
 import Chunk from "./Chunk";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
+import { layers, surfaceLayer, undergroundLayer } from "./layers";
+import generateSurfaceTerrain from "./world-generation/surface-terrain-generation";
+import { generateUndergroundTerrain } from "./world-generation/underground-terrain-generation";
+import OPTIONS from "./options";
+import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
+import { markWallTileInPathfinding } from "./pathfinding";
 
 const enum Vars {
    START_TIME = 6
-}
-
-export const enum LayerType {
-   surface,
-   underground
 }
 
 interface EntityJoinInfo {
@@ -29,10 +29,6 @@ interface EntityJoinInfo {
    /** Number of ticks remaining until the entity will be added. */
    ticksRemaining: number;
 }
-
-export let surfaceLayer: Layer;
-export let undergroundLayer: Layer;
-export const layers = new Array<Layer>();
 
 let ticks = 0;
 /** The time of day the server is currently in. Interval: [0, 24) */
@@ -49,15 +45,33 @@ const tribes = new Array<Tribe>();
 const entityJoinBuffer = new Array<EntityJoinInfo>();
 const entityRemoveBuffer = new Array<Entity>();
 
-export function createLayers(surfaceTerrainGenerationInfo: TerrainGenerationInfo, undergroundTerrainGenerationInfo: TerrainGenerationInfo): void {
-   surfaceLayer = new Layer(surfaceTerrainGenerationInfo);
-   layers.push(surfaceLayer);
-   undergroundLayer = new Layer(undergroundTerrainGenerationInfo);
-   layers.push(undergroundLayer);
-}
+// @Cleanup: this should probs be in the layers file
+export function generateLayers(): void {
+   generateSurfaceTerrain(surfaceLayer);
+   generateUndergroundTerrain(surfaceLayer, undergroundLayer);
 
-export function getLayerByType(type: LayerType): Layer {
-   return type === LayerType.surface ? surfaceLayer : undergroundLayer;
+   runTileCensuses();
+
+   // @Cleanup: make into function
+   for (const layer of layers) {
+      if (OPTIONS.generateWalls) {
+         for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+            for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+               if (tileHasWallSubtile(layer.wallSubtileTypes, tileX, tileY)) {
+                  // Mark which chunks have wall tiles
+                  const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
+                  const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
+                  const chunk = layer.getChunk(chunkX, chunkY);
+                  chunk.hasWallTiles = true;
+                  
+                  // @Incomplete: This system is outdated! Should account for wall subtiles
+                  // Mark inaccessible pathfinding nodes
+                  markWallTileInPathfinding(layer, tileX, tileY);
+               }
+            }
+         }
+      }
+   }
 }
 
 export function getGameTicks(): number {
@@ -353,4 +367,13 @@ export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    transformComponent.chunks = newChunks;
 
    entityLayers[entity] = newLayer;
+}
+
+export function tickIntervalHasPassed(intervalSeconds: number): boolean {
+   const ticksPerInterval = intervalSeconds * Settings.TPS;
+   
+   const gameTicks = getGameTicks();
+   const previousCheck = (gameTicks - 1) / ticksPerInterval;
+   const check = gameTicks / ticksPerInterval;
+   return Math.floor(previousCheck) !== Math.floor(check);
 }

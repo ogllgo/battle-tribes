@@ -1001,6 +1001,24 @@ export const enum InventoryName {
    devInventory
 }
 
+export const InventoryNameString: Record<InventoryName, string> = {
+   [InventoryName.hotbar]: "Hotbar",
+   [InventoryName.offhand]: "Offhand",
+   [InventoryName.craftingOutputSlot]: "Crafting Output Slot",
+   [InventoryName.heldItemSlot]: "Held Item Slot",
+   [InventoryName.armourSlot]: "Armour Slot",
+   [InventoryName.backpackSlot]: "Backpack Slot",
+   [InventoryName.gloveSlot]: "Glove Slot",
+   [InventoryName.backpack]: "Backpack",
+   [InventoryName.fuelInventory]: "Fuel Inventory",
+   [InventoryName.ingredientInventory]: "Ingredient Inventory",
+   [InventoryName.outputInventory]: "Output Inventory",
+   [InventoryName.inventory]: "Inventory",
+   [InventoryName.handSlot]: "Hand Slot",
+   [InventoryName.ammoBoxInventory]: "Ammo Box Inventory",
+   [InventoryName.devInventory]: "Dev Inventory"
+};
+
 /** Inventory data sent between client and server */
 export interface InventoryData {
    width: number;

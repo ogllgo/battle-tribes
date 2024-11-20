@@ -6,10 +6,11 @@ import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNois
 import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo, TileGenerationRequirements } from "./terrain-generation-info";
 import { WaterTileGenerationInfo, generateRiverFeatures, generateRiverTiles } from "./river-generation";
 import OPTIONS from "../options";
-import { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
+import { generateReeds } from "./reed-generation";
 
 export interface TerrainGenerationInfo {
    readonly tileTypes: Float32Array;
@@ -283,35 +284,26 @@ const groupLocalBiomes = (tileBiomes: Readonly<Float32Array>): ReadonlyArray<Loc
    return localBiomes;
 }
 
-function generateSurfaceTerrain(): TerrainGenerationInfo {
-   const tileBiomes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   const tileTypes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   // @Memory: This takes up an awful lot of memory, but the number of tiles which need this information is very few
-   const riverFlowDirections = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   const tileTemperatures = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   const tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-
-   const subtileTypes = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   
+function generateSurfaceTerrain(surfaceLayer: Layer): void {
    // Generate the noise
    const heightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, HEIGHT_NOISE_SCALE, 3, 1.5, 0.75);
    const temperatureMap = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, TEMPERATURE_NOISE_SCALE);
    const humidityMap = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, HUMIDITY_NOISE_SCALE);
 
-   // Create temperature and humidity arrays
+   // Fill temperature and humidity arrays
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
       for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          
          const rawTemperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
-         tileTemperatures[tileIndex] = smoothstep(rawTemperature);
+         surfaceLayer.tileTemperatures[tileIndex] = smoothstep(rawTemperature);
          
          const rawHumidity = humidityMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
-         tileHumidities[tileIndex] = smoothstep(rawHumidity);
+         surfaceLayer.tileHumidities[tileIndex] = smoothstep(rawHumidity);
       }
    }
    
-   // Create tile biomes
+   // Fill tile biomes
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
       for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          const height = heightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
@@ -321,7 +313,7 @@ function generateSurfaceTerrain(): TerrainGenerationInfo {
          const biome = getBiome(height, temperature, humidity);
          
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         tileBiomes[tileIndex] = biome;
+         surfaceLayer.tileBiomes[tileIndex] = biome;
       }
    }
 
@@ -338,47 +330,35 @@ function generateSurfaceTerrain(): TerrainGenerationInfo {
    }
 
    // Generate tiles
-   generateTileInfo(tileBiomes, tileTypes, subtileTypes);
+   generateTileInfo(surfaceLayer.tileBiomes, surfaceLayer.tileTypes, surfaceLayer.wallSubtileTypes);
 
    // Create flow directions array and create ice rivers
    for (const tileInfo of riverTiles) {
       const tileIndex = getTileIndexIncludingEdges(tileInfo.tileX, tileInfo.tileY);
       
       // Make ice rivers
-      if (tileBiomes[tileIndex] === Biome.tundra) {
-         tileTypes[tileIndex] = TileType.ice;
+      if (surfaceLayer.tileBiomes[tileIndex] === Biome.tundra) {
+         surfaceLayer.tileTypes[tileIndex] = TileType.ice;
       } else {
-         tileBiomes[tileIndex] = Biome.river;
-         tileTypes[tileIndex] = TileType.water;
+         surfaceLayer.tileBiomes[tileIndex] = Biome.river;
+         surfaceLayer.tileTypes[tileIndex] = TileType.water;
       }
       
       // @Incomplete
       // tileIsWalls[tileIndex] = 0;
 
-      riverFlowDirections[tileIndex] = tileInfo.flowDirectionIdx;
+      surfaceLayer.riverFlowDirections[tileIndex] = tileInfo.flowDirectionIdx;
    }
 
-   const waterRocks = new Array<WaterRockData>();
-   const riverSteppingStones = new Array<RiverSteppingStoneData>();
-   generateRiverFeatures(riverTiles, waterRocks, riverSteppingStones);
+   generateRiverFeatures(riverTiles, surfaceLayer.waterRocks, surfaceLayer.riverSteppingStones);
 
-   const localBiomes = groupLocalBiomes(tileBiomes);
+   const localBiomes = groupLocalBiomes(surfaceLayer.tileBiomes);
 
    if (OPTIONS.generateCaves) {
-      generateCaveEntrances(tileTypes, tileBiomes, subtileTypes, localBiomes);
+      generateCaveEntrances(surfaceLayer.tileTypes, surfaceLayer.tileBiomes, surfaceLayer.wallSubtileTypes, localBiomes);
    }
-
-   return {
-      tileTypes: tileTypes,
-      tileBiomes: tileBiomes,
-      subtileTypes: subtileTypes,
-      riverFlowDirections: riverFlowDirections,
-      tileTemperatures: tileTemperatures,
-      tileHumidities: tileHumidities,
-      riverMainTiles: riverMainTiles,
-      waterRocks: waterRocks,
-      riverSteppingStones: riverSteppingStones,
-   };
+   
+   generateReeds(riverMainTiles);
 }
 
 export default generateSurfaceTerrain;

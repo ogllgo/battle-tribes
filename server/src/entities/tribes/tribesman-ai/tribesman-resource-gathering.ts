@@ -5,7 +5,7 @@ import { InventoryComponentArray, getInventory, inventoryIsFull } from "../../..
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
 import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
-import { clearTribesmanPath, getTribesmanRadius, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getTribesmanRadius, moveTribesmanToDifferentLayer, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
@@ -15,7 +15,19 @@ import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { huntEntity } from "./tribesman-combat-ai";
 import { TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityType } from "../../../world";
+import { getEntityLayer, getEntityType } from "../../../world";
+import Layer from "../../../Layer";
+import { surfaceLayer } from "../../../layers";
+
+interface MaterialInfo {
+   readonly layer: Layer;
+}
+
+const MATERIAL_INFO_RECORD: Partial<Record<ItemType, MaterialInfo>> = {
+   [ItemType.slimeball]: {
+      layer: surfaceLayer
+   }
+};
 
 const getResourceProducts = (entity: Entity): ReadonlyArray<ItemType> => {
    switch (getEntityType(entity)) {
@@ -197,11 +209,26 @@ export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyAr
       return true;
    }
    
-   // Gather resources
+   // See if there are any entities they can harvest
    const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemTypes);
    if (harvestTarget !== null) {
       huntEntity(tribesman, harvestTarget, false);
       return true;
+   }
+
+   // If the entity isn't in the right layer to get the resources, go to the correct layer
+   const layer = getEntityLayer(tribesman);
+   for (const itemType of gatheredItemTypes) {
+      const materialInfo = MATERIAL_INFO_RECORD[itemType];
+      if (typeof materialInfo === "undefined") {
+         continue;
+      }
+
+      if (layer !== materialInfo.layer) {
+         // Go to the correct layer
+         moveTribesmanToDifferentLayer(tribesman, materialInfo.layer);
+         return true;
+      }
    }
 
    return false;

@@ -28,6 +28,7 @@ import { entitiesAreColliding, CollisionVars } from "../collision";
 import { addGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { getEntitiesAtPosition } from "../layer-utils";
 
 const enum Vars {
    MIN_POOP_PRODUCTION_COOLDOWN = 5 * Settings.TPS,
@@ -286,7 +287,7 @@ function onTick(cow: Entity): void {
          const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.rotation);
          if (positionIsInWorld(testPositionX, testPositionY)) {
             // @Hack? The only place which uses this weird function
-            const testEntities = layer.getEntitiesAtPosition(testPositionX, testPositionY);
+            const testEntities = getEntitiesAtPosition(layer, testPositionX, testPositionY);
             if (testEntities.indexOf(cowComponent.targetBushID) !== -1) {
                cowComponent.bushShakeTimer++;
                if (cowComponent.bushShakeTimer >= 1.5 * Settings.TPS) {

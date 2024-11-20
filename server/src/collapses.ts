@@ -4,8 +4,9 @@ import { SubtileType } from "../../shared/src/tiles";
 import { customTickIntervalHasPassed, distance } from "../../shared/src/utils";
 import { TransformComponent } from "./components/TransformComponent";
 import Layer from "./Layer";
+import { layers } from "./layers";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
-import { getGameTicks, layers } from "./world";
+import { getGameTicks } from "./world";
 
 const enum Vars {
    MAX_SUPPORT = 100,
@@ -109,6 +110,35 @@ export function registerMinedSubtile(layer: Layer, subtileIndex: number, subtile
       support: support
    };
    layer.minedSubtileInfoMap.set(subtileIndex, minedSubtileInfo);
+}
+
+export function damageWallSubtitle(layer: Layer, subtileIndex: number, damage: number): number {
+   let damageDealt: number;
+   if (!layer.wallSubtileDamageTakenMap.has(subtileIndex)) {
+      damageDealt = Math.min(damage, 3);
+      layer.wallSubtileDamageTakenMap.set(subtileIndex, damageDealt);
+   } else {
+      // @Cleanup: '!'
+      const previousDamageTaken = layer.wallSubtileDamageTakenMap.get(subtileIndex)!;
+      damageDealt = Math.min(damage, 3 - previousDamageTaken);
+      layer.wallSubtileDamageTakenMap.set(subtileIndex, previousDamageTaken + damageDealt);
+   }
+
+   // @Cleanup: '!'
+   const damageTaken = layer.wallSubtileDamageTakenMap.get(subtileIndex)!;
+   if (damageTaken >= 3) {
+      const previousSubtileType = layer.wallSubtileTypes[subtileIndex];
+      layer.wallSubtileTypes[subtileIndex] = SubtileType.none;
+      registerMinedSubtile(layer, subtileIndex, previousSubtileType);
+   }
+
+   layer.wallSubtileUpdates.push({
+      subtileIndex: subtileIndex,
+      subtileType: layer.wallSubtileTypes[subtileIndex],
+      damageTaken: damageTaken
+   });
+
+   return damageDealt;
 }
 
 const startCollapse = (layer: Layer, originSubtileIndex: number): void => {

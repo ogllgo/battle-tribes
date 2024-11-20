@@ -25,6 +25,7 @@ import { doBlueprintWork } from "./BlueprintComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { TribesmanTitle } from "../../../shared/src/titles";
 import { hasTitle } from "./TribeMemberComponent";
+import { damageWallSubtitle } from "../collapses";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -550,7 +551,7 @@ function onTick(entity: Entity): void {
                      }
                      
                      const subtileIndex = heldItemCollidingSubtiles[i];
-                     const damageDealt = layer.damageWallSubtitle(subtileIndex, itemInfo.wallDamage);
+                     const damageDealt = damageWallSubtitle(layer, subtileIndex, itemInfo.wallDamage);
 
                      limb.heldItemDamageBox.wallSubtileDamageGiven += damageDealt;
                   }

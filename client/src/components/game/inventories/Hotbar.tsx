@@ -1,9 +1,8 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useReducer, useState } from "react";
 import Game from "../../../Game";
-import { Inventory, InventoryName } from "battletribes-shared/items/items";
+import { Inventory } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
-import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
 import { playerInstance } from "../../../world";
@@ -17,6 +16,10 @@ export let Hotbar_updateLeftThrownBattleaxeItemID: (leftThrownBattleaxeItemID: n
 
 interface HotbarProps {
    readonly hotbar: Inventory;
+   readonly offhand: Inventory;
+   readonly backpackSlot: Inventory;
+   readonly armourSlot: Inventory;
+   readonly gloveSlot: Inventory;
    readonly hotbarItemRestTimes: ReadonlyArray<ItemRestTime>;
    readonly offhandItemRestTimes: ReadonlyArray<ItemRestTime>;
 }
@@ -46,32 +49,27 @@ const Hotbar = (props: HotbarProps) => {
       }
    }, []);
 
-   const playerID = playerInstance || undefined;
-   
-   const inventoryComponent = playerInstance !== null ? InventoryComponentArray.getComponent(playerInstance) : undefined;
-   const offhand = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.offhand) : null;
-   const backpackSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpackSlot) : null;
-   const armourSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.armourSlot) : null;
-   const gloveSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.gloveSlot) : null;
+   const playerID = playerInstance !== null ? playerInstance : undefined;
 
    return <div id="hotbar">
       <div className="flex-container">
          <EmptyItemSlot className="hidden" />
          <EmptyItemSlot className="hidden" />
          <div className={"inventory" + (Game.tribe.tribeType !== TribeType.barbarians ? " hidden" : "")}>
-            <InventoryContainer entityID={playerID} inventory={offhand} itemRestTimes={props.offhandItemRestTimes} />
+            <InventoryContainer entityID={playerID} inventory={props.offhand} itemRestTimes={props.offhandItemRestTimes} />
          </div>
       </div>
       <div className="middle">
          <div className="inventory">
+            {/* @Hack */}
             <InventoryContainer entityID={playerID} inventory={props.hotbar} itemRestTimes={props.hotbarItemRestTimes} selectedItemSlot={getHotbarSelectedItemSlot()} />
          </div>
       </div>
       <div className="flex-container">
          <div className="inventory">
-            <InventoryContainer entityID={playerID} inventory={backpackSlot} />
-            <InventoryContainer entityID={playerID} inventory={armourSlot} />
-            <InventoryContainer entityID={playerID} inventory={gloveSlot} />
+            <InventoryContainer entityID={playerID} inventory={props.backpackSlot} />
+            <InventoryContainer entityID={playerID} inventory={props.armourSlot} />
+            <InventoryContainer entityID={playerID} inventory={props.gloveSlot} />
          </div>
       </div>
    </div>;

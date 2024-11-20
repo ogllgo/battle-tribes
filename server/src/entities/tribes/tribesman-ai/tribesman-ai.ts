@@ -725,6 +725,7 @@ export function tickTribesman(tribesman: Entity): void {
    //    }
    // }
 
+   // @Speed: do we need to calculate this every tick?
    const goals = getTribesmanGoals(tribesman, hotbarInventory);
 
    // @Cleanup: don't use null
@@ -732,7 +733,7 @@ export function tickTribesman(tribesman: Entity): void {
    tribesmanAIComponent.goals = goals;
    
    if (goal !== null) {
-      // @Cleanup: messy. this whole system kinda sucks
+      // @Cleanup: messy. this whole bit kinda sucks
       if (goal.type === TribesmanGoalType.craftRecipe || goal.type === TribesmanGoalType.placeBuilding || goal.type === TribesmanGoalType.upgradeBuilding) {
          if (goal.isPersonalPlan && goal.plan !== null) {
             // @Cleanup: copy and paste

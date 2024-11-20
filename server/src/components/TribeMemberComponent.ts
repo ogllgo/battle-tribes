@@ -56,7 +56,7 @@ TribeMemberComponentArray.onEntityCollision = onEntityCollision;
 const getHotbarSize = (entityType: TribesmanEntityType): number => {
    switch (entityType) {
       case EntityType.player: return Settings.INITIAL_PLAYER_HOTBAR_SIZE;
-      case EntityType.tribeWorker: return 5;
+      case EntityType.tribeWorker: return 7;
       case EntityType.tribeWarrior: return 5;
    }
 }

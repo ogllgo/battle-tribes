@@ -2,10 +2,10 @@ import { PotentialBuildingPlanData } from "battletribes-shared/ai-building-types
 import { BlueprintType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import Tribe, { BuildingPlanType, BuildingUpgradePlan, VirtualBuilding } from "../Tribe";
+import Tribe, { BuildingPlanType, BuildingUpgradePlan, TribeLayerBuildingInfo, VirtualBuilding } from "../Tribe";
 import { SafetyNode, getSafetyNode, placeVirtualBuilding } from "./ai-building";
-import { LayerType } from "../world";
 import { createNormalStructureHitboxes } from "../../../shared/src/boxes/entity-hitbox-creation";
+import Layer from "../Layer";
 
 export const enum TribeDoorType {
    outside,
@@ -19,6 +19,7 @@ export interface TribeDoorInfo {
 
 export interface TribeArea {
    readonly id: number;
+   readonly layer: Layer;
    readonly containedNodes: Set<SafetyNode>;
    readonly connectedWallIDs: ReadonlyArray<number>;
    readonly connectedDoors: ReadonlyArray<TribeDoorInfo>;
@@ -31,8 +32,7 @@ const getRoundedSafetyNode = (nodeX: number, nodeY: number): number => {
 const getDoorType = (tribe: Tribe, door: VirtualBuilding): TribeDoorType => {
    // If any of the top or bottom nodes are not in an area, then the door leads outside
 
-   // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[door.layer.depth];
 
    const topNodeOffsetX = Math.sin(door.rotation);
    const topNodeOffsetY = Math.cos(door.rotation);
@@ -63,14 +63,11 @@ const getDoorType = (tribe: Tribe, door: VirtualBuilding): TribeDoorType => {
    return TribeDoorType.enclosed;
 }
 
-export function createTribeArea(tribe: Tribe, nodes: Set<SafetyNode>, id: number, encounteredOccupiedNodeIndexes: Set<SafetyNode>): TribeArea {
+export function createTribeArea(tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo, nodes: Set<SafetyNode>, id: number, encounteredOccupiedNodeIndexes: Set<SafetyNode>): TribeArea {
    const connectedWallIDs = new Array<number>();
    const connectedDoors = new Array<TribeDoorInfo>();
    const seenBuildingIDs = new Set<SafetyNode>();
 
-   // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
-   
    // @Incomplete
    for (const nodeIndex of encounteredOccupiedNodeIndexes) {
       const buildingIDs = buildingInfo.occupiedNodeToEntityIDRecord[nodeIndex];
@@ -105,6 +102,7 @@ export function createTribeArea(tribe: Tribe, nodes: Set<SafetyNode>, id: number
 
    return {
       id: id,
+      layer: layer,
       containedNodes: nodes,
       connectedWallIDs: connectedWallIDs,
       connectedDoors: connectedDoors
@@ -132,10 +130,7 @@ export function areaHasOutsideDoor(area: TribeArea): boolean {
    return false;
 }
 
-const sidesFormValidOutsideDoor = (tribe: Tribe, area: TribeArea, innerSideNodes: Array<SafetyNode>, outerSideNodes: Array<SafetyNode>): boolean => {
-   // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
-
+const sidesFormValidOutsideDoor = (buildingInfo: TribeLayerBuildingInfo, area: TribeArea, innerSideNodes: Array<SafetyNode>, outerSideNodes: Array<SafetyNode>): boolean => {
    // Make sure the inner nodes are all in the area and aren't occupied
    // Skip the first and last side nodes so that U-type wall structures can create walls
    for (let i = 1; i < innerSideNodes.length - 1; i++) {
@@ -158,7 +153,7 @@ const sidesFormValidOutsideDoor = (tribe: Tribe, area: TribeArea, innerSideNodes
 
 export function getOutsideDoorPlacePlan(tribe: Tribe, area: TribeArea): BuildingUpgradePlan | null {
    // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[area.layer.depth];
 
    let plan: BuildingUpgradePlan | null = null;
    const potentialPlans = new Array<PotentialBuildingPlanData>();   
@@ -169,13 +164,13 @@ export function getOutsideDoorPlacePlan(tribe: Tribe, area: TribeArea): Building
 
       // Make sure it has one side fully in the area, and the opposite side fully outside.
       let doorRotation: number;
-      if (sidesFormValidOutsideDoor(tribe, area, wallInfo.topSideNodes, wallInfo.bottomSideNodes) && (wallInfo.connectionBitset & 0b1000) !== 0 && (wallInfo.connectionBitset & 0b0010) !== 0) {
+      if (sidesFormValidOutsideDoor(buildingInfo, area, wallInfo.topSideNodes, wallInfo.bottomSideNodes) && (wallInfo.connectionBitset & 0b1000) !== 0 && (wallInfo.connectionBitset & 0b0010) !== 0) {
          doorRotation = wallInfo.wall.rotation;
-      } else if (sidesFormValidOutsideDoor(tribe, area, wallInfo.rightSideNodes, wallInfo.leftSideNodes) && (wallInfo.connectionBitset & 0b0100) !== 0 && (wallInfo.connectionBitset & 0b0001) !== 0) {
+      } else if (sidesFormValidOutsideDoor(buildingInfo, area, wallInfo.rightSideNodes, wallInfo.leftSideNodes) && (wallInfo.connectionBitset & 0b0100) !== 0 && (wallInfo.connectionBitset & 0b0001) !== 0) {
          doorRotation = wallInfo.wall.rotation + Math.PI/2;
-      } else if (sidesFormValidOutsideDoor(tribe, area, wallInfo.bottomSideNodes, wallInfo.topSideNodes) && (wallInfo.connectionBitset & 0b1000) !== 0 && (wallInfo.connectionBitset & 0b0010) !== 0) {
+      } else if (sidesFormValidOutsideDoor(buildingInfo, area, wallInfo.bottomSideNodes, wallInfo.topSideNodes) && (wallInfo.connectionBitset & 0b1000) !== 0 && (wallInfo.connectionBitset & 0b0010) !== 0) {
          doorRotation = wallInfo.wall.rotation + Math.PI;
-      } else if (sidesFormValidOutsideDoor(tribe, area, wallInfo.leftSideNodes, wallInfo.rightSideNodes) && (wallInfo.connectionBitset & 0b0100) !== 0 && (wallInfo.connectionBitset & 0b0001) !== 0) {
+      } else if (sidesFormValidOutsideDoor(buildingInfo, area, wallInfo.leftSideNodes, wallInfo.rightSideNodes) && (wallInfo.connectionBitset & 0b0100) !== 0 && (wallInfo.connectionBitset & 0b0001) !== 0) {
          doorRotation = wallInfo.wall.rotation + Math.PI*3/2;
       } else {
          continue;
@@ -185,7 +180,7 @@ export function getOutsideDoorPlacePlan(tribe: Tribe, area: TribeArea): Building
    
       const virtualBuildingID = tribe.virtualEntityIDCounter++;
       const hitboxes = createNormalStructureHitboxes(EntityType.door);
-      const virtualBuilding = placeVirtualBuilding(tribe, wallInfo.wall.position, doorRotation, EntityType.door, hitboxes, virtualBuildingID);
+      const virtualBuilding = placeVirtualBuilding(tribe, area.layer, wallInfo.wall.position, doorRotation, EntityType.door, hitboxes, virtualBuildingID);
    
       let isValidPosition = true;
       for (const node of virtualBuilding.occupiedNodes) {

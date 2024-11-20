@@ -14,6 +14,7 @@ import { PhysicsComponentArray } from "../../../entity-components/server-compone
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
 import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "../inventories/InventoryContainer";
+import { InventoryNameString } from "../../../../../shared/src/items/items";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -120,10 +121,13 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
          const inventoryComponent = InventoryComponentArray.getComponent(entity);
 
          return <>
-            {inventoryComponent.inventories.map(inventory => {
-               return <InventoryContainer inventory={inventory} />
+            {inventoryComponent.inventories.map((inventory, i) => {
+               return <div key={i}>
+                  <p>{InventoryNameString[inventory.name]}</p>
+                  <InventoryContainer inventory={inventory} />
+                  <br/>
+               </div>
             })}
-            <p>E</p>
          </>;
       })() : undefined}
 

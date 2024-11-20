@@ -7,7 +7,7 @@ import { TribesmanPathType, TribesmanAIComponentArray } from "../../../component
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, pathfind, smoothPath, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, pathIsClear } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { distance, angle } from "battletribes-shared/utils";
+import { distance, angle, assert, TileIndex } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -15,10 +15,15 @@ import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../../components/TribeMemberComponent";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
 import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo } from "battletribes-shared/items/items";
-import { TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
+import { getEntityTile, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
+import { changeEntityLayer, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../../../Layer";
+import { surfaceLayer } from "../../../layers";
+import { TileType } from "../../../../../shared/src/tiles";
+import { TribesmanAIType } from "../../../../../shared/src/components";
+import { getTilesOfType } from "../../../census";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -206,6 +211,7 @@ const continueCurrentPath = (tribesman: Entity, goalX: number, goalY: number): b
    if (path.length > 0) {
       const footprint = getEntityFootprint(getTribesmanRadius(transformComponent));
 
+      // @Cleanup: is this even needed?
       // If the path is clear, just move in a direct line to the goal
       if (pathIsClear(layer, transformComponent.position.x, transformComponent.position.y, goalX, goalY, tribeComponent.tribe.pathfindingGroupID, footprint)) {
          const targetDirection = angle(goalX - transformComponent.position.x, goalY - transformComponent.position.y);
@@ -440,4 +446,71 @@ export function getBestToolItemSlot(inventory: Inventory, toolCategory: keyof It
    }
 
    return bestItemSlot;
+}
+
+// @Incomplete: we don't want to find the closest in terms of absolute distance, we want the closest in terms of walking distance.
+const findClosestDropdownTile = (tribesman: Entity): TileIndex => {
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+
+   const dropdownTiles = getTilesOfType(surfaceLayer, TileType.dropdown);
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestTileIndex = 0;
+   for (const tileIndex of dropdownTiles) {
+      const tileX = getTileX(tileIndex);
+      const tileY = getTileY(tileIndex);
+
+      const x = (tileX + 0.5) * Settings.TILE_SIZE;
+      const y = (tileY + 0.5) * Settings.TILE_SIZE;
+
+      const dist = distance(transformComponent.position.x, transformComponent.position.y, x, y);
+      if (dist < minDist) {
+         minDist = dist;
+         closestTileIndex = tileIndex;
+      }
+   }
+
+   return closestTileIndex;
+}
+
+export function moveTribesmanToDifferentLayer(tribesman: Entity, targetLayer: Layer): void {
+   const currentLayer = getEntityLayer(tribesman);
+   assert(currentLayer !== targetLayer);
+
+   // If the entity is currently in position to change layers, do so
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const currentTileIndex = getEntityTile(transformComponent);
+   if (surfaceLayer.getTileType(currentTileIndex) === TileType.dropdown) {
+      changeEntityLayer(tribesman, targetLayer);
+      return;
+   }
+
+   // Check if the entity is already on the way to the target layer
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   
+   // @Cleanup: should probs be moved to a helper function somehow?
+   const nodeX = tribesmanAIComponent.pathfindingTargetNode % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
+   const nodeY = Math.floor(tribesmanAIComponent.pathfindingTargetNode / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
+
+   const tileX = nodeX >> 2;
+   const tileY = nodeY >> 2;
+   const tileType = surfaceLayer.getTileXYType(tileX, tileY);
+
+   // If the tribesman isn't on a path to change layers, set the path
+   if (tileType !== TileType.dropdown) {
+      const targetDropdownTile = findClosestDropdownTile(tribesman);
+
+      const tileX = getTileX(targetDropdownTile);
+      const tileY = getTileY(targetDropdownTile);
+      const x = (tileX + 0.5) * Settings.TILE_SIZE;
+      const y = (tileY + 0.5) * Settings.TILE_SIZE;
+      
+      pathfindToPosition(tribesman, x, y, 0, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+   } else {
+      const x = (tileX + 0.5) * Settings.TILE_SIZE;
+      const y = (tileY + 0.5) * Settings.TILE_SIZE;
+      continueCurrentPath(tribesman, x, y);
+   }
+
+   tribesmanAIComponent.currentAIType = TribesmanAIType.changeLayers;
 }

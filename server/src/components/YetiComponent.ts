@@ -19,7 +19,8 @@ import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType, surfaceLayer } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { surfaceLayer } from "../layers";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,

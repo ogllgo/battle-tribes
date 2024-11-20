@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { SLIME_MAX_MERGE_WANT, SLIME_MERGE_TIME, SLIME_MERGE_WEIGHTS, SLIME_RADII, SLIME_SPEED_MULTIPLIERS, SPIT_CHARGE_TIME_TICKS, SPIT_COOLDOWN_TICKS, SlimeEntityAnger } from "../entities/mobs/slime";
-import Layer from "../Layer";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -14,7 +13,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
-import { entityExists, getEntityLayer, getEntityType, getGameTicks } from "../world";
+import { entityExists, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "./ItemComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -31,7 +30,6 @@ const enum Vars {
    HEALING_ON_SLIME_PER_SECOND = 0.5,
    HEALING_PROC_INTERVAL = 0.1
 }
-
 
 export class SlimeComponent {
    public readonly size: SlimeSize;
@@ -215,7 +213,7 @@ function onTick(slime: Entity): void {
 
    // Heal when standing on slime blocks
    if (tileType === TileType.slime) {
-      if (Layer.tickIntervalHasPassed(Vars.HEALING_PROC_INTERVAL)) {
+      if (tickIntervalHasPassed(Vars.HEALING_PROC_INTERVAL)) {
          healEntity(slime, Vars.HEALING_ON_SLIME_PER_SECOND * Vars.HEALING_PROC_INTERVAL, slime);
       }
    }

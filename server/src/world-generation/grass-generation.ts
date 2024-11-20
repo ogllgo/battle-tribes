@@ -5,7 +5,8 @@ import { createGrassStrandConfig } from "../entities/grass-strand";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { distance, TileIndex } from "battletribes-shared/utils";
-import { pushJoinBuffer, surfaceLayer } from "../world";
+import { pushJoinBuffer } from "../world";
+import { surfaceLayer } from "../layers";
 
 const enum Vars {
    /** Average number of grass strands per tile in a fully humidified area. */

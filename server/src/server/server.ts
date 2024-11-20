@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randInt, TileIndex } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { noteSpawnableTiles, runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -18,22 +18,20 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
-import { generateReeds } from "../world-generation/reed-generation";
-import generateSurfaceTerrain from "../world-generation/surface-terrain-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { createLayers, destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, layers, pushJoinBuffer, surfaceLayer, tickGameTime, tickEntities, updateTribes } from "../world";
-import { generateUndergroundTerrain } from "../world-generation/underground-terrain-generation";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pushJoinBuffer, tickGameTime, tickEntities, updateTribes, generateLayers } from "../world";
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { generateSpikyBastards } from "../world-generation/spiky-bastard-generation";
+import { surfaceLayer, layers } from "../layers";
 
 /*
 
@@ -129,9 +127,7 @@ class GameServer {
       // Setup
       sortComponentArrays();
       console.log("Generating terrain...")
-      const surfaceTerrainGenerationInfo = generateSurfaceTerrain();
-      const undergroundTerrainGenerationInfo = generateUndergroundTerrain(surfaceTerrainGenerationInfo);
-      createLayers(surfaceTerrainGenerationInfo, undergroundTerrainGenerationInfo);
+      generateLayers();
       console.log("terrain",performance.now() - a)
       a = performance.now();
 
@@ -153,9 +149,6 @@ class GameServer {
       a = performance.now();
       generateDecorations();
       console.log("decorations",performance.now() - a)
-      a = performance.now();
-      generateReeds(surfaceTerrainGenerationInfo.riverMainTiles);
-      console.log("reeds",performance.now() - a)
       a = performance.now();
       generateSpikyBastards();
       console.log("spiky bastards",performance.now() - a)
@@ -194,14 +187,16 @@ class GameServer {
                   const tribe = new Tribe(tribeType, false);
                   const layer = surfaceLayer;
       
-                  const config = createPlayerConfig(tribe, username);
+                  // @Temporary @Incomplete
+                  const isDev = true;
+                  playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, 0, username, isDev);
+      
+                  const config = createPlayerConfig(tribe, playerClient);
                   config.components[ServerComponentType.transform].position.x = spawnPosition.x;
                   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
                   const player = createEntity(config, layer, 0);
-      
-                  // @Temporary @Incomplete
-                  const isDev = true;
-                  playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, player, username, isDev);
+                  
+                  playerClient.instance = player;
                   addPlayerClient(playerClient, player, surfaceLayer, config);
 
                   break;
@@ -274,6 +269,10 @@ class GameServer {
                }
                case PacketType.craftItem: {
                   processPlayerCraftingPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.ascend: {
+                  processAscendPacket(playerClient);
                   break;
                }
                case PacketType.devSetDebugEntity: {

@@ -10,6 +10,7 @@ import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
+import { getLayerInfo } from "../layers";
 
 export class StructureComponent implements Mutable<StructureConnectionInfo> {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -67,7 +68,7 @@ function onJoin(entity: Entity): void {
          const otherStructureComponent = StructureComponentArray.getComponent(connectedEntity);
          const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
 
-         const worldInfo = layer.getWorldInfo();
+         const worldInfo = getLayerInfo(layer);
          const snapOrigin = getStructureSnapOrigin(worldInfo.getEntityCallback(entity));
          const connectedSnapOrigin = getStructureSnapOrigin(worldInfo.getEntityCallback(connectedEntity));
          const connectionDirection = getSnapDirection(connectedSnapOrigin.calculateAngleBetween(snapOrigin), connectedEntityTransformComponent.rotation);

@@ -15,11 +15,10 @@ import { getEntityLayer, getEntityType, getGameTicks } from "./world";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import Layer from "./Layer";
+import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 
 const enum Vars {
-   NODE_ACCESSIBILITY_RESOLUTION = 3,
-   // @Hack?
-   WALL_TILE_OCCUPIED_ID = 3427823
+   NODE_ACCESSIBILITY_RESOLUTION = 3
 }
 
 const activeGroupIDs = new Array<number>();
@@ -41,45 +40,7 @@ const markPathfindingNodeClearance = (layer: Layer, node: PathfindingNodeIndex, 
    }
 }
 
-export function createNodeGroupIDs(): Array<Array<number>> {
-   const nodeGroupIDs = new Array<Array<number>>();
-
-   for (let i = 0; i < PathfindingSettings.NODES_IN_WORLD_WIDTH * PathfindingSettings.NODES_IN_WORLD_WIDTH; i++) {
-      const groupIDs = new Array<number>();
-      nodeGroupIDs.push(groupIDs);
-   }
-
-   // Mark borders as inaccessible
-
-   // Bottom border
-   for (let nodeX = 0; nodeX < PathfindingSettings.NODES_IN_WORLD_WIDTH - 2; nodeX++) {
-      const node = getNode(nodeX, -1);
-      nodeGroupIDs[node].push(Vars.WALL_TILE_OCCUPIED_ID);
-   }
-   // Top border
-   for (let nodeX = 0; nodeX < PathfindingSettings.NODES_IN_WORLD_WIDTH - 2; nodeX++) {
-      const node = getNode(nodeX, PathfindingSettings.NODES_IN_WORLD_WIDTH - 2);
-      nodeGroupIDs[node].push(Vars.WALL_TILE_OCCUPIED_ID);
-   }
-   // Left border
-   for (let nodeY = -1; nodeY < PathfindingSettings.NODES_IN_WORLD_WIDTH - 1; nodeY++) {
-      const node = getNode(-1, nodeY);
-      nodeGroupIDs[node].push(Vars.WALL_TILE_OCCUPIED_ID);
-   }
-   // Right border
-   for (let nodeY = -1; nodeY < PathfindingSettings.NODES_IN_WORLD_WIDTH - 1; nodeY++) {
-      const node = getNode(PathfindingSettings.NODES_IN_WORLD_WIDTH - 2, nodeY);
-      nodeGroupIDs[node].push(Vars.WALL_TILE_OCCUPIED_ID);
-   }
-   
-   return nodeGroupIDs;
-}
-
 const footprintNodeOffsets = new Array<Array<number>>();
-
-const getNode = (nodeX: number, nodeY: number): number => {
-   return (nodeY + 1) * PathfindingSettings.NODES_IN_WORLD_WIDTH + nodeX + 1;
-}
 
 // Calculate footprint node offsets
 const MAX_FOOTPRINT = 3;
@@ -178,7 +139,7 @@ const slowAccessibilityCheck = (layer: Layer, node: PathfindingNodeIndex, ignore
             const xDiff = nodeX - centerX;
             const yDiff = nodeY - centerY;
             if (xDiff * xDiff + yDiff * yDiff <= hitboxNodeRadiusSquared) {
-               const node = getNode(Math.round(nodeX), Math.round(nodeY));
+               const node = getPathfindingNode(Math.round(nodeX), Math.round(nodeY));
 
                if (nodeIsOccupied(layer, node, ignoredGroupID)) {
                   isAccessible = false;
@@ -258,7 +219,7 @@ const addCircularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: 
          const xDiff = nodeX - centerX;
          const yDiff = nodeY - centerY;
          if (xDiff * xDiff + yDiff * yDiff <= hitboxNodeRadiusSquared) {
-            const node = getNode(nodeX, nodeY);
+            const node = getPathfindingNode(nodeX, nodeY);
             // Add
             if (!occupiedPathfindingNodes.has(node)) {
                markPathfindingNodeOccupance(layer, node, pathfindingGroupID);
@@ -306,7 +267,7 @@ const addRectangularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNode
          const y = nodeY * PathfindingSettings.NODE_SEPARATION;
          
          if (distBetweenPointAndRectangularBox(x, y, box) <= nodeClearance) {
-            const node = getNode(nodeX, nodeY);
+            const node = getPathfindingNode(nodeX, nodeY);
             // @Temporary
             if (node >= PathfindingSettings.NODES_IN_WORLD_WIDTH*PathfindingSettings.NODES_IN_WORLD_WIDTH) {
                throw new Error();
@@ -354,8 +315,8 @@ export function markWallTileInPathfinding(layer: Layer, tileX: number, tileY: nu
 
    for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
       for (let nodeY = minNodeY; nodeY <= maxNodeY; nodeY++) {
-         const node = getNode(nodeX, nodeY);
-         markPathfindingNodeOccupance(layer, node, Vars.WALL_TILE_OCCUPIED_ID);
+         const node = getPathfindingNode(nodeX, nodeY);
+         markPathfindingNodeOccupance(layer, node, PathfindingServerVars.WALL_TILE_OCCUPIED_ID);
       }
    }
 }
@@ -363,7 +324,7 @@ export function markWallTileInPathfinding(layer: Layer, tileX: number, tileY: nu
 export function getClosestPathfindNode(x: number, y: number): PathfindingNodeIndex {
    const nodeX = Math.round(x / PathfindingSettings.NODE_SEPARATION);
    const nodeY = Math.round(y / PathfindingSettings.NODE_SEPARATION);
-   return getNode(nodeX, nodeY);
+   return getPathfindingNode(nodeX, nodeY);
 }
 
 export function positionIsAccessible(layer: Layer, x: number, y: number, ignoredGroupID: number, pathfindingEntityFootprint: number): boolean {
@@ -530,7 +491,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       const neighbours = new Array<PathfindingNodeIndex>();
 
       // Left neighbour
-      const leftNode = getNode(nodeX - 1, nodeY);
+      const leftNode = getPathfindingNode(nodeX - 1, nodeY);
       if (!closedSet.has(leftNode)) {
          if (nodeIsAccessibleForEntity(layer, leftNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(leftNode);
@@ -539,7 +500,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
       
       // Right neighbour
-      const rightNode = getNode(nodeX + 1, nodeY);
+      const rightNode = getPathfindingNode(nodeX + 1, nodeY);
       if (!closedSet.has(rightNode)) {
          if (nodeIsAccessibleForEntity(layer, rightNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(rightNode);
@@ -548,7 +509,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Bottom neighbour
-      const bottomNode = getNode(nodeX, nodeY - 1);
+      const bottomNode = getPathfindingNode(nodeX, nodeY - 1);
       if (!closedSet.has(bottomNode)) {
          if (nodeIsAccessibleForEntity(layer, bottomNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(bottomNode);
@@ -557,7 +518,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Top neighbour
-      const topNode = getNode(nodeX, nodeY + 1);
+      const topNode = getPathfindingNode(nodeX, nodeY + 1);
       if (!closedSet.has(topNode)) {
          if (nodeIsAccessibleForEntity(layer, topNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(topNode);
@@ -566,7 +527,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Top left neighbour
-      const topLeftNode = getNode(nodeX - 1, nodeY + 1);
+      const topLeftNode = getPathfindingNode(nodeX - 1, nodeY + 1);
       if (!closedSet.has(topLeftNode)) {
          if (nodeIsAccessibleForEntity(layer, topLeftNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(topLeftNode);
@@ -575,7 +536,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Top right neighbour
-      const topRightNode = getNode(nodeX + 1, nodeY + 1);
+      const topRightNode = getPathfindingNode(nodeX + 1, nodeY + 1);
       if (!closedSet.has(topRightNode)) {
          if (nodeIsAccessibleForEntity(layer, topRightNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(topRightNode);
@@ -584,7 +545,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Bottom left neighbour
-      const bottomLeftNode = getNode(nodeX - 1, nodeY - 1);
+      const bottomLeftNode = getPathfindingNode(nodeX - 1, nodeY - 1);
       if (!closedSet.has(bottomLeftNode)) {
          if (nodeIsAccessibleForEntity(layer, bottomLeftNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(bottomLeftNode);
@@ -593,7 +554,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       }
 
       // Bottom right neighbour
-      const bottomRightNode = getNode(nodeX + 1, nodeY - 1);
+      const bottomRightNode = getPathfindingNode(nodeX + 1, nodeY - 1);
       if (!closedSet.has(bottomRightNode)) {
          if (nodeIsAccessibleForEntity(layer, bottomRightNode, ignoredGroupID, pathfindingEntityFootprint)) {
             neighbours.push(bottomRightNode);
@@ -712,7 +673,7 @@ const pathBetweenNodesIsClear = (layer: Layer, node1: PathfindingNodeIndex, node
    }
 
    for (; n > 0; n--) {
-      const node = getNode(x, y);
+      const node = getPathfindingNode(x, y);
       if (!nodeIsAccessibleForEntity(layer, node, ignoredGroupID, pathfindingEntityFootprint)) {
          return false;
       }
@@ -769,7 +730,7 @@ export function getVisiblePathfindingNodeOccupances(playerClient: PlayerClient):
    const occupances = new Array<PathfindingNodeIndex>();
    for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
       for (let nodeY = minNodeY; nodeY <= maxNodeY; nodeY++) {
-         const node = getNode(nodeX, nodeY);
+         const node = getPathfindingNode(nodeX, nodeY);
          if (playerClient.lastLayer.nodeGroupIDs[node].length > 0) {
             occupances.push(node);
          }

@@ -20,11 +20,12 @@ import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { createEntity } from "./Entity";
 import { BoxType, Hitbox } from "battletribes-shared/boxes/boxes";
-import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, LayerType, removeTribe } from "./world";
+import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
 import Layer, { getTileIndexIncludingEdges } from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
+import { layers } from "./layers";
 
 export interface TribeLayerBuildingInfo {
    safetyRecord: Record<SafetyNode, number>;
@@ -75,6 +76,7 @@ interface BaseBuildingPlan {
 
 export interface NewBuildingPlan extends BaseBuildingPlan {
    readonly type: BuildingPlanType.newBuilding;
+   readonly layer: Layer;
    readonly position: Point;
    readonly rotation: number;
    readonly buildingRecipe: CraftingRecipe;
@@ -102,6 +104,7 @@ export interface RestrictedBuildingArea {
 
 export interface VirtualBuilding {
    readonly id: number;
+   readonly layer: Layer;
    readonly position: Readonly<Point>;
    readonly rotation: number;
    readonly entityType: StructureType;
@@ -216,9 +219,9 @@ const getWallNodeSides = (wall: VirtualBuilding): WallNodeSides => {
    return [topNodes, rightNodes, bottomNodes, leftNodes];
 }
 
-const wallSideIsConnected = (tribe: Tribe, sideNodes: ReadonlyArray<SafetyNode>): boolean => {
+const wallSideIsConnected = (tribe: Tribe, layer: Layer, sideNodes: ReadonlyArray<SafetyNode>): boolean => {
    // @Hack: surfacelayer
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
    
    // Make sure all nodes of the side link to another wall, except for the first and last
    for (let i = 1; i < sideNodes.length - 1; i++) {
@@ -241,19 +244,19 @@ const wallSideIsConnected = (tribe: Tribe, sideNodes: ReadonlyArray<SafetyNode>)
    return true;
 }
 
-const getWallConnectionBitset = (tribe: Tribe, topWallSide: ReadonlyArray<SafetyNode>, rightWallSide: ReadonlyArray<SafetyNode>, bottomWallSide: ReadonlyArray<SafetyNode>, leftWallSide: ReadonlyArray<SafetyNode>): number => {
+const getWallConnectionBitset = (tribe: Tribe, layer: Layer, topWallSide: ReadonlyArray<SafetyNode>, rightWallSide: ReadonlyArray<SafetyNode>, bottomWallSide: ReadonlyArray<SafetyNode>, leftWallSide: ReadonlyArray<SafetyNode>): number => {
    let connections = 0;
 
-   if (wallSideIsConnected(tribe, topWallSide)) {
+   if (wallSideIsConnected(tribe, layer, topWallSide)) {
       connections |= 0b1;
    }
-   if (wallSideIsConnected(tribe, rightWallSide)) {
+   if (wallSideIsConnected(tribe, layer, rightWallSide)) {
       connections |= 0b10;
    }
-   if (wallSideIsConnected(tribe, bottomWallSide)) {
+   if (wallSideIsConnected(tribe, layer, bottomWallSide)) {
       connections |= 0b100;
    }
-   if (wallSideIsConnected(tribe, leftWallSide)) {
+   if (wallSideIsConnected(tribe, layer, leftWallSide)) {
       connections |= 0b1000;
    }
 
@@ -268,7 +271,7 @@ export function updateTribeWalls(tribe: Tribe): void {
       }
       
       const wallInfo = tribe.wallInfoRecord[virtualBuilding.id];
-      wallInfo.connectionBitset = getWallConnectionBitset(tribe, wallInfo.topSideNodes, wallInfo.rightSideNodes, wallInfo.bottomSideNodes, wallInfo.leftSideNodes);
+      wallInfo.connectionBitset = getWallConnectionBitset(tribe, virtualBuilding.layer, wallInfo.topSideNodes, wallInfo.rightSideNodes, wallInfo.bottomSideNodes, wallInfo.leftSideNodes);
    }
 }
 
@@ -344,6 +347,14 @@ const createBuildingInfo = (): TribeLayerBuildingInfo => {
    };
 }
 
+const createLayerBuildingInfoRecord = (): Record<number, TribeLayerBuildingInfo> => {
+   const record: Record<number, TribeLayerBuildingInfo> = {};
+   for (const layer of layers) {
+      record[layer.depth] = createBuildingInfo();
+   }
+   return record;
+};
+
 class Tribe {
    public readonly name: string;
    public readonly id: number;
@@ -363,7 +374,7 @@ class Tribe {
    public readonly researchBenches = new Array<Entity>();
 
    public readonly buildings = new Array<Entity>();
-   public buildingsAreDirty = true;
+   public buildingsAreDirty = false;
 
    // @Cleanup: unify these two
    public buildingPlans = new Array<BuildingPlan>();
@@ -388,10 +399,8 @@ class Tribe {
    public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
    public wallInfoRecord: Record<number, TribeWallInfo> = {};
 
-   readonly layerBuildingInfoRecord: Record<LayerType, TribeLayerBuildingInfo> = {
-      [LayerType.surface]: createBuildingInfo(),
-      [LayerType.underground]: createBuildingInfo()
-   };
+   /** Stores building info for each layer, accessed through the layer's depth */
+   readonly layerBuildingInfoRecord = createLayerBuildingInfoRecord();
 
    public areas = new Array<TribeArea>();
    
@@ -432,6 +441,7 @@ class Tribe {
       
       this.addVirtualBuilding({
          id: building,
+         layer: getEntityLayer(building),
          position: transformComponent.position.copy(),
          rotation: transformComponent.rotation,
          entityType: entityType,
@@ -486,6 +496,7 @@ class Tribe {
       const virtualBuilding = this.virtualBuildingRecord[building];
       this.removeVirtualBuilding(virtualBuilding.id);
       
+      console.log("remove building");
       this.buildingsAreDirty = true;
 
       switch (getEntityType(building)) {
@@ -553,7 +564,7 @@ class Tribe {
                rightSideNodes: sides[1],
                bottomSideNodes: sides[2],
                leftSideNodes: sides[3],
-               connectionBitset: getWallConnectionBitset(this, sides[0], sides[1], sides[2], sides[3])
+               connectionBitset: getWallConnectionBitset(this, virtualBuilding.layer, sides[0], sides[1], sides[2], sides[3])
             };
             this.wallInfoRecord[virtualBuilding.id] = wallInfo;
             break;

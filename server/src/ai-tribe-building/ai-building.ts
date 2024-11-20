@@ -1,16 +1,17 @@
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
-import { Point, distBetweenPointAndRectangle } from "battletribes-shared/utils";
+import { Point, assert, distBetweenPointAndRectangle } from "battletribes-shared/utils";
 import Tribe, { RestrictedBuildingArea, TribeLayerBuildingInfo, VirtualBuilding, getNumWallConnections, updateTribeWalls } from "../Tribe";
 import { TribeArea, createTribeArea, updateTribeAreaDoors } from "./ai-building-areas";
 import { updateTribePlans } from "./ai-building-plans";
 import { assertHitboxIsRectangular, BoxType, createHitbox, hitboxIsCircular, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { HitboxCollisionBit } from "battletribes-shared/collision";
-import { getGameTicks, getTribes, LayerType, surfaceLayer, undergroundLayer } from "../world";
+import { getGameTicks, getTribes } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { layers } from "../layers";
 
 const enum Vars {
    /** How much safety increases when moving in a node */
@@ -142,13 +143,17 @@ export function addHitboxesOccupiedNodes(hitboxes: ReadonlyArray<Hitbox>, positi
    }
 }
 
-const updateTribeOccupiedNodesInfo = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo): void => {
+const updateTribeOccupiedNodesInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo): void => {
    const occupiedNodes = new Set<SafetyNode>();
    const occupiedNodeToEntityIDRecord: Record<SafetyNode, Array<number>> = {};
 
    // Add nodes from buildings
    for (let i = 0; i < tribe.virtualBuildings.length; i++) {
       const virtualBuilding = tribe.virtualBuildings[i];
+      if (virtualBuilding.layer !== layer) {
+         continue;
+      }
+      
       for (const node of virtualBuilding.occupiedNodes) {
          occupiedNodes.add(node);
 
@@ -208,7 +213,7 @@ const calculateNodeSafety = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo,
    return safety;
 }
 
-const createAreaInfo = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, areas: Array<TribeArea>, nodeToAreaIDRecord: Record<SafetyNode, number>, insideNodes: Set<SafetyNode>): void => {
+const createAreaInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo, areas: Array<TribeArea>, nodeToAreaIDRecord: Record<SafetyNode, number>, insideNodes: Set<SafetyNode>): void => {
    const occupiedNodes = buildingInfo.occupiedSafetyNodes;
    
    // Find min and max node positions
@@ -336,7 +341,7 @@ const createAreaInfo = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, area
          }
 
          // Create area
-         const area = createTribeArea(tribe, connectedNodes, areaIDCounter, encounteredOccupiedNodes);
+         const area = createTribeArea(tribe, layer, buildingInfo, connectedNodes, areaIDCounter, encounteredOccupiedNodes);
          areas.push(area);
 
          areaIDCounter++;
@@ -539,6 +544,7 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
    let nextMinSafetyIdx = 0;
    
    while (remainingNodes.size > 0) {
+      assert(nextMinSafetyIdx < surroundingNodes.length);
       const currentNode = surroundingNodes[nextMinSafetyIdx];
       const minSafety = safetyRecord[currentNode];
       nextMinSafetyIdx++;
@@ -593,23 +599,22 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
 }
 
 /** Updates a whole bunch of stuff. Relies on the occupied nodes being correct. */
-export function updateTribeBuildingInfo(layerType: LayerType, tribe: Tribe): void {
-   const layer = layerType === LayerType.surface ? surfaceLayer : undergroundLayer;
-   const buildingInfo = tribe.layerBuildingInfoRecord[layerType];
+export function updateTribeBuildingInfo(layer: Layer, tribe: Tribe): void {
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
    
-   updateTribeOccupiedNodesInfo(tribe, buildingInfo);
+   updateTribeOccupiedNodesInfo(tribe, layer, buildingInfo);
    
    // Find inside nodes and contained buildings
    const areas = new Array<TribeArea>();
    const nodeToAreaIDRecord: Record<SafetyNode, number> = {};
    const insideNodes = new Set<SafetyNode>();
-   createAreaInfo(tribe, buildingInfo, areas, nodeToAreaIDRecord, insideNodes);
+   createAreaInfo(tribe, layer, buildingInfo, areas, nodeToAreaIDRecord, insideNodes);
 
    // Find border nodes
    const borderNodes = getBorderNodes(layer, buildingInfo, insideNodes);
 
    // Create padding nodes
-   const outmostPaddingNodes = new Set<SafetyNode>()
+   const outmostPaddingNodes = new Set<SafetyNode>();
    const paddingNodes = new Set(borderNodes);
    createPaddingNodes(tribe, layer, buildingInfo, outmostPaddingNodes, borderNodes, paddingNodes);
    
@@ -644,8 +649,10 @@ export function tickTribes(): void {
       
       // Update safety nodes
       if (tribe.buildingsAreDirty && tribe.isAIControlled) {
-         updateTribeBuildingInfo(LayerType.surface, tribe);
-         updateTribeBuildingInfo(LayerType.underground, tribe);
+         // @Cleanup? should probs be done in the func???
+         for (const layer of layers) {
+            updateTribeBuildingInfo(layer, tribe);
+         }
          updateTribePlans(tribe);
 
          tribe.buildingsAreDirty = false;
@@ -658,7 +665,7 @@ export function tickTribes(): void {
    }
 }
 
-export function placeVirtualBuilding(tribe: Tribe, position: Readonly<Point>, rotation: number, entityType: StructureType, hitboxes: ReadonlyArray<Hitbox>, virtualEntityID: number): VirtualBuilding {
+export function placeVirtualBuilding(tribe: Tribe, layer: Layer, position: Readonly<Point>, rotation: number, entityType: StructureType, hitboxes: ReadonlyArray<Hitbox>, virtualEntityID: number): VirtualBuilding {
    for (let i = 0; i < hitboxes.length; i++) {
       const hitbox = hitboxes[i];
       updateBox(hitbox.box, position.x, position.y, rotation);
@@ -669,6 +676,7 @@ export function placeVirtualBuilding(tribe: Tribe, position: Readonly<Point>, ro
    
    const virtualBuilding: VirtualBuilding = {
       id: virtualEntityID,
+      layer: layer,
       position: position,
       rotation: rotation,
       occupiedNodes: occupiedNodes,

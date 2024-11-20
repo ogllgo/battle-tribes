@@ -8,7 +8,8 @@ import { Point } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { changeEntityLayer, getEntityLayer, getEntityType, undergroundLayer } from "../world";
+import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
+import { surfaceLayer, undergroundLayer } from "../layers";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -53,6 +54,8 @@ export class PhysicsComponent {
    public hitboxesAreDirty = false;
 
    public pathfindingNodesAreDirty = false;
+
+   public lastValidLayer = surfaceLayer;
 }
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
@@ -60,7 +63,13 @@ PhysicsComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
+PhysicsComponentArray.onJoin = onJoin;
 PhysicsComponentArray.onRemove = onRemove;
+
+function onJoin(entity: Entity): void {
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   physicsComponent.lastValidLayer = getEntityLayer(entity);
+}
 
 function onRemove(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -316,9 +325,13 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
       // Check to see if the entity has descended into the underground layer
       const entityType = getEntityType(entity);
       if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
+         // Update the last valid layer
          const layer = getEntityLayer(entity);
          const tileIndex = getEntityTile(transformComponent);
-         if (layer.tileTypes[tileIndex] === TileType.dropdown) {
+         if (layer.getTileType(tileIndex) !== TileType.dropdown) {
+            physicsComponent.lastValidLayer = layer;
+         // If the layer is valid and the entity is on a dropdown, move down
+         } else if (layer === physicsComponent.lastValidLayer) {
             changeEntityLayer(entity, undergroundLayer);
          }
       }

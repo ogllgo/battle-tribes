@@ -31,8 +31,9 @@ import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
-import { destroyEntity, entityExists, getEntityType, getTribe, surfaceLayer } from "../world";
+import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
 import { createItemsOverEntity } from "../components/ItemComponent";
+import { surfaceLayer } from "../layers";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 
@@ -47,7 +48,7 @@ export function getPlayerClients(): ReadonlyArray<PlayerClient> {
    return playerClients;
 }
 
-export function getPlayerClientFromInstanceID(instanceID: number): PlayerClient | null {
+const getPlayerClientFromInstanceID = (instanceID: number): PlayerClient | null => {
    for (let i = 0; i < playerClients.length; i++) {
       const playerClient = playerClients[i];
 

@@ -19,6 +19,7 @@ import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerab
 import { applyKnockback } from "./PhysicsComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { createItemsOverEntity } from "./ItemComponent";
+import { getDistanceToClosestEntity } from "../layer-utils";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -85,7 +86,7 @@ const grow = (iceSpikes: Entity): void => {
       return;
    }
 
-   const minDistanceToEntity = layer.getDistanceToClosestEntity(position);
+   const minDistanceToEntity = getDistanceToClosestEntity(layer, position);
    if (minDistanceToEntity >= 40) {
       const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
 

@@ -12,6 +12,7 @@ import { getEntityLayer, getEntityType } from "../world";
 import { ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { HealthComponentArray } from "./HealthComponent";
+import { getLayerInfo } from "../layers";
 
 interface DamageBoxCollisionInfo {
    readonly collidingEntity: Entity;
@@ -117,7 +118,7 @@ function onTick(entity: Entity): void {
          // throw new Error();
       }
 
-      const collidingEntities = getBoxesCollidingEntities(layer.getWorldInfo(), [damageBox]);
+      const collidingEntities = getBoxesCollidingEntities(getLayerInfo(layer), [damageBox]);
 
       // If attacking with a hammer, check for blueprints to work on
       const item = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
@@ -171,7 +172,7 @@ function onTick(entity: Entity): void {
       }
 
       // Look for projectiles to block
-      const collidingEntities = getBoxesCollidingEntities(layer.getWorldInfo(), [blockBox]);
+      const collidingEntities = getBoxesCollidingEntities(getLayerInfo(layer), [blockBox]);
       let hasBlockedProjectile = false;
       for (let i = 0; i < collidingEntities.length; i++) {
          const collidingEntity = collidingEntities[i];

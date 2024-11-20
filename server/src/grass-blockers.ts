@@ -4,7 +4,8 @@ import Chunk from "./Chunk";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { boxIsCircular, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import { entityExists, surfaceLayer } from "./world";
+import { entityExists } from "./world";
+import { surfaceLayer } from "./layers";
 
 const blockers = new Array<GrassBlocker>();
 const blockerAssociatedEntities = new Array<Entity>();

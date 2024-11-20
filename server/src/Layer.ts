@@ -1,37 +1,79 @@
-import { WaterRockData, RiverSteppingStoneData, RIVER_STEPPING_STONE_SIZES, ServerTileUpdateData } from "battletribes-shared/client-server-types";
+import { WaterRockData, RiverSteppingStoneData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { Entity } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { SubtileType, TileType } from "battletribes-shared/tiles";
+import { NUM_TILE_TYPES, SubtileType, TileType } from "battletribes-shared/tiles";
 import { distance, Point, TileIndex } from "battletribes-shared/utils";
-import Chunk from "./Chunk";
-import { addTileToCensus, createTileCensus } from "./census";
-import { TerrainGenerationInfo } from "./world-generation/surface-terrain-generation";
-import { createNodeGroupIDs, markWallTileInPathfinding } from "./pathfinding";
-import OPTIONS from "./options";
-import { TransformComponentArray } from "./components/TransformComponent";
-import { WorldInfo } from "battletribes-shared/structures";
-import { EntityInfo } from "battletribes-shared/board-interface";
-import { boxIsWithinRange } from "battletribes-shared/boxes/boxes";
-import { getEntityType, getGameTicks, layers } from "./world";
+import { Biome } from "battletribes-shared/biomes";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { getSubtileIndex } from "battletribes-shared/subtiles";
+import Chunk from "./Chunk";
 import CollisionChunk from "./CollisionChunk";
 import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detection";
-import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
-import { registerMinedSubtile, MinedSubtileInfo } from "./collapses";
-import { getSubtileIndex } from "../../shared/src/subtiles";
-import { Biome } from "../../shared/src/biomes";
-
-// @Cleanup: same as WaterTileGenerationInfo
-export interface RiverFlowDirection {
-   readonly tileX: number;
-   readonly tileY: number;
-   readonly flowDirection: number;
-}
+import { MinedSubtileInfo } from "./collapses";
+import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 
 interface WallSubtileUpdate {
    readonly subtileIndex: number;
    readonly subtileType: SubtileType;
    readonly damageTaken: number;
+}
+
+interface TileCensus {
+   readonly types: Record<TileType, Array<TileIndex>>;
+   biomes: Record<Biome, Array<TileIndex>>;
+}
+
+const createTileCensus = (): TileCensus => {
+   return {
+      types: (() => {
+         const types: Partial<Record<TileType, Array<TileIndex>>> = {};
+         for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
+            types[tileType] = [];
+         }
+         return types as Record<TileType, Array<TileIndex>>;
+      })(),
+      biomes: (() => {
+         const biomes: Partial<Record<Biome, Array<TileIndex>>> = {};
+         for (let biome: Biome = 0; biome < Biome._LENGTH_; biome++) {
+            biomes[biome] = [];
+         }
+         return biomes as Record<Biome, Array<TileIndex>>;
+      })()
+   };
+}
+
+const createNodeGroupIDs = (): Array<Array<number>> => {
+   const nodeGroupIDs = new Array<Array<number>>();
+
+   for (let i = 0; i < PathfindingSettings.NODES_IN_WORLD_WIDTH * PathfindingSettings.NODES_IN_WORLD_WIDTH; i++) {
+      const groupIDs = new Array<number>();
+      nodeGroupIDs.push(groupIDs);
+   }
+
+   // Mark borders as inaccessible
+
+   // Bottom border
+   for (let nodeX = 0; nodeX < PathfindingSettings.NODES_IN_WORLD_WIDTH - 2; nodeX++) {
+      const node = getPathfindingNode(nodeX, -1);
+      nodeGroupIDs[node].push(PathfindingServerVars.WALL_TILE_OCCUPIED_ID);
+   }
+   // Top border
+   for (let nodeX = 0; nodeX < PathfindingSettings.NODES_IN_WORLD_WIDTH - 2; nodeX++) {
+      const node = getPathfindingNode(nodeX, PathfindingSettings.NODES_IN_WORLD_WIDTH - 2);
+      nodeGroupIDs[node].push(PathfindingServerVars.WALL_TILE_OCCUPIED_ID);
+   }
+   // Left border
+   for (let nodeY = -1; nodeY < PathfindingSettings.NODES_IN_WORLD_WIDTH - 1; nodeY++) {
+      const node = getPathfindingNode(-1, nodeY);
+      nodeGroupIDs[node].push(PathfindingServerVars.WALL_TILE_OCCUPIED_ID);
+   }
+   // Right border
+   for (let nodeY = -1; nodeY < PathfindingSettings.NODES_IN_WORLD_WIDTH - 1; nodeY++) {
+      const node = getPathfindingNode(PathfindingSettings.NODES_IN_WORLD_WIDTH - 2, nodeY);
+      nodeGroupIDs[node].push(PathfindingServerVars.WALL_TILE_OCCUPIED_ID);
+   }
+   
+   return nodeGroupIDs;
 }
 
 export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
@@ -68,6 +110,15 @@ export function getChunkIndex(chunkX: number, chunkY: number): number {
    return chunkY * Settings.BOARD_SIZE + chunkX;
 }
 
+const createInitialChunksArray = (): Array<Chunk> => {
+   const chunks = new Array<Chunk>();
+   for (let i = 0; i < Settings.BOARD_SIZE * Settings.BOARD_SIZE; i++) {
+      const chunk = new Chunk();
+      chunks.push(chunk);
+   }
+   return chunks;
+}
+
 const createCollisionGroupChunks = (): Record<CollisionGroup, ReadonlyArray<CollisionChunk>> => {
    const collisionGroupChunks: Partial<Record<CollisionGroup, ReadonlyArray<CollisionChunk>>>= {};
 
@@ -84,26 +135,29 @@ const createCollisionGroupChunks = (): Record<CollisionGroup, ReadonlyArray<Coll
 }
 
 export default class Layer {
-   public readonly tileTypes: Float32Array;
-   public readonly tileBiomes: Float32Array;
-   public readonly riverFlowDirections: Float32Array;
-   public readonly tileTemperatures: Float32Array;
-   public readonly tileHumidities: Float32Array;
+   /** The depth of the layer, also the layer's index in the layers array. Surface layer has depth 0, and each subsequently lower layer has 1 higher depth. */
+   public readonly depth: number;
+   
+   public readonly tileTypes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly tileBiomes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly riverFlowDirections = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly tileTemperatures = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
    public readonly tileCensus = createTileCensus();
 
-   private readonly wallSubtileTypes: Float32Array;
+   public readonly wallSubtileTypes = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
    public readonly wallSubtileDamageTakenMap = new Map<number, number>();
 
-   public waterRocks: ReadonlyArray<WaterRockData>;
-   public riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>;
+   public readonly waterRocks = new Array<WaterRockData>();
+   public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
-   private tileUpdateCoordinates: Set<number>;
+   private tileUpdateCoordinates = new Set<number>();
    public wallSubtileUpdates = new Array<WallSubtileUpdate>();
 
    /** Stores all entities collectively in each chunk */
-   private chunks = new Array<Chunk>();
+   public chunks = createInitialChunksArray();
 
    public readonly collisionGroupChunks = createCollisionGroupChunks();
 
@@ -111,119 +165,31 @@ export default class Layer {
 
    public minedSubtileInfoMap = new Map<number, MinedSubtileInfo>();
 
-   private readonly worldInfo: WorldInfo;
-
    public readonly nodeGroupIDs = createNodeGroupIDs();
 
-   constructor(generationInfo: TerrainGenerationInfo) {
-      this.tileTypes = generationInfo.tileTypes;
-      this.tileBiomes = generationInfo.tileBiomes;
-      this.wallSubtileTypes = generationInfo.subtileTypes;
-      this.riverFlowDirections = generationInfo.riverFlowDirections;
-      this.tileTemperatures = generationInfo.tileTemperatures;
-      this.tileHumidities = generationInfo.tileHumidities;
-      this.waterRocks = generationInfo.waterRocks;
-      this.riverSteppingStones = generationInfo.riverSteppingStones;
+   constructor(depth: number) {
+      this.depth = depth;
 
-      // Initialise chunks
-      for (let i = 0; i < Settings.BOARD_SIZE * Settings.BOARD_SIZE; i++) {
-         const chunk = new Chunk();
-         this.chunks.push(chunk);
-      }
-
-      for (let tileIndex = 0; tileIndex < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS; tileIndex++) {
-         const tileX = getTileX(tileIndex);
-         const tileY = getTileY(tileIndex);
-         if (tileIsInWorldIncludingEdges(tileX, tileY)) {
-            addTileToCensus(this, tileIndex);
-         }
-      }
-
-      if (OPTIONS.generateWalls) {
-         for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
-            for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-               if (tileHasWallSubtile(this.wallSubtileTypes, tileX, tileY)) {
-                  // Mark which chunks have wall tiles
-                  const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
-                  const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
-                  const chunk = this.getChunk(chunkX, chunkY);
-                  chunk.hasWallTiles = true;
-                  
-                  // @Incomplete: This system is outdated! Should account for wall subtiles
-                  // Mark inaccessible pathfinding nodes
-                  markWallTileInPathfinding(this, tileX, tileY);
-               }
-            }
-         }
-      }
-
-      this.tileUpdateCoordinates = new Set<number>();
-
+      // @Incomplete: this is broken. fix it by making river stepping stones into entities
       // Add river stepping stones to chunks
-      for (const steppingStoneData of generationInfo.riverSteppingStones) {
-         const size = RIVER_STEPPING_STONE_SIZES[steppingStoneData.size];
-         const minChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-         const maxChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-         const minChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-         const maxChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      // for (const steppingStoneData of generationInfo.riverSteppingStones) {
+      //    const size = RIVER_STEPPING_STONE_SIZES[steppingStoneData.size];
+      //    const minChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      //    const maxChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      //    const minChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      //    const maxChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
          
-         for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-               const chunk = this.getChunk(chunkX, chunkY);
-               chunk.riverSteppingStones.push(steppingStoneData);
-            }
-         }
-      }
-
-      this.worldInfo = {
-         chunks: this.chunks,
-         wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: Entity): EntityInfo => {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-
-            return {
-               type: getEntityType(entity),
-               position: transformComponent.position,
-               rotation: transformComponent.rotation,
-               id: entity,
-               hitboxes: transformComponent.hitboxes
-            };
-         },
-         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex)
-      };
+      //    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      //       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+      //          const chunk = this.getChunk(chunkX, chunkY);
+      //          chunk.riverSteppingStones.push(steppingStoneData);
+      //       }
+      //    }
+      // }
    }
 
    public getSubtileTypes(): Readonly<Float32Array> {
       return this.wallSubtileTypes;
-   }
-
-   public damageWallSubtitle(subtileIndex: number, damage: number): number {
-      let damageDealt: number;
-      if (!this.wallSubtileDamageTakenMap.has(subtileIndex)) {
-         damageDealt = Math.min(damage, 3);
-         this.wallSubtileDamageTakenMap.set(subtileIndex, damageDealt);
-      } else {
-         // @Cleanup: '!'
-         const previousDamageTaken = this.wallSubtileDamageTakenMap.get(subtileIndex)!;
-         damageDealt = Math.min(damage, 3 - previousDamageTaken);
-         this.wallSubtileDamageTakenMap.set(subtileIndex, previousDamageTaken + damageDealt);
-      }
-
-      // @Cleanup: '!'
-      const damageTaken = this.wallSubtileDamageTakenMap.get(subtileIndex)!;
-      if (damageTaken >= 3) {
-         const previousSubtileType = this.wallSubtileTypes[subtileIndex];
-         this.wallSubtileTypes[subtileIndex] = SubtileType.none;
-         registerMinedSubtile(this, subtileIndex, previousSubtileType);
-      }
-
-      this.wallSubtileUpdates.push({
-         subtileIndex: subtileIndex,
-         subtileType: this.wallSubtileTypes[subtileIndex],
-         damageTaken: damageTaken
-      });
-
-      return damageDealt;
    }
 
    public getMinedSubtileType(subtileIndex: number): SubtileType {
@@ -243,15 +209,6 @@ export default class Layer {
          subtileType: subtileType,
          damageTaken: 0
       });
-   }
-
-   public static tickIntervalHasPassed(intervalSeconds: number): boolean {
-      const ticksPerInterval = intervalSeconds * Settings.TPS;
-      
-      const gameTicks = getGameTicks();
-      const previousCheck = (gameTicks - 1) / ticksPerInterval;
-      const check = gameTicks / ticksPerInterval;
-      return Math.floor(previousCheck) !== Math.floor(check);
    }
 
    public getTileType(tileIndex: number): TileType {
@@ -356,7 +313,7 @@ export default class Layer {
          const tileY = Math.floor(tileIndex / Settings.BOARD_DIMENSIONS);
          
          tileUpdates.push({
-            layerIdx: layers.indexOf(this),
+            layerIdx: this.depth,
             tileIndex: tileIndex,
             type: this.getTileXYType(tileX, tileY)
          });
@@ -370,100 +327,6 @@ export default class Layer {
 
    public static isInBoard(position: Point): boolean {
       return position.x >= 0 && position.x <= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1 && position.y >= 0 && position.y <= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1;
-   }
-
-   public getDistanceToClosestEntity(position: Point): number {
-      let minDistance = 2000;
-
-      const minChunkX = Math.max(Math.min(Math.floor((position.x - 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor((position.x + 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor((position.y - 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor((position.y + 2000) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-
-      const checkedEntities = new Set<Entity>();
-      
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = this.getChunk(chunkX, chunkY);
-            for (const entity of chunk.entities) {
-               if (checkedEntities.has(entity)) continue;
-               
-               const transformComponent = TransformComponentArray.getComponent(entity);
-               const distance = position.calculateDistanceBetween(transformComponent.position);
-               if (distance <= minDistance) {
-                  minDistance = distance;
-               }
-
-               checkedEntities.add(entity);
-            }
-         }
-      }
-
-      return minDistance;
-   }
-
-   public getEntitiesAtPosition(x: number, y: number): Array<Entity> {
-      if (!positionIsInWorld(x, y)) {
-         throw new Error("Position isn't in the board");
-      }
-      
-      // @Speed: Garbage collection
-      const testPosition = new Point(x, y);
-
-      const chunkX = Math.floor(x / Settings.CHUNK_UNITS);
-      const chunkY = Math.floor(y / Settings.CHUNK_UNITS);
-
-      const entities = new Array<Entity>();
-      
-      const chunk = this.getChunk(chunkX, chunkY);
-      for (const entity of chunk.entities) {
-         const transformComponent = TransformComponentArray.getComponent(entity);
-         for (const hitbox of transformComponent.hitboxes) {
-            if (boxIsWithinRange(hitbox.box, testPosition, 1)) {
-               entities.push(entity);
-               break;
-            }
-         }
-      }
-
-      return entities;
-   }
-
-   public getEntitiesInRange(x: number, y: number, range: number): Array<Entity> {
-      const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-
-      // @Speed: garbage collection
-      const position = new Point(x, y);
-      
-      // @Speed: garbage collection
-      const checkedEntities = new Set<Entity>();
-      const entities = new Array<Entity>();
-      
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = this.getChunk(chunkX, chunkY);
-            for (const entity of chunk.entities) {
-               if (checkedEntities.has(entity)) continue;
-               
-               const transformComponent = TransformComponentArray.getComponent(entity);
-               const distance = position.calculateDistanceBetween(transformComponent.position);
-               if (distance <= range) {
-                  entities.push(entity);
-               }
-
-               checkedEntities.add(entity);
-            }
-         }
-      }
-
-      return entities;
-   }
-
-   public getWorldInfo(): WorldInfo {
-      return this.worldInfo;
    }
 
    public getChunksInBounds(minX: number, maxX: number, minY: number, maxY: number): ReadonlyArray<Chunk> {

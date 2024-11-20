@@ -220,3 +220,8 @@ export function sendSetDebugEntityPacket(entity: Entity): void {
 
    Client.sendPacket(packet.buffer);
 }
+
+export function sendAscendPacket(): void {
+   const packet = new Packet(PacketType.ascend, Float32Array.BYTES_PER_ELEMENT);
+   Client.sendPacket(packet.buffer);
+}

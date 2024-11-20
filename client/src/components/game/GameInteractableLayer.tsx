@@ -57,6 +57,10 @@ export interface ItemRestTime {
 
 interface GameInteractableLayerProps {
    readonly hotbar: Inventory;
+   readonly offhand: Inventory;
+   readonly backpackSlot: Inventory;
+   readonly armourSlot: Inventory;
+   readonly gloveSlot: Inventory;
    readonly heldItemSlot: Inventory;
    readonly cinematicModeIsEnabled: boolean;
 }
@@ -1419,7 +1423,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       <AttackChargeBar mouseX={mouseX} mouseY={mouseY + 18} chargeElapsedTicks={offhandChargeElapsedTicks} chargeDuration={offhandChargeDuration} />
 
       {!props.cinematicModeIsEnabled ? (
-         <Hotbar hotbar={props.hotbar} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
+         <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
       ) : undefined}
    </>
 }

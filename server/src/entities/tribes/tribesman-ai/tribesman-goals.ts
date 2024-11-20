@@ -15,7 +15,8 @@ import { ItemType, ToolType, Inventory, InventoryName, PlaceableItemType, ITEM_I
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { updateBox } from "battletribes-shared/boxes/boxes";
-import { getEntityType, LayerType } from "../../../world";
+import { getEntityType } from "../../../world";
+import { surfaceLayer } from "../../../layers";
 
 // @Cleanup: can this be inferred from stuff like the entity->resource-dropped record?
 const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
@@ -456,7 +457,7 @@ const createBuildingPlaceGoal = (goals: Array<TribesmanGoal>, tribesman: Entity,
       let rotation: number;
       if (tribeComponent.tribe.buildings.length > 0) {
          // @Hack: surfacelayer
-         const positionInfo = generateBuildingPosition(tribeComponent.tribe, LayerType.surface, entityType);
+         const positionInfo = generateBuildingPosition(tribeComponent.tribe, surfaceLayer, entityType);
          position = new Point(positionInfo.x, positionInfo.y);
          rotation = positionInfo.rotation;
       } else {
@@ -467,6 +468,8 @@ const createBuildingPlaceGoal = (goals: Array<TribesmanGoal>, tribesman: Entity,
 
       plan = {
          type: BuildingPlanType.newBuilding,
+         // @Hack: surfacelayer
+         layer: surfaceLayer,
          position: position,
          rotation: rotation,
          buildingRecipe: buildingRecipe,

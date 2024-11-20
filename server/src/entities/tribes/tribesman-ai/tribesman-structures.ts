@@ -27,6 +27,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { updateBox } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getGameTicks } from "../../../world";
+import { getLayerInfo } from "../../../layers";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -43,7 +44,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    }
    
    const layer = getEntityLayer(tribesman);
-   const blockingEntities = getBoxesCollidingEntities(layer.getWorldInfo(), hitboxes);
+   const blockingEntities = getBoxesCollidingEntities(getLayerInfo(layer), hitboxes);
    for (let i = 0; i < blockingEntities.length; i++) {
       const blockingEntity = blockingEntities[i];
       if (!HealthComponentArray.hasComponent(blockingEntity)) {
@@ -101,7 +102,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          const item = hotbarInventory.itemSlots[goal.placeableItemSlot]!;
          const placingEntityType = (ITEM_INFO_RECORD[item.type] as PlaceableItemInfo).entityType;
          
-         const connectionInfo = calculateStructureConnectionInfo(plan.position, plan.rotation, placingEntityType, layer.getWorldInfo());
+         const connectionInfo = calculateStructureConnectionInfo(plan.position, plan.rotation, placingEntityType, getLayerInfo(layer));
          placeBuilding(tribe, getEntityLayer(tribesman), plan.position, plan.rotation, placingEntityType, connectionInfo, []);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {

@@ -34,6 +34,7 @@ import "./css/game/build-menu.css";
 import "./css/game/inspect-health-bar.css";
 import "./css/game/infocards.css";
 import "./css/game/attack-charge-bar.css";
+import "./css/game/layer-change-message.css";
 
 // We have to manually import this so that the component arrays are all detected
 import "./entity-components/components";

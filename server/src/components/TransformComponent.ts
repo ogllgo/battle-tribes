@@ -1,10 +1,10 @@
 import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
-import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/collision-groups";
+import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";

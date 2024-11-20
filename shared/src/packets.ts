@@ -23,6 +23,7 @@ export const enum PacketType {
    placeBlueprint,
    craftItem,
    devSetDebugEntity,
+   ascend,
    devGiveItem, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT

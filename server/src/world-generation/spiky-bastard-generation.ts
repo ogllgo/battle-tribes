@@ -5,8 +5,9 @@ import { SubtileType } from "../../../shared/src/tiles";
 import { angle, randSign } from "../../../shared/src/utils";
 import { createSpikyBastardConfig } from "../entities/spiky-bastard";
 import { createEntity } from "../Entity";
+import { undergroundLayer } from "../layers";
 import { generatePerlinNoise } from "../perlin-noise";
-import { pushJoinBuffer, undergroundLayer } from "../world";
+import { pushJoinBuffer } from "../world";
 
 const enum Vars {
    /** Number of spiky bastards attempted to be generated per tile */

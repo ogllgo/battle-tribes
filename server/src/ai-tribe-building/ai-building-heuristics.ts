@@ -3,9 +3,9 @@ import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entiti
 import { Settings } from "battletribes-shared/settings";
 import Tribe from "../Tribe";
 import { SafetyNode, addHitboxesOccupiedNodes, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
-import Layer from "../Layer";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { getEntityType, LayerType, surfaceLayer } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
+import Layer from "../Layer";
 
 const enum Vars {
    /** Minimum safety that buildings should have */
@@ -32,18 +32,15 @@ export function buildingIsInfrastructure(entity: Entity): boolean {
    return entityType !== EntityType.wall && entityType !== EntityType.embrasure && entityType !== EntityType.door && entityType !== EntityType.tunnel;
 }
 
-const getExtendedNodeSafety = (tribe: Tribe, nodeIndex: number, extendDist: number): number => {
+const getExtendedNodeSafety = (tribe: Tribe, layer: Layer, nodeIndex: number, extendDist: number): number => {
    // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
    let safety = buildingInfo.safetyRecord[nodeIndex];
    safety *= 1 - extendDist / Vars.EXTENDED_NODE_RANGE;
    return safety;
 }
 
-const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<SafetyNode>): number => {
-   // @Hack
-   const layer = surfaceLayer;
-   
+const getExtendedBuildingNodeSafety = (tribe: Tribe, layer: Layer, occupiedNodeIndexes: Set<SafetyNode>): number => {
    // Find border nodes
    const borderNodeIndexes = new Set<number>();
    for (const nodeIndex of occupiedNodeIndexes) {
@@ -105,7 +102,7 @@ const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<Sa
             if (!expandedNodeIndexes.has(nodeIndex) && !occupiedNodeIndexes.has(nodeIndex) && !safetyNodeIsInWall(layer, nodeX, nodeY + 1)) {
                expandedNodeIndexes.add(nodeIndex);
                addedNodes.add(nodeIndex);
-               safety += getExtendedNodeSafety(tribe, nodeIndex, extendDist);
+               safety += getExtendedNodeSafety(tribe, layer, nodeIndex, extendDist);
             }
          }
    
@@ -115,7 +112,7 @@ const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<Sa
             if (!expandedNodeIndexes.has(nodeIndex) && !occupiedNodeIndexes.has(nodeIndex) && !safetyNodeIsInWall(layer, nodeX + 1, nodeY)) {
                expandedNodeIndexes.add(nodeIndex);
                addedNodes.add(nodeIndex);
-               safety += getExtendedNodeSafety(tribe, nodeIndex, extendDist);
+               safety += getExtendedNodeSafety(tribe, layer, nodeIndex, extendDist);
             }
          }
    
@@ -125,7 +122,7 @@ const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<Sa
             if (!expandedNodeIndexes.has(nodeIndex) && !occupiedNodeIndexes.has(nodeIndex) && !safetyNodeIsInWall(layer, nodeX, nodeY - 1)) {
                expandedNodeIndexes.add(nodeIndex);
                addedNodes.add(nodeIndex);
-               safety += getExtendedNodeSafety(tribe, nodeIndex, extendDist);
+               safety += getExtendedNodeSafety(tribe, layer, nodeIndex, extendDist);
             }
          }
    
@@ -135,7 +132,7 @@ const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<Sa
             if (!expandedNodeIndexes.has(nodeIndex) && !occupiedNodeIndexes.has(nodeIndex) && !safetyNodeIsInWall(layer, nodeX - 1, nodeY)) {
                expandedNodeIndexes.add(nodeIndex);
                addedNodes.add(nodeIndex);
-               safety += getExtendedNodeSafety(tribe, nodeIndex, extendDist);
+               safety += getExtendedNodeSafety(tribe, layer, nodeIndex, extendDist);
             }
          }
       }
@@ -149,9 +146,9 @@ const getExtendedBuildingNodeSafety = (tribe: Tribe, occupiedNodeIndexes: Set<Sa
    return safety;
 }
 
-const getMinBuildingNodeSafety = (tribe: Tribe, occupiedIndexes: Set<SafetyNode>): number => {
+const getMinBuildingNodeSafety = (tribe: Tribe, layer: Layer, occupiedIndexes: Set<SafetyNode>): number => {
    // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
    
    let minSafety = Number.MAX_SAFE_INTEGER;
    for (const nodeIndex of occupiedIndexes) {
@@ -164,9 +161,9 @@ const getMinBuildingNodeSafety = (tribe: Tribe, occupiedIndexes: Set<SafetyNode>
    return minSafety;
 }
 
-const getAverageBuildingNodeSafety = (tribe: Tribe, occupiedIndexes: Set<SafetyNode>): number => {
+const getAverageBuildingNodeSafety = (tribe: Tribe, layer: Layer, occupiedIndexes: Set<SafetyNode>): number => {
    // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
 
    let averageSafety = 0;
    for (const nodeIndex of occupiedIndexes) {
@@ -191,6 +188,7 @@ export function getBuildingSafety(tribe: Tribe, building: Entity, safetyInfo: Po
    }
    
    const transformComponent = TransformComponentArray.getComponent(building);
+   const layer = getEntityLayer(building);
    
    const occupiedIndexes = new Set<SafetyNode>();
    addHitboxesOccupiedNodes(transformComponent.hitboxes, occupiedIndexes);
@@ -200,21 +198,21 @@ export function getBuildingSafety(tribe: Tribe, building: Entity, safetyInfo: Po
       throw new Error();
    }
 
-   let minSafety = getMinBuildingNodeSafety(tribe, occupiedIndexes);
+   let minSafety = getMinBuildingNodeSafety(tribe, layer, occupiedIndexes);
    minSafety *= Vars.MIN_SAFETY_WEIGHT;
    safety += minSafety;
    if (isNaN(safety)) {
       throw new Error();
    }
 
-   let averageSafety = getAverageBuildingNodeSafety(tribe, occupiedIndexes);
+   let averageSafety = getAverageBuildingNodeSafety(tribe, layer, occupiedIndexes);
    averageSafety *= Vars.AVERAGE_SAFETY_WEIGHT;
    safety += averageSafety;
    if (isNaN(safety)) {
       throw new Error();
    }
 
-   let extendedAverageSafety = getExtendedBuildingNodeSafety(tribe, occupiedIndexes);
+   let extendedAverageSafety = getExtendedBuildingNodeSafety(tribe, layer, occupiedIndexes);
    extendedAverageSafety *= Vars.AVERAGE_SAFETY_WEIGHT;
    safety += extendedAverageSafety;
    if (isNaN(safety)) {
@@ -281,11 +279,12 @@ export function tribeIsVulnerable(tribe: Tribe): boolean {
       }
 
       const transformComponent = TransformComponentArray.getComponent(building);
+      const layer = getEntityLayer(building);
       
       const occupiedIndexes = new Set<SafetyNode>();
       addHitboxesOccupiedNodes(transformComponent.hitboxes, occupiedIndexes);
 
-      const minSafety = getMinBuildingNodeSafety(tribe, occupiedIndexes);
+      const minSafety = getMinBuildingNodeSafety(tribe, layer, occupiedIndexes);
       if (minSafety < Vars.DESIRED_SAFETY) {
          return true;
       }

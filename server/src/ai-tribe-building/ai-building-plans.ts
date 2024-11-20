@@ -17,7 +17,8 @@ import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-
 import { boxIsCircular, updateBox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
-import { LayerType, surfaceLayer } from "../world";
+import { getEntityLayer } from "../world";
+import { surfaceLayer, layers, undergroundLayer, getLayerInfo } from "../layers";
 
 const virtualBuildingTakesUpWallSpace = (wallPosition: Point, wallRotation: number, virtualBuilding: VirtualBuilding, wallHitbox: RectangularBox): boolean => {
    // @Speed: cache when virutal entity is first created
@@ -139,7 +140,7 @@ interface TribeInfo {
 
 const copyTribeInfo = (tribe: Tribe): TribeInfo => {
    // @Hack
-   const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+   const buildingInfo = tribe.layerBuildingInfoRecord[surfaceLayer.depth];
    
    const safetyRecord: Record<SafetyNode, number> = {};
    const nodes = Object.keys(buildingInfo.safetyRecord).map(nodeString => Number(nodeString)) as Array<SafetyNode>;
@@ -170,13 +171,17 @@ const copyTribeInfo = (tribe: Tribe): TribeInfo => {
 }
 
 interface WallPlaceCandidate {
+   readonly layer: Layer;
    readonly position: Point;
    readonly rotation: number;
 }
 
-const wallCandidateAlreadyExists = (candidateX: number, candidateY: number, candidateRotation: number, placeCandidates: ReadonlyArray<WallPlaceCandidate>): boolean => {
+const wallCandidateAlreadyExists = (candidateLayer: Layer, candidateX: number, candidateY: number, candidateRotation: number, placeCandidates: ReadonlyArray<WallPlaceCandidate>): boolean => {
    for (let i = 0; i < placeCandidates.length; i++) {
       const currentCandidate = placeCandidates[i];
+      if (candidateLayer !== currentCandidate.layer) {
+         continue;
+      }
 
       const diffX = candidateX - currentCandidate.position.x;
       const diffY = candidateY - currentCandidate.position.y;
@@ -189,7 +194,7 @@ const wallCandidateAlreadyExists = (candidateX: number, candidateY: number, cand
    return false;
 }
 
-const addGridAlignedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallPlaceCandidate>): void => {
+const addGridAlignedWallCandidates = (tribe: Tribe, layer: Layer, placeCandidates: Array<WallPlaceCandidate>): void => {
    const occupiedNodes = new Set<SafetyNode>();
    for (let i = 0; i < tribe.virtualBuildings.length; i++) {
       const virtualBuilding = tribe.virtualBuildings[i];
@@ -326,9 +331,9 @@ const addGridAlignedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallP
       const y = (tileY + 0.5) * Settings.TILE_SIZE;
       const wallPos = new Point(x, y);
       
-      // @Hack: surfacelayer
-      if (wallSpaceIsFree(surfaceLayer, wallPos, 0, tribe) && !wallCandidateAlreadyExists(x, y, 0, placeCandidates)) {
+      if (wallSpaceIsFree(layer, wallPos, 0, tribe) && !wallCandidateAlreadyExists(layer, x, y, 0, placeCandidates)) {
          placeCandidates.push({
+            layer: layer,
             position: new Point(x, y),
             rotation: 0
          });
@@ -336,7 +341,7 @@ const addGridAlignedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallP
    }
 }
 
-const addSnappedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallPlaceCandidate>): void => {
+const addSnappedWallCandidates = (tribe: Tribe, layer: Layer, placeCandidates: Array<WallPlaceCandidate>): void => {
    for (let i = 0; i < tribe.virtualBuildings.length; i++) {
       const virtualBuilding = tribe.virtualBuildings[i];
       if (virtualBuilding.entityType !== EntityType.wall) {
@@ -350,8 +355,9 @@ const addSnappedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallPlace
          const wallPosition = new Point(x, y);
 
          // @Hack: surfacelayer
-         if (wallSpaceIsFree(surfaceLayer, wallPosition, virtualBuilding.rotation, tribe) && !wallCandidateAlreadyExists(x, y, virtualBuilding.rotation, placeCandidates)) {
+         if (wallSpaceIsFree(surfaceLayer, wallPosition, virtualBuilding.rotation, tribe) && !wallCandidateAlreadyExists(layer, x, y, virtualBuilding.rotation, placeCandidates)) {
             placeCandidates.push({
+               layer: layer,
                position: new Point(x, y),
                rotation: virtualBuilding.rotation
             });
@@ -363,8 +369,10 @@ const addSnappedWallCandidates = (tribe: Tribe, placeCandidates: Array<WallPlace
 const getWallPlaceCandidates = (tribe: Tribe): ReadonlyArray<WallPlaceCandidate> => {
    const placeCandidates = new Array<WallPlaceCandidate>();
 
-   addGridAlignedWallCandidates(tribe, placeCandidates);
-   addSnappedWallCandidates(tribe, placeCandidates);
+   for (const layer of layers) {
+      addGridAlignedWallCandidates(tribe, layer, placeCandidates);
+      addSnappedWallCandidates(tribe, layer, placeCandidates);
+   }
    
    return placeCandidates;
 }
@@ -391,11 +399,11 @@ const findIdealWallPlacePosition = (tribe: Tribe): NewBuildingPlan | null => {
 
       // Simulate placing the wall
       const hitboxes = createNormalStructureHitboxes(EntityType.wall);
-      placeVirtualBuilding(tribe, candidate.position, candidate.rotation, EntityType.wall, hitboxes, tribe.virtualEntityIDCounter);
+      placeVirtualBuilding(tribe, candidate.layer, candidate.position, candidate.rotation, EntityType.wall, hitboxes, tribe.virtualEntityIDCounter);
       tribe.virtualEntityIDCounter++;
       
-      updateTribeBuildingInfo(LayerType.surface, tribe);
-      updateTribeBuildingInfo(LayerType.underground, tribe);
+      updateTribeBuildingInfo(surfaceLayer, tribe);
+      updateTribeBuildingInfo(undergroundLayer, tribe);
 
       const query = getTribeSafety(tribe);
       const safety = query.safety;
@@ -414,8 +422,7 @@ const findIdealWallPlacePosition = (tribe: Tribe): NewBuildingPlan | null => {
          safetyData: query.safetyInfo
       });
 
-      // @Hack
-      const buildingInfo = tribe.layerBuildingInfoRecord[LayerType.surface];
+      const buildingInfo = tribe.layerBuildingInfoRecord[candidate.layer.depth];
 
       // @Incomplete: doesn't reset everything
       // Reset back to real info
@@ -432,6 +439,7 @@ const findIdealWallPlacePosition = (tribe: Tribe): NewBuildingPlan | null => {
    
    return {
       type: BuildingPlanType.newBuilding,
+      layer: bestCandidate.layer,
       position: bestCandidate.position,
       rotation: bestCandidate.rotation,
       buildingRecipe: getItemRecipe(ItemType.wooden_wall)!,
@@ -457,7 +465,7 @@ const buildingPositionIsValid = (tribe: Tribe, layer: Layer, x: number, y: numbe
       updateBox(hitbox.box, x, y, rotation);
    }
    
-   const collidingEntities = getBoxesCollidingEntities(layer.getWorldInfo(), hitboxes);
+   const collidingEntities = getBoxesCollidingEntities(getLayerInfo(layer), hitboxes);
    
    for (let i = 0; i < collidingEntities.length; i++) {
       const collidingEntity = collidingEntities[i];
@@ -477,8 +485,8 @@ interface BuildingPosition {
    readonly rotation: number;
 }
 
-export function generateBuildingPosition(tribe: Tribe, layerType: LayerType, entityType: StructureType): BuildingPosition {
-   const buildingInfo = tribe.layerBuildingInfoRecord[layerType];
+export function generateBuildingPosition(tribe: Tribe, layer: Layer, entityType: StructureType): BuildingPosition {
+   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
    
    // Find min and max node positions
    let minNodeX = Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1;
@@ -534,21 +542,20 @@ export function generateBuildingPosition(tribe: Tribe, layerType: LayerType, ent
    
       const occupiedNodes = new Set<SafetyNode>();
       addHitboxesOccupiedNodes(hitboxes, occupiedNodes);
-   
-      // Make sure that the building is in at least one safe node
-      let isValid = false;
+
+      // Make sure that the building is in at least one 'safe' node
+      let isOnValidNode = false;
       for (const node of occupiedNodes) {
          if (buildingInfo.safetyNodes.has(node)) {
-            isValid = true;
+            isOnValidNode = true;
             break;
          }
       }
-      if (!isValid) {
+      if (!isOnValidNode) {
          continue;
       }
 
-      // @Hack: surfacelayer
-      if (!buildingPositionIsValid(tribe, surfaceLayer, x, y, rotation, entityType)) {
+      if (!buildingPositionIsValid(tribe, layer, x, y, rotation, entityType)) {
          continue;
       }
       
@@ -582,10 +589,11 @@ const generatePlan = (tribe: Tribe): BuildingPlan | null => {
    // If the tribe doesn't have a workbench, prioritise placing one
    if (!tribeHasWorkbench(tribe)) {
       // @Hack: surfacelayer
-      const position = generateBuildingPosition(tribe, LayerType.surface, EntityType.workbench);
+      const position = generateBuildingPosition(tribe, surfaceLayer, EntityType.workbench);
 
       const plan: NewBuildingPlan = {
          type: BuildingPlanType.newBuilding,
+         layer: surfaceLayer,
          position: new Point(position.x, position.y),
          rotation: position.rotation,
          buildingRecipe: getItemRecipe(ItemType.workbench)!,
@@ -610,10 +618,12 @@ const generatePlan = (tribe: Tribe): BuildingPlan | null => {
    const numDesiredBarrels = getNumDesiredBarrels(tribe);
    if (getNumBarrels(tribe) < numDesiredBarrels) {
       // @Hack: surfacelayer
-      const position = generateBuildingPosition(tribe, LayerType.surface, EntityType.barrel);
+      const position = generateBuildingPosition(tribe, surfaceLayer, EntityType.barrel);
 
       const plan: NewBuildingPlan = {
          type: BuildingPlanType.newBuilding,
+         // @Hack: surfacelayer
+         layer: surfaceLayer,
          position: new Point(position.x, position.y),
          rotation: position.rotation,
          buildingRecipe: getItemRecipe(ItemType.barrel)!,
@@ -646,10 +656,12 @@ export function updateTribePlans(tribe: Tribe): void {
    // If the tribe has no huts, place one
    if (tribe.hasTotem() && tribe.getNumHuts() === 0) {
       // @Hack: surfacelayer
-      const position = generateBuildingPosition(tribe, LayerType.surface, EntityType.workbench);
+      const position = generateBuildingPosition(tribe, surfaceLayer, EntityType.workbench);
 
       const plan: NewBuildingPlan = {
          type: BuildingPlanType.newBuilding,
+         // @Hack: surfacelayer
+         layer: surfaceLayer,
          position: new Point(position.x, position.y),
          rotation: position.rotation,
          buildingRecipe: getItemRecipe(ItemType.worker_hut)!,
@@ -677,14 +689,15 @@ export function updateTribePlans(tribe: Tribe): void {
          case BuildingPlanType.newBuilding: {
             const entityType = (ITEM_INFO_RECORD[plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
             const hitboxes = createNormalStructureHitboxes(entityType);
-            virtualBuilding = placeVirtualBuilding(tribe, plan.position, plan.rotation, entityType as StructureType, hitboxes, virtualEntityID);
+            virtualBuilding = placeVirtualBuilding(tribe, plan.layer, plan.position, plan.rotation, entityType as StructureType, hitboxes, virtualEntityID);
             break;
          }
          case BuildingPlanType.upgrade: {
             // @Bug: Get from virtual buildings not actual entities
             const baseBuildingTransformComponent = TransformComponentArray.getComponent(plan.baseBuildingID);
+            const layer = getEntityLayer(plan.baseBuildingID);
             const hitboxes = createNormalStructureHitboxes(plan.entityType);
-            virtualBuilding = placeVirtualBuilding(tribe, baseBuildingTransformComponent.position, plan.rotation, plan.entityType, hitboxes, virtualEntityID);
+            virtualBuilding = placeVirtualBuilding(tribe, layer, baseBuildingTransformComponent.position, plan.rotation, plan.entityType, hitboxes, virtualEntityID);
             break;
          }
       }
@@ -705,7 +718,7 @@ export function forceBuildPlans(tribe: Tribe): void {
          case BuildingPlanType.newBuilding: {
             const entityType = (ITEM_INFO_RECORD[plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
             // @Hack: surfacelayer
-            const connectionInfo = calculateStructureConnectionInfo(plan.position, plan.rotation, entityType, surfaceLayer.getWorldInfo());
+            const connectionInfo = calculateStructureConnectionInfo(plan.position, plan.rotation, entityType, getLayerInfo(surfaceLayer));
 
             // @Hack
             placeBuilding(tribe, surfaceLayer, plan.position, plan.rotation, entityType, connectionInfo, []);
