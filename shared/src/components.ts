@@ -555,7 +555,8 @@ export enum TribesmanAIType {
    idle,
    recruiting,
    planting,
-   changeLayers
+   changeLayers,
+   moveToBiome
 }
 
 export interface TribesmanAIComponentData extends BaseComponentData {
