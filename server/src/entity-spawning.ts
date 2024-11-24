@@ -35,7 +35,7 @@ import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn
 import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { boxIsCollidingWithSubtile } from "./collision";
-import { undergroundLayer } from "./layers";
+import { surfaceLayer, undergroundLayer } from "./layers";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -370,5 +370,5 @@ export function spawnInitialEntities(): void {
       a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 800;
       a.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
       createEntity(a, undergroundLayer, 0);
-   }, 4000);
+   }, 16000);
 }

@@ -1,7 +1,7 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { ServerComponentType, TribesmanAIType } from "battletribes-shared/components";
-import { Settings } from "battletribes-shared/settings";
-import { randInt } from "battletribes-shared/utils";
+import { PathfindingSettings, Settings } from "battletribes-shared/settings";
+import { randInt, TileIndex } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import Tribe, { BuildingPlan } from "../Tribe";
 import { EntityRelationship, TribeComponentArray } from "./TribeComponent";
@@ -13,6 +13,7 @@ import { tickTribesman } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
 import { HutComponentArray } from "./HutComponent";
+import { getTileIndexIncludingEdges } from "../Layer";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -316,4 +317,14 @@ function onRemove(worker: Entity): void {
       const tribeComponent = TribeComponentArray.getComponent(worker);
       tribeComponent.tribe.respawnTribesman(tribesmanComponent.hut);
    }
+}
+
+export function getTribesmanPathfindingTargetTile(tribesmanAIComponent: TribesmanAIComponent): TileIndex {
+   const nodeX = tribesmanAIComponent.pathfindingTargetNode % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
+   const nodeY = Math.floor(tribesmanAIComponent.pathfindingTargetNode / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
+   
+   const tileX = nodeX >> 2;
+   const tileY = nodeY >> 2;
+
+   return getTileIndexIncludingEdges(tileX, tileY);
 }

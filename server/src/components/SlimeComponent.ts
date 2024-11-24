@@ -1,22 +1,24 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
-import { SLIME_MAX_MERGE_WANT, SLIME_MERGE_TIME, SLIME_MERGE_WEIGHTS, SLIME_RADII, SLIME_SPEED_MULTIPLIERS, SPIT_CHARGE_TIME_TICKS, SPIT_COOLDOWN_TICKS, SlimeEntityAnger } from "../entities/mobs/slime";
+import { Entity, EntityType, PlayerCauseOfDeath, SlimeSize } from "battletribes-shared/entities";
+import { SLIME_MAX_MERGE_WANT, SLIME_MERGE_TIME, SLIME_MERGE_WEIGHTS, SLIME_RADII, SLIME_SPEED_MULTIPLIERS, SPIT_CHARGE_TIME_TICKS, SPIT_COOLDOWN_TICKS, SlimeEntityAnger, createSlimeConfig } from "../entities/mobs/slime";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { randInt, UtilVars } from "battletribes-shared/utils";
+import { Point, randInt, UtilVars } from "battletribes-shared/utils";
 import { turnAngle, stopEntity } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, healEntity } from "./HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, getEntityHealth, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
-import { entityExists, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
+import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "./ItemComponent";
 import { Biome } from "../../../shared/src/biomes";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -61,12 +63,15 @@ const SLIME_DROP_AMOUNTS: ReadonlyArray<[minDropAmount: number, maxDropAmount: n
    [6, 9] // large slime
 ];
 
+const CONTACT_DAMAGE: ReadonlyArray<number> = [1, 2, 3];
+
 export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComponentType.slime, true,  getDataLength, addDataToPacket);
 SlimeComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
 SlimeComponentArray.preRemove = preRemove;
+SlimeComponentArray.onHitboxCollision = onHitboxCollision;
 
 const updateAngerTarget = (slime: Entity): Entity | null => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
@@ -328,5 +333,95 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    for (let i = 0; i < slimeComponent.orbSizes.length; i++) {
       const orbSize = slimeComponent.orbSizes[i];
       packet.addNumber(orbSize);
+   }
+}
+
+const wantsToMerge = (slimeComponent1: SlimeComponent, slime2: Entity): boolean => {
+   const slimeComponent2 = SlimeComponentArray.getComponent(slime2);
+   
+   // Don't try to merge with larger slimes
+   if (slimeComponent1.size > slimeComponent2.size) return false;
+
+   const mergeWant = getGameTicks() - slimeComponent1.lastMergeTicks;
+   return mergeWant >= SLIME_MAX_MERGE_WANT[slimeComponent1.size];
+}
+
+const merge = (slime1: Entity, slime2: Entity): void => {
+   // Prevents both slimes from calling this function
+   if (entityIsFlaggedForDestruction(slime2)) return;
+
+   const slimeComponent1 = SlimeComponentArray.getComponent(slime1);
+   const slimeComponent2 = SlimeComponentArray.getComponent(slime2);
+   slimeComponent1.mergeWeight += slimeComponent2.mergeWeight;
+
+   slimeComponent1.mergeTimer = SLIME_MERGE_TIME;
+
+   if (slimeComponent1.size < SlimeSize.large && slimeComponent1.mergeWeight >= SLIME_MERGE_WEIGHTS[slimeComponent1.size + 1]) {
+      const orbSizes = new Array<SlimeSize>();
+
+      // Add orbs from the 2 existing slimes
+      for (const orbSize of slimeComponent1.orbSizes) {
+         orbSizes.push(orbSize);
+      }
+      for (const orbSize of slimeComponent2.orbSizes) {
+         orbSizes.push(orbSize);
+      }
+
+      // @Incomplete: Why do we do this for both?
+      orbSizes.push(slimeComponent1.size);
+      orbSizes.push(slimeComponent2.size);
+      
+      const slime1TransformComponent = TransformComponentArray.getComponent(slime1);
+      const slime2TransformComponent = TransformComponentArray.getComponent(slime2);
+      
+      const config = createSlimeConfig(slimeComponent1.size + 1);
+      config.components[ServerComponentType.transform].position.x = (slime1TransformComponent.position.x + slime2TransformComponent.position.x) / 2;
+      config.components[ServerComponentType.transform].position.y = (slime1TransformComponent.position.y + slime2TransformComponent.position.y) / 2;
+      config.components[ServerComponentType.slime].orbSizes = orbSizes;
+      createEntity(config, getEntityLayer(slime1), 0);
+      
+      destroyEntity(slime1);
+   } else {
+      // @Incomplete: This allows small slimes to eat larger slimes. Very bad.
+      
+      // Add the other slime's health
+      healEntity(slime1, getEntityHealth(slime2), slime1)
+
+      slimeComponent1.orbSizes.push(slimeComponent2.size);
+
+      slimeComponent1.lastMergeTicks = getGameTicks();
+   }
+   
+   destroyEntity(slime2);
+}
+
+function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntityType = getEntityType(collidingEntity);
+   
+   // Merge with slimes
+   if (collidingEntityType === EntityType.slime) {
+      const slimeComponent = SlimeComponentArray.getComponent(slime);
+      if (wantsToMerge(slimeComponent, collidingEntity)) {
+         slimeComponent.mergeTimer -= Settings.I_TPS;
+         if (slimeComponent.mergeTimer <= 0) {
+            merge(slime, collidingEntity);
+         }
+      }
+      return;
+   }
+   
+   if (collidingEntityType === EntityType.slimewisp) return;
+   
+   if (HealthComponentArray.hasComponent(collidingEntity)) {
+      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+      if (!canDamageEntity(healthComponent, "slime")) {
+         return;
+      }
+
+      const slimeComponent = SlimeComponentArray.getComponent(slime);
+      const damage = CONTACT_DAMAGE[slimeComponent.size];
+
+      damageEntity(collidingEntity, slime, damage, PlayerCauseOfDeath.slime, AttackEffectiveness.effective, collisionPoint, 0);
+      addLocalInvulnerabilityHash(healthComponent, "slime", 0.3);
    }
 }

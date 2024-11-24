@@ -318,6 +318,13 @@ export function tickTribesman(tribesman: Entity): void {
       tribesmanAIComponent.targetPatrolPositionX = -1;
    }
 
+   // @Hack
+   // @Hack: don't do logic based off the tribesman ai type
+   if (tribesmanAIComponent.currentAIType === TribesmanAIType.crafting) {
+      setLimbActions(InventoryUseComponentArray.getComponent(tribesman), LimbAction.none);
+   }
+
+
    // @Speed
    // Clear any previous assigned plan
    for (let i = 0; i < tribeComponent.tribe.buildingPlans.length; i++) {

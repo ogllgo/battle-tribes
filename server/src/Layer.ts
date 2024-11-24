@@ -11,6 +11,7 @@ import CollisionChunk from "./CollisionChunk";
 import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detection";
 import { MinedSubtileInfo } from "./collapses";
 import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
+import { LocalBiome } from "./world-generation/terrain-generation-utils";
 
 interface WallSubtileUpdate {
    readonly subtileIndex: number;
@@ -166,6 +167,8 @@ export default class Layer {
    public minedSubtileInfoMap = new Map<number, MinedSubtileInfo>();
 
    public readonly nodeGroupIDs = createNodeGroupIDs();
+
+   public readonly localBiomes = new Array<LocalBiome>();
 
    constructor(depth: number) {
       this.depth = depth;

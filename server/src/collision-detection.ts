@@ -6,15 +6,15 @@ import { collide } from "./collision";
 import { TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
 
-type EntityCollisionPair = [pushingEntity: Entity, pushedEntity: Entity];
-export type HitboxCollisionPair = [pushingHitboxIdx: number, pushedHitboxIdx: number];
+type EntityCollisionPair = [affectedEntity: Entity, collidingEntity: Entity];
+export type HitboxCollisionPair = [affectedEntityIdx: number, collidingEntityIdx: number];
 
 export interface EntityPairCollisionInfo {
-   readonly pushedEntity: Entity;
+   readonly collidingEntity: Entity;
    readonly collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>;
 }
 
-/** For each pushing entity, stores info about pushed entities */
+/** For each affected entity, stores info about colliding entities */
 export type GlobalCollisionInfo = Partial<Record<number, Array<EntityPairCollisionInfo>>>;
 
 // Pair the colliding collision groups
@@ -27,24 +27,24 @@ for (let pushingGroup: CollisionGroup = 0; pushingGroup < CollisionGroup._LENGTH
    }
 }
 
-const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, collisionInfo: GlobalCollisionInfo, pushingEntity: Entity, pushedEntity: Entity): void => {
-   const pushingEntityTransformComponent = TransformComponentArray.getComponent(pushingEntity);
-   const pushedEntityTransformComponent = TransformComponentArray.getComponent(pushedEntity);
+const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, collisionInfo: GlobalCollisionInfo, affectedEntity: Entity, collidingEntity: Entity): void => {
+   const affectedEntityTransformComponent = TransformComponentArray.getComponent(affectedEntity);
+   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
    
    // AABB bounding area check
-   if (pushingEntityTransformComponent.boundingAreaMinX > pushedEntityTransformComponent.boundingAreaMaxX || // minX(1) > maxX(2)
-       pushingEntityTransformComponent.boundingAreaMaxX < pushedEntityTransformComponent.boundingAreaMinX || // maxX(1) < minX(2)
-       pushingEntityTransformComponent.boundingAreaMinY > pushedEntityTransformComponent.boundingAreaMaxY || // minY(1) > maxY(2)
-       pushingEntityTransformComponent.boundingAreaMaxY < pushedEntityTransformComponent.boundingAreaMinY) { // maxY(1) < minY(2)
+   if (affectedEntityTransformComponent.boundingAreaMinX > collidingEntityTransformComponent.boundingAreaMaxX || // minX(1) > maxX(2)
+       affectedEntityTransformComponent.boundingAreaMaxX < collidingEntityTransformComponent.boundingAreaMinX || // maxX(1) < minX(2)
+       affectedEntityTransformComponent.boundingAreaMinY > collidingEntityTransformComponent.boundingAreaMaxY || // minY(1) > maxY(2)
+       affectedEntityTransformComponent.boundingAreaMaxY < collidingEntityTransformComponent.boundingAreaMinY) { // maxY(1) < minY(2)
       return;
    }
 
    // Check if the collisions have already been marked
    // @Speed: perhaps modify the GlobalCollisionInfo type so we can skip if there was no collision. but see if that would actually make it faster
-   if (typeof collisionInfo[pushingEntity] !== "undefined") {
-      for (let i = 0; i < collisionInfo[pushingEntity]!.length; i++) {
-         const pairCollisionInfo = collisionInfo[pushingEntity]![i];
-         if (pairCollisionInfo.pushedEntity === pushedEntity) {
+   if (typeof collisionInfo[affectedEntity] !== "undefined") {
+      for (let i = 0; i < collisionInfo[affectedEntity]!.length; i++) {
+         const pairCollisionInfo = collisionInfo[affectedEntity]![i];
+         if (pairCollisionInfo.collidingEntity === collidingEntity) {
             return;
          }
       }
@@ -52,14 +52,14 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
    
    // Check hitboxes
    const collidingHitboxPairs = new Array<HitboxCollisionPair>();
-   const numHitboxes = pushingEntityTransformComponent.hitboxes.length;
-   const numOtherHitboxes = pushedEntityTransformComponent.hitboxes.length;
+   const numHitboxes = affectedEntityTransformComponent.hitboxes.length;
+   const numOtherHitboxes = collidingEntityTransformComponent.hitboxes.length;
    for (let i = 0; i < numHitboxes; i++) {
-      const hitbox = pushingEntityTransformComponent.hitboxes[i];
+      const hitbox = affectedEntityTransformComponent.hitboxes[i];
       const box = hitbox.box;
 
       for (let j = 0; j < numOtherHitboxes; j++) {
-         const otherHitbox = pushedEntityTransformComponent.hitboxes[j];
+         const otherHitbox = collidingEntityTransformComponent.hitboxes[j];
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
@@ -71,17 +71,17 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
    }
 
    if (collidingHitboxPairs.length > 0) {
-      if (typeof collisionInfo[pushingEntity] === "undefined") {
-         collisionInfo[pushingEntity] = [];
+      if (typeof collisionInfo[affectedEntity] === "undefined") {
+         collisionInfo[affectedEntity] = [];
       }
 
       const pairCollisionInfo: EntityPairCollisionInfo = {
-         pushedEntity: pushedEntity,
+         collidingEntity: collidingEntity,
          collidingHitboxPairs: collidingHitboxPairs
       };
-      collisionInfo[pushingEntity]!.push(pairCollisionInfo);
+      collisionInfo[affectedEntity]!.push(pairCollisionInfo);
 
-      entityCollisionPairs.push([pushingEntity, pushedEntity]);
+      entityCollisionPairs.push([affectedEntity, collidingEntity]);
    }
 }
 
@@ -117,17 +117,17 @@ export function resolveEntityCollisions(layer: Layer): void {
          const pushedChunk = pushedChunks[chunkIdx];
 
          for (let j = 0; j < pushingChunk.entities.length; j++) {
-            const pushingEntity = pushingChunk.entities[j];
+            const affectedEntity = pushingChunk.entities[j];
 
             for (let k = 0; k < pushedChunk.entities.length; k++) {
-               const pushedEntity = pushedChunk.entities[k];
+               const collidingEntity = pushedChunk.entities[k];
 
                // @Speed: This check is only needed if the pushingGroup is the pushedGroup.
-               if (pushingEntity === pushedEntity) {
+               if (affectedEntity === collidingEntity) {
                   continue;
                }
 
-               markEntityCollisions(entityCollisionPairs, globalCollisionInfo, pushingEntity, pushedEntity);
+               markEntityCollisions(entityCollisionPairs, globalCollisionInfo, affectedEntity, collidingEntity);
             }
          }
       }
@@ -135,13 +135,14 @@ export function resolveEntityCollisions(layer: Layer): void {
 
    for (let i = 0; i < entityCollisionPairs.length; i++) {
       const pair = entityCollisionPairs[i];
-      const pushingEntity = pair[0];
-      const pushedEntity = pair[1];
+      const affectedEntity = pair[0];
+      const collidingEntity = pair[1];
 
+      // @Speed? What does this even do?
       let collisionInfo: EntityPairCollisionInfo | undefined;
-      for (let j = 0; j < globalCollisionInfo[pushingEntity]!.length; j++) {
-         const currentCollisionInfo = globalCollisionInfo[pushingEntity]![j];
-         if (currentCollisionInfo.pushedEntity === pushedEntity) {
+      for (let j = 0; j < globalCollisionInfo[affectedEntity]!.length; j++) {
+         const currentCollisionInfo = globalCollisionInfo[affectedEntity]![j];
+         if (currentCollisionInfo.collidingEntity === collidingEntity) {
             collisionInfo = currentCollisionInfo;
             break;
          }
@@ -150,7 +151,7 @@ export function resolveEntityCollisions(layer: Layer): void {
          throw new Error();
       }
 
-      collide(pushedEntity, pushingEntity, collisionInfo.collidingHitboxPairs);
+      collide(affectedEntity, collidingEntity, collisionInfo.collidingHitboxPairs);
    }
 
    layer.globalCollisionInfo = globalCollisionInfo;

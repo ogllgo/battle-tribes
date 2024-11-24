@@ -35,6 +35,7 @@ const enum Vars {
    SNOW_THROW_KICKBACK_AMOUNT = 110,
    
    TURN_SPEED = UtilVars.PI * 3/2,
+   SLOW_TURN_SPEED = UtilVars.PI * 1.5/2,
 }
 
 export interface YetiTargetInfo {
@@ -318,7 +319,7 @@ function onTick(yeti: Entity): void {
 
                const physicsComponent = PhysicsComponentArray.getComponent(yeti);
                physicsComponent.targetRotation = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
-               physicsComponent.turnSpeed = Vars.TURN_SPEED;
+               physicsComponent.turnSpeed = Vars.SLOW_TURN_SPEED;
 
                stopEntity(physicsComponent);
                return;
@@ -331,7 +332,7 @@ function onTick(yeti: Entity): void {
 
                const physicsComponent = PhysicsComponentArray.getComponent(yeti);
                physicsComponent.targetRotation = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
-               physicsComponent.turnSpeed = Vars.TURN_SPEED;
+               physicsComponent.turnSpeed = Vars.SLOW_TURN_SPEED;
 
                stopEntity(physicsComponent);
                return;

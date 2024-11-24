@@ -1,14 +1,14 @@
 import { WaterRockData, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { TileType } from "battletribes-shared/tiles";
-import { smoothstep, TileIndex } from "battletribes-shared/utils";
+import { smoothstep } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNoise } from "../perlin-noise";
-import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo, TileGenerationRequirements } from "./terrain-generation-info";
+import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo } from "./terrain-generation-info";
 import { WaterTileGenerationInfo, generateRiverFeatures, generateRiverTiles } from "./river-generation";
 import OPTIONS from "../options";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
+import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
-import { setWallInSubtiles } from "./terrain-generation-utils";
+import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
 import { generateReeds } from "./reed-generation";
 
@@ -22,11 +22,6 @@ export interface TerrainGenerationInfo {
    readonly riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
    readonly waterRocks: ReadonlyArray<WaterRockData>;
    readonly riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>;
-}
-
-export interface LocalBiomeInfo {
-   readonly biome: Biome;
-   readonly tileIndexes: ReadonlyArray<TileIndex>;
 }
 
 const HEIGHT_NOISE_SCALE = 50;
@@ -174,116 +169,6 @@ export function generateTileInfo(tileBiomes: Float32Array, tileTypes: Float32Arr
    }
 }
 
-// @Incomplete: unused?
-const createNoiseMapData = (noise: ReadonlyArray<ReadonlyArray<number>>): Float32Array => {
-   const data = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS)
-   let idx = 0;
-   for (let tileY = 0; tileY < Settings.FULL_BOARD_DIMENSIONS; tileY++) {
-      for (let tileX = 0; tileX < Settings.FULL_BOARD_DIMENSIONS; tileX++) {
-         const val = noise[tileX][tileY];
-         data[idx] = val;
-         
-         idx++;
-      }
-   }
-   return data;
-}
-
-const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTiles: Set<TileIndex>, tileX: number, tileY: number): ReadonlyArray<TileIndex> => {
-   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-   const targetBiome = tileBiomes[tileIndex];
-
-   processedTiles.add(tileIndex);
-   
-   /** Tiles to expand from, not tiles to check whether they belong in connectedTiles */
-   const tilesToCheck = [tileIndex];
-   const connectedTiles = [tileIndex];
-   while (tilesToCheck.length > 0) {
-      const currentTile = tilesToCheck.shift()!;
-      const currentTileX = getTileX(currentTile);
-      const currentTileY = getTileY(currentTile);
-
-      // Top
-      if (currentTileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1) {
-         // @Speed: can calculate this directly by offsetting the currentTile
-         const tileIndex = getTileIndexIncludingEdges(currentTileX, currentTileY + 1);
-         if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
-               tilesToCheck.push(tileIndex);
-               connectedTiles.push(tileIndex);
-               processedTiles.add(tileIndex);
-            }
-         }
-      }
-      // Right
-      if (currentTileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1) {
-         // @Speed: can calculate this directly by offsetting the currentTile
-         const tileIndex = getTileIndexIncludingEdges(currentTileX + 1, currentTileY);
-         if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
-               tilesToCheck.push(tileIndex);
-               connectedTiles.push(tileIndex);
-               processedTiles.add(tileIndex);
-            }
-         }
-      }
-      // Bottom
-      if (currentTileY > -Settings.EDGE_GENERATION_DISTANCE + 1) {
-         // @Speed: can calculate this directly by offsetting the currentTile
-         const tileIndex = getTileIndexIncludingEdges(currentTileX, currentTileY - 1);
-         if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
-               tilesToCheck.push(tileIndex);
-               connectedTiles.push(tileIndex);
-               processedTiles.add(tileIndex);
-            }
-         }
-      }
-      // Left
-      if (currentTileX > -Settings.EDGE_GENERATION_DISTANCE + 1) {
-         // @Speed: can calculate this directly by offsetting the currentTile
-         const tileIndex = getTileIndexIncludingEdges(currentTileX - 1, currentTileY);
-         if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
-               tilesToCheck.push(tileIndex);
-               connectedTiles.push(tileIndex);
-               processedTiles.add(tileIndex);
-            }
-         }
-      }
-   }
-
-   return connectedTiles;
-}
-
-const groupLocalBiomes = (tileBiomes: Readonly<Float32Array>): ReadonlyArray<LocalBiomeInfo> => {
-   const processedTiles = new Set<TileIndex>();
-   
-   const localBiomes = new Array<LocalBiomeInfo>();
-   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
-      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
-         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         if (processedTiles.has(tileIndex)) {
-            continue;
-         }
-
-         // New tile! Make a local biome out of it
-         const connectedTiles = getConnectedBiomeTiles(tileBiomes, processedTiles, tileX, tileY);
-         const localBiome: LocalBiomeInfo = {
-            biome: tileBiomes[tileIndex],
-            tileIndexes: connectedTiles
-         };
-         localBiomes.push(localBiome);
-      }
-   }
-
-   return localBiomes;
-}
-
 function generateSurfaceTerrain(surfaceLayer: Layer): void {
    // Generate the noise
    const heightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, HEIGHT_NOISE_SCALE, 3, 1.5, 0.75);
@@ -352,10 +237,10 @@ function generateSurfaceTerrain(surfaceLayer: Layer): void {
 
    generateRiverFeatures(riverTiles, surfaceLayer.waterRocks, surfaceLayer.riverSteppingStones);
 
-   const localBiomes = groupLocalBiomes(surfaceLayer.tileBiomes);
+   groupLocalBiomes(surfaceLayer);
 
    if (OPTIONS.generateCaves) {
-      generateCaveEntrances(surfaceLayer.tileTypes, surfaceLayer.tileBiomes, surfaceLayer.wallSubtileTypes, localBiomes);
+      generateCaveEntrances();
    }
    
    generateReeds(riverMainTiles);

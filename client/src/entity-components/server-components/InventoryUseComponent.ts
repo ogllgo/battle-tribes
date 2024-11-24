@@ -76,7 +76,7 @@ export interface InventoryUseComponent {
    readonly inactiveCrossbowArrowRenderParts: Record<number, VisualRenderPart>;
    readonly arrowRenderParts: Record<number, VisualRenderPart>;
 
-   customItemRenderPart: VisualRenderPart | null;
+   customItemRenderPart: TexturedRenderPart | null;
    readonly bandageRenderParts: Array<VisualRenderPart>;
 }
 

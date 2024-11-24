@@ -5,7 +5,7 @@ import { InventoryComponentArray, getInventory, inventoryIsFull } from "../../..
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
 import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
-import { clearTribesmanPath, getTribesmanRadius, moveTribesmanToDifferentLayer, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getTribesmanRadius, moveTribesmanToBiome, moveTribesmanToDifferentLayer, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
@@ -14,18 +14,34 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { huntEntity } from "./tribesman-combat-ai";
-import { TransformComponentArray } from "../../../components/TransformComponent";
+import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType } from "../../../world";
 import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
+import { Biome } from "../../../../../shared/src/biomes";
+import { TileType } from "../../../../../shared/src/tiles";
 
-interface MaterialInfo {
+interface BiomeTileRequirement {
+   readonly tileType: TileType;
+   readonly minAmount: number;
+}
+
+export interface MaterialInfo {
+   readonly biome: Biome;
    readonly layer: Layer;
+   readonly localBiomeRequiredTiles: ReadonlyArray<BiomeTileRequirement>;
 }
 
 const MATERIAL_INFO_RECORD: Partial<Record<ItemType, MaterialInfo>> = {
    [ItemType.slimeball]: {
-      layer: surfaceLayer
+      biome: Biome.swamp,
+      layer: surfaceLayer,
+      localBiomeRequiredTiles: [
+         {
+            tileType: TileType.slime,
+            minAmount: 10
+         }
+      ]
    }
 };
 
@@ -216,7 +232,6 @@ export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyAr
       return true;
    }
 
-   // If the entity isn't in the right layer to get the resources, go to the correct layer
    const layer = getEntityLayer(tribesman);
    for (const itemType of gatheredItemTypes) {
       const materialInfo = MATERIAL_INFO_RECORD[itemType];
@@ -224,9 +239,18 @@ export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyAr
          continue;
       }
 
+      // If the entity isn't in the right layer to get the resources, go to the correct layer
       if (layer !== materialInfo.layer) {
          // Go to the correct layer
          moveTribesmanToDifferentLayer(tribesman, materialInfo.layer);
+         return true;
+      }
+
+      // If the entity isn't in the right biome, go to the right biome
+      const transformComponent = TransformComponentArray.getComponent(tribesman);
+      const currentTile = getEntityTile(transformComponent);
+      if (layer.getTileBiome(currentTile) !== materialInfo.biome) {
+         moveTribesmanToBiome(tribesman, materialInfo);
          return true;
       }
    }

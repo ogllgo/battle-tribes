@@ -1,12 +1,9 @@
-import { RiverSteppingStoneData, WaterRockData } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { distance, smoothstep } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
-import { WaterTileGenerationInfo } from "./river-generation";
-import { TerrainGenerationInfo } from "./surface-terrain-generation";
-import { setWallInSubtiles } from "./terrain-generation-utils";
+import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
@@ -84,4 +81,6 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          }
       }
    }
+   
+   groupLocalBiomes(undergroundLayer);
 }

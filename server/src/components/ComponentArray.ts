@@ -53,8 +53,8 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    };
    /** Called whenever the entity collides with a wall */
    public onWallCollision?(entity: Entity): void;
-   public onEntityCollision?(entity: Entity, collidingEntity: Entity): void;
-   public onHitboxCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionPoint: Point): void;
+   public onEntityCollision?(affectedEntity: Entity, collidingEntity: Entity): void;
+   public onHitboxCollision?(affectedEntity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void;
    /** Called immediately after an entity is marked for removal. */
    public preRemove?(entity: Entity): void;
    /**

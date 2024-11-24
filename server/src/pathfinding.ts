@@ -456,12 +456,11 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
    let i = 0;
    while (openSet.currentItemCount > 0) {
       // @Temporary
-      if (++i >= 500) {
-      // if (++i >= 10000) {
+      if (++i >= 100000) {
          // @Temporary
-         // console.warn("!!! POTENTIAL UNRESOLVEABLE PATH !!!");
-         // console.log("goal @ " + endX + " " + endY);
-         // console.trace();
+         console.warn("!!! POTENTIAL UNRESOLVEABLE PATH !!!");
+         console.log("goal @ " + endX + " " + endY);
+         console.trace();
          break;
       }
 
@@ -697,7 +696,7 @@ export function smoothPath(layer: Layer, path: ReadonlyArray<PathfindingNodeInde
    for (let i = 2; i < path.length; i++) {
       const node = path[i];
 
-      if (!pathBetweenNodesIsClear(layer, node, lastCheckpoint, ignoredGroupID, pathfindingEntityFootprint)) {
+      if (!pathBetweenNodesIsClear(layer, node, lastCheckpoint, ignoredGroupID, pathfindingEntityFootprint + 20 / PathfindingSettings.NODE_SEPARATION)) {
          smoothedPath.push(previousNode);
          lastCheckpoint = previousNode;
       }

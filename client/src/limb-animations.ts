@@ -222,6 +222,8 @@ export function updateCustomItemRenderPart(entity: Entity): void {
 
          const renderInfo = getEntityRenderInfo(entity);
          renderInfo.attachRenderPart(inventoryUseComponent.customItemRenderPart);
+      } else {
+         inventoryUseComponent.customItemRenderPart.switchTextureSource(getCustomItemRenderPartTextureSource(entity, customItemState));
       }
       
       inventoryUseComponent.customItemRenderPart.opacity = getCustomItemRenderPartOpacity(entity, customItemState);

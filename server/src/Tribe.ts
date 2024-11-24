@@ -496,7 +496,6 @@ class Tribe {
       const virtualBuilding = this.virtualBuildingRecord[building];
       this.removeVirtualBuilding(virtualBuilding.id);
       
-      console.log("remove building");
       this.buildingsAreDirty = true;
 
       switch (getEntityType(building)) {

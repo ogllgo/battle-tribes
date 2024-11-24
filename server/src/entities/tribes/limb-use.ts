@@ -198,7 +198,6 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // Global attack cooldown
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(attackingEntity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
-      console.log("glob");
       return false;
    }
 

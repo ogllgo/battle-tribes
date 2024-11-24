@@ -9,7 +9,7 @@ import { createEntity } from "../Entity";
 import { markTileAsUnspawnable } from "../entity-spawning";
 import { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { getEntityType } from "../world";
-import { getTileDist, LocalBiomeInfo } from "./surface-terrain-generation";
+import { getTileDist } from "./surface-terrain-generation";
 import { tileHasWallSubtile, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
 import { surfaceLayer } from "../layers";
@@ -22,12 +22,12 @@ const enum Vars {
 
 const guardianSpawnZones = new Array<Array<TileIndex>>();
 
-export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float32Array, subtileTypes: Float32Array, localBiomes: ReadonlyArray<LocalBiomeInfo>): void {
+export function generateCaveEntrances(): void {
    // @Temporary
    let first = true;
-   for (let i = 0; i < localBiomes.length; i++) {
-      const localBiome = localBiomes[i];
-      if (localBiome.biome !== Biome.mountains || localBiome.tileIndexes.length < Vars.MIN_TILES_FOR_CAVE) {
+   for (let i = 0; i < surfaceLayer.localBiomes.length; i++) {
+      const localBiome = surfaceLayer.localBiomes[i];
+      if (localBiome.biome !== Biome.mountains || localBiome.tiles.length < Vars.MIN_TILES_FOR_CAVE) {
          continue;
       }
 
@@ -36,12 +36,12 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
       // Pick a random tile some distance away from other biomes to generate the cave
       let originTile: TileIndex | undefined;
       for (let attempts = 0; attempts < 200; attempts++) {
-         const idx = Math.floor(Math.random() * localBiome.tileIndexes.length);
-         const tileIndex = localBiome.tileIndexes[idx];
+         const idx = Math.floor(Math.random() * localBiome.tiles.length);
+         const tileIndex = localBiome.tiles[idx];
 
          const tileX = getTileX(tileIndex);
          const tileY = getTileY(tileIndex);
-         const tileDist = getTileDist(tileBiomes, tileX, tileY, Vars.CAVE_ORIGIN_DIST);
+         const tileDist = getTileDist(surfaceLayer.tileBiomes, tileX, tileY, Vars.CAVE_ORIGIN_DIST);
          if (tileDist >= Vars.CAVE_ORIGIN_DIST) {
             originTile = tileIndex;
             break;
@@ -81,7 +81,7 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
 
             const tileX = Math.floor(x / Settings.TILE_SIZE);
             const tileY = Math.floor(y / Settings.TILE_SIZE);
-            setWallInSubtiles(subtileTypes, tileX, tileY, SubtileType.none);
+            setWallInSubtiles(surfaceLayer.wallSubtileTypes, tileX, tileY, SubtileType.none);
          }
       }
 
@@ -100,7 +100,7 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
             const tileX = Math.floor(x / Settings.TILE_SIZE);
             const tileY = Math.floor(y / Settings.TILE_SIZE);
             const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-            tileTypes[tileIndex] = TileType.dropdown;
+            surfaceLayer.tileTypes[tileIndex] = TileType.dropdown;
          }
       }
 
@@ -128,9 +128,9 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
             const tileY = Math.floor(y / Settings.TILE_SIZE);
             const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
             // @Incomplete: make into rough rock
-            tileTypes[tileIndex] = TileType.rock;
+            surfaceLayer.tileTypes[tileIndex] = TileType.rock;
 
-            setWallInSubtiles(subtileTypes, tileX, tileY, SubtileType.rockWall);
+            setWallInSubtiles(surfaceLayer.wallSubtileTypes, tileX, tileY, SubtileType.rockWall);
          }
       }
 
@@ -162,7 +162,7 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
                const tileY = Math.floor(y / Settings.TILE_SIZE);
                
                // @Incomplete: make floor into rough rock
-               setWallInSubtiles(subtileTypes, tileX, tileY, SubtileType.rockWall);
+               setWallInSubtiles(surfaceLayer.wallSubtileTypes, tileX, tileY, SubtileType.rockWall);
             }
          }
       }
@@ -183,7 +183,7 @@ export function generateCaveEntrances(tileTypes: Float32Array, tileBiomes: Float
             const tileX = Math.floor(x / Settings.TILE_SIZE);
             const tileY = Math.floor(y / Settings.TILE_SIZE);
             const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-            if (!tileHasWallSubtile(subtileTypes, tileX, tileY)) {
+            if (!tileHasWallSubtile(surfaceLayer.wallSubtileTypes, tileX, tileY)) {
                tiles.push(tileIndex);
             }
          }
