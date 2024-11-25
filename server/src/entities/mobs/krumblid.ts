@@ -1,7 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
-import { registerAttackingEntity } from "../../ai/escape-ai";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -17,6 +16,8 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { FollowAIComponent } from "../../components/FollowAIComponent";
 import { KrumblidComponent } from "../../components/KrumblidComponent";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { Settings } from "../../../../shared/src/settings";
 
 export const enum KrumblidVars {
    VISION_RANGE = 224,
@@ -29,6 +30,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
+   | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
    | ServerComponentType.followAI
    | ServerComponentType.krumblid;
@@ -53,7 +55,9 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
    const aiHelperComponent = new AIHelperComponent(KrumblidVars.VISION_RANGE);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, positionIsValidCallback);
 
-   const escapeAIComponent = new EscapeAIComponent();
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   
+   const escapeAIComponent = new EscapeAIComponent(700, 2 * Math.PI);
    
    const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), FOLLOW_CHANCE_PER_SECOND, 50);
    
@@ -67,13 +71,10 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       }
    };
-}
-
-export function onKrumblidHurt(cow: Entity, attackingEntity: Entity): void {
-   registerAttackingEntity(cow, attackingEntity);
 }

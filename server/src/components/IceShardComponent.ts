@@ -1,7 +1,7 @@
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Point, randFloat } from "battletribes-shared/utils";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -65,7 +65,7 @@ function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, _pushedHit
 
    if (entityIsIceSpikes(collidingEntity)) {
       // Instantly destroy ice spikes
-      damageEntity(collidingEntity, null, 99999, PlayerCauseOfDeath.ice_spikes, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, null, 99999, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
    } else {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "ice_shards")) {
@@ -77,7 +77,7 @@ function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, _pushedHit
       
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
-      damageEntity(collidingEntity, null, 2, PlayerCauseOfDeath.ice_shards, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 150, hitDirection);
       addLocalInvulnerabilityHash(healthComponent, "ice_shards", 0.3);
 

@@ -1,6 +1,6 @@
 import { Hitbox, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { GuardianAttackType, ServerComponentType } from "battletribes-shared/components";
-import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, DamageSource } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -398,7 +398,7 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, actingHitb
       
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
       
-      damageEntity(collidingEntity, guardian, 2, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 200, hitDirection);
       addLocalInvulnerabilityHash(healthComponent, "guardianLimb", 0.3);
    }

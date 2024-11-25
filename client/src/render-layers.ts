@@ -49,6 +49,11 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
 }
 
 export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: EntityPreCreationInfo): RenderLayer {
+   // Crafting stations render below tribesmen so they can see the limbs
+   if (typeof preCreationInfo.serverComponentParams[ServerComponentType.craftingStation] !== "undefined") {
+      return RenderLayer.lowEntities;
+   }
+   
    switch (entityType) {
       case EntityType.bracings: {
          return RenderLayer.bracings;

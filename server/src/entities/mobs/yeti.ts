@@ -1,19 +1,16 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
+import { HealthComponent } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { SnowballComponentArray } from "../../components/SnowballComponent";
 import { EntityConfig } from "../../components";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { getEntityType } from "../../world";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
@@ -25,8 +22,6 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
    | ServerComponentType.yeti;
-
-const ATTACK_PURSUE_TIME_TICKS = 5 * Settings.TPS;
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
 
@@ -73,56 +68,4 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.yeti]: yetiComponent
       }
    };
-}
-
-export function onYetiCollision(yeti: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   const collidingEntityType = getEntityType(collidingEntity);
-   
-   // Don't damage ice spikes
-   if (collidingEntityType === EntityType.iceSpikes) return;
-
-   // Don't damage snowballs thrown by the yeti
-   if (collidingEntityType === EntityType.snowball) {
-      const snowballComponent = SnowballComponentArray.getComponent(collidingEntity);
-      if (snowballComponent.yeti === yeti) {
-         return;
-      }
-   }
-   
-   // Don't damage yetis which haven't damaged it
-   const yetiComponent = YetiComponentArray.getComponent(yeti);
-   if ((collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti) && !yetiComponent.attackingEntities.hasOwnProperty(collidingEntity)) {
-      return;
-   }
-   
-   if (HealthComponentArray.hasComponent(collidingEntity)) {
-      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-      if (!canDamageEntity(healthComponent, "yeti")) {
-         return;
-      }
-
-      const transformComponent = TransformComponentArray.getComponent(yeti);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-      
-      damageEntity(collidingEntity, yeti, 2, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 200, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "yeti", 0.3);
-   }
-}
-
-export function onYetiHurt(yeti: Entity, attackingEntity: Entity, damage: number): void {
-   const yetiComponent = YetiComponentArray.getComponent(yeti);
-
-   const attackingEntityInfo = yetiComponent.attackingEntities[attackingEntity];
-   if (typeof attackingEntityInfo !== "undefined") {
-      attackingEntityInfo.remainingPursueTicks += ATTACK_PURSUE_TIME_TICKS;
-      attackingEntityInfo.totalDamageDealt += damage;
-   } else {
-      yetiComponent.attackingEntities[attackingEntity] = {
-         remainingPursueTicks: ATTACK_PURSUE_TIME_TICKS,
-         totalDamageDealt: damage
-      };
-   }
 }

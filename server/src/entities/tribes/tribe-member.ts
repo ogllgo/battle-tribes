@@ -552,17 +552,6 @@ export function tribeMemberCanPickUpItem(tribeMember: Entity, itemType: ItemType
    return false;
 }
 
-export function onTribeMemberHurt(tribeMember: Entity, attackingEntity: Entity): void {
-   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-   tribeComponent.tribe.addAttackingEntity(attackingEntity);
-   
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribeMember);
-   for (let i = 0; i < tribeMemberComponent.fishFollowerIDs.length; i++) {
-      const fish = tribeMemberComponent.fishFollowerIDs[i];
-      onFishLeaderHurt(fish, attackingEntity);
-   }
-}
-
 export function entityIsTribesman(entityType: EntityType): boolean {
    return entityType === EntityType.player || entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior;
 }

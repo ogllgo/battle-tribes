@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import {ServerComponentType } from "battletribes-shared/components";
-import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
@@ -80,7 +80,7 @@ export function onSlingTurretRockCollision(slingTurretRock: Entity, collidingEnt
       const owner = validateEntity(projectileComponent.creator);
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
       
-      damageEntity(collidingEntity, owner, 2, PlayerCauseOfDeath.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 75, hitDirection);
 
       destroyEntity(slingTurretRock);

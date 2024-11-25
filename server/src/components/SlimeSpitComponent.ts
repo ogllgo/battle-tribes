@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
@@ -78,7 +78,7 @@ function onHitboxCollision(spit: Entity, collidingEntity: Entity, actingHitbox: 
 
    const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
 
-   damageEntity(collidingEntity, spit, damage, PlayerCauseOfDeath.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

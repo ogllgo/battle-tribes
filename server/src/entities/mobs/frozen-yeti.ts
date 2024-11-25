@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -122,25 +122,9 @@ export function onFrozenYetiCollision(frozenYeti: Entity, collidingEntity: Entit
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
-      damageEntity(collidingEntity, frozenYeti, 5, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, frozenYeti, 5, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 250, hitDirection);
 
       addLocalInvulnerabilityHash(healthComponent, "frozen_yeti", 0.3);
-   }
-}
-
-export function onFrozenYetiHurt(frozenYeti: Entity, attackingEntity: Entity, damage: number): void {
-   const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
-
-   // Update/create the entity's targetInfo record
-   const attackingInfo = frozenYetiComponent.attackingEntities[attackingEntity];
-   if (typeof attackingInfo !== "undefined") {
-      attackingInfo.damageDealtToSelf += damage;
-      attackingInfo.timeSinceLastAggro = 0;
-   } else {
-      frozenYetiComponent.attackingEntities[attackingEntity] = {
-         damageDealtToSelf: damage,
-         timeSinceLastAggro: 0
-      };
    }
 }

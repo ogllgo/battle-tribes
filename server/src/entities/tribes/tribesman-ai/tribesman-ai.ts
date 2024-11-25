@@ -318,12 +318,11 @@ export function tickTribesman(tribesman: Entity): void {
       tribesmanAIComponent.targetPatrolPositionX = -1;
    }
 
-   // @Hack
+   // @Speed @Hack: ideally should be done once the crafting job is complete
    // @Hack: don't do logic based off the tribesman ai type
    if (tribesmanAIComponent.currentAIType === TribesmanAIType.crafting) {
       setLimbActions(InventoryUseComponentArray.getComponent(tribesman), LimbAction.none);
    }
-
 
    // @Speed
    // Clear any previous assigned plan
@@ -506,9 +505,12 @@ export function tickTribesman(tribesman: Entity): void {
          }
       }
    }
+
+   // @Cleanup: rename these into attack threats
       
    // Attack enemies
    if (visibleEnemies.length > 0) {
+      console.log("visible enemies!",Math.random());
       const target = getClosestAccessibleEntity(tribesman, visibleEnemies);
       huntEntity(tribesman, target, true);
       

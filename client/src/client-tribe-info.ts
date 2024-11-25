@@ -16,6 +16,9 @@ const CLIENT_TRIBE_INFO_RECORD: Record<TribeType, ClientTribeInfo> = {
    },
    [TribeType.goblins]: {
       name: "Goblins"
+   },
+   [TribeType.dwarves]: {
+      name: "Dwarves"
    }
 };
 

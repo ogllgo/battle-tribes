@@ -2,7 +2,6 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
-import { registerAttackingEntity } from "../../ai/escape-ai";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -18,7 +17,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { CowComponent } from "../../components/CowComponent";
 import { FollowAIComponent } from "../../components/FollowAIComponent";
-import { CollisionGroup } from "battletribes-shared/collision-groups";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 
 export const enum CowVars {
    VISION_RANGE = 256,
@@ -34,6 +33,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
+   | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
    | ServerComponentType.followAI
    | ServerComponentType.cow;
@@ -61,7 +61,9 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
    const aiHelperComponent = new AIHelperComponent(CowVars.VISION_RANGE);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
    
-   const escapeAIComponent = new EscapeAIComponent();
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   
+   const escapeAIComponent = new EscapeAIComponent(650, Math.PI);
 
    const followAIComponent = new FollowAIComponent(randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), FOLLOW_CHANCE_PER_SECOND, 60);
    
@@ -75,13 +77,10 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.cow]: cowComponent
       }
    };
-}
-
-export function onCowHurt(cow: Entity, attackingEntity: Entity): void {
-   registerAttackingEntity(cow, attackingEntity);
 }

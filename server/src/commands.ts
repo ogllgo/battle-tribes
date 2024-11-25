@@ -1,4 +1,4 @@
-import { PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { parseCommand } from "battletribes-shared/commands";
 import { damageEntity, healEntity } from "./components/HealthComponent";
@@ -17,13 +17,13 @@ const ENTITY_SPAWN_RANGE = 200;
 const killPlayer = (player: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   damageEntity(player, null, 999999, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const damagePlayer = (player: Entity, damage: number): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   damageEntity(player, null, damage, PlayerCauseOfDeath.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const setTime = (time: number): void => {

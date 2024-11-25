@@ -8,7 +8,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createDirtParticle, createLeafParticle, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW, LeafParticleSize } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";

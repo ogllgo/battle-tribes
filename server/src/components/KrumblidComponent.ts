@@ -1,12 +1,10 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Settings } from "battletribes-shared/settings";
 import { randInt, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
-import { chooseEscapeEntity, runFromAttackingEntity } from "../ai/escape-ai";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { EscapeAIComponentArray, updateEscapeAIComponent } from "./EscapeAIComponent";
+import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, startFollowingEntity } from "./FollowAIComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
@@ -30,15 +28,10 @@ KrumblidComponentArray.preRemove = preRemove;
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
    
-   // Escape AI
-   const escapeAIComponent = EscapeAIComponentArray.getComponent(krumblid);
-   updateEscapeAIComponent(escapeAIComponent, 5 * Settings.TPS);
-   if (escapeAIComponent.attackingEntities.length > 0) {
-      const escapeEntity = chooseEscapeEntity(krumblid, aiHelperComponent.visibleEntities);
-      if (escapeEntity !== null) {
-         runFromAttackingEntity(krumblid, escapeEntity, 700, Vars.TURN_SPEED);
-         return;
-      }
+   const escapeTarget = getEscapeTarget(krumblid);
+   if (escapeTarget !== null) {
+      runEscapeAI(krumblid, escapeTarget);
+      return;
    }
    
    // Follow AI: Make the krumblid like to hide in cacti

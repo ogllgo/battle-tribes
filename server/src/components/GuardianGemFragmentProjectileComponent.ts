@@ -1,6 +1,6 @@
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, DamageSource } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
@@ -49,7 +49,7 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHit
       
       const fragmentHitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
-      damageEntity(collidingEntity, fragment, 1, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 50, fragmentHitDirection);
 
       const projectileComponent = ProjectileComponentArray.getComponent(fragment);

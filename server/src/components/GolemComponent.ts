@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { BODY_GENERATION_RADIUS, GOLEM_WAKE_TIME_TICKS, GolemVars } from "../entities/mobs/golem";
 import { ComponentArray } from "./ComponentArray";
-import { Entity } from "battletribes-shared/entities";
+import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { randFloat, lerp, randInt } from "battletribes-shared/utils";
@@ -16,6 +16,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "./ItemComponent";
+import { HealthComponentArray } from "./HealthComponent";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
@@ -89,6 +90,7 @@ GolemComponentArray.onTick = {
    func: onTick
 };
 GolemComponentArray.preRemove = preRemove;
+GolemComponentArray.onTakeDamage = onTakeDamage;
 
 // @Incomplete?
 // // Set initial hitbox positions (sleeping)
@@ -291,4 +293,29 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(getGameTicks() - golemComponent.lastWakeTicks);
    packet.addBoolean(golemComponent.wakeTimerTicks === GOLEM_WAKE_TIME_TICKS);
    packet.padOffset(3);
+}
+
+function onTakeDamage(golem: Entity, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
+   // @Cleanup: Copy and paste from frozen-yeti
+
+   if (attackingEntity === null || !HealthComponentArray.hasComponent(attackingEntity)) {
+      return;
+   }
+   
+   const golemComponent = GolemComponentArray.getComponent(golem);
+
+   if (Object.keys(golemComponent.attackingEntities).length === 0) {
+      golemComponent.lastWakeTicks = getGameTicks();
+   }
+   
+   // Update/create the entity's targetInfo record
+   if (golemComponent.attackingEntities.hasOwnProperty(attackingEntity)) {
+      golemComponent.attackingEntities[attackingEntity].damageDealtToSelf += damageTaken;
+      golemComponent.attackingEntities[attackingEntity].timeSinceLastAggro = 0;
+   } else {
+      golemComponent.attackingEntities[attackingEntity] = {
+         damageDealtToSelf: damageTaken,
+         timeSinceLastAggro: 0
+      };
+   }
 }

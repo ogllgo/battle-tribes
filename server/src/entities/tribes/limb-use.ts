@@ -1,5 +1,5 @@
 import { HitFlags } from "battletribes-shared/client-server-types";
-import { Entity, LimbAction, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, LimbAction, EntityType, DamageSource } from "battletribes-shared/entities";
 import { AttackEffectiveness, calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsTool, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
@@ -15,11 +15,10 @@ import { TransformComponentArray } from "../../components/TransformComponent";
 import { hasTitle } from "../../components/TribeMemberComponent";
 import { calculateItemDamage } from "./tribe-member";
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
-import { BerryBushComponentArray } from "../../components/BerryBushComponent";
+import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/BerryBushComponent";
 import { PlantComponentArray, plantIsFullyGrown } from "../../components/PlantComponent";
 import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
-import { dropBerryOverEntity } from "../resources/berry-bush";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
 import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, getEntityType } from "../../world";
@@ -179,7 +178,7 @@ export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbIn
 
    // Register the hit
    const hitFlags = item !== null && item.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   damageEntity(victim, attacker, attackDamage, PlayerCauseOfDeath.tribe_member, attackEffectiveness, collisionPoint, hitFlags);
+   damageEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
    applyKnockback(victim, attackKnockback, hitDirection);
 
    if (item !== null && item.type === ItemType.flesh_sword) {

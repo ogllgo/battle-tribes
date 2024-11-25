@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
@@ -80,6 +80,7 @@ ZombieComponentArray.onTick = {
 };
 ZombieComponentArray.onHitboxCollision = onHitboxCollision;
 ZombieComponentArray.preRemove = preRemove;
+ZombieComponentArray.onTakeDamage = onTakeDamage;
 
 const tribesmanIsWearingMeatSuit = (entityID: number): boolean => {
    const inventoryComponent = InventoryComponentArray.getComponent(entityID);
@@ -350,7 +351,7 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, actingHitbox
    const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
 
    // Damage and knock back the player
-   damageEntity(collidingEntity, zombie, 1, PlayerCauseOfDeath.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 150, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "zombie", 0.3);
 
@@ -370,5 +371,16 @@ function preRemove(zombie: Entity): void {
 
    if (wasTribeMemberKill(zombie) && Math.random() < 0.1) {
       createItemsOverEntity(zombie, ItemType.eyeball, 1);
+   }
+}
+
+function onTakeDamage(zombie: Entity, attackingEntity: Entity | null): void {
+   if (attackingEntity !== null) {
+      // @Cleanup: too many ifs. generalise
+      const attackingEntityType = getEntityType(attackingEntity);
+      if (HealthComponentArray.hasComponent(attackingEntity) && attackingEntityType !== EntityType.iceSpikes && attackingEntityType !== EntityType.cactus && attackingEntityType !== EntityType.floorSpikes && attackingEntityType !== EntityType.wallSpikes && attackingEntityType !== EntityType.floorPunjiSticks && attackingEntityType !== EntityType.wallPunjiSticks) {
+         const zombieComponent = ZombieComponentArray.getComponent(zombie);
+         zombieComponent.attackingEntityIDs[attackingEntity] = ZombieVars.CHASE_PURSUE_TIME_TICKS;
+      }
    }
 }

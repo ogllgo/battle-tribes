@@ -1,5 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -113,6 +113,6 @@ export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, colli
    }
    
    // @Incomplete: Cause of death
-   damageEntity(collidingEntity, spikes, 1, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(healthComponent, "woodenSpikes", 0.3);
 }

@@ -1,6 +1,6 @@
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, PlayerCauseOfDeath } from "../../../shared/src/entities";
+import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
 import { getEntityType } from "../world";
@@ -35,7 +35,7 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, actingHitbo
 
    const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
 
-   damageEntity(collidingEntity, bastard, 1, PlayerCauseOfDeath.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 100, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "spikyBastard", 0.3);
 }

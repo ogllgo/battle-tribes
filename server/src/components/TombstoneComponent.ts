@@ -168,6 +168,6 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    if (tombstoneComponent.deathInfo !== null) {
       // @Hack: hardcoded
       packet.addString(tombstoneComponent.deathInfo.username, 100);
-      packet.addNumber(tombstoneComponent.deathInfo.causeOfDeath);
+      packet.addNumber(tombstoneComponent.deathInfo.damageSource);
    }
 }

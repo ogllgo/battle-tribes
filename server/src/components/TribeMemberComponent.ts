@@ -20,9 +20,10 @@ import { InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { adjustTribesmanRelationsAfterGift, TribesmanAIComponentArray } from "./TribesmanAIComponent";
+import { adjustTribeRelations, adjustTribesmanRelationsAfterGift, adjustTribesmanRelationsAfterKill, TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
+import { onFishLeaderHurt } from "../entities/mobs/fish";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -52,6 +53,10 @@ TribeMemberComponentArray.onTick = {
    func: onTick
 };
 TribeMemberComponentArray.onEntityCollision = onEntityCollision;
+TribeMemberComponentArray.onDeath = onDeath;
+TribeMemberComponentArray.onKill = onKill;
+TribeMemberComponentArray.onTakeDamage = onTakeDamage;
+TribeMemberComponentArray.onDealDamage = onDealDamage;
 
 const getHotbarSize = (entityType: TribesmanEntityType): number => {
    switch (entityType) {
@@ -416,5 +421,52 @@ function onEntityCollision(tribeMember: Entity, collidingEntity: Entity): void {
             adjustTribesmanRelationsAfterGift(tribeMember, itemComponent.throwingEntity, itemComponent.itemType, itemAmount);
          }
       }
+   }
+}
+
+function onDeath(entity: Entity, attackingEntity: Entity | null): void {
+   if (attackingEntity !== null) {
+      adjustTribesmanRelationsAfterKill(entity, attackingEntity);
+   }
+}
+
+function onKill(entity: Entity, deadEntity: Entity): void {
+   if (Math.random() < TITLE_REWARD_CHANCES.BLOODAXE_REWARD_CHANCE) {
+      awardTitle(entity, TribesmanTitle.bloodaxe);
+   } else if (Math.random() < TITLE_REWARD_CHANCES.DEATHBRINGER_REWARD_CHANCE) {
+      awardTitle(entity, TribesmanTitle.deathbringer);
+   } else if (getEntityType(deadEntity) === EntityType.yeti && Math.random() < TITLE_REWARD_CHANCES.YETISBANE_REWARD_CHANCE) {
+      awardTitle(entity, TribesmanTitle.yetisbane);
+   } else if (getEntityType(deadEntity) === EntityType.frozenYeti && Math.random() < TITLE_REWARD_CHANCES.WINTERSWRATH_REWARD_CHANCE) {
+      awardTitle(entity, TribesmanTitle.winterswrath);
+   }
+}
+
+function onTakeDamage(tribeMember: Entity, attackingEntity: Entity | null): void {
+   if (attackingEntity === null) {
+      return;
+   }
+
+   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
+   tribeComponent.tribe.addAttackingEntity(attackingEntity);
+   
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribeMember);
+   for (let i = 0; i < tribeMemberComponent.fishFollowerIDs.length; i++) {
+      const fish = tribeMemberComponent.fishFollowerIDs[i];
+      // @Hack?
+      onFishLeaderHurt(fish, attackingEntity);
+   }
+   
+   // Adjust the tribesman relations
+   if (TribeComponentArray.hasComponent(attackingEntity)) {
+      const otherTribeComponent = TribeComponentArray.getComponent(attackingEntity);
+      adjustTribeRelations(tribeComponent.tribe, otherTribeComponent.tribe, tribeMember, -30, -15);
+   }
+}
+
+function onDealDamage(entity: Entity, attackedEntity: Entity): void {
+   // Award gardener title for hitting berry bushes
+   if (getEntityType(attackedEntity) === EntityType.berryBush && Math.random() < TITLE_REWARD_CHANCES.GARDENER_REWARD_CHANCE) {
+      awardTitle(entity, TribesmanTitle.gardener);
    }
 }

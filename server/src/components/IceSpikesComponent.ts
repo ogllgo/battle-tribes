@@ -1,7 +1,7 @@
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
 import Layer, { positionIsInWorld } from "../Layer";
@@ -179,7 +179,7 @@ function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, _pushedHi
 
          const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
          
-         damageEntity(collidingEntity, iceSpikes, 1, PlayerCauseOfDeath.ice_spikes, AttackEffectiveness.effective, collisionPoint, 0);
+         damageEntity(collidingEntity, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, 180, hitDirection);
          addLocalInvulnerabilityHash(healthComponent, "ice_spikes", 0.3);
    

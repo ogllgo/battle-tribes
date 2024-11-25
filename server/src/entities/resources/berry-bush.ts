@@ -1,19 +1,13 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { createEntity } from "../../Entity";
-import Layer from "../../Layer";
-import { BerryBushComponent, BerryBushComponentArray } from "../../components/BerryBushComponent";
-import { ItemType } from "battletribes-shared/items/items";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { createItemEntityConfig } from "../item-entity";
+import { BerryBushComponent } from "../../components/BerryBushComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { registerDirtyEntity } from "../../server/player-clients";
-import { getEntityLayer } from "../../world";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
@@ -45,49 +39,4 @@ export function createBerryBushConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.berryBush]: berryBushComponent
       }
    }
-}
-
-export function dropBerryOverEntity(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   // Generate new spawn positions until we find one inside the board
-   let position: Point;
-   let spawnDirection: number;
-   do {
-      // @Speed: Garbage collection
-      position = transformComponent.position.copy();
-
-      spawnDirection = 2 * Math.PI * Math.random();
-      const spawnOffset = Point.fromVectorForm(40, spawnDirection);
-
-      position.add(spawnOffset);
-   } while (!Layer.isInBoard(position));
-
-   const velocityDirectionOffset = (Math.random() - 0.5) * Math.PI * 0.15;
-
-   const config = createItemEntityConfig(ItemType.berry, 1, null);
-   config.components[ServerComponentType.transform].position.x = position.x;
-   config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.physics].externalVelocity.x = 40 * Math.sin(spawnDirection + velocityDirectionOffset);
-   config.components[ServerComponentType.physics].externalVelocity.y = 40 * Math.cos(spawnDirection + velocityDirectionOffset);
-   createEntity(config, getEntityLayer(entity), 0);
-}
-
-export function dropBerry(berryBush: Entity, multiplier: number): void {
-   const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-   if (berryBushComponent.numBerries === 0) {
-      return;
-   }
-
-   for (let i = 0; i < multiplier; i++) {
-      dropBerryOverEntity(berryBush);
-   }
-
-   berryBushComponent.numBerries--;
-   registerDirtyEntity(berryBush);
-}
-
-export function onBerryBushHurt(berryBush: Entity): void {
-   dropBerry(berryBush, 1);
 }

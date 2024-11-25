@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { CactusBodyFlowerData, CactusLimbData, Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { CactusBodyFlowerData, CactusLimbData, Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
@@ -88,7 +88,7 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox
 
    const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
 
-   damageEntity(collidingEntity, cactus, 1, PlayerCauseOfDeath.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 200, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "cactus", 0.3);
 }

@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
@@ -67,7 +67,7 @@ export function onPebblumCollision(pebblum: Entity, collidingEntity: Entity, col
    const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
    // @Incomplete: Cause of death
-   damageEntity(collidingEntity, pebblum, 1, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 150, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "pebblum", 0.3);
 }

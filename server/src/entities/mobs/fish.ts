@@ -3,8 +3,6 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
-import { registerAttackingEntity } from "../../ai/escape-ai";
-import { TribeMemberComponentArray } from "../../components/TribeMemberComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -19,13 +17,10 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { Biome } from "../../../../shared/src/biomes";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 
 const enum Vars {
    TILE_VALIDATION_PADDING = 20
-}
-
-export const enum FishVars {
-   VISION_RANGE = 200
 }
 
 type ComponentTypes = ServerComponentType.transform
@@ -33,6 +28,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
+   | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
    | ServerComponentType.fish;
 
@@ -84,10 +80,12 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(FishVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(200);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, tileIsValidCallback);
 
-   const escapeAIComponent = new EscapeAIComponent();
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
+   
+   const escapeAIComponent = new EscapeAIComponent(200, Math.PI * 2/3);
 
    const fishComponent = new FishComponent();
 
@@ -99,19 +97,11 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.fish]: fishComponent
       }
    };
-}
-
-// @Cleanup: shouldn't be exported
-export function unfollowLeader(fish: Entity, leader: Entity): void {
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
-   const idx = tribeMemberComponent.fishFollowerIDs.indexOf(fish);
-   if (idx !== -1) {
-      tribeMemberComponent.fishFollowerIDs.splice(idx, 1);
-   }
 }
 
 export function onFishLeaderHurt(fish: Entity, attackingEntity: Entity): void {
@@ -119,8 +109,4 @@ export function onFishLeaderHurt(fish: Entity, attackingEntity: Entity): void {
       const fishComponent = FishComponentArray.getComponent(fish);
       fishComponent.attackTargetID = attackingEntity;
    }
-}
-
-export function onFishHurt(fish: Entity, attackingEntity: Entity): void {
-   registerAttackingEntity(fish, attackingEntity);
 }

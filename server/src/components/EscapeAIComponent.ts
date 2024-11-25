@@ -1,49 +1,70 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
-import { Packet } from "battletribes-shared/packets";
-
-// @Incomplete: Remove this component
+import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
+import { TransformComponentArray } from "./TransformComponent";
+import { AIHelperComponentArray } from "./AIHelperComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 
 export class EscapeAIComponent {
-   /** IDs of all entities attacking the entity */
-   public readonly attackingEntities = new Array<number>();
-   public readonly attackEntityTicksSinceLastAttack = new Array<number>();
+   public readonly acceleration: number;
+   public readonly turnSpeed: number;
+
+   constructor(acceleration: number, turnSpeed: number) {
+      this.acceleration = acceleration;
+      this.turnSpeed = turnSpeed;
+   }
 }
 
 export const EscapeAIComponentArray = new ComponentArray<EscapeAIComponent>(ServerComponentType.escapeAI, true, getDataLength, addDataToPacket);
 
-export function updateEscapeAIComponent(escapeAIComponent: EscapeAIComponent, attackSubsideTicks: number): void {
-   for (let i = 0; i < escapeAIComponent.attackingEntities.length; i++) {
-      if (escapeAIComponent.attackEntityTicksSinceLastAttack[i]++ >= attackSubsideTicks) {
-         escapeAIComponent.attackingEntities.splice(i, 1);
-         escapeAIComponent.attackEntityTicksSinceLastAttack.splice(i, 1);
-         i--;
+export function shouldRunEscapeAI(entity: Entity): boolean {
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
+   return attackingEntitiesComponent.attackingEntities.size > 0;
+}
+
+export function getEscapeTarget(entity: Entity): Entity | null {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
+   
+   let minDistance = Number.MAX_SAFE_INTEGER;
+   let escapeEntity: Entity | null = null;
+   for (const pair of attackingEntitiesComponent.attackingEntities) {
+      const attackingEntity = pair[0];
+
+      // Don't escape from entities which aren't visible
+      if (!aiHelperComponent.visibleEntities.includes(attackingEntity)) {
+         continue;
+      }
+      
+      const attackingEntityTransformComponent = TransformComponentArray.getComponent(attackingEntity);
+      const distance = transformComponent.position.calculateDistanceBetween(attackingEntityTransformComponent.position);
+      if (distance < minDistance) {
+         minDistance = distance;
+         escapeEntity = attackingEntity;
       }
    }
+
+   return escapeEntity;
 }
 
-function getDataLength(entity: Entity): number {
+export function runEscapeAI(entity: Entity, escapeTarget: Entity): void {
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
+   const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
 
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT * escapeAIComponent.attackingEntities.length;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT * escapeAIComponent.attackEntityTicksSinceLastAttack.length;
+   const direction = escapeTargetTransformComponent.position.calculateAngleBetween(transformComponent.position);
 
-   return lengthBytes;
+   physicsComponent.acceleration.x = escapeAIComponent.acceleration * Math.sin(direction);
+   physicsComponent.acceleration.y = escapeAIComponent.acceleration * Math.cos(direction);
+   physicsComponent.targetRotation = direction;
+   physicsComponent.turnSpeed = escapeAIComponent.turnSpeed;
 }
 
-function addDataToPacket(packet: Packet, entity: Entity): void {
-   const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
-
-   packet.addNumber(escapeAIComponent.attackingEntities.length);
-   for (let i = 0; i < escapeAIComponent.attackingEntities.length; i++) {
-      const entity = escapeAIComponent.attackingEntities[i];
-      packet.addNumber(entity);
-   }
-
-   for (let i = 0; i < escapeAIComponent.attackingEntities.length; i++) {
-      const ticks = escapeAIComponent.attackEntityTicksSinceLastAttack[i];
-      packet.addNumber(ticks);
-   }
+function getDataLength(): number {
+   return Float32Array.BYTES_PER_ELEMENT;
 }
+
+function addDataToPacket(): void {}

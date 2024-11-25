@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DeathInfo, Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { DeathInfo, Entity, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
@@ -59,7 +59,7 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    if (hasDeathInfo) {
       // @Hack: hardcoded
       const username = reader.readString(100);
-      const causeOfDeath = reader.readNumber() as PlayerCauseOfDeath;
+      const causeOfDeath = reader.readNumber() as DamageSource;
       deathInfo = {
          username: username,
          causeOfDeath: causeOfDeath

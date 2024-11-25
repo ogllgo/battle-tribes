@@ -1,5 +1,5 @@
 import { Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
-import { Entity, EntityType, FrozenYetiAttackType, PlayerCauseOfDeath, SnowballSize } from "battletribes-shared/entities";
+import { Entity, EntityType, FrozenYetiAttackType, DamageSource, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { FROZEN_YETI_BITE_COOLDOWN, FROZEN_YETI_GLOBAL_ATTACK_COOLDOWN, FROZEN_YETI_ROAR_COOLDOWN, FROZEN_YETI_SNOWBALL_THROW_COOLDOWN, FROZEN_YETI_STOMP_COOLDOWN, FrozenYetiRockSpikeInfo, FrozenYetiTargetInfo, FrozenYetiVars } from "../entities/mobs/frozen-yeti";
 import { ComponentArray } from "./ComponentArray";
@@ -67,6 +67,7 @@ FrozenYetiComponentArray.onTick = {
    func: onTick
 };
 FrozenYetiComponentArray.preRemove = preRemove;
+FrozenYetiComponentArray.onTakeDamage = onTakeDamage;
 
 const shouldTargetEntity = (layer: Layer, entity: Entity): boolean => {
    if (!HealthComponentArray.hasComponent(entity)) {
@@ -373,7 +374,7 @@ const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
             // @Hack
             const collisionPoint = new Point((hitEntityTransformComponent.position.x + transformComponent.position.x) / 2, (hitEntityTransformComponent.position.y + transformComponent.position.y) / 2);
 
-            damageEntity(hitEntity, frozenYeti, 3, PlayerCauseOfDeath.frozen_yeti, AttackEffectiveness.effective, collisionPoint, 0);
+            damageEntity(hitEntity, frozenYeti, 3, DamageSource.frozenYeti, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(hitEntity, 200, angleToTarget);
 
             if (StatusEffectComponentArray.hasComponent(hitEntity)) {
@@ -690,5 +691,27 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       const rockSpikeInfo = frozenYetiComponent.rockSpikeInfoArray[i];
       packet.addNumber(rockSpikeInfo.positionX);
       packet.addNumber(rockSpikeInfo.positionY);
+   }
+}
+
+function onTakeDamage(frozenYeti: Entity, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
+   if (attackingEntity === null) {
+      return;
+   }
+   
+   // @Copynpaste from yeti
+   
+   const frozenYetiComponent = FrozenYetiComponentArray.getComponent(frozenYeti);
+
+   // Update/create the entity's targetInfo record
+   const attackingInfo = frozenYetiComponent.attackingEntities[attackingEntity];
+   if (typeof attackingInfo !== "undefined") {
+      attackingInfo.damageDealtToSelf += damageTaken;
+      attackingInfo.timeSinceLastAggro = 0;
+   } else {
+      frozenYetiComponent.attackingEntities[attackingEntity] = {
+         damageDealtToSelf: damageTaken,
+         timeSinceLastAggro: 0
+      };
    }
 }

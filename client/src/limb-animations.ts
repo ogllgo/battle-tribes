@@ -35,15 +35,12 @@ const INGREDIENT_PARTICLE_COLOURS: Partial<Record<ItemType, ReadonlyArray<Partic
 
 const MEDICINE_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [[217/255, 26/255, 20/255], [63/255, 204/255, 91/255]];
 
-export function generateRandomLimbPosition(limbIdx: number): Point {
-   const limbMult = limbIdx === 0 ? 1 : -1;
-
-   let offsetDirection = randFloat(MIN_LIMB_DIRECTION, MAX_LIMB_DIRECTION);
-   const offsetMagnitude = 34 + randFloat(0, 6 + 6 * (offsetDirection - MIN_LIMB_DIRECTION) / MAX_LIMB_DIRECTION);
-   offsetDirection *= limbMult;
+export function generateRandomLimbPosition(): Point {
+   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetMagnitude = 8 * Math.random();
 
    const x = offsetMagnitude * Math.sin(offsetDirection);
-   const y = offsetMagnitude * Math.cos(offsetDirection);
+   const y = 4 + offsetMagnitude * Math.cos(offsetDirection);
    return new Point(x, y);
 }
 
@@ -63,7 +60,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
       const ingredientType = Number(itemTypeString) as ItemType;
 
       if (ingredientType === ItemType.wood && Math.random() < 1 / Settings.TPS) {
-         const pos = generateRandomLimbPosition(limbIdx);
+         const pos = generateRandomLimbPosition();
 
          const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
          const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
@@ -78,7 +75,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
       const particleColours = INGREDIENT_PARTICLE_COLOURS[ingredientType];
       if (typeof particleColours !== "undefined") {
          const colour = randItem(particleColours);
-         const pos = generateRandomLimbPosition(limbIdx);
+         const pos = generateRandomLimbPosition();
 
          const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
          const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
@@ -132,7 +129,7 @@ export function createMedicineAnimationParticles(entity: Entity, limbIdx: number
       const transformComponent = TransformComponentArray.getComponent(entity);
 
       const colour = randItem(MEDICINE_PARTICLE_COLOURS);
-      const pos = generateRandomLimbPosition(limbIdx);
+      const pos = generateRandomLimbPosition();
       
       const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
       const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
@@ -236,14 +233,14 @@ export function updateCustomItemRenderPart(entity: Entity): void {
    }
 }
 
-export function animateLimb(limb: VisualRenderPart, limbIdx: number, limbInfo: LimbInfo): void {
+export function animateLimb(limb: VisualRenderPart, limbInfo: LimbInfo): void {
    if (limbInfo.animationTicksElapsed === limbInfo.animationDurationTicks) {
       // New animation
 
       limbInfo.animationStartOffset.x = limbInfo.animationEndOffset.x;
       limbInfo.animationStartOffset.y = limbInfo.animationEndOffset.y;
 
-      const newOffset = generateRandomLimbPosition(limbIdx);
+      const newOffset = generateRandomLimbPosition();
       limbInfo.animationEndOffset.x = newOffset.x;
       limbInfo.animationEndOffset.y = newOffset.y;
 

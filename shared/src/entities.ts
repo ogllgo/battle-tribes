@@ -230,31 +230,30 @@ export const SNOWBALL_SIZES: Record<SnowballSize, number> = {
    [SnowballSize.large]: 60
 };
 
-// @Cleanup: Rename to something like HitCause
-export enum PlayerCauseOfDeath {
+export enum DamageSource {
    yeti,
    zombie,
    poison,
    fire,
-   tribe_member,
+   tribeMember,
    arrow,
-   ice_spikes,
-   ice_shards,
+   iceSpikes,
+   iceShards,
    cactus,
    snowball,
    slime,
    god,
-   frozen_yeti,
+   frozenYeti,
    bloodloss,
-   rock_spike,
-   lack_of_oxygen,
+   rockSpike,
+   lackOfOxygen,
    fish,
    spear
 }
 
 export interface DeathInfo {
    readonly username: string;
-   readonly causeOfDeath: PlayerCauseOfDeath;
+   readonly damageSource: DamageSource;
 }
 
 // @Refactor: It might be easier to send the animation info instead of whichever action which the client has to infer

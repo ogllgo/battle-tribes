@@ -1,6 +1,5 @@
-import { Entity, EntityType, FishColour, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, FishColour, DamageSource } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
-import { FishVars, unfollowLeader } from "../entities/mobs/fish";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -9,10 +8,9 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { stopEntity, runHerdAI } from "../ai-shared";
-import { chooseEscapeEntity, runFromAttackingEntity } from "../ai/escape-ai";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { EscapeAIComponentArray, updateEscapeAIComponent } from "./EscapeAIComponent";
+import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
@@ -32,7 +30,6 @@ const enum Vars {
    COHESION_INFLUENCE = 0.3,
    MIN_SEPARATION_DISTANCE = 40,
 
-   
    LUNGE_FORCE = 200,
    LUNGE_INTERVAL = 1
 }
@@ -109,6 +106,14 @@ const entityIsWearingFishlordSuit = (entityID: number): boolean => {
    return typeof armour !== "undefined" && armour.type === ItemType.fishlord_suit;
 }
 
+const unfollowLeader = (fish: Entity, leader: Entity): void => {
+   const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
+   const idx = tribeMemberComponent.fishFollowerIDs.indexOf(fish);
+   if (idx !== -1) {
+      tribeMemberComponent.fishFollowerIDs.splice(idx, 1);
+   }
+}
+
 function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
@@ -124,7 +129,7 @@ function onTick(fish: Entity): void {
       fishComponent.secondsOutOfWater += Settings.I_TPS;
       if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, 1.5)) {
          const hitPosition = getRandomPositionInEntity(transformComponent);
-         damageEntity(fish, null, 1, PlayerCauseOfDeath.lack_of_oxygen, AttackEffectiveness.effective, hitPosition, 0);
+         damageEntity(fish, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
    } else {
       fishComponent.secondsOutOfWater = 0;
@@ -176,7 +181,7 @@ function onTick(fish: Entity): void {
             // @Hack
             const collisionPoint = new Point((transformComponent.position.x + targetTransformComponent.position.x) / 2, (transformComponent.position.y + targetTransformComponent.position.y) / 2);
             
-            damageEntity(target, fish, 2, PlayerCauseOfDeath.fish, AttackEffectiveness.effective, collisionPoint, 0);
+            damageEntity(target, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(target, 100, hitDirection);
             addLocalInvulnerabilityHash(healthComponent, "fish", 0.3);
          }
@@ -204,14 +209,10 @@ function onTick(fish: Entity): void {
    }
 
    // Escape AI
-   const escapeAIComponent = EscapeAIComponentArray.getComponent(fish);
-   updateEscapeAIComponent(escapeAIComponent, 3 * Settings.TPS);
-   if (escapeAIComponent.attackingEntities.length > 0) {
-      const escapeEntity = chooseEscapeEntity(fish, aiHelperComponent.visibleEntities);
-      if (escapeEntity !== null) {
-         runFromAttackingEntity(fish, escapeEntity, 200, Vars.TURN_SPEED);
-         return;
-      }
+   const escapeTarget = getEscapeTarget(fish);
+   if (escapeTarget !== null) {
+      runEscapeAI(fish, escapeTarget);
+      return;
    }
 
    // Herd AI
@@ -224,7 +225,7 @@ function onTick(fish: Entity): void {
       }
    }
    if (herdMembers.length >= 1) {
-      runHerdAI(fish, herdMembers, FishVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
+      runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
       physicsComponent.acceleration.x = 100 * Math.sin(transformComponent.rotation);
       physicsComponent.acceleration.y = 100 * Math.cos(transformComponent.rotation);

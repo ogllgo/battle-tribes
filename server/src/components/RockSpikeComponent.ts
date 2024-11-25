@@ -1,10 +1,14 @@
-import { Entity, RockSpikeProjectileSize } from "battletribes-shared/entities";
+import { DamageSource, Entity, RockSpikeProjectileSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks } from "../world";
 import { Settings } from "battletribes-shared/settings";
-import { randFloat } from "battletribes-shared/utils";
+import { Point, randFloat } from "battletribes-shared/utils";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { applyKnockback } from "./PhysicsComponent";
 
 export class RockSpikeComponent {
    public readonly size: RockSpikeProjectileSize;
@@ -22,6 +26,7 @@ RockSpikeComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
+RockSpikeComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(rockSpike: Entity): void {
    const rockSpikeComponent = RockSpikeComponentArray.getComponent(rockSpike);
@@ -42,4 +47,27 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    packet.addNumber(rockSpikeComponent.size);
    packet.addNumber(rockSpikeComponent.lifetimeTicks);
+}
+
+function onHitboxCollision(rockSpikeProjectile: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const rockSpikeProjectileComponent = RockSpikeComponentArray.getComponent(rockSpikeProjectile);
+
+   // Don't hurt the yeti which created the spike
+   if (collidingEntity === rockSpikeProjectileComponent.frozenYeti) {
+      return;
+   }
+   
+   // Damage the entity
+   if (HealthComponentArray.hasComponent(collidingEntity)) {
+      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+      if (!canDamageEntity(healthComponent, "rock_spike")) {
+         return;
+      }
+      
+      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      
+      damageEntity(collidingEntity, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, 200, hitDirection);
+      addLocalInvulnerabilityHash(healthComponent, "rock_spike", 0.3);
+   }
 }

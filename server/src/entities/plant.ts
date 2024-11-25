@@ -2,8 +2,7 @@ import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } fro
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { PlantComponent, PlantComponentArray } from "../components/PlantComponent";
-import { dropBerryOverEntity } from "./resources/berry-bush";
+import { PlantComponent } from "../components/PlantComponent";
 import { EntityConfig } from "../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { TransformComponent } from "../components/TransformComponent";
@@ -44,32 +43,4 @@ export function createPlantConfig(plantType: PlanterBoxPlant, planterBox: Entity
          [ServerComponentType.plant]: plantComponent
       }
    };
-}
-
-export function dropBerryBushCropBerries(plant: Entity, multiplier: number): void {
-   const plantComponent = PlantComponentArray.getComponent(plant);
-   if (plantComponent.numFruit === 0) {
-      return;
-   }
-
-   for (let i = 0; i < multiplier; i++) {
-      dropBerryOverEntity(plant);
-   }
-
-   plantComponent.numFruit--;
-}
-
-export function onPlantHit(plant: Entity): void {
-   const plantComponent = PlantComponentArray.getComponent(plant);
-
-   plantComponent.fruitRandomGrowthTicks = 0;
-
-   switch (plantComponent.plantType) {
-      case PlanterBoxPlant.berryBush: {
-         if (plantComponent.numFruit > 0) {
-            dropBerryBushCropBerries(plant, 1);
-         }
-         break;
-      }
-   }
 }

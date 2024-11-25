@@ -34,18 +34,11 @@ export interface SlimeEntityAnger {
    readonly target: Entity;
 }
 
-interface AngerPropagationInfo {
-   chainLength: number;
-   readonly propagatedEntityIDs: Set<number>;
-}
-
 export const SLIME_RADII: ReadonlyArray<number> = [32, 44, 60];
 export const SLIME_MERGE_WEIGHTS: ReadonlyArray<number> = [2, 5, 11];
 export const SLIME_MAX_MERGE_WANT: ReadonlyArray<number> = [15 * Settings.TPS, 40 * Settings.TPS, 75 * Settings.TPS];
 
 export const SLIME_MERGE_TIME = 7.5;
-
-const MAX_ANGER_PROPAGATION_CHAIN_LENGTH = 5;
 
 export const SPIT_COOLDOWN_TICKS = 4 * Settings.TPS;
 export const SPIT_CHARGE_TIME_TICKS = SPIT_COOLDOWN_TICKS + Math.floor(0.8 * Settings.TPS);
@@ -88,77 +81,4 @@ export function createSlimeConfig(size: SlimeSize): EntityConfig<ComponentTypes>
          [ServerComponentType.craftingStation]: craftingStationComponent
       }
    };
-}
-
-const addEntityAnger = (slime: Entity, entity: Entity, amount: number, propagationInfo: AngerPropagationInfo): void => {
-   const slimeComponent = SlimeComponentArray.getComponent(slime);
-
-   let alreadyIsAngry = false;
-   for (const entityAnger of slimeComponent.angeredEntities) {
-      if (entityAnger.target === entity) {
-         const angerOverflow = Math.max(entityAnger.angerAmount + amount - 1, 0);
-
-         entityAnger.angerAmount = Math.min(entityAnger.angerAmount + amount, 1);
-
-         if (angerOverflow > 0) {
-            propagateAnger(slime, entity, angerOverflow, propagationInfo);
-         }
-
-         alreadyIsAngry = true;
-         break;
-      }
-   }
-
-   if (!alreadyIsAngry) {
-      slimeComponent.angeredEntities.push({
-         angerAmount: amount,
-         target: entity
-      });
-   }
-}
-
-const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, propagationInfo: AngerPropagationInfo = { chainLength: 0, propagatedEntityIDs: new Set() }): void => {
-   const transformComponent = TransformComponentArray.getComponent(slime);
-   const slimeComponent = SlimeComponentArray.getComponent(slime);
-
-   const visionRange = VISION_RANGES[slimeComponent.size];
-   // @Speed
-   const layer = getEntityLayer(slime);
-   const visibleEntities = getEntitiesInRange(layer, transformComponent.position.x, transformComponent.position.y, visionRange);
-
-   // @Cleanup: don't do here
-   let idx = visibleEntities.indexOf(slime);
-   while (idx !== -1) {
-      visibleEntities.splice(idx, 1);
-      idx = visibleEntities.indexOf(slime);
-   }
-   
-   // Propagate the anger
-   for (const entity of visibleEntities) {
-      if (getEntityType(entity) === EntityType.slime && !propagationInfo.propagatedEntityIDs.has(entity)) {
-         const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         
-         const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-         const distanceFactor = distance / visionRange;
-
-         propagationInfo.propagatedEntityIDs.add(slime);
-         
-         propagationInfo.chainLength++;
-
-         if (propagationInfo.chainLength <= MAX_ANGER_PROPAGATION_CHAIN_LENGTH) {
-            const propogatedAnger = lerp(amount * 1, amount * 0.4, Math.sqrt(distanceFactor));
-            addEntityAnger(entity, angeredEntity, propogatedAnger, propagationInfo);
-         }
-
-         propagationInfo.chainLength--;
-      }
-   }
-}
-
-export function onSlimeHurt(slime: Entity, attackingEntity: Entity): void {
-   const attackingEntityType = getEntityType(attackingEntity);
-   if (attackingEntityType === EntityType.iceSpikes || attackingEntityType === EntityType.cactus) return;
-
-   addEntityAnger(slime, attackingEntity, 1, { chainLength: 0, propagatedEntityIDs: new Set() });
-   propagateAnger(slime, attackingEntity, 1);
 }

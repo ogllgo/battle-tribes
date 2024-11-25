@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/status-effects";
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
@@ -117,7 +117,7 @@ function onTick(entity: Entity): void {
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
                   const hitPosition = getRandomPositionInEntity(transformComponent);
-                  damageEntity(entity, null, 1, PlayerCauseOfDeath.fire, AttackEffectiveness.effective, hitPosition, 0);
+                  damageEntity(entity, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
             break;
@@ -127,7 +127,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 0.5)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, null, 1, PlayerCauseOfDeath.poison, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -136,7 +136,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 1)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, null, 1, PlayerCauseOfDeath.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }

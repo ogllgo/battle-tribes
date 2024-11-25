@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
@@ -74,7 +74,7 @@ export function onSpearProjectileCollision(spear: Entity, collidingEntity: Entit
    // Damage the entity
    // @Temporary
    const hitDirection = spearTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-   damageEntity(collidingEntity, tribeMember, damage, PlayerCauseOfDeath.spear, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, tribeMember, damage, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 200, hitDirection);
    
    destroyEntity(spear);

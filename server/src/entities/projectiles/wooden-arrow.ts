@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
-import { EntityType, PlayerCauseOfDeath, Entity } from "battletribes-shared/entities";
+import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
@@ -16,7 +16,10 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { destroyEntity, getEntityType, validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 
-type ComponentTypes = ServerComponentType.transform | ServerComponentType.physics | ServerComponentType.tribe | ServerComponentType.projectile;
+type ComponentTypes = ServerComponentType.transform
+   | ServerComponentType.physics
+   | ServerComponentType.tribe
+   | ServerComponentType.projectile;
 
 export function createWoodenArrowConfig(tribe: Tribe, owner: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
@@ -83,7 +86,7 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
       
       const damage = 2 * (projectileComponent.isBlocked ? 0.5 : 1);
       const knockback = 150 * (projectileComponent.isBlocked ? 0.5 : 1);
-      damageEntity(collidingEntity, owner, damage, PlayerCauseOfDeath.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, owner, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, knockback, hitDirection);
 
       if (StatusEffectComponentArray.hasComponent(collidingEntity) && ammoInfo.statusEffect !== null) {

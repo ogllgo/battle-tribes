@@ -27,7 +27,9 @@ export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitCompone
    onDie: onDie
 });
 
-function createParamsFromData(): SlimeSpitComponentParams {
+function createParamsFromData(reader: PacketReader): SlimeSpitComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+
    return {};
 }
 

@@ -86,15 +86,6 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
    };
 }
 
-export function onZombieHurt(zombie: Entity, attackingEntity: Entity): void {
-   // @Cleanup: too many ifs. generalise
-   const attackingEntityType = getEntityType(attackingEntity);
-   if (HealthComponentArray.hasComponent(attackingEntity) && attackingEntityType !== EntityType.iceSpikes && attackingEntityType !== EntityType.cactus && attackingEntityType !== EntityType.floorSpikes && attackingEntityType !== EntityType.wallSpikes && attackingEntityType !== EntityType.floorPunjiSticks && attackingEntityType !== EntityType.wallPunjiSticks) {
-      const zombieComponent = ZombieComponentArray.getComponent(zombie);
-      zombieComponent.attackingEntityIDs[attackingEntity] = ZombieVars.CHASE_PURSUE_TIME_TICKS;
-   }
-}
-
 export function onZombieVisibleEntityHurt(zombie: Entity, hurtEntity: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
 

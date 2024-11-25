@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -54,7 +54,7 @@ function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, _pushedHi
       
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
-      damageEntity(collidingEntity, spikyBall, 2, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 100, hitDirection);
       addLocalInvulnerabilityHash(healthComponent, "gemSpikyBall", 0.5);
    }

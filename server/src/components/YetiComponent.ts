@@ -1,10 +1,10 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { SnowThrowStage, YETI_SNOW_THROW_COOLDOWN } from "../entities/mobs/yeti";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
+import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { randFloat, randInt, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
+import { Point, randFloat, randInt, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
 import { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -15,12 +15,16 @@ import { entitiesAreColliding, CollisionVars } from "../collision";
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, healEntity } from "./HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity } from "./HealthComponent";
 import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer } from "../layers";
+import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { SnowballComponentArray } from "./SnowballComponent";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -36,11 +40,8 @@ const enum Vars {
    
    TURN_SPEED = UtilVars.PI * 3/2,
    SLOW_TURN_SPEED = UtilVars.PI * 1.5/2,
-}
 
-export interface YetiTargetInfo {
-   remainingPursueTicks: number;
-   totalDamageDealt: number;
+   ATTACK_PURSUE_TIME_TICKS = 5 * Settings.TPS
 }
 
 const MIN_TERRITORY_SIZE = 50;
@@ -51,9 +52,6 @@ const yetiTerritoryTiles: Partial<Record<TileIndex, Entity>> = {};
 
 export class YetiComponent {
    public readonly territory: ReadonlyArray<TileIndex>;
-
-   // Stores the ids of all entities which have recently attacked the yeti
-   public readonly attackingEntities: Partial<Record<number, YetiTargetInfo>> = {};
 
    public attackTarget: Entity = 0;
    public isThrowingSnow = false;
@@ -74,6 +72,7 @@ YetiComponentArray.onTick = {
 },
 YetiComponentArray.preRemove = preRemove;
 YetiComponentArray.onRemove = onRemove;
+YetiComponentArray.onHitboxCollision = onHitboxCollision;
 
 const tileBelongsToYetiTerritory = (tileX: number, tileY: number): boolean => {
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
@@ -233,16 +232,9 @@ const throwSnow = (yeti: Entity, target: Entity): void => {
 // @Speed: hasComponent in here takes up about 1% of CPU time
 const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const yetiComponent = YetiComponentArray.getComponent(yeti);
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(yeti);
 
-   // @Speed
-   // Decrease remaining pursue time
-   for (const id of Object.keys(yetiComponent.attackingEntities).map(idString => Number(idString))) {
-      const attackingEntityInfo = yetiComponent.attackingEntities[id]!;
-      attackingEntityInfo.remainingPursueTicks--;
-      if (attackingEntityInfo!.remainingPursueTicks <= 0) {
-         delete yetiComponent.attackingEntities[id];
-      }
-   }
+   const attackingEntities = attackingEntitiesComponent.attackingEntities;
    
    let mostDamageDealt = 0;
    let target: Entity | null = null;
@@ -252,12 +244,12 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
       const entityType = getEntityType(entity);
 
       // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
-      if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !yetiComponent.attackingEntities.hasOwnProperty(entity))) {
+      if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntities.has(entity))) {
          continue;
       }
       
       // Don't chase frostlings which aren't attacking the yeti
-      if ((entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior || entityType === EntityType.player) && !yetiComponent.attackingEntities.hasOwnProperty(entity)) {
+      if ((entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior || entityType === EntityType.player) && !attackingEntities.has(entity)) {
          const tribeComponent = TribeComponentArray.getComponent(entity);
          if (tribeComponent.tribe.tribeType === TribeType.frostlings) {
             continue;
@@ -269,13 +261,13 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
       const entityTileIndex = getEntityTile(entityTransformComponent);
 
       // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
-      if (!yetiComponent.attackingEntities.hasOwnProperty(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
+      if (!attackingEntities.has(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
          continue;
       }
-
-      const attackingInfo = yetiComponent.attackingEntities[entity];
-      if (typeof attackingInfo !== "undefined") {
-         const damageDealt = attackingInfo.totalDamageDealt;
+      
+      const attackerInfo = attackingEntities.get(entity);
+      if (typeof attackerInfo !== "undefined") {
+         const damageDealt = attackerInfo.totalDamageFromEntity;
          if (damageDealt > mostDamageDealt) {
             mostDamageDealt = damageDealt;
             target = entity;
@@ -431,4 +423,38 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addBoolean(entityExists(yetiComponent.attackTarget));
    packet.padOffset(3);
    packet.addNumber(yetiComponent.snowThrowAttackProgress);
+}
+
+function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntityType = getEntityType(collidingEntity);
+   
+   // Don't damage ice spikes
+   if (collidingEntityType === EntityType.iceSpikes) return;
+
+   // Don't damage snowballs thrown by the yeti
+   if (collidingEntityType === EntityType.snowball) {
+      const snowballComponent = SnowballComponentArray.getComponent(collidingEntity);
+      if (snowballComponent.yeti === yeti) {
+         return;
+      }
+   }
+   
+   // Don't damage yetis which haven't damaged it
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(yeti);
+   if ((collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti) && !attackingEntitiesComponent.attackingEntities.has(collidingEntity)) {
+      return;
+   }
+   
+   if (HealthComponentArray.hasComponent(collidingEntity)) {
+      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+      if (!canDamageEntity(healthComponent, "yeti")) {
+         return;
+      }
+
+      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      
+      damageEntity(collidingEntity, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, 200, hitDirection);
+      addLocalInvulnerabilityHash(healthComponent, "yeti", 0.3);
+   }
 }

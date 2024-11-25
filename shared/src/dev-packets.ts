@@ -2,6 +2,7 @@ import { ServerComponentType } from "./components";
 import { EntityType } from "./entities";
 import { InventoryName, ItemSlots } from "./items/items";
 
+// @Cleanup: KILL THIS
 const SUMMON_DATA_RECORD = {
    [ServerComponentType.aiHelper]: {},
    [ServerComponentType.berryBush]: {},
@@ -85,6 +86,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.spikyBastard]: {},
    [ServerComponentType.glurb]: {},
    [ServerComponentType.slurbTorch]: {},
+   [ServerComponentType.attackingEntities]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

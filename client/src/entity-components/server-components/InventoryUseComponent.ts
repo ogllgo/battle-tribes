@@ -453,7 +453,7 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
       const limbInfo = createZeroedLimbInfo(usedInventoryName);
       limbInfos.push(limbInfo);
 
-      updateLimbInfoFromData(limbInfo, i, reader);
+      updateLimbInfoFromData(limbInfo, reader);
    }
 
    return {
@@ -1069,21 +1069,21 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       //    break;
       // }
       case LimbAction.craft: {
-         animateLimb(limbRenderPart, limbIdx, limb);
+         animateLimb(limbRenderPart, limb);
          createCraftingAnimationParticles(entity, limbIdx);
          // @Incomplete
          // shouldShowActiveItemRenderPart = false;
          break;
       }
       case LimbAction.useMedicine: {
-         animateLimb(limbRenderPart, limbIdx, limb);
+         animateLimb(limbRenderPart, limb);
          createMedicineAnimationParticles(entity, limbIdx);
          // @Incomplete
          // shouldShowActiveItemRenderPart = false;
          break;
       }
       case LimbAction.researching: {
-         animateLimb(limbRenderPart, limbIdx, limb);
+         animateLimb(limbRenderPart, limb);
          // @Incomplete
          // shouldShowActiveItemRenderPart = false;
          break;
@@ -1244,7 +1244,7 @@ const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
    }
 }
 
-const updateLimbInfoFromData = (limbInfo: LimbInfo, limbIdx: number, reader: PacketReader): void => {
+const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void => {
    const selectedItemSlot = reader.readNumber();
    const heldItemType = reader.readNumber();
 
@@ -1306,11 +1306,11 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, limbIdx: number, reader: Pac
    // Initial animation start position
    if (action === LimbAction.craft || action === LimbAction.researching) {
       if (limbInfo.animationStartOffset.x === -1) {
-         const startOffset = generateRandomLimbPosition(limbIdx);
+         const startOffset = generateRandomLimbPosition();
          limbInfo.animationStartOffset.x = startOffset.x;
          limbInfo.animationStartOffset.y = startOffset.y;
 
-         const endOffset = generateRandomLimbPosition(limbIdx);
+         const endOffset = generateRandomLimbPosition();
          limbInfo.animationEndOffset.x = endOffset.x;
          limbInfo.animationEndOffset.y = endOffset.y;
       }
@@ -1347,7 +1347,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          }
       }
 
-      updateLimbInfoFromData(limbInfo, i, reader);
+      updateLimbInfoFromData(limbInfo, reader);
       
       updateLimb(inventoryUseComponent, entity, i, limbInfo);
    }

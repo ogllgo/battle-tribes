@@ -1,6 +1,5 @@
 import { veryBadHash } from "battletribes-shared/utils";
-import { PlayerCauseOfDeath } from "battletribes-shared/entities";
-import Tombstone from "../../../entities/Tombstone";
+import { DamageSource } from "battletribes-shared/entities";
 import { getSelectedEntity } from "../../../entity-selection";
 import { TombstoneComponentArray } from "../../../entity-components/server-components/TombstoneComponent";
 
@@ -11,32 +10,32 @@ const LIFE_MESSAGES: ReadonlyArray<string> = [
 ];
 
 // @Incomplete
-const TOMBSTONE_DEATH_MESSAGES: Record<PlayerCauseOfDeath, string> = {
-   [PlayerCauseOfDeath.zombie]: "Ripped to pieces by a zombie",
-   [PlayerCauseOfDeath.yeti]: "Tried to hug a yeti",
-   [PlayerCauseOfDeath.god]: "Struck down by divine judgement",
-   [PlayerCauseOfDeath.fire]: "Couldn't handle the smoke",
-   [PlayerCauseOfDeath.poison]: "Poisoned",
-   [PlayerCauseOfDeath.tribe_member]: "Died to a tribe member", // @Incomplete
-   [PlayerCauseOfDeath.arrow]: "Impaled by an arrow", // @Incomplete
-   [PlayerCauseOfDeath.ice_spikes]: "Died to ice spikes", // @Incomplete
-   [PlayerCauseOfDeath.ice_shards]: "Impaled by an ice shard", // @Incomplete
-   [PlayerCauseOfDeath.cactus]: "Impaled by an arrow", // @Incomplete
-   [PlayerCauseOfDeath.snowball]: "Crushed by a snowball", // @Incomplete
-   [PlayerCauseOfDeath.slime]: "Absorbed by a slime", // @Incomplete
-   [PlayerCauseOfDeath.frozen_yeti]: "Thought the 'F' in Frozen Yeti meant friend", // @Incomplete
-   [PlayerCauseOfDeath.bloodloss]: "Ran out of blood",
-   [PlayerCauseOfDeath.rock_spike]: "Impaled from hole to hole",
-   [PlayerCauseOfDeath.lack_of_oxygen]: "Ran out of oxygen",
-   [PlayerCauseOfDeath.fish]: "Got beat up by a fish",
-   [PlayerCauseOfDeath.spear]: ""
+const TOMBSTONE_DEATH_MESSAGES: Record<DamageSource, string> = {
+   [DamageSource.zombie]: "Ripped to pieces by a zombie",
+   [DamageSource.yeti]: "Tried to hug a yeti",
+   [DamageSource.god]: "Struck down by divine judgement",
+   [DamageSource.fire]: "Couldn't handle the smoke",
+   [DamageSource.poison]: "Poisoned",
+   [DamageSource.tribeMember]: "Died to a tribe member", // @Incomplete
+   [DamageSource.arrow]: "Impaled by an arrow", // @Incomplete
+   [DamageSource.iceSpikes]: "Died to ice spikes", // @Incomplete
+   [DamageSource.iceShards]: "Impaled by an ice shard", // @Incomplete
+   [DamageSource.cactus]: "Impaled by an arrow", // @Incomplete
+   [DamageSource.snowball]: "Crushed by a snowball", // @Incomplete
+   [DamageSource.slime]: "Absorbed by a slime", // @Incomplete
+   [DamageSource.frozenYeti]: "Thought the 'F' in Frozen Yeti meant friend", // @Incomplete
+   [DamageSource.bloodloss]: "Ran out of blood",
+   [DamageSource.rockSpike]: "Impaled from hole to hole",
+   [DamageSource.lackOfOxygen]: "Ran out of oxygen",
+   [DamageSource.fish]: "Got beat up by a fish",
+   [DamageSource.spear]: ""
 };
 
 const TombstoneEpitaph = () => {
    const tombstone = getSelectedEntity();
 
    const tombstoneComponent = TombstoneComponentArray.getComponent(tombstone);
-   const causeOfDeath = TOMBSTONE_DEATH_MESSAGES[tombstoneComponent.deathInfo!.causeOfDeath];
+   const causeOfDeath = TOMBSTONE_DEATH_MESSAGES[tombstoneComponent.deathInfo!.damageSource];
 
    // Choose a random life message based off the entity's id
    const hash = veryBadHash(tombstone.toString());

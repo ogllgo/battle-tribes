@@ -1,12 +1,12 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, PlayerCauseOfDeath, SlimeSize } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource, SlimeSize } from "battletribes-shared/entities";
 import { SLIME_MAX_MERGE_WANT, SLIME_MERGE_TIME, SLIME_MERGE_WEIGHTS, SLIME_RADII, SLIME_SPEED_MULTIPLIERS, SPIT_CHARGE_TIME_TICKS, SPIT_COOLDOWN_TICKS, SlimeEntityAnger, createSlimeConfig } from "../entities/mobs/slime";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { Point, randInt, UtilVars } from "battletribes-shared/utils";
-import { turnAngle, stopEntity } from "../ai-shared";
+import { lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
+import { turnAngle, stopEntity, getEntitiesInRange } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
@@ -30,7 +30,14 @@ const enum Vars {
    MAX_ENTITIES_IN_RANGE_FOR_MERGE = 7,
 
    HEALING_ON_SLIME_PER_SECOND = 0.5,
-   HEALING_PROC_INTERVAL = 0.1
+   HEALING_PROC_INTERVAL = 0.1,
+
+   MAX_ANGER_PROPAGATION_CHAIN_LENGTH = 5
+}
+
+interface AngerPropagationInfo {
+   chainLength: number;
+   readonly propagatedEntityIDs: Set<number>;
 }
 
 export class SlimeComponent {
@@ -70,8 +77,9 @@ SlimeComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-SlimeComponentArray.preRemove = preRemove;
+SlimeComponentArray.onDeath = onDeath;
 SlimeComponentArray.onHitboxCollision = onHitboxCollision;
+SlimeComponentArray.onTakeDamage = onTakeDamage;
 
 const updateAngerTarget = (slime: Entity): Entity | null => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
@@ -293,7 +301,7 @@ function onTick(slime: Entity): void {
    wanderAI.run(slime);
 }
 
-function preRemove(slime: Entity): void {
+function onDeath(slime: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
    createItemsOverEntity(slime, ItemType.slimeball, randInt(...SLIME_DROP_AMOUNTS[slimeComponent.size]));
 }
@@ -421,7 +429,86 @@ function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox:
       const slimeComponent = SlimeComponentArray.getComponent(slime);
       const damage = CONTACT_DAMAGE[slimeComponent.size];
 
-      damageEntity(collidingEntity, slime, damage, PlayerCauseOfDeath.slime, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(healthComponent, "slime", 0.3);
    }
+}
+
+const addEntityAnger = (slime: Entity, entity: Entity, amount: number, propagationInfo: AngerPropagationInfo): void => {
+   const slimeComponent = SlimeComponentArray.getComponent(slime);
+
+   let alreadyIsAngry = false;
+   for (const entityAnger of slimeComponent.angeredEntities) {
+      if (entityAnger.target === entity) {
+         const angerOverflow = Math.max(entityAnger.angerAmount + amount - 1, 0);
+
+         entityAnger.angerAmount = Math.min(entityAnger.angerAmount + amount, 1);
+
+         if (angerOverflow > 0) {
+            propagateAnger(slime, entity, angerOverflow, propagationInfo);
+         }
+
+         alreadyIsAngry = true;
+         break;
+      }
+   }
+
+   if (!alreadyIsAngry) {
+      slimeComponent.angeredEntities.push({
+         angerAmount: amount,
+         target: entity
+      });
+   }
+}
+
+const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, propagationInfo: AngerPropagationInfo = { chainLength: 0, propagatedEntityIDs: new Set() }): void => {
+   const transformComponent = TransformComponentArray.getComponent(slime);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
+
+   const visionRange = aiHelperComponent.visionRange;
+   // @Speed
+   const layer = getEntityLayer(slime);
+   const visibleEntities = getEntitiesInRange(layer, transformComponent.position.x, transformComponent.position.y, visionRange);
+
+   // @Cleanup: don't do here
+   let idx = visibleEntities.indexOf(slime);
+   while (idx !== -1) {
+      visibleEntities.splice(idx, 1);
+      idx = visibleEntities.indexOf(slime);
+   }
+   
+   // Propagate the anger
+   for (const entity of visibleEntities) {
+      if (getEntityType(entity) === EntityType.slime && !propagationInfo.propagatedEntityIDs.has(entity)) {
+         const entityTransformComponent = TransformComponentArray.getComponent(entity);
+         
+         const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+         const distanceFactor = distance / visionRange;
+
+         propagationInfo.propagatedEntityIDs.add(slime);
+         
+         propagationInfo.chainLength++;
+
+         if (propagationInfo.chainLength <= Vars.MAX_ANGER_PROPAGATION_CHAIN_LENGTH) {
+            const propogatedAnger = lerp(amount * 1, amount * 0.4, Math.sqrt(distanceFactor));
+            addEntityAnger(entity, angeredEntity, propogatedAnger, propagationInfo);
+         }
+
+         propagationInfo.chainLength--;
+      }
+   }
+}
+
+function onTakeDamage(slime: Entity, attackingEntity: Entity | null): void {
+   if (attackingEntity === null) {
+      return;
+   }
+   
+   const attackingEntityType = getEntityType(attackingEntity);
+   if (attackingEntityType === EntityType.iceSpikes || attackingEntityType === EntityType.cactus) {
+      return;
+   }
+
+   addEntityAnger(slime, attackingEntity, 1, { chainLength: 0, propagatedEntityIDs: new Set() });
+   propagateAnger(slime, attackingEntity, 1);
 }

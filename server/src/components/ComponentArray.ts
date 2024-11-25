@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity } from "battletribes-shared/entities";
+import { DamageSource, Entity } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -66,6 +66,27 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    /** Returns the length of the data that would be added to the packet */
    public getDataLength: (entity: Entity, player: Entity | null) => number;
    public addDataToPacket: (packet: Packet, entity: Entity, player: Entity | null) => void;
+
+   /**
+    * Called when the entity takes damage.
+    * Only relevant for entities with health components
+   */
+   public onTakeDamage?(entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource, damageTaken: number): void;
+
+   /**
+    * Called when the entity deals damage to another entity
+    * Only relevant for entities with health components
+   */
+   public onDealDamage?(entity: Entity, attackedEntity: Entity, damageSource: DamageSource): void;
+
+   /**
+    * Called when the entity is killed (their health is reduced to 0.)
+    * Only relevant for entities with health components
+   */
+   public onDeath?(entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource): void;
+
+   /** Called when an entity with the component kills another entity (reduces their health to 0.) */
+   public onKill?(entity: Entity, killedEntity: Entity): void;
    
    constructor(componentType: C, isActiveByDefault: boolean, getDataLength: (entity: Entity, player: Entity | null) => number, addDataToPacket: (packet: Packet, entity: Entity, player: Entity | null) => void) {
       this.componentType = componentType;
@@ -303,6 +324,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.glurb]: ComponentArrayPriority.medium,
       [ServerComponentType.tetheredHitbox]: ComponentArrayPriority.medium,
       [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
+      [ServerComponentType.attackingEntities]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

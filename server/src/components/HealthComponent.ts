@@ -1,31 +1,15 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { PlayerCauseOfDeath, EntityType, Entity } from "battletribes-shared/entities";
+import { DamageSource, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { TribesmanTitle } from "battletribes-shared/titles";
 import { Point, clamp } from "battletribes-shared/utils";
-import TombstoneDeathManager from "../tombstone-deaths";
-import { onBerryBushHurt } from "../entities/resources/berry-bush";
-import { onCowHurt } from "../entities/mobs/cow";
-import { onKrumblidHurt } from "../entities/mobs/krumblid";
-import { onZombieHurt, onZombieVisibleEntityHurt } from "../entities/mobs/zombie";
-import { onSlimeHurt } from "../entities/mobs/slime";
-import { onYetiHurt } from "../entities/mobs/yeti";
-import { onFishHurt } from "../entities/mobs/fish";
-import { onFrozenYetiHurt } from "../entities/mobs/frozen-yeti";
-import { onPlayerHurt } from "../entities/tribes/player";
-import { onGolemHurt } from "../entities/mobs/golem";
+import { onZombieVisibleEntityHurt } from "../entities/mobs/zombie";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { adjustTribesmanRelationsAfterHurt, adjustTribesmanRelationsAfterKill } from "./TribesmanAIComponent";
-import { onTribeMemberHurt } from "../entities/tribes/tribe-member";
-import { TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
-import { TribeMemberComponentArray, awardTitle } from "./TribeMemberComponent";
-import { onPlantHit } from "../entities/plant";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerEntityHeal, registerEntityHit } from "../server/player-clients";
-import { ComponentArray } from "./ComponentArray";
+import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityType } from "../world";
+import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
 
 export class HealthComponent {
    public maxHealth: number;
@@ -79,7 +63,7 @@ export function canDamageEntity(healthComponent: HealthComponent, attackHash: st
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function damageEntity(entity: Entity, attackingEntity: Entity | null, damage: number, causeOfDeath: PlayerCauseOfDeath, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+export function damageEntity(entity: Entity, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
    const healthComponent = HealthComponentArray.getComponent(entity);
 
    const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
@@ -89,117 +73,49 @@ export function damageEntity(entity: Entity, attackingEntity: Entity | null, dam
 
    registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
 
-   const entityType = getEntityType(entity);
-   
+   const componentArrayRecord = getComponentArrayRecord();
+   const entityComponentTypes = getEntityComponentTypes(entity);
+
    // If the entity was killed by the attack, destroy the entity
    if (healthComponent.health <= 0) {
       destroyEntity(entity);
 
-      if (TribeMemberComponentArray.hasComponent(entity)) {
-         if (attackingEntity !== null) {
-            adjustTribesmanRelationsAfterKill(entity, attackingEntity);
+      // Call onDeath events for the dead entity
+      for (const componentType of entityComponentTypes) {
+         const componentArray = componentArrayRecord[componentType];
+         if (typeof componentArray.onDeath !== "undefined") {
+            componentArray.onDeath(entity, attackingEntity, damageSource);
          }
       }
 
-      if (attackingEntity !== null && TribeMemberComponentArray.hasComponent(attackingEntity)) {
-         if (Math.random() < TITLE_REWARD_CHANCES.BLOODAXE_REWARD_CHANCE) {
-            awardTitle(attackingEntity, TribesmanTitle.bloodaxe);
-         } else if (Math.random() < TITLE_REWARD_CHANCES.DEATHBRINGER_REWARD_CHANCE) {
-            awardTitle(attackingEntity, TribesmanTitle.deathbringer);
-         } else if (entityType === EntityType.yeti && Math.random() < TITLE_REWARD_CHANCES.YETISBANE_REWARD_CHANCE) {
-            awardTitle(attackingEntity, TribesmanTitle.yetisbane);
-         } else if (entityType === EntityType.frozenYeti && Math.random() < TITLE_REWARD_CHANCES.WINTERSWRATH_REWARD_CHANCE) {
-            awardTitle(attackingEntity, TribesmanTitle.winterswrath);
+      // Call onKill events for the attacking entity
+      if (attackingEntity !== null) {
+         const attackingEntityComponentTypes = getEntityComponentTypes(attackingEntity);
+         for (const componentType of attackingEntityComponentTypes) {
+            const componentArray = componentArrayRecord[componentType];
+            if (typeof componentArray.onKill !== "undefined") {
+               componentArray.onKill(attackingEntity, entity);
+            }
          }
-      }
-
-      if (entityType === EntityType.player) {
-         TombstoneDeathManager.registerNewDeath(entity, causeOfDeath);
       }
    }
 
-   // @Cleanup: make into component array event
-   switch (entityType) {
-      case EntityType.berryBush: {
-         onBerryBushHurt(entity);
+   // Call onTakeDamage events for the attacked entity
+   for (const componentType of entityComponentTypes) {
+      const componentArray = componentArrayRecord[componentType];
+      if (typeof componentArray.onTakeDamage !== "undefined") {
+         componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
+      }
+   }
 
-         // Award gardener title
-         if (attackingEntity !== null && TribeMemberComponentArray.hasComponent(attackingEntity) && Math.random() < TITLE_REWARD_CHANCES.GARDENER_REWARD_CHANCE) {
-            awardTitle(attackingEntity, TribesmanTitle.gardener);
+   // Call onDealDamage events for the attacking entity
+   if (attackingEntity !== null) {
+      const attackingEntityComponentTypes = getEntityComponentTypes(attackingEntity);
+      for (const componentType of attackingEntityComponentTypes) {
+         const componentArray = componentArrayRecord[componentType];
+         if (typeof componentArray.onDealDamage !== "undefined") {
+            componentArray.onDealDamage(attackingEntity, entity, damageSource);
          }
-         break;
-      }
-      case EntityType.cow: {
-         if (attackingEntity !== null) {
-            onCowHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.krumblid: {
-         if (attackingEntity !== null) {
-            onKrumblidHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.zombie: {
-         if (attackingEntity !== null) {
-            onZombieHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.slime: {
-         if (attackingEntity !== null) {
-            onSlimeHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.yeti: {
-         if (attackingEntity !== null) {
-            onYetiHurt(entity, attackingEntity, damage);
-         }
-         break;
-      }
-      case EntityType.fish: {
-         if (attackingEntity !== null) {
-            onFishHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.frozenYeti: {
-         if (attackingEntity !== null) {
-            onFrozenYetiHurt(entity, attackingEntity, damage);
-         }
-         break;
-      }
-      case EntityType.player: {
-         if (attackingEntity !== null) {
-            onPlayerHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.golem: {
-         if (attackingEntity !== null) {
-            onGolemHurt(entity, attackingEntity, damage);
-         }
-         break;
-      }
-      case EntityType.player: {
-         if (attackingEntity !== null) {
-            adjustTribesmanRelationsAfterHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.tribeWorker:
-      case EntityType.tribeWarrior: {
-         if (attackingEntity !== null) {
-            onTribeMemberHurt(entity, attackingEntity);
-            adjustTribesmanRelationsAfterHurt(entity, attackingEntity);
-         }
-         break;
-      }
-      case EntityType.plant: {
-         onPlantHit(entity);
-         break;
       }
    }
 
@@ -219,7 +135,7 @@ export function damageEntity(entity: Entity, attackingEntity: Entity | null, dam
          if (aiHelperComponent.visibleEntities.includes(entity)) {
             switch (getEntityType(viewingEntity)) {
                case EntityType.zombie: {
-                  if (causeOfDeath !== PlayerCauseOfDeath.fire && causeOfDeath !== PlayerCauseOfDeath.poison) {
+                  if (damageSource !== DamageSource.fire && damageSource !== DamageSource.poison) {
                      onZombieVisibleEntityHurt(viewingEntity, entity);
                   }
                   break;

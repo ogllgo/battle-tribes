@@ -1,10 +1,11 @@
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity } from "battletribes-shared/entities";
+import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { sendRespawnDataPacket } from "../server/packet-processing";
 import PlayerClient from "../server/PlayerClient";
+import TombstoneDeathManager from "../tombstone-deaths";
 
 export class PlayerComponent {
    public readonly client: PlayerClient;
@@ -22,6 +23,7 @@ export class PlayerComponent {
 export const PlayerComponentArray = new ComponentArray<PlayerComponent>(ServerComponentType.player, true, getDataLength, addDataToPacket);
 PlayerComponentArray.onJoin = onJoin;
 PlayerComponentArray.onRemove = onRemove;
+PlayerComponentArray.onDeath = onDeath;
 
 function onJoin(player: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(player);
@@ -51,4 +53,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    // @Hack: hardcoded
    packet.addString(playerComponent.client.username, 100);
+}
+
+function onDeath(entity: Entity, _attackingEntity: Entity | null, damageSource: DamageSource): void {
+   TombstoneDeathManager.registerNewDeath(entity, damageSource);
 }

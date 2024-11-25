@@ -236,17 +236,6 @@ export function adjustTribeRelations(attackedTribe: Tribe, attackingTribe: Tribe
    }
 }
 
-export function adjustTribesmanRelationsAfterHurt(tribesman: Entity, attackingTribesman: Entity): void {
-   if (!TribeComponentArray.hasComponent(attackingTribesman)) {
-      return;
-   }
-   
-   const tribeComponent = TribeComponentArray.getComponent(tribesman);
-   const otherTribeComponent = TribeComponentArray.getComponent(attackingTribesman);
-
-   adjustTribeRelations(tribeComponent.tribe, otherTribeComponent.tribe, tribesman, -30, -15);
-}
-
 // @Incomplete @Bug: this doesn't do anything rn as the data is lost when the tribesman is removed. need to keep track of it across tribesman lives.
 export function adjustTribesmanRelationsAfterKill(tribesman: Entity, attackingTribesman: Entity): void {
    if (!TribeComponentArray.hasComponent(attackingTribesman)) {

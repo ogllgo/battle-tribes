@@ -14,11 +14,9 @@ import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { TileType } from "battletribes-shared/tiles";
 import { moveEntityToPosition, runHerdAI, stopEntity } from "../ai-shared";
-import { chooseEscapeEntity, runFromAttackingEntity } from "../ai/escape-ai";
-import { dropBerry } from "../entities/resources/berry-bush";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { BerryBushComponentArray } from "./BerryBushComponent";
-import { EscapeAIComponentArray, updateEscapeAIComponent } from "./EscapeAIComponent";
+import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
+import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, continueFollowingEntity, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { healEntity, getEntityHealth } from "./HealthComponent";
 import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
@@ -70,7 +68,7 @@ CowComponentArray.preRemove = preRemove;
 
 const poop = (cow: Entity, cowComponent: CowComponent): void => {
    cowComponent.poopProductionCooldownTicks = randInt(Vars.MIN_POOP_PRODUCTION_COOLDOWN, Vars.MAX_POOP_PRODUCTION_COOLDOWN);
-   
+
    // Shit it out
    const transformComponent = TransformComponentArray.getComponent(cow);
    const poopPosition = transformComponent.position.offset(randFloat(0, 16), 2 * Math.PI * Math.random());
@@ -109,17 +107,17 @@ export function updateCowComponent(cow: Entity, cowComponent: CowComponent): voi
 const graze = (cow: Entity, cowComponent: CowComponent): void => {
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
    stopEntity(physicsComponent);
-   
+
    if (++cowComponent.grazeProgressTicks >= COW_GRAZE_TIME_TICKS) {
       const transformComponent = TransformComponentArray.getComponent(cow);
-      
+
       // 
       // Eat grass
       // 
 
       for (let i = 0; i < 7; i++) {
          const blockAmount = randFloat(0.6, 0.9);
-         
+
          const grassBlocker: GrassBlockerCircle = {
             radius: randFloat(10, 20),
             position: transformComponent.position.offset(randFloat(0, 55), 2 * Math.PI * Math.random()),
@@ -156,16 +154,16 @@ const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEnti
 
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
    moveEntityToPosition(cow, berryTransformComponent.position.x, berryTransformComponent.position.y, acceleration, Vars.TURN_SPEED);
-   
+
    return false;
 }
 
 const entityIsHoldingBerry = (entity: Entity): boolean => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
-   for (let i = 0 ; i < inventoryUseComponent.limbInfos.length; i++) {
+   for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
       const limbInfo = inventoryUseComponent.limbInfos[i];
-      
+
       const heldItem = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
       if (typeof heldItem !== "undefined" && heldItem.type === ItemType.berry) {
          return true;
@@ -177,7 +175,7 @@ const entityIsHoldingBerry = (entity: Entity): boolean => {
 
 const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const wantsToFollow = entityWantsToFollow(followAIComponent);
-   
+
    let currentTargetIsHoldingBerry = false;
    let target: Entity | null = null;
    for (let i = 0; i < visibleEntities.length; i++) {
@@ -205,16 +203,11 @@ function onTick(cow: Entity): void {
 
    const transformComponent = TransformComponentArray.getComponent(cow);
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
-   
-   // Escape AI
-   const escapeAIComponent = EscapeAIComponentArray.getComponent(cow);
-   updateEscapeAIComponent(escapeAIComponent, 5 * Settings.TPS);
-   if (escapeAIComponent.attackingEntities.length > 0) {
-      const escapeEntity = chooseEscapeEntity(cow, aiHelperComponent.visibleEntities);
-      if (escapeEntity !== null) {
-         runFromAttackingEntity(cow, escapeEntity, 650, Vars.TURN_SPEED);
-         return;
-      }
+
+   const escapeTarget = getEscapeTarget(cow);
+   if (escapeTarget !== null) {
+      runEscapeAI(cow, escapeTarget);
+      return;
    }
 
    // Graze dirt to recover health
@@ -257,7 +250,7 @@ function onTick(cow: Entity): void {
             if (getEntityType(berryBush) !== EntityType.berryBush) {
                continue;
             }
-   
+
             // Don't shake bushes without berries
             const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
             if (berryBushComponent.numBerries === 0) {
@@ -271,7 +264,7 @@ function onTick(cow: Entity): void {
                target = berryBush;
             }
          }
-   
+
          if (target !== null) {
             cowComponent.targetBushID = target;
          }
@@ -281,7 +274,7 @@ function onTick(cow: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
 
          moveEntityToPosition(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, 200, Vars.TURN_SPEED);
-   
+
          // If the target entity is directly in front of the cow, start eatin it
          const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.rotation);
          const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.rotation);
@@ -301,7 +294,7 @@ function onTick(cow: Entity): void {
          } else {
             cowComponent.bushShakeTimer = 0;
          }
-   
+
          return;
       }
    }
@@ -309,7 +302,7 @@ function onTick(cow: Entity): void {
    // Follow AI
    const followAIComponent = FollowAIComponentArray.getComponent(cow);
    updateFollowAIComponent(cow, aiHelperComponent.visibleEntities, 7)
-   
+
    if (entityExists(followAIComponent.followTargetID)) {
       continueFollowingEntity(cow, followAIComponent.followTargetID, 200, Vars.TURN_SPEED);
       return;
@@ -323,7 +316,7 @@ function onTick(cow: Entity): void {
    }
 
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
-   
+
    // Herd AI
    // @Incomplete: Steer the herd away from non-grasslands biomes
    const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
@@ -346,14 +339,14 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
-   
+
    packet.addNumber(cowComponent.species);
    packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / COW_GRAZE_TIME_TICKS : -1);
 }
 
 export function eatBerry(berryItemEntity: Entity, cowComponent: CowComponent): void {
    cowComponent.bowelFullness += Vars.BERRY_FULLNESS_VALUE;
-   
+
    destroyEntity(berryItemEntity);
 }
 

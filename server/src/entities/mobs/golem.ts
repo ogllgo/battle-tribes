@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { distance, Point } from "battletribes-shared/utils";
@@ -135,30 +135,6 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
    };
 }
 
-// @Cleanup: Copy and paste from frozen-yeti
-export function onGolemHurt(golem: Entity, attackingEntity: Entity, damage: number): void {
-   if (!HealthComponentArray.hasComponent(attackingEntity)) {
-      return;
-   }
-   
-   const golemComponent = GolemComponentArray.getComponent(golem);
-
-   if (Object.keys(golemComponent.attackingEntities).length === 0) {
-      golemComponent.lastWakeTicks = getGameTicks();
-   }
-   
-   // Update/create the entity's targetInfo record
-   if (golemComponent.attackingEntities.hasOwnProperty(attackingEntity)) {
-      golemComponent.attackingEntities[attackingEntity].damageDealtToSelf += damage;
-      golemComponent.attackingEntities[attackingEntity].timeSinceLastAggro = 0;
-   } else {
-      golemComponent.attackingEntities[attackingEntity] = {
-         damageDealtToSelf: damage,
-         timeSinceLastAggro: 0
-      };
-   }
-}
-
 export function onGolemCollision(golem: Entity, collidingEntity: Entity, collisionPoint: Point): void {
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
@@ -181,7 +157,7 @@ export function onGolemCollision(golem: Entity, collidingEntity: Entity, collisi
    const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
 
    // @Incomplete: Cause of death
-   damageEntity(collidingEntity, golem, 3, PlayerCauseOfDeath.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 300, hitDirection);
    addLocalInvulnerabilityHash(healthComponent, "golem", 0.3);
 }

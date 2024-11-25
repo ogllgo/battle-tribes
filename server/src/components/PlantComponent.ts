@@ -10,6 +10,7 @@ import { getEntityLayer } from "../world";
 import { createIceShardExplosion } from "./IceSpikesComponent";
 import { createItemsOverEntity } from "./ItemComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { dropBerryOverEntity } from "./BerryBushComponent";
 
 export const PLANT_GROWTH_TICKS: Record<PlanterBoxPlant, number> = {
    // @Temporary
@@ -44,6 +45,7 @@ PlantComponentArray.onTick = {
 };
 PlantComponentArray.onRemove = onRemove;
 PlantComponentArray.preRemove = preRemove;
+PlantComponentArray.onTakeDamage = onTakeDamage
 
 function preRemove(plant: Entity): void {
    const plantComponent = PlantComponentArray.getComponent(plant);
@@ -148,4 +150,33 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(plantComponent.plantType);
    packet.addNumber(growthProgress);
    packet.addNumber(plantComponent.numFruit);
+}
+
+// @Cleanup: can be done in place?
+const dropBerryBushCropBerries = (plant: Entity, multiplier: number): void => {
+   const plantComponent = PlantComponentArray.getComponent(plant);
+   if (plantComponent.numFruit === 0) {
+      return;
+   }
+
+   for (let i = 0; i < multiplier; i++) {
+      dropBerryOverEntity(plant);
+   }
+
+   plantComponent.numFruit--;
+}
+
+function onTakeDamage(plant: Entity): void {
+   const plantComponent = PlantComponentArray.getComponent(plant);
+
+   plantComponent.fruitRandomGrowthTicks = 0;
+
+   switch (plantComponent.plantType) {
+      case PlanterBoxPlant.berryBush: {
+         if (plantComponent.numFruit > 0) {
+            dropBerryBushCropBerries(plant, 1);
+         }
+         break;
+      }
+   }
 }

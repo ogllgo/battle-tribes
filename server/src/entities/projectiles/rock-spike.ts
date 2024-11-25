@@ -1,13 +1,10 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, PlayerCauseOfDeath } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { RockSpikeComponent, RockSpikeComponentArray } from "../../components/RockSpikeComponent";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { applyKnockback } from "../../components/PhysicsComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
+import { RockSpikeComponent } from "../../components/RockSpikeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 
@@ -31,30 +28,4 @@ export function createRockSpikeConfig(size: number, frozenYeti: Entity): EntityC
          [ServerComponentType.rockSpike]: rockSpikeComponent
       }
    };
-}
-
-export function onRockSpikeProjectileCollision(rockSpikeProjectile: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   const rockSpikeProjectileComponent = RockSpikeComponentArray.getComponent(rockSpikeProjectile);
-
-   // Don't hurt the yeti which created the spike
-   if (collidingEntity === rockSpikeProjectileComponent.frozenYeti) {
-      return;
-   }
-   
-   // Damage the entity
-   if (HealthComponentArray.hasComponent(collidingEntity)) {
-      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-      if (!canDamageEntity(healthComponent, "rock_spike")) {
-         return;
-      }
-      
-      const transformComponent = TransformComponentArray.getComponent(rockSpikeProjectile);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-      
-      damageEntity(collidingEntity, null, 5, PlayerCauseOfDeath.rock_spike, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 200, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "rock_spike", 0.3);
-   }
 }

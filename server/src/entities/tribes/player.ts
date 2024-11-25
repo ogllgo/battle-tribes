@@ -2,7 +2,6 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { onTribeMemberHurt } from "./tribe-member";
 import { consumeItemFromSlot, consumeItemType, countItemType, getInventory, InventoryComponentArray, InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
@@ -91,10 +90,6 @@ export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): En
          [ServerComponentType.damageBox]: damageBoxComponent
       }
    };
-}
-
-export function onPlayerHurt(player: Entity, attackingEntity: Entity): void {
-   onTribeMemberHurt(player, attackingEntity);
 }
 
 // @Cleanup: ton of copy and paste between these functions
