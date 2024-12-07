@@ -14,6 +14,20 @@ export const enum CollisionVars {
    NO_COLLISION = 0xFFFF
 }
 
+export function hitboxArraysAreColliding(hitboxes1: ReadonlyArray<Hitbox>, hitboxes2: ReadonlyArray<Hitbox>): boolean {
+   for (const hitbox of hitboxes1) {
+      const box = hitbox.box;
+
+      for (const otherHitbox of hitboxes2) {
+         if (box.isColliding(otherHitbox.box)) {
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
 /**
  * @returns A number where the first 8 bits hold the index of the entity's colliding hitbox, and the next 8 bits hold the index of the other entity's colliding hitbox
 */
@@ -38,10 +52,9 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
 
       for (let j = 0; j < numOtherHitboxes; j++) {
          const otherHitbox = transformComponent2.hitboxes[j];
-         const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
+         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherHitbox.box)) {
             return i + (j << 8);
          }
       }

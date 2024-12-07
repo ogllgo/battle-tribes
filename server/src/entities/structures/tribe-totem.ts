@@ -34,7 +34,7 @@ export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureCo
    const totemBannerComponent = new TotemBannerComponent();
    
    return {
-      entityType: EntityType.barrel,
+      entityType: EntityType.tribeTotem,
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,

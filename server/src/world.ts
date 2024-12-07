@@ -1,6 +1,5 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { tickTribes } from "./ai-tribe-building/ai-building";
 import Layer from "./Layer";
 import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
@@ -95,16 +94,6 @@ export function removeTribe(tribe: Tribe): void {
    if (idx !== -1) {
       tribes.splice(idx, 1);
    }
-}
-
-export function updateTribes(): void {
-   // @Cleanup: why do we have two different ones??
-   
-   for (const tribe of tribes) {
-      tribe.tick();
-   }
-   // @Cleanup: Maybe move to server tick function
-   tickTribes();
 }
 
 export function getTribes(): ReadonlyArray<Tribe> {

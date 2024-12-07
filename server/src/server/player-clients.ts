@@ -138,8 +138,8 @@ const processSelectTechPacket = (playerClient: PlayerClient, techID: TechID): vo
 
 const itemIsNeededInTech = (tech: TechInfo, itemRequirements: ItemRequirements, itemType: ItemType): boolean => {
    // If the item isn't present in the item requirements then it isn't needed
-   const amountNeeded = tech.researchItemRequirements[itemType];
-   if (typeof amountNeeded === "undefined") {
+   const amountNeeded = tech.researchItemRequirements.getItemCount(itemType);
+   if (amountNeeded === 0) {
       return false;
    }
    
@@ -165,7 +165,7 @@ const processTechUnlock = (playerClient: PlayerClient, techID: TechID): void => 
 
       const itemProgress = tribeComponent.tribe.techTreeUnlockProgress[techID]?.itemProgress || {};
       if (itemIsNeededInTech(tech, itemProgress, item.type)) {
-         const amountNeeded = tech.researchItemRequirements[item.type]!;
+         const amountNeeded = tech.researchItemRequirements.getItemCount(item.type);
          const amountCommitted = itemProgress[item.type] || 0;
 
          const amountToAdd = Math.min(item.count, amountNeeded - amountCommitted);

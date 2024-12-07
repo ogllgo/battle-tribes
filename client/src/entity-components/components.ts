@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { AIHelperComponentArray, AIHelperComponentParams } from "./server-components/AIHelperComponent";
 import { AmmoBoxComponentArray, AmmoBoxComponentParams } from "./server-components/AmmoBoxComponent";
 import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ArrowComponent";
+import { AttackingEntitiesComponentArray, AttackingEntitiesComponentParams } from "./server-components/AttackingEntitiesComponent";
 import { BallistaComponentArray, BallistaComponentParams } from "./server-components/BallistaComponent";
 import { BarrelComponentArray, BarrelComponentParams } from "./server-components/BarrelComponent";
 import { BattleaxeProjectileComponentArray, BattleaxeProjectileComponentParams } from "./server-components/BattleaxeProjectileComponent";
@@ -159,6 +160,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.glurb]: GlurbComponentArray,
    [ServerComponentType.tetheredHitbox]: TetheredHitboxComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
+   [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -240,6 +242,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
    [ServerComponentType.tetheredHitbox]: (): TetheredHitboxComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
+   [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

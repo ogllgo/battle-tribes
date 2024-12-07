@@ -4,7 +4,6 @@ import { parseCommand } from "battletribes-shared/commands";
 import { damageEntity, healEntity } from "./components/HealthComponent";
 import { InventoryComponentArray, addItem } from "./components/InventoryComponent";
 import { createItem } from "./items";
-import { forceBuildPlans } from "./ai-tribe-building/ai-building-plans";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { forcePlayerTeleport, getPlayerFromUsername } from "./server/player-clients";
 import { TribeComponentArray } from "./components/TribeComponent";
@@ -167,7 +166,8 @@ export function registerCommand(command: string, player: Entity): void {
       }
       case "build": {
          const tribeComponent = TribeComponentArray.getComponent(player);
-         forceBuildPlans(tribeComponent.tribe);
+         // @Incomplete
+         // forceBuildPlans(tribeComponent.tribe);
       }
    }
 }

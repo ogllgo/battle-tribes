@@ -559,18 +559,14 @@ export interface ProductInfo {
 }
 
 /** Gets the chain of items required to craft a recipe, taking into account how many items are already available */
-export function getRecipeProductChain(itemType: ItemType, availableItemsTally: Readonly<ItemTally2>): ReadonlyArray<ProductInfo> {
-   if (getItemRecipe(itemType) === null) {
-      return [];
-   }
-   
+export function getRecipeProductChain(recipe: CraftingRecipe, availableItemsTally: Readonly<ItemTally2>): ReadonlyArray<ProductInfo> {
    const currentAvailableItems = availableItemsTally.copy();
    
    const productChain = new Array<ProductInfo>();
    const itemsToCheck = new Array<ProductInfo>();
    itemsToCheck.push({
-      type: itemType,
-      amountRequired: 1
+      type: recipe.product,
+      amountRequired: recipe.yield 
    });
 
    while (itemsToCheck.length > 0) {

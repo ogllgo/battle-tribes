@@ -2,16 +2,13 @@ import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { Point, assert, distBetweenPointAndRectangle } from "battletribes-shared/utils";
-import Tribe, { RestrictedBuildingArea, TribeLayerBuildingInfo, VirtualBuilding, getNumWallConnections, updateTribeWalls } from "../Tribe";
-import { TribeArea, createTribeArea, updateTribeAreaDoors } from "./ai-building-areas";
-import { updateTribePlans } from "./ai-building-plans";
-import { assertHitboxIsRectangular, BoxType, createHitbox, hitboxIsCircular, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
-import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { HitboxCollisionBit } from "battletribes-shared/collision";
+import { TribeRoom, createTribeArea, updateTribeAreaDoors } from "./ai-building-areas";
+import { assertHitboxIsRectangular, BoxType, hitboxIsCircular, Hitbox } from "battletribes-shared/boxes/boxes";
 import { getGameTicks, getTribes } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
+import TribeBuildingLayer, { getNumWallConnections, updateTribeWalls } from "./building-plans/TribeBuildingLayer";
 
 const enum Vars {
    /** How much safety increases when moving in a node */
@@ -54,22 +51,6 @@ const BUILDING_SAFETY: Record<StructureType, number> = {
    [EntityType.fireTorch]: 3,
    [EntityType.slurbTorch]: 3
 };
-
-export function createRestrictedBuildingArea(position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea {
-   const box = new RectangularBox(new Point(0, 0), width, height, rotation);
-   const hitbox = createHitbox<BoxType.rectangular>(box, 0, 0, HitboxCollisionBit.DEFAULT, 0, []);
-   box.position.x = position.x;
-   box.position.y = position.y;
-   
-   return {
-      position: position,
-      width: width,
-      height: height,
-      rotation: rotation,
-      associatedBuildingID: associatedBuildingID,
-      hitbox: hitbox
-   };
-}
 
 export function getSafetyNode(nodeX: number, nodeY: number): SafetyNode {
    return nodeY * Settings.SAFETY_NODES_IN_WORLD_WIDTH + nodeX;
@@ -143,17 +124,12 @@ export function addHitboxesOccupiedNodes(hitboxes: ReadonlyArray<Hitbox>, positi
    }
 }
 
-const updateTribeOccupiedNodesInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo): void => {
+const updateTribeOccupiedNodesInfo = (buildingLayer: TribeBuildingLayer): void => {
    const occupiedNodes = new Set<SafetyNode>();
    const occupiedNodeToEntityIDRecord: Record<SafetyNode, Array<number>> = {};
 
    // Add nodes from buildings
-   for (let i = 0; i < tribe.virtualBuildings.length; i++) {
-      const virtualBuilding = tribe.virtualBuildings[i];
-      if (virtualBuilding.layer !== layer) {
-         continue;
-      }
-      
+   for (const virtualBuilding of buildingLayer.virtualBuildings) {
       for (const node of virtualBuilding.occupiedNodes) {
          occupiedNodes.add(node);
 
@@ -165,8 +141,8 @@ const updateTribeOccupiedNodesInfo = (tribe: Tribe, layer: Layer, buildingInfo: 
       }
    }
 
-   buildingInfo.occupiedSafetyNodes = occupiedNodes;
-   buildingInfo.occupiedNodeToEntityIDRecord = occupiedNodeToEntityIDRecord;
+   buildingLayer.occupiedSafetyNodes = occupiedNodes;
+   buildingLayer.occupiedNodeToEntityIDRecord = occupiedNodeToEntityIDRecord;
 }
 
 /** Gets all nodes within the tribe's bounding area which aren't occupied */
@@ -183,22 +159,19 @@ const getAreaNodes = (occupiedNodes: Set<SafetyNode>, minNodeX: number, maxNodeX
    return area;
 }
 
-const calculateNodeSafety = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, minAdjacentSafety: number, node: number): number => {
+const calculateNodeSafety = (buildingLayer: TribeBuildingLayer, minAdjacentSafety: number, node: number): number => {
    let safety = minAdjacentSafety + Vars.DISTANCE_FALLOFF;
-   if (buildingInfo.occupiedSafetyNodes.has(node)) {
+   if (buildingLayer.occupiedSafetyNodes.has(node)) {
       let maxOccupiedSafety = 0;
       
-      const buildingIDs = buildingInfo.occupiedNodeToEntityIDRecord[node];
-      for (let i = 0; i < buildingIDs.length; i++) {
-         const buildingID = buildingIDs[i];
-         const virtualBuilding = tribe.virtualBuildingRecord[buildingID];
+      for (const virtualBuildingID of buildingLayer.occupiedNodeToEntityIDRecord[node]) {
+         const virtualBuilding = buildingLayer.virtualBuildingRecord[virtualBuildingID];
    
          let occupiedSafety = BUILDING_SAFETY[virtualBuilding.entityType];
    
          // Walls are safer the more connected they are
          if (virtualBuilding.entityType === EntityType.wall) {
-            const wallInfo = tribe.wallInfoRecord[buildingID];
-            const numConnections = getNumWallConnections(wallInfo.connectionBitset);
+            const numConnections = getNumWallConnections(virtualBuilding.connectionBitset);
             occupiedSafety *= 1 + numConnections / 7;
          }
 
@@ -213,8 +186,8 @@ const calculateNodeSafety = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo,
    return safety;
 }
 
-const createAreaInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo, areas: Array<TribeArea>, nodeToAreaIDRecord: Record<SafetyNode, number>, insideNodes: Set<SafetyNode>): void => {
-   const occupiedNodes = buildingInfo.occupiedSafetyNodes;
+const createAreaInfo = (buildingLayer: TribeBuildingLayer, rooms: Array<TribeRoom>, nodeToRoomRecord: Record<SafetyNode, TribeRoom>, insideNodes: Set<SafetyNode>): void => {
+   const occupiedNodes = buildingLayer.occupiedSafetyNodes;
    
    // Find min and max node positions
    let minNodeX = Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1;
@@ -245,7 +218,6 @@ const createAreaInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuil
 
    // @Cleanup: name
    const areaNodes = getAreaNodes(occupiedNodes, minNodeX, maxNodeX, minNodeY, maxNodeY);
-   let areaIDCounter = 0;
    while (areaNodes.size > 0) {
       // Start at the first element in the set
       let originNode!: SafetyNode;
@@ -335,22 +307,21 @@ const createAreaInfo = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuil
       }
 
       if (isInside) {
+         // Create area
+         const area = createTribeArea(buildingLayer, connectedNodes, encounteredOccupiedNodes);
+         rooms.push(area);
+
          for (const node of connectedNodes) {
             insideNodes.add(node);
-            nodeToAreaIDRecord[node] = areaIDCounter;
+            nodeToRoomRecord[node] = area;
          }
-
-         // Create area
-         const area = createTribeArea(tribe, layer, buildingInfo, connectedNodes, areaIDCounter, encounteredOccupiedNodes);
-         areas.push(area);
-
-         areaIDCounter++;
       }
    }
 }
 
-const getBorderNodes = (layer: Layer, buildingInfo: TribeLayerBuildingInfo, insideNodes: ReadonlySet<SafetyNode>): Set<SafetyNode> => {
-   const occupiedNodes = buildingInfo.occupiedSafetyNodes;
+const getBorderNodes = (buildingLayer: TribeBuildingLayer, insideNodes: ReadonlySet<SafetyNode>): Set<SafetyNode> => {
+   const occupiedNodes = buildingLayer.occupiedSafetyNodes;
+   const layer = buildingLayer.layer;
 
    const borderNodes = new Set<SafetyNode>();
    for (const node of occupiedNodes) {
@@ -401,8 +372,9 @@ export function safetyNodeIsInWall(layer: Layer, nodeX: number, nodeY: number): 
    return layer.subtileIsWall(subtileIndex);
 }
 
-const createPaddingNodes = (tribe: Tribe, layer: Layer, buildingInfo: TribeLayerBuildingInfo, outmostPaddingNodes: Set<SafetyNode>, borderNodes: ReadonlySet<SafetyNode>, paddingNodes: Set<SafetyNode>): void => {
-   const occupiedNodes = buildingInfo.occupiedSafetyNodes;
+const createPaddingNodes = (buildingLayer: TribeBuildingLayer, outmostPaddingNodes: Set<SafetyNode>, borderNodes: ReadonlySet<SafetyNode>, paddingNodes: Set<SafetyNode>): void => {
+   const occupiedNodes = buildingLayer.occupiedSafetyNodes;
+   const layer = buildingLayer.layer;
 
    let previousOuterNodes = borderNodes;
    for (let i = 0; i < Vars.BORDER_PADDING; i++) {
@@ -523,8 +495,8 @@ const combineAllNodes = (occupiedNodes: ReadonlySet<SafetyNode>, paddingNodes: R
    return nodes;
 }
 
-const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, outmostPaddingNodes: ReadonlySet<SafetyNode>, paddingNodes: ReadonlySet<SafetyNode>, insideNodes: ReadonlySet<SafetyNode>): Record<SafetyNode, number> => {
-   const occupiedNodes = buildingInfo.occupiedSafetyNodes;
+const createSafetyRecord = (buildingLayer: TribeBuildingLayer, outmostPaddingNodes: ReadonlySet<SafetyNode>, paddingNodes: ReadonlySet<SafetyNode>, insideNodes: ReadonlySet<SafetyNode>): Record<SafetyNode, number> => {
+   const occupiedNodes = buildingLayer.occupiedSafetyNodes;
 
    const safetyRecord: Record<SafetyNode, number> = {};
    
@@ -558,7 +530,7 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
       if (nodeY < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
          const node = getSafetyNode(nodeX, nodeY + 1);
          if (remainingNodes.has(node)) {
-            safetyRecord[node] = calculateNodeSafety(tribe, buildingInfo, minSafety, node);
+            safetyRecord[node] = calculateNodeSafety(buildingLayer, minSafety, node);
             insertNode(surroundingNodes, node, safetyRecord, nextMinSafetyIdx);
             remainingNodes.delete(node);
          }
@@ -568,7 +540,7 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
       if (nodeX < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
          const node = getSafetyNode(nodeX + 1, nodeY);
          if (remainingNodes.has(node)) {
-            safetyRecord[node] = calculateNodeSafety(tribe, buildingInfo, minSafety, node);
+            safetyRecord[node] = calculateNodeSafety(buildingLayer, minSafety, node);
             insertNode(surroundingNodes, node, safetyRecord, nextMinSafetyIdx);
             remainingNodes.delete(node);
          }
@@ -578,7 +550,7 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
       if (nodeY > 0) {
          const node = getSafetyNode(nodeX, nodeY - 1);
          if (remainingNodes.has(node)) {
-            safetyRecord[node] = calculateNodeSafety(tribe, buildingInfo, minSafety, node);
+            safetyRecord[node] = calculateNodeSafety(buildingLayer, minSafety, node);
             insertNode(surroundingNodes, node, safetyRecord, nextMinSafetyIdx);
             remainingNodes.delete(node);
          }
@@ -588,7 +560,7 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
       if (nodeX > 0) {
          const node = getSafetyNode(nodeX - 1, nodeY);
          if (remainingNodes.has(node)) {
-            safetyRecord[node] = calculateNodeSafety(tribe, buildingInfo, minSafety, node);
+            safetyRecord[node] = calculateNodeSafety(buildingLayer, minSafety, node);
             insertNode(surroundingNodes, node, safetyRecord, nextMinSafetyIdx);
             remainingNodes.delete(node);
          }
@@ -599,29 +571,27 @@ const createSafetyRecord = (tribe: Tribe, buildingInfo: TribeLayerBuildingInfo, 
 }
 
 /** Updates a whole bunch of stuff. Relies on the occupied nodes being correct. */
-export function updateTribeBuildingInfo(layer: Layer, tribe: Tribe): void {
-   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
-   
-   updateTribeOccupiedNodesInfo(tribe, layer, buildingInfo);
+export function updateBuildingLayer(buildingLayer: TribeBuildingLayer): void {
+   updateTribeOccupiedNodesInfo(buildingLayer);
    
    // Find inside nodes and contained buildings
-   const areas = new Array<TribeArea>();
-   const nodeToAreaIDRecord: Record<SafetyNode, number> = {};
+   const rooms = new Array<TribeRoom>();
+   const nodeToRoomRecord: Record<SafetyNode, TribeRoom> = {};
    const insideNodes = new Set<SafetyNode>();
-   createAreaInfo(tribe, layer, buildingInfo, areas, nodeToAreaIDRecord, insideNodes);
+   createAreaInfo(buildingLayer, rooms, nodeToRoomRecord, insideNodes);
 
    // Find border nodes
-   const borderNodes = getBorderNodes(layer, buildingInfo, insideNodes);
+   const borderNodes = getBorderNodes(buildingLayer, insideNodes);
 
    // Create padding nodes
    const outmostPaddingNodes = new Set<SafetyNode>();
    const paddingNodes = new Set(borderNodes);
-   createPaddingNodes(tribe, layer, buildingInfo, outmostPaddingNodes, borderNodes, paddingNodes);
+   createPaddingNodes(buildingLayer, outmostPaddingNodes, borderNodes, paddingNodes);
    
-   const safetyRecord = createSafetyRecord(tribe, buildingInfo, outmostPaddingNodes, paddingNodes, insideNodes);
+   const safetyRecord = createSafetyRecord(buildingLayer, outmostPaddingNodes, paddingNodes, insideNodes);
 
    const nodes = new Set<SafetyNode>();
-   for (const node of buildingInfo.occupiedSafetyNodes) {
+   for (const node of buildingLayer.occupiedSafetyNodes) {
       nodes.add(node);
    }
    for (const node of paddingNodes) {
@@ -631,57 +601,12 @@ export function updateTribeBuildingInfo(layer: Layer, tribe: Tribe): void {
       nodes.add(node);
    }
    
-   buildingInfo.safetyNodes = nodes;
-   buildingInfo.safetyRecord = safetyRecord;
+   buildingLayer.safetyNodes = nodes;
+   buildingLayer.safetyRecord = safetyRecord;
    // @Hack
-   tribe.areas = areas;
-   buildingInfo.nodeToAreaIDRecord = nodeToAreaIDRecord;
+   buildingLayer.rooms = rooms;
+   buildingLayer.nodeToRoomRecord = nodeToRoomRecord;
 
-   // @Cleanup: kinda weird to be doing it here
-   updateTribeAreaDoors(tribe);
-   updateTribeWalls(tribe);
-}
-
-export function tickTribes(): void {
-   const tribes = getTribes();
-   for (let i = 0; i < tribes.length; i++) {
-      const tribe = tribes[i];
-      
-      // Update safety nodes
-      if (tribe.buildingsAreDirty && tribe.isAIControlled) {
-         // @Cleanup? should probs be done in the func???
-         for (const layer of layers) {
-            updateTribeBuildingInfo(layer, tribe);
-         }
-         updateTribePlans(tribe);
-
-         tribe.buildingsAreDirty = false;
-      }
-
-      if (getGameTicks() % Settings.TPS === 0) {
-         // @Cleanup: Not related to tribe building
-         tribe.updateAvailableResources();
-      }
-   }
-}
-
-export function placeVirtualBuilding(tribe: Tribe, layer: Layer, position: Readonly<Point>, rotation: number, entityType: StructureType, hitboxes: ReadonlyArray<Hitbox>, virtualEntityID: number): VirtualBuilding {
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-      updateBox(hitbox.box, position.x, position.y, rotation);
-   }
-   
-   const occupiedNodes = new Set<SafetyNode>();
-   addHitboxesOccupiedNodes(hitboxes, occupiedNodes);
-   
-   const virtualBuilding: VirtualBuilding = {
-      id: virtualEntityID,
-      layer: layer,
-      position: position,
-      rotation: rotation,
-      occupiedNodes: occupiedNodes,
-      entityType: entityType
-   };
-   tribe.addVirtualBuilding(virtualBuilding);
-   return virtualBuilding;
+   updateTribeAreaDoors(buildingLayer);
+   updateTribeWalls(buildingLayer);
 }

@@ -20,7 +20,7 @@ export function createWarriorHutHitboxes(): Array<Hitbox> {
    const WARRIOR_HUT_SIZE = 104;
 
    const box = new RectangularBox(new Point(0, 0), WARRIOR_HUT_SIZE, WARRIOR_HUT_SIZE, 0);
-   const hitbox = createHitbox(box, 2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(box, 2, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    
    return [hitbox];
 }
@@ -215,7 +215,7 @@ export function createWorkerHutHitboxes(): Array<Hitbox> {
    const HITBOX_SIZE = 88;
 
    const box = new RectangularBox(new Point(0, 0), HITBOX_SIZE, HITBOX_SIZE, 0);
-   const hitbox = createHitbox(box, 1.8, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(box, 1.8, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    return [hitbox];
 }
 

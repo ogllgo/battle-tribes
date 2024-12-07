@@ -8,6 +8,7 @@ import { distance } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
 import { isTooCloseToSteppingStone } from "../entity-spawn-info";
 import { surfaceLayer } from "../layers";
+import { pushJoinBuffer } from "../world";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35
@@ -73,4 +74,6 @@ export function generateReeds(riverMainTiles: ReadonlyArray<WaterTileGenerationI
          }
       }
    }
+
+   pushJoinBuffer(false);
 }

@@ -12,7 +12,7 @@ import { calculateItemDamage, useItem } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindToPosition, pathToEntityExists } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
@@ -262,18 +262,16 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
 
             clearTribesmanPath(tribesman);
          } else {
-            pathfindToPosition(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, huntedEntity, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
+            const isFinished = pathfindTribesman(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
 
             // If reached goal, turn towards the enemy
-            if (tribesmanComponent.path.length === 0) {
+            if (isFinished) {
                const targetRotation = transformComponent.position.calculateAngleBetween(huntedEntityTransformComponent.position);
 
                const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
                physicsComponent.targetRotation = targetRotation;
                physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
             }
-
-            setLimbActions(inventoryUseComponent, LimbAction.none);
          }
 
          return;
@@ -380,7 +378,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
 
       const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
       const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
-      pathfindToPosition(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, huntedEntity, TribesmanPathType.default, goalRadius, failureDefault);
+      pathfindTribesman(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, goalRadius, failureDefault);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

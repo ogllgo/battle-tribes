@@ -153,15 +153,15 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.slurbTorch]: "Slurb Torch"
 };
 
-const numItemTypes = Object.keys(ItemTypeString).length;
+export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
 
 export const ALL_ITEM_TYPES = new Array<ItemType>();
-for (let i = 0; i < numItemTypes; i++) {
+for (let i = 0; i < NUM_ITEM_TYPES; i++) {
    ALL_ITEM_TYPES.push(i);
 }
 
 export function getItemTypeFromString(itemTypeString: string): ItemType | null {
-   for (let itemType: ItemType = 0; itemType < numItemTypes; itemType++) {
+   for (let itemType: ItemType = 0; itemType < NUM_ITEM_TYPES; itemType++) {
       if (ItemTypeString[itemType] === itemTypeString) {
          return itemType;
       }
@@ -1142,6 +1142,11 @@ export function itemInfoIsUtility(itemType: ItemType, itemInfo: unknown): itemIn
 export function itemInfoIsBow(itemType: ItemType, itemInfo: unknown): itemInfo is BowItemInfo {
    const itemTypeInfo = ITEM_TYPE_RECORD[itemType];
    return itemTypeInfo === "bow" || itemTypeInfo === "crossbow";
+}
+
+export function itemInfoIsPlaceable(itemType: ItemType, itemInfo: unknown): itemInfo is PlaceableItemInfo {
+   const itemTypeInfo = ITEM_TYPE_RECORD[itemType];
+   return itemTypeInfo === "placeable";
 }
 
 export function itemTypeIsArmour(itemType: ItemType): boolean {

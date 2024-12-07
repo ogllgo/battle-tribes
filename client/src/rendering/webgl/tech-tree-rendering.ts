@@ -479,7 +479,7 @@ const renderConnectors = (): void => {
 }
 
 export function renderTechTree(): void {
-   gl.clearColor(0, 0,0, 1);
+   gl.clearColor(0, 0, 0, 1);
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
    renderBackground();

@@ -31,7 +31,6 @@ export interface BuildingPlanData {
    readonly rotation: number;
    readonly entityType: StructureType;
    readonly potentialBuildingPlans: ReadonlyArray<PotentialBuildingPlanData>;
-   readonly planNum: number;
    readonly assignedTribesmanID: number;
 }
 

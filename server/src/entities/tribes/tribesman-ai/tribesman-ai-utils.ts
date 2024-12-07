@@ -3,11 +3,11 @@ import Tribe from "../../../Tribe";
 import { getEntitiesInRange, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
-import { TribesmanPathType, TribesmanAIComponentArray, getTribesmanPathfindingTargetTile } from "../../../components/TribesmanAIComponent";
-import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, pathfind, smoothPath, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, pathIsClear } from "../../../pathfinding";
+import { TribesmanPathType, TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
+import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, findClosestDropdownTile, findMultiLayerPath } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { distance, angle, assert, TileIndex, randItem } from "battletribes-shared/utils";
+import { distance, assert } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -19,12 +19,11 @@ import { getEntityTile, TransformComponent, TransformComponentArray } from "../.
 import { changeEntityLayer, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../../../Layer";
+import Layer, { getTileX, getTileY } from "../../../Layer";
+
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { TribesmanAIType } from "../../../../../shared/src/components";
-import { getTilesOfType } from "../../../census";
-import { Biome } from "../../../../../shared/src/biomes";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
 import { MaterialInfo } from "./tribesman-resource-gathering";
 
@@ -135,16 +134,20 @@ export function positionIsSafeForTribesman(tribesman: Entity, x: number, y: numb
    return true;
 }
 
-const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, goalRadiusNodes: number): boolean => {
+const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, goalRadiusNodes: number): boolean => {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
 
-   if (tribesmanComponent.path.length === 0) {
-      // @Incomplete: Should we do this?
+   if (tribesmanComponent.paths.length === 0) {
       // Recalculate the path if the path's final node was reached but it wasn't at the goal
       const targetNode = getClosestPathfindNode(goalX, goalY);
       
-      return tribesmanComponent.pathfindingTargetNode !== targetNode;
+      const transformComponent = TransformComponentArray.getComponent(tribesman);
+      const currentNode = getClosestPathfindNode(transformComponent.position.x, transformComponent.position.y);
+      
+      return targetNode !== currentNode;
    } else {
+      const currentPath = tribesmanComponent.paths[0];
+      
       // @Speed
       // Recalculate if the tribesman isn't making any progress
       const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
@@ -154,13 +157,20 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
       const velocitySquare = vx * vx + vy * vy;
       
       const ageTicks = getEntityAgeTicks(tribesman);
-      if (tribesmanComponent.rawPath.length > 2 && ageTicks % Settings.TPS === 0 && velocitySquare < 10 * 10) {
+      if (currentPath.rawPath.length > 2 && ageTicks % Settings.TPS === 0 && velocitySquare < 10 * 10) {
          return true;
       }
 
-      // Recalculate if the goal has moved too far away from the path's final node
+      const finalPath = tribesmanComponent.paths[tribesmanComponent.paths.length - 1];
+
+      // Recalculate if the current path target is on the wrong layer
+      if (finalPath.layer !== goalLayer) {
+         return true;
+      }
       
-      const pathTargetNode = tribesmanComponent.path[tribesmanComponent.path.length - 1];
+      // Recalculate if the goal has moved too far away from the path's final node
+
+      const pathTargetNode = finalPath.smoothPath[finalPath.smoothPath.length - 1];
       
       const pathTargetX = (pathTargetNode % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
       const pathTargetY = (Math.floor(pathTargetNode / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
@@ -202,15 +212,17 @@ const openDoors = (tribesman: Entity, tribe: Tribe): void => {
 const continueCurrentPath = (tribesman: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
-   const path = tribesmanComponent.path;
 
-   if (entityHasReachedNode(transformComponent, path[0])) {
+   const path = tribesmanComponent.paths[0];
+   const nodes = path.smoothPath;
+
+   if (entityHasReachedNode(transformComponent, nodes[0])) {
       // If passed the next node, remove it
-      path.shift();
+      nodes.shift();
    }
 
-   if (path.length > 0) {
-      const nextNode = path[0];
+   if (nodes.length > 0) {
+      const nextNode = nodes[0];
       const targetDirection = getAngleToNode(transformComponent, nextNode);
 
       const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
@@ -235,24 +247,21 @@ const continueCurrentPath = (tribesman: Entity): boolean => {
          openDoors(tribesman, tribeComponent.tribe);
       }
 
-      tribesmanComponent.isPathfinding = true;
-
-      return true;
+      return false;
    } else {
       // Reached path!
       const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
       stopEntity(physicsComponent);
 
-      tribesmanComponent.rawPath = [];
-      tribesmanComponent.pathType = TribesmanPathType.default;
-      tribesmanComponent.isPathfinding = false;
-      return false;
+      tribesmanComponent.paths.shift();
+
+      return true;
    }
 }
 
 export function clearTribesmanPath(tribesman: Entity): void {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
-   tribesmanComponent.isPathfinding = false;
+   tribesmanComponent.paths.splice(0, tribesmanComponent.paths.length);
 }
 
 const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity> => {
@@ -326,16 +335,23 @@ const cleanupPathfinding = (targetEntity: Entity | 0, tribe: Tribe, blockingTrib
    }
 }
 
-export function pathfindToPosition(tribesman: Entity, goalX: number, goalY: number, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
+export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
+   const layer = getEntityLayer(tribesman);
    
-   tribesmanComponent.pathType = pathType;
+   // If the entity is currently in position to change layers, do so
+   if (layer !== goalLayer) {
+      const transformComponent = TransformComponentArray.getComponent(tribesman);
+      const currentTileIndex = getEntityTile(transformComponent);
+      if (surfaceLayer.getTileType(currentTileIndex) === TileType.dropdown) {
+         changeEntityLayer(tribesman, goalLayer);
+      }
+   }
 
    // If moving to a new target node, recalculate path
-   if (shouldRecalculatePath(tribesman, goalX, goalY, goalRadius)) {
+   if (shouldRecalculatePath(tribesman, goalX, goalY, goalLayer, goalRadius)) {
       const transformComponent = TransformComponentArray.getComponent(tribesman); // @Speed
       const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
-      const layer = getEntityLayer(tribesman);
       
       const footprint = getEntityFootprint(getTribesmanRadius(transformComponent));
       const tribe = tribeComponent.tribe;
@@ -348,21 +364,19 @@ export function pathfindToPosition(tribesman: Entity, goalX: number, goalY: numb
       const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
       preparePathfinding(targetEntityID, tribe, blockingTribesmen);
       
-      const rawPath = pathfind(layer, transformComponent.position.x, transformComponent.position.y, goalX, goalY, tribe.pathfindingGroupID, footprint, options);
+      const paths = findMultiLayerPath(layer, goalLayer, transformComponent.position.x, transformComponent.position.y, goalX, goalY, tribe.pathfindingGroupID, footprint, options);
 
       // @Incomplete: figure out why this happens
       // If the pathfinding failed, don't do anything
-      if (rawPath.length === 0) {
+      if (paths[0].rawPath.length === 0) {
          const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
          stopEntity(physicsComponent);
          
          cleanupPathfinding(targetEntityID, tribe, blockingTribesmen);
          return false;
       }
-      
-      tribesmanComponent.rawPath = rawPath;
-      tribesmanComponent.path = smoothPath(layer, rawPath, tribe.pathfindingGroupID, footprint);
-      tribesmanComponent.pathfindingTargetNode = getClosestPathfindNode(goalX, goalY);
+
+      tribesmanComponent.paths = paths;
       
       cleanupPathfinding(targetEntityID, tribe, blockingTribesmen);
    }
@@ -396,8 +410,7 @@ export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, trib
       goalRadius: Math.floor(goalRadius / PathfindingSettings.NODE_SEPARATION),
       failureDefault: PathfindFailureDefault.returnEmpty
    };
-   const layer = getEntityLayer(tribesman);
-   const path = pathfind(layer, transformComponent.position.x, transformComponent.position.y, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(transformComponent)), options);
+   const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), transformComponent.position.x, transformComponent.position.y, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(transformComponent)), options);
 
    cleanupPathfinding(huntedEntity, tribe, blockingTribesmen);
 
@@ -427,38 +440,12 @@ export function getBestToolItemSlot(inventory: Inventory, toolCategory: keyof It
    return bestItemSlot;
 }
 
-// @Incomplete: we don't want to find the closest in terms of absolute distance, we want the closest in terms of walking distance.
-const findClosestDropdownTile = (tribesman: Entity): TileIndex => {
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
-
-   const dropdownTiles = getTilesOfType(surfaceLayer, TileType.dropdown);
-   
-   let minDist = Number.MAX_SAFE_INTEGER;
-   let closestTileIndex = 0;
-   for (const tileIndex of dropdownTiles) {
-      const tileX = getTileX(tileIndex);
-      const tileY = getTileY(tileIndex);
-
-      const x = (tileX + 0.5) * Settings.TILE_SIZE;
-      const y = (tileY + 0.5) * Settings.TILE_SIZE;
-
-      const dist = distance(transformComponent.position.x, transformComponent.position.y, x, y);
-      if (dist < minDist) {
-         minDist = dist;
-         closestTileIndex = tileIndex;
-      }
-   }
-
-   return closestTileIndex;
-}
-
 const findClosestBiome = (tribesman: Entity, materialInfo: MaterialInfo): LocalBiome | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const layer = getEntityLayer(tribesman);
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestBiome: LocalBiome | null = null;
-   for (const localBiome of layer.localBiomes) {
+   for (const localBiome of materialInfo.layer.localBiomes) {
       if (localBiome.biome !== materialInfo.biome) {
          continue;
       }
@@ -486,62 +473,17 @@ const findClosestBiome = (tribesman: Entity, materialInfo: MaterialInfo): LocalB
    return closestBiome;
 }
 
-export function moveTribesmanToDifferentLayer(tribesman: Entity, targetLayer: Layer): void {
-   const currentLayer = getEntityLayer(tribesman);
-   assert(currentLayer !== targetLayer);
-
-   // If the entity is currently in position to change layers, do so
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const currentTileIndex = getEntityTile(transformComponent);
-   if (surfaceLayer.getTileType(currentTileIndex) === TileType.dropdown) {
-      changeEntityLayer(tribesman, targetLayer);
-      return;
-   }
-
-   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   
-   const pathfindingTargetTile = getTribesmanPathfindingTargetTile(tribesmanAIComponent);
-   const tileType = surfaceLayer.getTileType(pathfindingTargetTile);
-   
-   // Check if the entity is already on the way to the target layer
-   // If the tribesman isn't on a path to change layers, set the path
-   // @Cleanup: the pathfindToPosition function already has the continuecurrentpath optimisation... is this necessary? Would be a good cleanup
-   if (tileType !== TileType.dropdown) {
-      const targetDropdownTile = findClosestDropdownTile(tribesman);
-
-      // @Cleanup: make pathfind to tile center function
-      
-      const tileX = getTileX(targetDropdownTile);
-      const tileY = getTileY(targetDropdownTile);
-      const x = (tileX + 0.5) * Settings.TILE_SIZE;
-      const y = (tileY + 0.5) * Settings.TILE_SIZE;
-      
-      pathfindToPosition(tribesman, x, y, 0, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
-   } else {
-      continueCurrentPath(tribesman);
-   }
-
-   tribesmanAIComponent.currentAIType = TribesmanAIType.changeLayers;
-}
-
 export function moveTribesmanToBiome(tribesman: Entity, materialInfo: MaterialInfo): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   const layer = getEntityLayer(tribesman);
-   
-   const pathfindingTargetTile = getTribesmanPathfindingTargetTile(tribesmanAIComponent);
-   // @Cleanup: the pathfindToPosition function already has the continuecurrentpath optimisation... is this necessary? Would be a good cleanup
-   if (layer.getTileBiome(pathfindingTargetTile) !== materialInfo.biome) {
-      const localBiome = findClosestBiome(tribesman, materialInfo);
-      assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
 
-      // const targetTile = randItem(localBiome.tiles);
-      const targetTile = localBiome.tiles[0];
-      const targetX = (getTileX(targetTile) + 0.5) * Settings.TILE_SIZE;
-      const targetY = (getTileY(targetTile) + 0.5) * Settings.TILE_SIZE;
-      pathfindToPosition(tribesman, targetX, targetY, 0, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
-   } else {
-      continueCurrentPath(tribesman);
-   }
+   const localBiome = findClosestBiome(tribesman, materialInfo);
+   assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
+
+   // const targetTile = randItem(localBiome.tiles);
+   const targetTile = localBiome.tilesInBorder[0];
+   const targetX = (getTileX(targetTile) + 0.5) * Settings.TILE_SIZE;
+   const targetY = (getTileY(targetTile) + 0.5) * Settings.TILE_SIZE;
+   pathfindTribesman(tribesman, targetX, targetY, materialInfo.layer, 0, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
 
    // @Incomplete: also note which layer the tribesman is moving to
    tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;

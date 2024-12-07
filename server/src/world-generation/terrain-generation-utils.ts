@@ -2,13 +2,15 @@ import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { Biome } from "../../../shared/src/biomes";
 import { TileIndex } from "../../../shared/src/utils";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
 import { Settings } from "../../../shared/src/settings";
 
 export interface LocalBiome {
    readonly biome: Biome;
    readonly layer: Layer;
    readonly tiles: ReadonlyArray<TileIndex>;
+   /** All tiles which aren't outside the border */
+   readonly tilesInBorder: ReadonlyArray<TileIndex>;
    /** Stores how many tiles of each type there are in the local chunk */
    readonly tileCensus: Partial<Record<TileType, number>>;
    // @Incomplete: This would be more accurate if we stored the index of the tile in the tiles array with the smallest average distance from the other tiles.
@@ -159,6 +161,7 @@ export function groupLocalBiomes(layer: Layer): void {
             biome: tileBiomes[tileIndex],
             layer: layer,
             tiles: connectedTiles,
+            tilesInBorder: connectedTiles.filter(tileIndex => tileIsInWorld(getTileX(tileIndex), getTileY(tileIndex))),
             tileCensus: tileCensus,
             centerX: centerX,
             centerY: centerY

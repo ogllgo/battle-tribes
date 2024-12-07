@@ -2,7 +2,7 @@ import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
-import { getAngleDiff } from "battletribes-shared/utils";
+import { getAngleDiff, TribesmanPlanType } from "battletribes-shared/utils";
 import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray, hasSpaceForRecipe } from "../../../components/InventoryComponent";
@@ -14,15 +14,14 @@ import { EntityRelationship, TribeComponentArray, getEntityRelationship, recruit
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import Tribe from "../../../Tribe";
-import { TribesmanGoalType, getTribesmanGoals } from "./tribesman-goals";
 import { CollisionVars, entitiesAreColliding } from "../../../collision";
 import { huntEntity } from "./tribesman-combat-ai";
 import { PlanterBoxComponentArray, placePlantInPlanterBox } from "../../../components/PlanterBoxComponent";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
-import { gatherResources } from "./tribesman-resource-gathering";
+import { gatherItemPlanIsComplete, gatherResource } from "./tribesman-resource-gathering";
 import { goResearchTech } from "./tribesman-researching";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindToPosition } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings, goPlaceBuilding, goUpgradeBuilding } from "./tribesman-structures";
 import { goCraftItem } from "./tribesman-crafting";
 import { getGiftableItemSlot, getRecruitTarget } from "./tribesman-recruiting";
@@ -33,6 +32,7 @@ import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, Cons
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
 import { createItem } from "../../../items";
+import { completeTribesmanPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -111,7 +111,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
       // @Cleanup: bad. should only change tribesman ai in that tribesman's tick function.
       const healthComponent = HealthComponentArray.getComponent(currentTribesman);
       if (!tribesmanShouldEscape(getEntityType(currentTribesman), healthComponent)) {
-         pathfindToPosition(currentTribesman, transformComponent.position.x, transformComponent.position.y, communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+         pathfindTribesman(currentTribesman, transformComponent.position.x, transformComponent.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
       }
    }
 }
@@ -324,16 +324,6 @@ export function tickTribesman(tribesman: Entity): void {
       setLimbActions(InventoryUseComponentArray.getComponent(tribesman), LimbAction.none);
    }
 
-   // @Speed
-   // Clear any previous assigned plan
-   for (let i = 0; i < tribeComponent.tribe.buildingPlans.length; i++) {
-      const plan = tribeComponent.tribe.buildingPlans[i];
-      if (plan.assignedTribesmanID === tribesman) {
-         plan.assignedTribesmanID = 0;
-         break;
-      }
-   }
-
    // If recalled, go back to hut
    const hut = tribesmanAIComponent.hut;
    if (hut !== 0) {
@@ -344,7 +334,7 @@ export function tickTribesman(tribesman: Entity): void {
          if (hutComponent.isRecalling) {
             const hutTransformComponent = TransformComponentArray.getComponent(hut);
             
-            pathfindToPosition(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+            pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(hut), hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
             
             if (entitiesAreColliding(tribesman, hut) !== CollisionVars.NO_COLLISION) {
                destroyEntity(tribesman);
@@ -491,7 +481,7 @@ export function tickTribesman(tribesman: Entity): void {
       if (availableHut !== null) {
          const hutTransformComponent = TransformComponentArray.getComponent(availableHut);
          
-         const isPathfinding = pathfindToPosition(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+         const isFinished = pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(availableHut), availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
 
          if (entitiesAreColliding(tribesman, availableHut) !== CollisionVars.NO_COLLISION) {
             tribesmanAIComponent.hut = availableHut;
@@ -500,7 +490,7 @@ export function tickTribesman(tribesman: Entity): void {
             hutComponent.hasTribesman = true;
          }
          
-         if (isPathfinding) {
+         if (!isFinished) {
             return;
          }
       }
@@ -536,9 +526,9 @@ export function tickTribesman(tribesman: Entity): void {
 
    // Help other tribesmen
    if (tribesmanAIComponent.ticksSinceLastHelpRequest <= Vars.HELP_TIME) {
-      const isPathfinding = pathfindToPosition(tribesman, tribesmanAIComponent.helpX, tribesmanAIComponent.helpY, 0, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
+      const isFinished = pathfindTribesman(tribesman, tribesmanAIComponent.helpX, tribesmanAIComponent.helpY, getEntityLayer(tribesman), 0, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
       
-      if (isPathfinding) {
+      if (!isFinished) {
          tribesmanAIComponent.currentAIType = TribesmanAIType.assistingOtherTribesmen;
          
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
@@ -654,7 +644,7 @@ export function tickTribesman(tribesman: Entity): void {
          } else {
             const targetTransformComponent = TransformComponentArray.getComponent(recruitTarget);
             
-            pathfindToPosition(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, recruitTarget, TribesmanPathType.default, Math.floor(recruitRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
+            pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(recruitRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
             
             const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
             setLimbActions(inventoryUseComponent, LimbAction.none);
@@ -701,7 +691,7 @@ export function tickTribesman(tribesman: Entity): void {
                
                return;
             } else {
-               pathfindToPosition(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, recruitTarget, TribesmanPathType.default, Math.floor(giftRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
+               pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(giftRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
    
                setLimbActions(inventoryUseComponent, LimbAction.none);
                tribesmanAIComponent.currentAIType = TribesmanAIType.giftingItems;
@@ -734,54 +724,18 @@ export function tickTribesman(tribesman: Entity): void {
    //    }
    // }
 
-   // @Speed: do we need to calculate this every tick?
-   const goals = getTribesmanGoals(tribesman, hotbarInventory);
-
-   // @Cleanup: don't use null
-   const goal = goals.length > 0 ? goals[0] : null;
-   tribesmanAIComponent.goals = goals;
-   
-   if (goal !== null) {
-      // @Cleanup: messy. this whole bit kinda sucks
-      if (goal.type === TribesmanGoalType.craftRecipe || goal.type === TribesmanGoalType.placeBuilding || goal.type === TribesmanGoalType.upgradeBuilding) {
-         if (goal.isPersonalPlan && goal.plan !== null) {
-            // @Cleanup: copy and paste
-            if (tribesmanAIComponent.personalBuildingPlan !== null) {
-               const idx = tribeComponent.tribe.personalBuildingPlans.indexOf(tribesmanAIComponent.personalBuildingPlan);
-               if (idx !== -1) {
-                  tribeComponent.tribe.personalBuildingPlans.splice(idx, 1);
-               }
-            }
-   
-            tribesmanAIComponent.personalBuildingPlan = goal.plan;
-            tribeComponent.tribe.personalBuildingPlans.push(goal.plan);
-         } else {
-            // @Cleanup: copy and paste
-            if (tribesmanAIComponent.personalBuildingPlan !== null) {
-               const idx = tribeComponent.tribe.personalBuildingPlans.indexOf(tribesmanAIComponent.personalBuildingPlan);
-               if (idx !== -1) {
-                  tribeComponent.tribe.personalBuildingPlans.splice(idx, 1);
-               }
-            }
-            
-            tribesmanAIComponent.personalBuildingPlan = null;
-         }
-         
-         if (goal.plan !== null) {
-            goal.plan.assignedTribesmanID = tribesman;
-         }
-      }
-      
-      switch (goal.type) {
-         case TribesmanGoalType.craftRecipe: {
+   const plan = tribesmanAIComponent.assignedPlan;
+   if (plan !== null) {
+      switch (plan.type) {
+         case TribesmanPlanType.craftRecipe: {
             // If not enough space, try to make space
-            if (!hasSpaceForRecipe(inventoryComponent, goal.recipe, InventoryName.hotbar)) {
+            if (!hasSpaceForRecipe(inventoryComponent, plan.recipe, InventoryName.hotbar)) {
                // Just throw out any item which isn't used in the recipe
                let hasThrown = false;
                for (let i = 0; i < hotbarInventory.items.length; i++) {
                   const item = hotbarInventory.items[i];
 
-                  if (goal.recipe.ingredients.getItemCount(item.type) === 0) {
+                  if (plan.recipe.ingredients.getItemCount(item.type) === 0) {
                      const itemSlot = hotbarInventory.getItemSlot(item);
                      throwItem(tribesman, InventoryName.hotbar, itemSlot, item.count, transformComponent.rotation);
                      hasThrown = true;
@@ -792,40 +746,69 @@ export function tickTribesman(tribesman: Entity): void {
                if (!hasThrown) {
                   console.warn("couldn't throw");
                   console.log(hotbarInventory.itemSlots);
-                  console.log(goal.recipe);
+                  console.log(plan.recipe);
                   return;
                }
             }
             
-            const isGoing = goCraftItem(tribesman, goal.recipe, tribeComponent.tribe);
+            const isGoing = goCraftItem(tribesman, plan.recipe, tribeComponent.tribe);
             if (isGoing) {
                return;
             }
 
             break;
          }
-         case TribesmanGoalType.placeBuilding: {
-            const isGoing = goPlaceBuilding(tribesman, hotbarInventory, tribeComponent.tribe, goal);
+         case TribesmanPlanType.placeBuilding: {
+            const isGoing = goPlaceBuilding(tribesman, hotbarInventory, tribeComponent.tribe, plan);
             if (isGoing) {
                return;
             }
             break;
          }
-         case TribesmanGoalType.upgradeBuilding: {
-            goUpgradeBuilding(tribesman, goal);
+         case TribesmanPlanType.upgradeBuilding: {
+            goUpgradeBuilding(tribesman, plan);
             return;
          }
-         case TribesmanGoalType.researchTech: {
-            if (tribeComponent.tribe.techRequiresResearching(goal.tech)) {
-               const isGoing = goResearchTech(tribesman, goal.tech);
-               if (isGoing) {
-                  return;
-               }
+         case TribesmanPlanType.doTechStudy: {
+            if (tribeComponent.tribe.techRequiresResearching(plan.tech)) {
+               goResearchTech(tribesman, plan.tech);
+               return;
+            }
+
+            // @Copynpaste
+            if (tribeComponent.tribe.techIsComplete(plan.tech)) {
+               tribeComponent.tribe.unlockTech(plan.tech.id);
             }
             break;
          }
-         case TribesmanGoalType.gatherItems: {
-            const isGathering = gatherResources(tribesman, goal.itemTypesToGather, visibleItemEntities);
+         case TribesmanPlanType.doTechItems: {
+            // Use items in research
+            // @Incomplete: only research the required item type here
+               
+            // @Incomplete: take into account backpack
+            for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
+               const item = hotbarInventory.itemSlots[itemSlot];
+               if (typeof item === "undefined") {
+                  continue;
+               }
+      
+               const amountUsed = tribeComponent.tribe.useItemInTechResearch(plan.tech, item.type, item.count);
+               if (amountUsed > 0) {
+                  consumeItemFromSlot(tribesman, hotbarInventory, itemSlot, amountUsed);
+               }
+            }
+      
+            // @Copynpaste
+            if (tribeComponent.tribe.techIsComplete(plan.tech)) {
+               tribeComponent.tribe.unlockTech(plan.tech.id);
+            }
+            break;
+         }
+         case TribesmanPlanType.gatherItem: {
+            const isGathering = gatherResource(tribesman, plan.itemType, visibleItemEntities);
+            if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
+               completeTribesmanPlan(tribesman, plan);
+            }
             if (isGathering) {
                return;
             }
@@ -837,37 +820,12 @@ export function tickTribesman(tribesman: Entity): void {
       }
    }
 
+   // @Cleanup: combine this with the one above
    // @Speed: shouldn't have to run for tribesmen which can't research
    // Research
    if (tribeComponent.tribe.selectedTechID !== null && tribeComponent.tribe.techRequiresResearching(getTechByID(tribeComponent.tribe.selectedTechID)) && getEntityType(tribesman) === EntityType.tribeWorker) {
-      const isGoing = goResearchTech(tribesman, getTechByID(tribeComponent.tribe.selectedTechID));
-      if (isGoing) {
-         return;
-      }
-   }
-
-   // Use items in research
-   // @Hack
-   // instead make the research tech goal have 
-   if (goals.length >= 2 && goal!.type === TribesmanGoalType.gatherItems && goals[1].type === TribesmanGoalType.researchTech) {
-      const researchGoal = goals[1];
-      
-      // @Incomplete: take into account backpack
-      for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
-         const item = hotbarInventory.itemSlots[itemSlot];
-         if (typeof item === "undefined") {
-            continue;
-         }
-
-         const amountUsed = tribeComponent.tribe.useItemInTechResearch(researchGoal.tech, item.type, item.count);
-         if (amountUsed > 0) {
-            consumeItemFromSlot(tribesman, hotbarInventory, itemSlot, amountUsed);
-         }
-      }
-
-      if (tribeComponent.tribe.techIsComplete(researchGoal.tech)) {
-         tribeComponent.tribe.unlockTech(researchGoal.tech.id);
-      }
+      goResearchTech(tribesman, getTechByID(tribeComponent.tribe.selectedTechID));
+      return;
    }
 
    // Replace plants in planter boxes
@@ -941,7 +899,7 @@ export function tickTribesman(tribesman: Entity): void {
             const goalRadius = Math.floor((desiredDistance + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
             // @Temporary: failure default
             // pathfindToPosition(tribesman, closestReplantablePlanterBox.position.x, closestReplantablePlanterBox.position.y, closestReplantablePlanterBox.id, TribesmanPathType.default, goalRadius, PathfindFailureDefault.throwError);
-            pathfindToPosition(tribesman, planterBoxTransformComponent.position.x, planterBoxTransformComponent.position.y, closestReplantablePlanterBox, TribesmanPathType.default, goalRadius, PathfindFailureDefault.returnClosest);
+            pathfindTribesman(tribesman, planterBoxTransformComponent.position.x, planterBoxTransformComponent.position.y, getEntityLayer(closestReplantablePlanterBox), closestReplantablePlanterBox, TribesmanPathType.default, goalRadius, PathfindFailureDefault.returnClosest);
 
             tribesmanAIComponent.currentAIType = TribesmanAIType.planting;
             setLimbActions(inventoryUseComponent, LimbAction.none);
@@ -953,9 +911,12 @@ export function tickTribesman(tribesman: Entity): void {
 
    // If not in an AI tribe, try to gather any resources you can indiscriminantly
    if (!tribeComponent.tribe.isAIControlled) {
-      const isGathering = gatherResources(tribesman, ALL_ITEM_TYPES, visibleItemEntities);
-      if (isGathering) {
-         return;
+      // @Speed?
+      for (const itemType of ALL_ITEM_TYPES) {
+         const isGathering = gatherResource(tribesman, itemType, visibleItemEntities);
+         if (isGathering) {
+            return;
+         }
       }
    }
 
@@ -982,7 +943,7 @@ export function tickTribesman(tribesman: Entity): void {
          const barrelTransformComponent = TransformComponentArray.getComponent(closestBarrelWithFood);
          
          if (transformComponent.position.calculateDistanceBetween(barrelTransformComponent.position) > BARREL_INTERACT_DISTANCE) {
-            pathfindToPosition(tribesman, barrelTransformComponent.position.x, barrelTransformComponent.position.y, closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+            pathfindTribesman(tribesman, barrelTransformComponent.position.x, barrelTransformComponent.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
          } else {
             const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
             stopEntity(physicsComponent);
@@ -996,7 +957,7 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    // Patrol tribe area
-   const isPatrolling = tribesmanDoPatrol(tribesman, goal);
+   const isPatrolling = tribesmanDoPatrol(tribesman, plan !== null);
    if (isPatrolling) {
       return;
    }

@@ -10,25 +10,14 @@ import { TribesmanPathType, TribesmanAIComponentArray } from "../../../component
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { getAvailableCraftingStations } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { pathfindToPosition, clearTribesmanPath } from "./tribesman-ai-utils";
+import { pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
 import { CraftingStation, CraftingRecipe, CRAFTING_RECIPES } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityType, getGameTicks } from "../../../world";
+import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 
 const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
-}
-
-// @Cleanup: move to different file
-export function craftingStationExists(tribe: Tribe, craftingStation: CraftingStation): boolean {
-   for (let i = 0; i < tribe.buildings.length; i++) {
-      const building = tribe.buildings[i];
-      if (buildingMatchesCraftingStation(building, craftingStation)) {
-         return true;
-      }
-   }
-   return false;
 }
 
 const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: CraftingStation): Entity => {
@@ -67,8 +56,8 @@ export function goCraftItem(tribesman: Entity, recipe: CraftingRecipe, tribe: Tr
 
       const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
       
-      const isPathfinding = pathfindToPosition(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
-      if (isPathfinding) {
+      const isFinished = pathfindTribesman(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+      if (!isFinished) {
          const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
 

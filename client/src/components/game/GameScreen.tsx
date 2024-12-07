@@ -26,6 +26,7 @@ import { inventoriesAreDifferent } from "../../inventory-manipulation";
 import LayerChangeMessage from "./LayerChangeMessage";
 import { getEntityTile, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
+import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 
 export const enum GameInteractState {
    none,
@@ -206,6 +207,8 @@ const GameScreen = (props: GameScreenProps) => {
 
       <TechTree />
       <TechInfocard />
+
+      <TribePlanVisualiser />
 
       <BuildMenu />
 

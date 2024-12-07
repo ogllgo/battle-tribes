@@ -96,6 +96,18 @@
    margin-left: 50%;
    transform: translateX(-50%);
 }
+.tab-selector img:hover {
+   animation: Spinninator9000 1s infinite linear;
+}
+
+@keyframes Spinninator9000 {
+   0% {
+      transform: translateX(-50%) rotate(0deg);
+   }
+   100% {
+      transform: translateX(-50%) rotate(360deg);
+   }
+}
 
 .tab-selector span {
    color: #ccc;

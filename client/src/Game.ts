@@ -72,6 +72,7 @@ import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/
 import { createSlimeTrailShaders, renderSlimeTrails, updateSlimeTrails } from "./rendering/webgl/slime-trail-rendering";
 import { Entity } from "../../shared/src/entities";
 import { sendSetDebugEntityPacket } from "./networking/packet-creation";
+import { createTribePlanVisualiserGLContext, renderTribePlans } from "./rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -336,6 +337,7 @@ abstract class Game {
             createWebGLContext();
             createTechTreeGLContext();
             createTextCanvasContext();
+            createTribePlanVisualiserGLContext();
 
             console.log("creating contexts",performance.now() - l);
             l = performance.now();
@@ -550,6 +552,8 @@ abstract class Game {
       
       renderTechTree();
       renderTechTreeItems();
+
+      renderTribePlans();
    }
 
    public static getEnemyTribeData(tribeID: number): EnemyTribeData {

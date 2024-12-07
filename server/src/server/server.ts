@@ -26,12 +26,13 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pushJoinBuffer, tickGameTime, tickEntities, updateTribes, generateLayers } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pushJoinBuffer, tickGameTime, tickEntities, generateLayers } from "../world";
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { generateSpikyBastards } from "../world-generation/spiky-bastard-generation";
 import { surfaceLayer, layers } from "../layers";
+import { updateTribes } from "../tribes";
 
 /*
 

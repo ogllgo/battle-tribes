@@ -1,50 +1,33 @@
 import { PotentialBuildingPlanData } from "battletribes-shared/ai-building-types";
-import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
+import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { TechID, TechTreeUnlockProgress, TechInfo, getTechByID, TECHS } from "battletribes-shared/techs";
 import { TribeType, TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { Point, angle, randItem, clampToBoardDimensions, TileIndex } from "battletribes-shared/utils";
+import { Point, randItem, clampToBoardDimensions, TileIndex } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
 import { TotemBannerComponentArray, addBannerToTotem, removeBannerFromTotem } from "./components/TotemBannerComponent";
-import { SafetyNode, addHitboxesOccupiedNodes, createRestrictedBuildingArea, getSafetyNode } from "./ai-tribe-building/ai-building";
 import { InventoryComponentArray, getInventory } from "./components/InventoryComponent";
-import { TribeArea } from "./ai-tribe-building/ai-building-areas";
-import { cleanAngle } from "./ai-shared";
 import { getPathfindingGroupID } from "./pathfinding";
 import { getPlayerClients, registerResearchOrbComplete } from "./server/player-clients";
 import { HutComponentArray } from "./components/HutComponent";
-import { CraftingRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { createEntity } from "./Entity";
-import { BoxType, Hitbox } from "battletribes-shared/boxes/boxes";
 import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
 import Layer, { getTileIndexIncludingEdges } from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
-import { layers } from "./layers";
-
-export interface TribeLayerBuildingInfo {
-   safetyRecord: Record<SafetyNode, number>;
-   occupiedSafetyNodes: Set<SafetyNode>;
-   safetyNodes: Set<SafetyNode>;
-
-   occupiedNodeToEntityIDRecord: Record<SafetyNode, Array<number>>;
-
-   nodeToAreaIDRecord: Record<SafetyNode, number>;
-}
+import { layers, surfaceLayer, undergroundLayer } from "./layers";
+import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualBuilding, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
+import { createRootPlan, TribesmanPlan } from "./tribesman-ai/tribesman-ai-planning";
 
 const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
 const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
 
-let idCounter = 0;
-
-const getAvailableID = (): number => {
-   return idCounter++;
-}
+let tribeIDCounter = 0;
 
 const TRIBE_BUILDING_AREA_INFLUENCES = {
    [EntityType.tribeTotem]: 200,
@@ -63,233 +46,18 @@ interface ChunkInfluence {
    numInfluences: number;
 }
 
-export const enum BuildingPlanType {
-   newBuilding,
-   upgrade
-}
-
-interface BaseBuildingPlan {
-   readonly type: BuildingPlanType;
-   assignedTribesmanID: number;
-   potentialPlans: ReadonlyArray<PotentialBuildingPlanData>;
-}
-
-export interface NewBuildingPlan extends BaseBuildingPlan {
-   readonly type: BuildingPlanType.newBuilding;
-   readonly layer: Layer;
-   readonly position: Point;
-   readonly rotation: number;
-   readonly buildingRecipe: CraftingRecipe;
-}
-
-export interface BuildingUpgradePlan extends BaseBuildingPlan {
-   readonly type: BuildingPlanType.upgrade;
-   readonly baseBuildingID: number;
-   readonly rotation: number;
-   readonly blueprintType: BlueprintType;
-   readonly entityType: StructureType;
-}
-
-export type BuildingPlan = NewBuildingPlan | BuildingUpgradePlan;
-
-export interface RestrictedBuildingArea {
-   readonly position: Point;
-   readonly width: number;
-   readonly height: number;
-   readonly rotation: number;
-   /** The ID of the building responsible for the restricted area */
-   readonly associatedBuildingID: number;
-   readonly hitbox: Hitbox<BoxType.rectangular>;
-}
-
-export interface VirtualBuilding {
-   readonly id: number;
-   readonly layer: Layer;
-   readonly position: Readonly<Point>;
-   readonly rotation: number;
-   readonly entityType: StructureType;
-   readonly occupiedNodes: Set<SafetyNode>;
-}
-
-export interface TribeWallInfo {
-   readonly wall: VirtualBuilding;
-   readonly topSideNodes: Array<SafetyNode>;
-   readonly rightSideNodes: Array<SafetyNode>;
-   readonly bottomSideNodes: Array<SafetyNode>;
-   readonly leftSideNodes: Array<SafetyNode>;
-   connectionBitset: number;
-}
-
-/** The 4 lines of nodes directly outside a wall. */
-type WallNodeSides = [Array<SafetyNode>, Array<SafetyNode>, Array<SafetyNode>, Array<SafetyNode>];
-
-// @Cleanup: Move this logic out of the Tribe.ts file
-
-const getWallSideNodeDir = (node: SafetyNode, wall: VirtualBuilding): number => {
-   const nodeX = node % Settings.SAFETY_NODES_IN_WORLD_WIDTH;
-   const nodeY = Math.floor(node / Settings.SAFETY_NODES_IN_WORLD_WIDTH);
-   const x = (nodeX + 0.5) * Settings.SAFETY_NODE_SEPARATION;
-   const y = (nodeY + 0.5) * Settings.SAFETY_NODE_SEPARATION;
-
-   let dir = angle(x - wall.position.x, y - wall.position.y) - wall.rotation;
-   dir += Math.PI/4;
-   dir = cleanAngle(dir);
-
-   return dir;
-}
-
-const getWallNodeSides = (wall: VirtualBuilding): WallNodeSides => {
-   // Find border nodes
-   const borderNodes = new Set<SafetyNode>();
-   for (const node of wall.occupiedNodes) {
-      const nodeX = node % Settings.SAFETY_NODES_IN_WORLD_WIDTH;
-      const nodeY = Math.floor(node / Settings.SAFETY_NODES_IN_WORLD_WIDTH);
-
-      // Top
-      if (nodeY < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
-         const node = getSafetyNode(nodeX, nodeY + 1);
-         if (!wall.occupiedNodes.has(node)) {
-            borderNodes.add(node);
-         }
+const getTribeHomeLayer = (tribeType: TribeType): Layer => {
+   switch (tribeType) {
+      case TribeType.plainspeople:
+      case TribeType.barbarians:
+      case TribeType.frostlings:
+      case TribeType.goblins: {
+         return surfaceLayer;
       }
-
-      // Right
-      if (nodeX < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
-         const node = getSafetyNode(nodeX + 1, nodeY);
-         if (!wall.occupiedNodes.has(node)) {
-            borderNodes.add(node);
-         }
-      }
-
-      // Bottom
-      if (nodeY > 0) {
-         const node = getSafetyNode(nodeX, nodeY - 1);
-         if (!wall.occupiedNodes.has(node)) {
-            borderNodes.add(node);
-         }
-      }
-
-      // Left
-      if (nodeX > 0) {
-         const node = getSafetyNode(nodeX - 1, nodeY);
-         if (!wall.occupiedNodes.has(node)) {
-            borderNodes.add(node);
-         }
+      case TribeType.dwarves: {
+         return undergroundLayer;
       }
    }
-   
-   const topNodes = new Array<SafetyNode>();
-   const rightNodes = new Array<SafetyNode>();
-   const bottomNodes = new Array<SafetyNode>();
-   const leftNodes = new Array<SafetyNode>();
-
-   // Sort the border nodes based on their dir
-   const sortedBorderNodes = new Array<SafetyNode>();
-   for (const node of borderNodes) {
-      const nodeDir = getWallSideNodeDir(node, wall);
-      
-      let insertIdx = 0;
-      for (let i = 0; i < sortedBorderNodes.length; i++) {
-         const currentNode = sortedBorderNodes[i];
-         const currentNodeDir = getWallSideNodeDir(currentNode, wall);
-         if (nodeDir < currentNodeDir) {
-            break;
-         }
-         insertIdx++;
-      }
-
-      sortedBorderNodes.splice(insertIdx, 0, node);
-   }
-
-   const separation = 0.2;
-
-   for (const node of sortedBorderNodes) {
-      const dir = getWallSideNodeDir(node, wall);
-      if (dir > separation && dir < Math.PI/2 - separation) {
-         topNodes.push(node);
-      } else if (dir > Math.PI/2 + separation && dir < Math.PI - separation) {
-         rightNodes.push(node);
-      } else if (dir > Math.PI + separation && dir < Math.PI*3/2 - separation) {
-         bottomNodes.push(node)
-      } else if (dir > Math.PI*3/2 + separation && dir < Math.PI*2 - separation) {
-         leftNodes.push(node);
-      }
-   }
-
-   return [topNodes, rightNodes, bottomNodes, leftNodes];
-}
-
-const wallSideIsConnected = (tribe: Tribe, layer: Layer, sideNodes: ReadonlyArray<SafetyNode>): boolean => {
-   // @Hack: surfacelayer
-   const buildingInfo = tribe.layerBuildingInfoRecord[layer.depth];
-   
-   // Make sure all nodes of the side link to another wall, except for the first and last
-   for (let i = 1; i < sideNodes.length - 1; i++) {
-      const node = sideNodes[i];
-      if (!buildingInfo.occupiedSafetyNodes.has(node)) {
-         return false;
-      }
-
-      // Only make connections between walls and doors
-      const buildingIDs = buildingInfo.occupiedNodeToEntityIDRecord[node];
-      for (let i = 0; i < buildingIDs.length; i++) {
-         const buildingID = buildingIDs[i];
-         const virtualBuilding = tribe.virtualBuildingRecord[buildingID];
-         if (virtualBuilding.entityType !== EntityType.wall && virtualBuilding.entityType !== EntityType.door) {
-            return false;
-         }
-      }
-   }
-
-   return true;
-}
-
-const getWallConnectionBitset = (tribe: Tribe, layer: Layer, topWallSide: ReadonlyArray<SafetyNode>, rightWallSide: ReadonlyArray<SafetyNode>, bottomWallSide: ReadonlyArray<SafetyNode>, leftWallSide: ReadonlyArray<SafetyNode>): number => {
-   let connections = 0;
-
-   if (wallSideIsConnected(tribe, layer, topWallSide)) {
-      connections |= 0b1;
-   }
-   if (wallSideIsConnected(tribe, layer, rightWallSide)) {
-      connections |= 0b10;
-   }
-   if (wallSideIsConnected(tribe, layer, bottomWallSide)) {
-      connections |= 0b100;
-   }
-   if (wallSideIsConnected(tribe, layer, leftWallSide)) {
-      connections |= 0b1000;
-   }
-
-   return connections;
-}
-
-export function updateTribeWalls(tribe: Tribe): void {
-   for (let i = 0; i < tribe.virtualBuildings.length; i++) {
-      const virtualBuilding = tribe.virtualBuildings[i];
-      if (virtualBuilding.entityType !== EntityType.wall) {
-         continue;
-      }
-      
-      const wallInfo = tribe.wallInfoRecord[virtualBuilding.id];
-      wallInfo.connectionBitset = getWallConnectionBitset(tribe, virtualBuilding.layer, wallInfo.topSideNodes, wallInfo.rightSideNodes, wallInfo.bottomSideNodes, wallInfo.leftSideNodes);
-   }
-}
-
-export function getNumWallConnections(wallConnectionBitset: number): number {
-   let numConnections = 0;
-   if ((wallConnectionBitset & 0b0001) !== 0) {
-      numConnections++;
-   }
-   if ((wallConnectionBitset & 0b0010) !== 0) {
-      numConnections++;
-   }
-   if ((wallConnectionBitset & 0b0100) !== 0) {
-      numConnections++;
-   }
-   if ((wallConnectionBitset & 0b1000) !== 0) {
-      numConnections++;
-   }
-   return numConnections;
 }
 
 const NOUNS: ReadonlyArray<string> = [
@@ -337,30 +105,14 @@ const generateTribeName = (tribeType: TribeType): string => {
    }
 }
 
-const createBuildingInfo = (): TribeLayerBuildingInfo => {
-   return {
-      safetyRecord: {},
-      occupiedSafetyNodes: new Set(),
-      safetyNodes: new Set(),
-      occupiedNodeToEntityIDRecord: {},
-      nodeToAreaIDRecord: {}
-   };
-}
-
-const createLayerBuildingInfoRecord = (): Record<number, TribeLayerBuildingInfo> => {
-   const record: Record<number, TribeLayerBuildingInfo> = {};
-   for (const layer of layers) {
-      record[layer.depth] = createBuildingInfo();
-   }
-   return record;
-};
-
 class Tribe {
    public readonly name: string;
-   public readonly id: number;
+   public readonly id = tribeIDCounter++;
    
    public tribeType: TribeType;
    public readonly isAIControlled: boolean;
+   /** The layer which the tribe will create their base in. */
+   public readonly homeLayer: Layer;
 
    public isRemoveable = false;
 
@@ -374,11 +126,9 @@ class Tribe {
    public readonly researchBenches = new Array<Entity>();
 
    public readonly buildings = new Array<Entity>();
-   public buildingsAreDirty = false;
+   public buildingsAreDirty = true;
 
-   // @Cleanup: unify these two
-   public buildingPlans = new Array<BuildingPlan>();
-   public personalBuildingPlans = new Array<BuildingPlan>();
+   public rootPlan = createRootPlan();
 
    /** Stores all tiles in the tribe's zone of influence */
    private area: Record<number, TileInfluence> = {};
@@ -395,16 +145,8 @@ class Tribe {
 
    public tribesmanIDs = new Array<number>();
 
-   public virtualBuildings = new Array<VirtualBuilding>;
-   public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
-   public wallInfoRecord: Record<number, TribeWallInfo> = {};
-
    /** Stores building info for each layer, accessed through the layer's depth */
-   readonly layerBuildingInfoRecord = createLayerBuildingInfoRecord();
-
-   public areas = new Array<TribeArea>();
-   
-   public restrictedBuildingAreas = new Array<RestrictedBuildingArea>();
+   public readonly buildingLayers = layers.map(layer => new TribeBuildingLayer(layer, this));
 
    public potentialPlansData: ReadonlyArray<PotentialBuildingPlanData> = [];
 
@@ -412,16 +154,20 @@ class Tribe {
 
    public attackingEntities: Partial<Record<number, number>> = {};
 
-   // @Cleanup: Why can't this just start at 0?
-   public virtualEntityIDCounter = 999999999;
+   public virtualEntityIDCounter = 0;
+
+   // Whereas each building layer stores these only for that building layer, this stores all virtual buildings in every building layer
+   public virtualBuildings = new Array<VirtualBuilding>;
+   public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
+   public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
 
    public readonly pathfindingGroupID: number;
    
    constructor(tribeType: TribeType, isAIControlled: boolean) {
       this.name = generateTribeName(tribeType);
-      this.id = getAvailableID();
       this.tribeType = tribeType;
       this.isAIControlled = isAIControlled;
+      this.homeLayer = getTribeHomeLayer(tribeType);
 
       this.tribesmanCap = TRIBE_INFO_RECORD[tribeType].baseTribesmanCap;
       this.pathfindingGroupID = getPathfindingGroupID();
@@ -432,21 +178,14 @@ class Tribe {
    public addBuilding(building: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(building);
       
-      const occupiedSafetyNodes = new Set<SafetyNode>();
-      addHitboxesOccupiedNodes(transformComponent.hitboxes, occupiedSafetyNodes);
-      
-      this.buildings.push(building);
-
       const entityType = getEntityType(building) as StructureType;
+      const layer = getEntityLayer(building);
       
-      this.addVirtualBuilding({
-         id: building,
-         layer: getEntityLayer(building),
-         position: transformComponent.position.copy(),
-         rotation: transformComponent.rotation,
-         entityType: entityType,
-         occupiedNodes: occupiedSafetyNodes
-      });
+      const buildingLayer = this.buildingLayers[layer.depth];
+      const virtualBuilding = createVirtualBuilding(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType, )
+      buildingLayer.addVirtualBuilding(virtualBuilding);
+
+      this.buildings.push(building);
 
       this.buildingsAreDirty = true;
       this.isRemoveable = true;
@@ -493,8 +232,10 @@ class Tribe {
    public removeBuilding(building: Entity): void {
       this.buildings.splice(this.buildings.indexOf(building), 1);
 
-      const virtualBuilding = this.virtualBuildingRecord[building];
-      this.removeVirtualBuilding(virtualBuilding.id);
+      const layer = getEntityLayer(building);
+      const buildingLayer = this.buildingLayers[layer.depth];
+      const virtualBuilding = buildingLayer.virtualBuildingRecord[building];
+      buildingLayer.removeVirtualBuilding(virtualBuilding);
       
       this.buildingsAreDirty = true;
 
@@ -546,110 +287,6 @@ class Tribe {
                this.barrels.splice(idx, 1);
             }
             break;
-         }
-      }
-   }
-
-   public addVirtualBuilding(virtualBuilding: VirtualBuilding): void {
-      this.virtualBuildings.push(virtualBuilding);
-      this.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
-
-      switch (virtualBuilding.entityType) {
-         case EntityType.wall: {
-            const sides = getWallNodeSides(virtualBuilding);
-            const wallInfo: TribeWallInfo = {
-               wall: virtualBuilding,
-               topSideNodes: sides[0],
-               rightSideNodes: sides[1],
-               bottomSideNodes: sides[2],
-               leftSideNodes: sides[3],
-               connectionBitset: getWallConnectionBitset(this, virtualBuilding.layer, sides[0], sides[1], sides[2], sides[3])
-            };
-            this.wallInfoRecord[virtualBuilding.id] = wallInfo;
-            break;
-         }
-      }
-
-      switch (virtualBuilding.entityType) {
-         case EntityType.workerHut: {
-            const offsetAmount = 88 / 2 + 55;
-            const x = virtualBuilding.position.x + offsetAmount * Math.sin(virtualBuilding.rotation);
-            const y = virtualBuilding.position.y + offsetAmount * Math.cos(virtualBuilding.rotation);
-
-            const restrictedArea = createRestrictedBuildingArea(new Point(x, y), 100, 70, virtualBuilding.rotation, virtualBuilding.id);
-            this.restrictedBuildingAreas.push(restrictedArea);
-            
-            break;
-         }
-         case EntityType.warriorHut: {
-            // @Incomplete
-
-            break;
-         }
-         case EntityType.door: {
-            for (let i = 0; i < 2; i++) {
-               const offsetAmount = 16 / 2 + 50;
-               const offsetDirection = virtualBuilding.rotation + (i === 1 ? Math.PI : 0);
-               const position = virtualBuilding.position.offset(offsetAmount, offsetDirection);
-            
-               const restrictedArea = createRestrictedBuildingArea(position, 50, 50, offsetDirection, virtualBuilding.id);
-               this.restrictedBuildingAreas.push(restrictedArea);
-            }
-            break;
-         }
-         case EntityType.workbench: {
-            const offsetAmount = 80 / 2 + 55;
-            const offsetDirection = virtualBuilding.rotation + Math.PI;
-            const position = virtualBuilding.position.offset(offsetAmount, offsetDirection);
-
-            const restrictedArea = createRestrictedBuildingArea(position, 80, 80, offsetDirection, virtualBuilding.id);
-            this.restrictedBuildingAreas.push(restrictedArea);
-            
-            break;
-         }
-      }
-   }
-
-   public removeVirtualBuilding(virtualBuildingID: number): void {
-      delete this.virtualBuildingRecord[virtualBuildingID];
-      
-      let virtualBuilding!: VirtualBuilding;
-      let hasFoundBuilding = false;
-      for (let i = 0; i < this.virtualBuildings.length; i++) {
-         const currentVirtualBuilding = this.virtualBuildings[i];
-         if (currentVirtualBuilding.id === virtualBuildingID) {
-            this.virtualBuildings.splice(i, 1);
-            virtualBuilding = currentVirtualBuilding;
-
-            switch (currentVirtualBuilding.entityType) {
-               case EntityType.wall: {
-                  delete this.wallInfoRecord[virtualBuildingID];
-                  break;
-               }
-            }
-
-            hasFoundBuilding = true;
-            break;
-         }
-      }
-      if (!hasFoundBuilding) {
-         throw new Error();
-      }
-
-      switch (virtualBuilding.entityType) {
-         case EntityType.wall: {
-            delete this.wallInfoRecord[virtualBuilding.id];
-            break;
-         }
-      }
-      
-      // Remove restricted areas
-      for (let i = 0; i < this.restrictedBuildingAreas.length; i++) {
-         const restrictedArea = this.restrictedBuildingAreas[i];
-
-         if (restrictedArea.associatedBuildingID === virtualBuilding.id) {
-            this.restrictedBuildingAreas.splice(i, 1);
-            i--;
          }
       }
    }
@@ -899,8 +536,10 @@ class Tribe {
       }
       
       // Check item requirements
-      for (const [itemTypeString, itemAmountRequired] of Object.entries(tech.researchItemRequirements)) {
-         const itemType = Number(itemTypeString) as ItemType;
+      for (const entry of tech.researchItemRequirements.getEntries()) {
+         const itemType = entry.itemType;
+         const itemAmountRequired = entry.count;
+         
          const progress = this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType];
          if (progress === undefined || progress < itemAmountRequired) {
             return false;
@@ -951,12 +590,11 @@ class Tribe {
          this.techTreeUnlockProgress[techInfo.id] = {
             itemProgress: {},
             studyProgress: 0
-         }
+         };
       }
       this.techTreeUnlockProgress[techInfo.id]!.studyProgress = techInfo.researchStudyRequirements;
-      for (const [itemTypeString, itemAmount] of Object.entries(techInfo.researchItemRequirements)) {
-         const itemType = Number(itemTypeString) as ItemType;
-         this.techTreeUnlockProgress[techInfo.id]!.itemProgress[itemType] = itemAmount;
+      for (const entry of techInfo.researchItemRequirements.getEntries()) {
+         this.techTreeUnlockProgress[techInfo.id]!.itemProgress[entry.itemType] = entry.count;
       }
       
       this.unlockTech(techInfo.id);
@@ -999,38 +637,27 @@ class Tribe {
       this.availableResources = newAvailableResources;
    }
 
-   public getItemsRequiredForTech(tech: TechInfo): ReadonlyArray<ItemType> {
-      const requiredItemType = new Array<ItemType>();
-      
-      for (const [itemTypeString, itemAmountRequired] of Object.entries(tech.researchItemRequirements)) {
-         const itemType = Number(itemTypeString) as ItemType;
-         if (typeof this.techTreeUnlockProgress[tech.id] === "undefined" || this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType]! < itemAmountRequired) {
-            requiredItemType.push(itemType);
-         }
-      }
-
-      return requiredItemType;
-   }
-
    public useItemInTechResearch(tech: TechInfo, itemType: ItemType, amount: number): number {
-      if (tech.researchItemRequirements[itemType] === undefined) {
+      const amountRequiredToResearch = tech.researchItemRequirements.getItemCount(itemType);
+      if (amountRequiredToResearch === 0) {
          return 0;
       }
       
       let amountUsed = 0;
 
-      if (this.techTreeUnlockProgress[tech.id] === undefined) {
-         amountUsed = Math.min(amount, tech.researchItemRequirements[itemType]!);
+      const techUnlockProgress = this.techTreeUnlockProgress[tech.id];
+      if (typeof techUnlockProgress === "undefined") {
+         amountUsed = Math.min(amount, amountRequiredToResearch);
          this.techTreeUnlockProgress[tech.id] = {
             itemProgress: { [itemType]: amountUsed },
             studyProgress: 0
          };
-      } else if (this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType] === undefined) {
-         amountUsed = Math.min(amount, tech.researchItemRequirements[itemType]!);
-         this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType] = amountUsed;
+      } else if (techUnlockProgress.itemProgress[itemType] === undefined) {
+         amountUsed = Math.min(amount, amountRequiredToResearch);
+         techUnlockProgress.itemProgress[itemType] = amountUsed;
       } else {
-         amountUsed = Math.min(amount, tech.researchItemRequirements[itemType]! - this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType]!);
-         this.techTreeUnlockProgress[tech.id]!.itemProgress[itemType]! += amountUsed;
+         amountUsed = Math.min(amount, amountRequiredToResearch - techUnlockProgress.itemProgress[itemType]!);
+         techUnlockProgress.itemProgress[itemType]! += amountUsed;
       }
 
       return amountUsed;

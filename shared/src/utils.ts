@@ -23,6 +23,18 @@ export interface Colour {
    a: number;
 }
 
+// @Cleanup: location
+export const enum TribesmanPlanType {
+   root,
+   craftRecipe,
+   placeBuilding,
+   upgradeBuilding,
+   doTechStudy,
+   doTechItems,
+   completeTech,
+   gatherItem
+}
+
 const kRGBToYPrime = [0.299, 0.587, 0.114];
 const kRGBToI = [0.596, -0.275, -0.321];
 const kRGBToQ = [0.212, -0.523, 0.311];

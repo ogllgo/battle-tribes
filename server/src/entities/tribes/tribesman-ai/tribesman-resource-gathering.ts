@@ -1,17 +1,16 @@
-import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { HealthComponent, HealthComponentArray } from "../../../components/HealthComponent";
 import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
-import { InventoryComponentArray, getInventory, inventoryIsFull } from "../../../components/InventoryComponent";
+import { InventoryComponent, InventoryComponentArray, countItemType, getInventory, inventoryIsFull } from "../../../components/InventoryComponent";
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
 import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
-import { clearTribesmanPath, getTribesmanRadius, moveTribesmanToBiome, moveTribesmanToDifferentLayer, pathfindToPosition, positionIsSafeForTribesman } from "./tribesman-ai-utils";
+import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman, positionIsSafeForTribesman } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
-import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { ItemType, InventoryName } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, Inventory } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { huntEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
@@ -20,6 +19,7 @@ import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { Biome } from "../../../../../shared/src/biomes";
 import { TileType } from "../../../../../shared/src/tiles";
+import { GatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 
 interface BiomeTileRequirement {
    readonly tileType: TileType;
@@ -33,6 +33,11 @@ export interface MaterialInfo {
 }
 
 const MATERIAL_INFO_RECORD: Partial<Record<ItemType, MaterialInfo>> = {
+   [ItemType.wood]: {
+      biome: Biome.grasslands,
+      layer: surfaceLayer,
+      localBiomeRequiredTiles: []
+   },
    [ItemType.slimeball]: {
       biome: Biome.swamp,
       layer: surfaceLayer,
@@ -127,7 +132,7 @@ const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponen
    return true;
 }
 
-const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemTypes: ReadonlyArray<ItemType>): Entity | null => {
+const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
@@ -149,7 +154,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
       
       const resourceTransformComponent = TransformComponentArray.getComponent(resource);
       const dist = transformComponent.position.calculateDistanceBetween(resourceTransformComponent.position);
-      if (resourceProducts.some(itemType => gatheredItemTypes.includes(itemType))) {
+      if (resourceProducts.some(itemType => itemType === gatheredItemType)) {
          if (dist < minDist) {
             closestResource = resource;
             minDist = dist;
@@ -160,7 +165,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
    return typeof closestResource !== "undefined" ? closestResource : null;
 }
 
-const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemTypes: ReadonlyArray<ItemType>): Entity | null => {
+const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const shouldEscape = tribesmanShouldEscape(getEntityType(tribesman), healthComponent);
@@ -184,7 +189,7 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
       // }
 
       const itemComponent = ItemComponentArray.getComponent(itemEntity);
-      if (!gatheredItemTypes.includes(itemComponent.itemType) || !tribeMemberCanPickUpItem(tribesman, itemComponent.itemType)) {
+      if (itemComponent.itemType !== gatheredItemType || !tribeMemberCanPickUpItem(tribesman, itemComponent.itemType)) {
          continue;
       }
 
@@ -201,51 +206,34 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
 export function tribesmanGoPickupItemEntity(tribesman: Entity, pickupTarget: Entity): void {
    const targetTransformComponent = TransformComponentArray.getComponent(pickupTarget);
    
-   // @Temporary
-   // pathfindToPosition(tribesman, closestDroppedItem.position.x, closestDroppedItem.position.y, closestDroppedItem.id, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
-   pathfindToPosition(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, pickupTarget, TribesmanPathType.default, Math.floor((32 + VACUUM_RANGE) / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
-
-   clearTribesmanPath(tribesman);
-   
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-   setLimbActions(inventoryUseComponent, LimbAction.none);
+   pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
    tribesmanAIComponent.currentAIType = TribesmanAIType.pickingUpDroppedItems;
 }
 
 /** Controls the tribesman to gather the specified item types. */
-export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyArray<ItemType>, visibleItemEntities: ReadonlyArray<Entity>): boolean {
+export function gatherResource(tribesman: Entity, itemType: ItemType, visibleItemEntities: ReadonlyArray<Entity>): boolean {
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
    // First see if there are any items which match which we can pick up
-   const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, gatheredItemTypes);
+   const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, itemType);
    if (itemPickupTarget !== null) {
       tribesmanGoPickupItemEntity(tribesman, itemPickupTarget);
       return true;
    }
    
    // See if there are any entities they can harvest
-   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemTypes);
+   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, itemType);
    if (harvestTarget !== null) {
       huntEntity(tribesman, harvestTarget, false);
       return true;
    }
 
    const layer = getEntityLayer(tribesman);
-   for (const itemType of gatheredItemTypes) {
-      const materialInfo = MATERIAL_INFO_RECORD[itemType];
-      if (typeof materialInfo === "undefined") {
-         continue;
-      }
 
-      // If the entity isn't in the right layer to get the resources, go to the correct layer
-      if (layer !== materialInfo.layer) {
-         // Go to the correct layer
-         moveTribesmanToDifferentLayer(tribesman, materialInfo.layer);
-         return true;
-      }
-
+   const materialInfo = MATERIAL_INFO_RECORD[itemType];
+   if (typeof materialInfo !== "undefined") {
       // If the entity isn't in the right biome, go to the right biome
       const transformComponent = TransformComponentArray.getComponent(tribesman);
       const currentTile = getEntityTile(transformComponent);
@@ -255,5 +243,10 @@ export function gatherResources(tribesman: Entity, gatheredItemTypes: ReadonlyAr
       }
    }
 
+
    return false;
+}
+
+export function gatherItemPlanIsComplete(inventoryComponent: InventoryComponent, plan: GatherItemPlan): boolean {
+   return countItemType(inventoryComponent, plan.itemType) >= plan.amount;
 }

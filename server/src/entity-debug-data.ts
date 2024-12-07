@@ -3,14 +3,44 @@ import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { getTechByID } from "battletribes-shared/techs";
 import { TRIBESMAN_COMMUNICATION_RANGE } from "./entities/tribes/tribesman-ai/tribesman-ai";
-import { TribesmanGoalType } from "./entities/tribes/tribesman-ai/tribesman-goals";
 import { StructureComponentArray } from "./components/StructureComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
-import { ItemTypeString, ITEM_INFO_RECORD, PlaceableItemInfo } from "battletribes-shared/items/items";
+import { ItemTypeString } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
 import { AIHelperComponentArray } from "./components/AIHelperComponent";
+import { TribesmanPlan } from "./tribesman-ai/tribesman-ai-planning";
+import { TribesmanPlanType } from "../../shared/src/utils";
+
+const getPlanDebugString = (plan: TribesmanPlan): string => {
+   switch (plan.type) {
+      case TribesmanPlanType.craftRecipe: {
+         return "Craft " + ItemTypeString[plan.recipe.product];
+      }
+      case TribesmanPlanType.placeBuilding: {
+         return "Place  " + EntityTypeString[plan.virtualBuilding.entityType];
+      }
+      case TribesmanPlanType.doTechStudy: {
+         return "Study " + plan.tech.name;
+      }
+      case TribesmanPlanType.doTechItems: {
+         return "Contribute " + ItemTypeString[plan.itemType] + " to " + plan.tech.name;
+      }
+      case TribesmanPlanType.completeTech: {
+         return "Complete " + plan.tech.name;
+      }
+      case TribesmanPlanType.gatherItem: {
+         return "Gather " + ItemTypeString[plan.itemType];
+      }
+      case TribesmanPlanType.upgradeBuilding: {
+         return "Upgrade " + EntityTypeString[getEntityType(plan.baseBuildingID)];
+      }
+      case TribesmanPlanType.root: {
+         throw new Error();
+      }
+   }
+}
 
 export function createEntityDebugData(entity: Entity): EntityDebugData {
    const lines = new Array<LineDebugData>();
@@ -31,14 +61,16 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
    }
    
    if (TribesmanAIComponentArray.hasComponent(entity)) {
-      const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
+      const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
       
-      debugEntries.push("Current AI type: " + TribesmanAIType[tribesmanComponent.currentAIType]);
+      debugEntries.push("Current AI type: " + TribesmanAIType[tribesmanAIComponent.currentAIType]);
       
-      if (tribesmanComponent.path.length > 0 && tribesmanComponent.isPathfinding) {
+      if (tribesmanAIComponent.paths.length > 0) {
+         const path = tribesmanAIComponent.paths[0];
+
          pathData = {
-            pathNodes: tribesmanComponent.path,
-            rawPathNodes: tribesmanComponent.rawPath
+            pathNodes: path.smoothPath,
+            rawPathNodes: path.rawPath
          };
       }
       
@@ -49,39 +81,11 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
          colour: [1, 0, 0.3]
       });
 
-      // Display the goals of the tribesman
-      const goalStrings = new Array<string>();
-      for (let i = 0; i < tribesmanComponent.goals.length; i++) {
-         const goal = tribesmanComponent.goals[i];
-         
-         let goalString = "";
-         switch (goal.type) {
-            case TribesmanGoalType.craftRecipe: {
-               goalString = "Craft " + ItemTypeString[goal.recipe.product];
-               break;
-            }
-            case TribesmanGoalType.placeBuilding: {
-               const buildingType = (ITEM_INFO_RECORD[goal.plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
-               goalString = "Place  " + EntityTypeString[buildingType];
-               break;
-            }
-            case TribesmanGoalType.researchTech: {
-               goalString = "Research " + goal.tech.name;
-               break;
-            }
-            case TribesmanGoalType.gatherItems: {
-               goalString = "Gather " + goal.itemTypesToGather.map(itemType => ItemTypeString[itemType]).join(", ");
-               break;
-            }
-            case TribesmanGoalType.upgradeBuilding: {
-               goalString = "Upgrade " + EntityTypeString[getEntityType(goal.plan.baseBuildingID)];
-               break;
-            }
-         }
-
-         goalStrings.push(goalString);
+      if (tribesmanAIComponent.assignedPlan !== null) {
+         debugEntries.push("Tribesman plan: " + getPlanDebugString(tribesmanAIComponent.assignedPlan));
+      } else {
+         debugEntries.push("Tribesman plan: none");
       }
-      debugEntries.push("Goals (" + tribesmanComponent.goals.length + "): " + goalStrings.join(" -> "));
    }
 
    if (TribeComponentArray.hasComponent(entity)) {

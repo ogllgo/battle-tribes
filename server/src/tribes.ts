@@ -1,0 +1,32 @@
+import { Settings } from "../../shared/src/settings";
+import { updateBuildingLayer } from "./tribesman-ai/ai-building";
+import { updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
+import { getGameTicks, getTribes } from "./world";
+
+export function updateTribes(): void {
+   const tribes = getTribes();
+   
+   for (const tribe of tribes) {
+      tribe.tick();
+   }
+
+   // @Speed: only check dirty tribes?
+   for (let i = 0; i < tribes.length; i++) {
+      const tribe = tribes[i];
+      
+      // If buildings have been added/removed, we need to update the building layers and re-determine the tribe's plans
+      if (tribe.buildingsAreDirty && tribe.isAIControlled) {
+         for (const buildingLayer of tribe.buildingLayers) {
+            updateBuildingLayer(buildingLayer);
+         }
+         updateTribePlans(tribe);
+
+         tribe.buildingsAreDirty = false;
+      }
+
+      if (getGameTicks() % Settings.TPS === 0) {
+         // @Cleanup: Not related to tribe building
+         tribe.updateAvailableResources();
+      }
+   }
+}

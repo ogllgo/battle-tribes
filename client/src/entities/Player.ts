@@ -5,6 +5,8 @@ import { TransformComponentArray } from "../entity-components/server-components/
 import { getEntityRenderInfo, playerInstance } from "../world";
 import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 
+// @Cleanup: this is out of place
+
 /** Updates the rotation of the player to match the cursor position */
 export function updatePlayerRotation(cursorX: number, cursorY: number): void {
    if (playerInstance === null || cursorX === null || cursorY === null) return;
@@ -28,6 +30,7 @@ export function updatePlayerRotation(cursorX: number, cursorY: number): void {
    registerDirtyRenderInfo(renderInfo);
 }
 
+// @Incomplete?
 // export function updateAvailableCraftingRecipes(): void {
 //    if (Player.instance === null) return;
    

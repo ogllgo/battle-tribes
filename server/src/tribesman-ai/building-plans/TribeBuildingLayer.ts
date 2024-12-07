@@ -1,0 +1,439 @@
+import { BoxType, createHitbox, Hitbox, updateBox } from "../../../../shared/src/boxes/boxes";
+import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { HitboxCollisionBit } from "../../../../shared/src/collision";
+import { EntityType } from "../../../../shared/src/entities";
+import { Settings } from "../../../../shared/src/settings";
+import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
+import { angle, Point } from "../../../../shared/src/utils";
+import { cleanAngle } from "../../ai-shared";
+import Layer from "../../Layer";
+import Tribe from "../../Tribe";
+import { addHitboxesOccupiedNodes, getSafetyNode, SafetyNode } from "../ai-building";
+import { TribeRoom } from "../ai-building-areas";
+
+/** The 4 lines of nodes directly outside a wall. */
+type WallNodeSides = [Array<SafetyNode>, Array<SafetyNode>, Array<SafetyNode>, Array<SafetyNode>];
+
+export interface RestrictedBuildingArea {
+   readonly position: Point;
+   readonly width: number;
+   readonly height: number;
+   readonly rotation: number;
+   /** The ID of the building responsible for the restricted area */
+   readonly associatedBuildingID: number;
+   readonly hitbox: Hitbox<BoxType.rectangular>;
+   readonly occupiedNodes: Set<SafetyNode>;
+}
+
+export const enum VirtualBuildingType {
+   unidentified,
+   wall
+}
+
+interface BaseVirtualBuilding {
+   readonly entityType: StructureType;
+   readonly id: number;
+   readonly layer: Layer;
+   readonly position: Readonly<Point>;
+   readonly rotation: number;
+   readonly hitboxes: ReadonlyArray<Hitbox>;
+   readonly occupiedNodes: Set<SafetyNode>;
+   readonly restrictedBuildingAreas: ReadonlyArray<RestrictedBuildingArea>;
+}
+
+export interface VirtualUnidentifiedBuilding extends BaseVirtualBuilding {
+   readonly entityType: Exclude<StructureType, EntityType.wall | EntityType.door>;
+}
+
+export interface VirtualWall extends BaseVirtualBuilding {
+   readonly entityType: EntityType.wall;
+   readonly topSideNodes: Array<SafetyNode>;
+   readonly rightSideNodes: Array<SafetyNode>;
+   readonly bottomSideNodes: Array<SafetyNode>;
+   readonly leftSideNodes: Array<SafetyNode>;
+   connectionBitset: number;
+}
+
+export const enum TribeDoorType {
+   outside,
+   enclosed
+}
+
+export interface VirtualDoor extends BaseVirtualBuilding {
+   readonly entityType: EntityType.door;
+   doorType: TribeDoorType;
+}
+
+export type VirtualBuilding = VirtualUnidentifiedBuilding | VirtualWall | VirtualDoor;
+
+export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualBuilding> };
+
+const createRestrictedBuildingArea = (position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea => {
+   const box = new RectangularBox(new Point(0, 0), width, height, rotation);
+   const hitbox = createHitbox<BoxType.rectangular>(box, 0, 0, HitboxCollisionBit.DEFAULT, 0, []);
+   box.position.x = position.x;
+   box.position.y = position.y;
+
+   const occupiedNodes = new Set<SafetyNode>();
+   addHitboxesOccupiedNodes([hitbox], occupiedNodes);
+   
+   return {
+      position: position,
+      width: width,
+      height: height,
+      rotation: rotation,
+      associatedBuildingID: associatedBuildingID,
+      hitbox: hitbox,
+      occupiedNodes: occupiedNodes
+   };
+}
+
+export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualBuilding {
+   const hitboxes = createNormalStructureHitboxes(entityType);
+   
+   for (let i = 0; i < hitboxes.length; i++) {
+      const hitbox = hitboxes[i];
+      updateBox(hitbox.box, position.x, position.y, rotation);
+   }
+   
+   const occupiedNodes = new Set<SafetyNode>();
+   addHitboxesOccupiedNodes(hitboxes, occupiedNodes);
+   
+   const virtualEntityID = buildingLayer.tribe.virtualEntityIDCounter++;
+   
+   switch (entityType) {
+      case EntityType.wall: {
+         const sides = getWallNodeSides(position, rotation, occupiedNodes);
+         
+         const virtualBuilding: VirtualWall = {
+            id: virtualEntityID,
+            layer: buildingLayer.layer,
+            position: position,
+            rotation: rotation,
+            occupiedNodes: occupiedNodes,
+            entityType: entityType,
+            hitboxes: hitboxes,
+            restrictedBuildingAreas: [],
+            topSideNodes: sides[0],
+            rightSideNodes: sides[1],
+            bottomSideNodes: sides[2],
+            leftSideNodes: sides[3],
+            connectionBitset: 0
+         };
+         updateWallConnectionBitset(buildingLayer, virtualBuilding);
+         return virtualBuilding;
+      }
+      case EntityType.door: {
+         const restrictedBuildingAreas = new Array<RestrictedBuildingArea>();
+         for (let i = 0; i < 2; i++) {
+            const offsetAmount = 16 / 2 + 50;
+            const offsetDirection = rotation + (i === 1 ? Math.PI : 0);
+            const restrictedAreaPosition = position.offset(offsetAmount, offsetDirection);
+         
+            const restrictedArea = createRestrictedBuildingArea(restrictedAreaPosition, 50, 50, offsetDirection, virtualEntityID);
+            restrictedBuildingAreas.push(restrictedArea);
+         }
+
+         const virtualBuilding: VirtualDoor = {
+            entityType: entityType,
+            id: virtualEntityID,
+            layer: buildingLayer.layer,
+            position: position,
+            rotation: rotation,
+            occupiedNodes: occupiedNodes,
+            hitboxes: hitboxes,
+            restrictedBuildingAreas: restrictedBuildingAreas,
+            // Default value until the actual door type gets calculated
+            doorType: TribeDoorType.enclosed
+         };
+         return virtualBuilding;
+      }
+      default: {
+         const restrictedBuildingAreas = new Array<RestrictedBuildingArea>();
+
+         switch (entityType) {
+            case EntityType.workerHut: {
+               const offsetAmount = 88 / 2 + 55;
+               const x = position.x + offsetAmount * Math.sin(rotation);
+               const y = position.y + offsetAmount * Math.cos(rotation);
+      
+               const restrictedArea = createRestrictedBuildingArea(new Point(x, y), 100, 70, rotation, virtualEntityID);
+               restrictedBuildingAreas.push(restrictedArea);
+               
+               break;
+            }
+            case EntityType.warriorHut: {
+               // @Incomplete
+      
+               break;
+            }
+            case EntityType.workbench: {
+               const offsetAmount = 80 / 2 + 55;
+               const offsetDirection = rotation + Math.PI;
+               const restrictedAreaPosition = position.offset(offsetAmount, offsetDirection);
+      
+               const restrictedArea = createRestrictedBuildingArea(restrictedAreaPosition, 80, 80, offsetDirection, virtualEntityID);
+               restrictedBuildingAreas.push(restrictedArea);
+               
+               break;
+            }
+         }
+         
+         const virtualBuilding: VirtualUnidentifiedBuilding = {
+            entityType: entityType,
+            id: virtualEntityID,
+            layer: buildingLayer.layer,
+            position: position,
+            rotation: rotation,
+            occupiedNodes: occupiedNodes,
+            hitboxes: hitboxes,
+            restrictedBuildingAreas: restrictedBuildingAreas
+         };
+         return virtualBuilding;
+      }
+   }
+}
+
+const getWallSideNodeDir = (node: SafetyNode, wallPosition: Point, wallRotation: number): number => {
+   const nodeX = node % Settings.SAFETY_NODES_IN_WORLD_WIDTH;
+   const nodeY = Math.floor(node / Settings.SAFETY_NODES_IN_WORLD_WIDTH);
+   const x = (nodeX + 0.5) * Settings.SAFETY_NODE_SEPARATION;
+   const y = (nodeY + 0.5) * Settings.SAFETY_NODE_SEPARATION;
+
+   let dir = angle(x - wallPosition.x, y - wallPosition.y) - wallRotation;
+   dir += Math.PI/4;
+   dir = cleanAngle(dir);
+
+   return dir;
+}
+
+const getWallNodeSides = (wallPosition: Point, wallRotation: number, occupiedNodes: ReadonlySet<SafetyNode>): WallNodeSides => {
+   // Find border nodes
+   const borderNodes = new Set<SafetyNode>();
+   for (const node of occupiedNodes) {
+      const nodeX = node % Settings.SAFETY_NODES_IN_WORLD_WIDTH;
+      const nodeY = Math.floor(node / Settings.SAFETY_NODES_IN_WORLD_WIDTH);
+
+      // Top
+      if (nodeY < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
+         const node = getSafetyNode(nodeX, nodeY + 1);
+         if (!occupiedNodes.has(node)) {
+            borderNodes.add(node);
+         }
+      }
+
+      // Right
+      if (nodeX < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
+         const node = getSafetyNode(nodeX + 1, nodeY);
+         if (!occupiedNodes.has(node)) {
+            borderNodes.add(node);
+         }
+      }
+
+      // Bottom
+      if (nodeY > 0) {
+         const node = getSafetyNode(nodeX, nodeY - 1);
+         if (!occupiedNodes.has(node)) {
+            borderNodes.add(node);
+         }
+      }
+
+      // Left
+      if (nodeX > 0) {
+         const node = getSafetyNode(nodeX - 1, nodeY);
+         if (!occupiedNodes.has(node)) {
+            borderNodes.add(node);
+         }
+      }
+   }
+   
+   const topNodes = new Array<SafetyNode>();
+   const rightNodes = new Array<SafetyNode>();
+   const bottomNodes = new Array<SafetyNode>();
+   const leftNodes = new Array<SafetyNode>();
+
+   // Sort the border nodes based on their dir
+   const sortedBorderNodes = new Array<SafetyNode>();
+   for (const node of borderNodes) {
+      const nodeDir = getWallSideNodeDir(node, wallPosition, wallRotation);
+      
+      let insertIdx = 0;
+      for (let i = 0; i < sortedBorderNodes.length; i++) {
+         const currentNode = sortedBorderNodes[i];
+         const currentNodeDir = getWallSideNodeDir(currentNode, wallPosition, wallRotation);
+         if (nodeDir < currentNodeDir) {
+            break;
+         }
+         insertIdx++;
+      }
+
+      sortedBorderNodes.splice(insertIdx, 0, node);
+   }
+
+   const separation = 0.2;
+
+   for (const node of sortedBorderNodes) {
+      const dir = getWallSideNodeDir(node, wallPosition, wallRotation);
+      if (dir > separation && dir < Math.PI/2 - separation) {
+         topNodes.push(node);
+      } else if (dir > Math.PI/2 + separation && dir < Math.PI - separation) {
+         rightNodes.push(node);
+      } else if (dir > Math.PI + separation && dir < Math.PI*3/2 - separation) {
+         bottomNodes.push(node)
+      } else if (dir > Math.PI*3/2 + separation && dir < Math.PI*2 - separation) {
+         leftNodes.push(node);
+      }
+   }
+
+   return [topNodes, rightNodes, bottomNodes, leftNodes];
+}
+
+const wallSideIsConnected = (buildingLayer: TribeBuildingLayer, wallSideNodes: ReadonlyArray<SafetyNode>): boolean => {
+   // Make sure all nodes of the side link to another wall, except for the first and last
+   for (let i = 1; i < wallSideNodes.length - 1; i++) {
+      const node = wallSideNodes[i];
+      if (!buildingLayer.occupiedSafetyNodes.has(node)) {
+         return false;
+      }
+
+      // Only make connections between walls and doors
+      const buildingIDs = buildingLayer.occupiedNodeToEntityIDRecord[node];
+      for (let i = 0; i < buildingIDs.length; i++) {
+         const buildingID = buildingIDs[i];
+         const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
+         if (virtualBuilding.entityType !== EntityType.wall && virtualBuilding.entityType !== EntityType.door) {
+            return false;
+         }
+      }
+   }
+
+   return true;
+}
+
+const updateWallConnectionBitset = (buildingLayer: TribeBuildingLayer, wall: VirtualWall): void => {
+   let connections = 0;
+
+   if (wallSideIsConnected(buildingLayer, wall.topSideNodes)) {
+      connections |= 0b1;
+   }
+   if (wallSideIsConnected(buildingLayer, wall.rightSideNodes)) {
+      connections |= 0b10;
+   }
+   if (wallSideIsConnected(buildingLayer, wall.bottomSideNodes)) {
+      connections |= 0b100;
+   }
+   if (wallSideIsConnected(buildingLayer, wall.leftSideNodes)) {
+      connections |= 0b1000;
+   }
+
+   wall.connectionBitset = connections;
+}
+
+export function updateTribeWalls(buildingLayer: TribeBuildingLayer): void {
+   for (const wall of buildingLayer.virtualBuildingsByEntityType[EntityType.wall]) {
+      // @Hack: cast
+      updateWallConnectionBitset(buildingLayer, wall as VirtualWall);
+   }
+}
+
+export function getNumWallConnections(wallConnectionBitset: number): number {
+   let numConnections = 0;
+   if ((wallConnectionBitset & 0b0001) !== 0) {
+      numConnections++;
+   }
+   if ((wallConnectionBitset & 0b0010) !== 0) {
+      numConnections++;
+   }
+   if ((wallConnectionBitset & 0b0100) !== 0) {
+      numConnections++;
+   }
+   if ((wallConnectionBitset & 0b1000) !== 0) {
+      numConnections++;
+   }
+   return numConnections;
+}
+
+export function createVirtualBuildingsByEntityType(): VirtualBuildingsByEntityType {
+   const record: Partial<VirtualBuildingsByEntityType> = {};
+   for (const entityType of STRUCTURE_TYPES) {
+      record[entityType] = [];
+   }
+   return record as VirtualBuildingsByEntityType;
+}
+
+export default class TribeBuildingLayer {
+   public readonly layer: Layer;
+   public readonly tribe: Tribe;
+   
+   public safetyRecord: Record<SafetyNode, number> = {};
+   public occupiedSafetyNodes = new Set<SafetyNode>();
+   public safetyNodes = new Set<SafetyNode>();
+
+   public occupiedNodeToEntityIDRecord: Record<SafetyNode, Array<number>> = {};
+
+   public nodeToRoomRecord: Record<SafetyNode, TribeRoom> = {};
+
+   public virtualBuildings = new Array<VirtualBuilding>;
+   public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
+   public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
+
+   public rooms = new Array<TribeRoom>();
+   
+   constructor(layer: Layer, tribe: Tribe) {
+      this.layer = layer;
+      this.tribe = tribe;
+   }
+
+   public addVirtualBuilding(virtualBuilding: VirtualBuilding): void {
+      // Add to building layer
+      this.virtualBuildings.push(virtualBuilding);
+      this.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
+      this.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+
+      // Add to tribe
+      this.tribe.virtualBuildings.push(virtualBuilding);
+      this.tribe.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
+      this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+   }
+
+   public removeVirtualBuilding(virtualBuilding: VirtualBuilding): void {
+      // Remove from building layer
+      
+      delete this.virtualBuildingRecord[virtualBuilding.id];
+      
+      let idx = this.virtualBuildings.indexOf(virtualBuilding);
+      if (idx !== -1) {
+         this.virtualBuildings.splice(idx, 1);
+      } else {
+         throw new Error();
+      }
+
+      let buildingsOfType = this.virtualBuildingsByEntityType[virtualBuilding.entityType];
+      idx = buildingsOfType.indexOf(virtualBuilding);
+      if (idx !== -1) {
+         buildingsOfType.splice(idx, 1);
+      } else {
+         throw new Error();
+      }
+
+      // Remove from tribe
+      
+      delete this.tribe.virtualBuildingRecord[virtualBuilding.id];
+      
+      idx = this.tribe.virtualBuildings.indexOf(virtualBuilding);
+      if (idx !== -1) {
+         this.tribe.virtualBuildings.splice(idx, 1);
+      } else {
+         throw new Error();
+      }
+
+      buildingsOfType = this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType];
+      idx = buildingsOfType.indexOf(virtualBuilding);
+      if (idx !== -1) {
+         buildingsOfType.splice(idx, 1);
+      } else {
+         throw new Error();
+      }
+   }
+}

@@ -1,7 +1,7 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { angle, calculateDistanceSquared, distBetweenPointAndRectangularBox } from "battletribes-shared/utils";
+import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, TileIndex } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
 import OPTIONS from "./options";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
@@ -14,11 +14,21 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityLayer, getEntityType, getGameTicks } from "./world";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
-import Layer from "./Layer";
+import Layer, { getTileX, getTileY } from "./Layer";
 import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
+import { TileType } from "../../shared/src/tiles";
+import { getTilesOfType } from "./census";
+import { surfaceLayer } from "./layers";
 
 const enum Vars {
    NODE_ACCESSIBILITY_RESOLUTION = 3
+}
+
+export interface Path {
+   readonly layer: Layer;
+   readonly rawPath: ReadonlyArray<PathfindingNodeIndex>;
+   // @Cleanup: rename to something like 'active path'
+   readonly smoothPath: Array<PathfindingNodeIndex>;
 }
 
 const activeGroupIDs = new Array<number>();
@@ -412,18 +422,34 @@ export function pathIsClear(layer: Layer, startX: number, startY: number, endX: 
    return pathBetweenNodesIsClear(layer, start, goal, ignoredGroupID, pathfindingEntityFootprint);
 }
 
+// @Incomplete: we don't want to find the closest in terms of absolute distance, we want the closest in terms of walking distance.
+export function findClosestDropdownTile(startX: number, startY: number): TileIndex {
+   const dropdownTiles = getTilesOfType(surfaceLayer, TileType.dropdown);
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestTileIndex = 0;
+   for (const tileIndex of dropdownTiles) {
+      const tileX = getTileX(tileIndex);
+      const tileY = getTileY(tileIndex);
+
+      const x = (tileX + 0.5) * Settings.TILE_SIZE;
+      const y = (tileY + 0.5) * Settings.TILE_SIZE;
+
+      const dist = distance(startX, startY, x, y);
+      if (dist < minDist) {
+         minDist = dist;
+         closestTileIndex = tileIndex;
+      }
+   }
+
+   return closestTileIndex;
+}
+
 /**
- * A-star pathfinding algorithm
- * @param startX 
-* @param startY 
- * @param endX 
- * @param endY 
- * @param ignoredEntityIDs 
+ * Uses an A-star pathfinding algorithm to generate an array of all paths needed to get from one point to another.
  * @param pathfindingEntityFootprint Radius of the entity's footprint in nodes
- * @param options 
- * @returns 
  */
-export function pathfind(layer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Array<PathfindingNodeIndex> {
+export function findSingleLayerPath(layer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Path {
    const start = getClosestPathfindNode(startX, startY);
    const goal = getClosestPathfindNode(endX, endY);
 
@@ -433,7 +459,11 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
       console.trace();
       console.warn("Goal is inaccessible! @ " + endX + " " + endY);
       // throw new Error();
-      return [];
+      return {
+         layer: layer,
+         rawPath: [],
+         smoothPath: []
+      };
    }
 
    const cameFrom: Record<PathfindingNodeIndex, number> = {};
@@ -455,6 +485,7 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
    
    let i = 0;
    while (openSet.currentItemCount > 0) {
+      // @Speed: perhaps create a 'node budget' based on the distance between the two points
       // @Temporary
       if (++i >= 100000) {
          // @Temporary
@@ -479,7 +510,11 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
             path.splice(0, 0, currentNode);
             currentNode = cameFrom[currentNode];
          }
-         return path;
+         return {
+            layer: layer,
+            rawPath: path,
+            smoothPath: smoothPath(layer, path, ignoredGroupID, pathfindingEntityFootprint)
+         };
       }
 
       const currentGScore = gScore[current];
@@ -607,21 +642,60 @@ export function pathfind(layer: Layer, startX: number, startY: number, endX: num
             current = cameFrom[current];
             path.splice(0, 0, current);
          }
-         return path;
+         return {
+            layer: layer,
+            rawPath: path,
+            smoothPath: smoothPath(layer, path, ignoredGroupID, pathfindingEntityFootprint)
+         };
       }
       case PathfindFailureDefault.returnEmpty: {
          if (!OPTIONS.inBenchmarkMode) {
             console.warn("FAILURE");
             console.trace();
          }
-         return [];
+         return {
+            layer: layer,
+            rawPath: [],
+            smoothPath: []
+         };
       }
       case PathfindFailureDefault.throwError: {
-         // @Temporary
-         // throw new Error("Pathfinding failed!");
-         return [];
+         throw new Error("Pathfinding failed!");
       }
    }
+}
+
+export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Array<Path> {
+   const paths = new Array<Path>();
+   
+   let x1: number;
+   let y1: number;
+   
+   // If the goal is in a different layer, first move to the correct layer
+   if (startLayer !== endLayer) {
+      const targetDropdownTile = findClosestDropdownTile(startX, startY);
+      
+      const tileX = getTileX(targetDropdownTile);
+      const tileY = getTileY(targetDropdownTile);
+      x1 = (tileX + 0.5) * Settings.TILE_SIZE;
+      y1 = (tileY + 0.5) * Settings.TILE_SIZE;
+
+      const options: PathfindOptions = {
+         // Should move right on the goal
+         goalRadius: 0,
+         failureDefault: PathfindFailureDefault.throwError
+      };
+      const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, options);
+      paths.push(path);
+   } else {
+      x1 = startX;
+      y1 = startY;
+   }
+
+   const path = findSingleLayerPath(endLayer, x1, y1, endX, endY, ignoredGroupID, pathfindingEntityFootprint, options);
+   paths.push(path);
+
+   return paths;
 }
 
 const pathBetweenNodesIsClear = (layer: Layer, node1: PathfindingNodeIndex, node2: PathfindingNodeIndex, ignoredGroupID: number, pathfindingEntityFootprint: number): boolean => {

@@ -46,14 +46,12 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
    return id;
 }
 
-export function goResearchTech(tribesman: Entity, tech: TechInfo): boolean {
+export function goResearchTech(tribesman: Entity, tech: TechInfo): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
 
-   // @Incomplete: use pathfinding
-   
-   // Continue researching at an occupied bench
+   // If already researching at a bench, continue researching at an occupied bench
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
@@ -75,13 +73,14 @@ export function goResearchTech(tribesman: Entity, tech: TechInfo): boolean {
 
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
       setLimbActions(inventoryUseComponent, LimbAction.researching);
-      
-      return true;
+
+      return;
    }
    
+   // @Incomplete: use pathfinding
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
-      const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
+      const benchTransformComponent = TransformComponentArray.getComponent(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
       moveEntityToPosition(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, getTribesmanAcceleration(tribesman), TRIBESMAN_TURN_SPEED);
@@ -95,11 +94,8 @@ export function goResearchTech(tribesman: Entity, tech: TechInfo): boolean {
          attemptToOccupyResearchBench(bench, tribesman);
       }
 
-      const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-      setLimbActions(inventoryUseComponent, LimbAction.none);
-
-      return true;
+      return;
    }
 
-   return false;
+   throw new Error();
 }

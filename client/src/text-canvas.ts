@@ -396,7 +396,7 @@ const renderBuildingPlanInfos = (): void => {
 
       const textColour = "#fff";
 
-      const planNumText = "#" + plan.planNum;
+      const planNumText = "#" + i;
       const planNumWidth = ctx.measureText(planNumText).width; // @Speed
 
       ctx.font = "400 " + fontSize + "px Helvetica";

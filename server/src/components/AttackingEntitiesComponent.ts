@@ -31,6 +31,8 @@ function getDataLength(entity: Entity): number {
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
+   // @Bandwidth @Vulnerability: Only send these for the dev
+   
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
 
    packet.addNumber(attackingEntitiesComponent.attackingEntities.size);

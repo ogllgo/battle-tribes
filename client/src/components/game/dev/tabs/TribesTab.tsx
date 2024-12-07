@@ -6,6 +6,7 @@ import Client from "../../../../networking/Client";
 import { TribeType, NUM_TRIBE_TYPES } from "battletribes-shared/tribes";
 import CLIENT_TRIBE_INFO_RECORD from "../../../../client-tribe-info";
 import DevmodeDropdownInput from "../DevmodeDropdownInput";
+import { setRenderedTribePlanID } from "../../../../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 
 export let TribesTab_refresh: () => void = () => {};
 
@@ -45,7 +46,6 @@ const TribesTab = () => {
       tribeTypeOptions.push(clientInfo.name);
    }
    
-
    return <div id="tribes-tab" className="devmode-tab devmode-container">
       <div className="flex-container">
          <DevmodeScrollableOptions options={tribeIDs.map(id => id.toString())} onOptionSelect={selectTribeID} />
@@ -56,8 +56,11 @@ const TribesTab = () => {
                <div className="bar"></div>
 
                <DevmodeDropdownInput text="Tribe type:" options={tribeTypeOptions} onChange={updateTribeType} />
+
+               <button onClick={() => setRenderedTribePlanID(selectedTribeID)}>View Plans</button>
             </div>
 
+            {/* @Cleanup: Wrong section */}
             <div className="devmode-menu-section">
                <button onClick={() => Client.sendDevCreateTribe()}>Create tribe</button>
             </div>

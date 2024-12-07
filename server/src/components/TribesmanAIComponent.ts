@@ -1,11 +1,9 @@
-import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { ServerComponentType, TribesmanAIType } from "battletribes-shared/components";
-import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { randInt, TileIndex } from "battletribes-shared/utils";
+import { Settings } from "battletribes-shared/settings";
+import { randInt } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import Tribe, { BuildingPlan } from "../Tribe";
+import Tribe from "../Tribe";
 import { EntityRelationship, TribeComponentArray } from "./TribeComponent";
-import { TribesmanGoal } from "../entities/tribes/tribesman-ai/tribesman-goals";
 import { CRAFTING_RECIPES } from "battletribes-shared/items/crafting-recipes";
 import { ItemType } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
@@ -13,7 +11,8 @@ import { tickTribesman } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
 import { HutComponentArray } from "./HutComponent";
-import { getTileIndexIncludingEdges } from "../Layer";
+import { Path } from "../pathfinding";
+import { TribesmanPlan } from "../tribesman-ai/tribesman-ai-planning";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -120,11 +119,11 @@ export class TribesmanAIComponent {
    // the tribesmen finishes researching, is there some better way which doesn't need having this value?
    public targetResearchBenchID = 0;
 
-   public rawPath = new Array<PathfindingNodeIndex>();
-   public path: Array<PathfindingNodeIndex> = [];
-   public pathfindingTargetNode: PathfindingNodeIndex = Number.MAX_SAFE_INTEGER;
-   public pathType = TribesmanPathType.default;
-   public isPathfinding = false;
+   /**
+    * Stores an array of all paths the entity is going to follow to reach its destination.
+    * Once an indiviual path is completed, it is removed from this array.
+   */
+   public paths = new Array<Path>();
 
    /** Artificial cooldown added to tribesmen to make them a bit worse at bow combat */
    public extraBowCooldownTicks = 0;
@@ -137,7 +136,7 @@ export class TribesmanAIComponent {
    public helpY = 0;
    public ticksSinceLastHelpRequest = 99999;
 
-   public personalBuildingPlan: BuildingPlan | null = null;
+   public assignedPlan: TribesmanPlan | null = null;
 
    /** Stores relations with tribesman from other tribes */
    public tribesmanRelations: Partial<Record<number, number>> = {};
@@ -146,8 +145,6 @@ export class TribesmanAIComponent {
    public readonly name = randInt(0, 99);
    // @Bug: will favour certain names more.
    public untitledDescriptor = randInt(0, 99);
-
-   public goals: ReadonlyArray<TribesmanGoal> = [];
 
    public currentCraftingRecipeIdx = 0;
    public currentCraftingTicks = 0;
@@ -306,14 +303,4 @@ function onRemove(worker: Entity): void {
       const tribeComponent = TribeComponentArray.getComponent(worker);
       tribeComponent.tribe.respawnTribesman(tribesmanComponent.hut);
    }
-}
-
-export function getTribesmanPathfindingTargetTile(tribesmanAIComponent: TribesmanAIComponent): TileIndex {
-   const nodeX = tribesmanAIComponent.pathfindingTargetNode % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
-   const nodeY = Math.floor(tribesmanAIComponent.pathfindingTargetNode / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
-   
-   const tileX = nodeX >> 2;
-   const tileY = nodeY >> 2;
-
-   return getTileIndexIncludingEdges(tileX, tileY);
 }

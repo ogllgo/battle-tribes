@@ -29,6 +29,7 @@ function App() {
          <canvas id="game-canvas"></canvas>
          <canvas id="text-canvas"></canvas>
          <canvas id="tech-tree-canvas" className="hidden"></canvas>
+         <canvas id="tribe-plan-visualiser-canvas" className="hidden"></canvas>
          <FrameGraph />
       </div>
    </>;

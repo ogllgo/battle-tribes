@@ -37,6 +37,7 @@ import { createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
+import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -827,7 +828,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       setVisibleSubtileSupports(subtileSupports);
    }
 
-   // Subtile supports
+   // Pathfinding node occupances
    const showPathfindingNodeOccupances = reader.readBoolean();
    reader.padOffset(3);
    if (showPathfindingNodeOccupances) {
@@ -840,6 +841,17 @@ export function processGameDataPacket(reader: PacketReader): void {
       }
 
       setVisiblePathfindingNodeOccupances(visiblePathfindingNodeOccupances);
+   }
+
+   // @Cleanup: remove underscore
+   const _isDev = reader.readBoolean();
+   reader.padOffset(3);
+   if (_isDev) {
+      const numTribes = reader.readNumber();
+      for (let i = 0; i < numTribes; i++) {
+         const tribeID = reader.readNumber();
+         updateTribePlanData(reader, tribeID);
+      }
    }
    
    const gameDataPacket: GameDataPacket = {

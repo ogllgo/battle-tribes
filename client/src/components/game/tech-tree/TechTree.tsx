@@ -13,7 +13,7 @@ import Camera from "../../../Camera";
 import { playSound } from "../../../sound";
 import TechTreeProgressBar from "./TechTreeProgressBar";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
-import { InventoryName, ItemType } from "battletribes-shared/items/items";
+import { InventoryName } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { playerInstance } from "../../../world";
@@ -109,11 +109,13 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
       {!isUnlocked ? <>
          <div className="container">
             <ul>
-               {Object.entries(techInfo.researchItemRequirements).map(([itemTypeString, itemAmount], i) => {
+               {techInfo.researchItemRequirements.getEntries().map((entry, i) => {
+                  const itemType = entry.itemType;
+                  const itemAmount = entry.count;
+                  
                   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
                   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
                   
-                  const itemType = Number(itemTypeString) as ItemType;
                   const itemProgress = (Game.tribe.techTreeUnlockProgress[techInfo.id]?.itemProgress.hasOwnProperty(itemType)) ? Game.tribe.techTreeUnlockProgress[techInfo.id]!.itemProgress[itemType] : 0;
 
                   const hasFinished = typeof itemProgress !== "undefined" ? itemProgress >= itemAmount : false;
@@ -155,14 +157,14 @@ const getResearchedItems = (techInfo: TechInfo): ItemTally2 => {
    tallyInventoryItems(availableItemsTally, hotbar);
    
    const researchTally = new ItemTally2();
-   for (const [itemTypeString, count] of Object.entries(techInfo.researchItemRequirements)) {
-      const researchItemType = Number(itemTypeString) as ItemType;
+   for (const entry of techInfo.researchItemRequirements.getEntries()) {
+      const researchItemType = entry.itemType;
 
       const availableCount = availableItemsTally.getItemCount(researchItemType);
       researchTally.addItem(researchItemType, availableCount);
       
       const itemProgress = Game.tribe.techTreeUnlockProgress[techInfo.id]?.itemProgress[researchItemType] || 0;
-      researchTally.restrictItemCount(researchItemType, count - itemProgress);
+      researchTally.restrictItemCount(researchItemType, entry.count - itemProgress);
    }
 
    return researchTally;

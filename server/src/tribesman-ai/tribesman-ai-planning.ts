@@ -1,0 +1,460 @@
+import { PotentialBuildingPlanData } from "../../../shared/src/ai-building-types";
+import { BlueprintType } from "../../../shared/src/components";
+import { Entity, EntityType } from "../../../shared/src/entities";
+import { CRAFTING_STATION_ITEM_TYPE_RECORD, CraftingRecipe, CraftingStation, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
+import { ITEM_INFO_RECORD, ItemType, PlaceableItemInfo, PlaceableItemType } from "../../../shared/src/items/items";
+import { StructureType } from "../../../shared/src/structures";
+import { getTechChain, TechInfo } from "../../../shared/src/techs";
+import { TribesmanPlanType } from "../../../shared/src/utils";
+import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
+import Tribe from "../Tribe";
+import { areaHasOutsideDoor, getOutsideDoorPlacePlan } from "./ai-building-areas";
+import { tribeIsVulnerable } from "./ai-building-heuristics";
+import { findIdealWallPlacePosition } from "./ai-building-plans";
+import { generateBuildingCandidate } from "./building-plans/ai-building-utils";
+import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
+
+/*
+This file contains the logic for planning what AI tribes should do.
+*/
+
+interface BasePlan {
+   readonly type: TribesmanPlanType;
+   potentialPlans: ReadonlyArray<PotentialBuildingPlanData>;
+   /** Whether or not the plan has been completed by the assigned tribesman. */
+   isComplete: boolean;
+   assignedTribesman: Entity | null;
+   readonly childPlans: Array<TribesmanPlan>;
+}
+
+export interface RootPlan extends BasePlan {
+   readonly type: TribesmanPlanType.root;
+}
+
+export interface CraftRecipePlan extends BasePlan {
+   readonly type: TribesmanPlanType.craftRecipe;
+   readonly recipe: CraftingRecipe;
+}
+
+export interface PlaceBuildingPlan extends BasePlan {
+   readonly type: TribesmanPlanType.placeBuilding;
+   readonly virtualBuilding: VirtualBuilding;
+}
+
+export interface UpgradeBuildingPlan extends BasePlan {
+   readonly type: TribesmanPlanType.upgradeBuilding;
+   readonly baseBuildingID: number;
+   readonly rotation: number;
+   // @Cleanup: can't one be deduced from the other?
+   readonly blueprintType: BlueprintType;
+   readonly entityType: StructureType;
+}
+
+/** Directs the tribesman to study a tech. */
+export interface TechStudyPlan extends BasePlan {
+   readonly type: TribesmanPlanType.doTechStudy;
+   readonly tech: TechInfo;
+}
+
+/** Directs the tribesman to contribute gathered items to a tech. */
+export interface TechItemPlan extends BasePlan {
+   readonly type: TribesmanPlanType.doTechItems;
+   readonly tech: TechInfo;
+   readonly itemType: ItemType;
+}
+
+/** Directs the tribesman to complete the tech. */
+export interface TechCompletePlan extends BasePlan {
+   readonly type: TribesmanPlanType.completeTech;
+   readonly tech: TechInfo;
+}
+
+export interface GatherItemPlan extends BasePlan {
+   readonly type: TribesmanPlanType.gatherItem;
+   readonly itemType: ItemType;
+   /** Amount of the item type to gather */
+   readonly amount: number;
+}
+
+/** Represents an individual unit of work that a tribesman can do in order to advance their tribe. */
+export type TribesmanPlan = RootPlan | CraftRecipePlan | PlaceBuildingPlan | UpgradeBuildingPlan | TechStudyPlan | TechItemPlan | TechCompletePlan | GatherItemPlan;
+
+export function createRootPlan(): RootPlan {
+   return {
+      type: TribesmanPlanType.root,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: []
+   };
+}
+
+export function createCraftRecipePlan(recipe: CraftingRecipe): CraftRecipePlan {
+   return {
+      type: TribesmanPlanType.craftRecipe,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      recipe: recipe
+   };
+}
+
+export function createPlaceBuildingPlan(virtualBuilding: VirtualBuilding): PlaceBuildingPlan {
+   return {
+      type: TribesmanPlanType.placeBuilding,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      virtualBuilding: virtualBuilding
+   };
+}
+
+export function createUpgradeBuildingPlan(baseBuildingID: number, rotation: number, blueprintType: BlueprintType, entityType: StructureType): UpgradeBuildingPlan {
+   return {
+      type: TribesmanPlanType.upgradeBuilding,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      baseBuildingID: baseBuildingID,
+      rotation: rotation,
+      blueprintType: blueprintType,
+      entityType: entityType
+   };
+}
+
+export function createTechStudyPlan(tech: TechInfo): TechStudyPlan {
+   return {
+      type: TribesmanPlanType.doTechStudy,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      tech: tech
+   };
+}
+
+export function createTechItemPlan(tech: TechInfo, itemType: ItemType): TechItemPlan {
+   return {
+      type: TribesmanPlanType.doTechItems,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      tech: tech,
+      itemType: itemType
+   };
+}
+
+export function createTechCompletePlan(tech: TechInfo): TechCompletePlan {
+   return {
+      type: TribesmanPlanType.completeTech,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      tech: tech
+   };
+}
+
+export function createGatherItemPlan(itemType: ItemType, amount: number): GatherItemPlan {
+   return {
+      type: TribesmanPlanType.gatherItem,
+      potentialPlans: [],
+      assignedTribesman: null,
+      isComplete: false,
+      childPlans: [],
+      itemType: itemType,
+      amount: amount
+   };
+}
+
+const craftingStationExists = (tribe: Tribe, craftingStation: CraftingStation): boolean => {
+   let entityType: EntityType;
+   switch (craftingStation) {
+      case CraftingStation.workbench: {
+         entityType = EntityType.workbench;
+         break;
+      }
+      // @Robustness
+      default: {
+         throw new Error();
+      }
+   }
+   
+   return tribe.virtualBuildingsByEntityType[entityType].length > 0;
+}
+
+const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe): CraftRecipePlan => {
+   // @Cleanup: Make recursive
+   // Start with the lowest-level not bottom intermediate products and work up to the final product
+
+   const plan = createCraftRecipePlan(recipe);
+
+   const plansToCheck = new Array<CraftRecipePlan>();
+   plansToCheck.push(plan);
+
+   while (plansToCheck.length > 0) {
+      const currentPlan = plansToCheck.shift()!;
+
+      const recipe = currentPlan.recipe;
+
+      // Do the actual stuff with the recipe
+
+      for (const entry of recipe.ingredients.getEntries()) {
+         currentPlan.childPlans.push(
+            planToGetItem(tribe, entry.itemType, entry.count)
+         );
+      }
+   
+      // If there is no crafting station which can craft the recipe, first place that crafting station.
+      if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation)) {
+         const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation]!;
+         planToPlaceBuildingRandomly(tribe, craftingStationItemType);
+      }
+      
+      currentPlan.childPlans.push(
+         createCraftRecipePlan(recipe)
+      );
+
+      const ingredientEntries = recipe.ingredients.getEntries();
+      for (let i = 0; i < ingredientEntries.length; i++) {
+         const entry = ingredientEntries[i];
+
+         // If the ingredient also has a recipe, add it
+         const recipe = getItemRecipe(entry.itemType);
+         if (recipe !== null) {
+            plansToCheck.push(
+               createCraftRecipePlan(recipe)
+            );
+         }
+      }
+   }
+
+   return plan;
+}
+
+/** Creates a goal to obtain an item by any means necessary */
+const planToGetItem = (tribe: Tribe, itemType: ItemType, amount: number): CraftRecipePlan | GatherItemPlan => {
+   const recipe = getItemRecipe(itemType);
+   if (recipe !== null) {
+      return planToCraftItem(tribe, recipe);
+   } else {
+      return createGatherItemPlan(itemType, amount);
+   }
+}
+
+const tribeHasResearchBench = (tribe: Tribe): boolean => {
+   return tribe.virtualBuildingsByEntityType[EntityType.researchBench].length > 0;
+}
+
+const planToResearchTech = (tribe: Tribe, tech: TechInfo): TechCompletePlan => {
+   const plan = createTechCompletePlan(tech);
+
+   // Add all required items to the tech
+   for (const entry of tech.researchItemRequirements.getEntries()) {
+      const requiredItemType = entry.itemType;
+      const amountRequired = entry.count;
+
+      // Skip items which have already been donated
+      if (typeof tribe.techTreeUnlockProgress[tech.id] !== "undefined" && typeof tribe.techTreeUnlockProgress[tech.id]!.itemProgress[requiredItemType] !== "undefined" && tribe.techTreeUnlockProgress[tech.id]!.itemProgress[requiredItemType]! >= amountRequired) {
+         continue;
+      }
+
+      plan.childPlans.push(
+         planToGetItem(tribe, requiredItemType, amountRequired)
+      );
+
+      plan.childPlans.push(
+         createTechItemPlan(tech, requiredItemType)
+      );
+   }
+
+   // If there is no bench to research at, go place one
+   if (tech.researchStudyRequirements > 0 && !tribeHasResearchBench(tribe)) {
+      plan.childPlans.push(
+         planToPlaceBuildingRandomly(tribe, ItemType.research_bench)
+      );
+   }
+
+   plan.childPlans.push(
+      createTechStudyPlan(tech)
+   );
+
+   return plan;
+}
+
+const getNextTechRequiredForItem = (tribe: Tribe, itemType: ItemType): TechInfo | null => {
+   const techsRequired = getTechChain(itemType);
+   for (let i = 0; i < techsRequired.length; i++) {
+      const tech = techsRequired[i];
+      if (!tribe.hasUnlockedTech(tech.id)) {
+         return tech;
+      }
+   }
+
+   return null;
+}
+
+const planToPlaceBuilding = (tribe: Tribe, placeableItemType: PlaceableItemType, virtualBuilding: VirtualBuilding): PlaceBuildingPlan => {
+   // @Incomplete: when there are no existing buildings, the chosen tribesman should just place it near to them
+   
+   const plan = createPlaceBuildingPlan(virtualBuilding)
+
+   // If the tribesman is missing research to craft it, research the missing tech
+   const missingTech = getNextTechRequiredForItem(tribe, placeableItemType);
+   if (missingTech !== null) {
+      plan.childPlans.push(
+         planToResearchTech(tribe, missingTech)
+      );
+   }
+   
+   plan.childPlans.push(
+      planToGetItem(tribe, placeableItemType, 1)
+   );
+
+   return plan;
+}
+
+const planToPlaceBuildingRandomly = (tribe: Tribe, itemType: PlaceableItemType): PlaceBuildingPlan => {
+   // @Hack
+   const buildingLayer = tribe.buildingLayers[tribe.homeLayer.depth];
+   const entityType = (ITEM_INFO_RECORD[itemType] as PlaceableItemInfo).entityType;
+   
+   // @Cleanup: shouldn't have to define both entity type and placeable item type
+   const candidate = generateBuildingCandidate(buildingLayer, entityType);
+   const virtualBuilding = createVirtualBuilding(buildingLayer, candidate.position, candidate.rotation, entityType);
+
+   return planToPlaceBuilding(tribe, itemType, virtualBuilding);
+}
+
+const getNumDesiredBarrels = (tribe: Tribe): number => {
+   // Want a barrel every 20 buildings
+   return Math.floor(tribe.virtualBuildings.length / 20);
+}
+
+const getNumBarrels = (tribe: Tribe): number => {
+   return tribe.virtualBuildingsByEntityType[EntityType.barrel].length;
+}
+
+const getIncompleteLeafNodePlan = (plan: TribesmanPlan): TribesmanPlan | null => {
+   if (plan.assignedTribesman !== null || plan.isComplete) {
+      return null;
+   }
+
+   for (const childPlan of plan.childPlans) {
+      const plan = getIncompleteLeafNodePlan(childPlan);
+      if (plan !== null) {
+         return plan;
+      }
+   }
+   
+   return plan;
+}
+
+/** Gets the plans of a tribe in order of which should be done first */
+export function updateTribePlans(tribe: Tribe): void {
+   // @Incomplete: place huts for other tribesman
+   // @Incomplete: simulate placing each plan actually happening, and then undo/revert them at the end
+
+   const rootPlan = createRootPlan();
+
+   // If the tribe doesn't have a totem, place one
+   if (!tribe.hasTotem()) {
+      rootPlan.childPlans.push(
+         planToPlaceBuildingRandomly(tribe, ItemType.tribe_totem)
+      );
+   }
+
+   // Place a hut so the first tribesman can respawn
+   if (tribe.getNumHuts() === 0) {
+      rootPlan.childPlans.push(
+         planToPlaceBuildingRandomly(tribe, ItemType.worker_hut)
+      );
+   }
+
+   // Make sure all rooms which can have doors leading outside do have them
+   for (const buildingLayer of tribe.buildingLayers) {
+      for (const room of buildingLayer.rooms) {
+         if (!areaHasOutsideDoor(room)) {
+            const plan = getOutsideDoorPlacePlan(buildingLayer, room);
+            if (plan !== null) {
+               rootPlan.childPlans.push(plan);
+            }
+         }
+      }
+   }
+
+   for (let i = 0; i < tribe.getNumHuts(); i++) {
+      const numDesiredBarrels = getNumDesiredBarrels(tribe);
+      if (getNumBarrels(tribe) < numDesiredBarrels) {
+         rootPlan.childPlans.push(
+            planToPlaceBuildingRandomly(tribe, ItemType.barrel)
+         );
+         continue;
+      }
+
+      // Protect buildings if vulnerable
+      if (tribeIsVulnerable(tribe)) {
+         // @Incomplete: not just walls!
+         // Find the place for a wall that would maximise the building's safety
+         const virtualBuilding = findIdealWallPlacePosition(tribe);
+         if (virtualBuilding !== null) {
+            rootPlan.childPlans.push(
+               // @Hack: item type
+               planToPlaceBuilding(tribe, ItemType.wooden_wall, virtualBuilding)
+            );
+            continue;
+         }
+      }
+
+      break;
+   }
+
+   // @Incomplete: this could result in some very chaotic behaviour, where as soon as 1 building
+   // is finished, tribesmen working on something completely unrelated have their plans destroyed.
+   // So i will need to have some kind of away of having temporal coherence
+   
+   // Immediately assign the plans to all tribesman, overriding their existing plans
+   tribe.rootPlan = rootPlan;
+   for (const tribesman of tribe.tribesmanIDs) {
+      if (!TribesmanAIComponentArray.hasComponent(tribesman)) {
+         continue;
+      }
+
+      const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+
+      const plan = getIncompleteLeafNodePlan(rootPlan);
+      if (plan === null) {
+         // No plans left to be assigned!
+         tribesmanAIComponent.assignedPlan = null;
+         break;
+      }
+
+      // Assign the plan to the tribesman
+      plan.assignedTribesman = tribesman;
+      tribesmanAIComponent.assignedPlan = plan;
+   }
+}
+
+export function completeTribesmanPlan(tribesman: Entity, plan: TribesmanPlan): void {
+   plan.isComplete = true;
+
+   // The tribesman has completed the plan, so it must look for a new one
+   // @Copynpaste
+
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   
+   const newPlan = getIncompleteLeafNodePlan(plan);
+   if (newPlan === null) {
+      // No plans left to be assigned!
+      tribesmanAIComponent.assignedPlan = null;
+      return;
+   }
+
+   // Assign the plan to the tribesman
+   plan.assignedTribesman = tribesman;
+   tribesmanAIComponent.assignedPlan = plan;
+}

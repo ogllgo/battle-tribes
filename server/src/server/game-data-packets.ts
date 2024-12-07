@@ -23,6 +23,7 @@ import { getPlayerNearbyCollapses, getSubtileSupport, getVisibleSubtileSupports,
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { layers } from "../layers";
+import { addPlanData, getTribePlansDataLength } from "../tribesman-ai/building-plans/ai-building-client-data";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -294,6 +295,16 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * visiblePathfindingNodeOccupances.length;
    }
 
+   // Tribe plans
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   if (playerClient.isDev) {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      for (const tribe of tribes) {
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+         lengthBytes += getTribePlansDataLength(tribe.rootPlan);
+      }
+   }
+
    lengthBytes = alignLengthBytes(lengthBytes);
 
    const packet = new Packet(PacketType.gameData, lengthBytes);
@@ -532,6 +543,17 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       packet.addNumber(visiblePathfindingNodeOccupances!.length);
       for (const node of visiblePathfindingNodeOccupances!) {
          packet.addNumber(node);
+      }
+   }
+
+   // Tribe plans
+   packet.addBoolean(playerClient.isDev);
+   packet.padOffset(3);
+   if (playerClient.isDev) {
+      packet.addNumber(tribes.length);
+      for (const tribe of tribes) {
+         packet.addNumber(tribe.id);
+         addPlanData(packet, tribe.rootPlan);
       }
    }
    

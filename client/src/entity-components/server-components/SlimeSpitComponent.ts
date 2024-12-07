@@ -1,5 +1,4 @@
 import { PacketReader } from "battletribes-shared/packets";
-import { VisualRenderPart } from "../../render-parts/render-parts";
 import { Settings } from "battletribes-shared/settings";
 import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
@@ -10,12 +9,11 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityConfig } from "../ComponentArray";
+import { getEntityRenderInfo } from "../../world";
 
 export interface SlimeSpitComponentParams {}
 
-export interface SlimeSpitComponent {
-   readonly renderParts: ReadonlyArray<VisualRenderPart>;
-}
+export interface SlimeSpitComponent {}
 
 export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, never>(ServerComponentType.slimeSpit, true, {
    createParamsFromData: createParamsFromData,
@@ -34,8 +32,6 @@ function createParamsFromData(reader: PacketReader): SlimeSpitComponentParams {
 }
 
 function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitComponent {
-   const renderParts = new Array<VisualRenderPart>();
-
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
    const renderPart1 = new TexturedRenderPart(
@@ -46,7 +42,6 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
    );
    renderPart1.opacity = 0.75;
    entityConfig.renderInfo.attachRenderPart(renderPart1);
-   renderParts.push(renderPart1);
 
    const renderPart2 = new TexturedRenderPart(
       null,
@@ -56,11 +51,8 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
    );
    renderPart2.opacity = 0.75;
    entityConfig.renderInfo.attachRenderPart(renderPart2);
-   renderParts.push(renderPart2);
 
-   return {
-      renderParts: []
-   };
+   return {};
 }
 
 function onLoad(entity: Entity): void {
@@ -68,9 +60,11 @@ function onLoad(entity: Entity): void {
 }
 
 function onTick(entity: Entity): void {
-   const slimeSpitComponent = SlimeSpitComponentArray.getComponent(entity);
-   slimeSpitComponent.renderParts[0].rotation += 1.5 * Math.PI / Settings.TPS;
-   slimeSpitComponent.renderParts[1].rotation -= 1.5 * Math.PI / Settings.TPS;
+   const renderInfo = getEntityRenderInfo(entity);
+   const rotatingRenderPart = renderInfo.allRenderThings[0];
+   
+   rotatingRenderPart.rotation += 1.5 * Math.PI / Settings.TPS;
+   rotatingRenderPart.rotation -= 1.5 * Math.PI / Settings.TPS;
 
    if (Board.tickIntervalHasPassed(0.2)) {
       for (let i = 0; i < 5; i++) {

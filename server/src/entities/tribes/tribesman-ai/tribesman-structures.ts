@@ -1,13 +1,13 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
-import { calculateStructureConnectionInfo } from "battletribes-shared/structures";
+import { calculateStructureConnectionInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD, StructureType } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import { angle, getAngleDiff } from "battletribes-shared/utils";
+import { angle, assert, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
 import { getDistanceFromPointToEntity, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
-import { consumeItemFromSlot, InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
+import { consumeItemFromSlot, InventoryComponentArray, getInventory, getItemTypeSlot } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { getEntityRelationship, EntityRelationship } from "../../../components/TribeComponent";
@@ -17,34 +17,29 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
 import { placeBuilding, placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindToPosition } from "./tribesman-ai-utils";
+import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { huntEntity } from "./tribesman-combat-ai";
-import { TribesmanPlaceGoal, TribesmanUpgradeGoal } from "./tribesman-goals";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
-import { Inventory, ITEM_INFO_RECORD, PlaceableItemInfo, InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
-import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
-import { updateBox } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getGameTicks } from "../../../world";
 import { getLayerInfo } from "../../../layers";
+import { PlaceBuildingPlan, UpgradeBuildingPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
 }
 
-export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, goal: TribesmanPlaceGoal): boolean {
-   const plan = goal.plan;
-   
-   const entityType = (ITEM_INFO_RECORD[plan.buildingRecipe.product] as PlaceableItemInfo).entityType;
-   const hitboxes = createNormalStructureHitboxes(entityType);
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-      updateBox(hitbox.box, plan.position.x, plan.position.y, plan.rotation);
-   }
+const getPlaceableItemSlot = (hotbarInventory: Inventory, itemType: ItemType): number | null => {
+   return getItemTypeSlot(hotbarInventory, itemType);
+}
+
+export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, plan: PlaceBuildingPlan): boolean {
+   const virtualBuilding = plan.virtualBuilding;
    
    const layer = getEntityLayer(tribesman);
-   const blockingEntities = getBoxesCollidingEntities(getLayerInfo(layer), hitboxes);
+   const blockingEntities = getBoxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
    for (let i = 0; i < blockingEntities.length; i++) {
       const blockingEntity = blockingEntities[i];
       if (!HealthComponentArray.hasComponent(blockingEntity)) {
@@ -59,19 +54,24 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          return true;
       }
    }
+
+   // @Hack?
+   const placeableItemType = STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD[virtualBuilding.entityType];
+   const placeableItemSlot = getPlaceableItemSlot(hotbarInventory, placeableItemType);
+   assert(placeableItemSlot !== null);
    
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
    
-   const distance = getDistanceFromPointToEntity(plan.position, tribesman);
+   const distance = getDistanceFromPointToEntity(virtualBuilding.position, tribesman);
    if (distance < Vars.BUILDING_PLACE_DISTANCE) {
       // Equip the item
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
       const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-      useInfo.selectedItemSlot = goal.placeableItemSlot;
+      useInfo.selectedItemSlot = placeableItemSlot;
       
       const transformComponent = TransformComponentArray.getComponent(tribesman);
       
-      const targetDirection = angle(plan.position.x - transformComponent.position.x, plan.position.y - transformComponent.position.y);
+      const targetDirection = angle(virtualBuilding.position.x - transformComponent.position.x, virtualBuilding.position.y - transformComponent.position.y);
       if (distance < getTribesmanAttackRadius(tribesman)) {
          // @Incomplete: Shouldn't move backwards from the target position, should instead pathfind to the closest position
          // which is far enough away, as currently it will try to back into buildings and get stuck like this.
@@ -99,17 +99,14 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // Place the item
          // 
          
-         const item = hotbarInventory.itemSlots[goal.placeableItemSlot]!;
-         const placingEntityType = (ITEM_INFO_RECORD[item.type] as PlaceableItemInfo).entityType;
-         
-         const connectionInfo = calculateStructureConnectionInfo(plan.position, plan.rotation, placingEntityType, getLayerInfo(layer));
-         placeBuilding(tribe, getEntityLayer(tribesman), plan.position, plan.rotation, placingEntityType, connectionInfo, []);
+         const connectionInfo = calculateStructureConnectionInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
+         placeBuilding(tribe, getEntityLayer(tribesman), virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, connectionInfo, []);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {
             awardTitle(tribesman, TribesmanTitle.builder);
          }
 
-         consumeItemFromSlot(tribesman, hotbarInventory, goal.placeableItemSlot, 1);
+         consumeItemFromSlot(tribesman, hotbarInventory, placeableItemSlot, 1);
          
          useInfo.lastAttackTicks = getGameTicks();
       } else {
@@ -125,8 +122,8 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       }
    } else {
       // Move to the building plan
-      const isPathfinding = pathfindToPosition(tribesman, plan.position.x, plan.position.y, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
-      if (isPathfinding) {
+      const isFinished = pathfindTribesman(tribesman, virtualBuilding.position.x, virtualBuilding.position.y, virtualBuilding.layer, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+      if (!isFinished) {
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
@@ -138,8 +135,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    return false;
 }
 
-export function goUpgradeBuilding(tribesman: Entity, goal: TribesmanUpgradeGoal): void {
-   const plan = goal.plan;
+export function goUpgradeBuilding(tribesman: Entity, plan: UpgradeBuildingPlan): void {
    const building = plan.baseBuildingID;
    
    // @Cleanup: Copy and paste from attemptToRepairBuildings
@@ -184,7 +180,7 @@ export function goUpgradeBuilding(tribesman: Entity, goal: TribesmanUpgradeGoal)
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
       }
    } else {
-      pathfindToPosition(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -259,7 +255,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
          // }
       }
    } else {
-      pathfindToPosition(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

@@ -7,6 +7,7 @@ import { Settings } from "./settings";
 import { Point, distance, getAbsAngleDiff } from "./utils";
 import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./subtiles";
 import { CollisionGroup, getEntityCollisionGroup } from "./collision-groups";
+import { ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType, NUM_ITEM_TYPES, PlaceableItemType } from "./items/items";
 
 /*
 When snapping:
@@ -25,6 +26,18 @@ const enum Vars {
 
 export const STRUCTURE_TYPES = [EntityType.wall, EntityType.door, EntityType.embrasure, EntityType.floorSpikes, EntityType.wallSpikes, EntityType.floorPunjiSticks, EntityType.wallPunjiSticks, EntityType.ballista, EntityType.slingTurret, EntityType.tunnel, EntityType.tribeTotem, EntityType.workerHut, EntityType.warriorHut, EntityType.barrel, EntityType.workbench, EntityType.researchBench, EntityType.healingTotem, EntityType.planterBox, EntityType.furnace, EntityType.campfire, EntityType.fence, EntityType.fenceGate, EntityType.frostshaper, EntityType.stonecarvingTable, EntityType.bracings, EntityType.fireTorch, EntityType.slurbTorch] as const;
 export type StructureType = typeof STRUCTURE_TYPES[number];
+
+export const STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD = {} as Record<StructureType, PlaceableItemType>;
+for (const structureType of STRUCTURE_TYPES) {
+   for (let itemType: ItemType = 0; itemType < NUM_ITEM_TYPES; itemType++) {
+      const itemInfo = ITEM_INFO_RECORD[itemType];
+      if (itemInfoIsPlaceable(itemType, itemInfo)) {
+         if (itemInfo.entityType === structureType) {
+            STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD[structureType] = itemType as PlaceableItemType;
+         }
+      }
+   }
+}
 
 export const enum SnapDirection {
    top,

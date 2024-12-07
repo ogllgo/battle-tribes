@@ -2,6 +2,7 @@
 
 import { ItemRequirements } from "./items/crafting-recipes";
 import { ItemType } from "./items/items";
+import { createTallyFromRecord, ItemTally2 } from "./items/ItemTally";
 import { TribeType } from "./tribes";
 
 export enum TechID {
@@ -66,7 +67,7 @@ export interface TechInfo {
    readonly positionX: number;
    readonly positionY: number;
    readonly dependencies: ReadonlyArray<TechID>;
-   readonly researchItemRequirements: ItemRequirements;
+   readonly researchItemRequirements: ItemTally2;
    readonly researchStudyRequirements: number;
    /** Tribes which are unable to research the tech */
    readonly blacklistedTribes: ReadonlyArray<TribeType>
@@ -83,9 +84,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 0,
       positionY: 0,
       dependencies: [],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 10
-      },
+      }),
       researchStudyRequirements: 0,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -99,10 +100,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 1,
       positionY: 35,
       dependencies: [TechID.fire],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wooden_pickaxe]: 1,
          [ItemType.wood]: 10
-      },
+      }),
       researchStudyRequirements: 20,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -116,10 +117,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 22,
       positionY: -28,
       dependencies: [TechID.fire],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 25,
          [ItemType.berry]: 10
-      },
+      }),
       researchStudyRequirements: 0,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -133,9 +134,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
        positionX: -40,
        positionY: -1,
        dependencies: [TechID.fire],
-       researchItemRequirements: {
+       researchItemRequirements: createTallyFromRecord({
          [ItemType.rock]: 20
-       },
+       }),
        researchStudyRequirements: 0,
        blacklistedTribes: [],
        conflictingTechs: []
@@ -149,9 +150,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 44,
       positionY: 4,
       dependencies: [TechID.fire],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 20
-      },
+      }),
       researchStudyRequirements: 0,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -165,10 +166,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 62,
       positionY: 15,
       dependencies: [TechID.woodworking],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.campfire]: 2,
          [ItemType.rock]: 20
-      },
+      }),
       // @Temporary
       // researchStudyRequirements: 10,
       researchStudyRequirements: 10000,
@@ -184,10 +185,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -28,
       positionY: 18,
       dependencies: [TechID.stoneTools],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.rock]: 20,
          [ItemType.cactus_spine]: 30
-      },
+      }),
       researchStudyRequirements: 40,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -201,9 +202,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -53,
       positionY: 19,
       dependencies: [TechID.stoneTools],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 35
-      },
+      }),
       // researchStudyRequirements: 75,
       researchStudyRequirements: 1,
       blacklistedTribes: [TribeType.barbarians],
@@ -218,9 +219,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -67,
       positionY: 26,
       dependencies: [TechID.archery],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 35
-      },
+      }),
       researchStudyRequirements: 75,
       blacklistedTribes: [],
       conflictingTechs: [TechID.crossbows]
@@ -234,9 +235,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -50,
       positionY: 34,
       dependencies: [TechID.archery],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 35
-      },
+      }),
       researchStudyRequirements: 75,
       blacklistedTribes: [],
       conflictingTechs: [TechID.reinforcedBows]
@@ -250,9 +251,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -76,
       positionY: 17,
       dependencies: [TechID.archery, TechID.frostshaping],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 35
-      },
+      }),
       researchStudyRequirements: 75,
       blacklistedTribes: [TribeType.plainspeople, TribeType.barbarians, TribeType.goblins],
       conflictingTechs: []
@@ -266,9 +267,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -55,
       positionY: 21,
       dependencies: [TechID.stoneTools],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.living_rock]: 30
-      },
+      }),
       researchStudyRequirements: 75,
       blacklistedTribes: [TribeType.frostlings, TribeType.goblins, TribeType.plainspeople],
       conflictingTechs: []
@@ -282,9 +283,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -56,
       positionY: -18,
       dependencies: [TechID.stoneTools],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.leather]: 20
-      },
+      }),
       researchStudyRequirements: 50,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -299,10 +300,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 14,
       positionY: 48,
       dependencies: [TechID.society],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 30,
          [ItemType.rock]: 50
-      },
+      }),
       researchStudyRequirements: 100,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -316,9 +317,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 69,
       positionY: -4,
       dependencies: [TechID.woodworking],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 40
-      },
+      }),
       researchStudyRequirements: 150,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -332,9 +333,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 51,
       positionY: -15,
       dependencies: [TechID.woodworking],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 50
-      },
+      }),
       researchStudyRequirements: 50,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -348,9 +349,9 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: -65,
       positionY: 0,
       dependencies: [TechID.stoneTools],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.frostcicle]: 15
-      },
+      }),
       researchStudyRequirements: 50,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -364,10 +365,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 81,
       positionY: -12,
       dependencies: [TechID.basicArchitecture],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 50,
          [ItemType.rock]: 50
-      },
+      }),
       researchStudyRequirements: 200,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -381,10 +382,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 45,
       positionY: -34,
       dependencies: [TechID.gathering],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.berry]: 20,
          [ItemType.slimeball]: 20
-      },
+      }),
       researchStudyRequirements: 0,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -398,11 +399,11 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 30,
       positionY: -51,
       dependencies: [TechID.gathering],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 40,
          [ItemType.leaf]: 30,
          [ItemType.berry]: 20
-      },
+      }),
       researchStudyRequirements: 30,
       blacklistedTribes: [],
       conflictingTechs: []
@@ -416,10 +417,10 @@ export const TECHS: ReadonlyArray<TechInfo> = [
       positionX: 70,
       positionY: -28,
       dependencies: [TechID.herbalMedicine, TechID.basicArchitecture],
-      researchItemRequirements: {
+      researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 50,
          [ItemType.herbal_medicine]: 15
-      },
+      }),
       researchStudyRequirements: 100,
       blacklistedTribes: [],
       conflictingTechs: []
