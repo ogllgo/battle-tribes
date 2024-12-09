@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { TechInfo } from "battletribes-shared/techs";
+import { Tech } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbSize } from "battletribes-shared/research";
 import { ComponentArray } from "./ComponentArray";
@@ -109,7 +109,7 @@ const getResearchTimeMultiplier = (researcher: Entity): number => {
 }
 
 // @Cleanup: Should this be in tribesman.ts?
-export function continueResearching(researchBench: Entity, researcher: Entity, tech: TechInfo): void {
+export function continueResearching(researchBench: Entity, researcher: Entity, tech: Tech): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(researchBench);
 
    researchBenchComponent.orbCompleteProgressTicks++;

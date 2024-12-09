@@ -49,6 +49,7 @@ import HeldItemSlot from "./HeldItemSlot";
 import { createFireTorchComponentParams } from "../../entity-components/server-components/FireTorchComponent";
 import { createSlurbTorchComponentParams } from "../../entity-components/server-components/SlurbTorchComponent";
 import { createBarrelComponentParams } from "../../entity-components/server-components/BarrelComponent";
+import { playerTribe } from "../../tribes";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -449,7 +450,7 @@ const tryToSwing = (inventoryName: InventoryName): boolean => {
 const getAttackTimeMultiplier = (itemType: ItemType | null): number => {
    let swingTimeMultiplier = 1;
 
-   if (Game.tribe.tribeType === TribeType.barbarians) {
+   if (playerTribe.tribeType === TribeType.barbarians) {
       // 30% slower
       swingTimeMultiplier /= 0.7;
    }
@@ -498,7 +499,7 @@ const attemptAttack = (): void => {
    if (playerInstance === null) return;
 
    let attackDidSucceed = tryToSwing(InventoryName.hotbar);
-   if (!attackDidSucceed && Game.tribe.tribeType === TribeType.barbarians) {
+   if (!attackDidSucceed && playerTribe.tribeType === TribeType.barbarians) {
       attackDidSucceed = tryToSwing(InventoryName.offhand);
    }
 
@@ -739,7 +740,7 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
       moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect.type].moveSpeedMultiplier;
    }
 
-   moveSpeedMultiplier *= TRIBE_INFO_RECORD[Game.tribe.tribeType].moveSpeedMultiplier;
+   moveSpeedMultiplier *= TRIBE_INFO_RECORD[playerTribe.tribeType].moveSpeedMultiplier;
 
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
    if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter)) {
@@ -935,7 +936,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
    switch (itemCategory) {
       case "healing": {
          const healthComponent = HealthComponentArray.getComponent(playerInstance!);
-         const maxHealth = TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer;
+         const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
          if (healthComponent.health >= maxHealth) {
             break;
          }
@@ -1180,7 +1181,7 @@ const tickItem = (itemType: ItemType): void => {
       case "healing": {
          // If the player can no longer eat food without wasting it, stop eating
          const healthComponent = HealthComponentArray.getComponent(playerInstance!);
-         const maxHealth = TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer;
+         const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
          if ((playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine) && healthComponent.health >= maxHealth) {
             unuseItem(itemType);

@@ -1,21 +1,21 @@
-import { TechID, getTechByID } from "battletribes-shared/techs";
+import { Tech } from "battletribes-shared/techs";
 import { useEffect, useState } from "react";
-import Game from "../../Game";
 import TechTreeProgressBar from "./tech-tree/TechTreeProgressBar";
+import { playerTribe } from "../../tribes";
 
-export let TechInfocard_setSelectedTech: (techID: TechID | null) => void = () => {};
+export let TechInfocard_setSelectedTech: (tech: Tech | null) => void = () => {};
 
 const TechInfocard = () => {
-   const [selectedTech, setSelectedTech] = useState<TechID | null>(null);
+   const [selectedTech, setSelectedTech] = useState<Tech | null>(null);
    const [studyProgress, setStudyProgress] = useState(0);
    // @Incomplete doesn't refresh on study progress increase
 
    useEffect(() => {
-      TechInfocard_setSelectedTech = (techID: TechID | null): void => {
-         setSelectedTech(techID);
+      TechInfocard_setSelectedTech = (tech: Tech | null): void => {
+         setSelectedTech(tech);
 
-         if (techID !== null) {
-            setStudyProgress(Game.tribe.techTreeUnlockProgress[techID]?.studyProgress || 0);
+         if (tech !== null) {
+            setStudyProgress(playerTribe.techTreeUnlockProgress[tech.id]?.studyProgress || 0);
          }
       }
    }, []);
@@ -24,19 +24,17 @@ const TechInfocard = () => {
       return null;
    }
 
-   const techInfo = getTechByID(selectedTech);
-
    return <div id="tech-infocard" className="infocard">
-      {studyProgress < techInfo.researchStudyRequirements ? <>
+      {studyProgress < selectedTech.researchStudyRequirements ? <>
          <div className="flex">
-            <h2>{techInfo.name}</h2>
-            <img src={require("../../images/tech-tree/" + techInfo.iconSrc)} alt="" />
+            <h2>{selectedTech.name}</h2>
+            <img src={require("../../images/tech-tree/" + selectedTech.iconSrc)} alt="" />
          </div>
-         <TechTreeProgressBar techInfo={techInfo} />
+         <TechTreeProgressBar techInfo={selectedTech} />
       </> : <>
          <div className="flex">
             <h2>Research Complete!</h2>
-            <img src={require("../../images/tech-tree/" + techInfo.iconSrc)} alt="" />
+            <img src={require("../../images/tech-tree/" + selectedTech.iconSrc)} alt="" />
          </div>
       </>}
    </div>;

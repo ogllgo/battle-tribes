@@ -8,14 +8,14 @@ import { randInt } from "battletribes-shared/utils";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes, Box } from "battletribes-shared/boxes/boxes";
+import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes, Box, Hitbox, BoxType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
-import { Entity, EntityType } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
@@ -53,6 +53,90 @@ export interface TransformComponent {
    boundingAreaMaxY: number;
 }
 
+const padBaseHitboxData = (reader: PacketReader): void => {
+   reader.padOffset(12 * Float32Array.BYTES_PER_ELEMENT);
+
+   const numFlags = reader.readNumber();
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numFlags);
+}
+
+export function readCircularHitboxFromData(reader: PacketReader): ClientHitbox<BoxType.circular> {
+   const x = reader.readNumber();
+   const y = reader.readNumber();
+   const relativeRotation = reader.readNumber();
+   const rotation = reader.readNumber();
+   const mass = reader.readNumber();
+   const offsetX = reader.readNumber();
+   const offsetY = reader.readNumber();
+   const scale = reader.readNumber();
+   const collisionType = reader.readNumber();
+   const collisionBit = reader.readNumber();
+   const collisionMask = reader.readNumber();
+   const localID = reader.readNumber();
+
+   const numFlags = reader.readNumber();
+   const flags = new Array<HitboxFlag>();
+   for (let i = 0; i < numFlags; i++) {
+      flags.push(reader.readNumber());
+   }
+
+   const radius = reader.readNumber();
+
+   const offset = new Point(offsetX, offsetY);
+   const box = new CircularBox(offset, 0, radius);
+   // @Hack
+   box.scale = scale;
+   box.position.x = x;
+   box.position.y = y;
+   box.relativeRotation = relativeRotation;
+   box.rotation = rotation;
+   
+   return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
+}
+const padCircularHitboxData = (reader: PacketReader): void => {
+   padBaseHitboxData(reader);
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+}
+
+export function readRectangularHitboxFromData(reader: PacketReader): ClientHitbox<BoxType.rectangular> {
+   const x = reader.readNumber();
+   const y = reader.readNumber();
+   const relativeRotation = reader.readNumber();
+   const rotation = reader.readNumber();
+   const mass = reader.readNumber();
+   const offsetX = reader.readNumber();
+   const offsetY = reader.readNumber();
+   const scale = reader.readNumber();
+   const collisionType = reader.readNumber();
+   const collisionBit = reader.readNumber();
+   const collisionMask = reader.readNumber();
+   const localID = reader.readNumber();
+
+   const numFlags = reader.readNumber();
+   const flags = new Array<HitboxFlag>();
+   for (let i = 0; i < numFlags; i++) {
+      flags.push(reader.readNumber());
+   }
+   
+   const width = reader.readNumber();
+   const height = reader.readNumber();
+
+   const offset = new Point(offsetX, offsetY);
+   const box = new RectangularBox(offset, width, height, rotation);
+   // @Hack
+   box.scale = scale;
+   box.position.x = x;
+   box.position.y = y;
+   box.relativeRotation = relativeRotation;
+   box.rotation = rotation;
+
+   return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
+}
+const padRectangularHitboxData = (reader: PacketReader): void => {
+   padBaseHitboxData(reader);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+}
+
 export function createTransformComponentParams(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number): TransformComponentParams {
    return {
       position: position,
@@ -77,66 +161,14 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
    
    const numCircularHitboxes = reader.readNumber();
    for (let i = 0; i < numCircularHitboxes; i++) {
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const relativeRotation = reader.readNumber();
-      const rotation = reader.readNumber();
-      const mass = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-      const scale = reader.readNumber();
-      const collisionType = reader.readNumber();
-      const collisionBit = reader.readNumber();
-      const collisionMask = reader.readNumber();
-      const localID = reader.readNumber();
-      const numFlags = reader.readNumber();
-      const flags = new Array<HitboxFlag>();
-      for (let i = 0; i < numFlags; i++) {
-         flags.push(reader.readNumber());
-      }
-      const radius = reader.readNumber();
-
-      const offset = new Point(offsetX, offsetY);
-      const box = new CircularBox(offset, 0, radius);
-      box.scale = scale;
-      box.position.x = x;
-      box.position.y = y;
-      box.relativeRotation = relativeRotation;
-      box.rotation = rotation;
-      
-      const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
+      const hitbox = readCircularHitboxFromData(reader);
       hitboxes.push(hitbox);
    }
 
    // Update rectangular hitboxes
    const numRectangularHitboxes = reader.readNumber();
    for (let i = 0; i < numRectangularHitboxes; i++) {
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const mass = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-      const scale = reader.readNumber();
-      const collisionType = reader.readNumber();
-      const collisionBit = reader.readNumber();
-      const collisionMask = reader.readNumber();
-      const localID = reader.readNumber();
-      const numFlags = reader.readNumber();
-      const flags = new Array<HitboxFlag>();
-      for (let i = 0; i < numFlags; i++) {
-         flags.push(reader.readNumber());
-      }
-      const width = reader.readNumber();
-      const height = reader.readNumber();
-      const rotation = reader.readNumber();
-
-      const offset = new Point(offsetX, offsetY);
-      const box = new RectangularBox(offset, width, height, rotation);
-      box.scale = scale;
-      box.position.x = x;
-      box.position.y = y;
-
-      const hitbox = new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
+      const hitbox = readRectangularHitboxFromData(reader);
       hitboxes.push(hitbox);
    }
 
@@ -374,10 +406,14 @@ function padData(reader: PacketReader): void {
    reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
 
    const numCircularHitboxes = reader.readNumber();
-   reader.padOffset(14 * Float32Array.BYTES_PER_ELEMENT * numCircularHitboxes);
+   for (let i = 0; i < numCircularHitboxes; i++) {
+      padCircularHitboxData(reader);
+   }
 
    const numRectangularHitboxes = reader.readNumber();
-   reader.padOffset(14 * Float32Array.BYTES_PER_ELEMENT * numRectangularHitboxes);
+   for (let i = 0; i < numRectangularHitboxes; i++) {
+      padRectangularHitboxData(reader);
+   }
 }
    
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -474,6 +510,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    for (let i = 0; i < numRectangularHitboxes; i++) {
       const x = reader.readNumber();
       const y = reader.readNumber();
+      const relativeRotation = reader.readNumber();
+      const rotation = reader.readNumber();
       const mass = reader.readNumber();
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -490,7 +528,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
       const width = reader.readNumber();
       const height = reader.readNumber();
-      const rotation = reader.readNumber();
 
       // If the hitbox is new, create it
       const hitbox = transformComponent.hitboxMap.get(localID);
@@ -512,7 +549,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          box.position.y = y;
          box.width = width;
          box.height = height;
-         box.relativeRotation = rotation;
+         box.relativeRotation = relativeRotation;
+         box.rotation = rotation;
          box.offset.x = offsetX;
          box.offset.y = offsetY;
          box.scale = scale;

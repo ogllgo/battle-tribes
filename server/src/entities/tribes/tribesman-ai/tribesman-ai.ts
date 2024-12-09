@@ -2,7 +2,7 @@ import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
-import { getAngleDiff, TribesmanPlanType } from "battletribes-shared/utils";
+import { assert, getAngleDiff, TribesmanPlanType } from "battletribes-shared/utils";
 import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray, hasSpaceForRecipe } from "../../../components/InventoryComponent";
@@ -20,10 +20,10 @@ import { PlanterBoxComponentArray, placePlantInPlanterBox } from "../../../compo
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { gatherItemPlanIsComplete, gatherResource } from "./tribesman-resource-gathering";
-import { goResearchTech } from "./tribesman-researching";
+import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "./tribesman-researching";
 import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings, goPlaceBuilding, goUpgradeBuilding } from "./tribesman-structures";
-import { goCraftItem } from "./tribesman-crafting";
+import { craftGoalIsComplete, goCraftItem } from "./tribesman-crafting";
 import { getGiftableItemSlot, getRecruitTarget } from "./tribesman-recruiting";
 import { escapeFromEnemies, tribesmanShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
@@ -751,12 +751,11 @@ export function tickTribesman(tribesman: Entity): void {
                }
             }
             
-            const isGoing = goCraftItem(tribesman, plan.recipe, tribeComponent.tribe);
-            if (isGoing) {
-               return;
+            goCraftItem(tribesman, plan.recipe, tribeComponent.tribe);
+            if (craftGoalIsComplete(plan, inventoryComponent)) {
+               completeTribesmanPlan(tribesman, plan);
             }
-
-            break;
+            return;
          }
          case TribesmanPlanType.placeBuilding: {
             const isGoing = goPlaceBuilding(tribesman, hotbarInventory, tribeComponent.tribe, plan);
@@ -770,38 +769,25 @@ export function tickTribesman(tribesman: Entity): void {
             return;
          }
          case TribesmanPlanType.doTechStudy: {
-            if (tribeComponent.tribe.techRequiresResearching(plan.tech)) {
-               goResearchTech(tribesman, plan.tech);
-               return;
+            goResearchTech(tribesman, plan.tech);
+            if (techStudyIsComplete(tribeComponent.tribe, plan.tech)) {
+               completeTribesmanPlan(tribesman, plan);
             }
-
-            // @Copynpaste
-            if (tribeComponent.tribe.techIsComplete(plan.tech)) {
-               tribeComponent.tribe.unlockTech(plan.tech.id);
-            }
-            break;
+            return;
          }
          case TribesmanPlanType.doTechItems: {
             // Use items in research
-            // @Incomplete: only research the required item type here
-               
-            // @Incomplete: take into account backpack
-            for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
-               const item = hotbarInventory.itemSlots[itemSlot];
-               if (typeof item === "undefined") {
-                  continue;
-               }
-      
-               const amountUsed = tribeComponent.tribe.useItemInTechResearch(plan.tech, item.type, item.count);
-               if (amountUsed > 0) {
-                  consumeItemFromSlot(tribesman, hotbarInventory, itemSlot, amountUsed);
-               }
+            const isComplete = useItemsInResearch(tribesman, plan.tech, plan.itemType, hotbarInventory);
+            if (isComplete) {
+               completeTribesmanPlan(tribesman, plan);
             }
-      
-            // @Copynpaste
-            if (tribeComponent.tribe.techIsComplete(plan.tech)) {
-               tribeComponent.tribe.unlockTech(plan.tech.id);
-            }
+            break;
+         }
+         case TribesmanPlanType.completeTech: {
+            assert(tribeComponent.tribe.techIsComplete(plan.tech));
+
+            tribeComponent.tribe.unlockTech(plan.tech.id);
+            completeTribesmanPlan(tribesman, plan);
             break;
          }
          case TribesmanPlanType.gatherItem: {

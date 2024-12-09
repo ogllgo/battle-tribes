@@ -9,7 +9,7 @@ import { GrassBlocker } from "./grass-blockers";
 import { HitboxCollisionType, HitboxFlag } from "./boxes/boxes";
 import { InventoryName, ItemType } from "./items/items";
 import { StatusEffect } from "./status-effects";
-import { EnemyTribeData, PlayerTribeData, TechID } from "./techs";
+import { TechID } from "./techs";
 import { TileType } from "./tiles";
 import { TribesmanTitle } from "./titles";
 import { TribeType } from "./tribes";
@@ -105,8 +105,6 @@ export interface GameDataPacket {
    /** All healing received by visible entities server-side */
    readonly heals: ReadonlyArray<HealData>;
    readonly playerHealth: number;
-   readonly playerTribeData: PlayerTribeData;
-   readonly enemyTribesData: ReadonlyArray<EnemyTribeData>;
    readonly hasFrostShield: boolean;
    readonly pickedUpItem: boolean;
    readonly hotbarCrossbowLoadProgressRecord: Partial<Record<number, number>> | undefined;

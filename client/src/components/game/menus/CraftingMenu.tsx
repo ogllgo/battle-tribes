@@ -15,6 +15,7 @@ import { addMenuCloseFunction } from "../../../menus";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { playerInstance } from "../../../world";
 import { sendCraftItemPacket } from "../../../networking/packet-creation";
+import { playerTribe } from "../../../tribes";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
@@ -334,7 +335,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       const recipe = availableRecipes[i];
 
       const techRequired = getTechRequiredForItem(recipe.product);
-      if (techRequired !== null && !Game.tribe.hasUnlockedTech(techRequired)) {
+      if (techRequired !== null && !playerTribe.unlockedTechs.includes(techRequired)) {
          availableRecipes.splice(i, 1);
          i--;
       }

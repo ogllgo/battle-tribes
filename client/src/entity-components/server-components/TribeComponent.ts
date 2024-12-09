@@ -1,9 +1,7 @@
 import { TribeType } from "battletribes-shared/tribes";
-import { EnemyTribeData } from "battletribes-shared/techs";
 import { ServerComponentType } from "battletribes-shared/components";
 import { randFloat } from "battletribes-shared/utils";
-import Game from "../../Game";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getHumanoidRadius, TribeMemberComponentArray } from "./TribeMemberComponent";
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
@@ -12,6 +10,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { playerInstance } from "../../world";
 import { EntityConfig } from "../ComponentArray";
+import { getTribeByID } from "../../tribes";
 
 export interface TribeComponentParams {
    readonly tribeID: number;
@@ -23,25 +22,9 @@ export interface TribeComponent {
    tribeType: TribeType;
 }
 
-// @Cleanup
+// @Hack
 export function getTribeType(tribeID: number): TribeType {
-   if (tribeID === Game.tribe.id) {
-      return Game.tribe.tribeType;
-   } else {
-      let tribeData: EnemyTribeData | undefined;
-      for (const currentTribeData of Game.enemyTribes) {
-         if (currentTribeData.id === tribeID) {
-            tribeData = currentTribeData;
-            break;
-         }
-      }
-      if (typeof tribeData === "undefined") {
-         console.log("ID:",tribeID);
-         console.log(Game.enemyTribes.map(t => t.id));
-         throw new Error("Tribe data is undefined!");
-      }
-      return tribeData.tribeType;
-   }
+   return getTribeByID(tribeID).tribeType;
 }
 
 export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentParams, never>(ServerComponentType.tribe, true, {

@@ -1,15 +1,14 @@
 import DevmodeDropdownInput from "../DevmodeDropdownInput";
 import { SUMMON_DATA_PARAMS } from "./SummonTab";
-import Game from "../../../../Game";
 import CLIENT_TRIBE_INFO_RECORD from "../../../../client-tribe-info";
+import { tribes } from "../../../../tribes";
 
 const TribeComponentInput = () => {
-   const tribeIDs = [Game.tribe.id];
-   const options = [Game.tribe.id + " (" + CLIENT_TRIBE_INFO_RECORD[Game.tribe.tribeType].name + ")"];
-   for (let i = 0; i < Game.enemyTribes.length; i++) {
-      const enemyTribeData = Game.enemyTribes[i];
-      tribeIDs.push(enemyTribeData.id);
-      options.push(enemyTribeData.id + " (" + CLIENT_TRIBE_INFO_RECORD[enemyTribeData.tribeType].name + ")");
+   const tribeIDs = new Array<number>();
+   const options = new Array<string>();
+   for (const tribe of tribes) {
+      tribeIDs.push(tribe.id);
+      options.push(tribe.id + " (" + CLIENT_TRIBE_INFO_RECORD[tribe.tribeType].name + ")");
    }
 
    const updateTribeID = (optionIdx: number): void => {

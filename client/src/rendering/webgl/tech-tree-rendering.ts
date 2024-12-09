@@ -1,8 +1,8 @@
-import { TECHS, TechID, TechInfo, getTechByID } from "battletribes-shared/techs";
+import { TECHS, TechID, Tech, getTechByID } from "battletribes-shared/techs";
 import { angle } from "battletribes-shared/utils";
-import Game from "../../Game";
 import { createWebGLProgram, halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "../../webgl";
 import { techIsHovered } from "../../components/game/tech-tree/TechTree";
+import { playerTribe } from "../../tribes";
 
 const ConnectorType = {
    unlocked: 0,
@@ -340,7 +340,7 @@ const calculateYScreenPos = (y: number): number => {
    return position;
 }
 
-const addConnectorVertices = (vertices: Array<number>, startTech: TechInfo, endTech: TechInfo, type: number): void => {
+const addConnectorVertices = (vertices: Array<number>, startTech: Tech, endTech: Tech, type: number): void => {
    const direction = angle(endTech.positionX - startTech.positionX, endTech.positionY - startTech.positionY);
    const perpendicularDirection1 = direction + Math.PI / 2;
    const perpendicularDirection2 = direction - Math.PI / 2;
@@ -377,18 +377,18 @@ const addConnectorVertices = (vertices: Array<number>, startTech: TechInfo, endT
    );
 }
 
-export function techIsDirectlyAccessible(techInfo: TechInfo): boolean {
-   if (techInfo.blacklistedTribes.includes(Game.tribe.tribeType)) {
+export function techIsDirectlyAccessible(tech: Tech): boolean {
+   if (tech.blacklistedTribes.includes(playerTribe.tribeType)) {
       return false;
    }
    
-   if (Game.tribe.hasUnlockedTech(techInfo.id)) {
+   if (playerTribe.unlockedTechs.includes(tech)) {
       return true;
    }
    
    // Make sure all dependencies have been unlocked
-   for (const dependencyTechID of techInfo.dependencies) {
-      if (!Game.tribe.hasUnlockedTech(dependencyTechID)) {
+   for (const dependencyTechID of tech.dependencies) {
+      if (!playerTribe.unlockedTechs.includes(getTechByID(dependencyTechID))) {
          return false;
       }
    }
@@ -400,8 +400,7 @@ const calculateConnectorVertices = (): ReadonlyArray<number> => {
    const vertices = new Array<number>();
    
    // For all unlocked techs, draw the connectors for their dependencies
-   for (const techID of Game.tribe.unlockedTechs) {
-      const tech = getTechByID(techID);
+   for (const tech of playerTribe.unlockedTechs) {
       for (const dependencyTechID of tech.dependencies) {
          const dependencyTech = getTechByID(dependencyTechID);
          addConnectorVertices(vertices, dependencyTech, tech, ConnectorType.unlocked);
@@ -410,7 +409,7 @@ const calculateConnectorVertices = (): ReadonlyArray<number> => {
 
    // For all directly accessible locked techs, draw the connectors for their dependencies
    for (const tech of TECHS) {
-      if (!Game.tribe.hasUnlockedTech(tech.id) && techIsDirectlyAccessible(tech)) {
+      if (!playerTribe.unlockedTechs.includes(tech) && techIsDirectlyAccessible(tech)) {
          for (const dependencyTechID of tech.dependencies) {
             const dependencyTech = getTechByID(dependencyTechID);
             addConnectorVertices(vertices, dependencyTech, tech, ConnectorType.locked);
@@ -421,7 +420,7 @@ const calculateConnectorVertices = (): ReadonlyArray<number> => {
    // Conflicting connection ids
    const conflictingConnectionIDs = new Array<TechID>();
    for (const tech of TECHS) {
-      if (!Game.tribe.hasUnlockedTech(tech.id) && techIsDirectlyAccessible(tech)) {
+      if (!playerTribe.unlockedTechs.includes(tech) && techIsDirectlyAccessible(tech)) {
          for (const conflictingTechID of tech.conflictingTechs) {
             if (conflictingConnectionIDs.includes(tech.id) || conflictingConnectionIDs.includes(conflictingTechID)) {
                continue;

@@ -57,12 +57,11 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    
    let deathInfo: DeathInfo | null;
    if (hasDeathInfo) {
-      // @Hack: hardcoded
-      const username = reader.readString(100);
-      const causeOfDeath = reader.readNumber() as DamageSource;
+      const username = reader.readString();
+      const damageSource = reader.readNumber() as DamageSource;
       deathInfo = {
          username: username,
-         causeOfDeath: causeOfDeath
+         damageSource: damageSource
       };
    } else {
       deathInfo = null;
@@ -130,7 +129,8 @@ function padData(reader: PacketReader): void {
    const hasDeathInfo = reader.readBoolean();
    reader.padOffset(3);
    if (hasDeathInfo) {
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT + 100 + Float32Array.BYTES_PER_ELEMENT);
+      reader.padString();
+      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
    }
 }
 
@@ -146,7 +146,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const hasDeathInfo = reader.readBoolean();
    reader.padOffset(3);
    if (hasDeathInfo) {
-      reader.padOffset(100 + Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT);
+      reader.padString();
+      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
    }
 }
 

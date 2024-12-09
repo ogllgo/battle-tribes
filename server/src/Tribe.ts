@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
-import { TechID, TechTreeUnlockProgress, TechInfo, getTechByID, TECHS } from "battletribes-shared/techs";
+import { TechID, TechTreeUnlockProgress, Tech, getTechByID, TECHS, TechUnlockProgress } from "battletribes-shared/techs";
 import { TribeType, TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { Point, randItem, clampToBoardDimensions, TileIndex } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
@@ -16,13 +16,17 @@ import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { createEntity } from "./Entity";
 import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
-import Layer, { getTileIndexIncludingEdges } from "./Layer";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
 import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualBuilding, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
-import { createRootPlan, TribesmanPlan } from "./tribesman-ai/tribesman-ai-planning";
+import { createRootPlan } from "./tribesman-ai/tribesman-ai-planning";
+import { getStringLengthBytes, Packet } from "../../shared/src/packets";
+import PlayerClient from "./server/PlayerClient";
+import { PlayerComponentArray } from "./components/PlayerComponent";
+import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
 
 const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
 const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
@@ -105,7 +109,7 @@ const generateTribeName = (tribeType: TribeType): string => {
    }
 }
 
-class Tribe {
+export default class Tribe {
    public readonly name: string;
    public readonly id = tribeIDCounter++;
    
@@ -162,11 +166,18 @@ class Tribe {
    public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
 
    public readonly pathfindingGroupID: number;
+
+   /**
+    * When the tribe starts, there are no reference buildings to determine where future buildings should be placed.
+    * So we keep track of the position of the first tribe entity, and use that to decide the placement of the first building.
+   */
+   public startPosition: Point;
    
-   constructor(tribeType: TribeType, isAIControlled: boolean) {
+   constructor(tribeType: TribeType, isAIControlled: boolean, startPosition: Point) {
       this.name = generateTribeName(tribeType);
       this.tribeType = tribeType;
       this.isAIControlled = isAIControlled;
+      this.startPosition = startPosition;
       this.homeLayer = getTribeHomeLayer(tribeType);
 
       this.tribesmanCap = TRIBE_INFO_RECORD[tribeType].baseTribesmanCap;
@@ -530,7 +541,7 @@ class Tribe {
       return area;
    }
 
-   public techIsComplete(tech: TechInfo): boolean {
+   public techIsComplete(tech: Tech): boolean {
       if (this.techTreeUnlockProgress[tech.id] === undefined) {
          return false;
       }
@@ -553,7 +564,7 @@ class Tribe {
       return true;
    }
 
-   public studyTech(tech: TechInfo, researcherX: number, researcherY: number, studyAmount: number): void {
+   public studyTech(tech: Tech, researcherX: number, researcherY: number, studyAmount: number): void {
       if (!this.techTreeUnlockProgress.hasOwnProperty(tech.id)) {
          this.techTreeUnlockProgress[tech.id] = {
             itemProgress: {},
@@ -606,7 +617,7 @@ class Tribe {
       }
    }
 
-   public techRequiresResearching(tech: TechInfo): boolean {
+   public techRequiresResearching(tech: Tech): boolean {
       if (!this.techTreeUnlockProgress.hasOwnProperty(tech.id)) {
          return true;
       }
@@ -636,32 +647,134 @@ class Tribe {
 
       this.availableResources = newAvailableResources;
    }
-
-   public useItemInTechResearch(tech: TechInfo, itemType: ItemType, amount: number): number {
-      const amountRequiredToResearch = tech.researchItemRequirements.getItemCount(itemType);
-      if (amountRequiredToResearch === 0) {
-         return 0;
-      }
-      
-      let amountUsed = 0;
-
-      const techUnlockProgress = this.techTreeUnlockProgress[tech.id];
-      if (typeof techUnlockProgress === "undefined") {
-         amountUsed = Math.min(amount, amountRequiredToResearch);
-         this.techTreeUnlockProgress[tech.id] = {
-            itemProgress: { [itemType]: amountUsed },
-            studyProgress: 0
-         };
-      } else if (techUnlockProgress.itemProgress[itemType] === undefined) {
-         amountUsed = Math.min(amount, amountRequiredToResearch);
-         techUnlockProgress.itemProgress[itemType] = amountUsed;
-      } else {
-         amountUsed = Math.min(amount, amountRequiredToResearch - techUnlockProgress.itemProgress[itemType]!);
-         techUnlockProgress.itemProgress[itemType]! += amountUsed;
-      }
-
-      return amountUsed;
-   }
 }
 
-export default Tribe;
+export function shouldAddTribeExtendedData(playerClient: PlayerClient, tribe: Tribe): boolean {
+   return tribe === playerClient.tribe || playerClient.isDev;
+}
+
+export function getShortTribeDataLength(tribe: Tribe): number {
+   return getStringLengthBytes(tribe.name) + 3 * Float32Array.BYTES_PER_ELEMENT;
+}
+
+export function getExtendedTribeDataLength(tribe: Tribe): number {
+   let lengthBytes = getShortTribeDataLength(tribe);
+   
+   // Has totem, num huts, tribesman cap
+   lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
+
+   // Tribe area
+   const area = tribe.getArea();
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * area.length;
+
+   // Selected tech id
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+
+   // Unlocked techs
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * tribe.unlockedTechs.length;
+   
+   // Tech tree unlock progress
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   // @Copynpaste
+   const unlockProgressEntries = Object.entries(tribe.techTreeUnlockProgress).map(([a, b]) => [Number(a), b]) as Array<[number, TechUnlockProgress]>;
+   for (const [, unlockProgress] of unlockProgressEntries) {
+      lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
+      
+      const numItemRequirements = Object.keys(unlockProgress.itemProgress).length;
+      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * numItemRequirements;
+   }
+
+   // Tribesmen
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const tribesman of tribe.tribesmanIDs) {
+      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+
+      // Name
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      if (PlayerComponentArray.hasComponent(tribesman)) {
+         const playerComponent = PlayerComponentArray.getComponent(tribesman);
+         lengthBytes += getStringLengthBytes(playerComponent.client.username);
+      } else {
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      }
+   }
+
+   return lengthBytes;
+}
+
+const addTribeData = (packet: Packet, tribe: Tribe): void => {
+   packet.addString(tribe.name);
+   packet.addNumber(tribe.id);
+   packet.addNumber(tribe.tribeType);
+}
+
+export function addShortTribeData(packet: Packet, tribe: Tribe): void {
+   packet.addBoolean(false);
+   packet.padOffset(3);
+   addTribeData(packet, tribe);
+}
+
+export function addExtendedTribeData(packet: Packet, tribe: Tribe): void {
+   packet.addBoolean(true);
+   packet.padOffset(3);
+   addTribeData(packet, tribe);
+   
+   packet.addBoolean(tribe.totem !== null);
+   packet.padOffset(3);
+   packet.addNumber(tribe.getNumHuts());
+   packet.addNumber(tribe.tribesmanCap);
+
+   const area = tribe.getArea();
+   packet.addNumber(area.length);
+   for (const tileIndex of area) {
+      const tileX = getTileX(tileIndex);
+      const tileY = getTileY(tileIndex);
+      packet.addNumber(tileX);
+      packet.addNumber(tileY);
+   }
+
+   packet.addNumber(tribe.selectedTechID !== null ? tribe.selectedTechID : -1);
+
+   packet.addNumber(tribe.unlockedTechs.length);
+   for (const techID of tribe.unlockedTechs) {
+      packet.addNumber(techID);
+   }
+
+   // Tech tree unlock progress
+   const unlockProgressEntries = Object.entries(tribe.techTreeUnlockProgress).map(([a, b]) => [Number(a), b]) as Array<[number, TechUnlockProgress]>;
+   packet.addNumber(unlockProgressEntries.length);
+   for (const [techID, unlockProgress] of unlockProgressEntries) {
+      packet.addNumber(techID);
+
+      const itemRequirementEntries = Object.entries(unlockProgress.itemProgress).map(([a, b]) => [Number(a), b]) as Array<[ItemType, number]>;
+      packet.addNumber(itemRequirementEntries.length);
+      for (const [itemType, amount] of itemRequirementEntries) {
+         packet.addNumber(itemType);
+         packet.addNumber(amount);
+      }
+      
+      packet.addNumber(unlockProgress.studyProgress);
+   }
+
+   // Tribesmen
+   packet.addNumber(tribe.tribesmanIDs.length);
+   for (const tribesman of tribe.tribesmanIDs) {
+      // ID
+      packet.addNumber(tribesman);
+      // Entity type
+      packet.addNumber(getEntityType(tribesman));
+
+      // Name
+      if (PlayerComponentArray.hasComponent(tribesman)) {
+         packet.addBoolean(true);
+         packet.padOffset(3);
+         const playerComponent = PlayerComponentArray.getComponent(tribesman);
+         packet.addString(playerComponent.client.username);
+      } else {
+         packet.addBoolean(false);
+         packet.padOffset(3);
+         const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+         packet.addNumber(tribesmanAIComponent.name);
+      }
+   }
+}

@@ -511,3 +511,19 @@ export function processAscendPacket(playerClient: PlayerClient): void {
       }
    }
 }
+
+export function processTPToEntityPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const targetEntity = reader.readNumber() as Entity;
+
+   const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
+
+   const packet = new Packet(PacketType.forcePositionUpdate, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(targetTransformComponent.position.x);
+   packet.addNumber(targetTransformComponent.position.y);
+   playerClient.socket.send(packet.buffer);
+}

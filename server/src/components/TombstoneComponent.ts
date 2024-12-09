@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
-import { Packet } from "battletribes-shared/packets";
+import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { createZombieConfig } from "../entities/mobs/zombie";
@@ -145,7 +145,8 @@ function getDataLength(entity: Entity): number {
    
    let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
    if (tombstoneComponent.deathInfo !== null) {
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT + 100 + Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += getStringLengthBytes(tombstoneComponent.deathInfo.username);
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    }
 
    return lengthBytes;
@@ -166,8 +167,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addBoolean(tombstoneComponent.deathInfo !== null);
    packet.padOffset(3);
    if (tombstoneComponent.deathInfo !== null) {
-      // @Hack: hardcoded
-      packet.addString(tombstoneComponent.deathInfo.username, 100);
+      packet.addString(tombstoneComponent.deathInfo.username);
       packet.addNumber(tombstoneComponent.deathInfo.damageSource);
    }
 }

@@ -2,7 +2,7 @@ import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
 import HealthIcon from "../../images/miscellaneous/health.png";
 import FrozenHealthIcon from "../../images/miscellaneous/health-frozen.png";
-import Game from "../../Game";
+import { playerTribe } from "../../tribes";
 
 export let updateHealthBar: (newHealth: number) => void = () => {};
 
@@ -14,12 +14,12 @@ interface HealthBarProps {
 
 const HealthBar = (props: HealthBarProps) => {
    const healthBarRef = useRef<HTMLDivElement | null>(null);
-   const [health, setHealth] = useState(!props.isDead ? TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer : 0);
+   const [health, setHealth] = useState(!props.isDead ? TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer : 0);
    const [hasFrostShield, setHasFrostShield] = useState(false);
 
    useEffect(() => {
       if (healthBarRef.current !== null) {
-         const maxHealth = !props.isDead ? TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer : 0;
+         const maxHealth = !props.isDead ? TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer : 0;
 
          healthBarRef.current.style.setProperty("--max-health", maxHealth.toString());
          healthBarRef.current.style.setProperty("--current-health", maxHealth.toString());

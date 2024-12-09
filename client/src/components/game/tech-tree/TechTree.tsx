@@ -1,8 +1,7 @@
-import { TECHS, TechID, TechInfo, getTechByID, getTechRequiredForItem } from "battletribes-shared/techs";
+import { TECHS, TechID, Tech, getTechByID, getTechRequiredForItem } from "battletribes-shared/techs";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { addKeyListener } from "../../../keyboard-input";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
-import Game from "../../../Game";
 import Client from "../../../networking/Client";
 import { setTechTreeX, setTechTreeY, setTechTreeZoom, techIsDirectlyAccessible } from "../../../rendering/webgl/tech-tree-rendering";
 import OPTIONS from "../../../options";
@@ -17,6 +16,7 @@ import { InventoryName } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { playerInstance } from "../../../world";
+import { playerTribe } from "../../../tribes";
 
 const boundsScale = 16;
 
@@ -54,69 +54,67 @@ const selectTech = (techID: TechID): void => {
    Client.sendSelectTech(techID);
 }
    
-const researchTech = (techID: TechID): void => {
-   if (Game.tribe.hasUnlockedTech(techID)) {
-      return;
+const researchTech = (tech: Tech): void => {
+   if (!playerTribe.unlockedTechs.includes(tech)) {
+      Client.sendUnlockTech(tech.id);
    }
-   
-   Client.sendUnlockTech(techID);
 }
 
 interface TechTooltipProps {
-   readonly techInfo: TechInfo;
+   readonly tech: Tech;
    readonly techPositionX: number;
    readonly techPositionY: number;
    readonly zoom: number;
 }
-const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechTooltipProps) => {
+const TechTooltip = ({ tech, techPositionX, techPositionY, zoom }: TechTooltipProps) => {
    const tooltipRef = useRef<HTMLDivElement | null>(null);
    
    useEffect(() => {
       if (tooltipRef.current !== null) {
          const tooltip = tooltipRef.current;
-         tooltip.style.left = `calc(50% + (${techInfo.positionX + 5}rem + ${techPositionX}px) * ${zoom})`;
-         tooltip.style.top = `calc(50% + (${-techInfo.positionY}rem + ${techPositionY}px) * ${zoom})`;
+         tooltip.style.left = `calc(50% + (${tech.positionX + 5}rem + ${techPositionX}px) * ${zoom})`;
+         tooltip.style.top = `calc(50% + (${-tech.positionY}rem + ${techPositionY}px) * ${zoom})`;
       }
-   }, [techInfo.positionX, techInfo.positionY, techPositionX, techPositionY, zoom]);
+   }, [tech.positionX, tech.positionY, techPositionX, techPositionY, zoom]);
 
-   const isUnlocked = Game.tribe.hasUnlockedTech(techInfo.id);
+   const isUnlocked = playerTribe.unlockedTechs.includes(tech);
    
    return <div ref={tooltipRef} id="tech-tooltip">
       <div className="container">
          
-         <h2 className="name">{techInfo.name}</h2>
-         <p className="description">{techInfo.description}</p>
+         <h2 className="name">{tech.name}</h2>
+         <p className="description">{tech.description}</p>
 
          <div className="bar"></div>
 
-         <p className="unlocks">Unlocks {techInfo.unlockedItems.map((itemType, i) => {
+         <p className="unlocks">Unlocks {tech.unlockedItems.map((itemType, i) => {
             const techRequired = getTechRequiredForItem(itemType);
-            if (techRequired === null || !getTechByID(techRequired).blacklistedTribes.includes(Game.tribe.tribeType)) {
+            if (techRequired === null || !techRequired.blacklistedTribes.includes(playerTribe.tribeType)) {
                return <span key={i}>
                   <img src={getItemTypeImage(itemType)} alt="" />
                   <b>{CLIENT_ITEM_INFO_RECORD[itemType].name}</b>
-                  {i <= techInfo.unlockedItems.length - 2 ? ", " : "."}
+                  {i <= tech.unlockedItems.length - 2 ? ", " : "."}
                </span>;
             } else {
                return undefined;
             }
          })}</p>
 
-         {techInfo.conflictingTechs.length > 0 ? (
-            <p className="conflict">Conflicts with {getTechByID(techInfo.conflictingTechs[0]).name}</p>
+         {tech.conflictingTechs.length > 0 ? (
+            <p className="conflict">Conflicts with {getTechByID(tech.conflictingTechs[0]).name}</p>
          ) : null}
       </div>
       {!isUnlocked ? <>
          <div className="container">
             <ul>
-               {techInfo.researchItemRequirements.getEntries().map((entry, i) => {
+               {tech.researchItemRequirements.getEntries().map((entry, i) => {
                   const itemType = entry.itemType;
                   const itemAmount = entry.count;
                   
                   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
                   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
                   
-                  const itemProgress = (Game.tribe.techTreeUnlockProgress[techInfo.id]?.itemProgress.hasOwnProperty(itemType)) ? Game.tribe.techTreeUnlockProgress[techInfo.id]!.itemProgress[itemType] : 0;
+                  const itemProgress = (playerTribe.techTreeUnlockProgress[tech.id]?.itemProgress.hasOwnProperty(itemType)) ? playerTribe.techTreeUnlockProgress[tech.id]!.itemProgress[itemType] : 0;
 
                   const hasFinished = typeof itemProgress !== "undefined" ? itemProgress >= itemAmount : false;
                   const canContributeItems = countItemTypesInInventory(hotbar, itemType) > 0;
@@ -139,9 +137,9 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
                })}
             </ul>
          </div>
-         {techInfo.researchStudyRequirements > 0 ? (
+         {tech.researchStudyRequirements > 0 ? (
             <div className="container research-container">
-               <TechTreeProgressBar techInfo={techInfo} />
+               <TechTreeProgressBar techInfo={tech} />
             </div>
          ) : null}
       </> : null}
@@ -149,7 +147,7 @@ const TechTooltip = ({ techInfo, techPositionX, techPositionY, zoom }: TechToolt
 }
 
 /** Gets a tally of all the items which we predict will be researched when clicking */
-const getResearchedItems = (techInfo: TechInfo): ItemTally2 => {
+const getResearchedItems = (techInfo: Tech): ItemTally2 => {
    const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
@@ -163,14 +161,14 @@ const getResearchedItems = (techInfo: TechInfo): ItemTally2 => {
       const availableCount = availableItemsTally.getItemCount(researchItemType);
       researchTally.addItem(researchItemType, availableCount);
       
-      const itemProgress = Game.tribe.techTreeUnlockProgress[techInfo.id]?.itemProgress[researchItemType] || 0;
+      const itemProgress = playerTribe.techTreeUnlockProgress[techInfo.id]?.itemProgress[researchItemType] || 0;
       researchTally.restrictItemCount(researchItemType, entry.count - itemProgress);
    }
 
    return researchTally;
 }
 
-const addResearchedItems = (techInfo: TechInfo, researchTally: ItemTally2): void => {
+const addResearchedItems = (techInfo: Tech, researchTally: ItemTally2): void => {
    const entries = researchTally.getEntries();
    for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
@@ -183,29 +181,29 @@ const addResearchedItems = (techInfo: TechInfo, researchTally: ItemTally2): void
    }
 }
 
-interface TechProps {
-   readonly techInfo: TechInfo;
+interface TechNodeProps {
+   readonly tech: Tech;
    readonly positionX: number;
    readonly positionY: number;
    readonly zoom: number;
 }
-const Tech = ({ techInfo, positionX, positionY, zoom }: TechProps) => {
+const TechNode = ({ tech, positionX, positionY, zoom }: TechNodeProps) => {
    const elementRef = useRef<HTMLDivElement | null>(null);
    const [isHovered, setIsHovered] = useState(false);
 
    useEffect(() => {
       if (elementRef.current !== null) {
          const element = elementRef.current;
-         element.style.left = `calc(50% + (${techInfo.positionX}rem + ${positionX}px) * ${zoom})`;
-         element.style.top = `calc(50% + (${-techInfo.positionY}rem + ${positionY}px) * ${zoom})`;
+         element.style.left = `calc(50% + (${tech.positionX}rem + ${positionX}px) * ${zoom})`;
+         element.style.top = `calc(50% + (${-tech.positionY}rem + ${positionY}px) * ${zoom})`;
       }
-   }, [techInfo.positionX, techInfo.positionY, positionX, positionY, zoom]);
+   }, [tech.positionX, tech.positionY, positionX, positionY, zoom]);
 
-   const isUnlocked = Game.tribe.hasUnlockedTech(techInfo.id);
-   const isSelected = Game.tribe.selectedTechID === techInfo.id;
+   const isUnlocked = playerTribe.unlockedTechs.includes(tech);
+   const isSelected = playerTribe.selectedTech === tech;
 
    const onMouseEnter = (): void => {
-      hoveredTechID = techInfo.id;
+      hoveredTechID = tech.id;
       setIsHovered(true);
    }
 
@@ -216,12 +214,12 @@ const Tech = ({ techInfo, positionX, positionY, zoom }: TechProps) => {
 
    const onClick = (e: MouseEvent): void => {
       if (e.shiftKey) {
-         Client.sendForceUnlockTech(techInfo.id);
+         Client.sendForceUnlockTech(tech.id);
       } else if (!isUnlocked) {
-         researchTech(techInfo.id);
+         researchTech(tech);
 
-         const itemTally = getResearchedItems(techInfo);
-         addResearchedItems(techInfo, itemTally);
+         const itemTally = getResearchedItems(tech);
+         addResearchedItems(tech, itemTally);
          
          // @Incomplete @Bug: will decrease in loudness as the sound plays: - attach to camera so it doesn't decrease in loudness. or make 'global sounds'
          playSound("item-research.mp3", 0.4, 1, Camera.position, null);
@@ -233,8 +231,8 @@ const Tech = ({ techInfo, positionX, positionY, zoom }: TechProps) => {
          return;
       }
       
-      if (techInfo.researchStudyRequirements > 0) {
-         selectTech(techInfo.id);
+      if (tech.researchStudyRequirements > 0) {
+         selectTech(tech.id);
       }
       e.preventDefault();
    }
@@ -242,11 +240,11 @@ const Tech = ({ techInfo, positionX, positionY, zoom }: TechProps) => {
    return <>
       <div ref={elementRef} onClick={e => onClick(e.nativeEvent)} onContextMenu={e => onRightClick(e.nativeEvent)} className={`tech${isUnlocked ? " unlocked" : ""}${isSelected ? " selected" : ""}`} onMouseEnter={() => onMouseEnter()} onMouseLeave={() => onMouseLeave()}>
          <div className="icon-wrapper">
-            <img src={require("../../../images/tech-tree/" + techInfo.iconSrc)} alt="" className="icon" draggable={false} />
+            <img src={require("../../../images/tech-tree/" + tech.iconSrc)} alt="" className="icon" draggable={false} />
          </div>
       </div>
       {isHovered ? (
-         <TechTooltip techInfo={techInfo} techPositionX={positionX} techPositionY={positionY} zoom={zoom} />
+         <TechTooltip tech={tech} techPositionX={positionX} techPositionY={positionY} zoom={zoom} />
       ) : null}
    </>;
 }
@@ -384,7 +382,7 @@ const TechTree = () => {
       <h1>Tech Tree</h1>
       
       {TECHS.filter(tech => OPTIONS.showAllTechs || techIsDirectlyAccessible(tech)).map((techInfo, i) => {
-         return <Tech techInfo={techInfo} positionX={positionX} positionY={positionY} zoom={zoom} key={i} />
+         return <TechNode tech={techInfo} positionX={positionX} positionY={positionY} zoom={zoom} key={i} />
       })}
    </div>;
 }

@@ -2,7 +2,7 @@ import { BuildingPlanData, PotentialBuildingPlanData, TribeWallData } from "batt
 import { CircularHitboxData, GameDataPacket, HitFlags, RectangularHitboxData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { distance, Point, randFloat } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { PlayerTribeData, TechID } from "battletribes-shared/techs";
+import { TechID } from "battletribes-shared/techs";
 import { STRUCTURE_TYPES } from "battletribes-shared/structures";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -15,9 +15,6 @@ import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
 import { createDamageNumber, createHealNumber, setVisibleBuildingSafetys } from "../text-canvas";
 import { playSound } from "../sound";
-import { updateTechTree } from "../components/game/tech-tree/TechTree";
-import { TechInfocard_setSelectedTech } from "../components/game/TechInfocard";
-import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { setVisibleRestrictedBuildingAreas } from "../rendering/webgl/restricted-building-areas-rendering";
 import { setVisibleWallConnections } from "../rendering/webgl/wall-connection-rendering";
@@ -28,10 +25,9 @@ import { windowHeight, windowWidth } from "../webgl";
 import { closeCurrentMenu } from "../menus";
 import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
 import { processTickEvents } from "../entity-tick-events";
-import { Packet, PacketReader, PacketType } from "battletribes-shared/packets";
-import { processInitialGameDataPacket, processRespawnDataPacket, processSyncDataPacket } from "./packet-processing";
+import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
+import { processForcePositionUpdatePacket, processInitialGameDataPacket, processRespawnDataPacket, processSyncDataPacket } from "./packet-processing";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket } from "./packet-creation";
-import Tribe from "../Tribe";
 import { createHitbox, Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -218,6 +214,10 @@ abstract class Client {
                   processRespawnDataPacket(reader);
                   break;
                }
+               case PacketType.forcePositionUpdate: {
+                  processForcePositionUpdatePacket(reader);
+                  break;
+               }
             }
          }
 
@@ -264,12 +264,6 @@ abstract class Client {
          //       this.registerGameDataSyncPacket(gameDataSyncPacket);
          //    });
 
-         //    this.socket.on("force_position_update", (position: [number, number]): void => {
-         //       if (Player.instance !== null) {
-         //          transformComponent.position.x = position[0];
-         //          transformComponent.position.y = position[1];
-         //       }
-         //    })
          // }
       });
    }
@@ -436,27 +430,6 @@ abstract class Client {
       grassBlockers = gameDataPacket.visibleGrassBlockers;
    }
 
-   public static updateTribe(tribeData: PlayerTribeData): void {
-      // @Cleanup: the compile time type of Game.tribe is never undefined
-      if (typeof Game.tribe === "undefined") {
-         Game.tribe = new Tribe(tribeData.name, tribeData.id, tribeData.tribeType, tribeData.numHuts);
-      }
-
-      if (tribeData.unlockedTechs.length > Game.tribe.unlockedTechs.length) {
-         // @Incomplete: attach to camera so it doesn't decrease in loudness. Or make 'global sounds'
-         playSound("research.mp3", 0.4, 1, Camera.position, null);
-      }
-      
-      Game.tribe.hasTotem = tribeData.hasTotem;
-      Game.tribe.numHuts = tribeData.numHuts;
-      Game.tribe.selectedTechID = tribeData.selectedTechID;
-      Game.tribe.unlockedTechs = tribeData.unlockedTechs;
-      Game.tribe.techTreeUnlockProgress = tribeData.techTreeUnlockProgress;
-
-      updateTechTree();
-      TechInfocard_setSelectedTech(Game.tribe.selectedTechID);
-   }
-   
    private static registerTileUpdates(tileUpdates: ReadonlyArray<ServerTileUpdateData>): void {
       for (const tileUpdate of tileUpdates) {
          const layer = layers[tileUpdate.layerIdx];
@@ -482,10 +455,8 @@ abstract class Client {
    public static sendInitialPlayerData(username: string, tribeType: TribeType): void {
       // Send player data to the server
       if (this.socket !== null) {
-         const maxUsernameUInt8Length = 24;
-         
-         const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 4 + Float32Array.BYTES_PER_ELEMENT + maxUsernameUInt8Length);
-         packet.addString(username, maxUsernameUInt8Length);
+         const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 4 + getStringLengthBytes(username));
+         packet.addString(username);
          packet.addNumber(tribeType);
          packet.addNumber(windowWidth);
          packet.addNumber(windowHeight);

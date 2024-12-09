@@ -7,7 +7,7 @@ import { StructureComponentArray } from "./components/StructureComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
 import { ItemTypeString } from "battletribes-shared/items/items";
-import { Packet } from "battletribes-shared/packets";
+import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
 import { AIHelperComponentArray } from "./components/AIHelperComponent";
 import { TribesmanPlan } from "./tribesman-ai/tribesman-ai-planning";
@@ -123,8 +123,11 @@ export function getEntityDebugDataLength(debugData: EntityDebugData): number {
    lengthBytes += 5 * Float32Array.BYTES_PER_ELEMENT * debugData.circles.length;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 5 * Float32Array.BYTES_PER_ELEMENT * debugData.tileHighlights.length;
+   
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += (Float32Array.BYTES_PER_ELEMENT + 1000) * debugData.debugEntries.length;
+   for (const debugEntry of debugData.debugEntries) {
+      lengthBytes += getStringLengthBytes(debugEntry);
+   }
 
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    if (typeof debugData.pathData !== "undefined") {
@@ -168,8 +171,7 @@ export function addEntityDebugDataToPacket(packet: Packet, entity: Entity, debug
 
    packet.addNumber(debugData.debugEntries.length);
    for (const string of debugData.debugEntries) {
-      // @Hack: hardcoded
-      packet.addString(string, 1000);
+      packet.addString(string);
    }
 
    if (typeof debugData.pathData !== "undefined") {

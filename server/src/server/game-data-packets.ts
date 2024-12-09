@@ -2,7 +2,7 @@ import { GameDataPacketOptions, PathfindingNodeIndex, VisibleChunkBounds } from 
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { TechUnlockProgress } from "battletribes-shared/techs";
-import Layer, { getTileX, getTileY } from "../Layer";
+import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
@@ -14,7 +14,7 @@ import { GrassBlocker } from "battletribes-shared/grass-blockers";
 import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
 import PlayerClient from "./PlayerClient";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
+import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
@@ -24,6 +24,8 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { layers } from "../layers";
 import { addPlanData, getTribePlansDataLength } from "../tribesman-ai/building-plans/ai-building-client-data";
+import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
+import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -206,22 +208,16 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Player is alive
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   // Player tribe data
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 100 + 5 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * area.length;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * playerClient.tribe.unlockedTechs.length;
-   // Tech tree unlock progress
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   for (const [, unlockProgress] of unlockProgressEntries) {
-      lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
-      
-      const numItemRequirements = Object.keys(unlockProgress.itemProgress).length;
-      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * numItemRequirements;
-   }
 
-   // Enemy tribes data
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + (Float32Array.BYTES_PER_ELEMENT + 100 + 2 * Float32Array.BYTES_PER_ELEMENT) * numEnemyTribes;
+   // Tribes
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const tribe of tribes) {
+      if (shouldAddTribeExtendedData(playerClient, tribe)) {
+         lengthBytes += getExtendedTribeDataLength(tribe);
+      } else {
+         lengthBytes += getShortTribeDataLength(tribe);
+      }
+   }
 
    // Entities
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -295,13 +291,21 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * visiblePathfindingNodeOccupances.length;
    }
 
-   // Tribe plans
+   // Tribe plans and virtual buildings
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (playerClient.isDev) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       for (const tribe of tribes) {
          lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+
+         // Tribe plans
          lengthBytes += getTribePlansDataLength(tribe.rootPlan);
+
+         // Virtual buildings
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+         for (const virtualBuilding of tribe.virtualBuildings) {
+            lengthBytes += getVirtualBuildingDataLength(virtualBuilding);
+         }
       }
    }
 
@@ -321,59 +325,20 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    packet.addBoolean(player !== null);
    packet.padOffset(3);
 
-   // 
-   // Player tribe data
-   // 
-   // @Cleanup: move into a separate function
-
-   packet.addString(playerClient.tribe.name, 100);
-   packet.addNumber(playerClient.tribe.id);
-   packet.addNumber(playerClient.tribe.tribeType);
-   packet.addBoolean(playerClient.tribe.totem !== null);
-   packet.padOffset(3);
-   packet.addNumber(playerClient.tribe.getNumHuts());
-   packet.addNumber(playerClient.tribe.tribesmanCap);
-
-   packet.addNumber(area.length);
-   for (const tileIndex of area) {
-      const tileX = getTileX(tileIndex);
-      const tileY = getTileY(tileIndex);
-      packet.addNumber(tileX);
-      packet.addNumber(tileY);
-   }
-
-   packet.addNumber(playerClient.tribe.selectedTechID !== null ? playerClient.tribe.selectedTechID : -1),
-
-   packet.addNumber(playerClient.tribe.unlockedTechs.length);
-   for (const techID of playerClient.tribe.unlockedTechs) {
-      packet.addNumber(techID);
-   }
-
-   // Tech tree unlock progress
-   packet.addNumber(unlockProgressEntries.length);
-   for (const [techID, unlockProgress] of unlockProgressEntries) {
-      packet.addNumber(techID);
-
-      const itemRequirementEntries = Object.entries(unlockProgress.itemProgress).map(([a, b]) => [Number(a), b]) as Array<[ItemType, number]>;
-      packet.addNumber(itemRequirementEntries.length);
-      for (const [itemType, amount] of itemRequirementEntries) {
-         packet.addNumber(itemType);
-         packet.addNumber(amount);
-      }
-      
-      packet.addNumber(unlockProgress.studyProgress);
-   }
-
-   // Enemy tribes data
-   packet.addNumber(numEnemyTribes);
+   // Tribes
+   packet.addNumber(tribes.length);
+   addExtendedTribeData(packet, playerClient.tribe); // Always add player at index 0
    for (const tribe of tribes) {
-      if (tribe.id === playerClient.tribe.id) {
+      // Player tribe is already added
+      if (tribe === playerClient.tribe) {
          continue;
       }
-      
-      packet.addString(tribe.name, 100);
-      packet.addNumber(tribe.id);
-      packet.addNumber(tribe.tribeType);
+
+      if (shouldAddTribeExtendedData(playerClient, tribe)) {
+         addExtendedTribeData(packet, tribe);
+      } else {
+         addShortTribeData(packet, tribe);
+      }
    }
 
    // Add entities
@@ -546,14 +511,22 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       }
    }
 
-   // Tribe plans
+   // Tribe plans and virtual buildings
    packet.addBoolean(playerClient.isDev);
    packet.padOffset(3);
    if (playerClient.isDev) {
       packet.addNumber(tribes.length);
       for (const tribe of tribes) {
          packet.addNumber(tribe.id);
+
+         // Tribe plans
          addPlanData(packet, tribe.rootPlan);
+
+         // Virtual buildings
+         packet.addNumber(tribe.virtualBuildings.length);
+         for (const virtualBuilding of tribe.virtualBuildings) {
+            addVirtualBuildingData(packet, virtualBuilding);
+         }
       }
    }
    

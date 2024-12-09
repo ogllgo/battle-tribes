@@ -225,3 +225,9 @@ export function sendAscendPacket(): void {
    const packet = new Packet(PacketType.ascend, Float32Array.BYTES_PER_ELEMENT);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendTPTOEntityPacket(targetEntity: Entity): void {
+   const packet = new Packet(PacketType.devTPToEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(targetEntity);
+   Client.sendPacket(packet.buffer);
+}

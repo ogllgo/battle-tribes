@@ -39,26 +39,7 @@ export interface TechUnlockProgress {
 /** The current amount of items used in each tech's research */
 export type TechTreeUnlockProgress = Partial<Record<TechID, TechUnlockProgress>>;
 
-export interface TribeData {
-   readonly name: string;
-   readonly id: number;
-   readonly tribeType: TribeType;
-}
-
-// @Cleanup: Should this be moved to tribes.ts?
-export interface PlayerTribeData extends TribeData {
-   readonly hasTotem: boolean;
-   readonly numHuts: number;
-   readonly tribesmanCap: number;
-   readonly area: ReadonlyArray<[tileX: number, tileY: number]>;
-   readonly selectedTechID: TechID | null;
-   readonly unlockedTechs: ReadonlyArray<TechID>;
-   readonly techTreeUnlockProgress: TechTreeUnlockProgress;
-}
-
-export interface EnemyTribeData extends TribeData {}
-
-export interface TechInfo {
+export interface Tech {
    readonly id: TechID;
    readonly name: string;
    readonly description: string;
@@ -74,7 +55,7 @@ export interface TechInfo {
    readonly conflictingTechs: ReadonlyArray<TechID>;
 }
 
-export const TECHS: ReadonlyArray<TechInfo> = [
+export const TECHS: ReadonlyArray<Tech> = [
    {
       id: TechID.fire,
       name: "Fire",
@@ -427,7 +408,8 @@ export const TECHS: ReadonlyArray<TechInfo> = [
    }
 ];
 
-export function getTechByID(techID: TechID): TechInfo {
+export function getTechByID(techID: TechID): Tech {
+   // @Speed
    for (let i = 0; i < TECHS.length; i++) {
       const tech = TECHS[i];
       if (tech.id === techID) {
@@ -437,36 +419,13 @@ export function getTechByID(techID: TechID): TechInfo {
    throw new Error(`No tech with id '${techID}'`);
 }
 
-export function getTechRequiredForItem(itemType: ItemType): TechID | null {
+export function getTechRequiredForItem(itemType: ItemType): Tech | null {
    for (const tech of TECHS) {
+      // @Speed
       if (tech.unlockedItems.includes(itemType)) {
-         return tech.id;
+         return tech;
       }
    }
 
    return null;
-}
-
-/** Returns all techs required to get to the item type, in ascending order of depth */
-export function getTechChain(itemType: ItemType): ReadonlyArray<TechInfo> {
-   const initialTechID = getTechRequiredForItem(itemType);
-   if (initialTechID === null) {
-      return [];
-   }
-
-   const requiredTechs = [getTechByID(initialTechID)];
-   const techsToCheck = [getTechByID(initialTechID)];
-   while (techsToCheck.length > 0) {
-      const currentTech = techsToCheck[0];
-      techsToCheck.shift();
-
-      for (let i = 0; i < currentTech.dependencies.length; i++) {
-         const techID = currentTech.dependencies[i];
-         const tech = getTechByID(techID);
-         techsToCheck.push(tech);
-         requiredTechs.splice(0, 0, tech);
-      }
-   }
-
-   return requiredTechs;
 }

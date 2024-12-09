@@ -4,7 +4,6 @@ import { TribeType } from "battletribes-shared/tribes";
 import InventoryContainer from "./InventoryContainer";
 import ItemSlot from "./ItemSlot";
 import { getSelectedEntity } from "../../../entity-selection";
-import Game from "../../../Game";
 import Client from "../../../networking/Client";
 import { InventoryName, itemTypeIsArmour, itemTypeIsBackpack } from "battletribes-shared/items/items";
 import { TribeComponentArray } from "../../../entity-components/server-components/TribeComponent";
@@ -14,6 +13,7 @@ import { TribesmanAIComponentArray } from "../../../entity-components/server-com
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
 import { getEntityAgeTicks, playerInstance } from "../../../world";
+import { getTribeByID, playerTribe } from "../../../tribes";
 
 const PLAINSPEOPLE_NAMES: ReadonlyArray<string> = [
    "Oda",
@@ -225,10 +225,10 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    const ageDays = getEntityAgeTicks(tribesman) / Settings.TIME_PASS_RATE * Settings.TPS / 3600;
 
    let tribeName: string;
-   if (tribeComponent.tribeID === Game.tribe.id) {
-      tribeName = Game.tribe.name;
+   if (tribeComponent.tribeID === playerTribe.id) {
+      tribeName = playerTribe.name;
    } else {
-      const tribeData = Game.getEnemyTribeData(tribeComponent.tribeID);
+      const tribeData = getTribeByID(tribeComponent.tribeID);
       tribeName = tribeData.name;
    }
 
@@ -254,7 +254,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
          </ul> 
       </div>
 
-      {tribeComponent.tribeID !== Game.tribe.id ? (
+      {tribeComponent.tribeID !== playerTribe.id ? (
          <div className="area">
             <div className="flex-container space-around">
                <button className={`recruit-button${canRecruit ? " clickable" : ""}`} onClick={recruit}>Recruit</button>
@@ -293,7 +293,7 @@ const TribesmanInteractMenu = () => {
          </div>
       </div>
 
-      {tribeComponent.tribeID === Game.tribe.id ? (
+      {tribeComponent.tribeID === playerTribe.id ? (
          <div className="hotbar-container">
             <InventoryContainer isBordered className="hotbar" entityID={tribesman} inventory={getInventory(inventoryComponent, InventoryName.hotbar)!} selectedItemSlot={getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar).selectedItemSlot} />
             <div className="inventory">

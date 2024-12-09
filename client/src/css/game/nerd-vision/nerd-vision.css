@@ -37,6 +37,11 @@
    margin: 0.2rem;
    border: 1px solid #999;
 }
+.devmode-menu-section h3 {
+   color: #fff;
+   text-align: center;
+   margin: 0.2rem 0;
+}
 
 .devmode-menu-section h2.devmode-menu-section-title {
    color: #fff;
@@ -73,6 +78,16 @@
 
 .devmode-container button {
    cursor: pointer;
+}
+
+.devmode-card {
+   border: 2px solid #666;
+}
+.devmode-card p {
+   margin: 0;
+}
+.devmode-card button {
+   float: right;
 }
 
 #tab-selection {

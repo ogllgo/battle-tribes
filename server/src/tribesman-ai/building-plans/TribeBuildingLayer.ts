@@ -1,12 +1,14 @@
-import { BoxType, createHitbox, Hitbox, updateBox } from "../../../../shared/src/boxes/boxes";
+import { BoxType, createHitbox, Hitbox, hitboxIsCircular, updateBox } from "../../../../shared/src/boxes/boxes";
 import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityType } from "../../../../shared/src/entities";
+import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
 import { angle, Point } from "../../../../shared/src/utils";
 import { cleanAngle } from "../../ai-shared";
+import { addCircularHitboxData, addRectangularHitboxData, getCircularHitboxDataLength, getRectangularHitboxDataLength } from "../../components/TransformComponent";
 import Layer from "../../Layer";
 import Tribe from "../../Tribe";
 import { addHitboxesOccupiedNodes, getSafetyNode, SafetyNode } from "../ai-building";
@@ -193,6 +195,47 @@ export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, positio
          return virtualBuilding;
       }
    }
+}
+
+export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualBuilding): void {
+   packet.addNumber(virtualBuilding.entityType);
+   packet.addNumber(virtualBuilding.id);
+   packet.addNumber(virtualBuilding.layer.depth);
+   packet.addNumber(virtualBuilding.position.x);
+   packet.addNumber(virtualBuilding.position.y);
+   packet.addNumber(virtualBuilding.rotation);
+
+   // Hitboxes
+   packet.addNumber(virtualBuilding.hitboxes.length);
+   for (const hitbox of virtualBuilding.hitboxes) {
+      const isCircular = hitboxIsCircular(hitbox);
+      
+      // Is circular
+      packet.addBoolean(isCircular);
+      packet.padOffset(3);
+
+      if (isCircular) {
+         addCircularHitboxData(packet, hitbox, 0);
+      } else {
+         // @Hack: cast
+         addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, 0);
+      }
+   }
+}
+export function getVirtualBuildingDataLength(virtualBuilding: VirtualBuilding): number {
+   let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
+
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const hitbox of virtualBuilding.hitboxes) {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      if (hitboxIsCircular(hitbox)) {
+         lengthBytes += getCircularHitboxDataLength(hitbox);
+      } else {
+         // @Hack: cast
+         lengthBytes += getRectangularHitboxDataLength(hitbox as Hitbox<BoxType.rectangular>);
+      }
+   }
+   return lengthBytes;
 }
 
 const getWallSideNodeDir = (node: SafetyNode, wallPosition: Point, wallRotation: number): number => {

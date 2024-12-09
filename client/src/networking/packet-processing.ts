@@ -1,15 +1,12 @@
 import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { ItemType } from "battletribes-shared/items/items";
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { readCrossbowLoadProgressRecord } from "../entity-components/server-components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import { ItemRequirements } from "battletribes-shared/items/crafting-recipes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { EnemyTribeData, PlayerTribeData, TechID, TechTreeUnlockProgress } from "battletribes-shared/techs";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import Game from "../Game";
 import Client, { getQueuedGameDataPackets } from "./Client";
@@ -38,6 +35,8 @@ import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../renderi
 import { Biome } from "../../../shared/src/biomes";
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
+import { ExtendedTribeInfo, playerTribe, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
+import { readVirtualBuildingFromData } from "../virtual-buildings";
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -249,8 +248,7 @@ const readDebugData = (reader: PacketReader): EntityDebugData => {
    const entries = new Array<string>();
    const numDebugEntries = reader.readNumber();
    for (let i = 0; i < numDebugEntries; i++) {
-      // @Hack: hardcoded
-      const entry = reader.readString(1000);
+      const entry = reader.readString();
       entries.push(entry);
    }
 
@@ -303,7 +301,7 @@ const processPlayerUpdateData = (reader: PacketReader): void => {
       // Change layers
       changeEntityLayer(playerInstance, layer);
    }
-      
+   
    const numComponents = reader.readNumber();
    for (let i = 0; i < numComponents; i++) {
       const componentType = reader.readNumber() as ServerComponentType;
@@ -469,90 +467,25 @@ export function processGameDataPacket(reader: PacketReader): void {
    Board.time = time;
    updateDebugScreenCurrentTime(time);
 
-   // 
-   // Player tribe data
-   // 
-   // @Cleanup: move into a separate function
+   // Tribes
+   // @Temporary @Garbage
+   const tempTribes = new Set<TribeData>();
+   const numTribes = reader.readNumber();
+   for (let i = 0; i < numTribes; i++) {
+      const isExtended = reader.readBoolean();
+      reader.padOffset(3);
 
-   const tribeName = reader.readString(100);
-   const tribeID = reader.readNumber();
-   const tribeType = reader.readNumber();
-   const hasTotem = reader.readBoolean();
-   reader.padOffset(3);
-   const numHuts = reader.readNumber();
-   const tribesmanCap = reader.readNumber();
-
-   const area = new Array<[tileX: number, tileY: number]>();
-   const areaLength = reader.readNumber();
-   for (let i = 0; i < areaLength; i++) {
-      const tileX = reader.readNumber();
-      const tileY = reader.readNumber();
-      area.push([tileX, tileY]);
-   }
-
-   const rawSelectedTechID = reader.readNumber();
-   const selectedTechID = rawSelectedTechID !== -1 ? rawSelectedTechID : null;
-
-   const unlockedTechs = new Array<TechID>();
-   const numUnlockedTechs = reader.readNumber();
-   for (let i = 0; i < numUnlockedTechs; i++) {
-      const techID = reader.readNumber();
-      unlockedTechs.push(techID);
-   }
-
-   // Tech tree unlock progress
-   const techTreeUnlockProgress: TechTreeUnlockProgress = {};
-   const numTechProgressEntries = reader.readNumber();
-   for (let i = 0; i < numTechProgressEntries; i++) {
-      const techID = reader.readNumber() as TechID;
-
-      const itemProgress: ItemRequirements = {};
-      const numRequirements = reader.readNumber();
-      for (let j = 0; j < numRequirements; j++) {
-         const itemType = reader.readNumber() as ItemType;
-         const amount = reader.readNumber();
-         itemProgress[itemType] = amount;
+      const tribe = isExtended ? readExtendedTribeData(reader) : readShortTribeData(reader);
+      tempTribes.add(tribe);
+      
+      if (i === 0) {
+         updatePlayerTribe(tribe as ExtendedTribeInfo);
       }
-
-      const studyProgress = reader.readNumber();
-
-      techTreeUnlockProgress[techID] = {
-         itemProgress: itemProgress,
-         studyProgress: studyProgress
-      };
    }
-
-   // @Temporary @Incomplete @Speed: garbage collection
-   const tribeData: PlayerTribeData = {
-      name: tribeName,
-      id: tribeID,
-      tribeType: tribeType,
-      hasTotem: hasTotem,
-      numHuts: numHuts,
-      tribesmanCap: tribesmanCap,
-      area: area,
-      selectedTechID: selectedTechID,
-      unlockedTechs: unlockedTechs,
-      techTreeUnlockProgress: techTreeUnlockProgress
-   };
-   Client.updateTribe(tribeData);
-
-   // Enemy tribes data
-   // @Temporary
-   const enemyTribesData = new Array<EnemyTribeData>();
-   const numEnemyTribes = reader.readNumber();
-   for (let i = 0; i < numEnemyTribes; i++) {
-      const name = reader.readString(100);
-      const id = reader.readNumber();
-      const tribeType = reader.readNumber();
-
-      enemyTribesData.push({
-         name: name,
-         id: id,
-         tribeType: tribeType
-      });
+   tribes.splice(0, tribes.length);
+   for (const tribe of tempTribes) {
+      tribes.push(tribe);
    }
-   Game.enemyTribes = enemyTribesData;
 
    // Process entities
    const playerInstanceID = Game.playerID;
@@ -843,6 +776,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       setVisiblePathfindingNodeOccupances(visiblePathfindingNodeOccupances);
    }
 
+   // Tribe plans and virtual buildings
    // @Cleanup: remove underscore
    const _isDev = reader.readBoolean();
    reader.padOffset(3);
@@ -850,7 +784,15 @@ export function processGameDataPacket(reader: PacketReader): void {
       const numTribes = reader.readNumber();
       for (let i = 0; i < numTribes; i++) {
          const tribeID = reader.readNumber();
+
+         // Tribe plans
          updateTribePlanData(reader, tribeID);
+
+         // Virtual buildings
+         const numVirtualBuildings = reader.readNumber();
+         for (let i = 0; i < numVirtualBuildings; i++) {
+            const virtualBuilding = readVirtualBuildingFromData(reader)
+         }
       }
    }
    
@@ -860,19 +802,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       playerKnockbacks: playerKnockbacks,
       heals: heals,
       playerHealth: playerHealth,
-      playerTribeData: {
-         name: tribeName,
-         id: tribeID,
-         tribeType: tribeType,
-         hasTotem: hasTotem,
-         numHuts: numHuts,
-         tribesmanCap: tribesmanCap,
-         area: area,
-         selectedTechID: selectedTechID,
-         unlockedTechs: unlockedTechs,
-         techTreeUnlockProgress: techTreeUnlockProgress
-      },
-      enemyTribesData: enemyTribesData,
       hasFrostShield: hasFrostShield,
       pickedUpItem: hasPickedUpItem,
       hotbarCrossbowLoadProgressRecord: hotbarCrossbowLoadProgressRecord,
@@ -933,7 +862,7 @@ export function processRespawnDataPacket(reader: PacketReader): void {
    
    selectItemSlot(1);
    
-   const maxHealth = TRIBE_INFO_RECORD[Game.tribe.tribeType].maxHealthPlayer;
+   const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
    updateHealthBar(maxHealth);
 
    gameScreenSetIsDead(false);
@@ -941,4 +870,17 @@ export function processRespawnDataPacket(reader: PacketReader): void {
    // Clear any queued packets, as they contain data from when the player wasn't respawned.
    const queuedPackets = getQueuedGameDataPackets();
    queuedPackets.length = 0;
+}
+
+export function processForcePositionUpdatePacket(reader: PacketReader): void {
+   if (playerInstance === null) {
+      return;
+   }
+   
+   const x = reader.readNumber();
+   const y = reader.readNumber();
+
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   transformComponent.position.x = x;
+   transformComponent.position.y = y;
 }

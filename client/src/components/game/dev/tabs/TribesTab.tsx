@@ -1,21 +1,19 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import Game from "../../../../Game";
 import DevmodeScrollableOptions from "../DevmodeScrollableOptions";
-import { TribeData } from "battletribes-shared/techs";
 import Client from "../../../../networking/Client";
 import { TribeType, NUM_TRIBE_TYPES } from "battletribes-shared/tribes";
 import CLIENT_TRIBE_INFO_RECORD from "../../../../client-tribe-info";
 import DevmodeDropdownInput from "../DevmodeDropdownInput";
 import { setRenderedTribePlanID } from "../../../../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
+import { tribeHasExtendedInfo, tribes } from "../../../../tribes";
+import CLIENT_ENTITY_INFO_RECORD from "../../../../client-entity-info";
+import { sendTPTOEntityPacket } from "../../../../networking/packet-creation";
 
 export let TribesTab_refresh: () => void = () => {};
 
 const TribesTab = () => {
-   // @Cleanup: copy paste from tribecomponentinput
-   const tribeIDs = Game.enemyTribes.map(enemyTribeData => enemyTribeData.id);
-   tribeIDs.unshift(Game.tribe.id);
-
-   const [selectedTribeID, setSelectedTribeID] = useState(tribeIDs[0]);
+   const [selectedTribe, setSelectedTribe] = useState(tribes[0]);
    const [, forceUpdate] = useReducer(x => x + 1, 0);
 
    useEffect(() => {
@@ -23,22 +21,13 @@ const TribesTab = () => {
    }, []);
    
    const selectTribeID = (optionIdx: number): void => {
-      const tribeID = tribeIDs[optionIdx];
-      setSelectedTribeID(tribeID);
+      setSelectedTribe(tribes[optionIdx]);
    }
 
    const updateTribeType = useCallback((optionIdx: number): void => {
       const tribeType = optionIdx as TribeType;
-      Client.sendDevChangeTribeType(selectedTribeID, tribeType);
-   }, [selectedTribeID]);
-
-   let tribeData: TribeData;
-   if (selectedTribeID === Game.tribe.id) {
-      // @Hack
-      tribeData = Game.tribe;
-   } else {
-      tribeData = Game.getEnemyTribeData(selectedTribeID);
-   }
+      Client.sendDevChangeTribeType(selectedTribe.id, tribeType);
+   }, [selectedTribe]);
 
    const tribeTypeOptions = new Array<string>();
    for (let tribeType: TribeType = 0; tribeType < NUM_TRIBE_TYPES; tribeType++) {
@@ -48,21 +37,36 @@ const TribesTab = () => {
    
    return <div id="tribes-tab" className="devmode-tab devmode-container">
       <div className="flex-container">
-         <DevmodeScrollableOptions options={tribeIDs.map(id => id.toString())} onOptionSelect={selectTribeID} />
+         <DevmodeScrollableOptions options={tribes.map(tribe => tribe.id.toString())} onOptionSelect={selectTribeID} />
          
          <div className="flex-container column">
             <div className="spawn-options devmode-menu-section">
-               <h2 className="devmode-menu-section-title">{tribeData.name}</h2>
+               <h2 className="devmode-menu-section-title">{selectedTribe.name}</h2>
                <div className="bar"></div>
 
                <DevmodeDropdownInput text="Tribe type:" options={tribeTypeOptions} onChange={updateTribeType} />
 
-               <button onClick={() => setRenderedTribePlanID(selectedTribeID)}>View Plans</button>
+               <button onClick={() => setRenderedTribePlanID(selectedTribe.id)}>View Plans</button>
             </div>
+
+            {tribeHasExtendedInfo(selectedTribe) ? (
+               <div className="devmode-menu-section">
+                  <h3>Tribesmen</h3>
+
+                  {selectedTribe.tribesman.map((tribesmanInfo, i) => {
+                     return <div key={i} className="devmode-card">
+                        <button onClick={() => sendTPTOEntityPacket(tribesmanInfo.entity)}>Teleport</button>
+                        
+                        <p>{tribesmanInfo.name}</p>
+                        <p>{CLIENT_ENTITY_INFO_RECORD[tribesmanInfo.entityType].name} #{tribesmanInfo.entity}</p>
+                     </div>;
+                  })}
+               </div>
+            ) : <></>}
 
             {/* @Cleanup: Wrong section */}
             <div className="devmode-menu-section">
-               <button onClick={() => Client.sendDevCreateTribe()}>Create tribe</button>
+               <button onClick={() => Client.sendDevCreateTribe()}>Create New Tribe</button>
             </div>
          </div>
       </div>

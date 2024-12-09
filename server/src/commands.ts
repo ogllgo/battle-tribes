@@ -5,7 +5,7 @@ import { damageEntity, healEntity } from "./components/HealthComponent";
 import { InventoryComponentArray, addItem } from "./components/InventoryComponent";
 import { createItem } from "./items";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { forcePlayerTeleport, getPlayerFromUsername } from "./server/player-clients";
+import { getPlayerFromUsername } from "./server/player-clients";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { ItemType, getItemTypeFromString } from "battletribes-shared/items/items";
 import { getRandomPositionInEntity, TransformComponentArray } from "./components/TransformComponent";
@@ -40,8 +40,8 @@ const giveItem = (player: Entity, itemType: ItemType, amount: number): void => {
 }
 
 const tp = (player: Entity, x: number, y: number): void => {
-   const newPosition = new Point(x, y);
-   forcePlayerTeleport(player, newPosition);
+   // const newPosition = new Point(x, y);
+   // forcePlayerTeleport(player, newPosition);
 }
 
 // @Incomplete

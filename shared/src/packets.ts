@@ -25,6 +25,7 @@ export const enum PacketType {
    devSetDebugEntity,
    ascend,
    devGiveItem, // ((DEV))
+   devTPToEntity, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
    // -----------------
@@ -33,7 +34,8 @@ export const enum PacketType {
    // @Cleanup: unused?
    syncData,
    sync,
-   respawnData
+   respawnData,
+   forcePositionUpdate
 }
 
 // @Bandwidth: figure out a way to be tightly packed (not have to add padding)
@@ -93,22 +95,19 @@ export class Packet extends BasePacketObject {
       this.currentByteOffset += 4;
    }
 
-   public addString(string: string, lengthBytes: number): void {
+   public addString(str: string): void {
       if (this.currentByteOffset >= this.buffer.byteLength) {
          throw new Error("Exceeded length of buffer");
       }
 
-      const encodedUsername = new TextEncoder().encode(string);
-      if (encodedUsername.byteLength > lengthBytes) {
-         throw new Error("String was too long!");
-      }
+      const encodedUsername = new TextEncoder().encode(str);
 
       // Write the length of the string
-      this.addNumber(string.length);
+      this.addNumber(str.length);
       
       new Uint8Array(this.buffer).set(encodedUsername, this.currentByteOffset);
       
-      this.currentByteOffset += lengthBytes;
+      this.currentByteOffset += alignLengthBytes(encodedUsername.byteLength);
    }
 
    public addBoolean(boolean: boolean): void {
@@ -119,6 +118,11 @@ export class Packet extends BasePacketObject {
       this.uint8View[this.currentByteOffset] = boolean ? 1 : 0;
       this.currentByteOffset++;
    }
+}
+
+export function getStringLengthBytes(str: string): number {
+   // @Copynpaste
+   return Float32Array.BYTES_PER_ELEMENT + alignLengthBytes(new TextEncoder().encode(str).byteLength); // @Speed?
 }
 
 export class PacketReader extends BasePacketObject {
@@ -158,16 +162,21 @@ export class PacketReader extends BasePacketObject {
       return number;
    }
 
-   public readString(lengthBytes: number): string {
+   public readString(): string {
       const stringLength = this.readNumber();
       
       const decodeBuffer = this.uint8View.subarray(this.currentByteOffset, this.currentByteOffset + stringLength);
       // @Speed? @Garbage
       const string = new TextDecoder().decode(decodeBuffer);
 
+      const lengthBytes = alignLengthBytes(new TextEncoder().encode(string).byteLength); // @Speed?
       this.currentByteOffset += lengthBytes;
 
       return string;
+   }
+
+   public padString(): void {
+      this.readString();
    }
 
    // @Cleanup: rename to readbool

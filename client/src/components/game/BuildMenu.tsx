@@ -8,7 +8,6 @@ import { GhostInfo, GhostType, PARTIAL_OPACITY } from "../../rendering/webgl/ent
 import { getItemTypeImage } from "../../client-item-info";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import { playSound } from "../../sound";
-import Game from "../../Game";
 import { InventoryName, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../menus";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
@@ -23,6 +22,7 @@ import { HutComponentArray } from "../../entity-components/server-components/Hut
 import { PlanterBoxComponentArray } from "../../entity-components/server-components/PlanterBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { sendPlaceBlueprintPacket } from "../../networking/packet-creation";
+import { playerTribe } from "../../tribes";
 
 /*
 // @Incomplete
@@ -138,7 +138,7 @@ const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
    
    // Enemy buildings can't be selected
    const tribeComponent = TribeComponentArray.getComponent(entity);
-   if (tribeComponent.tribeID !== Game.tribe.id) {
+   if (tribeComponent.tribeID !== playerTribe.id) {
       return [];
    }
 

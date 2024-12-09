@@ -1,14 +1,14 @@
-import { TechInfo } from "battletribes-shared/techs";
-import Game from "../../../Game";
+import { Tech } from "battletribes-shared/techs";
+import { playerTribe } from "../../../tribes";
 
 interface TechTreeProgressBarProps {
-   readonly techInfo: TechInfo;
+   readonly techInfo: Tech;
 }
 
 const TechTreeProgressBar = (props: TechTreeProgressBarProps) => {
    const techInfo = props.techInfo;
    
-   const studyProgress = Game.tribe.techTreeUnlockProgress[techInfo.id]?.studyProgress || 0;
+   const studyProgress = playerTribe.techTreeUnlockProgress[techInfo.id]?.studyProgress || 0;
    
    return <div className="study-progress-bar-bg">
       <p className="research-progress">{studyProgress}/{techInfo.researchStudyRequirements}</p>

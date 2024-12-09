@@ -19,7 +19,7 @@ export const PlayerComponentArray = new ServerComponentArray<PlayerComponent, Pl
 });
 
 function createParamsFromData(reader: PacketReader): PlayerComponentParams {
-   const username = reader.readString(100);
+   const username = reader.readString();
    return {
       username: username
    };
@@ -32,9 +32,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.player, 
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT + 100);
+   reader.padString();
 }
 
 function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT + 100);
+   reader.padString();
 }

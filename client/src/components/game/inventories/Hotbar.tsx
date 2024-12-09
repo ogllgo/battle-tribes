@@ -6,6 +6,7 @@ import EmptyItemSlot from "./EmptyItemSlot";
 import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
 import { playerInstance } from "../../../world";
+import { playerTribe } from "../../../tribes";
 
 export let Hotbar_update: () => void = () => {};
 
@@ -55,7 +56,7 @@ const Hotbar = (props: HotbarProps) => {
       <div className="flex-container">
          <EmptyItemSlot className="hidden" />
          <EmptyItemSlot className="hidden" />
-         <div className={"inventory" + (Game.tribe.tribeType !== TribeType.barbarians ? " hidden" : "")}>
+         <div className={"inventory" + (playerTribe.tribeType !== TribeType.barbarians ? " hidden" : "")}>
             <InventoryContainer entityID={playerID} inventory={props.offhand} itemRestTimes={props.offhandItemRestTimes} />
          </div>
       </div>

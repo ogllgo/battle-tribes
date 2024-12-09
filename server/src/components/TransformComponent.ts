@@ -13,7 +13,7 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
-import { Box, boxIsCircular, Hitbox, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular, BoxType, Hitbox, HitboxFlag, hitboxIsCircular, updateBox } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
@@ -500,18 +500,65 @@ function onRemove(entity: Entity): void {
    }
 }
 
+const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): void => {
+   const box = hitbox.box;
+   packet.addNumber(box.position.x);
+   packet.addNumber(box.position.y);
+   packet.addNumber(box.relativeRotation);
+   packet.addNumber(box.rotation);
+   packet.addNumber(hitbox.mass);
+   packet.addNumber(box.offset.x);
+   packet.addNumber(box.offset.y);
+   packet.addNumber(box.scale);
+   packet.addNumber(hitbox.collisionType);
+   packet.addNumber(hitbox.collisionBit);
+   packet.addNumber(hitbox.collisionMask);
+   packet.addNumber(localID);
+   // Flags
+   packet.addNumber(hitbox.flags.length);
+   for (const flag of hitbox.flags) {
+      packet.addNumber(flag);
+   }
+}
+const getBaseHitboxDataLength = (hitbox: Hitbox): number => {
+   let lengthBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
+   return lengthBytes;
+}
+
+export function addCircularHitboxData(packet: Packet, hitbox: Hitbox<BoxType.circular>, localID: number): void {
+   addBaseHitboxData(packet, hitbox, localID);
+   
+   const box = hitbox.box;
+   packet.addNumber(box.radius);
+}
+export function getCircularHitboxDataLength(hitbox: Hitbox<BoxType.circular>): number {
+   return getBaseHitboxDataLength(hitbox) + Float32Array.BYTES_PER_ELEMENT;
+}
+
+export function addRectangularHitboxData(packet: Packet, hitbox: Hitbox<BoxType.rectangular>, localID: number): void {
+   addBaseHitboxData(packet, hitbox, localID);
+
+   const box = hitbox.box;
+   packet.addNumber(box.width);
+   packet.addNumber(box.height);
+}
+export function getRectangularHitboxDataLength(hitbox: Hitbox<BoxType.rectangular>): number {
+   return getBaseHitboxDataLength(hitbox) + 2 * Float32Array.BYTES_PER_ELEMENT;
+}
+
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    let lengthBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
-      if (boxIsCircular(hitbox.box)) {
-         lengthBytes += 14 * Float32Array.BYTES_PER_ELEMENT;
+      if (hitboxIsCircular(hitbox)) {
+         lengthBytes += getCircularHitboxDataLength(hitbox);
       } else {
-         lengthBytes += 14 * Float32Array.BYTES_PER_ELEMENT;
+         // @Hack: cast
+         lengthBytes += getRectangularHitboxDataLength(hitbox as Hitbox<BoxType.rectangular>);
       }
-      lengthBytes += hitbox.flags.length * Float32Array.BYTES_PER_ELEMENT;
    }
 
    return lengthBytes;
@@ -541,63 +588,22 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    // Circular
    packet.addNumber(numCircularHitboxes);
    for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
       // @Speed
-      if (!boxIsCircular(box)) {
-         continue;
+      if (hitboxIsCircular(hitbox)) {
+         const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
+         addCircularHitboxData(packet, hitbox, localID);
       }
-
-      const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
-      
-      packet.addNumber(box.position.x);
-      packet.addNumber(box.position.y);
-      packet.addNumber(box.relativeRotation);
-      packet.addNumber(box.rotation);
-      packet.addNumber(hitbox.mass);
-      packet.addNumber(box.offset.x);
-      packet.addNumber(box.offset.y);
-      packet.addNumber(box.scale);
-      packet.addNumber(hitbox.collisionType);
-      packet.addNumber(hitbox.collisionBit);
-      packet.addNumber(hitbox.collisionMask);
-      packet.addNumber(localID);
-      // Flags
-      packet.addNumber(hitbox.flags.length);
-      for (const flag of hitbox.flags) {
-         packet.addNumber(flag);
-      }
-      packet.addNumber(box.radius);
    }
    
    // Rectangular
    packet.addNumber(numRectangularHitboxes);
    for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
       // @Speed
-      if (boxIsCircular(box)) {
-         continue;
+      if (!hitboxIsCircular(hitbox)) {
+         const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
+         // @Hack: cast
+         addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, localID);
       }
-
-      const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
-
-      packet.addNumber(box.position.x);
-      packet.addNumber(box.position.y);
-      packet.addNumber(hitbox.mass);
-      packet.addNumber(box.offset.x);
-      packet.addNumber(box.offset.y);
-      packet.addNumber(box.scale);
-      packet.addNumber(hitbox.collisionType);
-      packet.addNumber(hitbox.collisionBit);
-      packet.addNumber(hitbox.collisionMask);
-      packet.addNumber(localID);
-      // Flags
-      packet.addNumber(hitbox.flags.length);
-      for (const flag of hitbox.flags) {
-         packet.addNumber(flag);
-      }
-      packet.addNumber(box.width);
-      packet.addNumber(box.height);
-      packet.addNumber(box.relativeRotation);
    }
 }
 

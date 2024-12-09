@@ -18,7 +18,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -176,7 +176,7 @@ class GameServer {
 
             switch (packetType) {
                case PacketType.initialPlayerData: {
-                  const username = reader.readString(24);
+                  const username = reader.readString();
                   const tribeType = reader.readNumber() as TribeType;
                   const screenWidth = reader.readNumber();
                   const screenHeight = reader.readNumber();
@@ -185,7 +185,7 @@ class GameServer {
                   // @Incomplete? Unused?
                   const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
       
-                  const tribe = new Tribe(tribeType, false);
+                  const tribe = new Tribe(tribeType, false, spawnPosition.copy());
                   const layer = surfaceLayer;
       
                   // @Temporary @Incomplete
@@ -280,6 +280,10 @@ class GameServer {
                   const entity: Entity = reader.readNumber();
                   // @Cleanup: shouldn't be in the server!
                   SERVER.setTrackedGameObject(entity);
+                  break;
+               }
+               case PacketType.devTPToEntity: {
+                  processTPToEntityPacket(playerClient, reader);
                   break;
                }
                default: {

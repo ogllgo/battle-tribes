@@ -1,7 +1,7 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex } from "battletribes-shared/utils";
+import { randInt, randFloat, TileIndex, Point } from "battletribes-shared/utils";
 import Layer, { getTileIndexIncludingEdges } from "./Layer";
 import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
 import OPTIONS from "./options";
@@ -178,7 +178,7 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.fish: config = createFishConfig(); break;
       case EntityType.lilypad: config = createLilypadConfig(); break;
       case EntityType.golem: config = createGolemConfig(); break;
-      case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true)); break;
+      case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
       case EntityType.glurb: config = createGlurbConfig(); break;
    }
    
@@ -365,10 +365,13 @@ export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
 
-      const tribe = new Tribe(TribeType.dwarves, true);
+      const x = Settings.BOARD_UNITS * 0.5 + 800;
+      const y = Settings.BOARD_UNITS * 0.5;
+      
+      const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
       const a = createTribeWorkerConfig(tribe);
-      a.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 800;
-      a.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+      a.components[ServerComponentType.transform].position.x = x;
+      a.components[ServerComponentType.transform].position.y = y;
       createEntity(a, undergroundLayer, 0);
    }, 16000);
 }

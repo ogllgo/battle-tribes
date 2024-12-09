@@ -2,7 +2,7 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity } from "battletribes-shared/entities";
-import { Packet } from "battletribes-shared/packets";
+import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { sendRespawnDataPacket } from "../server/packet-processing";
 import PlayerClient from "../server/PlayerClient";
 import TombstoneDeathManager from "../tombstone-deaths";
@@ -44,15 +44,14 @@ function onRemove(player: Entity): void {
    }
 }
 
-function getDataLength(): number {
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 100;
+function getDataLength(entity: Entity): number {
+   const playerComponent = PlayerComponentArray.getComponent(entity);
+   return Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(playerComponent.client.username);
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(entity);
-
-   // @Hack: hardcoded
-   packet.addString(playerComponent.client.username, 100);
+   packet.addString(playerComponent.client.username);
 }
 
 function onDeath(entity: Entity, _attackingEntity: Entity | null, damageSource: DamageSource): void {

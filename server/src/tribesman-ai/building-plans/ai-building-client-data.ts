@@ -292,17 +292,20 @@ export function getVisibleWallConnections(playerLayer: Layer, visibleTribes: Rea
 const addBasePlanData = (packet: Packet, plan: TribesmanPlan): void => {
    packet.addNumber(plan.type);
    packet.addNumber(plan.assignedTribesman !== null ? plan.assignedTribesman : 0);
+   packet.addBoolean(plan.isComplete);
+   packet.padOffset(3);
 }
 const getBasePlanDataLength = (): number => {
-   return 2 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addCraftRecipePlanData = (packet: Packet, plan: CraftRecipePlan): void => {
    // @Speed
    packet.addNumber(CRAFTING_RECIPES.indexOf(plan.recipe));
+   packet.addNumber(plan.productAmount);
 }
 const getCraftRecipePlanDataLength = (): number => {
-   return 1 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addPlaceBuildingPlanData = (packet: Packet, plan: PlaceBuildingPlan): void => {

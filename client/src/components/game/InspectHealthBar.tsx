@@ -10,6 +10,7 @@ import { HealthComponentArray } from "../../entity-components/server-components/
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
+import { playerTribe } from "../../tribes";
 
 const Y_OFFSET = -50;
 
@@ -76,7 +77,7 @@ export function updateInspectHealthBar(): void {
    }
 
    // Only show health for friendly tribe buildings/tribesman
-   if (!TribeComponentArray.hasComponent(hoveredEntity) || TribeComponentArray.getComponent(hoveredEntity).tribeID !== Game.tribe.id) {
+   if (!TribeComponentArray.hasComponent(hoveredEntity) || TribeComponentArray.getComponent(hoveredEntity).tribeID !== playerTribe.id) {
       InspectHealthBar_setEntity(null);
       return;
    }

@@ -4,7 +4,7 @@ import { CRAFTING_RECIPES, CraftingRecipe } from "../../../../shared/src/items/c
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { StructureType } from "../../../../shared/src/structures";
-import { getTechByID, TechID, TechInfo } from "../../../../shared/src/techs";
+import { getTechByID, TechID, Tech } from "../../../../shared/src/techs";
 import { TribesmanPlanType } from "../../../../shared/src/utils";
 import { TribePlanVisualiser_setPlan } from "../../components/game/tribe-plan-visualiser/TribePlanVisualiser";
 import { addMenuCloseFunction } from "../../menus";
@@ -15,7 +15,8 @@ const enum Vars {
 
 interface BasePlan {
    readonly type: TribesmanPlanType;
-   assignedTribesman: Entity | null;
+   readonly assignedTribesman: Entity | null;
+   readonly isComplete: boolean;
    readonly childPlans: Array<TribesmanPlan>;
 
    // Stuff for displaying the plan node
@@ -31,6 +32,7 @@ export interface RootPlan extends BasePlan {
 export interface CraftRecipePlan extends BasePlan {
    readonly type: TribesmanPlanType.craftRecipe;
    readonly recipe: CraftingRecipe;
+   readonly productAmount: number;
 }
 
 export interface PlaceBuildingPlan extends BasePlan {
@@ -45,18 +47,18 @@ export interface UpgradeBuildingPlan extends BasePlan {
 
 export interface TechStudyPlan extends BasePlan {
    readonly type: TribesmanPlanType.doTechStudy;
-   readonly tech: TechInfo;
+   readonly tech: Tech;
 }
 
 export interface TechItemPlan extends BasePlan {
    readonly type: TribesmanPlanType.doTechItems;
-   readonly tech: TechInfo;
+   readonly tech: Tech;
    readonly itemType: ItemType;
 }
 
 export interface TechCompletePlan extends BasePlan {
    readonly type: TribesmanPlanType.completeTech;
-   readonly tech: TechInfo;
+   readonly tech: Tech;
 }
 
 export interface GatherItemPlan extends BasePlan {
@@ -105,10 +107,11 @@ export function createTribePlanVisualiserShaders(): void {
    `;
 }
 
-const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): RootPlan => {
+const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): RootPlan => {
    return {
       type: TribesmanPlanType.root,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       displayWidth: Vars.NODE_DISPLAY_SIZE,
       depth: depth,
@@ -116,26 +119,30 @@ const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, de
    };
 }
 
-const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): CraftRecipePlan => {
+const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): CraftRecipePlan => {
    const recipeIdx = reader.readNumber();
+   const productAmount = reader.readNumber();
    
    return {
       type: TribesmanPlanType.craftRecipe,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       recipe: CRAFTING_RECIPES[recipeIdx],
+      productAmount: productAmount,
       displayWidth: Vars.NODE_DISPLAY_SIZE,
       depth: depth,
       xOffset: 0
    };
 }
 
-const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): PlaceBuildingPlan => {
+const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): PlaceBuildingPlan => {
    const entityType = reader.readNumber() as StructureType;
    
    return {
       type: TribesmanPlanType.placeBuilding,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       entityType: entityType,
       displayWidth: Vars.NODE_DISPLAY_SIZE,
@@ -144,12 +151,13 @@ const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity |
    };
 }
 
-const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): UpgradeBuildingPlan => {
+const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): UpgradeBuildingPlan => {
    const blueprintType = reader.readNumber() as BlueprintType;
    
    return {
       type: TribesmanPlanType.upgradeBuilding,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       blueprintType: blueprintType,
       displayWidth: Vars.NODE_DISPLAY_SIZE,
@@ -158,12 +166,13 @@ const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity
    };
 }
 
-const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): TechStudyPlan => {
+const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechStudyPlan => {
    const techID = reader.readNumber() as TechID;
    
    return {
       type: TribesmanPlanType.doTechStudy,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       tech: getTechByID(techID),
       displayWidth: Vars.NODE_DISPLAY_SIZE,
@@ -172,13 +181,14 @@ const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | nul
    };
 }
 
-const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): TechItemPlan => {
+const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechItemPlan => {
    const techID = reader.readNumber() as TechID;
    const itemType = reader.readNumber() as ItemType;
 
    return {
       type: TribesmanPlanType.doTechItems,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       tech: getTechByID(techID),
       itemType: itemType,
@@ -188,12 +198,13 @@ const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null
    };
 }
 
-const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): TechCompletePlan => {
+const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechCompletePlan => {
    const techID = reader.readNumber() as TechID;
    
    return {
       type: TribesmanPlanType.completeTech,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       tech: getTechByID(techID),
       displayWidth: Vars.NODE_DISPLAY_SIZE,
@@ -202,13 +213,14 @@ const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | 
    };
 }
 
-const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, depth: number): GatherItemPlan => {
+const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): GatherItemPlan => {
    const itemType = reader.readNumber() as ItemType;
    const amount = reader.readNumber();
 
    return {
       type: TribesmanPlanType.gatherItem,
       assignedTribesman: assignedTribesman,
+      isComplete: isComplete,
       childPlans: [],
       itemType: itemType,
       amount: amount,
@@ -225,16 +237,19 @@ const readTribePlanData = (reader: PacketReader, depth: number): TribesmanPlan =
       assignedTribesman = null;
    }
 
+   const isComplete = reader.readBoolean();
+   reader.padOffset(3);
+
    let plan: TribesmanPlan;
    switch (planType) {
-      case TribesmanPlanType.root:            plan = readRootPlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.craftRecipe:     plan = readCraftRecipePlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.placeBuilding:   plan = readPlaceBuildingPlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.upgradeBuilding: plan = readUpgradeBuildingPlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.doTechStudy:     plan = readTechStudyPlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.doTechItems:     plan = readTechItemPlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.completeTech:    plan = readTechCompletePlan(reader, assignedTribesman, depth); break;
-      case TribesmanPlanType.gatherItem:      plan = readGatherItemPlan(reader, assignedTribesman, depth); break;
+      case TribesmanPlanType.root:            plan = readRootPlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.craftRecipe:     plan = readCraftRecipePlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.placeBuilding:   plan = readPlaceBuildingPlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.upgradeBuilding: plan = readUpgradeBuildingPlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.doTechStudy:     plan = readTechStudyPlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.doTechItems:     plan = readTechItemPlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.completeTech:    plan = readTechCompletePlan(reader, assignedTribesman, isComplete, depth); break;
+      case TribesmanPlanType.gatherItem:      plan = readGatherItemPlan(reader, assignedTribesman, isComplete, depth); break;
    }
 
    const numChildren = reader.readNumber();

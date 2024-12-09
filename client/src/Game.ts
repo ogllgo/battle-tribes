@@ -1,5 +1,4 @@
 import { EntityDebugData } from "battletribes-shared/client-server-types";
-import { EnemyTribeData } from "battletribes-shared/techs";
 import { Settings } from "battletribes-shared/settings";
 import Board from "./Board";
 import { updatePlayerRotation } from "./entities/Player";
@@ -25,7 +24,6 @@ import { createDebugDataShaders, renderLineDebugData, renderTriangleDebugData } 
 import { createTileShadowShaders, renderTileShadows, TileShadowType } from "./rendering/webgl/tile-shadow-rendering";
 import { createWallBorderShaders, renderWallBorders } from "./rendering/webgl/wall-border-rendering";
 import { ParticleRenderLayer, createParticleShaders, renderMonocolourParticles, renderTexturedParticles } from "./rendering/webgl/particle-rendering";
-import Tribe from "./Tribe";
 import OPTIONS from "./options";
 import { RENDER_CHUNK_SIZE, createRenderChunks } from "./rendering/render-chunks";
 import { registerFrame, updateFrameGraph } from "./components/game/dev/FrameGraph";
@@ -277,9 +275,6 @@ abstract class Game {
    public static cursorPositionX: number | null = null;
    public static cursorPositionY: number | null = null;
 
-   public static tribe: Tribe;
-   public static enemyTribes: ReadonlyArray<EnemyTribeData>;
-
    // @Hack @Cleanup: remove this!
    public static playerID: number;
    
@@ -322,8 +317,6 @@ abstract class Game {
     * Prepares the game to be played. Called once just before the game starts.
     */
    public static async initialise(): Promise<void> {
-      Game.enemyTribes = [];
-
       // Clear any queued packets from previous games
       const queuedPackets = getQueuedGameDataPackets();
       queuedPackets.length = 0;
@@ -555,27 +548,16 @@ abstract class Game {
 
       renderTribePlans();
    }
-
-   public static getEnemyTribeData(tribeID: number): EnemyTribeData {
-      for (const tribeData of Game.enemyTribes) {
-         if (tribeData.id === tribeID) {
-            return tribeData;
-         }
-      }
-      throw new Error("No tribe data for tribe with ID " + tribeID);
-   }
 }
 
 export default Game;
 
 if (module.hot) {
    module.hot.dispose(data => {
-      data.tribe = Game.tribe;
       data.playerID = Game.playerID;
    });
 
    if (module.hot.data) {
-      Game.tribe = module.hot.data.tribe;
       Game.playerID = module.hot.data.playerID;
    }
 }

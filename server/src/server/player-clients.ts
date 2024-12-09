@@ -1,6 +1,6 @@
 import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
 import { BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
-import { TechID, TechInfo, getTechByID } from "battletribes-shared/techs";
+import { TechID, Tech, getTechByID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer, { getTileX, getTileY } from "../Layer";
 import { registerCommand } from "../commands";
@@ -136,7 +136,7 @@ const processSelectTechPacket = (playerClient: PlayerClient, techID: TechID): vo
    playerClient.tribe.selectedTechID = techID;
 }
 
-const itemIsNeededInTech = (tech: TechInfo, itemRequirements: ItemRequirements, itemType: ItemType): boolean => {
+const itemIsNeededInTech = (tech: Tech, itemRequirements: ItemRequirements, itemType: ItemType): boolean => {
    // If the item isn't present in the item requirements then it isn't needed
    const amountNeeded = tech.researchItemRequirements.getItemCount(itemType);
    if (amountNeeded === 0) {
@@ -471,7 +471,7 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
    });
 
    socket.on("dev_create_tribe", (): void => {
-      new Tribe(TribeType.plainspeople, true);
+      new Tribe(TribeType.plainspeople, true, new Point(Settings.BOARD_UNITS * 0.5, Settings.BOARD_UNITS * 0.5));
    });
 
    socket.on("dev_change_tribe_type", (tribeID: number, newTribeType: TribeType): void => {
@@ -627,13 +627,6 @@ export function registerPlayerDroppedItemPickup(player: Entity): void {
       playerClient.hasPickedUpItem = true;
    } else {
       console.warn("Couldn't find player to pickup item!");
-   }
-}
-
-export function forcePlayerTeleport(player: Entity, position: Point): void {
-   const playerClient = getPlayerClientFromInstanceID(player);
-   if (playerClient !== null) {
-      playerClient.socket.emit("force_position_update", position.package());
    }
 }
 

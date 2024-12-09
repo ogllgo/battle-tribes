@@ -1,6 +1,6 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, LimbAction } from "battletribes-shared/entities";
-import { TechInfo } from "battletribes-shared/techs";
+import { Tech } from "battletribes-shared/techs";
 import { moveEntityToPosition, getDistanceFromPointToEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
@@ -10,6 +10,10 @@ import { TribesmanAIComponentArray } from "../../../components/TribesmanAICompon
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getTribesmanSlowAcceleration, getTribesmanAcceleration, getTribesmanRadius } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
+import { Inventory, ItemType } from "../../../../../shared/src/items/items";
+import { consumeItemFromSlot } from "../../../components/InventoryComponent";
+import Tribe from "../../../Tribe";
+import { assert } from "../../../../../shared/src/utils";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -46,10 +50,13 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
    return id;
 }
 
-export function goResearchTech(tribesman: Entity, tech: TechInfo): void {
+export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
+
+   // Make sure that the tech requires researching
+   assert(tribeComponent.tribe.techRequiresResearching(tech));
 
    // If already researching at a bench, continue researching at an occupied bench
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
@@ -98,4 +105,60 @@ export function goResearchTech(tribesman: Entity, tech: TechInfo): void {
    }
 
    throw new Error();
+}
+
+export function techStudyIsComplete(tribe: Tribe, tech: Tech): boolean {
+   return !tribe.techRequiresResearching(tech);
+}
+
+const useItemInTechResearch = (tribe: Tribe, tech: Tech, itemType: ItemType, amount: number): number => {
+   const amountRequiredToResearch = tech.researchItemRequirements.getItemCount(itemType);
+   
+   let amountUsed = 0;
+
+   const techUnlockProgress = tribe.techTreeUnlockProgress[tech.id];
+   if (typeof techUnlockProgress === "undefined") {
+      amountUsed = Math.min(amount, amountRequiredToResearch);
+      tribe.techTreeUnlockProgress[tech.id] = {
+         itemProgress: { [itemType]: amountUsed },
+         studyProgress: 0
+      };
+   } else if (typeof techUnlockProgress.itemProgress[itemType] === "undefined") {
+      amountUsed = Math.min(amount, amountRequiredToResearch);
+      techUnlockProgress.itemProgress[itemType] = amountUsed;
+   } else {
+      amountUsed = Math.min(amount, amountRequiredToResearch - techUnlockProgress.itemProgress[itemType]!);
+      techUnlockProgress.itemProgress[itemType]! += amountUsed;
+   }
+
+   return amountUsed;
+}
+
+const techHasEnoughItems = (tribe: Tribe, tech: Tech, itemType: ItemType): boolean => {
+   const amountRequiredToResearch = tech.researchItemRequirements.getItemCount(itemType);
+   
+   const techUnlockProgress = tribe.techTreeUnlockProgress[tech.id];
+   return (techUnlockProgress?.itemProgress[itemType] || 0) >= amountRequiredToResearch;
+}
+
+export function useItemsInResearch(tribesman: Entity, tech: Tech, itemType: ItemType, hotbarInventory: Inventory): boolean {
+   // @Incomplete: take into account backpack
+
+   const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   const tribe = tribeComponent.tribe;
+
+   for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
+      const item = hotbarInventory.itemSlots[itemSlot];
+      if (typeof item === "undefined" || item.type !== itemType) {
+         continue;
+      }
+
+      const amountUsed = useItemInTechResearch(tribe, tech, item.type, item.count);
+      if (amountUsed > 0) {
+         consumeItemFromSlot(tribesman, hotbarInventory, itemSlot, amountUsed);
+      }
+   }
+
+   // Return whether or not the item requirements have been fulfilled
+   return techHasEnoughItems(tribe, tech, itemType);
 }
