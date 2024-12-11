@@ -35,9 +35,9 @@ export interface VirtualBuilding {
    readonly renderInfo: EntityRenderInfo;
 }
 
-const virtualBuildingRecord = new Map<number, VirtualBuilding>();
+const virtualBuildingsMap = new Map<number, VirtualBuilding>();
 
-export function readVirtualBuildingFromData(reader: PacketReader): VirtualBuilding {
+const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
    const entityType = reader.readNumber() as StructureType;
    const virtualBuildingID = reader.readNumber();
    const layerDepth = reader.readNumber();
@@ -201,27 +201,56 @@ export function readVirtualBuildingFromData(reader: PacketReader): VirtualBuildi
    };
 }
 
-export function updateVirtualBuilding(virtualBuilding: VirtualBuilding): void {
-   if (!virtualBuildingRecord.has(virtualBuilding.id)) {
-      virtualBuildingRecord.set(virtualBuilding.id, virtualBuilding);
-      const renderInfo = virtualBuilding.renderInfo;
+const readGhostEntities = (reader: PacketReader, virtualBuildings: Map<number, VirtualBuilding>): void => {
+   const hasVirtualBuilding = reader.readBoolean();
+   reader.padOffset(3);
+   if (hasVirtualBuilding) {
+      const virtualBuilding = readVirtualBuildingFromData(reader);
+      virtualBuildings.set(virtualBuilding.id, virtualBuilding);
+   }
 
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      readGhostEntities(reader, virtualBuildings);
+   }
+}
+
+export function updateVirtualBuildings(reader: PacketReader): void {
+   // @Speed
+
+   const newVirtualBuildingsMap = new Map<number, VirtualBuilding>();
+   readGhostEntities(reader, newVirtualBuildingsMap);
+
+   // Check for removed virtual buildings
+   for (const pair of virtualBuildingsMap) {
+      const virtualBuildingID = pair[0];
+      if (newVirtualBuildingsMap.has(virtualBuildingID)) {
+         continue;
+      }
+
+      const virtualBuilding = pair[1];
+      removeGhostRenderInfo(virtualBuilding.renderInfo);
+
+      virtualBuildingsMap.delete(virtualBuildingID);
+   }
+   
+   // Add new virtual buildings
+   for (const pair of newVirtualBuildingsMap) {
+      const virtualBuildingID = pair[0];
+      if (virtualBuildingsMap.has(virtualBuildingID)) {
+         continue;
+      }
+
+      const virtualBuilding = pair[1];
+      virtualBuildingsMap.set(virtualBuildingID, virtualBuilding);
+
+      // Add render info for new virtual buildings
+      const renderInfo = virtualBuilding.renderInfo;
       addGhostRenderInfo(renderInfo);
 
       // Manually set the render info's position and rotation
       renderInfo.renderPosition.x = virtualBuilding.position.x;
       renderInfo.renderPosition.y = virtualBuilding.position.y;
       renderInfo.rotation = virtualBuilding.rotation;
-   }
-}
-
-export function updateVirtualBuildingRecord(seenVirtualBuildingIDs: ReadonlySet<number>): void {
-   for (const pair of virtualBuildingRecord) {
-      if (!seenVirtualBuildingIDs.has(pair[0])) {
-         virtualBuildingRecord.delete(pair[0]);
-
-         const virtualBuilding = pair[1];
-         removeGhostRenderInfo(virtualBuilding.renderInfo);
-      }
    }
 }

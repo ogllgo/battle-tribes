@@ -136,7 +136,7 @@ const addVisibleAssignmentsRecursively = (assignment: AIPlanAssignment, chunkBou
          rotation: planRotation,
          entityType: entityType,
          potentialBuildingPlans: getTribePotentialBuildingPlans(plan, chunkBounds),
-         assignedTribesmanID: assignment.plan.assignedEntity || -1
+         assignedTribesmanID: assignment.assignedEntity || -1
       });
    }
 
@@ -296,10 +296,10 @@ export function getVisibleWallConnections(playerLayer: Layer, visibleTribes: Rea
    return connectionsData;
 }
 
-const addBasePlanData = (packet: Packet, plan: AIPlan): void => {
-   packet.addNumber(plan.type);
-   packet.addNumber(plan.assignedEntity !== null ? plan.assignedEntity : 0);
-   packet.addBoolean(plan.isComplete);
+const addBaseAssignmentData = (packet: Packet, assignment: AIPlanAssignment): void => {
+   packet.addNumber(assignment.plan.type);
+   packet.addNumber(assignment.assignedEntity !== null ? assignment.assignedEntity : 0);
+   packet.addBoolean(assignment.plan.isComplete);
    packet.padOffset(3);
 }
 const getBasePlanDataLength = (): number => {
@@ -363,7 +363,7 @@ const addAssignmentData = (packet: Packet, assignment: AIPlanAssignment): void =
    const plan = assignment.plan;
    
    // Add data for the plan
-   addBasePlanData(packet, plan);
+   addBaseAssignmentData(packet, assignment);
    switch (plan.type) {
       case AIPlanType.craftRecipe:     addCraftRecipePlanData(packet, plan); break;
       case AIPlanType.placeBuilding:   addPlaceBuildingPlanData(packet, plan); break;

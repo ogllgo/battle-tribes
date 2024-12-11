@@ -26,9 +26,11 @@
    background-color: #deab4e;
 }
 #tribe-plan-visualiser .tribe-plan-node :is(h3, p) {
+   user-select: none;
    text-align: center;
    white-space: pre;
    margin: 0;
+   pointer-events: none;
 }
 
 #tribe-plan-visualiser .node-connector {

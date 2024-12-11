@@ -172,14 +172,16 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
    return {
       plan: plan,
-      children: children
+      children: children,
+      assignedEntity: null
    };
 }
 
 const createNewAssignmentWithSamePlan = <T extends AIPlan>(assignment: AIPlanAssignment<T> , children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
    return {
       plan: assignment.plan,
-      children: children
+      children: children,
+      assignedEntity: null
    };
 }
 
@@ -187,7 +189,6 @@ export function createRootPlanAssignment(children: Array<AIPlanAssignment>): AIP
    return createAssignment({
       type: AIPlanType.root,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: []
    }, children);
 }
@@ -196,7 +197,6 @@ export function createCraftRecipePlanAssignment(children: Array<AIPlanAssignment
    return createAssignment({
       type: AIPlanType.craftRecipe,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       recipe: recipe,
       productAmount: productAmount
@@ -207,7 +207,6 @@ export function createPlaceBuildingPlanAssignment(children: Array<AIPlanAssignme
    return createAssignment({
       type: AIPlanType.placeBuilding,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       virtualBuilding: virtualBuilding
    }, children);
@@ -217,7 +216,6 @@ export function createUpgradeBuildingPlanAssignment(children: Array<AIPlanAssign
    return createAssignment({
       type: AIPlanType.upgradeBuilding,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       baseBuildingID: baseBuildingID,
       rotation: rotation,
@@ -230,7 +228,6 @@ export function createTechStudyPlanAssignment(children: Array<AIPlanAssignment>,
    return createAssignment({
       type: AIPlanType.doTechStudy,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       tech: tech
    }, children);
@@ -240,7 +237,6 @@ export function createTechItemPlanAssignment(children: Array<AIPlanAssignment>, 
    return createAssignment({
       type: AIPlanType.doTechItems,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       tech: tech,
       itemType: itemType
@@ -251,7 +247,6 @@ export function createTechCompletePlanAssignment(children: Array<AIPlanAssignmen
    return createAssignment({
       type: AIPlanType.completeTech,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       tech: tech
    }, children);
@@ -261,7 +256,6 @@ export function createGatherItemPlanAssignment(children: Array<AIPlanAssignment>
    return createAssignment({
       type: AIPlanType.gatherItem,
       isComplete: false,
-      assignedEntity: null,
       potentialPlans: [],
       itemType: itemType,
       amount: amount
@@ -443,8 +437,8 @@ const trimAssignmentRecursively = (tribe: Tribe, assignment: AIPlanAssignment): 
          i--;
 
          // If there are any entities assigned to the plan, clear their assignment
-         if (childAssignment.plan.assignedEntity !== null) {
-            const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(childAssignment.plan.assignedEntity);
+         if (childAssignment.assignedEntity !== null) {
+            const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(childAssignment.assignedEntity);
             if (aiAssignmentComponent.wholeAssignment === childAssignment) {
                clearAssignment(aiAssignmentComponent);
             }
@@ -516,7 +510,7 @@ export function updateTribePlans(tribe: Tribe): void {
 /** Returns the first available assignment in the assignment's plan tree */
 export function getFirstAvailableAssignment(assignment: AIPlanAssignment): AIPlanAssignment | null {
    // If the plan is unable to be assigned to an entity, it can't be a leaf
-   if (assignment.plan.assignedEntity !== null || assignment.plan.isComplete) {
+   if (assignment.assignedEntity !== null || assignment.plan.isComplete) {
       return null;
    }
 

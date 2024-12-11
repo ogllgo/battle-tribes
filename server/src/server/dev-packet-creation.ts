@@ -1,11 +1,43 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
+import { AIPlanType } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, getTribeAssignmentDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
+import { AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
 import { getTribes } from "../world";
 import PlayerClient from "./PlayerClient";
+
+const getVirtualBuildingGhostEntitiesLength = (assignment: AIPlanAssignment): number => {
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
+   if (assignment.plan.type === AIPlanType.placeBuilding) {
+      lengthBytes += getVirtualBuildingDataLength(assignment.plan.virtualBuilding);
+   }
+
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const childAssignment of assignment.children) {
+      lengthBytes += getVirtualBuildingGhostEntitiesLength(childAssignment);
+   }
+
+   return lengthBytes;
+}
+
+const addVirtualBuildingGhostEntities = (packet: Packet, assignment: AIPlanAssignment): void => {
+   if (assignment.plan.type === AIPlanType.placeBuilding) {
+      packet.addBoolean(true);
+      packet.padOffset(3);
+      addVirtualBuildingData(packet, assignment.plan.virtualBuilding);
+   } else {
+      packet.addBoolean(false);
+      packet.padOffset(3);
+   }
+
+   packet.addNumber(assignment.children.length);
+   for (const childAssignment of assignment.children) {
+      addVirtualBuildingGhostEntities(packet, childAssignment);
+   }
+}
 
 export function getDevPacketDataLength(playerClient: PlayerClient): number {
    const tribes = getTribes();
@@ -47,10 +79,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
          lengthBytes += getTribeAssignmentDataLength(tribe);
 
          // Virtual buildings
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-         for (const virtualBuilding of tribe.virtualBuildings) {
-            lengthBytes += getVirtualBuildingDataLength(virtualBuilding);
-         }
+         lengthBytes += getVirtualBuildingGhostEntitiesLength(tribe.assignment);
       }
    }
 
@@ -116,9 +145,6 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       addTribeAssignmentData(packet, tribe);
 
       // Virtual buildings
-      packet.addNumber(tribe.virtualBuildings.length);
-      for (const virtualBuilding of tribe.virtualBuildings) {
-         addVirtualBuildingData(packet, virtualBuilding);
-      }
+      addVirtualBuildingGhostEntities(packet, tribe.assignment);
    }
 }

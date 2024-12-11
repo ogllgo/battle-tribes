@@ -179,6 +179,8 @@ const TribePlanVisualiser = () => {
          return;
       }
 
+      e.preventDefault();
+
       setOffsetX(offsetX + (e.clientX - lastCursorX) / zoom);
       setOffsetY(offsetY + (e.clientY - lastCursorY) / zoom);
       

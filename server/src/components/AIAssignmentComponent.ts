@@ -49,15 +49,18 @@ export function clearAssignment(aiAssignmentComponent: AIAssignmentComponent): v
    aiAssignmentComponent.currentAssignment = null;
 }
 
-const completeAssignment = (aiAssignmentComponent: AIAssignmentComponent, assignment: AIPlanAssignment, tribe: Tribe): void => {
+const completeAssignment = (entity: Entity, aiAssignmentComponent: AIAssignmentComponent, assignment: AIPlanAssignment, tribe: Tribe): void => {
    assignment.plan.isComplete = true;
 
    assert(aiAssignmentComponent.wholeAssignment !== null);
    // Move on to the next part of the assignment
    aiAssignmentComponent.currentAssignment = getFirstAvailableAssignment(aiAssignmentComponent.wholeAssignment);
+   
    // If all of the assignment was completed, note that in the whole assignment
    if (aiAssignmentComponent.currentAssignment === null) {
       aiAssignmentComponent.wholeAssignment = null;
+   } else {
+      aiAssignmentComponent.currentAssignment.assignedEntity = entity;
    }
 
    // If the plan was to place a building, the plan has an associated virutal buildling which
@@ -101,12 +104,12 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
       if (availableAssignment !== null) {
          const assignment = createPersonalAssignment(entity, availableAssignment);
          
-         assignment.plan.assignedEntity = entity;
-
          aiAssignmentComponent.wholeAssignment = assignment;
          aiAssignmentComponent.currentAssignment = getFirstAvailableAssignment(assignment);
-         /** There should always be an aviailable part of a new assignment */
+         /** There should always be an available part of a new assignment */
          assert(aiAssignmentComponent.currentAssignment !== null);
+         
+         aiAssignmentComponent.currentAssignment.assignedEntity = entity;
       }
    }
 
@@ -150,7 +153,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          
          goCraftItem(entity, plan.recipe, tribeComponent.tribe);
          if (craftGoalIsComplete(plan, inventoryComponent)) {
-            completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+            completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }
          break;
       }
@@ -161,7 +164,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
 
          const isPlaced = goPlaceBuilding(entity, hotbarInventory, tribeComponent.tribe, plan);
          if (isPlaced) {
-            completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+            completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }
          break;
       }
@@ -172,7 +175,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
       case AIPlanType.doTechStudy: {
          goResearchTech(entity, plan.tech);
          if (techStudyIsComplete(tribeComponent.tribe, plan.tech)) {
-            completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+            completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }
          break;
       }
@@ -184,7 +187,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          // Use items in research
          const isComplete = useItemsInResearch(entity, plan.tech, plan.itemType, hotbarInventory);
          if (isComplete) {
-            completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+            completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }
          break;
       }
@@ -192,13 +195,13 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          assert(tribeComponent.tribe.techIsComplete(plan.tech));
 
          tribeComponent.tribe.unlockTech(plan.tech);
-         completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+         completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          break;
       }
       case AIPlanType.gatherItem: {
          const inventoryComponent = InventoryComponentArray.getComponent(entity);
          if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
-            completeAssignment(aiAssignmentComponent, assignment, tribeComponent.tribe);
+            completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          } else {
             gatherResource(entity, plan.itemType, visibleItemEntities);
          }

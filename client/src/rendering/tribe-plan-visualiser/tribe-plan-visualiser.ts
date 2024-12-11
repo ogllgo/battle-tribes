@@ -120,7 +120,7 @@ const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, is
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -137,7 +137,7 @@ const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | n
       childPlans: [],
       recipe: CRAFTING_RECIPES[recipeIdx],
       productAmount: productAmount,
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -152,7 +152,7 @@ const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity |
       isComplete: isComplete,
       childPlans: [],
       entityType: entityType,
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -167,7 +167,7 @@ const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity
       isComplete: isComplete,
       childPlans: [],
       blueprintType: blueprintType,
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -182,7 +182,7 @@ const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | nul
       isComplete: isComplete,
       childPlans: [],
       tech: getTechByID(techID),
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -199,7 +199,7 @@ const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null
       childPlans: [],
       tech: getTechByID(techID),
       itemType: itemType,
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -214,7 +214,7 @@ const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | 
       isComplete: isComplete,
       childPlans: [],
       tech: getTechByID(techID),
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -231,7 +231,7 @@ const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | nu
       childPlans: [],
       itemType: itemType,
       amount: amount,
-      displayWidth: Vars.NODE_DISPLAY_SIZE,
+      displayWidth: 0,
       depth: depth,
       xOffset: 0
    };
@@ -267,6 +267,10 @@ const readAssignmentData = (reader: PacketReader, depth: number): AIPlan => {
       plan.displayWidth += childPlan.displayWidth;
    }
 
+   if (numChildren === 0) {
+      plan.displayWidth += Vars.NODE_DISPLAY_SIZE;
+   }
+
    return plan;
 }
 
@@ -278,7 +282,6 @@ const fillPlanChildrenXOffset = (plan: AIPlan): void => {
       // Inherit parent x offset
       childPlan.xOffset = plan.xOffset;
       childPlan.xOffset += offsetCounter + childPlan.displayWidth * 0.5;
-      childPlan.xOffset += Vars.NODE_DISPLAY_SIZE * 0.5;
 
       fillPlanChildrenXOffset(childPlan);
       
