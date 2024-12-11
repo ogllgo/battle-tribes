@@ -29,7 +29,7 @@ export interface ExtendedTribeInfo extends ShortTribeInfo {
    readonly selectedTech: Tech | null;
    readonly unlockedTechs: ReadonlyArray<Tech>;
    readonly techTreeUnlockProgress: TechTreeUnlockProgress;
-   readonly tribesman: ReadonlyArray<TribesmanInfo>;
+   readonly tribesmen: ReadonlyArray<TribesmanInfo>;
 }
 
 export type TribeData = ExtendedTribeInfo | ShortTribeInfo;
@@ -38,7 +38,7 @@ export let playerTribe: ExtendedTribeInfo;
 export const tribes = new Array<TribeData>();
 
 export function tribeHasExtendedInfo(tribe: TribeData): tribe is ExtendedTribeInfo {
-   return typeof (tribe as ExtendedTribeInfo).tribesman !== "undefined";
+   return typeof (tribe as ExtendedTribeInfo).tribesmen !== "undefined";
 }
 
 export function updatePlayerTribe(tribe: ExtendedTribeInfo): void {
@@ -160,6 +160,6 @@ export function readExtendedTribeData(reader: PacketReader): ExtendedTribeInfo {
       selectedTech: selectedTech,
       unlockedTechs: unlockedTechs,
       techTreeUnlockProgress: techTreeUnlockProgress,
-      tribesman: tribesmen
+      tribesmen: tribesmen
    };
 }

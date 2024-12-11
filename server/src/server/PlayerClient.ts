@@ -1,4 +1,4 @@
-import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, VisibleChunkBounds } from "battletribes-shared/client-server-types";
+import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, GameDataPacketOptions } from "battletribes-shared/client-server-types";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { Entity } from "battletribes-shared/entities";
@@ -6,6 +6,7 @@ import WebSocket from "ws";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
+import { TransformComponentArray } from "../components/TransformComponent";
 
 export const enum PlayerClientVars {
    VIEW_PADDING = 128
@@ -28,7 +29,16 @@ class PlayerClient {
    public lastLayer: Layer;
    public screenWidth: number;
    public screenHeight: number;
-   public visibleChunkBounds: VisibleChunkBounds;
+
+   public minVisibleX = 0;
+   public maxVisibleX = 0;
+   public minVisibleY = 0;
+   public maxVisibleY = 0;
+
+   public minVisibleChunkX = 0;
+   public maxVisibleChunkX = 0;
+   public minVisibleChunkY = 0;
+   public maxVisibleChunkY = 0;
 
    /** All hits that have occured to any entity visible to the player */
    public visibleHits = new Array<HitData>();
@@ -54,23 +64,32 @@ class PlayerClient {
       this.lastLayer = layer;
       this.screenWidth = screenWidth;
       this.screenHeight = screenHeight;
-      this.visibleChunkBounds = this.getVisibleChunkBounds(playerPosition, screenWidth, screenHeight);
       this.instance = instance;
       this.username = username;
       this.isDev = isDev;
+
+      this._updateVisibleChunkBounds(playerPosition, screenWidth, screenHeight);
    }
 
-   public getVisibleChunkBounds(playerPosition: Point, screenWidth: number, screenHeight: number): VisibleChunkBounds {
-      const minVisibleX = playerPosition.x - screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
-      const maxVisibleX = playerPosition.x + screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
-      const minVisibleY = playerPosition.y - screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
-      const maxVisibleY = playerPosition.y + screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
+   private _updateVisibleChunkBounds(playerPosition: Point, screenWidth: number, screenHeight: number): void {
+      this.minVisibleX = playerPosition.x - screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
+      this.maxVisibleX = playerPosition.x + screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
+      this.minVisibleY = playerPosition.y - screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
+      this.maxVisibleY = playerPosition.y + screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
       
-      const minChunkX = Math.max(Math.min(Math.floor(minVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor(maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor(minVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor(maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      return [minChunkX, maxChunkX, minChunkY, maxChunkY];
+      this.minVisibleChunkX = Math.max(Math.min(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      this.maxVisibleChunkX = Math.max(Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      this.minVisibleChunkY = Math.max(Math.min(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      this.maxVisibleChunkY = Math.max(Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   }
+
+   public updateVisibleChunkBounds(): void {
+      const transformComponent = TransformComponentArray.getComponent(this.instance);
+      this._updateVisibleChunkBounds(transformComponent.position, this.screenWidth, this.screenHeight);
+   }
+
+   public hasPacketOption(packetOption: GameDataPacketOptions): boolean {
+      return (this.gameDataOptions & packetOption) !== 0;
    }
 }
 

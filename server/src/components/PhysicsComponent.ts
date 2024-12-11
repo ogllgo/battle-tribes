@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
-import { addDirtyPathfindingEntity, entityCanBlockPathfinding, removeDirtyPathfindingEntity } from "../pathfinding";
+import { entityCanBlockPathfinding } from "../pathfinding";
 import { Point } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
@@ -64,18 +64,10 @@ PhysicsComponentArray.onTick = {
    func: onTick
 };
 PhysicsComponentArray.onJoin = onJoin;
-PhysicsComponentArray.onRemove = onRemove;
 
 function onJoin(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    physicsComponent.lastValidLayer = getEntityLayer(entity);
-}
-
-function onRemove(entity: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.pathfindingNodesAreDirty) {
-      removeDirtyPathfindingEntity(entity);
-   }
 }
 
 const cleanRotation = (transformComponent: TransformComponent): void => {
@@ -242,7 +234,6 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
 
 const dirtifyPathfindingNodes = (entity: Entity, physicsComponent: PhysicsComponent): void => {
    if (!physicsComponent.pathfindingNodesAreDirty && entityCanBlockPathfinding(entity)) {
-      addDirtyPathfindingEntity(entity);
       physicsComponent.pathfindingNodesAreDirty = true;
    }
 }

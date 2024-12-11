@@ -18,6 +18,8 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
+import { PatrolAIComponent } from "../../components/PatrolAIComponent";
+import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -27,6 +29,8 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribeMember
    | ServerComponentType.tribesmanAI
    | ServerComponentType.aiHelper
+   | ServerComponentType.aiAssignment
+   | ServerComponentType.patrolAI
    | ServerComponentType.inventoryUse
    | ServerComponentType.inventory
    | ServerComponentType.damageBox;
@@ -65,6 +69,10 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
    const tribesmanAIComponent = new TribesmanAIComponent();
 
    const aiHelperComponent = new AIHelperComponent(500);
+
+   const aiAssignmentComponent = new AIAssignmentComponent();
+   
+   const patrolAIComponent = new PatrolAIComponent();
    
    const inventoryComponent = new InventoryComponent();
 
@@ -83,6 +91,8 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
          [ServerComponentType.tribeMember]: tribeMemberComponent,
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.aiAssignment]: aiAssignmentComponent,
+         [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.damageBox]: damageBoxComponent

@@ -1,7 +1,6 @@
 import { CircleDebugData, EntityDebugData, LineDebugData, PathData, TileHighlightData } from "battletribes-shared/client-server-types";
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
-import { getTechByID } from "battletribes-shared/techs";
 import { TRIBESMAN_COMMUNICATION_RANGE } from "./entities/tribes/tribesman-ai/tribesman-ai";
 import { StructureComponentArray } from "./components/StructureComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
@@ -10,34 +9,35 @@ import { ItemTypeString } from "battletribes-shared/items/items";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
 import { AIHelperComponentArray } from "./components/AIHelperComponent";
-import { TribesmanPlan } from "./tribesman-ai/tribesman-ai-planning";
-import { TribesmanPlanType } from "../../shared/src/utils";
+import { AIPlan } from "./tribesman-ai/tribesman-ai-planning";
+import { AIPlanType } from "../../shared/src/utils";
+import { AIAssignmentComponentArray } from "./components/AIAssignmentComponent";
 
-const getPlanDebugString = (plan: TribesmanPlan): string => {
+const getPlanDebugString = (plan: AIPlan): string => {
    switch (plan.type) {
-      case TribesmanPlanType.craftRecipe: {
+      case AIPlanType.craftRecipe: {
          return "Craft " + ItemTypeString[plan.recipe.product];
       }
-      case TribesmanPlanType.placeBuilding: {
+      case AIPlanType.placeBuilding: {
          return "Place  " + EntityTypeString[plan.virtualBuilding.entityType];
       }
-      case TribesmanPlanType.doTechStudy: {
+      case AIPlanType.doTechStudy: {
          return "Study " + plan.tech.name;
       }
-      case TribesmanPlanType.doTechItems: {
+      case AIPlanType.doTechItems: {
          return "Contribute " + ItemTypeString[plan.itemType] + " to " + plan.tech.name;
       }
-      case TribesmanPlanType.completeTech: {
+      case AIPlanType.completeTech: {
          return "Complete " + plan.tech.name;
       }
-      case TribesmanPlanType.gatherItem: {
+      case AIPlanType.gatherItem: {
          return "Gather " + ItemTypeString[plan.itemType];
       }
-      case TribesmanPlanType.upgradeBuilding: {
+      case AIPlanType.upgradeBuilding: {
          return "Upgrade " + EntityTypeString[getEntityType(plan.baseBuildingID)];
       }
-      case TribesmanPlanType.root: {
-         throw new Error();
+      case AIPlanType.root: {
+         return "Nothing left to do";
       }
    }
 }
@@ -80,9 +80,12 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
          thickness: 8,
          colour: [1, 0, 0.3]
       });
+   }
 
-      if (tribesmanAIComponent.assignedPlan !== null) {
-         debugEntries.push("Tribesman plan: " + getPlanDebugString(tribesmanAIComponent.assignedPlan));
+   if (AIAssignmentComponentArray.hasComponent(entity)) {
+      const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(entity);
+      if (aiAssignmentComponent.wholeAssignment !== null) {
+         debugEntries.push("Tribesman plan: " + getPlanDebugString(aiAssignmentComponent.wholeAssignment.plan));
       } else {
          debugEntries.push("Tribesman plan: none");
       }
@@ -90,7 +93,7 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
 
    if (TribeComponentArray.hasComponent(entity)) {
       const tribeComponent = TribeComponentArray.getComponent(entity);
-      debugEntries.push("Researched techs: " + tribeComponent.tribe.unlockedTechs.map(techID => getTechByID(techID).name).join(", "));
+      debugEntries.push("Researched techs: " + tribeComponent.tribe.unlockedTechs.map(tech => tech.name).join(", "));
    }
 
    if (StructureComponentArray.hasComponent(entity)) {

@@ -2,10 +2,10 @@ import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
-import { assert, getAngleDiff, TribesmanPlanType } from "battletribes-shared/utils";
+import { getAngleDiff } from "battletribes-shared/utils";
 import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
-import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray, hasSpaceForRecipe } from "../../../components/InventoryComponent";
+import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray } from "../../../components/InventoryComponent";
 import { TribesmanAIComponentArray, TribesmanPathType, itemThrowIsOnCooldown } from "../../../components/TribesmanAIComponent";
 import { calculateRadialAttackTargets, throwItem, } from "../tribe-member";
 import { InventoryUseComponentArray, repairBuilding, setLimbActions } from "../../../components/InventoryUseComponent";
@@ -19,20 +19,18 @@ import { huntEntity } from "./tribesman-combat-ai";
 import { PlanterBoxComponentArray, placePlantInPlanterBox } from "../../../components/PlanterBoxComponent";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
-import { gatherItemPlanIsComplete, gatherResource } from "./tribesman-resource-gathering";
-import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "./tribesman-researching";
+import { goResearchTech } from "./tribesman-researching";
 import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
-import { attemptToRepairBuildings, goPlaceBuilding, goUpgradeBuilding } from "./tribesman-structures";
-import { craftGoalIsComplete, goCraftItem } from "./tribesman-crafting";
+import { attemptToRepairBuildings } from "./tribesman-structures";
 import { getGiftableItemSlot, getRecruitTarget } from "./tribesman-recruiting";
 import { escapeFromEnemies, tribesmanShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
-import { tribesmanDoPatrol } from "./tribesman-patrolling";
-import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory, ALL_ITEM_TYPES } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
 import { createItem } from "../../../items";
-import { completeTribesmanPlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
+import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -303,7 +301,7 @@ const getSeedItemSlot = (hotbarInventory: Inventory, plantType: PlanterBoxPlant)
    return getItemTypeSlot(hotbarInventory, searchItemType);
 }
 
-// @Cleanup: Remove to tribesmanAIComponent
+// @Cleanup: Move to tribesmanAIComponent
 export function tickTribesman(tribesman: Entity): void {
    // @Cleanup: This is an absolutely massive function
    
@@ -312,11 +310,6 @@ export function tickTribesman(tribesman: Entity): void {
 
    tribesmanAIComponent.targetResearchBenchID = 0;
    tribesmanAIComponent.ticksSinceLastHelpRequest++;
-
-   // As soon as the tribesman stops patrolling, clear the existing target patrol position.
-   if (tribesmanAIComponent.currentAIType !== TribesmanAIType.patrolling) {
-      tribesmanAIComponent.targetPatrolPositionX = -1;
-   }
 
    // @Speed @Hack: ideally should be done once the crafting job is complete
    // @Hack: don't do logic based off the tribesman ai type
@@ -724,86 +717,9 @@ export function tickTribesman(tribesman: Entity): void {
    //    }
    // }
 
-   const plan = tribesmanAIComponent.assignedPlan;
-   if (plan !== null) {
-      switch (plan.type) {
-         case TribesmanPlanType.craftRecipe: {
-            // If not enough space, try to make space
-            if (!hasSpaceForRecipe(inventoryComponent, plan.recipe, InventoryName.hotbar)) {
-               // Just throw out any item which isn't used in the recipe
-               let hasThrown = false;
-               for (let i = 0; i < hotbarInventory.items.length; i++) {
-                  const item = hotbarInventory.items[i];
-
-                  if (plan.recipe.ingredients.getItemCount(item.type) === 0) {
-                     const itemSlot = hotbarInventory.getItemSlot(item);
-                     throwItem(tribesman, InventoryName.hotbar, itemSlot, item.count, transformComponent.rotation);
-                     hasThrown = true;
-                     break;
-                  }
-               }
-
-               if (!hasThrown) {
-                  console.warn("couldn't throw");
-                  console.log(hotbarInventory.itemSlots);
-                  console.log(plan.recipe);
-                  return;
-               }
-            }
-            
-            goCraftItem(tribesman, plan.recipe, tribeComponent.tribe);
-            if (craftGoalIsComplete(plan, inventoryComponent)) {
-               completeTribesmanPlan(tribesman, plan);
-            }
-            return;
-         }
-         case TribesmanPlanType.placeBuilding: {
-            const isGoing = goPlaceBuilding(tribesman, hotbarInventory, tribeComponent.tribe, plan);
-            if (isGoing) {
-               return;
-            }
-            break;
-         }
-         case TribesmanPlanType.upgradeBuilding: {
-            goUpgradeBuilding(tribesman, plan);
-            return;
-         }
-         case TribesmanPlanType.doTechStudy: {
-            goResearchTech(tribesman, plan.tech);
-            if (techStudyIsComplete(tribeComponent.tribe, plan.tech)) {
-               completeTribesmanPlan(tribesman, plan);
-            }
-            return;
-         }
-         case TribesmanPlanType.doTechItems: {
-            // Use items in research
-            const isComplete = useItemsInResearch(tribesman, plan.tech, plan.itemType, hotbarInventory);
-            if (isComplete) {
-               completeTribesmanPlan(tribesman, plan);
-            }
-            break;
-         }
-         case TribesmanPlanType.completeTech: {
-            assert(tribeComponent.tribe.techIsComplete(plan.tech));
-
-            tribeComponent.tribe.unlockTech(plan.tech.id);
-            completeTribesmanPlan(tribesman, plan);
-            break;
-         }
-         case TribesmanPlanType.gatherItem: {
-            const isGathering = gatherResource(tribesman, plan.itemType, visibleItemEntities);
-            if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
-               completeTribesmanPlan(tribesman, plan);
-            }
-            if (isGathering) {
-               return;
-            }
-            // @Incomplete:
-            // level 1) explore randomly if not gathering
-            // level 2) remember which places the tribesman has been to and go there to get more of those resources
-            break;
-         }
-      }
+   const isDoingAssignments = runAssignmentAI(tribesman, visibleItemEntities);
+   if (isDoingAssignments) {
+      return;
    }
 
    // @Cleanup: combine this with the one above
@@ -896,15 +812,16 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    // If not in an AI tribe, try to gather any resources you can indiscriminantly
-   if (!tribeComponent.tribe.isAIControlled) {
-      // @Speed?
-      for (const itemType of ALL_ITEM_TYPES) {
-         const isGathering = gatherResource(tribesman, itemType, visibleItemEntities);
-         if (isGathering) {
-            return;
-         }
-      }
-   }
+   // @Incomplete
+   // if (!tribeComponent.tribe.isAIControlled) {
+   //    // @Speed?
+   //    for (const itemType of ALL_ITEM_TYPES) {
+   //       const isGathering = gatherResource(tribesman, itemType, visibleItemEntities);
+   //       if (isGathering) {
+   //          return;
+   //       }
+   //    }
+   // }
 
    // @Cleanup: Remove once all paths set their limb actions
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
@@ -942,16 +859,6 @@ export function tickTribesman(tribesman: Entity): void {
       }
    }
 
-   // Patrol tribe area
-   const isPatrolling = tribesmanDoPatrol(tribesman, plan !== null);
-   if (isPatrolling) {
-      return;
-   }
-
-   // If all else fails, don't do anything
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-   stopEntity(physicsComponent);
-
-   tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
-   clearTribesmanPath(tribesman);
+   // If there's nothing else to do, patrol the tribe area
+   tribesmanDoPatrol(tribesman, tribeComponent.tribe.getArea());
 }

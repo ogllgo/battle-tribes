@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
-import { Entity, LimbAction } from "../../../../shared/src/entities";
+import { LimbAction } from "../../../../shared/src/entities";
 import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
@@ -14,14 +14,13 @@ import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItem
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
-import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
+import { getLimbByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
-import Game from "../../Game";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
 import { closeCurrentMenu } from "../../menus";
-import { setGhostRenderInfo } from "../../rendering/webgl/entity-ghost-rendering";
+import { addGhostRenderInfo, removeGhostRenderInfo } from "../../rendering/webgl/entity-ghost-rendering";
 import { attemptToCompleteNode } from "../../research";
 import { playSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
@@ -50,6 +49,7 @@ import { createFireTorchComponentParams } from "../../entity-components/server-c
 import { createSlurbTorchComponentParams } from "../../entity-components/server-components/SlurbTorchComponent";
 import { createBarrelComponentParams } from "../../entity-components/server-components/BarrelComponent";
 import { playerTribe } from "../../tribes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -99,12 +99,12 @@ const enum BufferedInputType {
 const INPUT_COYOTE_TIME = 0.05;
 
 /** Acceleration of the player while moving without any modifiers. */
-const PLAYER_ACCELERATION = 900;
+const PLAYER_ACCELERATION = 700;
 
 const PLAYER_LIGHTSPEED_ACCELERATION = 15000;
 
 /** Acceleration of the player while slowed. */
-const PLAYER_SLOW_ACCELERATION = 500;
+const PLAYER_SLOW_ACCELERATION = 400;
 
 /** Acceleration of the player for a brief period after being hit */
 const PLAYER_DISCOMBOBULATED_ACCELERATION = 300;
@@ -124,7 +124,7 @@ let attackBufferTime = 0;
 let bufferedInputType = BufferedInputType.attack;
 let bufferedInputInventory = InventoryName.hotbar;
 
-let placeableEntityGhost: Entity = 0;
+let placeableEntityGhostRenderInfo: EntityRenderInfo | null = null;
 
 const createItemRestTimes = (num: number): Array<ItemRestTime> => {
    const restTimes = new Array<ItemRestTime>();
@@ -153,8 +153,28 @@ export function getHotbarSelectedItemSlot(): number {
 
 export function getInstancePlayerAction(inventoryName: InventoryName): LimbAction {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-   const limbInfo = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+   const limbInfo = getLimbByInventoryName(inventoryUseComponent, inventoryName);
    return limbInfo.action;
+}
+
+export function playerIsHoldingPlaceableItem(): boolean {
+   if (playerInstance === null) {
+      return false;
+   }
+
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
+
+   const hotbarLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+   if (hotbarLimb.heldItemType !== null && ITEM_TYPE_RECORD[hotbarLimb.heldItemType] === "placeable") {
+      return true;
+   }
+
+   const offhandLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+   if (offhandLimb.heldItemType !== null && ITEM_TYPE_RECORD[offhandLimb.heldItemType] === "placeable") {
+      return true;
+   }
+
+   return false;
 }
 
 /** Distract blind target. Now, discombobulate. */
@@ -212,7 +232,7 @@ export function updatePlayerItems(): void {
       const selectedItemSlot = i === 0 ? hotbarSelectedItemSlot : 1;
       
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
-      const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+      const limb = getLimbByInventoryName(inventoryUseComponent, inventoryName);
 
       if (limb.currentActionPauseTicksRemaining > 0) {
          limb.currentActionPauseTicksRemaining--;
@@ -404,7 +424,7 @@ export function updatePlayerItems(): void {
 const tryToSwing = (inventoryName: InventoryName): boolean => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
 
-   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+   const limb = getLimbByInventoryName(inventoryUseComponent, inventoryName);
    const attackInfo = getItemAttackInfo(limb.heldItemType);
 
    // Shield-bash
@@ -865,7 +885,10 @@ export function onItemDeselect(itemType: ItemType, isOffhand: boolean): void {
          latencyGameState.playerIsPlacingEntity = false;
 
          // Clear entity ghost
-         setGhostRenderInfo(null);
+         if (placeableEntityGhostRenderInfo !== null) {
+            removeGhostRenderInfo(placeableEntityGhostRenderInfo);
+            placeableEntityGhostRenderInfo = null;
+         }
          break;
       }
    }
@@ -900,7 +923,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
 
    const attackInfo = getItemAttackInfo(itemType);
    if (attackInfo.attackTimings.blockTimeTicks !== null) {
-      const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+      const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
 
       // Start blocking
       if (limb.action === LimbAction.none) {
@@ -941,7 +964,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
             break;
          }
 
-         const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+         const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
          if (limb.action === LimbAction.none) {
             const itemInfo = ITEM_INFO_RECORD[itemType] as ConsumableItemInfo;
             let action: LimbAction;
@@ -974,7 +997,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       case "crossbow": {
          if (!definiteGameState.hotbarCrossbowLoadProgressRecord.hasOwnProperty(itemSlot) || definiteGameState.hotbarCrossbowLoadProgressRecord[itemSlot]! < 1) {
             // Start loading crossbow
-            const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+            const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
             limb.action = LimbAction.loadCrossbow;
             limb.lastCrossbowLoadTicks = Board.serverTicks;
             playSound("crossbow-load.mp3", 0.4, 1, transformComponent.position, null);
@@ -987,7 +1010,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       }
       case "bow": {
          for (let i = 0; i < 2; i++) {
-            const limb = getLimbInfoByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
+            const limb = getLimbByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
             limb.action = LimbAction.chargeBow;
             limb.currentActionElapsedTicks = 0;
             limb.currentActionDurationTicks = (ITEM_INFO_RECORD[itemType] as BowItemInfo).shotChargeTimeTicks;
@@ -1000,7 +1023,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "spear": {
-         const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+         const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
          if (limb.action === LimbAction.none) {
             limb.action = LimbAction.chargeSpear;
             limb.currentActionElapsedTicks = 0;
@@ -1011,7 +1034,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       }
       case "battleaxe": {
          // If an axe is already thrown, don't throw another
-         const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+         const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
          if (limb.thrownBattleaxeItemID !== -1) {
             break;
          }
@@ -1031,7 +1054,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, layer.getWorldInfo());
          
          if (placeInfo.isValid) {
-            const limb = getLimbInfoByInventoryName(inventoryUseComponent, itemInventoryName);
+            const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
             limb.lastAttackTicks = Board.serverTicks;
 
             sendItemUsePacket();
@@ -1044,7 +1067,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
 
 const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+   const limb = getLimbByInventoryName(inventoryUseComponent, inventoryName);
 
    const itemCategory = ITEM_TYPE_RECORD[item.type];
    switch (itemCategory) {
@@ -1091,7 +1114,7 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
          }
 
          for (let i = 0; i < 2; i++) {
-            const limb = getLimbInfoByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
+            const limb = getLimbByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
             limb.action = LimbAction.none;
             limb.currentActionElapsedTicks = 0;
             limb.currentActionDurationTicks = 0;
@@ -1151,7 +1174,7 @@ export function selectItemSlot(itemSlot: number): void {
    }
 
    const playerInventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
-   const hotbarUseInfo = getLimbInfoByInventoryName(playerInventoryUseComponent, InventoryName.hotbar);
+   const hotbarUseInfo = getLimbByInventoryName(playerInventoryUseComponent, InventoryName.hotbar);
    hotbarUseInfo.selectedItemSlot = itemSlot;
 
    // Update the held item type
@@ -1202,6 +1225,7 @@ const tickItem = (itemType: ItemType): void => {
 
          const components: EntityServerComponentParams = {};
 
+         // @Hack @Cleanup: make the client and server use the some component params system
          const componentTypes = EntityComponents[entityType];
          for (let i = 0; i < componentTypes.length; i++) {
             const componentType = componentTypes[i];
@@ -1315,7 +1339,13 @@ const tickItem = (itemType: ItemType): void => {
             }
          }
 
-         setGhostRenderInfo(renderInfo);
+         // Remove any previous render info
+         if (placeableEntityGhostRenderInfo !== null) {
+            removeGhostRenderInfo(placeableEntityGhostRenderInfo);
+         }
+         
+         placeableEntityGhostRenderInfo = renderInfo;
+         addGhostRenderInfo(renderInfo);
 
          // Manually set the render info's position and rotation
          const transformComponentParams = components[ServerComponentType.transform]!;

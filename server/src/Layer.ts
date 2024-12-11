@@ -146,6 +146,7 @@ export default class Layer {
    public readonly tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
    public readonly tileCensus = createTileCensus();
+   public readonly buildingBlockingTiles = new Set<TileIndex>();
 
    public readonly wallSubtileTypes = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
@@ -169,6 +170,7 @@ export default class Layer {
    public readonly nodeGroupIDs = createNodeGroupIDs();
 
    public readonly localBiomes = new Array<LocalBiome>();
+   public readonly tileToLocalBiomeRecord: Record<TileIndex, LocalBiome> = {};
 
    constructor(depth: number) {
       this.depth = depth;
@@ -214,7 +216,7 @@ export default class Layer {
       });
    }
 
-   public getTileType(tileIndex: number): TileType {
+   public getTileType(tileIndex: TileIndex): TileType {
       return this.tileTypes[tileIndex];
    }
    
@@ -227,6 +229,10 @@ export default class Layer {
       const tileX = Math.floor(x / Settings.TILE_SIZE);
       const tileY = Math.floor(y / Settings.TILE_SIZE);
       return this.getTileXYType(tileX, tileY);
+   }
+
+   public getTileLocalBiome(tileIndex: TileIndex): LocalBiome {
+      return this.tileToLocalBiomeRecord[tileIndex]!;
    }
 
    public getSubtileType(subtileIndex: number): SubtileType {

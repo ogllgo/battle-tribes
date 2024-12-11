@@ -8,7 +8,7 @@ import { ClientBlockBox, ClientDamageBox } from "../../boxes";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { InventoryName } from "battletribes-shared/items/items";
-import { getLimbInfoByInventoryName, InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
+import { getLimbByInventoryName, InventoryUseComponentArray, LimbInfo } from "./InventoryUseComponent";
 import { discombobulate, GameInteractableLayer_setItemRestTime } from "../../components/game/GameInteractableLayer";
 import { AttackVars } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, playerInstance } from "../../world";
@@ -268,7 +268,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.damageBo
 
 const blockPlayerAttack = (damageBox: ClientDamageBox): void => {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-   const limb = getLimbInfoByInventoryName(inventoryUseComponent, damageBox.associatedLimbInventoryName);
+   const limb = getLimbByInventoryName(inventoryUseComponent, damageBox.associatedLimbInventoryName);
    
    // Pause the attack for a brief period
    limb.currentActionPauseTicksRemaining = Math.floor(Settings.TPS / 15);
@@ -377,7 +377,7 @@ function onTick(entity: Entity): void {
          if (blockBox.collidingBox !== collisionInfo.collidingBox) {
             blockBox.hasBlocked = true;
 
-            const limb = getLimbInfoByInventoryName(inventoryUseComponent, blockBox.associatedLimbInventoryName);
+            const limb = getLimbByInventoryName(inventoryUseComponent, blockBox.associatedLimbInventoryName);
             onPlayerBlock(limb);
          }
          blockBox.collidingBox = collisionInfo.collidingBox;

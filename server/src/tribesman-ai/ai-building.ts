@@ -4,10 +4,8 @@ import { StructureType } from "battletribes-shared/structures";
 import { Point, assert, distBetweenPointAndRectangle } from "battletribes-shared/utils";
 import { TribeRoom, createTribeArea, updateTribeAreaDoors } from "./ai-building-areas";
 import { assertHitboxIsRectangular, BoxType, hitboxIsCircular, Hitbox } from "battletribes-shared/boxes/boxes";
-import { getGameTicks, getTribes } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { layers } from "../layers";
 import TribeBuildingLayer, { getNumWallConnections, updateTribeWalls } from "./building-plans/TribeBuildingLayer";
 
 const enum Vars {

@@ -1,4 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
+import { AIAssignmentComponentArray, AIAssignmentComponentParams } from "./server-components/AIAssignmentComponent";
 import { AIHelperComponentArray, AIHelperComponentParams } from "./server-components/AIHelperComponent";
 import { AmmoBoxComponentArray, AmmoBoxComponentParams } from "./server-components/AmmoBoxComponent";
 import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ArrowComponent";
@@ -44,6 +45,7 @@ import { InventoryUseComponentArray, InventoryUseComponentParams } from "./serve
 import { ItemComponentArray, ItemComponentParams } from "./server-components/ItemComponent";
 import { KrumblidComponentArray, KrumblidComponentParams } from "./server-components/KrumblidComponent";
 import { LayeredRodComponentArray, LayeredRodComponentParams } from "./server-components/LayeredRodComponent";
+import { PatrolAIComponentArray, PatrolAIComponentParams } from "./server-components/PatrolAIComponent";
 import { PebblumComponentArray, PebblumComponentParams } from "./server-components/PebblumComponent";
 import { PhysicsComponentArray, PhysicsComponentParams } from "./server-components/PhysicsComponent";
 import { PlantComponentArray, PlantComponentParams } from "./server-components/PlantComponent";
@@ -161,6 +163,8 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tetheredHitbox]: TetheredHitboxComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
+   [ServerComponentType.patrolAI]: PatrolAIComponentArray,
+   [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -243,6 +247,8 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.tetheredHitbox]: (): TetheredHitboxComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
+   [ServerComponentType.patrolAI]: (): PatrolAIComponentParams => 0 as any,
+   [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

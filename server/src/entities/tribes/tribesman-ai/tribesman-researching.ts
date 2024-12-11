@@ -6,14 +6,17 @@ import { InventoryUseComponentArray, setLimbActions } from "../../../components/
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearchBench, canResearchAtBench, shouldMoveToResearchBench } from "../../../components/ResearchBenchComponent";
 import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
-import { TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
+import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getTribesmanSlowAcceleration, getTribesmanAcceleration, getTribesmanRadius } from "./tribesman-ai-utils";
+import { getTribesmanSlowAcceleration, getTribesmanAcceleration, getTribesmanRadius, pathfindTribesman } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
 import Tribe from "../../../Tribe";
 import { assert } from "../../../../../shared/src/utils";
+import { getEntityLayer } from "../../../world";
+import { PathfindingSettings } from "../../../../../shared/src/settings";
+import { PathfindFailureDefault } from "../../../pathfinding";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -84,21 +87,23 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       return;
    }
    
-   // @Incomplete: use pathfinding
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
+      const benchLayer = getEntityLayer(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
-      moveEntityToPosition(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, getTribesmanAcceleration(tribesman), TRIBESMAN_TURN_SPEED);
+      pathfindTribesman(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
       
       tribesmanComponent.targetResearchBenchID = bench;
       tribesmanComponent.currentAIType = TribesmanAIType.researching;
 
       // If close enough, switch to doing research
-      const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getTribesmanRadius(transformComponent);
-      if (dist < 50) {
-         attemptToOccupyResearchBench(bench, tribesman);
+      if (benchLayer === getEntityLayer(tribesman)) {
+         const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getTribesmanRadius(transformComponent);
+         if (dist < 30) {
+            attemptToOccupyResearchBench(bench, tribesman);
+         }
       }
 
       return;

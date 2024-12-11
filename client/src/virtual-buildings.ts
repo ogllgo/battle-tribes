@@ -1,11 +1,29 @@
-import { Hitbox } from "../../shared/src/boxes/boxes";
+import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../shared/src/collision";
+import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../shared/src/components";
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { Point } from "../../shared/src/utils";
 import { ClientHitbox } from "./boxes";
-import { readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
+import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
+import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
+import { createBuildingMaterialComponentParams } from "./entity-components/server-components/BuildingMaterialComponent";
+import { createCampfireComponentParams } from "./entity-components/server-components/CampfireComponent";
+import { createCookingComponentParams } from "./entity-components/server-components/CookingComponent";
+import { createFireTorchComponentParams } from "./entity-components/server-components/FireTorchComponent";
+import { createFurnaceComponentParams } from "./entity-components/server-components/FurnaceComponent";
+import { createHealthComponentParams } from "./entity-components/server-components/HealthComponent";
+import { createInventoryComponentParams } from "./entity-components/server-components/InventoryComponent";
+import { createSlurbTorchComponentParams } from "./entity-components/server-components/SlurbTorchComponent";
+import { createSpikesComponentParams } from "./entity-components/server-components/SpikesComponent";
+import { createStatusEffectComponentParams } from "./entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentParams } from "./entity-components/server-components/StructureComponent";
+import { createTransformComponentParams, readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
+import { TribeComponentArray, createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
+import { EntityRenderInfo } from "./EntityRenderInfo";
 import Layer from "./Layer";
-import { layers } from "./world";
+import { thingIsVisualRenderPart } from "./render-parts/render-parts";
+import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
+import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers, playerInstance } from "./world";
 
 export interface VirtualBuilding {
    readonly entityType: StructureType;
@@ -13,8 +31,11 @@ export interface VirtualBuilding {
    readonly layer: Layer;
    readonly position: Readonly<Point>;
    readonly rotation: number;
-   readonly hitboxes: ReadonlyArray<Hitbox>;
+   readonly hitboxes: ReadonlyArray<ClientHitbox>;
+   readonly renderInfo: EntityRenderInfo;
 }
+
+const virtualBuildingRecord = new Map<number, VirtualBuilding>();
 
 export function readVirtualBuildingFromData(reader: PacketReader): VirtualBuilding {
    const entityType = reader.readNumber() as StructureType;
@@ -42,12 +63,165 @@ export function readVirtualBuildingFromData(reader: PacketReader): VirtualBuildi
       hitboxes.push(hitbox);
    }
 
+   // @Copynpaste @Hack
+   
+
+   const components: EntityServerComponentParams = {};
+
+   // @Hack @Cleanup: make the client and server use the some component params system
+   const componentTypes = EntityComponents[entityType];
+   for (let i = 0; i < componentTypes.length; i++) {
+      const componentType = componentTypes[i];
+
+      switch (componentType) {
+         case ServerComponentType.transform: {
+            const transformComponentParams = createTransformComponentParams(
+               new Point(x, y),
+               rotation,
+               hitboxes.slice(),
+               COLLISION_BITS.default,
+               DEFAULT_COLLISION_MASK
+            );
+
+            components[componentType] = transformComponentParams;
+            break;
+         }
+         case ServerComponentType.health: {
+            const params = createHealthComponentParams(0, 0);
+            components[componentType] = params;
+            break;
+         }
+         case ServerComponentType.statusEffect: {
+            const params = createStatusEffectComponentParams([]);
+            components[componentType] = params;
+            break;
+         }
+         case ServerComponentType.structure: {
+            components[componentType] = createStructureComponentParams(false, 0);
+            break;
+         }
+         case ServerComponentType.tribe: {
+            // @Crash: when the player is dead, playerinstance will be null and this will cause a crash
+            const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
+            
+            components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
+            break;
+         }
+         case ServerComponentType.buildingMaterial: {
+            components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
+            break;
+         }
+         case ServerComponentType.bracings: {
+            components[componentType] = createBracingsComponentParams();
+            break;
+         }
+         case ServerComponentType.inventory: {
+            components[componentType] = createInventoryComponentParams({});
+            break;
+         }
+         case ServerComponentType.cooking: {
+            components[componentType] = createCookingComponentParams(0, false);
+            break;
+         }
+         case ServerComponentType.campfire: {
+            components[componentType] = createCampfireComponentParams();
+            break;
+         }
+         case ServerComponentType.furnace: {
+            components[componentType] = createFurnaceComponentParams();
+            break;
+         }
+         case ServerComponentType.spikes: {
+            components[componentType] = createSpikesComponentParams(false);
+            break;
+         }
+         case ServerComponentType.fireTorch: {
+            components[componentType] = createFireTorchComponentParams();
+            break;
+         }
+         case ServerComponentType.slurbTorch: {
+            components[componentType] = createSlurbTorchComponentParams();
+            break;
+         }
+         case ServerComponentType.barrel: {
+            components[componentType] = createBarrelComponentParams();
+            break;
+         }
+         case ServerComponentType.researchBench: {
+            components[componentType] = {
+               isOccupied: false
+            };
+            break;
+         }
+         case ServerComponentType.totemBanner: {
+            components[componentType] = {
+               banners: []
+            };
+            break;
+         }
+         case ServerComponentType.hut: {
+            components[componentType] = {
+               doorSwingAmount: 0,
+               isRecalling: false
+            };
+            break;
+         }
+         default: {
+            throw new Error(ServerComponentType[componentType]);
+         }
+      }
+   }
+
+   const preCreationInfo: EntityPreCreationInfo = {
+      serverComponentTypes: componentTypes,
+      serverComponentParams: components
+   };
+
+   // Create the entity
+   const creationInfo = createEntity(0, entityType, layer, preCreationInfo);
+
+   const renderInfo = creationInfo.renderInfo;
+
+   // Modify all the render part's opacity
+   for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
+      const renderThing = renderInfo.allRenderThings[i];
+      if (thingIsVisualRenderPart(renderThing)) {
+         renderThing.opacity *= 0.5;
+      }
+   }
+
    return {
       entityType: entityType,
       id: virtualBuildingID,
       layer: layer,
       position: new Point(x, y),
       rotation: rotation,
-      hitboxes: hitboxes
+      hitboxes: hitboxes,
+      renderInfo: renderInfo
    };
+}
+
+export function updateVirtualBuilding(virtualBuilding: VirtualBuilding): void {
+   if (!virtualBuildingRecord.has(virtualBuilding.id)) {
+      virtualBuildingRecord.set(virtualBuilding.id, virtualBuilding);
+      const renderInfo = virtualBuilding.renderInfo;
+
+      addGhostRenderInfo(renderInfo);
+
+      // Manually set the render info's position and rotation
+      renderInfo.renderPosition.x = virtualBuilding.position.x;
+      renderInfo.renderPosition.y = virtualBuilding.position.y;
+      renderInfo.rotation = virtualBuilding.rotation;
+   }
+}
+
+export function updateVirtualBuildingRecord(seenVirtualBuildingIDs: ReadonlySet<number>): void {
+   for (const pair of virtualBuildingRecord) {
+      if (!seenVirtualBuildingIDs.has(pair[0])) {
+         virtualBuildingRecord.delete(pair[0]);
+
+         const virtualBuilding = pair[1];
+         removeGhostRenderInfo(virtualBuilding.renderInfo);
+      }
+   }
 }

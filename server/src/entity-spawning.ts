@@ -35,7 +35,7 @@ import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn
 import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { boxIsCollidingWithSubtile } from "./collision";
-import { surfaceLayer, undergroundLayer } from "./layers";
+import { undergroundLayer } from "./layers";
 
 const PACK_SPAWN_RANGE = 200;
 

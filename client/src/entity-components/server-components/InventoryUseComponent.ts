@@ -421,7 +421,7 @@ export function inventoryUseComponentHasLimbInfo(inventoryUseComponent: Inventor
    return false;
 }
 
-export function getLimbInfoByInventoryName(inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName): LimbInfo {
+export function getLimbByInventoryName(inventoryUseComponent: InventoryUseComponent, inventoryName: InventoryName): LimbInfo {
    for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
       const useInfo = inventoryUseComponent.limbInfos[i];
       if (useInfo.inventoryName === inventoryName) {

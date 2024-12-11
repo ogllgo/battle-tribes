@@ -1,16 +1,18 @@
 import { Hitbox, updateBox } from "../../../../shared/src/boxes/boxes";
 import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { hitboxesAreColliding } from "../../../../shared/src/hitbox-collision";
 import { Settings } from "../../../../shared/src/settings";
 import { StructureType } from "../../../../shared/src/structures";
-import { getSubtileX, getSubtileY } from "../../../../shared/src/subtiles";
+import { getSubtileIndex } from "../../../../shared/src/subtiles";
 import { Point, randFloat } from "../../../../shared/src/utils";
 import { boxIsCollidingWithSubtile, hitboxArraysAreColliding } from "../../collision";
+import { getTileIndexIncludingEdges } from "../../Layer";
 import { SafetyNode, addHitboxesOccupiedNodes } from "../ai-building";
 import TribeBuildingLayer from "./TribeBuildingLayer";
 
 const enum Vars {
-   INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE = 700
+   INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE = 550
 }
 
 export interface BuildingCandidate {
@@ -38,17 +40,47 @@ const initialBuildingCandidateIsValid = (candidate: BuildingCandidate): boolean 
    }
    
    // Make sure the building isn't in any walls
+   const layer = candidate.buildingLayer.layer;
    for (const hitbox of candidate.hitboxes) {
       const box = hitbox.box;
 
-      const minSubtileX = getSubtileX(box.calculateBoundsMinX());
-      const maxSubtileX = getSubtileX(box.calculateBoundsMaxX());
-      const minSubtileY = getSubtileY(box.calculateBoundsMinY());
-      const maxSubtileY = getSubtileY(box.calculateBoundsMaxY());
+      const minSubtileX = Math.floor(box.calculateBoundsMinX() / Settings.SUBTILE_SIZE);
+      const maxSubtileX = Math.floor(box.calculateBoundsMaxX() / Settings.SUBTILE_SIZE);
+      const minSubtileY = Math.floor(box.calculateBoundsMinY() / Settings.SUBTILE_SIZE);
+      const maxSubtileY = Math.floor(box.calculateBoundsMaxY() / Settings.SUBTILE_SIZE);
 
       for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
          for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-            if (boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+            const subtileIndex = getSubtileIndex(subtileX, subtileY);
+            if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+               return false;
+            }
+         }
+      }
+   }
+
+   // Make sure the building isn't over any building blocking tiles
+   // @Copynpaste from structureIntersectsWithBuildingBlockingTiles in shared
+   for (const hitbox of candidate.hitboxes) {
+      const box = hitbox.box;
+      
+      const minTileX = Math.floor(box.calculateBoundsMinX() / Settings.TILE_SIZE);
+      const maxTileX = Math.floor(box.calculateBoundsMaxX() / Settings.TILE_SIZE);
+      const minTileY = Math.floor(box.calculateBoundsMinY() / Settings.TILE_SIZE);
+      const maxTileY = Math.floor(box.calculateBoundsMaxY() / Settings.TILE_SIZE);
+
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+            const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+            if (!layer.buildingBlockingTiles.has(tileIndex)) {
+               continue;
+            }
+            
+            // @Speed
+            const tileBox = new RectangularBox(new Point(0, 0), Settings.TILE_SIZE, Settings.TILE_SIZE, 0);
+            updateBox(tileBox, (tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE, 0);
+
+            if (box.isColliding(tileBox)) {
                return false;
             }
          }
@@ -100,8 +132,8 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
    // If there are no virtual buildings, we can't use any existing buildings as reference so we go off the start position of the tribe
    if (buildingLayer.virtualBuildings.length === 0) {
       minX = buildingLayer.tribe.startPosition.x - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
-      maxX = buildingLayer.tribe.startPosition.y + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
-      minY = buildingLayer.tribe.startPosition.x - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
+      maxX = buildingLayer.tribe.startPosition.x + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
+      minY = buildingLayer.tribe.startPosition.y - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       maxY = buildingLayer.tribe.startPosition.y + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       isInitial = true;
    } else {

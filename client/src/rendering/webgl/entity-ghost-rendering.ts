@@ -1,4 +1,4 @@
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { renderEntities } from "./entity-rendering";
 import { gl } from "../../webgl";
@@ -59,19 +59,19 @@ export interface GhostInfo {
 
 export const PARTIAL_OPACITY = 0.5;
 
-let ghostRenderInfo: EntityRenderInfo | null = null;
+const renderInfos = new Array<EntityRenderInfo>();
 
-export function setGhostRenderInfo(renderInfo: EntityRenderInfo | null): void {
-   ghostRenderInfo = renderInfo;
+export function addGhostRenderInfo(renderInfo: EntityRenderInfo): void {
+   renderInfos.push(renderInfo);
+}
+
+export function removeGhostRenderInfo(renderInfo: EntityRenderInfo): void {
+   const idx = renderInfos.indexOf(renderInfo);
+   assert(idx !== -1);
+   renderInfos.splice(idx, 1);
 }
 
 export function renderGhostEntities(): void {
-   const renderInfos = new Array<EntityRenderInfo>();
-
-   if (ghostRenderInfo !== null) {
-      renderInfos.push(ghostRenderInfo);
-   }
-
    // @INCOMPLETE
    // // Building plans
    // if (OPTIONS.showBuildingPlans) {

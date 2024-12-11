@@ -8,7 +8,7 @@ import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "
 import { modifyBuilding } from "../entities/tribes/player";
 import PlayerClient from "./PlayerClient";
 import { SERVER } from "./server";
-import { createInitialGameDataPacket } from "./game-data-packets";
+import { createInitialGameDataPacket } from "./packet-creation";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { InventoryComponentArray, addItemToInventory, getInventory } from "../components/InventoryComponent";
@@ -191,7 +191,7 @@ const processTechUnlock = (playerClient: PlayerClient, techID: TechID): void => 
    }
 
    if (tribeComponent.tribe.techIsComplete(tech)) {
-      tribeComponent.tribe.unlockTech(techID);
+      tribeComponent.tribe.unlockTech(tech);
    }
 }
 
@@ -200,7 +200,8 @@ const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): voi
       return;
    }
 
-   playerClient.tribe.forceUnlockTech(techID);
+   // @Incomplete
+   // playerClient.tribe.forceUnlockTech(techID);
 }
 
 const processStudyPacket = (playerClient: PlayerClient, studyAmount: number): void => {
@@ -520,7 +521,7 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
          continue;
       }
 
-      if (minChunkX <= playerClient.visibleChunkBounds[1] && maxChunkX >= playerClient.visibleChunkBounds[0] && minChunkY <= playerClient.visibleChunkBounds[3] && maxChunkY >= playerClient.visibleChunkBounds[2]) {
+      if (minChunkX <= playerClient.maxVisibleChunkX && maxChunkX >= playerClient.minVisibleChunkX && minChunkY <= playerClient.maxVisibleChunkY && maxChunkY >= playerClient.minVisibleChunkY) {
          viewingPlayerClients.push(playerClient);
       }
    }

@@ -111,7 +111,6 @@ export interface GameDataPacket {
    readonly titleOffer: TribesmanTitle | null;
    readonly tickEvents: ReadonlyArray<EntityTickEvent>;
    // @Cleanup @Bandwidth: move these all to a special dev info packet
-   readonly visibleSafetyNodes: ReadonlyArray<SafetyNodeData>;
    readonly visibleBuildingPlans: ReadonlyArray<BuildingPlanData>;
    readonly visibleBuildingSafetys: ReadonlyArray<BuildingSafetyData>;
    readonly visibleRestrictedBuildingAreas: ReadonlyArray<RestrictedBuildingAreaData>;

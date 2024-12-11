@@ -22,7 +22,7 @@ import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
 import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualBuilding, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
-import { createRootPlan } from "./tribesman-ai/tribesman-ai-planning";
+import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
 import { PlayerComponentArray } from "./components/PlayerComponent";
@@ -132,7 +132,7 @@ export default class Tribe {
    public readonly buildings = new Array<Entity>();
    public buildingsAreDirty = true;
 
-   public rootPlan = createRootPlan();
+   public readonly assignment = createRootPlanAssignment([]);
 
    /** Stores all tiles in the tribe's zone of influence */
    private area: Record<number, TileInfluence> = {};
@@ -141,7 +141,7 @@ export default class Tribe {
    public tribesmanCap: number;
 
    public selectedTechID: TechID | null = null;
-   public readonly unlockedTechs = new Array<TechID>();
+   public readonly unlockedTechs = new Array<Tech>();
    public readonly techTreeUnlockProgress: TechTreeUnlockProgress = {};
 
    private readonly respawnTimesRemaining = new Array<number>();
@@ -306,10 +306,16 @@ export default class Tribe {
       this.attackingEntities[attackingEntityID] = ENEMY_ATTACK_REMEMBER_TIME_TICKS;
    }
 
-   public unlockTech(techID: TechID): void {
-      if (!this.unlockedTechs.includes(techID)) {
-         this.unlockedTechs.push(techID);
-         this.selectedTechID = null;
+   public unlockTech(tech: Tech): void {
+      if (this.unlockedTechs.includes(tech)) {
+         return;
+      }
+
+      this.unlockedTechs.push(tech);
+      this.selectedTechID = null;
+
+      if (this.isAIControlled) {
+         updateTribePlans(this);
       }
    }
 
@@ -534,6 +540,7 @@ export default class Tribe {
    }
 
    public getArea(): Array<TileIndex> {
+      // @Speed @Garbage
       const area = new Array<TileIndex>();
       for (const tileInfluence of Object.values(this.area)) {
          area.push(tileInfluence.tile);
@@ -587,33 +594,32 @@ export default class Tribe {
       });
    }
 
-   public hasUnlockedTech(techID: TechID): boolean {
-      return this.unlockedTechs.indexOf(techID) !== -1;
+   public hasUnlockedTech(tech: Tech): boolean {
+      return this.unlockedTechs.indexOf(tech) !== -1;
    }
 
-   public forceUnlockTech(techID: TechID): void {
-      const techInfo = getTechByID(techID);
-      if (this.hasUnlockedTech(techID) || techInfo.blacklistedTribes.includes(this.tribeType)) {
+   public forceUnlockTech(tech: Tech): void {
+      if (this.hasUnlockedTech(tech) || tech.blacklistedTribes.includes(this.tribeType)) {
          return;
       }
 
-      if (!this.techTreeUnlockProgress.hasOwnProperty(techInfo.id)) {
-         this.techTreeUnlockProgress[techInfo.id] = {
+      if (!this.techTreeUnlockProgress.hasOwnProperty(tech.id)) {
+         this.techTreeUnlockProgress[tech.id] = {
             itemProgress: {},
             studyProgress: 0
          };
       }
-      this.techTreeUnlockProgress[techInfo.id]!.studyProgress = techInfo.researchStudyRequirements;
-      for (const entry of techInfo.researchItemRequirements.getEntries()) {
-         this.techTreeUnlockProgress[techInfo.id]!.itemProgress[entry.itemType] = entry.count;
+      this.techTreeUnlockProgress[tech.id]!.studyProgress = tech.researchStudyRequirements;
+      for (const entry of tech.researchItemRequirements.getEntries()) {
+         this.techTreeUnlockProgress[tech.id]!.itemProgress[entry.itemType] = entry.count;
       }
       
-      this.unlockTech(techInfo.id);
+      this.unlockTech(tech);
    }
 
    public unlockAllTechs(): void {
-      for (const techInfo of TECHS) {
-         this.forceUnlockTech(techInfo.id);
+      for (const tech of TECHS) {
+         this.forceUnlockTech(tech);
       }
    }
 
@@ -736,8 +742,8 @@ export function addExtendedTribeData(packet: Packet, tribe: Tribe): void {
    packet.addNumber(tribe.selectedTechID !== null ? tribe.selectedTechID : -1);
 
    packet.addNumber(tribe.unlockedTechs.length);
-   for (const techID of tribe.unlockedTechs) {
-      packet.addNumber(techID);
+   for (const tech of tribe.unlockedTechs) {
+      packet.addNumber(tech.id);
    }
 
    // Tech tree unlock progress

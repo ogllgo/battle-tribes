@@ -53,7 +53,7 @@ const TribesTab = () => {
                <div className="devmode-menu-section">
                   <h3>Tribesmen</h3>
 
-                  {selectedTribe.tribesman.map((tribesmanInfo, i) => {
+                  {selectedTribe.tribesmen.map((tribesmanInfo, i) => {
                      return <div key={i} className="devmode-card">
                         <button onClick={() => sendTPTOEntityPacket(tribesmanInfo.entity)}>Teleport</button>
                         

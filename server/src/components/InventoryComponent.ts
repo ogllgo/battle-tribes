@@ -10,7 +10,7 @@ import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { addInventoryDataToPacket, getInventoryDataLength } from "../server/game-data-packets";
+import { addInventoryDataToPacket, getInventoryDataLength } from "../server/packet-creation";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 import { destroyEntity, getEntityLayer } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";

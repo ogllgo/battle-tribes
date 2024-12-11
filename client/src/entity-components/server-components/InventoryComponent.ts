@@ -8,7 +8,7 @@ import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { playerInstance } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
-import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbInfoByInventoryName } from "./InventoryUseComponent";
+import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbByInventoryName } from "./InventoryUseComponent";
 
 export interface InventoryComponentParams {
    readonly inventories: Partial<Record<InventoryName, Inventory>>;
@@ -65,7 +65,7 @@ const validatePlayerAction = (inventoryName: InventoryName, item: Item | null): 
       return;
    }
 
-   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+   const limb = getLimbByInventoryName(inventoryUseComponent, inventoryName);
    if (!playerActionIsLegal(limb, item)) {
       // Reset the action
       limb.action = LimbAction.none;
@@ -172,7 +172,7 @@ export function updatePlayerHeldItem(inventoryName: InventoryName, heldItemSlot:
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    
    const inventory = getInventory(inventoryComponent, inventoryName)!;
-   const limb = getLimbInfoByInventoryName(inventoryUseComponent, inventoryName);
+   const limb = getLimbByInventoryName(inventoryUseComponent, inventoryName);
    
    const heldItem = inventory.getItem(heldItemSlot);
    if (heldItem === null) {

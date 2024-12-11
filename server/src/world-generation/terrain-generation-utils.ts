@@ -167,6 +167,10 @@ export function groupLocalBiomes(layer: Layer): void {
             centerY: centerY
          };
          layer.localBiomes.push(localBiome);
+
+         for (const tile of connectedTiles) {
+            layer.tileToLocalBiomeRecord[tile] = localBiome;
+         }
       }
    }
 }

@@ -24,7 +24,7 @@ export interface Colour {
 }
 
 // @Cleanup: location
-export const enum TribesmanPlanType {
+export const enum AIPlanType {
    root,
    craftRecipe,
    placeBuilding,

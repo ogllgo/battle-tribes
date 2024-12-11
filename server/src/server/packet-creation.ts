@@ -1,7 +1,6 @@
-import { GameDataPacketOptions, PathfindingNodeIndex, VisibleChunkBounds } from "battletribes-shared/client-server-types";
+import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
-import { TechUnlockProgress } from "battletribes-shared/techs";
 import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
 import { HealthComponentArray } from "../components/HealthComponent";
@@ -19,13 +18,11 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes } from "../world";
-import { getPlayerNearbyCollapses, getSubtileSupport, getVisibleSubtileSupports, subtileIsCollapsing } from "../collapses";
+import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from "../collapses";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { layers } from "../layers";
-import { addPlanData, getTribePlansDataLength } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
-import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
+import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -125,8 +122,8 @@ const getVisibleGrassBlockers = (layer: Layer, visibleChunkBounds: VisibleChunkB
 const getVisibleMinedSubtiles = (playerClient: PlayerClient): ReadonlyArray<number> => {
    const minedSubtiles = new Array<number>();
    
-   for (let chunkX = playerClient.visibleChunkBounds[0]; chunkX <= playerClient.visibleChunkBounds[1]; chunkX++) {
-      for (let chunkY = playerClient.visibleChunkBounds[2]; chunkY <= playerClient.visibleChunkBounds[3]; chunkY++) {
+   for (let chunkX = playerClient.minVisibleChunkX; chunkX <= playerClient.maxVisibleChunkX; chunkX++) {
+      for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
          const minSubtileX = chunkX * Settings.CHUNK_SIZE * 4;
          const maxSubtileX = (chunkX + 1) * Settings.CHUNK_SIZE * 4 - 1;
          const minSubtileY = chunkY * Settings.CHUNK_SIZE * 4;
@@ -151,38 +148,13 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    const player = entityExists(playerClient.instance) ? playerClient.instance : null;
    const layer = playerClient.lastLayer;
-
-   let hotbarInventory: Inventory | undefined;
-   let backpackInventory: Inventory | undefined;
-   let backpackSlotInventory: Inventory | undefined;
-   let heldItemSlotInventory: Inventory | undefined;
-   let craftingOutputSlotInventory: Inventory | undefined;
-   let armourSlotInventory: Inventory | undefined;
-   let offhandInventory: Inventory | undefined;
-   let gloveSlotInventory: Inventory | undefined;
-   if (player !== null) {
-      const inventoryComponent = InventoryComponentArray.getComponent(player);
-      // @Copynpaste @Robustness
-      hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-      backpackInventory = getInventory(inventoryComponent, InventoryName.backpack);
-      backpackSlotInventory = getInventory(inventoryComponent, InventoryName.backpackSlot);
-      heldItemSlotInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot);
-      craftingOutputSlotInventory = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
-      armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
-      offhandInventory = getInventory(inventoryComponent, InventoryName.offhand);
-      gloveSlotInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
-   }
    
    const tileUpdates = layer.popTileUpdates();
 
    const trackedEntity = SERVER.trackedEntityID;
    const debugData = typeof trackedEntity !== "undefined" ? createEntityDebugData(trackedEntity) : null;
 
-   const area = playerClient.tribe.getArea();
-   const unlockProgressEntries = Object.entries(playerClient.tribe.techTreeUnlockProgress).map(([a, b]) => [Number(a), b]) as Array<[number, TechUnlockProgress]>;
-
    const tribes = getTribes();
-   const numEnemyTribes = tribes.filter(tribe => tribe.id !== playerClient.tribe.id).length;
 
    let hotbarUseInfo: LimbInfo | undefined;
    if (player !== null) {
@@ -194,9 +166,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    const minedSubtiles = getVisibleMinedSubtiles(playerClient);
    const nearbyCollapses = getPlayerNearbyCollapses(playerClient);
-
-   const sendSubtileSupports = (playerClient.gameDataOptions & GameDataPacketOptions.sendSubtileSupports) !== 0;
-   const sendPathfindingNodeOccupances = (playerClient.gameDataOptions & GameDataPacketOptions.sendVisiblePathfindingNodeOccupances) !== 0;
    
    // Packet type
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -273,42 +242,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * nearbyCollapses.length;
 
-   // Subtile supports
-   let visibleSubtileSupports: ReadonlyArray<number> | undefined;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   if (sendSubtileSupports) {
-      visibleSubtileSupports = getVisibleSubtileSupports(playerClient);
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * visibleSubtileSupports.length;
-   }
-
-   // Pathfinding node occupances
-   let visiblePathfindingNodeOccupances: ReadonlyArray<PathfindingNodeIndex> | undefined;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   if (sendPathfindingNodeOccupances) {
-      visiblePathfindingNodeOccupances = getVisiblePathfindingNodeOccupances(playerClient);
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT * visiblePathfindingNodeOccupances.length;
-   }
-
-   // Tribe plans and virtual buildings
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   if (playerClient.isDev) {
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      for (const tribe of tribes) {
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-
-         // Tribe plans
-         lengthBytes += getTribePlansDataLength(tribe.rootPlan);
-
-         // Virtual buildings
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-         for (const virtualBuilding of tribe.virtualBuildings) {
-            lengthBytes += getVirtualBuildingDataLength(virtualBuilding);
-         }
-      }
-   }
-
+   lengthBytes += getDevPacketDataLength(playerClient);
+   
    lengthBytes = alignLengthBytes(lengthBytes);
 
    const packet = new Packet(PacketType.gameData, lengthBytes);
@@ -420,6 +355,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       }
    }
 
+   // @Hack: why is this necessary? the player should be able to gather this information simply
+   // from the health component's health value and whether or not the player has its data sent
    packet.addNumber(player !== null ? HealthComponentArray.getComponent(player).health : 0);
 
    // @Bug: Shared for all players
@@ -488,46 +425,11 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       packet.addNumber(collapse.age);
    }
 
-   // Subtile supports
-   packet.addBoolean(sendSubtileSupports);
-   packet.padOffset(3);
-   if (sendSubtileSupports) {
-      packet.addNumber(visibleSubtileSupports!.length);
-      for (const subtileIndex of visibleSubtileSupports!) {
-         const support = getSubtileSupport(playerClient.lastLayer, subtileIndex);
-         
-         packet.addNumber(subtileIndex);
-         packet.addNumber(support);
-      }
-   }
-
-   // Pathfinding node occupances
-   packet.addBoolean(sendPathfindingNodeOccupances);
-   packet.padOffset(3);
-   if (sendPathfindingNodeOccupances) {
-      packet.addNumber(visiblePathfindingNodeOccupances!.length);
-      for (const node of visiblePathfindingNodeOccupances!) {
-         packet.addNumber(node);
-      }
-   }
-
-   // Tribe plans and virtual buildings
+   // Dev data
    packet.addBoolean(playerClient.isDev);
    packet.padOffset(3);
    if (playerClient.isDev) {
-      packet.addNumber(tribes.length);
-      for (const tribe of tribes) {
-         packet.addNumber(tribe.id);
-
-         // Tribe plans
-         addPlanData(packet, tribe.rootPlan);
-
-         // Virtual buildings
-         packet.addNumber(tribe.virtualBuildings.length);
-         for (const virtualBuilding of tribe.virtualBuildings) {
-            addVirtualBuildingData(packet, virtualBuilding);
-         }
-      }
+      addDevPacketData(packet, playerClient);
    }
    
    // const visibleTribes = getVisibleTribes(extendedVisibleChunkBounds);

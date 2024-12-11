@@ -33,8 +33,6 @@ export interface Path {
 
 const activeGroupIDs = new Array<number>();
 
-let dirtyPathfindingEntities = new Array<Entity>();
-
 const markPathfindingNodeOccupance = (layer: Layer, node: PathfindingNodeIndex, groupID: number): void => {
    layer.nodeGroupIDs[node].push(groupID);
 }
@@ -70,20 +68,6 @@ for (let footprint = 1; footprint <= MAX_FOOTPRINT; footprint++) {
    }
 
    footprintNodeOffsets.push(offsets);
-}
-
-export function addDirtyPathfindingEntity(entity: Entity): void {
-   dirtyPathfindingEntities.push(entity);
-}
-
-export function removeDirtyPathfindingEntity(entity: Entity): void {
-   for (let i = 0 ; i < dirtyPathfindingEntities.length; i++) {
-      const currentEntity = dirtyPathfindingEntities[i];
-      if (currentEntity === entity) {
-         dirtyPathfindingEntities.splice(i, 1);
-         break;
-      }
-   }
 }
 
 export function getPathfindingGroupID(): number {
@@ -680,12 +664,12 @@ export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: n
       x1 = (tileX + 0.5) * Settings.TILE_SIZE;
       y1 = (tileY + 0.5) * Settings.TILE_SIZE;
 
-      const options: PathfindOptions = {
+      const changeLayerOptions: PathfindOptions = {
          // Should move right on the goal
          goalRadius: 0,
          failureDefault: PathfindFailureDefault.throwError
       };
-      const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, options);
+      const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, changeLayerOptions);
       paths.push(path);
    } else {
       x1 = startX;
@@ -868,15 +852,19 @@ export function updateDynamicPathfindingNodes(): void {
       return;
    }
 
-   for (let i = 0; i < dirtyPathfindingEntities.length; i++) {
-      const entity = dirtyPathfindingEntities[i];
-      updateEntityPathfindingNodeOccupance(entity);
-
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      physicsComponent.pathfindingNodesAreDirty = false;
+   // Here I prefer to loop over all the entities instead of using a dirty array, to make
+   // the performance more constant thanks to no garbage collection
+   const activeEntities = PhysicsComponentArray.activeEntities;
+   const activeComponents = PhysicsComponentArray.activeComponents;
+   for (let i = 0; i < activeEntities.length; i++) {
+      const physicsComponent = activeComponents[i];
+      if (physicsComponent.pathfindingNodesAreDirty) {
+         const entity = activeEntities[i];
+         updateEntityPathfindingNodeOccupance(entity);
+   
+         physicsComponent.pathfindingNodesAreDirty = false;
+      }
    }
-
-   dirtyPathfindingEntities = [];
 }
 
 export function clearEntityPathfindingNodes(entity: Entity): void {

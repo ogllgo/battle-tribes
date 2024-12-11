@@ -4,7 +4,7 @@ import Particle from "./Particle";
 import { highMonocolourBufferContainer, highTexturedBufferContainer, lowMonocolourBufferContainer, lowTexturedBufferContainer } from "./rendering/webgl/particle-rendering";
 import ObjectBufferContainer from "./rendering/ObjectBufferContainer";
 import { tempFloat32ArrayLength1 } from "./webgl";
-import { RenderPart, VisualRenderPart } from "./render-parts/render-parts";
+import { RenderPart } from "./render-parts/render-parts";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { getFrameProgress } from "./Game";
 
@@ -147,14 +147,6 @@ abstract class Board {
 
    public static positionIsInBoard(x: number, y: number): boolean {
       return x >= 0 && x < Settings.BOARD_UNITS && y >= 0 && y < Settings.BOARD_UNITS;
-   }
-
-   public static getTileX(tileIndex: number): number {
-      return tileIndex % Settings.FULL_BOARD_DIMENSIONS - Settings.EDGE_GENERATION_DISTANCE;
-   }
-
-   public static getTileY(tileIndex: number): number {
-      return Math.floor(tileIndex / Settings.FULL_BOARD_DIMENSIONS) - Settings.EDGE_GENERATION_DISTANCE;
    }
 }
 

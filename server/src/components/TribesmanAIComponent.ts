@@ -12,7 +12,7 @@ import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
 import { HutComponentArray } from "./HutComponent";
 import { Path } from "../pathfinding";
-import { TribesmanPlan } from "../tribesman-ai/tribesman-ai-planning";
+import { AIPlan, AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -111,9 +111,6 @@ export class TribesmanAIComponent {
    public hut: Entity = 0;
 
    public currentAIType = TribesmanAIType.idle;
-   
-   public targetPatrolPositionX = -1;
-   public targetPatrolPositionY = -1;
 
    // @Memory @Speed: This is only used to clear the ResearchBenchComponent's preemptiveOccupeeID value when
    // the tribesmen finishes researching, is there some better way which doesn't need having this value?
@@ -135,8 +132,6 @@ export class TribesmanAIComponent {
    public helpX = 0;
    public helpY = 0;
    public ticksSinceLastHelpRequest = 99999;
-
-   public assignedPlan: TribesmanPlan | null = null;
 
    /** Stores relations with tribesman from other tribes */
    public tribesmanRelations: Partial<Record<number, number>> = {};

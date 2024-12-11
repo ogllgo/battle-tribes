@@ -9,7 +9,7 @@ import Chunk from "./Chunk";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
-import { layers, surfaceLayer, undergroundLayer } from "./layers";
+import { addLayerBuildingBlockingTiles, layers, surfaceLayer, undergroundLayer } from "./layers";
 import generateSurfaceTerrain from "./world-generation/surface-terrain-generation";
 import { generateUndergroundTerrain } from "./world-generation/underground-terrain-generation";
 import OPTIONS from "./options";
@@ -53,6 +53,8 @@ export function generateLayers(): void {
 
    // @Cleanup: make into function
    for (const layer of layers) {
+      // @Incomplete: investigate whether generate walls mode actually does anything
+      // This check isn't strictly necessary but it improves speed
       if (OPTIONS.generateWalls) {
          for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
             for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
@@ -70,6 +72,8 @@ export function generateLayers(): void {
             }
          }
       }
+
+      addLayerBuildingBlockingTiles(layer);
    }
 }
 

@@ -5,7 +5,7 @@ import { InventoryComponent, InventoryComponentArray, countItemType, getInventor
 import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
 import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
-import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman, positionIsSafeForTribesman } from "./tribesman-ai-utils";
+import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
@@ -19,7 +19,9 @@ import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { Biome } from "../../../../../shared/src/biomes";
 import { TileType } from "../../../../../shared/src/tiles";
-import { GatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { assert } from "../../../../../shared/src/utils";
+import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
 
 interface BiomeTileRequirement {
    readonly tileType: TileType;
@@ -105,13 +107,14 @@ const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponen
       return false;
    }
    
+   // @Incomplete
    // If the tribesman is within the escape health threshold, make sure there wouldn't be any enemies visible while picking up the dropped item
    // @Hack: the accessibility check doesn't work for plants in planter boxes
-   const resourceTransformComponent = TransformComponentArray.getComponent(resource);
-   if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent) || !positionIsSafeForTribesman(tribesman, resourceTransformComponent.position.x, resourceTransformComponent.position.y)) {
-   // if (tribesmanShouldEscape(tribesman.type, healthComponent) || !positionIsSafeForTribesman(tribesman, resource.position.x, resource.position.y) || !entityIsAccessible(tribesman, resource, tribeComponent.tribe, getTribesmanAttackRadius(tribesman))) {
-      return false;
-   }
+   // const resourceTransformComponent = TransformComponentArray.getComponent(resource);
+   // if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent)) {
+   // // if (tribesmanShouldEscape(tribesman.type, healthComponent) || !positionIsSafeForTribesman(tribesman, resource.position.x, resource.position.y) || !entityIsAccessible(tribesman, resource, tribeComponent.tribe, getTribesmanAttackRadius(tribesman))) {
+   //    return false;
+   // }
 
    // Only try to gather plants if they are fully grown
    if (getEntityType(resource) === EntityType.plant && !shouldGatherPlant(resource)) {
@@ -178,9 +181,10 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
    for (const itemEntity of visibleItemEntities) {
       const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
       // If the tribesman is within the escape health threshold, make sure there wouldn't be any enemies visible while picking up the dropped item
-      if (shouldEscape && !positionIsSafeForTribesman(tribesman, itemEntityTransformComponent.position.x, itemEntityTransformComponent.position.y)) {
-         continue;
-      }
+      // @Incomplete
+      // if (shouldEscape && !positionIsSafeForTribesman(tribesman, itemEntityTransformComponent.position.x, itemEntityTransformComponent.position.y)) {
+      //    continue;
+      // }
 
       // @Temporary @Bug @Incomplete: Will cause the tribesman to incorrectly skip items which are JUST inside a hitbox, but are still accessible via vacuum.
       // if (!entityIsAccessible(tribesman, itemEntity, tribeComponent.tribe, goalRadius)) {
@@ -213,40 +217,45 @@ export function tribesmanGoPickupItemEntity(tribesman: Entity, pickupTarget: Ent
 }
 
 /** Controls the tribesman to gather the specified item types. */
-export function gatherResource(tribesman: Entity, itemType: ItemType, visibleItemEntities: ReadonlyArray<Entity>): boolean {
+export function gatherResource(tribesman: Entity, itemType: ItemType, visibleItemEntities: ReadonlyArray<Entity>): void {
+   // @Incomplete:
+   // level 1) explore randomly if not gathering
+   // level 2) remember which places the tribesman has been to and go there to get more of those resources
+   
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
    // First see if there are any items which match which we can pick up
    const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, itemType);
    if (itemPickupTarget !== null) {
       tribesmanGoPickupItemEntity(tribesman, itemPickupTarget);
-      return true;
+      return;
    }
    
    // See if there are any entities they can harvest
    const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, itemType);
    if (harvestTarget !== null) {
       huntEntity(tribesman, harvestTarget, false);
-      return true;
+      return;
    }
 
    const layer = getEntityLayer(tribesman);
-
+   
    const materialInfo = MATERIAL_INFO_RECORD[itemType];
-   if (typeof materialInfo !== "undefined") {
-      // If the entity isn't in the right biome, go to the right biome
-      const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const currentTile = getEntityTile(transformComponent);
-      if (layer.getTileBiome(currentTile) !== materialInfo.biome) {
-         moveTribesmanToBiome(tribesman, materialInfo);
-         return true;
-      }
+   assert(typeof materialInfo !== "undefined");
+
+   // If the entity isn't in the right biome, go to the right biome
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const currentTile = getEntityTile(transformComponent);
+   if (layer.getTileBiome(currentTile) !== materialInfo.biome) {
+      moveTribesmanToBiome(tribesman, materialInfo);
+      return;
    }
 
-
-   return false;
+   // Explore the biome for things to harvest
+   const localBiome = layer.getTileLocalBiome(currentTile);
+   tribesmanDoPatrol(tribesman, localBiome.tilesInBorder);
 }
 
-export function gatherItemPlanIsComplete(inventoryComponent: InventoryComponent, plan: GatherItemPlan): boolean {
+export function gatherItemPlanIsComplete(inventoryComponent: InventoryComponent, plan: AIGatherItemPlan): boolean {
    return countItemType(inventoryComponent, plan.itemType) >= plan.amount;
 }

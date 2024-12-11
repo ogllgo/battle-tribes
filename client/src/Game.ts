@@ -58,7 +58,7 @@ import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { updateEntity } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
-import { updatePlayerMovement, updatePlayerItems } from "./components/game/GameInteractableLayer";
+import { updatePlayerMovement, updatePlayerItems, playerIsHoldingPlaceableItem } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
 import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance } from "./world";
 import Layer from "./Layer";
@@ -71,6 +71,7 @@ import { createSlimeTrailShaders, renderSlimeTrails, updateSlimeTrails } from ".
 import { Entity } from "../../shared/src/entities";
 import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 import { createTribePlanVisualiserGLContext, renderTribePlans } from "./rendering/tribe-plan-visualiser/tribe-plan-visualiser";
+import { createBuildingBlockingTileShaders, renderBuildingBlockingTiles } from "./rendering/webgl/building-blocking-tiles-rendering";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -250,6 +251,11 @@ const renderLayer = (layer: Layer): void => {
    }
 
    renderGhostEntities();
+
+   // Should be before lighting so that the player can't use building blocking tiles to see in the dark
+   if (layer === getCurrentLayer() && playerIsHoldingPlaceableItem()) {
+      renderBuildingBlockingTiles();
+   }
       
    renderLighting(layer);
    if (OPTIONS.debugLights) {
@@ -401,6 +407,7 @@ abstract class Game {
             createTileBreakProgressShaders();
             createSubtileSupportShaders();
             createSlimeTrailShaders();
+            createBuildingBlockingTileShaders();
             if (isDev()) {
                setupFrameGraph();
             }

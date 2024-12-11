@@ -420,7 +420,6 @@ abstract class Client {
          definiteGameState.hotbarCrossbowLoadProgressRecord = gameDataPacket.hotbarCrossbowLoadProgressRecord;
       }
 
-      setVisibleSafetyNodes(gameDataPacket.visibleSafetyNodes);
       setVisibleBuildingSafetys(gameDataPacket.visibleBuildingSafetys);
       setVisibleRestrictedBuildingAreas(gameDataPacket.visibleRestrictedBuildingAreas);
       setVisibleWallConnections(gameDataPacket.visibleWallConnections);

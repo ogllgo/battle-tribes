@@ -70,6 +70,11 @@ export function createForcefieldShaders(): void {
 }
 
 export function renderForcefield(): void {
+   // If no forcefields are visible, skip rendering altogether
+   if (Camera.minVisibleRenderChunkX >= 0 && Camera.maxVisibleRenderChunkX < WORLD_RENDER_CHUNK_SIZE && Camera.minVisibleRenderChunkY >= 0 && Camera.maxVisibleRenderChunkY < WORLD_RENDER_CHUNK_SIZE) {
+      return;
+   }
+   
    const vertices = new Array<number>();
 
    // Left forcefield segment

@@ -5,19 +5,20 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { StructureType } from "../../../../shared/src/structures";
 import { getTechByID, TechID, Tech } from "../../../../shared/src/techs";
-import { TribesmanPlanType } from "../../../../shared/src/utils";
+import { AIPlanType } from "../../../../shared/src/utils";
 import { TribePlanVisualiser_setPlan } from "../../components/game/tribe-plan-visualiser/TribePlanVisualiser";
 import { addMenuCloseFunction } from "../../menus";
+import { ExtendedTribeInfo, getTribeByID } from "../../tribes";
 
 const enum Vars {
    NODE_DISPLAY_SIZE = 100
 }
 
-interface BasePlan {
-   readonly type: TribesmanPlanType;
+interface AIBasePlan {
+   readonly type: AIPlanType;
    readonly assignedTribesman: Entity | null;
    readonly isComplete: boolean;
-   readonly childPlans: Array<TribesmanPlan>;
+   readonly childPlans: Array<AIPlan>;
 
    // Stuff for displaying the plan node
    displayWidth: number;
@@ -25,53 +26,58 @@ interface BasePlan {
    xOffset: number;
 }
 
-export interface RootPlan extends BasePlan {
-   readonly type: TribesmanPlanType.root;
+export interface AIRootPlan extends AIBasePlan {
+   readonly type: AIPlanType.root;
 }
 
-export interface CraftRecipePlan extends BasePlan {
-   readonly type: TribesmanPlanType.craftRecipe;
+export interface AICraftRecipePlan extends AIBasePlan {
+   readonly type: AIPlanType.craftRecipe;
    readonly recipe: CraftingRecipe;
    readonly productAmount: number;
 }
 
-export interface PlaceBuildingPlan extends BasePlan {
-   readonly type: TribesmanPlanType.placeBuilding;
+export interface AIPlaceBuildingPlan extends AIBasePlan {
+   readonly type: AIPlanType.placeBuilding;
    readonly entityType: EntityType;
 }
 
-export interface UpgradeBuildingPlan extends BasePlan {
-   readonly type: TribesmanPlanType.upgradeBuilding;
+export interface AIUpgradeBuildingPlan extends AIBasePlan {
+   readonly type: AIPlanType.upgradeBuilding;
    readonly blueprintType: BlueprintType;
 }
 
-export interface TechStudyPlan extends BasePlan {
-   readonly type: TribesmanPlanType.doTechStudy;
+export interface AITechStudyPlan extends AIBasePlan {
+   readonly type: AIPlanType.doTechStudy;
    readonly tech: Tech;
 }
 
-export interface TechItemPlan extends BasePlan {
-   readonly type: TribesmanPlanType.doTechItems;
+export interface AITechItemPlan extends AIBasePlan {
+   readonly type: AIPlanType.doTechItems;
    readonly tech: Tech;
    readonly itemType: ItemType;
 }
 
-export interface TechCompletePlan extends BasePlan {
-   readonly type: TribesmanPlanType.completeTech;
+export interface AITechCompletePlan extends AIBasePlan {
+   readonly type: AIPlanType.completeTech;
    readonly tech: Tech;
 }
 
-export interface GatherItemPlan extends BasePlan {
-   readonly type: TribesmanPlanType.gatherItem;
+export interface AIGatherItemPlan extends AIBasePlan {
+   readonly type: AIPlanType.gatherItem;
    readonly itemType: ItemType;
    readonly amount: number;
 }
 
-export type TribesmanPlan = RootPlan | CraftRecipePlan | PlaceBuildingPlan | UpgradeBuildingPlan | TechStudyPlan | TechItemPlan | TechCompletePlan | GatherItemPlan;
+export type AIPlan = AIRootPlan | AICraftRecipePlan | AIPlaceBuildingPlan | AIUpgradeBuildingPlan | AITechStudyPlan | AITechItemPlan | AITechCompletePlan | AIGatherItemPlan;
+
+export interface TribeAssignmentInfo {
+   readonly tribeAssignment: AIPlan;
+   readonly entityAssignments: Partial<Record<Entity, AIPlan>>;
+}
 
 let gl: WebGL2RenderingContext;
 
-const tribePlanDataRecord: Record<number, TribesmanPlan> = {};
+const tribePlanDataRecord: Record<number, TribeAssignmentInfo> = {};
 
 let renderedTribeID: number | null = null;
 
@@ -93,6 +99,7 @@ export function getTribePlanVisualiserGL(): WebGL2RenderingContext {
    return gl;
 }
 
+// @Incomplete: unused?
 export function createTribePlanVisualiserShaders(): void {
    const vertexShaderText = `#version 300 es
    precision highp float;
@@ -107,9 +114,9 @@ export function createTribePlanVisualiserShaders(): void {
    `;
 }
 
-const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): RootPlan => {
+const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AIRootPlan => {
    return {
-      type: TribesmanPlanType.root,
+      type: AIPlanType.root,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -119,12 +126,12 @@ const readRootPlan = (reader: PacketReader, assignedTribesman: Entity | null, is
    };
 }
 
-const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): CraftRecipePlan => {
+const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AICraftRecipePlan => {
    const recipeIdx = reader.readNumber();
    const productAmount = reader.readNumber();
    
    return {
-      type: TribesmanPlanType.craftRecipe,
+      type: AIPlanType.craftRecipe,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -136,11 +143,11 @@ const readCraftRecipePlan = (reader: PacketReader, assignedTribesman: Entity | n
    };
 }
 
-const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): PlaceBuildingPlan => {
+const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AIPlaceBuildingPlan => {
    const entityType = reader.readNumber() as StructureType;
    
    return {
-      type: TribesmanPlanType.placeBuilding,
+      type: AIPlanType.placeBuilding,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -151,11 +158,11 @@ const readPlaceBuildingPlan = (reader: PacketReader, assignedTribesman: Entity |
    };
 }
 
-const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): UpgradeBuildingPlan => {
+const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AIUpgradeBuildingPlan => {
    const blueprintType = reader.readNumber() as BlueprintType;
    
    return {
-      type: TribesmanPlanType.upgradeBuilding,
+      type: AIPlanType.upgradeBuilding,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -166,11 +173,11 @@ const readUpgradeBuildingPlan = (reader: PacketReader, assignedTribesman: Entity
    };
 }
 
-const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechStudyPlan => {
+const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AITechStudyPlan => {
    const techID = reader.readNumber() as TechID;
    
    return {
-      type: TribesmanPlanType.doTechStudy,
+      type: AIPlanType.doTechStudy,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -181,12 +188,12 @@ const readTechStudyPlan = (reader: PacketReader, assignedTribesman: Entity | nul
    };
 }
 
-const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechItemPlan => {
+const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AITechItemPlan => {
    const techID = reader.readNumber() as TechID;
    const itemType = reader.readNumber() as ItemType;
 
    return {
-      type: TribesmanPlanType.doTechItems,
+      type: AIPlanType.doTechItems,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -198,11 +205,11 @@ const readTechItemPlan = (reader: PacketReader, assignedTribesman: Entity | null
    };
 }
 
-const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): TechCompletePlan => {
+const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AITechCompletePlan => {
    const techID = reader.readNumber() as TechID;
    
    return {
-      type: TribesmanPlanType.completeTech,
+      type: AIPlanType.completeTech,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -213,12 +220,12 @@ const readTechCompletePlan = (reader: PacketReader, assignedTribesman: Entity | 
    };
 }
 
-const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): GatherItemPlan => {
+const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | null, isComplete: boolean, depth: number): AIGatherItemPlan => {
    const itemType = reader.readNumber() as ItemType;
    const amount = reader.readNumber();
 
    return {
-      type: TribesmanPlanType.gatherItem,
+      type: AIPlanType.gatherItem,
       assignedTribesman: assignedTribesman,
       isComplete: isComplete,
       childPlans: [],
@@ -230,63 +237,76 @@ const readGatherItemPlan = (reader: PacketReader, assignedTribesman: Entity | nu
    };
 }
 
-const readTribePlanData = (reader: PacketReader, depth: number): TribesmanPlan => {
-   const planType = reader.readNumber() as TribesmanPlanType;
-   let assignedTribesman: Entity | null = reader.readNumber();
-   if (assignedTribesman === 0) {
-      assignedTribesman = null;
+const readAssignmentData = (reader: PacketReader, depth: number): AIPlan => {
+   const planType = reader.readNumber() as AIPlanType;
+   let assignedEntity: Entity | null = reader.readNumber();
+   if (assignedEntity === 0) {
+      assignedEntity = null;
    }
 
    const isComplete = reader.readBoolean();
    reader.padOffset(3);
 
-   let plan: TribesmanPlan;
+   let plan: AIPlan;
    switch (planType) {
-      case TribesmanPlanType.root:            plan = readRootPlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.craftRecipe:     plan = readCraftRecipePlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.placeBuilding:   plan = readPlaceBuildingPlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.upgradeBuilding: plan = readUpgradeBuildingPlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.doTechStudy:     plan = readTechStudyPlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.doTechItems:     plan = readTechItemPlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.completeTech:    plan = readTechCompletePlan(reader, assignedTribesman, isComplete, depth); break;
-      case TribesmanPlanType.gatherItem:      plan = readGatherItemPlan(reader, assignedTribesman, isComplete, depth); break;
+      case AIPlanType.root:            plan = readRootPlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.craftRecipe:     plan = readCraftRecipePlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.placeBuilding:   plan = readPlaceBuildingPlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.upgradeBuilding: plan = readUpgradeBuildingPlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.doTechStudy:     plan = readTechStudyPlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.doTechItems:     plan = readTechItemPlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.completeTech:    plan = readTechCompletePlan(reader, assignedEntity, isComplete, depth); break;
+      case AIPlanType.gatherItem:      plan = readGatherItemPlan(reader, assignedEntity, isComplete, depth); break;
    }
 
    const numChildren = reader.readNumber();
    for (let i = 0; i < numChildren; i++) {
-      const childPlan = readTribePlanData(reader, depth + 1);
+      const childPlan = readAssignmentData(reader, depth + 1);
       plan.childPlans.push(childPlan);
 
       plan.displayWidth += childPlan.displayWidth;
-
-      // spacing between children
-      // if (i < numChildren - 1) {
-      //    plan.displayWidth += Vars.NODE_DISPLAY_SIZE;
-      // }
    }
 
    return plan;
 }
 
-const fillPlanChildrenXOffset = (plan: TribesmanPlan): void => {
-   let widthCounter = 0;
+const fillPlanChildrenXOffset = (plan: AIPlan): void => {
+   let offsetCounter = -plan.displayWidth * 0.5;
    for (let i = 0; i < plan.childPlans.length; i++) {
       const childPlan = plan.childPlans[i];
       
-      childPlan.xOffset = plan.xOffset - plan.displayWidth * 0.5;
-      childPlan.xOffset += (widthCounter + childPlan.displayWidth * 0.5) + Vars.NODE_DISPLAY_SIZE * 0.5;
+      // Inherit parent x offset
+      childPlan.xOffset = plan.xOffset;
+      childPlan.xOffset += offsetCounter + childPlan.displayWidth * 0.5;
+      childPlan.xOffset += Vars.NODE_DISPLAY_SIZE * 0.5;
 
       fillPlanChildrenXOffset(childPlan);
       
-      widthCounter += childPlan.displayWidth;
+      offsetCounter += childPlan.displayWidth;
    }
 }
 
 export function updateTribePlanData(reader: PacketReader, tribeID: number): void {
-   const rootPlan = readTribePlanData(reader, 0);
-   fillPlanChildrenXOffset(rootPlan);
+   const tribePlan = readAssignmentData(reader, 0);
+   fillPlanChildrenXOffset(tribePlan);
 
-   tribePlanDataRecord[tribeID] = rootPlan;
+   const tribeAssignmentInfo: TribeAssignmentInfo = {
+      tribeAssignment: tribePlan,
+      entityAssignments: {}
+   };
+
+   // Entity assignments
+   const numEntityAssignments = reader.readNumber();
+   for (let i = 0; i < numEntityAssignments; i++) {
+      const entity = reader.readNumber() as Entity;
+
+      const assignment = readAssignmentData(reader, 0);
+      fillPlanChildrenXOffset(assignment);
+
+      tribeAssignmentInfo.entityAssignments[entity] = assignment;
+   }
+
+   tribePlanDataRecord[tribeID] = tribeAssignmentInfo;
 }
 
 export function setRenderedTribePlanID(id: number | null): void {
@@ -302,14 +322,14 @@ export function setRenderedTribePlanID(id: number | null): void {
 export function renderTribePlans(): void {
    if (renderedTribeID === null) {
       document.getElementById("tribe-plan-visualiser-canvas")!.classList.add("hidden");
-      TribePlanVisualiser_setPlan(null);
+      TribePlanVisualiser_setPlan(null, null);
       return;
    }
    document.getElementById("tribe-plan-visualiser-canvas")!.classList.remove("hidden");
 
-   gl.clearColor(0, 0,0, 1);
+   gl.clearColor(0, 0, 0, 1);
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
    
-   const plan = tribePlanDataRecord[renderedTribeID];
-   TribePlanVisualiser_setPlan(plan);
+   const tribeAssignmentInfo = tribePlanDataRecord[renderedTribeID];
+   TribePlanVisualiser_setPlan(tribeAssignmentInfo, getTribeByID(renderedTribeID) as ExtendedTribeInfo);
 }

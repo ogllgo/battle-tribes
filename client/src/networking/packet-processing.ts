@@ -1,4 +1,4 @@
-import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
@@ -19,24 +19,61 @@ import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { updateHealthBar } from "../components/game/HealthBar";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance, registerBasicEntityInfo, removeEntity, setCurrentLayer, setPlayerInstance, getEntityAgeTicks, EntityPreCreationInfo } from "../world";
+import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance, registerBasicEntityInfo, removeEntity, setCurrentLayer, setPlayerInstance, getEntityAgeTicks, EntityPreCreationInfo, surfaceLayer } from "../world";
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
-import Layer, { getTileIndexIncludingEdges, tileIsWithinEdge } from "../Layer";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { playSound } from "../sound";
 import { initialiseRenderables } from "../rendering/render-loop";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
-import { setVisibleSubtileSupports, SubtileSupportInfo } from "../rendering/webgl/subtile-support-rendering";
 import { createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
-import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
-import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { ExtendedTribeInfo, playerTribe, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
-import { readVirtualBuildingFromData } from "../virtual-buildings";
+import { readPacketDevData } from "./dev-packet-processing";
+import { TileIndex } from "../../../shared/src/utils";
+
+const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
+   // Initially find all tiles below a dropdown tile
+   const buildingBlockingTiles = new Set<TileIndex>();
+   for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         const surfaceTile = surfaceLayer.getTile(tileIndex);
+         if (surfaceTile.type === TileType.dropdown) {
+            buildingBlockingTiles.add(tileIndex);
+         }
+      }
+   }
+
+   // Expand the tiles to their neighbours
+   for (let i = 0; i < 3; i++) {
+      const tilesToExpand = Array.from(buildingBlockingTiles);
+
+      for (const tileIndex of tilesToExpand) {
+         const tileX = getTileX(tileIndex);
+         const tileY = getTileY(tileIndex);
+         
+         if (tileIsInWorld(tileX + 1, tileY)) {
+            buildingBlockingTiles.add(getTileIndexIncludingEdges(tileX + 1, tileY));
+         }
+         if (tileIsInWorld(tileX, tileY + 1)) {
+            buildingBlockingTiles.add(getTileIndexIncludingEdges(tileX, tileY + 1));
+         }
+         if (tileIsInWorld(tileX - 1, tileY)) {
+            buildingBlockingTiles.add(getTileIndexIncludingEdges(tileX - 1, tileY));
+         }
+         if (tileIsInWorld(tileX, tileY - 1)) {
+            buildingBlockingTiles.add(getTileIndexIncludingEdges(tileX, tileY - 1));
+         }
+      }
+   }
+
+   return buildingBlockingTiles;
+}
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
    // Player ID
@@ -61,8 +98,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
          const temperature = reader.readNumber();
          const humidity = reader.readNumber();
    
-         const tileX = Board.getTileX(tileIndex);
-         const tileY = Board.getTileY(tileIndex);
+         const tileX = getTileX(tileIndex);
+         const tileY = getTileY(tileIndex);
    
          const tile = new Tile(tileX, tileY, tileType, tileBiome);
          tiles.push(tile);
@@ -121,7 +158,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
          }
       }
 
-      const layer = new Layer(i, tiles, wallSubtileTypes, wallSubtileDamageTakenMap, flowDirections, [], [], grassInfoRecord);
+      const buildingBlockingTiles: ReadonlySet<TileIndex> = i > 0 ? getBuildingBlockingTiles() : new Set();
+      const layer = new Layer(i, tiles, buildingBlockingTiles, wallSubtileTypes, wallSubtileDamageTakenMap, flowDirections, [], [], grassInfoRecord);
       addLayer(layer);
    }
 
@@ -741,59 +779,12 @@ export function processGameDataPacket(reader: PacketReader): void {
       tickCollapse(collapsingSubtileIndex, ageTicks);
    }
 
-   // Subtile supports
-   const showSubtileSupports = reader.readBoolean();
-   reader.padOffset(3);
-   if (showSubtileSupports) {
-      const subtileSupports = new Array<SubtileSupportInfo>();
-      
-      const numSubtiles = reader.readNumber();
-      for (let i = 0; i < numSubtiles; i++) {
-         const subtileIndex = reader.readNumber();
-         const support = reader.readNumber();
-
-         subtileSupports.push({
-            subtileIndex: subtileIndex,
-            support: support
-         });
-      }
-
-      setVisibleSubtileSupports(subtileSupports);
-   }
-
-   // Pathfinding node occupances
-   const showPathfindingNodeOccupances = reader.readBoolean();
-   reader.padOffset(3);
-   if (showPathfindingNodeOccupances) {
-      const visiblePathfindingNodeOccupances = new Array<PathfindingNodeIndex>();
-      
-      const numNodes = reader.readNumber();
-      for (let i = 0; i < numNodes; i++) {
-         const node = reader.readNumber();
-         visiblePathfindingNodeOccupances.push(node);
-      }
-
-      setVisiblePathfindingNodeOccupances(visiblePathfindingNodeOccupances);
-   }
-
    // Tribe plans and virtual buildings
    // @Cleanup: remove underscore
    const _isDev = reader.readBoolean();
    reader.padOffset(3);
    if (_isDev) {
-      const numTribes = reader.readNumber();
-      for (let i = 0; i < numTribes; i++) {
-         const tribeID = reader.readNumber();
-
-         // Tribe plans
-         updateTribePlanData(reader, tribeID);
-
-         // Virtual buildings
-         const numVirtualBuildings = reader.readNumber();
-         for (let i = 0; i < numVirtualBuildings; i++) {
-            const virtualBuilding = readVirtualBuildingFromData(reader)
-         }
-      }
+      readPacketDevData(reader);
    }
    
    const gameDataPacket: GameDataPacket = {
@@ -808,7 +799,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       titleOffer: titleOffer,
       tickEvents: tickEvents,
       // @Incomplete
-      visibleSafetyNodes: [],
       visibleBuildingPlans: [],
       visibleBuildingSafetys: [],
       visibleRestrictedBuildingAreas: [],

@@ -17,7 +17,7 @@ import { BlueprintType, ServerComponentType } from "battletribes-shared/componen
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
-import { addEntityDataToPacket, getEntityDataLength } from "./game-data-packets";
+import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
 import { changeEntityLayer, entityExists, getEntityLayer } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
@@ -81,7 +81,7 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    // playerClient.visibleChunkBounds = [minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY];
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
-   playerClient.visibleChunkBounds = playerClient.getVisibleChunkBounds(transformComponent.position, screenWidth, screenHeight);
+   playerClient.updateVisibleChunkBounds();
    playerClient.gameDataOptions = gameDataOptions;
    
    const physicsComponent = PhysicsComponentArray.getComponent(player);

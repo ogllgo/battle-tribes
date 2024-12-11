@@ -31,8 +31,8 @@ const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
    /** How far off the target the pathfinding can be before recalculating */
    PATH_RECALCULATE_DIST = 32,
-   ACCELERATION = 400,
-   SLOW_ACCELERATION = 200
+   ACCELERATION = 700,
+   SLOW_ACCELERATION = 400
 }
 
 /** How far away from the entity the attack is done */
@@ -116,22 +116,6 @@ export function getTribesmanSlowAcceleration(tribesmanID: number): number {
 
 export function getTribesmanAcceleration(tribesmanID: number): number {
    return Vars.ACCELERATION * getAccelerationMultiplier(tribesmanID);
-}
-
-export function positionIsSafeForTribesman(tribesman: Entity, x: number, y: number): boolean {
-   const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
-   
-   const layer = getEntityLayer(tribesman);
-   const visibleEntitiesFromItem = getEntitiesInRange(layer, x, y, aiHelperComponent.visionRange);
-
-   for (const entity of visibleEntitiesFromItem) {
-      const relationship = getEntityRelationship(tribesman, entity);
-      if (relationship >= EntityRelationship.hostileMob) {
-         return false;
-      }
-   }
-
-   return true;
 }
 
 const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, goalRadiusNodes: number): boolean => {
@@ -483,7 +467,7 @@ export function moveTribesmanToBiome(tribesman: Entity, materialInfo: MaterialIn
    const targetTile = localBiome.tilesInBorder[0];
    const targetX = (getTileX(targetTile) + 0.5) * Settings.TILE_SIZE;
    const targetY = (getTileY(targetTile) + 0.5) * Settings.TILE_SIZE;
-   pathfindTribesman(tribesman, targetX, targetY, materialInfo.layer, 0, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+   pathfindTribesman(tribesman, targetX, targetY, materialInfo.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
 
    // @Incomplete: also note which layer the tribesman is moving to
    tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;

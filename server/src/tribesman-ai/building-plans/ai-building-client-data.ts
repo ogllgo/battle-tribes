@@ -2,7 +2,7 @@ import { SafetyNodeData, PotentialBuildingPlanData, BuildingPlanData, BuildingSa
 import { VisibleChunkBounds, RestrictedBuildingAreaData } from "battletribes-shared/client-server-types";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, TribesmanPlanType } from "battletribes-shared/utils";
+import { Point, AIPlanType } from "battletribes-shared/utils";
 import Layer from "../../Layer";
 import Tribe from "../../Tribe";
 import { SafetyNode, getSafetyNode } from "../ai-building";
@@ -10,9 +10,12 @@ import { buildingIsInfrastructure, getBuildingSafety } from "../ai-building-heur
 import { TribeComponentArray } from "../../components/TribeComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { VirtualWall } from "./TribeBuildingLayer";
-import { CraftRecipePlan, GatherItemPlan, PlaceBuildingPlan, TechCompletePlan, TechItemPlan, TechStudyPlan, TribesmanPlan, UpgradeBuildingPlan } from "../tribesman-ai-planning";
+import { AICraftRecipePlan, AIGatherItemPlan, AIPlaceBuildingPlan, AITechCompletePlan, AITechItemPlan, AITechStudyPlan, AIPlan, AIUpgradeBuildingPlan, AIPlanAssignment } from "../tribesman-ai-planning";
 import { Packet } from "../../../../shared/src/packets";
 import { CRAFTING_RECIPES } from "../../../../shared/src/items/crafting-recipes";
+import PlayerClient from "../../server/PlayerClient";
+import { getTribes } from "../../world";
+import { AIAssignmentComponentArray } from "../../components/AIAssignmentComponent";
 
 // @Cleanup: should this be here?
 export function getVisibleTribes(playerLayer: Layer, chunkBounds: VisibleChunkBounds): ReadonlyArray<Tribe> {
@@ -35,16 +38,18 @@ export function getVisibleTribes(playerLayer: Layer, chunkBounds: VisibleChunkBo
    return visibleTribes;
 }
 
-export function getVisibleSafetyNodesData(playerLayer: Layer, visibleTribes: ReadonlyArray<Tribe>, chunkBounds: VisibleChunkBounds): ReadonlyArray<SafetyNodeData> {
-   const safetyNodesData = new Array<SafetyNodeData>();
-   for (let i = 0; i < visibleTribes.length; i++) {
-      const tribe = visibleTribes[i];
-      const buildingLayer = tribe.buildingLayers[playerLayer.depth];
+export function getVisibleSafetyNodesData(playerClient: PlayerClient): ReadonlyArray<SafetyNodeData> {
+   const tribes = getTribes();
 
-      const minNodeX = Math.floor(chunkBounds[0] * Settings.CHUNK_UNITS / Settings.SAFETY_NODE_SEPARATION);
-      const maxNodeX = Math.floor((chunkBounds[1] + 1) * Settings.CHUNK_UNITS / Settings.SAFETY_NODE_SEPARATION) - 1;
-      const minNodeY = Math.floor(chunkBounds[2] * Settings.CHUNK_UNITS / Settings.SAFETY_NODE_SEPARATION);
-      const maxNodeY = Math.floor((chunkBounds[3] + 1) * Settings.CHUNK_UNITS / Settings.SAFETY_NODE_SEPARATION) - 1;
+   const minNodeX = Math.floor(playerClient.minVisibleX / Settings.SAFETY_NODE_SEPARATION);
+   const maxNodeX = Math.floor(playerClient.maxVisibleX / Settings.SAFETY_NODE_SEPARATION);
+   const minNodeY = Math.floor(playerClient.minVisibleY / Settings.SAFETY_NODE_SEPARATION);
+   const maxNodeY = Math.floor(playerClient.maxVisibleY / Settings.SAFETY_NODE_SEPARATION);
+   
+   const safetyNodesData = new Array<SafetyNodeData>();
+   for (const tribe of tribes) {
+      const buildingLayer = tribe.buildingLayers[playerClient.lastLayer.depth];
+
       for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
          for (let nodeY = minNodeY; nodeY <= maxNodeY; nodeY++) {
             const nodeIndex = getSafetyNode(nodeX, nodeY);
@@ -77,7 +82,7 @@ export function getVisibleSafetyNodesData(playerLayer: Layer, visibleTribes: Rea
    return safetyNodesData;
 }
 
-const getTribePotentialBuildingPlans = (plan: TribesmanPlan, chunkBounds: VisibleChunkBounds): ReadonlyArray<PotentialBuildingPlanData> => {
+const getTribePotentialBuildingPlans = (plan: AIPlan, chunkBounds: VisibleChunkBounds): ReadonlyArray<PotentialBuildingPlanData> => {
    const potentialPlansData = new Array<PotentialBuildingPlanData>();
    for (let i = 0; i < plan.potentialPlans.length; i++) {
       const potentialPlanData = plan.potentialPlans[i];
@@ -90,18 +95,20 @@ const getTribePotentialBuildingPlans = (plan: TribesmanPlan, chunkBounds: Visibl
    return potentialPlansData;
 }
 
-const addPlansRecursively = (plan: TribesmanPlan, chunkBounds: VisibleChunkBounds, buildingPlansData: Array<BuildingPlanData>): void => {
+const addVisibleAssignmentsRecursively = (assignment: AIPlanAssignment, chunkBounds: VisibleChunkBounds, buildingPlansData: Array<BuildingPlanData>): void => {
+   const plan = assignment.plan;
+   
    let planPosition: Point;
    let planRotation: number;
    let entityType: EntityType;
    switch (plan.type) {
-      case TribesmanPlanType.placeBuilding: {               
+      case AIPlanType.placeBuilding: {               
          planPosition = plan.virtualBuilding.position;
          planRotation = plan.virtualBuilding.rotation;
          entityType = plan.virtualBuilding.entityType;
          break;
       }
-      case TribesmanPlanType.upgradeBuilding: {
+      case AIPlanType.upgradeBuilding: {
          const building = plan.baseBuildingID;
          
          const buildingTransformComponent = TransformComponentArray.getComponent(building);
@@ -129,12 +136,12 @@ const addPlansRecursively = (plan: TribesmanPlan, chunkBounds: VisibleChunkBound
          rotation: planRotation,
          entityType: entityType,
          potentialBuildingPlans: getTribePotentialBuildingPlans(plan, chunkBounds),
-         assignedTribesmanID: plan.assignedTribesman || -1
+         assignedTribesmanID: assignment.plan.assignedEntity || -1
       });
    }
 
-   for (const childPlan of plan.childPlans) {
-      addPlansRecursively(childPlan, chunkBounds, buildingPlansData);
+   for (const childAssignment of assignment.children) {
+      addVisibleAssignmentsRecursively(childAssignment, chunkBounds, buildingPlansData);
    }
 }
 
@@ -143,7 +150,7 @@ export function getVisibleBuildingPlans(visibleTribes: ReadonlyArray<Tribe>, chu
    for (let i = 0; i < visibleTribes.length; i++) {
       const tribe = visibleTribes[i];
 
-      addPlansRecursively(tribe.rootPlan, chunkBounds, buildingPlansData);
+      addVisibleAssignmentsRecursively(tribe.assignment, chunkBounds, buildingPlansData);
    }
 
    return buildingPlansData;
@@ -289,9 +296,9 @@ export function getVisibleWallConnections(playerLayer: Layer, visibleTribes: Rea
    return connectionsData;
 }
 
-const addBasePlanData = (packet: Packet, plan: TribesmanPlan): void => {
+const addBasePlanData = (packet: Packet, plan: AIPlan): void => {
    packet.addNumber(plan.type);
-   packet.addNumber(plan.assignedTribesman !== null ? plan.assignedTribesman : 0);
+   packet.addNumber(plan.assignedEntity !== null ? plan.assignedEntity : 0);
    packet.addBoolean(plan.isComplete);
    packet.padOffset(3);
 }
@@ -299,7 +306,7 @@ const getBasePlanDataLength = (): number => {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addCraftRecipePlanData = (packet: Packet, plan: CraftRecipePlan): void => {
+const addCraftRecipePlanData = (packet: Packet, plan: AICraftRecipePlan): void => {
    // @Speed
    packet.addNumber(CRAFTING_RECIPES.indexOf(plan.recipe));
    packet.addNumber(plan.productAmount);
@@ -308,28 +315,28 @@ const getCraftRecipePlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addPlaceBuildingPlanData = (packet: Packet, plan: PlaceBuildingPlan): void => {
+const addPlaceBuildingPlanData = (packet: Packet, plan: AIPlaceBuildingPlan): void => {
    packet.addNumber(plan.virtualBuilding.entityType);
 }
 const getPlaceBuildingPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addUpgradeBuildingPlanData = (packet: Packet, plan: UpgradeBuildingPlan): void => {
+const addUpgradeBuildingPlanData = (packet: Packet, plan: AIUpgradeBuildingPlan): void => {
    packet.addNumber(plan.blueprintType);
 }
 const getUpgradeBuildingPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addTechStudyPlanData = (packet: Packet, plan: TechStudyPlan): void => {
+const addTechStudyPlanData = (packet: Packet, plan: AITechStudyPlan): void => {
    packet.addNumber(plan.tech.id);
 }
 const getTechStudyPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addTechItemPlanData = (packet: Packet, plan: TechItemPlan): void => {
+const addTechItemPlanData = (packet: Packet, plan: AITechItemPlan): void => {
    packet.addNumber(plan.tech.id);
    packet.addNumber(plan.itemType);
 }
@@ -337,14 +344,14 @@ const getTechItemPlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addTechCompletePlanData = (packet: Packet, plan: TechCompletePlan): void => {
+const addTechCompletePlanData = (packet: Packet, plan: AITechCompletePlan): void => {
    packet.addNumber(plan.tech.id);
 }
 const getTechCompletePlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-const addGatherItemPlanData = (packet: Packet, plan: GatherItemPlan): void => {
+const addGatherItemPlanData = (packet: Packet, plan: AIGatherItemPlan): void => {
    packet.addNumber(plan.itemType);
    packet.addNumber(plan.amount);
 }
@@ -352,41 +359,96 @@ const getGatherItemPlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-export function addPlanData(packet: Packet, plan: TribesmanPlan): void {
+const addAssignmentData = (packet: Packet, assignment: AIPlanAssignment): void => {
+   const plan = assignment.plan;
+   
    // Add data for the plan
    addBasePlanData(packet, plan);
    switch (plan.type) {
-      case TribesmanPlanType.craftRecipe:     addCraftRecipePlanData(packet, plan); break;
-      case TribesmanPlanType.placeBuilding:   addPlaceBuildingPlanData(packet, plan); break;
-      case TribesmanPlanType.upgradeBuilding: addUpgradeBuildingPlanData(packet, plan); break;
-      case TribesmanPlanType.doTechStudy:     addTechStudyPlanData(packet, plan); break;
-      case TribesmanPlanType.doTechItems:     addTechItemPlanData(packet, plan); break;
-      case TribesmanPlanType.completeTech:    addTechCompletePlanData(packet, plan); break;
-      case TribesmanPlanType.gatherItem:      addGatherItemPlanData(packet, plan); break;
+      case AIPlanType.craftRecipe:     addCraftRecipePlanData(packet, plan); break;
+      case AIPlanType.placeBuilding:   addPlaceBuildingPlanData(packet, plan); break;
+      case AIPlanType.upgradeBuilding: addUpgradeBuildingPlanData(packet, plan); break;
+      case AIPlanType.doTechStudy:     addTechStudyPlanData(packet, plan); break;
+      case AIPlanType.doTechItems:     addTechItemPlanData(packet, plan); break;
+      case AIPlanType.completeTech:    addTechCompletePlanData(packet, plan); break;
+      case AIPlanType.gatherItem:      addGatherItemPlanData(packet, plan); break;
    }
 
-   packet.addNumber(plan.childPlans.length);
-   for (const childPlan of plan.childPlans) {
-      addPlanData(packet, childPlan);
+   packet.addNumber(assignment.children.length);
+   for (const childAssignment of assignment.children) {
+      addAssignmentData(packet, childAssignment);
    }
 }
 
-export function getTribePlansDataLength(plan: TribesmanPlan): number {
+const getAssignmentDataLength = (assignment: AIPlanAssignment): number => {
    let dataLength = getBasePlanDataLength();
-   switch (plan.type) {
-      case TribesmanPlanType.craftRecipe:     dataLength += getCraftRecipePlanDataLength(); break;
-      case TribesmanPlanType.placeBuilding:   dataLength += getPlaceBuildingPlanDataLength(); break;
-      case TribesmanPlanType.upgradeBuilding: dataLength += getUpgradeBuildingPlanDataLength(); break;
-      case TribesmanPlanType.doTechStudy:     dataLength += getTechStudyPlanDataLength(); break;
-      case TribesmanPlanType.doTechItems:     dataLength += getTechItemPlanDataLength(); break;
-      case TribesmanPlanType.completeTech:    dataLength += getTechCompletePlanDataLength(); break;
-      case TribesmanPlanType.gatherItem:      dataLength += getGatherItemPlanDataLength(); break;
+   switch (assignment.plan.type) {
+      case AIPlanType.craftRecipe:     dataLength += getCraftRecipePlanDataLength(); break;
+      case AIPlanType.placeBuilding:   dataLength += getPlaceBuildingPlanDataLength(); break;
+      case AIPlanType.upgradeBuilding: dataLength += getUpgradeBuildingPlanDataLength(); break;
+      case AIPlanType.doTechStudy:     dataLength += getTechStudyPlanDataLength(); break;
+      case AIPlanType.doTechItems:     dataLength += getTechItemPlanDataLength(); break;
+      case AIPlanType.completeTech:    dataLength += getTechCompletePlanDataLength(); break;
+      case AIPlanType.gatherItem:      dataLength += getGatherItemPlanDataLength(); break;
    }
    
    dataLength += Float32Array.BYTES_PER_ELEMENT;
-   for (const childPlan of plan.childPlans) {
-      dataLength += getTribePlansDataLength(childPlan);
+   for (const childAssignment of assignment.children) {
+      dataLength += getAssignmentDataLength(childAssignment);
    }
 
    return dataLength;
+}
+
+export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
+   // Tribe assignment
+   addAssignmentData(packet, tribe.assignment);
+
+   // @Speed @Hack
+   let numEntitiesWithAIAssignmentComponent = 0;
+   for (const tribesman of tribe.tribesmanIDs) {
+      if (AIAssignmentComponentArray.hasComponent(tribesman)) {
+         const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+         if (aiAssignmentComponent.wholeAssignment !== null) {
+            numEntitiesWithAIAssignmentComponent++;
+         }
+      }
+   }
+
+   // Tribesman assignments
+   packet.addNumber(numEntitiesWithAIAssignmentComponent);
+   // @Incomplete: won't account for cogwalkers
+   for (let i = 0; i < tribe.tribesmanIDs.length; i++) {
+      const tribesman = tribe.tribesmanIDs[i];
+      
+      if (AIAssignmentComponentArray.hasComponent(tribesman)) {
+         const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+         if (aiAssignmentComponent.wholeAssignment !== null) {
+            packet.addNumber(tribesman);
+            addAssignmentData(packet, aiAssignmentComponent.wholeAssignment);
+         }
+      }
+   }
+}
+
+export function getTribeAssignmentDataLength(tribe: Tribe): number {
+   // Tribe assignment
+   let lengthBytes = getAssignmentDataLength(tribe.assignment);
+
+   // Tribesman assignments
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   // @Incomplete: won't account for cogwalkers
+   for (let i = 0; i < tribe.tribesmanIDs.length; i++) {
+      const tribesman = tribe.tribesmanIDs[i];
+      
+      if (AIAssignmentComponentArray.hasComponent(tribesman)) {
+         const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+         if (aiAssignmentComponent.wholeAssignment !== null) {
+            lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+            lengthBytes += getAssignmentDataLength(aiAssignmentComponent.wholeAssignment);
+         }
+      }
+   }
+
+   return lengthBytes;
 }

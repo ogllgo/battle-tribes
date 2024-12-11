@@ -21,7 +21,7 @@ import { TombstoneComponentArray } from "./entity-components/server-components/T
 import { TunnelComponentArray } from "./entity-components/server-components/TunnelComponent";
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
-import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
+import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 const enum InteractActionType {
@@ -205,7 +205,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+         const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
          
          break;
@@ -215,7 +215,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+         const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
 
          break;
@@ -225,7 +225,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+         const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
          
          break;
@@ -241,7 +241,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
-         const hotbarUseInfo = getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+         const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          hotbarUseInfo.lastAttackTicks = Board.serverTicks;
 
          break;

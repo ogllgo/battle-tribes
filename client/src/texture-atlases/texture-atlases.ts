@@ -99,6 +99,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tribe-totem/barbarian-banner.png",
    "entities/tribe-totem/plainspeople-banner.png",
    "entities/tribe-totem/frostling-banner.png",
+   "entities/tribe-totem/dwarf-banner.png",
    "entities/worker-hut/worker-hut.png",
    "entities/worker-hut/worker-hut-door.png",
    "entities/warrior-hut/warrior-hut.png",

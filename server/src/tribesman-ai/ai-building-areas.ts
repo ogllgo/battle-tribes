@@ -4,7 +4,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { SafetyNode, getSafetyNode } from "./ai-building";
 import TribeBuildingLayer, { TribeDoorType, VirtualBuilding, VirtualDoor, VirtualWall } from "./building-plans/TribeBuildingLayer";
-import { createUpgradeBuildingPlan, UpgradeBuildingPlan } from "./tribesman-ai-planning";
+import { createUpgradeBuildingPlanAssignment, AIPlanAssignment, AIUpgradeBuildingPlan } from "./tribesman-ai-planning";
 
 export interface TribeRoom {
    readonly containedNodes: Set<SafetyNode>;
@@ -127,8 +127,8 @@ const sidesFormValidOutsideDoor = (buildingLayer: TribeBuildingLayer, room: Trib
    return true;
 }
 
-export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room: TribeRoom): UpgradeBuildingPlan | null {
-   let plan: UpgradeBuildingPlan | null = null;
+export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room: TribeRoom): AIPlanAssignment<AIUpgradeBuildingPlan> | null {
+   let assignment: AIPlanAssignment<AIUpgradeBuildingPlan> | null = null;
    const potentialPlans = new Array<PotentialBuildingPlanData>();   
    
    for (const wall of room.connectedWalls) {
@@ -165,13 +165,13 @@ export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room:
       });
 
       // @Cleanup: probs should be done in the tribesman-ai-olanning file
-      plan = createUpgradeBuildingPlan(wall.id, doorRotation, BlueprintType.woodenDoor, EntityType.door);
+      assignment = createUpgradeBuildingPlanAssignment([], wall.id, doorRotation, BlueprintType.woodenDoor, EntityType.door);
       break;
    }
 
-   if (plan !== null) {
-      plan.potentialPlans = potentialPlans;
+   if (assignment !== null) {
+      assignment.plan.potentialPlans = potentialPlans;
    }
 
-   return plan;
+   return assignment;
 }

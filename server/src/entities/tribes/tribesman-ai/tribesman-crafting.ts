@@ -15,7 +15,7 @@ import { CraftingStation, CraftingRecipe, CRAFTING_RECIPES } from "battletribes-
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
-import { CraftRecipePlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { AICraftRecipePlan } from "../../../tribesman-ai/tribesman-ai-planning";
 
 const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
@@ -109,6 +109,6 @@ export function goCraftItem(tribesman: Entity, recipe: CraftingRecipe, tribe: Tr
    clearTribesmanPath(tribesman);
 }
 
-export function craftGoalIsComplete(plan: CraftRecipePlan, inventoryComponent: InventoryComponent): boolean {
+export function craftGoalIsComplete(plan: AICraftRecipePlan, inventoryComponent: InventoryComponent): boolean {
    return countItemType(inventoryComponent, plan.recipe.product) >= plan.productAmount;
 }

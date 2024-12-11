@@ -20,7 +20,7 @@
    z-index: 1;
 }
 #tribe-plan-visualiser .tribe-plan-node.complete {
-   background-color: #999;
+   background-color: #7ae66c;
 }
 #tribe-plan-visualiser .tribe-plan-node.assigned {
    background-color: #deab4e;
@@ -34,7 +34,13 @@
 #tribe-plan-visualiser .node-connector {
    height: 10px;
    position: absolute;
-   background-color: #777;
+   background-color: #aaa;
    transform-origin: 0% 50%;
    z-index: 0;
+}
+
+#tribe-plan-visualiser .dropdown {
+   position: absolute;
+   top: 20px;
+   left: 20px;
 }

@@ -1,52 +1,10 @@
 import { PotentialBuildingPlanData } from "battletribes-shared/ai-building-types";
 import { EntityType } from "battletribes-shared/entities";
 import Tribe from "../Tribe";
-import { SafetyNode, updateBuildingLayer } from "./ai-building";
+import { updateBuildingLayer } from "./ai-building";
 import { getTribeSafety } from "./ai-building-heuristics";
-import { TribeRoom } from "./ai-building-areas";
-import TribeBuildingLayer, { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
-import { BuildingCandidate } from "./building-plans/ai-building-utils";
+import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
 import { getWallCandidates } from "./building-plans/ai-building-walls";
-
-interface TribeInfo {
-   readonly safetyNodes: Set<SafetyNode>;
-   readonly safetyRecord: Record<SafetyNode, number>;
-   readonly occupiedSafetyNodes: Set<SafetyNode>;
-   readonly virtualBuildings: Array<VirtualBuilding>;
-   readonly virtualBuildingRecord: Record<number, VirtualBuilding>;
-   readonly areas: Array<TribeRoom>;
-   // @Incomplete
-   // readonly nodeToAreaIDRecord: Record<SafetyNodeIndex, number>;
-}
-
-const copyTribeInfo = (tribe: Tribe, buildingLayer: TribeBuildingLayer): TribeInfo => {
-   const safetyRecord: Record<SafetyNode, number> = {};
-   const nodes = Object.keys(buildingLayer.safetyRecord).map(nodeString => Number(nodeString)) as Array<SafetyNode>;
-   for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i];
-
-      const safety = buildingLayer.safetyRecord[node];
-      safetyRecord[node] = safety;
-   }
-
-   const virtualBuildingRecord: Record<number, VirtualBuilding> = {};
-   const virtualBuildingIDs = Object.keys(tribe.virtualBuildingRecord).map(idString => Number(idString));
-   for (let i = 0; i < virtualBuildingIDs.length; i++) {
-      const id = virtualBuildingIDs[i];
-
-      const virtualBuilding = tribe.virtualBuildingRecord[id];
-      virtualBuildingRecord[id] = virtualBuilding;
-   }
-
-   return {
-      safetyNodes: new Set(buildingLayer.safetyNodes),
-      safetyRecord: safetyRecord,
-      occupiedSafetyNodes: new Set(buildingLayer.occupiedSafetyNodes),
-      virtualBuildings: tribe.virtualBuildings.slice(),
-      virtualBuildingRecord: virtualBuildingRecord,
-      areas: buildingLayer.rooms.slice()
-   };
-}
 
 export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null {
    const potentialCandidates = getWallCandidates(tribe);
@@ -54,8 +12,6 @@ export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null
       // Unable to find a position
       return null
    }
-
-   let realTribeInfo!: TribeInfo;
 
    const potentialPlans = new Array<PotentialBuildingPlanData>();
 
@@ -68,20 +24,15 @@ export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null
    for (let i = 0; i < potentialCandidates.length; i++) {
       const candidate = potentialCandidates[i];
 
-      // Re-copy the tribe info so that it doesn't get modified across iterations
-      realTribeInfo = copyTribeInfo(tribe, candidate.buildingLayer);
+      const virtualBuilding = createVirtualBuilding(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.wall);
 
       // Simulate placing the wall
-      const virtualBuilding = createVirtualBuilding(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.wall);
       candidate.buildingLayer.addVirtualBuilding(virtualBuilding);
-
-      for (const buildingLayer of tribe.buildingLayers) {
-         updateBuildingLayer(buildingLayer);
-      }
+      updateBuildingLayer(candidate.buildingLayer);
 
       const query = getTribeSafety(tribe);
+      
       const safety = query.safety;
-
       if (safety > maxSafety) {
          maxSafety = safety;
          bestBuilding = virtualBuilding;
@@ -96,15 +47,9 @@ export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null
          safetyData: query.safetyInfo
       });
 
-      // @Incomplete: doesn't reset everything
-      // @Cleanup: instead do this by 'undoing' the place?
-      // Reset back to real info
-      candidate.buildingLayer.safetyNodes = realTribeInfo.safetyNodes;
-      candidate.buildingLayer.safetyRecord = realTribeInfo.safetyRecord;
-      candidate.buildingLayer.occupiedSafetyNodes = realTribeInfo.occupiedSafetyNodes;
-      tribe.virtualBuildings = realTribeInfo.virtualBuildings;
-      tribe.virtualBuildingRecord = realTribeInfo.virtualBuildingRecord;
-      candidate.buildingLayer.rooms = realTribeInfo.areas;
+      // Undo the simulated placement
+      candidate.buildingLayer.removeVirtualBuilding(virtualBuilding);
+      updateBuildingLayer(candidate.buildingLayer);
    }
 
    return bestBuilding;

@@ -25,7 +25,7 @@ import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/it
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getGameTicks } from "../../../world";
 import { getLayerInfo } from "../../../layers";
-import { PlaceBuildingPlan, UpgradeBuildingPlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -35,7 +35,7 @@ const getPlaceableItemSlot = (hotbarInventory: Inventory, itemType: ItemType): n
    return getItemTypeSlot(hotbarInventory, itemType);
 }
 
-export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, plan: PlaceBuildingPlan): boolean {
+export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, plan: AIPlaceBuildingPlan): boolean {
    const virtualBuilding = plan.virtualBuilding;
    
    const layer = getEntityLayer(tribesman);
@@ -51,7 +51,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // @Bug: sometimes the blocking entity is inaccessible, causing the pathfinding to the entity to break. Fix
          
          huntEntity(tribesman, blockingEntity, false);
-         return true;
+         return false;
       }
    }
 
@@ -91,7 +91,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
-         return true;
+         return false;
       } else if (Math.abs(getAngleDiff(transformComponent.rotation, targetDirection)) < 0.02) {
          // @Cleanup: copy and paste. use the function from item-use.ts
          
@@ -109,6 +109,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          consumeItemFromSlot(tribesman, hotbarInventory, placeableItemSlot, 1);
          
          useInfo.lastAttackTicks = getGameTicks();
+         return true;
       } else {
          const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
          
@@ -118,7 +119,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
 
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
-         return true;
+         return false;
       }
    } else {
       // Move to the building plan
@@ -128,14 +129,12 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
-         return true;
       }
+      return false;
    }
-
-   return false;
 }
 
-export function goUpgradeBuilding(tribesman: Entity, plan: UpgradeBuildingPlan): void {
+export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan): void {
    const building = plan.baseBuildingID;
    
    // @Cleanup: Copy and paste from attemptToRepairBuildings

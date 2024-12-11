@@ -1,13 +1,14 @@
 import { Chunks, EntityInfo, getChunk } from "./board-interface";
 import { Entity, EntityType } from "./entities";
-import { estimateCollidingEntities } from "./hitbox-collision";
+import { estimateCollidingEntities, getBoxesCollidingEntities } from "./hitbox-collision";
 import { createBracingHitboxes, createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
-import { boxIsCircular, Hitbox } from "./boxes/boxes";
+import { boxIsCircular, Hitbox, updateBox } from "./boxes/boxes";
 import { Settings } from "./settings";
-import { Point, distance, getAbsAngleDiff } from "./utils";
+import { Point, TileIndex, distance, getAbsAngleDiff } from "./utils";
 import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./subtiles";
 import { CollisionGroup, getEntityCollisionGroup } from "./collision-groups";
 import { ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType, NUM_ITEM_TYPES, PlaceableItemType } from "./items/items";
+import RectangularBox from "./boxes/RectangularBox";
 
 /*
 When snapping:
@@ -76,6 +77,7 @@ export interface WorldInfo {
    readonly wallSubtileTypes: Readonly<Float32Array>;
    getEntityCallback(entity: Entity): EntityInfo;
    subtileIsMined(subtileIndex: number): boolean;
+   tileIsBuildingBlocking(tileIndex: TileIndex): boolean;
 }
 
 export function entityIsStructure(entityType: EntityType): boolean {
@@ -89,8 +91,53 @@ export function createEmptyStructureConnectionInfo(): StructureConnectionInfo {
    };
 }
 
+// @Hack @Copynpaste
+const getTileIndexIncludingEdges = (tileX: number, tileY: number): TileIndex => {
+   return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_BOARD_DIMENSIONS + tileX + Settings.EDGE_GENERATION_DISTANCE;
+}
+
+const structureIntersectsWithBuildingBlockingTiles = (hitboxes: ReadonlyArray<Hitbox>, worldInfo: WorldInfo): boolean => {
+   for (const hitbox of hitboxes) {
+      const box = hitbox.box;
+
+      const minTileX = Math.floor(box.calculateBoundsMinX() / Settings.TILE_SIZE);
+      const maxTileX = Math.floor(box.calculateBoundsMaxX() / Settings.TILE_SIZE);
+      const minTileY = Math.floor(box.calculateBoundsMinY() / Settings.TILE_SIZE);
+      const maxTileY = Math.floor(box.calculateBoundsMaxY() / Settings.TILE_SIZE);
+
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+            const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+            if (!worldInfo.tileIsBuildingBlocking(tileIndex)) {
+               continue;
+            }
+            
+            // @Speed
+            const tileBox = new RectangularBox(new Point(0, 0), Settings.TILE_SIZE, Settings.TILE_SIZE, 0);
+            updateBox(tileBox, (tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE, 0);
+
+            if (box.isColliding(tileBox)) {
+               return true;
+            }
+         }
+      }
+   }
+
+   return false;
+}
+
 const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, rotation: number, worldInfo: WorldInfo): boolean => {
-   const collidingEntities = estimateCollidingEntities(worldInfo, entityType, x, y, rotation, Vars.COLLISION_EPSILON);
+   const testHitboxes = createNormalStructureHitboxes(entityType);
+   for (let i = 0; i < testHitboxes.length; i++) {
+      const hitbox = testHitboxes[i];
+      updateBox(hitbox.box, x, y, rotation);
+   }
+   
+   if (structureIntersectsWithBuildingBlockingTiles(testHitboxes, worldInfo)) {
+      return false;
+   }
+   
+   const collidingEntities = getBoxesCollidingEntities(worldInfo, testHitboxes);
 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entityID = collidingEntities[i];
@@ -523,11 +570,18 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: Structure
    const x = (closestTileCornerX + secondClosestTileCornerX) * 0.5;
    const y = (closestTileCornerY + secondClosestTileCornerY) * 0.5;
    const position = new Point(x, y);
-   
-   const hitboxes = createBracingHitboxes();
 
    // 0 rotation - vertical, 90 deg rotation - horizontal
    const rotation = closestTileCornerSubtileY === secondClosestTileCornerSubtileY ? Math.PI / 2 : 0;
+   
+   const hitboxes = createBracingHitboxes();
+   for (const hitbox of hitboxes) {
+      updateBox(hitbox.box, position.x, position.y, rotation);
+   }
+   
+   if (structureIntersectsWithBuildingBlockingTiles(hitboxes, worldInfo)) {
+      isValid = false;
+   }
    
    return {
       position: position,

@@ -20,7 +20,7 @@ const HIGHLIGHTED_NODE_THICKNESS = 3;
 
 let program: WebGLProgram;
 
-let safetyNodes: ReadonlyArray<SafetyNodeData>;
+let safetyNodes: ReadonlyArray<SafetyNodeData> = [];
 
 export function setVisibleSafetyNodes(newSafetyNodes: ReadonlyArray<SafetyNodeData>): void {
    // @Speed: Garbage collection

@@ -22,6 +22,16 @@ import { playSound } from "./sound";
 import { Tile } from "./Tile";
 import { getEntityType } from "./world";
 
+// @Cleanup: location, @Copynpaste from server
+
+export function getTileX(tileIndex: number): number {
+   return tileIndex % Settings.FULL_BOARD_DIMENSIONS - Settings.EDGE_GENERATION_DISTANCE;
+}
+
+export function getTileY(tileIndex: number): number {
+   return Math.floor(tileIndex / Settings.FULL_BOARD_DIMENSIONS) - Settings.EDGE_GENERATION_DISTANCE;
+}
+
 export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
    if (tileX < -Settings.EDGE_GENERATION_DISTANCE || tileX >= Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE || tileY < -Settings.EDGE_GENERATION_DISTANCE || tileY >= Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) {
       throw new Error("Outside of world bounds!");
@@ -65,6 +75,8 @@ export default class Layer {
    public readonly riverSteppingStones: Array<RiverSteppingStoneData>;
    public readonly grassInfo: Record<number, Record<number, GrassTileInfo>>;
 
+   public readonly buildingBlockingTiles: ReadonlySet<TileIndex>;
+
    public readonly chunks: ReadonlyArray<Chunk>;
 
    public readonly wallSubtileVariants: Partial<Record<TileIndex, number>> = {};
@@ -83,11 +95,12 @@ export default class Layer {
 
    public readonly slimeTrailPixels = new Map<number, number>();
    
-   constructor(idx: number, tiles: ReadonlyArray<Tile>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
+   constructor(idx: number, tiles: ReadonlyArray<Tile>, buildingBlockingTiles: ReadonlySet<TileIndex>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
       this.idx = idx;
       this.wallSubtileTypes = wallSubtileTypes;
       this.wallSubtileDamageTakenMap = wallSubtileDamageTakenMap;
       this.tiles = tiles;
+      this.buildingBlockingTiles = buildingBlockingTiles;
       this.riverFlowDirections = riverFlowDirections;
       this.waterRocks = waterRocks;
       this.riverSteppingStones = riverSteppingStones;
@@ -136,7 +149,8 @@ export default class Layer {
                hitboxes: transformComponent.hitboxes
             };
          },
-         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex)
+         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex),
+         tileIsBuildingBlocking: tileIndex => this.buildingBlockingTiles.has(tileIndex)
       };
    }
 

@@ -11,7 +11,7 @@ import { TribeMemberComponentArray } from "../../../entity-components/server-com
 import { Entity } from "../../../../../shared/src/entities";
 import { TribesmanAIComponentArray } from "../../../entity-components/server-components/TribesmanAIComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
-import { getLimbInfoByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
+import { getLimbByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
 import { getEntityAgeTicks, playerInstance } from "../../../world";
 import { getTribeByID, playerTribe } from "../../../tribes";
 
@@ -295,7 +295,7 @@ const TribesmanInteractMenu = () => {
 
       {tribeComponent.tribeID === playerTribe.id ? (
          <div className="hotbar-container">
-            <InventoryContainer isBordered className="hotbar" entityID={tribesman} inventory={getInventory(inventoryComponent, InventoryName.hotbar)!} selectedItemSlot={getLimbInfoByInventoryName(inventoryUseComponent, InventoryName.hotbar).selectedItemSlot} />
+            <InventoryContainer isBordered className="hotbar" entityID={tribesman} inventory={getInventory(inventoryComponent, InventoryName.hotbar)!} selectedItemSlot={getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar).selectedItemSlot} />
             <div className="inventory">
                {backpackSlotElement}
                {armourItemSlotElement}
