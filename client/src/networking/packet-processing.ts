@@ -800,7 +800,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       tickEvents: tickEvents,
       // @Incomplete
       visibleBuildingPlans: [],
-      visibleBuildingSafetys: [],
       visibleRestrictedBuildingAreas: [],
       visibleWalls: [],
       visibleWallConnections: [],

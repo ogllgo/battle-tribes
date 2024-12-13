@@ -311,7 +311,7 @@ export function getPlayerNearbyCollapses(playerClient: PlayerClient): ReadonlyAr
          const x = subtileX * Settings.SUBTILE_SIZE;
          const y = subtileY * Settings.SUBTILE_SIZE;
 
-         const dist = distance(x, y, playerClient.lastPlayerPositionX, playerClient.lastPlayerPositionY);
+         const dist = distance(x, y, playerClient.lastViewedPositionX, playerClient.lastViewedPositionY);
          if (dist < minDist) {
             minDist = dist;
             closestSubtileIndex = subtileIndex;
@@ -341,10 +341,10 @@ export function deregisterEntitySupports(transformComponent: TransformComponent)
 
 export function getVisibleSubtileSupports(playerClient: PlayerClient): ReadonlyArray<number> {
    // @Copynpaste
-   const minVisibleX = playerClient.lastPlayerPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
-   const maxVisibleX = playerClient.lastPlayerPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
-   const minVisibleY = playerClient.lastPlayerPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
-   const maxVisibleY = playerClient.lastPlayerPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
+   const minVisibleX = playerClient.lastViewedPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleX = playerClient.lastViewedPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
+   const minVisibleY = playerClient.lastViewedPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleY = playerClient.lastViewedPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
 
    const supports = new Array<number>();
    

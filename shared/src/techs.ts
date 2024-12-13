@@ -85,7 +85,9 @@ export const TECHS: ReadonlyArray<Tech> = [
          [ItemType.wooden_pickaxe]: 1,
          [ItemType.wood]: 10
       }),
-      researchStudyRequirements: 20,
+      // @Temporary
+      // researchStudyRequirements: 20,
+      researchStudyRequirements: 1,
       blacklistedTribes: [],
       conflictingTechs: []
    },
@@ -301,7 +303,9 @@ export const TECHS: ReadonlyArray<Tech> = [
       researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 40
       }),
-      researchStudyRequirements: 150,
+      // @Temporary
+      // researchStudyRequirements: 150,
+      researchStudyRequirements: 1,
       blacklistedTribes: [],
       conflictingTechs: []
    },

@@ -1,6 +1,5 @@
-import { TRIBESMAN_TITLE_RECORD, TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
+import { TRIBESMAN_TITLE_RECORD, TitleGenerationInfo } from "battletribes-shared/titles";
 import { Settings } from "battletribes-shared/settings";
-import { TribeType } from "battletribes-shared/tribes";
 import InventoryContainer from "./InventoryContainer";
 import ItemSlot from "./ItemSlot";
 import { getSelectedEntity } from "../../../entity-selection";
@@ -14,114 +13,6 @@ import { getInventory, InventoryComponentArray } from "../../../entity-component
 import { getLimbByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
 import { getEntityAgeTicks, playerInstance } from "../../../world";
 import { getTribeByID, playerTribe } from "../../../tribes";
-
-const PLAINSPEOPLE_NAMES: ReadonlyArray<string> = [
-   "Oda",
-   "Grug",
-   "Og",
-   "Urgh",
-   "Blurgh"
-];
-
-const BARBARIAN_NAMES: ReadonlyArray<string> = [
-   "RAAAAGH",
-   "Bjorn",
-   "HOUUUURGH",
-   "Erik",
-   "Ivar",
-   "Agmundr",
-   "Harald",
-   "Frednog",
-   "Snigvut"
-];
-
-const FROSTLING_NAMES: ReadonlyArray<string> = [
-   "Fraazgakk",
-   "Fruzeek",
-   "Grivve"
-];
-
-const GOBLIN_NAMES: ReadonlyArray<string> = [
-   "Vuzz",
-   "Klanzogz",
-   "Striex",
-   "Slokx"
-];
-
-const DWARF_NAMES: ReadonlyArray<string> = [
-   "Durin",
-   "Thorin",
-   "Dugim",
-   "Gimli",
-   "Baldrik",
-   "Bronin",
-   "Fundin",
-   "Garim",
-   "Nain",
-   "Marrin",
-   "Stigr",
-   "Brokk",
-   "Durrak",
-   "Grottin",
-   "Hraldir",
-   "Kromlin",
-   "Nordri",
-   "Ulgrim",
-   "Varrik",
-   "Wulfrin",
-   "Borrik",
-   "Erdrik",
-   "Thrain",
-   "Orik",
-   "Skorr",
-   "Frerin",
-   "Torrin",
-   "Zarn",
-   "Grimm",
-   "Haddar"
-];
-
-const TITLE_DISPLAY_OPTIONS: Record<TribesmanTitle, ReadonlyArray<string>> = {
-   [TribesmanTitle.builder]: ["Builder", "Object Constructor", "Manipulator of Materials"],
-   [TribesmanTitle.berrymuncher]: ["Berry-muncher", "Muncher of Berries"],
-   [TribesmanTitle.bloodaxe]: ["Bloodaxe", "Shedder of Blood"],
-   [TribesmanTitle.deathbringer]: ["Deathbringer", "Precursor of Doom", "Enemy of Life"],
-   [TribesmanTitle.gardener]: ["Gardener", "Maintainer of Plants", "Friend to Plants"],
-   [TribesmanTitle.packrat]: ["Packrat", "Carryer of Things"],
-   [TribesmanTitle.shrewd]: ["the Shrewd", "Haver of Brains"],
-   [TribesmanTitle.sprinter]: ["Owner of the Fast Legs", "Haver of Legs", "the Fast"],
-   [TribesmanTitle.wellful]: ["of Good Health", "the Wellful"],
-   [TribesmanTitle.winterswrath]: ["Winterswrath", "Antithesis of Cold", "Torment of Winter"],
-   [TribesmanTitle.yetisbane]: ["Yetisbane", "Slayer of Yetis"]
-};
-
-const UNTITLED_ADJECTIVES: ReadonlyArray<string> = [
-   "Useless",
-   "Weak",
-   "Puny",
-   "Small",
-   "Frail",
-   "Sickly",
-   "Inebriated",
-   "Demented",
-   "Wimp",
-   "Weed",
-   "Twig",
-   "Ant",
-   "Rickety",
-   "Elderly",
-   "Pale",
-   "Feeble",
-   "Poor",
-   "Thing",
-   "Pebble",
-   "Thin",
-   "Anorexic",
-   "Depressed",
-   "Struggler",
-   "Limp",
-   "Lame"
-];
 
 const getTitleByTier = (titles: ReadonlyArray<TitleGenerationInfo>, tier: number): TitleGenerationInfo | null => {
    for (let i = 0; i < titles.length; i++) {
@@ -166,41 +57,11 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   
-   let nameArray: ReadonlyArray<string>;
-   switch (tribeComponent.tribeType) {
-      case TribeType.plainspeople: {
-         nameArray = PLAINSPEOPLE_NAMES;
-         break;
-      }
-      case TribeType.barbarians: {
-         nameArray = BARBARIAN_NAMES;
-         break;
-      }
-      case TribeType.frostlings: {
-         nameArray = FROSTLING_NAMES;
-         break;
-      }
-      case TribeType.goblins: {
-         nameArray = GOBLIN_NAMES;
-         break;
-      }
-      case TribeType.dwarves: {
-         nameArray = DWARF_NAMES;
-      }
-   }
-   
-   let name = nameArray[tribesmanComponent.name % nameArray.length];
 
    if (tribeMemberComponent.titles.length === 0) {
-      const descriptor = UNTITLED_ADJECTIVES[tribesmanComponent.untitledDescriptor % UNTITLED_ADJECTIVES.length];
-      name += " the " + descriptor;
    } else {
       for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
          const titleGenerationInfo = tribeMemberComponent.titles[i];
-         
-         const displayText = TITLE_DISPLAY_OPTIONS[titleGenerationInfo.title][titleGenerationInfo.displayOption - 1];
-         name += ", " + displayText;
       }
    }
 
@@ -241,7 +102,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    }
    
    return <div id="tribesman-info" className="sub-menu">
-      <h2>{name}</h2>
+      <h2>{tribeMemberComponent.name}</h2>
 
       <p>Belongs to the <span>{tribeName}</span>.</p>
 

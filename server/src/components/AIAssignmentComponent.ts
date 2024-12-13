@@ -94,6 +94,25 @@ const completeAssignment = (entity: Entity, aiAssignmentComponent: AIAssignmentC
    }
 }
 
+const clearAssigned = (assignment: AIPlanAssignment): void => {
+   assignment.assignedEntity = null;
+   
+   for (const childAssignment of assignment.children) {
+      clearAssigned(childAssignment);
+   }
+}
+
+export function addAssignmentPart(aiAssignmentComponent: AIAssignmentComponent, newAssignmentPart: AIPlanAssignment): void {
+   assert(aiAssignmentComponent.wholeAssignment !== null);
+   aiAssignmentComponent.wholeAssignment.children.push(newAssignmentPart);
+
+   // Refresh the current assignment part
+   clearAssigned(aiAssignmentComponent.wholeAssignment);
+   aiAssignmentComponent.currentAssignment = getFirstAvailableAssignment(aiAssignmentComponent.wholeAssignment);
+   /** There should always be an available part of a new assignment */
+   assert(aiAssignmentComponent.currentAssignment !== null);
+}
+
 export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArray<Entity>): boolean {
    const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(entity);
    const tribeComponent = TribeComponentArray.getComponent(entity);
@@ -110,6 +129,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          assert(aiAssignmentComponent.currentAssignment !== null);
          
          aiAssignmentComponent.currentAssignment.assignedEntity = entity;
+         availableAssignment.assignedEntity = entity;
       }
    }
 

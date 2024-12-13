@@ -20,6 +20,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import { PatrolAIComponent } from "../../components/PatrolAIComponent";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
+import { generateTribesmanName } from "../../tribesman-names";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -64,7 +65,7 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
 
    const tribeComponent = new TribeComponent(tribe);
 
-   const tribeMemberComponent = new TribeMemberComponent();
+   const tribeMemberComponent = new TribeMemberComponent(generateTribesmanName(tribe.tribeType));
 
    const tribesmanAIComponent = new TribesmanAIComponent();
 

@@ -12,8 +12,6 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { EntityConfig } from "../ComponentArray";
 
 export interface TribesmanAIComponentParams {
-   readonly name: number;
-   readonly untitledDescriptor: number;
    readonly aiType: TribesmanAIType;
    readonly relationsWithPlayer: number;
    readonly craftingItemType: ItemType;
@@ -21,8 +19,6 @@ export interface TribesmanAIComponentParams {
 }
 
 export interface TribesmanAIComponent {
-   readonly name: number;
-   readonly untitledDescriptor: number;
    aiType: TribesmanAIType;
    relationsWithPlayer: number;
 
@@ -43,16 +39,12 @@ export const TribesmanAIComponentArray = new ServerComponentArray<TribesmanAICom
 });
 
 function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams {
-   const name = reader.readNumber();
-   const untitledDescriptor = reader.readNumber();
    const aiType = reader.readNumber();
    const relationsWithPlayer = reader.readNumber();
    const craftingItemType = reader.readNumber();
    const craftingProgress = reader.readNumber();
 
    return {
-      name: name,
-      untitledDescriptor: untitledDescriptor,
       aiType: aiType,
       relationsWithPlayer: relationsWithPlayer,
       craftingItemType: craftingItemType,
@@ -64,8 +56,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
    const tribesmanAIComponentParams = entityConfig.serverComponents[ServerComponentType.tribesmanAI];
 
    return {
-      name: tribesmanAIComponentParams.name,
-      untitledDescriptor: tribesmanAIComponentParams.untitledDescriptor,
       aiType: tribesmanAIComponentParams.aiType,
       relationsWithPlayer: tribesmanAIComponentParams.relationsWithPlayer,
       craftingItemType: tribesmanAIComponentParams.craftingItemType,
@@ -74,7 +64,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const tribeComponent = TribeComponentArray.getComponent(entity);
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
 
@@ -125,13 +114,11 @@ function onTick(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
-
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
    tribesmanAIComponent.aiType = reader.readNumber();
    tribesmanAIComponent.relationsWithPlayer = reader.readNumber();

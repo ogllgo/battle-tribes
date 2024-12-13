@@ -130,16 +130,7 @@ export function readExtendedTribeData(reader: PacketReader): ExtendedTribeInfo {
    for (let i = 0; i < numTribesmen; i++) {
       const entity = reader.readNumber() as Entity;
       const entityType = reader.readNumber() as EntityType;
-
-      const isPlayer = reader.readBoolean();
-      reader.padOffset(3);
-      let name: string;
-      if (isPlayer) {
-         name = reader.readString();
-      } else {
-         name = "obamaTest";
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-      }
+      const name = reader.readString();
 
       const tribesman: TribesmanInfo = {
          entity: entity,

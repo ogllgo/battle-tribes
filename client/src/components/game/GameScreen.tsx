@@ -30,7 +30,8 @@ import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 
 export const enum GameInteractState {
    none,
-   summonEntity
+   summonEntity,
+   spectateEntity
 }
 
 export let openSettingsMenu: () => void;
@@ -174,7 +175,7 @@ const GameScreen = (props: GameScreenProps) => {
    }, [settingsIsOpen]);
    
    return <>
-      <GameInteractableLayer hotbar={hotbar} offhand={offhand} backpackSlot={backpackSlot} armourSlot={armourSlot} gloveSlot={gloveSlot} heldItemSlot={heldItemSlot} cinematicModeIsEnabled={cinematicModeIsEnabled} />
+      <GameInteractableLayer hotbar={hotbar} offhand={offhand} backpackSlot={backpackSlot} armourSlot={armourSlot} gloveSlot={gloveSlot} heldItemSlot={heldItemSlot} cinematicModeIsEnabled={cinematicModeIsEnabled} gameInteractState={interactState} />
    
       <ChatBox />
 

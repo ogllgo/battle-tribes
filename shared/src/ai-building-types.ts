@@ -20,7 +20,7 @@ export interface PotentialBuildingPlanData {
    readonly x: number;
    readonly y: number;
    readonly rotation: number;
-   readonly buildingType: StructureType;
+   readonly entityType: StructureType;
    readonly safety: number;
    readonly safetyData: PotentialPlanSafetyData;
 }
@@ -32,15 +32,6 @@ export interface BuildingPlanData {
    readonly entityType: StructureType;
    readonly potentialBuildingPlans: ReadonlyArray<PotentialBuildingPlanData>;
    readonly assignedTribesmanID: number;
-}
-
-export interface BuildingSafetyData {
-   readonly x: number;
-   readonly y: number;
-   readonly minSafety: number;
-   readonly averageSafety: number;
-   readonly extendedAverageSafety: number;
-   readonly resultingSafety: number;
 }
 
 export interface WallSideNodeData {

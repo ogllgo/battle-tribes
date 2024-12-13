@@ -1,16 +1,15 @@
-import { SafetyNodeData, PotentialBuildingPlanData, BuildingPlanData, BuildingSafetyData, PotentialPlanSafetyData, WallSideNodeData, TribeWallData, WallConnectionData } from "battletribes-shared/ai-building-types";
+import { SafetyNodeData, PotentialPlanSafetyData, WallSideNodeData, TribeWallData, WallConnectionData } from "battletribes-shared/ai-building-types";
 import { VisibleChunkBounds, RestrictedBuildingAreaData } from "battletribes-shared/client-server-types";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, AIPlanType } from "battletribes-shared/utils";
+import { AIPlanType } from "battletribes-shared/utils";
 import Layer from "../../Layer";
 import Tribe from "../../Tribe";
 import { SafetyNode, getSafetyNode } from "../ai-building";
 import { buildingIsInfrastructure, getBuildingSafety } from "../ai-building-heuristics";
 import { TribeComponentArray } from "../../components/TribeComponent";
-import { TransformComponentArray } from "../../components/TransformComponent";
 import { VirtualWall } from "./TribeBuildingLayer";
-import { AICraftRecipePlan, AIGatherItemPlan, AIPlaceBuildingPlan, AITechCompletePlan, AITechItemPlan, AITechStudyPlan, AIPlan, AIUpgradeBuildingPlan, AIPlanAssignment } from "../tribesman-ai-planning";
+import { AICraftRecipePlan, AIGatherItemPlan, AIPlaceBuildingPlan, AITechCompletePlan, AITechItemPlan, AITechStudyPlan, AIUpgradeBuildingPlan, AIPlanAssignment } from "../tribesman-ai-planning";
 import { Packet } from "../../../../shared/src/packets";
 import { CRAFTING_RECIPES } from "../../../../shared/src/items/crafting-recipes";
 import PlayerClient from "../../server/PlayerClient";
@@ -82,117 +81,125 @@ export function getVisibleSafetyNodesData(playerClient: PlayerClient): ReadonlyA
    return safetyNodesData;
 }
 
-const getTribePotentialBuildingPlans = (plan: AIPlan, chunkBounds: VisibleChunkBounds): ReadonlyArray<PotentialBuildingPlanData> => {
-   const potentialPlansData = new Array<PotentialBuildingPlanData>();
-   for (let i = 0; i < plan.potentialPlans.length; i++) {
-      const potentialPlanData = plan.potentialPlans[i];
+// const getTribePotentialBuildingPlans = (plan: AIPlan, chunkBounds: VisibleChunkBounds): ReadonlyArray<PotentialBuildingPlanData> => {
+//    const potentialPlansData = new Array<PotentialBuildingPlanData>();
+//    for (let i = 0; i < plan.potentialPlans.length; i++) {
+//       const potentialPlanData = plan.potentialPlans[i];
    
-      // @Incomplete: filter out potential plans which aren't visible
+//       // @Incomplete: filter out potential plans which aren't visible
       
-      potentialPlansData.push(potentialPlanData);
-   }
+//       potentialPlansData.push(potentialPlanData);
+//    }
 
-   return potentialPlansData;
-}
+//    return potentialPlansData;
+// }
 
-const addVisibleAssignmentsRecursively = (assignment: AIPlanAssignment, chunkBounds: VisibleChunkBounds, buildingPlansData: Array<BuildingPlanData>): void => {
-   const plan = assignment.plan;
+// const addVisibleAssignmentsRecursively = (assignment: AIPlanAssignment, chunkBounds: VisibleChunkBounds, buildingPlansData: Array<BuildingPlanData>): void => {
+//    const plan = assignment.plan;
    
-   let planPosition: Point;
-   let planRotation: number;
-   let entityType: EntityType;
-   switch (plan.type) {
-      case AIPlanType.placeBuilding: {               
-         planPosition = plan.virtualBuilding.position;
-         planRotation = plan.virtualBuilding.rotation;
-         entityType = plan.virtualBuilding.entityType;
-         break;
-      }
-      case AIPlanType.upgradeBuilding: {
-         const building = plan.baseBuildingID;
+//    let planPosition: Point;
+//    let planRotation: number;
+//    let entityType: EntityType;
+//    switch (plan.type) {
+//       case AIPlanType.placeBuilding: {               
+//          planPosition = plan.virtualBuilding.position;
+//          planRotation = plan.virtualBuilding.rotation;
+//          entityType = plan.virtualBuilding.entityType;
+//          break;
+//       }
+//       case AIPlanType.upgradeBuilding: {
+//          const building = plan.baseBuildingID;
          
-         const buildingTransformComponent = TransformComponentArray.getComponent(building);
+//          const buildingTransformComponent = TransformComponentArray.getComponent(building);
          
-         planPosition = buildingTransformComponent.position;
-         planRotation = plan.rotation;
-         entityType = plan.entityType;
-         break;
+//          planPosition = buildingTransformComponent.position;
+//          planRotation = plan.rotation;
+//          entityType = plan.entityType;
+//          break;
+//       }
+//       default: {
+//          return;
+//       }
+//    }
+   
+//    // @Cleanup: hardcoded
+//    const minChunkX = Math.max(Math.floor((planPosition.x - 800) / Settings.CHUNK_UNITS), 0);
+//    const maxChunkX = Math.min(Math.floor((planPosition.x + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+//    const minChunkY = Math.max(Math.floor((planPosition.y - 800) / Settings.CHUNK_UNITS), 0);
+//    const maxChunkY = Math.min(Math.floor((planPosition.y + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+
+//    if (minChunkX <= chunkBounds[1] && maxChunkX >= chunkBounds[0] && minChunkY <= chunkBounds[3] && maxChunkY >= chunkBounds[2]) {
+//       buildingPlansData.push({
+//          x: planPosition.x,
+//          y: planPosition.y,
+//          rotation: planRotation,
+//          entityType: entityType,
+//          potentialBuildingPlans: getTribePotentialBuildingPlans(plan, chunkBounds),
+//          assignedTribesmanID: assignment.assignedEntity || -1
+//       });
+//    }
+
+//    for (const childAssignment of assignment.children) {
+//       addVisibleAssignmentsRecursively(childAssignment, chunkBounds, buildingPlansData);
+//    }
+// }
+
+// export function getVisibleBuildingPlans(visibleTribes: ReadonlyArray<Tribe>, chunkBounds: VisibleChunkBounds): ReadonlyArray<BuildingPlanData> {
+//    const buildingPlansData = new Array<BuildingPlanData>();
+//    for (let i = 0; i < visibleTribes.length; i++) {
+//       const tribe = visibleTribes[i];
+
+//       addVisibleAssignmentsRecursively(tribe.assignment, chunkBounds, buildingPlansData);
+//    }
+
+//    return buildingPlansData;
+// }
+
+export function getTribeBuildingSafetyDataLength(tribe: Tribe): number {
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
+   for (const virtualBuilding of tribe.virtualBuildings) {
+      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
+         continue;
       }
-      default: {
-         return;
+
+      lengthBytes += 6 * Float32Array.BYTES_PER_ELEMENT;
+   }
+   return lengthBytes;
+}
+
+export function addTribeBuildingSafetyData(packet: Packet, tribe: Tribe): void {
+   let numRelevantBuildings = 0;
+   for (const virtualBuilding of tribe.virtualBuildings) {
+      if (buildingIsInfrastructure(virtualBuilding.entityType)) {
+         numRelevantBuildings++;
       }
    }
    
-   // @Cleanup: hardcoded
-   const minChunkX = Math.max(Math.floor((planPosition.x - 800) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((planPosition.x + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((planPosition.y - 800) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((planPosition.y + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-
-   if (minChunkX <= chunkBounds[1] && maxChunkX >= chunkBounds[0] && minChunkY <= chunkBounds[3] && maxChunkY >= chunkBounds[2]) {
-      buildingPlansData.push({
-         x: planPosition.x,
-         y: planPosition.y,
-         rotation: planRotation,
-         entityType: entityType,
-         potentialBuildingPlans: getTribePotentialBuildingPlans(plan, chunkBounds),
-         assignedTribesmanID: assignment.assignedEntity || -1
-      });
-   }
-
-   for (const childAssignment of assignment.children) {
-      addVisibleAssignmentsRecursively(childAssignment, chunkBounds, buildingPlansData);
-   }
-}
-
-export function getVisibleBuildingPlans(visibleTribes: ReadonlyArray<Tribe>, chunkBounds: VisibleChunkBounds): ReadonlyArray<BuildingPlanData> {
-   const buildingPlansData = new Array<BuildingPlanData>();
-   for (let i = 0; i < visibleTribes.length; i++) {
-      const tribe = visibleTribes[i];
-
-      addVisibleAssignmentsRecursively(tribe.assignment, chunkBounds, buildingPlansData);
-   }
-
-   return buildingPlansData;
-}
-
-export function getVisibleBuildingSafetys(visibleTribes: ReadonlyArray<Tribe>, chunkBounds: VisibleChunkBounds): ReadonlyArray<BuildingSafetyData> {
-   const buildingSafetysData = new Array<BuildingSafetyData>();
-   for (let i = 0; i < visibleTribes.length; i++) {
-      const tribe = visibleTribes[i];
-
-      for (let i = 0; i < tribe.buildings.length; i++) {
-         const building = tribe.buildings[i];
-         if (!buildingIsInfrastructure(building)) {
-            continue;
-         }
-         // @Incomplete: filter out nodes which aren't in the chunk bounds
-
-         // @Speed: Garbage collection
-         const safetyInfo: PotentialPlanSafetyData = {
-            buildingTypes: [],
-            buildingIDs: [],
-            buildingMinSafetys: [],
-            buildingAverageSafetys: [],
-            buildingExtendedAverageSafetys: [],
-            buildingResultingSafetys: []
-         };
-         getBuildingSafety(tribe, building, safetyInfo);
-
-         const buildingTransformComponent = TransformComponentArray.getComponent(building);
-
-         buildingSafetysData.push({
-            x: buildingTransformComponent.position.x,
-            y: buildingTransformComponent.position.y,
-            minSafety: safetyInfo.buildingMinSafetys[0],
-            averageSafety: safetyInfo.buildingAverageSafetys[0],
-            extendedAverageSafety: safetyInfo.buildingExtendedAverageSafetys[0],
-            resultingSafety: safetyInfo.buildingResultingSafetys[0],
-         });
+   packet.addNumber(numRelevantBuildings);
+   for (const virtualBuilding of tribe.virtualBuildings) {
+      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
+         continue;
       }
-   }
+      // @Incomplete: filter out nodes which aren't in the chunk bounds
 
-   return buildingSafetysData;
+      // @Speed: Garbage collection
+      const safetyInfo: PotentialPlanSafetyData = {
+         buildingTypes: [],
+         buildingIDs: [],
+         buildingMinSafetys: [],
+         buildingAverageSafetys: [],
+         buildingExtendedAverageSafetys: [],
+         buildingResultingSafetys: []
+      };
+      getBuildingSafety(tribe, virtualBuilding, safetyInfo);
+
+      packet.addNumber(virtualBuilding.position.x);
+      packet.addNumber(virtualBuilding.position.y);
+      packet.addNumber(safetyInfo.buildingMinSafetys[0]);
+      packet.addNumber(safetyInfo.buildingAverageSafetys[0]);
+      packet.addNumber(safetyInfo.buildingExtendedAverageSafetys[0]);
+      packet.addNumber(safetyInfo.buildingResultingSafetys[0]);
+   }
 }
 
 export function getVisibleRestrictedBuildingAreas(visibleTribes: ReadonlyArray<Tribe>, chunkBounds: VisibleChunkBounds): ReadonlyArray<RestrictedBuildingAreaData> {

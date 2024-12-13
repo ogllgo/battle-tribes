@@ -1,19 +1,18 @@
-import { PotentialBuildingPlanData } from "../../../shared/src/ai-building-types";
 import { BlueprintType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { CRAFTING_STATION_ITEM_TYPE_RECORD, CraftingRecipe, CraftingStation, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
 import { InventoryName, ITEM_INFO_RECORD, ItemType, PlaceableItemInfo, PlaceableItemType, ToolType } from "../../../shared/src/items/items";
 import { StructureType } from "../../../shared/src/structures";
 import { getTechRequiredForItem, Tech } from "../../../shared/src/techs";
-import { assert, AIPlanType } from "../../../shared/src/utils";
-import { AIAssignmentComponent, AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
+import { AIPlanType } from "../../../shared/src/utils";
+import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
 import { areaHasOutsideDoor, getOutsideDoorPlacePlan } from "./ai-building-areas";
 import { tribeIsVulnerable } from "./ai-building-heuristics";
-import { findIdealWallPlacePosition } from "./ai-building-plans";
+import { findIdealWallPlacePosition, WallPlaceCandidate } from "./ai-building-plans";
 import { generateBuildingCandidate } from "./building-plans/ai-building-utils";
 import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
 
@@ -26,8 +25,6 @@ interface AIBasePlan {
    /** Whether or not the plan has been completed by the assigned entity. */
    // Stored on the plan so that when an entity completes the assignment in their personal plan, its completion is also reflected in the main tree
    isComplete: boolean;
-   // @Cleanup: unused?
-   potentialPlans: ReadonlyArray<PotentialBuildingPlanData>;
 }
 
 export interface AIRootPlan extends AIBasePlan {
@@ -44,6 +41,8 @@ export interface AICraftRecipePlan extends AIBasePlan {
 export interface AIPlaceBuildingPlan extends AIBasePlan {
    readonly type: AIPlanType.placeBuilding;
    readonly virtualBuilding: VirtualBuilding;
+   /** If this plan is for a safety-related building, this contains the safety data for all the candidates considered. */
+   potentialPlans: ReadonlyArray<WallPlaceCandidate>;
 }
 
 export interface AIUpgradeBuildingPlan extends AIBasePlan {
@@ -188,8 +187,7 @@ const createNewAssignmentWithSamePlan = <T extends AIPlan>(assignment: AIPlanAss
 export function createRootPlanAssignment(children: Array<AIPlanAssignment>): AIPlanAssignment<AIRootPlan> {
    return createAssignment({
       type: AIPlanType.root,
-      isComplete: false,
-      potentialPlans: []
+      isComplete: false
    }, children);
 }
 
@@ -197,7 +195,6 @@ export function createCraftRecipePlanAssignment(children: Array<AIPlanAssignment
    return createAssignment({
       type: AIPlanType.craftRecipe,
       isComplete: false,
-      potentialPlans: [],
       recipe: recipe,
       productAmount: productAmount
    }, children);
@@ -216,7 +213,6 @@ export function createUpgradeBuildingPlanAssignment(children: Array<AIPlanAssign
    return createAssignment({
       type: AIPlanType.upgradeBuilding,
       isComplete: false,
-      potentialPlans: [],
       baseBuildingID: baseBuildingID,
       rotation: rotation,
       blueprintType: blueprintType,
@@ -228,7 +224,6 @@ export function createTechStudyPlanAssignment(children: Array<AIPlanAssignment>,
    return createAssignment({
       type: AIPlanType.doTechStudy,
       isComplete: false,
-      potentialPlans: [],
       tech: tech
    }, children);
 }
@@ -237,7 +232,6 @@ export function createTechItemPlanAssignment(children: Array<AIPlanAssignment>, 
    return createAssignment({
       type: AIPlanType.doTechItems,
       isComplete: false,
-      potentialPlans: [],
       tech: tech,
       itemType: itemType
    }, children);
@@ -247,7 +241,6 @@ export function createTechCompletePlanAssignment(children: Array<AIPlanAssignmen
    return createAssignment({
       type: AIPlanType.completeTech,
       isComplete: false,
-      potentialPlans: [],
       tech: tech
    }, children);
 }
@@ -256,7 +249,6 @@ export function createGatherItemPlanAssignment(children: Array<AIPlanAssignment>
    return createAssignment({
       type: AIPlanType.gatherItem,
       isComplete: false,
-      potentialPlans: [],
       itemType: itemType,
       amount: amount
    }, children);
@@ -308,7 +300,7 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
 }
 
 /** Creates a goal to obtain an item by any means necessary */
-const planToGetItem = (tribe: Tribe, itemType: ItemType, amount: number): AIPlanAssignment<AICraftRecipePlan | AIGatherItemPlan> => {
+export function planToGetItem(tribe: Tribe, itemType: ItemType, amount: number): AIPlanAssignment<AICraftRecipePlan | AIGatherItemPlan> {
    const recipe = getItemRecipe(itemType);
    if (recipe !== null) {
       return planToCraftItem(tribe, recipe, amount);
@@ -493,12 +485,13 @@ export function updateTribePlans(tribe: Tribe): void {
       if (tribeIsVulnerable(tribe)) {
          // @Incomplete: not just walls!
          // Find the place for a wall that would maximise the building's safety
-         const virtualBuilding = findIdealWallPlacePosition(tribe);
-         if (virtualBuilding !== null) {
-            tribe.assignment.children.push(
-               // @Hack: item type
-               planToPlaceBuilding(tribe, ItemType.wooden_wall, virtualBuilding)
-            );
+         const wallPlaceResult = findIdealWallPlacePosition(tribe);
+         if (wallPlaceResult !== null) {
+            // @Hack: item type
+            const assignment = planToPlaceBuilding(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
+            assignment.plan.potentialPlans = wallPlaceResult.potentialPlans;
+
+            tribe.assignment.children.push(assignment);
             continue;
          }
       }

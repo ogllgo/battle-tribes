@@ -82,6 +82,7 @@
 
 .devmode-card {
    border: 2px solid #666;
+   margin: 4px;
 }
 .devmode-card p {
    margin: 0;

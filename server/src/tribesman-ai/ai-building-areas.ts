@@ -152,7 +152,7 @@ export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room:
          x: wall.position.x,
          y: wall.position.y,
          rotation: doorRotation,
-         buildingType: EntityType.door,
+         entityType: EntityType.door,
          safety: 0,
          safetyData: {
             buildingTypes: [],
@@ -169,9 +169,10 @@ export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room:
       break;
    }
 
-   if (assignment !== null) {
-      assignment.plan.potentialPlans = potentialPlans;
-   }
+   // @Incomplete?
+   // if (assignment !== null) {
+   //    assignment.plan.potentialPlans = potentialPlans;
+   // }
 
    return assignment;
 }

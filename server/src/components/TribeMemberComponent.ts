@@ -11,7 +11,7 @@ import { PlayerComponentArray } from "./PlayerComponent";
 import { ArmourItemInfo, BackpackItemInfo, ConsumableItemInfo, Inventory, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { EntityConfig } from "../components";
 import { tribeMemberCanPickUpItem, useItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
-import { Packet } from "battletribes-shared/packets";
+import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { itemEntityCanBePickedUp } from "../entities/item-entity";
 import { HealthComponentArray, addDefence, removeDefence } from "./HealthComponent";
@@ -42,6 +42,12 @@ export class TribeMemberComponent {
    // Used to give movement penalty while wearing the leaf suit.
    // @Cleanup: would be great to not store a variable to do this.
    public lastPlantCollisionTicks = getGameTicks();
+
+   public name: string;
+
+   constructor(name: string) {
+      this.name = name;
+   }
 }
 
 export const TribeMemberComponentArray = new ComponentArray<TribeMemberComponent>(ServerComponentType.tribeMember, true, getDataLength, addDataToPacket);
@@ -136,7 +142,10 @@ function onRemove(entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += getStringLengthBytes(tribeMemberComponent.name);
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * tribeMemberComponent.titles.length;
 
    return lengthBytes;
@@ -145,6 +154,9 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
+   // Name
+   packet.addString(tribeMemberComponent.name);
+   
    packet.addNumber(tribeMemberComponent.warPaintType !== null ? tribeMemberComponent.warPaintType : -1);
 
    packet.addNumber(tribeMemberComponent.titles.length);

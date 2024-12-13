@@ -231,3 +231,9 @@ export function sendTPTOEntityPacket(targetEntity: Entity): void {
    packet.addNumber(targetEntity);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendSpectateEntityPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.devSpectateEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   Client.sendPacket(packet.buffer);
+}

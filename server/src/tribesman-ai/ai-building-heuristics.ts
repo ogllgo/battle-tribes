@@ -5,7 +5,7 @@ import Tribe from "../Tribe";
 import { SafetyNode, addHitboxesOccupiedNodes, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
-import TribeBuildingLayer from "./building-plans/TribeBuildingLayer";
+import TribeBuildingLayer, { VirtualBuilding } from "./building-plans/TribeBuildingLayer";
 
 const enum Vars {
    /** Minimum safety that buildings should have */
@@ -27,9 +27,9 @@ const BASE_BUILDING_WEIGHTS: Record<InfrastructureBuildingType, number> = {
    [EntityType.workbench]: 2
 };
 
-export function buildingIsInfrastructure(entity: Entity): boolean {
-   const entityType = getEntityType(entity);
-   return entityType !== EntityType.wall && entityType !== EntityType.embrasure && entityType !== EntityType.door && entityType !== EntityType.tunnel;
+export function buildingIsInfrastructure(entityType: EntityType): boolean {
+   // @Hack
+   return entityType !== EntityType.wall && entityType !== EntityType.embrasure && entityType !== EntityType.door && entityType !== EntityType.tunnel && entityType !== EntityType.fireTorch && entityType !== EntityType.slurbTorch;
 }
 
 const getExtendedNodeSafety = (buildingLayer: TribeBuildingLayer, nodeIndex: number, extendDist: number): number => {
@@ -175,40 +175,34 @@ const getAverageBuildingNodeSafety = (buildingLayer: TribeBuildingLayer, occupie
    return averageSafety / occupiedIndexes.size;
 }
 
-export function getBuildingSafety(tribe: Tribe, building: Entity, safetyInfo: PotentialPlanSafetyData | null): number {
-   const entityType = getEntityType(building) as InfrastructureBuildingType;
-   if (BASE_BUILDING_WEIGHTS[entityType] === undefined) {
-      throw new Error("Base buliding weight not defined for entity type " + EntityTypeString[entityType]);
+export function getBuildingSafety(tribe: Tribe, virtualBuilding: VirtualBuilding, safetyInfo: PotentialPlanSafetyData | null): number {
+   const entityType = virtualBuilding.entityType as InfrastructureBuildingType;
+   if (typeof BASE_BUILDING_WEIGHTS[entityType] === "undefined") {
+      throw new Error("Base building weight not defined for entity type " + EntityTypeString[entityType]);
    }
    
-   const transformComponent = TransformComponentArray.getComponent(building);
-
-   const layer = getEntityLayer(building);
-   const buildingLayer = tribe.buildingLayers[layer.depth];
+   const buildingLayer = tribe.buildingLayers[virtualBuilding.layer.depth];
    
-   const occupiedIndexes = new Set<SafetyNode>();
-   addHitboxesOccupiedNodes(transformComponent.hitboxes, occupiedIndexes);
-
    let safety = 0;
    if (isNaN(safety)) {
       throw new Error();
    }
 
-   let minSafety = getMinBuildingNodeSafety(buildingLayer, occupiedIndexes);
+   let minSafety = getMinBuildingNodeSafety(buildingLayer, virtualBuilding.occupiedNodes);
    minSafety *= Vars.MIN_SAFETY_WEIGHT;
    safety += minSafety;
    if (isNaN(safety)) {
       throw new Error();
    }
 
-   let averageSafety = getAverageBuildingNodeSafety(buildingLayer, occupiedIndexes);
+   let averageSafety = getAverageBuildingNodeSafety(buildingLayer, virtualBuilding.occupiedNodes);
    averageSafety *= Vars.AVERAGE_SAFETY_WEIGHT;
    safety += averageSafety;
    if (isNaN(safety)) {
       throw new Error();
    }
 
-   let extendedAverageSafety = getExtendedBuildingNodeSafety(buildingLayer, occupiedIndexes);
+   let extendedAverageSafety = getExtendedBuildingNodeSafety(buildingLayer, virtualBuilding.occupiedNodes);
    extendedAverageSafety *= Vars.AVERAGE_SAFETY_WEIGHT;
    safety += extendedAverageSafety;
    if (isNaN(safety)) {
@@ -224,7 +218,8 @@ export function getBuildingSafety(tribe: Tribe, building: Entity, safetyInfo: Po
 
    if (safetyInfo !== null) {
       safetyInfo.buildingTypes.push(entityType);
-      safetyInfo.buildingIDs.push(building);
+      // @Incomplete
+      // safetyInfo.buildingIDs.push(building);
       safetyInfo.buildingMinSafetys.push(minSafety);
       safetyInfo.buildingAverageSafetys.push(averageSafety);
       safetyInfo.buildingExtendedAverageSafetys.push(extendedAverageSafety);
@@ -251,13 +246,12 @@ export function getTribeSafety(tribe: Tribe): SafetyQuery {
       buildingResultingSafetys: []
    };
    
-   for (let i = 0; i < tribe.buildings.length; i++) {
-      const building = tribe.buildings[i];
-      if (!buildingIsInfrastructure(building)) {
+   for (const virtualBuilding of tribe.virtualBuildings) {
+      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
          continue;
       }
 
-      const buildingSafety = getBuildingSafety(tribe, building, safetyInfo);
+      const buildingSafety = getBuildingSafety(tribe, virtualBuilding, safetyInfo);
       safety += buildingSafety;
    }
 
@@ -268,20 +262,14 @@ export function getTribeSafety(tribe: Tribe): SafetyQuery {
 }
 
 export function tribeIsVulnerable(tribe: Tribe): boolean {
-   for (let i = 0; i < tribe.buildings.length; i++) {
-      const building = tribe.buildings[i];
-      if (!buildingIsInfrastructure(building)) {
+   for (const virtualBuilding of tribe.virtualBuildings) {
+      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
          continue;
       }
 
-      const transformComponent = TransformComponentArray.getComponent(building);
-      const layer = getEntityLayer(building);
-      const buildingLayer = tribe.buildingLayers[layer.depth];
+      const buildingLayer = tribe.buildingLayers[virtualBuilding.layer.depth];
       
-      const occupiedIndexes = new Set<SafetyNode>();
-      addHitboxesOccupiedNodes(transformComponent.hitboxes, occupiedIndexes);
-
-      const minSafety = getMinBuildingNodeSafety(buildingLayer, occupiedIndexes);
+      const minSafety = getMinBuildingNodeSafety(buildingLayer, virtualBuilding.occupiedNodes);
       if (minSafety < Vars.DESIRED_SAFETY) {
          return true;
       }

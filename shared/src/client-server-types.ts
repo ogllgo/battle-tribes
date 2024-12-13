@@ -1,4 +1,4 @@
-import { BuildingPlanData, BuildingSafetyData, SafetyNodeData, TribeWallData, WallConnectionData } from "./ai-building-types";
+import { BuildingPlanData, TribeWallData, WallConnectionData } from "./ai-building-types";
 import { HitboxCollisionBit } from "./collision";
 import { BlueprintType } from "./components";
 import { EntitySummonPacket } from "./dev-packets";
@@ -112,7 +112,6 @@ export interface GameDataPacket {
    readonly tickEvents: ReadonlyArray<EntityTickEvent>;
    // @Cleanup @Bandwidth: move these all to a special dev info packet
    readonly visibleBuildingPlans: ReadonlyArray<BuildingPlanData>;
-   readonly visibleBuildingSafetys: ReadonlyArray<BuildingSafetyData>;
    readonly visibleRestrictedBuildingAreas: ReadonlyArray<RestrictedBuildingAreaData>;
    readonly visibleWalls: ReadonlyArray<TribeWallData>;
    readonly visibleWallConnections: ReadonlyArray<WallConnectionData>;

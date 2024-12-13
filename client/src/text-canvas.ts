@@ -1,12 +1,12 @@
-import { BuildingSafetyData } from "battletribes-shared/ai-building-types";
 import { Settings } from "battletribes-shared/settings";
 import { lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
-import { calculatePotentialPlanIdealness, getHoveredBuildingPlan, getPotentialPlanStats, getVisibleBuildingPlans } from "./networking/Client";
 import { PlayerComponentArray } from "./entity-components/server-components/PlayerComponent";
 import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance } from "./world";
+import { getBuildingSafeties } from "./building-safety";
+import { getVisibleBuildingPlan, GhostBuildingPlan, VirtualBuildingSafetySimulation } from "./virtual-buildings";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -29,6 +29,11 @@ interface HealNumber extends TextNumber {
    amount: number;
 }
 
+export interface PotentialPlanStats {
+   readonly minSafety: number;
+   readonly maxSafety: number;
+}
+
 const DAMAGE_NUMBER_LIFETIME = 1.75;
 const RESEARCH_NUMBER_LIFETIME = 1.5;
 const HEAL_NUMBER_LIFETIME = 1.75;
@@ -47,13 +52,6 @@ let accumulatedDamage = 0;
 let damageTime = 0;
 let damageNumberX = -1;
 let damageNumberY = -1;
-
-let buildingSafetys: ReadonlyArray<BuildingSafetyData>;
-
-export function setVisibleBuildingSafetys(newBuildingSafetys: ReadonlyArray<BuildingSafetyData>): void {
-   // @Speed: Garbage collection
-   buildingSafetys = newBuildingSafetys;
-}
 
 export function createTextCanvasContext(): void {
    const textCanvas = document.getElementById("text-canvas") as HTMLCanvasElement;
@@ -335,27 +333,53 @@ const renderPlayerNames = (): void => {
    }
 }
 
+const getPotentialPlanStats = (ghostBuildingPlan: GhostBuildingPlan): PotentialPlanStats => {
+   let minPlanSafety = Number.MAX_SAFE_INTEGER;
+   let maxPlanSafety = Number.MIN_SAFE_INTEGER;
+   for (const pair of ghostBuildingPlan.virtualBuildingsMap) {
+      const virtualBuildingSafetySimulation = pair[1];
+
+      if (virtualBuildingSafetySimulation.safety < minPlanSafety) {
+         minPlanSafety = virtualBuildingSafetySimulation.safety;
+      } else if (virtualBuildingSafetySimulation.safety > maxPlanSafety) {
+         maxPlanSafety = virtualBuildingSafetySimulation.safety;
+      }
+   }
+   
+   return {
+      minSafety: minPlanSafety,
+      maxSafety: maxPlanSafety
+   };
+}
+
+const calculatePotentialPlanIdealness = (virtualBuildingSafetySimulation: VirtualBuildingSafetySimulation, potentialPlanStats: PotentialPlanStats): number => {
+   let idealness = (virtualBuildingSafetySimulation.safety - potentialPlanStats.minSafety) / (potentialPlanStats.maxSafety - potentialPlanStats.minSafety);
+   if (isNaN(idealness)) {
+      idealness = 1;
+   }
+   return idealness;
+}
+
 const renderPotentialBuildingPlans = (): void => {
-   const hoveredBuildingPlan = getHoveredBuildingPlan();
-   if (hoveredBuildingPlan === null) {
+   if (!OPTIONS.showBuildingPlans) {
+      return;
+   }
+   
+   const ghostBuildingPlan = getVisibleBuildingPlan();
+   if (ghostBuildingPlan === null) {
       return;
    }
 
-   const potentialPlans = hoveredBuildingPlan.potentialBuildingPlans;
-   if (potentialPlans.length === 0) {
-      return;
-   }
-
-   const stats = getPotentialPlanStats(potentialPlans);
-   for (let i = 0; i < potentialPlans.length; i++) {
-      const potentialPlan = potentialPlans[i];
-
+   const stats = getPotentialPlanStats(ghostBuildingPlan);
+   for (const virtualBuildingSafetySimulation of ghostBuildingPlan.virtualBuildingsMap.values()) {
+      const virtualBuilding = virtualBuildingSafetySimulation.virtualBuilding;
+      
       // Calculate position in camera
-      const cameraX = getXPosInCamera(potentialPlan.x);
-      const cameraY = getYPosInCamera(potentialPlan.y);
+      const cameraX = getXPosInCamera(virtualBuilding.position.x);
+      const cameraY = getYPosInCamera(virtualBuilding.position.y);
       const height = 15;
 
-      const idealness = calculatePotentialPlanIdealness(potentialPlan, stats);
+      const idealness = calculatePotentialPlanIdealness(virtualBuildingSafetySimulation, stats);
 
       const textColour = idealness === 1 ? "#ff5252" : "#eee";
 
@@ -363,7 +387,7 @@ const renderPotentialBuildingPlans = (): void => {
       ctx.lineJoin = "round";
       ctx.miterLimit = 2;
 
-      const text = potentialPlan.safety.toFixed(2);
+      const text = virtualBuildingSafetySimulation.safety.toFixed(2);
       const width = ctx.measureText(text).width; // @Speed
 
       // Draw text bg
@@ -379,95 +403,70 @@ const renderPotentialBuildingPlans = (): void => {
    ctx.globalAlpha = 1;
 }
 
-const renderBuildingPlanInfos = (): void => {
-   const hoveredPlan = getHoveredBuildingPlan();
-   const buildingPlans = getVisibleBuildingPlans();
-   for (let i = 0; i < buildingPlans.length; i++) {
-      const plan = buildingPlans[i];
-      if (plan === hoveredPlan) {
-         continue;
-      }
-
-      // Calculate position in camera
-      const cameraX = getXPosInCamera(plan.x);
-      const cameraY = getYPosInCamera(plan.y);
-      const fontSize = 13;
-      const height = fontSize * 2 + 2;
-
-      const textColour = "#fff";
-
-      const planNumText = "#" + i;
-      const planNumWidth = ctx.measureText(planNumText).width; // @Speed
-
-      ctx.font = "400 " + fontSize + "px Helvetica";
-      ctx.lineJoin = "round";
-      ctx.miterLimit = 2;
-
-      const assignedTribesmanIDText = "to=" + plan.assignedTribesmanID;
-      const assignedTribesmanIDWidth = ctx.measureText(assignedTribesmanIDText).width; // @Speed
-
-      const width = Math.max(planNumWidth, assignedTribesmanIDWidth);
-
-      // Draw text bg
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(cameraX - width/2, cameraY - height / 2, width, height);
-      
-      // Draw text
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = textColour;
-      ctx.fillText(planNumText, cameraX - planNumWidth / 2, cameraY - height / 2 + fontSize);
-      
-      // Draw text
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = textColour;
-      ctx.fillText(assignedTribesmanIDText, cameraX - assignedTribesmanIDWidth / 2, cameraY - height / 2 + fontSize * 2);
-   }
-   ctx.globalAlpha = 1;
-}
-
-// @Temporary @Incomplete
-// const getHoveredPotentialPlan = (): PotentialBuildingPlanData | null => {
-//    if (Game.cursorPositionX === null || Game.cursorPositionY === null) {
-//       return null;
-//    }
-   
-//    const potentialBuildingPlans = getPotentialBuildingPlans();
-
-//    let closestPlan: PotentialBuildingPlanData | undefined;
-//    let minDist = 64;
-//    for (let i = 0; i < potentialBuildingPlans.length; i++) {
-//       const plan = potentialBuildingPlans[i];
-
-//       const dist = distance(Game.cursorPositionX, Game.cursorPositionY, plan.x, plan.y);
-//       if (dist < minDist) {
-//          minDist = dist;
-//          closestPlan = plan;
+// const renderBuildingPlanInfos = (): void => {
+//    const hoveredPlan = getHoveredBuildingPlan();
+//    const buildingPlans = getVisibleBuildingPlans();
+//    for (let i = 0; i < buildingPlans.length; i++) {
+//       const plan = buildingPlans[i];
+//       if (plan === hoveredPlan) {
+//          continue;
 //       }
-//    }
 
-//    if (typeof closestPlan !== "undefined") {
-//       return closestPlan;
+//       // Calculate position in camera
+//       const cameraX = getXPosInCamera(plan.x);
+//       const cameraY = getYPosInCamera(plan.y);
+//       const fontSize = 13;
+//       const height = fontSize * 2 + 2;
+
+//       const textColour = "#fff";
+
+//       const planNumText = "#" + i;
+//       const planNumWidth = ctx.measureText(planNumText).width; // @Speed
+
+//       ctx.font = "400 " + fontSize + "px Helvetica";
+//       ctx.lineJoin = "round";
+//       ctx.miterLimit = 2;
+
+//       const assignedTribesmanIDText = "to=" + plan.assignedTribesmanID;
+//       const assignedTribesmanIDWidth = ctx.measureText(assignedTribesmanIDText).width; // @Speed
+
+//       const width = Math.max(planNumWidth, assignedTribesmanIDWidth);
+
+//       // Draw text bg
+//       ctx.globalAlpha = 1;
+//       ctx.fillStyle = "#000";
+//       ctx.fillRect(cameraX - width/2, cameraY - height / 2, width, height);
+      
+//       // Draw text
+//       ctx.globalAlpha = 1;
+//       ctx.fillStyle = textColour;
+//       ctx.fillText(planNumText, cameraX - planNumWidth / 2, cameraY - height / 2 + fontSize);
+      
+//       // Draw text
+//       ctx.globalAlpha = 1;
+//       ctx.fillStyle = textColour;
+//       ctx.fillText(assignedTribesmanIDText, cameraX - assignedTribesmanIDWidth / 2, cameraY - height / 2 + fontSize * 2);
 //    }
-//    return null;
+//    ctx.globalAlpha = 1;
 // }
 
-// @Incomplete
-// const renderHoveredPotentialPlanInfo = (): void => {
-//    const hoveredPlan = getHoveredPotentialPlan();
-//    if (hoveredPlan === null) {
+// const renderHoveredBuildingPlanInfo = (): void => {
+//    const ghostBuildingPlan = getVisibleBuildingPlan();
+//    if (ghostBuildingPlan === null) {
 //       return;
 //    }
 
-//    let left = getXPosInCamera(hoveredPlan.x);
-//    const top = getYPosInCamera(hoveredPlan.y);
+//    const planVirtualBuilding = ghostBuildingPlan.virtualBuilding;
+
+//    let left = getXPosInCamera(planVirtualBuilding.position.x);
+//    const top = getYPosInCamera(planVirtualBuilding.position.y);
 
 //    const fontSize = 13;
 //    const titleSpacing = 3;
 //    const dataLeftMargin = 8;
 //    const height = fontSize * 5 + titleSpacing;
    
-//    const safetyInfo = hoveredPlan.safetyInfo;
+//    const safetyInfo = ghostBuildingPlan.safetyInfo;
 //    for (let i = 0; i < safetyInfo.buildingIDs.length; i++) {
 //       const buildingID = safetyInfo.buildingIDs[i];
 //       const buildingType = safetyInfo.buildingTypes[i];
@@ -527,8 +526,9 @@ const renderBuildingPlanInfos = (): void => {
 const renderBuildingSafetys = (): void => {
    const fontSize = 18;
 
-   for (let i = 0; i < buildingSafetys.length; i++) {
-      const buildingSafetyData = buildingSafetys[i];
+   const buildingSafeties = getBuildingSafeties();
+   for (let i = 0; i < buildingSafeties.length; i++) {
+      const buildingSafetyData = buildingSafeties[i];
 
       ctx.font = "400 " + fontSize + "px Helvetica";
       ctx.lineJoin = "round";
@@ -543,7 +543,7 @@ const renderBuildingSafetys = (): void => {
       const extendedAverageText = "xavg=" + buildingSafetyData.extendedAverageSafety.toFixed(2);
       const extendedAverageWidth = ctx.measureText(extendedAverageText).width; // @Speed
 
-      const resultText = "fin=" + buildingSafetyData.resultingSafety.toFixed(2);
+      const resultText = "fin=" + buildingSafetyData.safety.toFixed(2);
       const resultWidth = ctx.measureText(resultText).width; // @Speed
 
       const width = Math.max(minWidth, averageWidth, extendedAverageWidth, resultWidth);
@@ -584,10 +584,10 @@ export function renderText(): void {
       renderBuildingSafetys();
    }
 
-   if (OPTIONS.showBuildingPlans) {
-      renderBuildingPlanInfos();
+   // if (OPTIONS.showBuildingPlans) {
+      // renderBuildingPlanInfos();
       renderPotentialBuildingPlans();
       // @Temporary @Incomplete
       // renderHoveredPotentialPlanInfo();
-   }
+   // }
 }

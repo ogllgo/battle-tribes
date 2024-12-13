@@ -20,6 +20,7 @@ export enum RenderLayer {
    projectiles,
    highEntities,
    blueprints,
+   treeRootBase,
    /* --------------- */
    WALL_SEPARATOR,
    /* --------------- */
@@ -127,6 +128,9 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
       // @Temporary?
       case EntityType.planterBox: {
          return RenderLayer.lowestEntities;
+      }
+      case EntityType.treeRootBase: {
+         return RenderLayer.treeRootBase;
       }
       // (default)
       default: {

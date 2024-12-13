@@ -1,19 +1,30 @@
-import { PotentialBuildingPlanData } from "battletribes-shared/ai-building-types";
 import { EntityType } from "battletribes-shared/entities";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
-import { getTribeSafety } from "./ai-building-heuristics";
+import { getBuildingSafety, getTribeSafety } from "./ai-building-heuristics";
 import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
 import { getWallCandidates } from "./building-plans/ai-building-walls";
+import { PotentialPlanSafetyData } from "../../../shared/src/ai-building-types";
 
-export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null {
+export interface WallPlaceSearchResult {
+   readonly virtualBuilding: VirtualBuilding;
+   readonly potentialPlans: ReadonlyArray<WallPlaceCandidate>;
+}
+
+export interface WallPlaceCandidate {
+   readonly virtualBuilding: VirtualBuilding;
+   /** Resulting safety of the tribe */
+   readonly safety: number;
+}
+
+export function findIdealWallPlacePosition(tribe: Tribe): WallPlaceSearchResult | null {
    const potentialCandidates = getWallCandidates(tribe);
    if (potentialCandidates.length === 0) {
       // Unable to find a position
-      return null
+      return null;
    }
 
-   const potentialPlans = new Array<PotentialBuildingPlanData>();
+   const potentialPlans = new Array<WallPlaceCandidate>();
 
    // 
    // Simulate placing each building to see which one increases safety the most
@@ -39,12 +50,8 @@ export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null
       }
 
       potentialPlans.push({
-         x: candidate.position.x,
-         y: candidate.position.y,
-         rotation: candidate.rotation,
-         buildingType: EntityType.wall,
-         safety: safety,
-         safetyData: query.safetyInfo
+         virtualBuilding: virtualBuilding,
+         safety: safety
       });
 
       // Undo the simulated placement
@@ -52,7 +59,10 @@ export function findIdealWallPlacePosition(tribe: Tribe): VirtualBuilding | null
       updateBuildingLayer(candidate.buildingLayer);
    }
 
-   return bestBuilding;
+   return {
+      virtualBuilding: bestBuilding,
+      potentialPlans: potentialPlans
+   };
 }
 
 // @Incomplete

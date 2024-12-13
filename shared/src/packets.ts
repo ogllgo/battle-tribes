@@ -26,6 +26,7 @@ export const enum PacketType {
    ascend,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
+   devSpectateEntity, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
    // -----------------

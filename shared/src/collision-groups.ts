@@ -123,7 +123,9 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.fireTorch]: CollisionGroup.default,
    [EntityType.spikyBastard]: CollisionGroup.exclusiveDamaging,
    [EntityType.glurb]: CollisionGroup.default,
-   [EntityType.slurbTorch]: CollisionGroup.default
+   [EntityType.slurbTorch]: CollisionGroup.default,
+   [EntityType.treeRootBase]: CollisionGroup.boring,
+   [EntityType.treeRootSegment]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

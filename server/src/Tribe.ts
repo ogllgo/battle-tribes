@@ -25,8 +25,7 @@ import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEnti
 import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
-import { PlayerComponentArray } from "./components/PlayerComponent";
-import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
+import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
 
 const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
 const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
@@ -694,15 +693,9 @@ export function getExtendedTribeDataLength(tribe: Tribe): number {
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const tribesman of tribe.tribesmanIDs) {
       lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-
       // Name
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      if (PlayerComponentArray.hasComponent(tribesman)) {
-         const playerComponent = PlayerComponentArray.getComponent(tribesman);
-         lengthBytes += getStringLengthBytes(playerComponent.client.username);
-      } else {
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      }
+      const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
+      lengthBytes += getStringLengthBytes(tribeMemberComponent.name);
    }
 
    return lengthBytes;
@@ -769,18 +762,8 @@ export function addExtendedTribeData(packet: Packet, tribe: Tribe): void {
       packet.addNumber(tribesman);
       // Entity type
       packet.addNumber(getEntityType(tribesman));
-
       // Name
-      if (PlayerComponentArray.hasComponent(tribesman)) {
-         packet.addBoolean(true);
-         packet.padOffset(3);
-         const playerComponent = PlayerComponentArray.getComponent(tribesman);
-         packet.addString(playerComponent.client.username);
-      } else {
-         packet.addBoolean(false);
-         packet.padOffset(3);
-         const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-         packet.addNumber(tribesmanAIComponent.name);
-      }
+      const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
+      packet.addString(tribeMemberComponent.name);
    }
 }

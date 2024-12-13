@@ -79,6 +79,10 @@ import { GlurbComponent } from "./components/GlurbComponent";
 import { TetheredHitboxComponent } from "./components/TetheredHitboxComponent";
 import { SlurbTorchComponent } from "./components/SlurbTorchComponent";
 import { AttackingEntitiesComponent } from "./components/AttackingEntitiesComponent";
+import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
+import { TreeRootSegmentComponent } from "./components/TreeRootSegmentComponent";
+import { AIAssignmentComponent } from "./components/AIAssignmentComponent";
+import { PatrolAIComponent } from "./components/PatrolAIComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -162,6 +166,10 @@ const ComponentClassRecord = {
    [ServerComponentType.glurb]: () => GlurbComponent,
    [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
    [ServerComponentType.attackingEntities]: () => AttackingEntitiesComponent,
+   [ServerComponentType.patrolAI]: () => PatrolAIComponent,
+   [ServerComponentType.aiAssignment]: () => AIAssignmentComponent,
+   [ServerComponentType.treeRootBase]: () => TreeRootBaseComponent,
+   [ServerComponentType.treeRootSegment]: () => TreeRootSegmentComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

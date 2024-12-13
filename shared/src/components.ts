@@ -97,7 +97,9 @@ export enum ServerComponentType {
    slurbTorch,
    attackingEntities,
    patrolAI,
-   aiAssignment
+   aiAssignment,
+   treeRootBase,
+   treeRootSegment
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -188,6 +190,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.attackingEntities]: "Attacking Entities Component",
    [ServerComponentType.patrolAI]: "Patrol AI Component",
    [ServerComponentType.aiAssignment]: "AI Assignment Component",
+   [ServerComponentType.treeRootBase]: "Tree Root Base Component",
+   [ServerComponentType.treeRootSegment]: "Tree Root Segment Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -268,6 +272,8 @@ export const EntityComponents = {
    [EntityType.spikyBastard]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.spikyBastard],
    [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurb],
    [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
+   [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
+   [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

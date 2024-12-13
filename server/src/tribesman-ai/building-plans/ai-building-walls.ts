@@ -43,117 +43,64 @@ const convertSafetyNodeToTileIndex = (node: SafetyNode): TileIndex => {
 }
 
 const addGridAlignedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCandidates: Array<BuildingCandidate>): void => {
-   // First, we find out which tiles are occupied by buildings
-   const occupiedTileIndexes = new Set<number>();
+   const tileIndexes = new Set<number>();
+
+   // First, we mark which tiles are occupied by buildings or restricted building areas
    for (const virtualBuilding of buildingLayer.virtualBuildings) {
       for (const node of virtualBuilding.occupiedNodes) {
          const tileIndex = convertSafetyNodeToTileIndex(node);
-         occupiedTileIndexes.add(tileIndex);
+         tileIndexes.add(tileIndex);
       }
    
       for (const restrictedArea of virtualBuilding.restrictedBuildingAreas) {
          for (const node of restrictedArea.occupiedNodes) {
             const tileIndex = convertSafetyNodeToTileIndex(node);
-            occupiedTileIndexes.add(tileIndex);
+            tileIndexes.add(tileIndex);
          }
       }
-   }
-
-   // Find border tiles
-   const borderTileIndexes = new Set<number>();
-   for (const tileIndex of occupiedTileIndexes) {
-      const tileX = tileIndex % Settings.TILES_IN_WORLD_WIDTH;
-      const tileY = Math.floor(tileIndex / Settings.TILES_IN_WORLD_WIDTH);
-
-      // Top
-      if (tileY < Settings.TILES_IN_WORLD_WIDTH - 1) {
-         const tileIndex = (tileY + 1) * Settings.TILES_IN_WORLD_WIDTH + tileX;
-         if (!occupiedTileIndexes.has(tileIndex)) {
-            borderTileIndexes.add(tileIndex);
-         }
-      }
-
-      // Right
-      if (tileX < Settings.TILES_IN_WORLD_WIDTH - 1) {
-         const tileIndex = tileY * Settings.TILES_IN_WORLD_WIDTH + tileX + 1;
-         if (!occupiedTileIndexes.has(tileIndex)) {
-            borderTileIndexes.add(tileIndex);
-         }
-      }
-
-      // Bottom
-      if (tileY > 0) {
-         const tileIndex = (tileY - 1) * Settings.TILES_IN_WORLD_WIDTH + tileX;
-         if (!occupiedTileIndexes.has(tileIndex)) {
-            borderTileIndexes.add(tileIndex);
-         }
-      }
-
-      // Left
-      if (tileX > 0) {
-         const tileIndex = tileY * Settings.TILES_IN_WORLD_WIDTH + tileX - 1;
-         if (!occupiedTileIndexes.has(tileIndex)) {
-            borderTileIndexes.add(tileIndex);
-         }
-      }
-   }
-
-   for (const tileIndex of borderTileIndexes) {
-      occupiedTileIndexes.add(tileIndex);
    }
 
    // Expand tile indexes
    // @Speed
-   let previousOuterTileIndexes = borderTileIndexes;
-   for (let i = 0; i < 1; i++) {
-      const addedTileIndexes = new Set<SafetyNode>();
+   for (let i = 0; i < 2; i++) {
+      const tileIndexesToAdd = new Set<SafetyNode>();
       
-      for (const tileIndex of previousOuterTileIndexes) {
+      for (const tileIndex of tileIndexes) {
          const tileX = tileIndex % Settings.TILES_IN_WORLD_WIDTH;
          const tileY = Math.floor(tileIndex / Settings.TILES_IN_WORLD_WIDTH);
 
          // Top
          if (tileY < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
             const tileIndex = (tileY + 1) * Settings.TILES_IN_WORLD_WIDTH + tileX;
-            if (!occupiedTileIndexes.has(tileIndex)) {
-               occupiedTileIndexes.add(tileIndex);
-               addedTileIndexes.add(tileIndex);
-            }
+            tileIndexesToAdd.add(tileIndex);
          }
    
          // Right
          if (tileX < Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1) {
             const tileIndex = tileY * Settings.TILES_IN_WORLD_WIDTH + tileX + 1;
-            if (!occupiedTileIndexes.has(tileIndex)) {
-               occupiedTileIndexes.add(tileIndex);
-               addedTileIndexes.add(tileIndex);
-            }
+            tileIndexesToAdd.add(tileIndex);
          }
    
          // Bottom
          if (tileY > 0) {
             const tileIndex = (tileY - 1) * Settings.TILES_IN_WORLD_WIDTH + tileX;
-            if (!occupiedTileIndexes.has(tileIndex)) {
-               occupiedTileIndexes.add(tileIndex);
-               addedTileIndexes.add(tileIndex);
-            }
+            tileIndexesToAdd.add(tileIndex);
          }
    
          // Left
          if (tileX > 0) {
             const tileIndex = tileY * Settings.TILES_IN_WORLD_WIDTH + tileX - 1;
-            if (!occupiedTileIndexes.has(tileIndex)) {
-               occupiedTileIndexes.add(tileIndex);
-               addedTileIndexes.add(tileIndex);
-            }
+            tileIndexesToAdd.add(tileIndex);
          }
       }
 
-      previousOuterTileIndexes = addedTileIndexes;
+      for (const tileIndex of tileIndexesToAdd) {
+         tileIndexes.add(tileIndex);
+      }
    }
 
    // Filter candidates
-   for (const tileIndex of occupiedTileIndexes) {
+   for (const tileIndex of tileIndexes) {
       const tileX = tileIndex % Settings.TILES_IN_WORLD_WIDTH;
       const tileY = Math.floor(tileIndex / Settings.TILES_IN_WORLD_WIDTH);
 

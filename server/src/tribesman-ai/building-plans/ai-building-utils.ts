@@ -98,10 +98,15 @@ export function buildingCandidateIsValid(buildingLayer: TribeBuildingLayer, cand
    // Make sure that the building is in at least one 'safe' node
    const occupiedNodes = new Set<SafetyNode>();
    addHitboxesOccupiedNodes(candidate.hitboxes, occupiedNodes);
+   let isInSafeZone = false;
    for (const node of occupiedNodes) {
       if (buildingLayer.safetyNodes.has(node)) {
-         return false;
+         isInSafeZone = true;
+         break;
       }
+   }
+   if (!isInSafeZone) {
+      return false;
    }
    
    // Make sure the space doesn't collide with any buildings or their restricted building areas

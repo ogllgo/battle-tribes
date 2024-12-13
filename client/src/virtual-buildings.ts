@@ -2,7 +2,7 @@ import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../shared/src/collisi
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../shared/src/components";
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
-import { Point } from "../../shared/src/utils";
+import { distance, Point } from "../../shared/src/utils";
 import { ClientHitbox } from "./boxes";
 import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
 import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
@@ -20,7 +20,9 @@ import { createStructureComponentParams } from "./entity-components/server-compo
 import { createTransformComponentParams, readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray, createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo } from "./EntityRenderInfo";
+import Game from "./Game";
 import Layer from "./Layer";
+import OPTIONS from "./options";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers, playerInstance } from "./world";
@@ -35,7 +37,19 @@ export interface VirtualBuilding {
    readonly renderInfo: EntityRenderInfo;
 }
 
-const virtualBuildingsMap = new Map<number, VirtualBuilding>();
+export interface VirtualBuildingSafetySimulation {
+   readonly virtualBuilding: VirtualBuilding;
+   readonly safety: number;
+}
+
+export interface GhostBuildingPlan {
+   readonly virtualBuilding: VirtualBuilding;
+   readonly virtualBuildingsMap: Map<number, VirtualBuildingSafetySimulation>;
+}
+
+/** Contains the virtual buildings for tribe building plans */
+let plannedVirtualBuildingsMap = new Map<number, GhostBuildingPlan>();
+let previousVisibleVirtualBuildings = new Set<VirtualBuilding>();
 
 const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
    const entityType = reader.readNumber() as StructureType;
@@ -201,48 +215,99 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
    };
 }
 
-const readGhostEntities = (reader: PacketReader, virtualBuildings: Map<number, VirtualBuilding>): void => {
+export function readGhostVirtualBuildings(reader: PacketReader, virtualBuildings: Map<number, GhostBuildingPlan>): void {
    const hasVirtualBuilding = reader.readBoolean();
    reader.padOffset(3);
    if (hasVirtualBuilding) {
       const virtualBuilding = readVirtualBuildingFromData(reader);
-      virtualBuildings.set(virtualBuilding.id, virtualBuilding);
+
+      const virtualBuildingsMap = new Map<number, VirtualBuildingSafetySimulation>();
+      const numPotentialPlans = reader.readNumber();
+      for (let i = 0; i < numPotentialPlans; i++) {
+         const virtualBuilding = readVirtualBuildingFromData(reader);
+      
+         const safety = reader.readNumber();
+
+         const VirtualBuildingSafetySimulation: VirtualBuildingSafetySimulation = {
+            virtualBuilding: virtualBuilding,
+            safety: safety
+         };
+         virtualBuildingsMap.set(virtualBuilding.id, VirtualBuildingSafetySimulation);
+      }
+
+      const ghostBuildingPlan: GhostBuildingPlan = {
+         virtualBuilding: virtualBuilding,
+         virtualBuildingsMap: virtualBuildingsMap
+      }
+      virtualBuildings.set(virtualBuilding.id, ghostBuildingPlan);
    }
 
    const numChildren = reader.readNumber();
    for (let i = 0; i < numChildren; i++) {
-      readGhostEntities(reader, virtualBuildings);
+      readGhostVirtualBuildings(reader, virtualBuildings);
    }
 }
 
-export function updateVirtualBuildings(reader: PacketReader): void {
+export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
+   if (Game.cursorPositionX === null || Game.cursorPositionY === null) {
+      return null;
+   }
+   
+   let closestGhostBuildingPlan: GhostBuildingPlan | undefined;
+   let minDist = 64;
+   for (const pair of plannedVirtualBuildingsMap) {
+      const ghostBuildingPlan = pair[1];
+      const virtualBuilding = ghostBuildingPlan.virtualBuilding;
+      
+      const dist = distance(Game.cursorPositionX, Game.cursorPositionY, virtualBuilding.position.x, virtualBuilding.position.y);
+      if (dist < minDist) {
+         minDist = dist;
+         closestGhostBuildingPlan = ghostBuildingPlan;
+      }
+   }
+
+   if (typeof closestGhostBuildingPlan !== "undefined") {
+      return closestGhostBuildingPlan;
+   }
+   return null;
+}
+
+export function updateVirtualBuildings(newVirtualBuildingsMap: Map<number, GhostBuildingPlan>): void {
    // @Speed
 
-   const newVirtualBuildingsMap = new Map<number, VirtualBuilding>();
-   readGhostEntities(reader, newVirtualBuildingsMap);
+   plannedVirtualBuildingsMap = newVirtualBuildingsMap;
+
+   const visibleBuildingPlan = getVisibleBuildingPlan();
+
+   const visibleVirtualBuildings = new Set<VirtualBuilding>();
+   if (OPTIONS.showBuildingPlans) {
+      if (visibleBuildingPlan === null) {
+         for (const pair of plannedVirtualBuildingsMap) {
+            const ghostBuildingPlan = pair[1];
+            visibleVirtualBuildings.add(ghostBuildingPlan.virtualBuilding);
+         }
+      } else {
+         for (const pair of visibleBuildingPlan.virtualBuildingsMap) {
+            const virtualBuildingSafetySimulation = pair[1];
+            visibleVirtualBuildings.add(virtualBuildingSafetySimulation.virtualBuilding);
+         }
+      }
+   }
 
    // Check for removed virtual buildings
-   for (const pair of virtualBuildingsMap) {
-      const virtualBuildingID = pair[0];
-      if (newVirtualBuildingsMap.has(virtualBuildingID)) {
+   for (const virtualBuilding of previousVisibleVirtualBuildings) {
+      if (visibleVirtualBuildings.has(virtualBuilding)) {
          continue;
       }
 
-      const virtualBuilding = pair[1];
       removeGhostRenderInfo(virtualBuilding.renderInfo);
-
-      virtualBuildingsMap.delete(virtualBuildingID);
    }
    
    // Add new virtual buildings
-   for (const pair of newVirtualBuildingsMap) {
-      const virtualBuildingID = pair[0];
-      if (virtualBuildingsMap.has(virtualBuildingID)) {
+   for (const virtualBuilding of visibleVirtualBuildings) {
+      if (previousVisibleVirtualBuildings.has(virtualBuilding)) {
          continue;
       }
-
-      const virtualBuilding = pair[1];
-      virtualBuildingsMap.set(virtualBuildingID, virtualBuilding);
 
       // Add render info for new virtual buildings
       const renderInfo = virtualBuilding.renderInfo;
@@ -253,4 +318,6 @@ export function updateVirtualBuildings(reader: PacketReader): void {
       renderInfo.renderPosition.y = virtualBuilding.position.y;
       renderInfo.rotation = virtualBuilding.rotation;
    }
+
+   previousVisibleVirtualBuildings = visibleVirtualBuildings;
 }

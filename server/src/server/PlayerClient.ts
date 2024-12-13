@@ -18,14 +18,17 @@ class PlayerClient {
    public readonly tribe: Tribe;
    public readonly isDev: boolean;
 
-   /** ID of the player's entity */
+   /** The player's entity */
    public instance: Entity;
+   /** The entity currently being viewed by the player. Typically the player instance. */
+   public viewedEntity: Entity;
    public clientIsActive = false;
    public isAlive = true;
 
    // When the player is dead, we need to remember where their final position is so they can receive updates while dead
-   public lastPlayerPositionX = 0;
-   public lastPlayerPositionY = 0;
+   public lastViewedPositionX = 0;
+   public lastViewedPositionY = 0;
+   /** The last layer that the player was viewing. */
    public lastLayer: Layer;
    public screenWidth: number;
    public screenHeight: number;
@@ -65,6 +68,7 @@ class PlayerClient {
       this.screenWidth = screenWidth;
       this.screenHeight = screenHeight;
       this.instance = instance;
+      this.viewedEntity = instance;
       this.username = username;
       this.isDev = isDev;
 

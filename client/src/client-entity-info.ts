@@ -226,6 +226,12 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.slurbTorch]: {
       name: "Slurb Torch"
+   },
+   [EntityType.treeRootBase]: {
+      name: "Tree Root Base"
+   },
+   [EntityType.treeRootSegment]: {
+      name: "Tree Root Segment"
    }
 };
 

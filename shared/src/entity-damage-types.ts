@@ -316,6 +316,14 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    [EntityType.slurbTorch]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
+   },
+   [EntityType.treeRootBase]: {
+      effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.treeRootSegment]: {
+      effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
    }
 };
 

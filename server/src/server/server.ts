@@ -60,10 +60,10 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
    const entities = new Set<Entity>();
       
    // @Copynpaste
-   const minVisibleX = playerClient.lastPlayerPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
-   const maxVisibleX = playerClient.lastPlayerPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
-   const minVisibleY = playerClient.lastPlayerPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
-   const maxVisibleY = playerClient.lastPlayerPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
+   const minVisibleX = playerClient.lastViewedPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleX = playerClient.lastViewedPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
+   const minVisibleY = playerClient.lastViewedPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
+   const maxVisibleY = playerClient.lastViewedPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
    
    for (let chunkX = playerClient.minVisibleChunkX; chunkX <= playerClient.maxVisibleChunkX; chunkX++) {
       for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
@@ -150,9 +150,6 @@ class GameServer {
       a = performance.now();
       generateDecorations();
       console.log("decorations",performance.now() - a)
-      a = performance.now();
-      generateSpikyBastards();
-      console.log("spiky bastards",performance.now() - a)
       a = performance.now();
       spawnGuardians();
       console.log("guardians",performance.now() - a)
@@ -351,13 +348,15 @@ class GameServer {
             continue;
          }
 
-         // Update player client info
-         if (entityExists(playerClient.instance)) {
-            const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
-            playerClient.lastPlayerPositionX = transformComponent.position.x;
-            playerClient.lastPlayerPositionY = transformComponent.position.y;
+         const viewedEntity = playerClient.viewedEntity;
 
-            playerClient.lastLayer = getEntityLayer(playerClient.instance);
+         // Update player client info
+         if (entityExists(viewedEntity)) {
+            const transformComponent = TransformComponentArray.getComponent(viewedEntity);
+            playerClient.lastViewedPositionX = transformComponent.position.x;
+            playerClient.lastViewedPositionY = transformComponent.position.y;
+
+            playerClient.lastLayer = getEntityLayer(viewedEntity);
          }
       
          const visibleEntities = getPlayerVisibleEntities(playerClient);

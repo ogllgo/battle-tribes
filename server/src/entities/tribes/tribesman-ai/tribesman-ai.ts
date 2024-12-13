@@ -621,78 +621,78 @@ export function tickTribesman(tribesman: Entity): void {
 
    // @Cleanup
    // Try to recuit other tribesmen
-   const recruitTarget = getRecruitTarget(tribesman, aiHelperComponent.visibleEntities);
-   if (recruitTarget !== null) {
-      const targetTribesmanComponent = TribesmanAIComponentArray.getComponent(recruitTarget);
-      const relation = targetTribesmanComponent.tribesmanRelations[tribesman];
+   // const recruitTarget = getRecruitTarget(tribesman, aiHelperComponent.visibleEntities);
+   // if (recruitTarget !== null) {
+   //    const targetTribesmanComponent = TribesmanAIComponentArray.getComponent(recruitTarget);
+   //    const relation = targetTribesmanComponent.tribesmanRelations[tribesman];
       
-      // @Cleanup: hardcoded val '50'
-      if (typeof relation !== "undefined" && relation >= 50) {
-         // Try to recruit the target
+   //    // @Cleanup: hardcoded val '50'
+   //    if (typeof relation !== "undefined" && relation >= 50) {
+   //       // Try to recruit the target
          
-         const recruitRange = 50;
-         const distance = getDistanceFromPointToEntity(transformComponent.position, recruitTarget);
-         if (distance <= recruitRange) {
-            recruitTribesman(recruitTarget, tribeComponent.tribe);
-         } else {
-            const targetTransformComponent = TransformComponentArray.getComponent(recruitTarget);
+   //       const recruitRange = 50;
+   //       const distance = getDistanceFromPointToEntity(transformComponent.position, recruitTarget);
+   //       if (distance <= recruitRange) {
+   //          recruitTribesman(recruitTarget, tribeComponent.tribe);
+   //       } else {
+   //          const targetTransformComponent = TransformComponentArray.getComponent(recruitTarget);
             
-            pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(recruitRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
+   //          pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(recruitRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
             
-            const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-            setLimbActions(inventoryUseComponent, LimbAction.none);
-            tribesmanAIComponent.currentAIType = TribesmanAIType.recruiting;
-            return;
-         }
-      } else {
-         // Try to gift items to the tribesman
-         const giftItemSlot = getGiftableItemSlot(tribesman);
-         if (giftItemSlot !== 0) {
-            const targetTransformComponent = TransformComponentArray.getComponent(recruitTarget);
+   //          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
+   //          setLimbActions(inventoryUseComponent, LimbAction.none);
+   //          tribesmanAIComponent.currentAIType = TribesmanAIType.recruiting;
+   //          return;
+   //       }
+   //    } else {
+   //       // Try to gift items to the tribesman
+   //       const giftItemSlot = getGiftableItemSlot(tribesman);
+   //       if (giftItemSlot !== 0) {
+   //          const targetTransformComponent = TransformComponentArray.getComponent(recruitTarget);
 
-            const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-            const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-            useInfo.selectedItemSlot = giftItemSlot;
+   //          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
+   //          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+   //          useInfo.selectedItemSlot = giftItemSlot;
    
-            // Swap to that item slot
-            const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-            const distance = getDistanceFromPointToEntity(transformComponent.position, recruitTarget);
+   //          // Swap to that item slot
+   //          const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+   //          const distance = getDistanceFromPointToEntity(transformComponent.position, recruitTarget);
             
-            // @Incomplete: account for tribesman radius
-            const giftRange = 50;
-            if (willStopAtDesiredDistance(physicsComponent, giftRange, distance)) {
-               if (willStopAtDesiredDistance(physicsComponent, giftRange - 20, distance)) {
-                  physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-                  physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
-               } else {
-                  stopEntity(physicsComponent);
-               }
+   //          // @Incomplete: account for tribesman radius
+   //          const giftRange = 50;
+   //          if (willStopAtDesiredDistance(physicsComponent, giftRange, distance)) {
+   //             if (willStopAtDesiredDistance(physicsComponent, giftRange - 20, distance)) {
+   //                physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
+   //                physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+   //             } else {
+   //                stopEntity(physicsComponent);
+   //             }
                
-               const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+   //             const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
 
-               physicsComponent.targetRotation = targetDirection;
-               physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+   //             physicsComponent.targetRotation = targetDirection;
+   //             physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
    
-               if (Math.abs(getAngleDiff(targetDirection, transformComponent.rotation)) < 0.1 && !itemThrowIsOnCooldown(tribesmanAIComponent)) {
-                  const item = hotbarInventory.itemSlots[giftItemSlot]!;
-                  throwItem(tribesman, InventoryName.hotbar, giftItemSlot, item.count, targetDirection);
-               }
+   //             if (Math.abs(getAngleDiff(targetDirection, transformComponent.rotation)) < 0.1 && !itemThrowIsOnCooldown(tribesmanAIComponent)) {
+   //                const item = hotbarInventory.itemSlots[giftItemSlot]!;
+   //                throwItem(tribesman, InventoryName.hotbar, giftItemSlot, item.count, targetDirection);
+   //             }
    
-               setLimbActions(inventoryUseComponent, LimbAction.none);
-               tribesmanAIComponent.currentAIType = TribesmanAIType.giftingItems;
-               clearTribesmanPath(tribesman);
+   //             setLimbActions(inventoryUseComponent, LimbAction.none);
+   //             tribesmanAIComponent.currentAIType = TribesmanAIType.giftingItems;
+   //             clearTribesmanPath(tribesman);
                
-               return;
-            } else {
-               pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(giftRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
+   //             return;
+   //          } else {
+   //             pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(recruitTarget), recruitTarget, TribesmanPathType.default, Math.floor(giftRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest)
    
-               setLimbActions(inventoryUseComponent, LimbAction.none);
-               tribesmanAIComponent.currentAIType = TribesmanAIType.giftingItems;
-               return;
-            }
-         }
-      }
-   }
+   //             setLimbActions(inventoryUseComponent, LimbAction.none);
+   //             tribesmanAIComponent.currentAIType = TribesmanAIType.giftingItems;
+   //             return;
+   //          }
+   //       }
+   //    }
+   // }
 
 
    // @Temporary

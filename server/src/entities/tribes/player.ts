@@ -65,7 +65,7 @@ export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): En
 
    const tribeComponent = new TribeComponent(tribe);
 
-   const tribeMemberComponent = new TribeMemberComponent();
+   const tribeMemberComponent = new TribeMemberComponent(playerClient.username);
 
    const playerComponent = new PlayerComponent(playerClient);
    

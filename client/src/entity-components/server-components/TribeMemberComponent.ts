@@ -30,6 +30,7 @@ import { TileType } from "../../../../shared/src/tiles";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 
 export interface TribeMemberComponentParams {
+   name: string;
    readonly warpaintType: number | null;
    readonly titles: ReadonlyArray<TitleGenerationInfo>;
 }
@@ -42,6 +43,8 @@ interface RenderParts {
 export interface TribeMemberComponent {
    readonly bodyRenderPart: VisualRenderPart;
    readonly handRenderParts: ReadonlyArray<VisualRenderPart>;
+   
+   name: string;
    
    warpaintType: number | null;
    
@@ -241,8 +244,10 @@ export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberCom
 });
 
 function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
+   const name = reader.readString();
+   
    const warpaintType = readWarpaint(reader);
-
+   
    const titles = new Array<TitleGenerationInfo>();
    const numTitles = reader.readNumber();
    for (let i = 0; i < numTitles; i++) {
@@ -256,6 +261,7 @@ function createParamsFromData(reader: PacketReader): TribeMemberComponentParams 
    }
 
    return {
+      name: name,
       warpaintType: warpaintType,
       titles: titles
    };
@@ -450,6 +456,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMem
    return {
       bodyRenderPart: renderParts.bodyRenderPart,
       handRenderParts: renderParts.limbRenderParts,
+      name: tribeMemberComponentParams.name,
       warpaintType: tribeMemberComponentParams.warpaintType,
       titles: tribeMemberComponentParams.titles,
       deathbringerEyeLights: []
@@ -722,6 +729,7 @@ function onTick(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
+   reader.padString();
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
    const numTitles = reader.readNumber();
@@ -731,6 +739,8 @@ function padData(reader: PacketReader): void {
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
 
+   tribeMemberComponent.name = reader.readString();
+   
    tribeMemberComponent.warpaintType = readWarpaint(reader);
 
    // @Temporary @Garbage

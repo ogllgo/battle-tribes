@@ -364,7 +364,8 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-
+      if(1+1===2)return;
+      
       const x = Settings.BOARD_UNITS * 0.5 + 800;
       const y = Settings.BOARD_UNITS * 0.5;
       

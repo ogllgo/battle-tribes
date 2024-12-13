@@ -12,13 +12,15 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
+import { BarrelComponent } from "../../components/BarrelComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.structure
    | ServerComponentType.tribe
-   | ServerComponentType.inventory;
+   | ServerComponentType.inventory
+   | ServerComponentType.barrel;
 
 export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
@@ -37,6 +39,8 @@ export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnec
    const inventory = new Inventory(3, 3, InventoryName.inventory);
    addInventoryToInventoryComponent(inventoryComponent, inventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    
+   const barrelComponent = new BarrelComponent();
+   
    return {
       entityType: EntityType.barrel,
       components: {
@@ -45,7 +49,8 @@ export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnec
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
-         [ServerComponentType.inventory]: inventoryComponent
+         [ServerComponentType.inventory]: inventoryComponent,
+         [ServerComponentType.barrel]: barrelComponent
       }
    };
 }

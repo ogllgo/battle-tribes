@@ -30,13 +30,17 @@ export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenc
    updateFromData: updateFromData
 });
 
+export function createResearchBenchComponentParams(isOccupied: boolean): ResearchBenchComponentParams {
+   return {
+      isOccupied: isOccupied
+   };
+}
+
 function createParamsFromData(reader: PacketReader): ResearchBenchComponentParams {
    const isOccupied = reader.readBoolean();
    reader.padOffset(3);
 
-   return {
-      isOccupied: isOccupied
-   };
+   return createResearchBenchComponentParams(isOccupied);
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {

@@ -13,9 +13,8 @@ import { HealthBar_setHasFrostShield } from "../components/game/HealthBar";
 import Camera from "../Camera";
 import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
-import { createDamageNumber, createHealNumber, setVisibleBuildingSafetys } from "../text-canvas";
+import { createDamageNumber, createHealNumber } from "../text-canvas";
 import { playSound } from "../sound";
-import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { setVisibleRestrictedBuildingAreas } from "../rendering/webgl/restricted-building-areas-rendering";
 import { setVisibleWallConnections } from "../rendering/webgl/wall-connection-rendering";
 import { Infocards_setTitleOffer } from "../components/game/infocards/Infocards";
@@ -85,38 +84,6 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    }
 
    return closestPlanToCursor;
-}
-
-export interface PotentialPlanStats {
-   readonly minSafety: number;
-   readonly maxSafety: number;
-}
-
-export function getPotentialPlanStats(potentialPlans: ReadonlyArray<PotentialBuildingPlanData>): PotentialPlanStats {
-   const firstPlan = potentialPlans[0];
-   let minPlanSafety = firstPlan.safety;
-   let maxPlanSafety = firstPlan.safety;
-   for (let i = 1; i < potentialPlans.length; i++) {
-      const potentialPlan = potentialPlans[i];
-      if (potentialPlan.safety < minPlanSafety) {
-         minPlanSafety = potentialPlan.safety;
-      } else if (potentialPlan.safety > maxPlanSafety) {
-         maxPlanSafety = potentialPlan.safety;
-      }
-   }
-
-   return {
-      minSafety: minPlanSafety,
-      maxSafety: maxPlanSafety
-   };
-}
-
-export function calculatePotentialPlanIdealness(potentialPlan: PotentialBuildingPlanData, potentialPlanStats: PotentialPlanStats): number {
-   let idealness = (potentialPlan.safety - potentialPlanStats.minSafety) / (potentialPlanStats.maxSafety - potentialPlanStats.minSafety);
-   if (isNaN(idealness)) {
-      idealness = 1;
-   }
-   return idealness;
 }
 
 // @Cleanup
@@ -420,7 +387,6 @@ abstract class Client {
          definiteGameState.hotbarCrossbowLoadProgressRecord = gameDataPacket.hotbarCrossbowLoadProgressRecord;
       }
 
-      setVisibleBuildingSafetys(gameDataPacket.visibleBuildingSafetys);
       setVisibleRestrictedBuildingAreas(gameDataPacket.visibleRestrictedBuildingAreas);
       setVisibleWallConnections(gameDataPacket.visibleWallConnections);
 

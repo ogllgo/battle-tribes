@@ -75,7 +75,9 @@ export const enum EntityType {
    fireTorch,
    spikyBastard,
    glurb,
-   slurbTorch
+   slurbTorch,
+   treeRootBase,
+   treeRootSegment
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -153,6 +155,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.spikyBastard]: "Spiky Bastard",
    [EntityType.glurb]: "Glurb",
    [EntityType.slurbTorch]: "Slurb Torch",
+   [EntityType.treeRootBase]: "Tree Root Base",
+   [EntityType.treeRootSegment]: "Tree Root Segment",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

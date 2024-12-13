@@ -1,6 +1,5 @@
 import { ServerComponentType, TribesmanAIType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { randInt } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import Tribe from "../Tribe";
 import { EntityRelationship, TribeComponentArray } from "./TribeComponent";
@@ -12,7 +11,6 @@ import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
 import { HutComponentArray } from "./HutComponent";
 import { Path } from "../pathfinding";
-import { AIPlan, AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -136,11 +134,6 @@ export class TribesmanAIComponent {
    /** Stores relations with tribesman from other tribes */
    public tribesmanRelations: Partial<Record<number, number>> = {};
 
-   // @Cleanup: Unify with player username in tribemember component
-   public readonly name = randInt(0, 99);
-   // @Bug: will favour certain names more.
-   public untitledDescriptor = randInt(0, 99);
-
    public currentCraftingRecipeIdx = 0;
    public currentCraftingTicks = 0;
 
@@ -161,7 +154,7 @@ function onJoin(entity: Entity): void {
 }
 
 function getDataLength(): number {
-   return 7 * Float32Array.BYTES_PER_ELEMENT;
+   return 5 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
@@ -179,8 +172,6 @@ function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null):
       craftingItemType = 0;
    }
 
-   packet.addNumber(tribesmanComponent.name);
-   packet.addNumber(tribesmanComponent.untitledDescriptor);
    packet.addNumber(tribesmanComponent.currentAIType);
    const relationsWithPlayer = player !== null && typeof tribesmanComponent.tribesmanRelations[player] !== "undefined" ? tribesmanComponent.tribesmanRelations[player]! : 0;
    packet.addNumber(relationsWithPlayer);

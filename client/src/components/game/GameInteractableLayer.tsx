@@ -10,12 +10,12 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket } from "../../networking/packet-creation";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket } from "../../networking/packet-creation";
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
-import { attemptEntitySelection } from "../../entity-selection";
+import { attemptEntitySelection, getHoveredEntityID } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
@@ -50,6 +50,8 @@ import { createSlurbTorchComponentParams } from "../../entity-components/server-
 import { createBarrelComponentParams } from "../../entity-components/server-components/BarrelComponent";
 import { playerTribe } from "../../tribes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { createResearchBenchComponentParams } from "../../entity-components/server-components/ResearchBenchComponent";
+import { GameInteractState } from "./GameScreen";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -64,6 +66,7 @@ interface GameInteractableLayerProps {
    readonly gloveSlot: Inventory;
    readonly heldItemSlot: Inventory;
    readonly cinematicModeIsEnabled: boolean;
+   readonly gameInteractState: GameInteractState;
 }
 
 interface SelectedItemInfo {
@@ -110,7 +113,6 @@ const PLAYER_SLOW_ACCELERATION = 400;
 const PLAYER_DISCOMBOBULATED_ACCELERATION = 300;
 
 export let rightMouseButtonIsPressed = false;
-export let leftMouseButtonIsPressed = false;
 
 let hotbarSelectedItemSlot = 1;
 
@@ -583,44 +585,10 @@ const getSelectedItemInfo = (): SelectedItemInfo | null => {
    return null;
 }
 
-const onGameMouseDown = (e: React.MouseEvent): void => {
-   if (playerInstance === null) return;
-
-   if (e.button === 0) { // Left click
-      leftMouseButtonIsPressed = true;
-      attemptAttack();
-   } else if (e.button === 2) { // Right click
-      rightMouseButtonIsPressed = true;
-
-      const selectedItemInfo = getSelectedItemInfo();
-      if (selectedItemInfo !== null) {
-         onItemStartUse(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
-
-         // Special case: Barbarians can eat with both hands at once
-         if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
-            const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
-            const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
-            const offhandHeldItem = offhandInventory.getItem(1);
-            if (offhandHeldItem !== null) {
-               onItemStartUse(offhandHeldItem.type, InventoryName.offhand, 1);
-            }
-         }
-      }
-      
-      const didSelectEntity = attemptEntitySelection();
-      if (didSelectEntity) {
-         e.preventDefault();
-      }
-      
-      attemptToCompleteNode();
-   }
-}
-
 const onGameMouseUp = (e: React.MouseEvent): void => {
    if (playerInstance === null) return;
 
    if (e.button === 0) { // Left click
-      leftMouseButtonIsPressed = false;
    } else if (e.button === 2) { // Right click
       rightMouseButtonIsPressed = false;
 
@@ -1310,6 +1278,10 @@ const tickItem = (itemType: ItemType): void => {
                   components[componentType] = createBarrelComponentParams();
                   break;
                }
+               case ServerComponentType.researchBench: {
+                  components[componentType] = createResearchBenchComponentParams(false);
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }
@@ -1441,12 +1413,48 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       }
    }, []);
 
+   const onMouseDown = (e: React.MouseEvent): void => {
+      if (playerInstance === null) return;
+   
+      if (e.button === 0) { // Left click
+         if (props.gameInteractState === GameInteractState.spectateEntity) {
+            sendSpectateEntityPacket(getHoveredEntityID());
+         } else {
+            attemptAttack();
+         }
+      } else if (e.button === 2) { // Right click
+         rightMouseButtonIsPressed = true;
+   
+         const selectedItemInfo = getSelectedItemInfo();
+         if (selectedItemInfo !== null) {
+            onItemStartUse(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
+   
+            // Special case: Barbarians can eat with both hands at once
+            if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
+               const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+               const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
+               const offhandHeldItem = offhandInventory.getItem(1);
+               if (offhandHeldItem !== null) {
+                  onItemStartUse(offhandHeldItem.type, InventoryName.offhand, 1);
+               }
+            }
+         }
+         
+         const didSelectEntity = attemptEntitySelection();
+         if (didSelectEntity) {
+            e.preventDefault();
+         }
+         
+         attemptToCompleteNode();
+      }
+   }
+
    const onContextMenu = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
    }, []);
 
    return <>
-      <div id="game-interactable-layer" draggable={false} onMouseDown={onGameMouseDown} onMouseUp={onGameMouseUp} onContextMenu={onContextMenu}></div>
+      <div id="game-interactable-layer" draggable={false} onMouseDown={onMouseDown} onMouseUp={onGameMouseUp} onContextMenu={onContextMenu}></div>
 
       <HeldItemSlot heldItemSlot={props.heldItemSlot} mouseX={mouseX} mouseY={mouseY} />
       

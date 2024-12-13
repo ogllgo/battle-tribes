@@ -1,5 +1,5 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { Entity, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { calculateStructureConnectionInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD, StructureType } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -7,10 +7,10 @@ import { angle, assert, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
 import { getDistanceFromPointToEntity, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
-import { consumeItemFromSlot, InventoryComponentArray, getInventory, getItemTypeSlot } from "../../../components/InventoryComponent";
+import { consumeItemFromSlot, InventoryComponentArray, getInventory, getItemTypeSlot, inventoryHasItemType } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
-import { getEntityRelationship, EntityRelationship } from "../../../components/TribeComponent";
+import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
 import { awardTitle } from "../../../components/TribeMemberComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
@@ -23,9 +23,10 @@ import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityLayer, getGameTicks } from "../../../world";
+import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { getLayerInfo } from "../../../layers";
-import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan, planToGetItem } from "../../../tribesman-ai/tribesman-ai-planning";
+import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -49,6 +50,23 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       const relationship = getEntityRelationship(tribesman, blockingEntity);
       if (relationship !== EntityRelationship.friendly) {
          // @Bug: sometimes the blocking entity is inaccessible, causing the pathfinding to the entity to break. Fix
+         
+         // If the entity is a boulder, ensure that the tribesman has a pickaxe so that it can damage it
+         // @Hack: hardcoded
+         if (getEntityType(blockingEntity) === EntityType.boulder) {
+            const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+            // @Hack: this is shit, only checks for wooden pickaxe, but it's just a start. improve layer.
+            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+            if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_pickaxe)) {
+               const tribeComponent = TribeComponentArray.getComponent(tribesman);
+               const assignment = planToGetItem(tribeComponent.tribe, ItemType.wooden_pickaxe, 1);
+               
+               const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+               addAssignmentPart(aiAssignmentComponent, assignment);
+               // @Bug: the entity will do nothing this tick...
+               return false;
+            }
+         }
          
          huntEntity(tribesman, blockingEntity, false);
          return false;

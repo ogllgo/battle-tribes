@@ -72,6 +72,8 @@ import { TombstoneComponentArray, TombstoneComponentParams } from "./server-comp
 import { TotemBannerComponentArray, TotemBannerComponentParams } from "./server-components/TotemBannerComponent";
 import { TransformComponentArray, TransformComponentParams } from "./server-components/TransformComponent";
 import { TreeComponentArray, TreeComponentParams } from "./server-components/TreeComponent";
+import { TreeRootBaseComponentArray, TreeRootBaseComponentParams } from "./server-components/TreeRootBaseComponent";
+import { TreeRootSegmentComponentArray, TreeRootSegmentComponentParams } from "./server-components/TreeRootSegmentComponent";
 import { TribeComponentArray, TribeComponentParams } from "./server-components/TribeComponent";
 import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-components/TribeMemberComponent";
 import { TribesmanAIComponentArray, TribesmanAIComponentParams } from "./server-components/TribesmanAIComponent";
@@ -165,6 +167,8 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
    [ServerComponentType.patrolAI]: PatrolAIComponentArray,
    [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
+   [ServerComponentType.treeRootBase]: TreeRootBaseComponentArray,
+   [ServerComponentType.treeRootSegment]: TreeRootSegmentComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -249,6 +253,8 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
    [ServerComponentType.patrolAI]: (): PatrolAIComponentParams => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,
+   [ServerComponentType.treeRootBase]: (): TreeRootBaseComponentParams => 0 as any,
+   [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

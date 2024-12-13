@@ -89,6 +89,8 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.attackingEntities]: {},
    [ServerComponentType.patrolAI]: {},
    [ServerComponentType.aiAssignment]: {},
+   [ServerComponentType.treeRootBase]: {},
+   [ServerComponentType.treeRootSegment]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];
