@@ -28,7 +28,7 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
 
       if (typeof componentArray.onInitialise !== "undefined") {
          // @Cleanup: remove need for cast
-         componentArray.onInitialise(entityConfig as EntityConfig<ServerComponentType>, id);
+         componentArray.onInitialise(entityConfig as EntityConfig<ServerComponentType>, id, layer);
       }
    }
    

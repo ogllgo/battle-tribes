@@ -366,7 +366,7 @@ export function spawnInitialEntities(): void {
    setTimeout(() => {
       if(1+1===2)return;
       
-      const x = Settings.BOARD_UNITS * 0.5 + 800;
+      const x = Settings.BOARD_UNITS * 0.5 + 900;
       const y = Settings.BOARD_UNITS * 0.5;
       
       const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
@@ -374,5 +374,5 @@ export function spawnInitialEntities(): void {
       a.components[ServerComponentType.transform].position.x = x;
       a.components[ServerComponentType.transform].position.y = y;
       createEntity(a, undergroundLayer, 0);
-   }, 16000);
+   }, 25000);
 }

@@ -96,7 +96,8 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       // Hostile if attacking, neutral otherwise
       case EntityType.frozenYeti:
       case EntityType.yeti:
-      case EntityType.slime: {
+      case EntityType.slime:
+      case EntityType.guardian: {
          const tribeComponent = TribeComponentArray.getComponent(entity);
          return tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }

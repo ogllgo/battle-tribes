@@ -249,7 +249,13 @@ export async function loadSoundEffects(): Promise<void> {
       "wall-collapse-2.mp3",
       "wooden-bracings-place.mp3",
       "glurb-hit.mp3",
-      "glurb-death.mp3"
+      "glurb-death.mp3",
+      "tree-root-base-hit.mp3",
+      "tree-root-base-death.mp3",
+      "tree-root-segment-hit.mp3",
+      "tree-root-segment-death-1.mp3",
+      "tree-root-segment-death-2.mp3",
+      "tree-root-segment-death-3.mp3",
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
@@ -408,9 +414,12 @@ export function playRiverSounds(): void {
          }
 
          if (tile.type === TileType.water && Math.random() < 0.1 / Settings.TPS) {
-            const x = (tileX + Math.random()) * Settings.TILE_SIZE;
-            const y = (tileY + Math.random()) * Settings.TILE_SIZE;
-            playSound("water-flowing-" + randInt(1, 4) + ".mp3", 0.2, 1, new Point(x, y), layer);
+            const flowDirection = layer.getRiverFlowDirection(tileX, tileY);
+            if (flowDirection > 0) {
+               const x = (tileX + Math.random()) * Settings.TILE_SIZE;
+               const y = (tileY + Math.random()) * Settings.TILE_SIZE;
+               playSound("water-flowing-" + randInt(1, 4) + ".mp3", 0.2, 1, new Point(x, y), layer);
+            }
          }
       }
    }

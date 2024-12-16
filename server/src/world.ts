@@ -179,6 +179,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
          entityLayers[joinInfo.id] = joinInfo.layer;
          entityComponentTypes[joinInfo.id] = joinInfo.entityComponentTypes;
          entitySpawnTicks[joinInfo.id] = ticks;
+
          finalPushedIdx = i;
       } else if (shouldTickJoinInfos) {
          joinInfo.ticksRemaining--;
@@ -191,34 +192,41 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
       entityJoinBuffer.splice(0, numPushedEntities);
    }
    
+   const componentArrayFinalJoiningIndexes = {} as Record<ServerComponentType, number | null>;
    
    // Push components
    for (let i = 0; i < ComponentArrays.length; i++) {
       const componentArray = ComponentArrays[i];
       componentArray.pushComponentsFromBuffer();
+
+      const finalJoiningIdx = componentArray.getFinalJoiningBufferIdx();
+      componentArrayFinalJoiningIndexes[componentArray.componentType] = finalJoiningIdx;
+      
+      if (shouldTickJoinInfos) {
+         componentArray.tickJoinInfos(finalJoiningIdx);
+      }
    }
 
    // Once all new components are added, call on join functions and clear buffers
    for (let i = 0; i < ComponentArrays.length; i++) {
       const componentArray = ComponentArrays[i];
 
-      // @Cleanup: should probably do all of this in one function in the component array, including the clearing
+      // NOTE: For this to function correctly, a component should never be inserted at
+      // or before the final joining idx by an onJoin function.
 
+      const finalJoiningIdx = componentArrayFinalJoiningIndexes[componentArray.componentType];
+      
       const onJoin = componentArray.onJoin;
-      if (typeof onJoin !== "undefined") {
+      if (typeof onJoin !== "undefined" && finalJoiningIdx !== null) {
          const componentBufferIDs = componentArray.getComponentBufferIDs();
 
-         for (let j = 0; j < componentBufferIDs.length; j++) {
-            const ticksRemaining = componentArray.bufferedComponentJoinTicksRemaining[j];
-            if (ticksRemaining > 0) {
-               break;
-            }
+         for (let j = 0; j <= finalJoiningIdx; j++) {
             const entityID = componentBufferIDs[j];
             onJoin(entityID);
          }
       }
 
-      componentArray.clearJoinedComponents(shouldTickJoinInfos);
+      componentArray.clearJoinedComponents(finalJoiningIdx);
    }
 }
 

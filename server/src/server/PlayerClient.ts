@@ -7,6 +7,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { TransformComponentArray } from "../components/TransformComponent";
+import { entityExists } from "../world";
 
 export const enum PlayerClientVars {
    VIEW_PADDING = 128
@@ -88,8 +89,10 @@ class PlayerClient {
    }
 
    public updateVisibleChunkBounds(): void {
-      const transformComponent = TransformComponentArray.getComponent(this.instance);
-      this._updateVisibleChunkBounds(transformComponent.position, this.screenWidth, this.screenHeight);
+      if (entityExists(this.viewedEntity)) {
+         const transformComponent = TransformComponentArray.getComponent(this.viewedEntity);
+         this._updateVisibleChunkBounds(transformComponent.position, this.screenWidth, this.screenHeight);
+      }
    }
 
    public hasPacketOption(packetOption: GameDataPacketOptions): boolean {

@@ -1,4 +1,4 @@
-import { ServerComponentType } from "battletribes-shared/components";
+import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
@@ -18,7 +18,7 @@ import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { attemptAttack, calculateItemKnockback } from "../entities/tribes/limb-use";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
-import { destroyEntity, getEntityLayer, getGameTicks } from "../world";
+import { destroyEntity, getEntityComponentTypes, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { doBlueprintWork } from "./BlueprintComponent";
@@ -529,43 +529,44 @@ function onTick(entity: Entity): void {
          
       lerpLimbBetweenStates(entity, limb, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
 
+      // @Temporary?
       // If the attack collides with a wall, cancel it
-      if (limb.action === LimbAction.attack) {
-         const layer = getEntityLayer(entity);
+      // if (limb.action === LimbAction.attack) {
+      //    const layer = getEntityLayer(entity);
          
-         if (limb.heldItemDamageBox.isActive) {
-            const heldItemCollidingSubtiles = getBoxCollidingWallSubtiles(layer, limb.heldItemDamageBox.box);
-            if (heldItemCollidingSubtiles.length > 0) {
-               cancelAttack(limb);
-               limb.heldItemDamageBox.isBlockedByWall = true;
-               limb.heldItemDamageBox.blockingSubtileIndex = heldItemCollidingSubtiles[0];
+      //    if (limb.heldItemDamageBox.isActive) {
+      //       const heldItemCollidingSubtiles = getBoxCollidingWallSubtiles(layer, limb.heldItemDamageBox.box);
+      //       if (heldItemCollidingSubtiles.length > 0) {
+      //          cancelAttack(limb);
+      //          limb.heldItemDamageBox.isBlockedByWall = true;
+      //          limb.heldItemDamageBox.blockingSubtileIndex = heldItemCollidingSubtiles[0];
 
-               // Damage the subtiles with the pickaxe
-               const heldItem = getHeldItem(limb)!;
-               if (ITEM_TYPE_RECORD[heldItem.type] === "pickaxe") {
-                  const itemInfo = ITEM_INFO_RECORD[heldItem.type] as PickaxeItemInfo;
+      //          // Damage the subtiles with the pickaxe
+      //          const heldItem = getHeldItem(limb)!;
+      //          if (ITEM_TYPE_RECORD[heldItem.type] === "pickaxe") {
+      //             const itemInfo = ITEM_INFO_RECORD[heldItem.type] as PickaxeItemInfo;
 
-                  for (let i = 0; i < heldItemCollidingSubtiles.length; i++) {
-                     if (limb.heldItemDamageBox.wallSubtileDamageGiven >= itemInfo.wallDamage) {
-                        break;
-                     }
+      //             for (let i = 0; i < heldItemCollidingSubtiles.length; i++) {
+      //                if (limb.heldItemDamageBox.wallSubtileDamageGiven >= itemInfo.wallDamage) {
+      //                   break;
+      //                }
                      
-                     const subtileIndex = heldItemCollidingSubtiles[i];
-                     const damageDealt = damageWallSubtitle(layer, subtileIndex, itemInfo.wallDamage);
+      //                const subtileIndex = heldItemCollidingSubtiles[i];
+      //                const damageDealt = damageWallSubtitle(layer, subtileIndex, itemInfo.wallDamage);
 
-                     limb.heldItemDamageBox.wallSubtileDamageGiven += damageDealt;
-                  }
-               }
-            }
-         } else if (limb.limbDamageBox.isActive) {
-            const limbCollidingSubtiles = getBoxCollidingWallSubtiles(layer, limb.limbDamageBox.box);
-            if (limbCollidingSubtiles.length > 0) {
-               cancelAttack(limb);
-               limb.limbDamageBox.isBlockedByWall = true;
-               limb.limbDamageBox.blockingSubtileIndex = limbCollidingSubtiles[0];
-            }
-         }
-      }
+      //                limb.heldItemDamageBox.wallSubtileDamageGiven += damageDealt;
+      //             }
+      //          }
+      //       }
+      //    } else if (limb.limbDamageBox.isActive) {
+      //       const limbCollidingSubtiles = getBoxCollidingWallSubtiles(layer, limb.limbDamageBox.box);
+      //       if (limbCollidingSubtiles.length > 0) {
+      //          cancelAttack(limb);
+      //          limb.limbDamageBox.isBlockedByWall = true;
+      //          limb.limbDamageBox.blockingSubtileIndex = limbCollidingSubtiles[0];
+      //       }
+      //    }
+      // }
       // @Copynpaste
       // Update damage box for shield bashes
       if (limb.action === LimbAction.pushShieldBash) {

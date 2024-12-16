@@ -423,8 +423,6 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
    // Set the player instance
    if (entity === Game.playerID) {
       setPlayerInstance(entity);
-      // Player.instance = entity as Player;
-      Camera.setTrackedEntityID(entity);
 
       // @Speed @Copynpaste
       const componentArrays = getComponentArrays();
@@ -496,6 +494,9 @@ export function processGameDataPacket(reader: PacketReader): void {
       setCurrentLayer(layerIdx);
       playSound("layer-change.mp3", 0.55, 1, Camera.position.copy(), null);
    }
+
+   const viewedEntity = reader.readNumber() as Entity;
+   Camera.setTrackedEntityID(viewedEntity);
 
    const playerIsAlive = reader.readBoolean();
    reader.padOffset(3);

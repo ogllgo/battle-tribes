@@ -22,15 +22,14 @@ import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
 import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
-import { getGiftableItemSlot, getRecruitTarget } from "./tribesman-recruiting";
 import { escapeFromEnemies, tribesmanShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
 import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
-import { createItem } from "../../../items";
 import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
+import { createItem } from "../../../items";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -345,14 +344,6 @@ export function tickTribesman(tribesman: Entity): void {
 
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
    const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
-
-   // @Temporary
-   if (hotbarInventory.getItem(1)?.type !== ItemType.wood) {
-      hotbarInventory.removeItem(1);
-      hotbarInventory.addItem(createItem(ItemType.wood, 99), 1);
-   } else {
-      hotbarInventory.getItem(1)!.count = 99;
-   }
 
    // Automatically equip armour from the hotbar
    // @Speed: only do when inventory changes

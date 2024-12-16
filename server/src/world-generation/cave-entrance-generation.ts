@@ -199,9 +199,6 @@ export function generateCaveEntrances(): void {
 }
 
 export function spawnGuardians(): void {
-   // @Temporary
-   if (1+1===2)return;
-   
    for (const tiles of guardianSpawnZones) {
       // Spawn 1-2 guardians in the cave
       // @Temporary
@@ -209,6 +206,9 @@ export function spawnGuardians(): void {
       for (let i = 0; i < 1; i++) {
          for (let attempts = 0; attempts < 50; attempts++) {
             const tileIndex = randItem(tiles);
+            if (surfaceLayer.getTileType(tileIndex) === TileType.dropdown) {
+               continue;
+            }
    
             const tileX = getTileX(tileIndex);
             const tileY = getTileY(tileIndex);

@@ -1,19 +1,25 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
+import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { getAbsAngleDiff, randFloat } from "../../../shared/src/utils";
+import { getAbsAngleDiff, randFloat, randInt } from "../../../shared/src/utils";
+import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
 import { createEntity } from "../Entity";
 import Layer from "../Layer";
-import { getEntityLayer } from "../world";
+import { destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { createItemsOverEntity } from "./ItemComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
-export class TreeRootBaseComponent {}
+export class TreeRootBaseComponent {
+   readonly segments = new Array<Entity>();
+}
 
 export const TreeRootBaseComponentArray = new ComponentArray<TreeRootBaseComponent>(ServerComponentType.treeRootBase, true, getDataLength, addDataToPacket);
 TreeRootBaseComponentArray.onJoin = onJoin;
+TreeRootBaseComponentArray.preRemove = preRemove;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
@@ -28,22 +34,29 @@ const segmentWillBeInWall = (rootLayer: Layer, rootX: number, rootY: number, off
    for (let i = 1; i <= NUM_CHECKS; i++) {
       const offsetMagnitude = MAX_OFFSET_MAGNITUDE * i / NUM_CHECKS;
 
-      const x = rootX + offsetMagnitude * Math.sin(offsetDirection);
-      const y = rootY + offsetMagnitude * Math.cos(offsetDirection);
-      const subtileX = Math.floor(x / Settings.SUBTILE_SIZE);
-      const subtileY = Math.floor(y / Settings.SUBTILE_SIZE);
-      const subtileIndex = getSubtileIndex(subtileX, subtileY);
-      if (rootLayer.subtileCanHaveWall(subtileIndex)) {
-         return true;
+      const rowX = rootX + offsetMagnitude * Math.sin(offsetDirection);
+      const rowY = rootY + offsetMagnitude * Math.cos(offsetDirection);
+
+      for (let xo = -1; xo <= 1; xo++) {
+         const sidewaysOffsetMagnitude = 8 * xo;
+
+         const x = rowX + sidewaysOffsetMagnitude * Math.sin(offsetDirection + Math.PI * 0.5);
+         const y = rowY + sidewaysOffsetMagnitude * Math.cos(offsetDirection + Math.PI * 0.5);
+         const subtileX = Math.floor(x / Settings.SUBTILE_SIZE);
+         const subtileY = Math.floor(y / Settings.SUBTILE_SIZE);
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (rootLayer.subtileCanHaveWall(subtileIndex)) {
+            return true;
+         }
       }
    }
 
    return false;
 }
 
-function onJoin(treeRootBase: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(treeRootBase);
-   const layer = getEntityLayer(treeRootBase);
+function onJoin(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const layer = getEntityLayer(entity);
 
    const spawnOffsetDirections = new Array<number>();
 
@@ -74,7 +87,7 @@ function onJoin(treeRootBase: Entity): void {
       const x = transformComponent.position.x + offsetX;
       const y = transformComponent.position.y + offsetY;
 
-      const config = createTreeRootSegmentConfig();
+      const config = createTreeRootSegmentConfig(entity);
       config.components[ServerComponentType.transform].position.x = x;
       config.components[ServerComponentType.transform].position.y = y;
       config.components[ServerComponentType.transform].rotation = offsetDirection + randFloat(-0.1, 0.1);
@@ -83,5 +96,23 @@ function onJoin(treeRootBase: Entity): void {
       spawnOffsetDirections.push(offsetDirection);
       
       i++;
+   }
+}
+
+function preRemove(entity: Entity): void {
+   createItemsOverEntity(entity, ItemType.wood, randInt(2, 3));
+
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   // Respawn the tree root after a while
+   const config = createTreeRootBaseConfig();
+   config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
+   config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
+   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TPS);
+
+   const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(entity);
+   for (const segment of treeRootBaseComponent.segments) {
+      destroyEntity(segment);
    }
 }

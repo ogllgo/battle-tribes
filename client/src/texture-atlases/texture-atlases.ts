@@ -355,6 +355,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tree-root-segment/tree-root-segment-1.png",
    "entities/tree-root-segment/tree-root-segment-2.png",
    "entities/tree-root-segment/tree-root-segment-3.png",
+   "entities/tree-root-segment/tree-root-segment-4.png",
 ];
 
 const addTextureSource = (textureSource: string): void => {

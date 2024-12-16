@@ -467,7 +467,8 @@ export function moveTribesmanToBiome(tribesman: Entity, materialInfo: MaterialIn
    const targetTile = localBiome.tilesInBorder[0];
    const targetX = (getTileX(targetTile) + 0.5) * Settings.TILE_SIZE;
    const targetY = (getTileY(targetTile) + 0.5) * Settings.TILE_SIZE;
-   pathfindTribesman(tribesman, targetX, targetY, materialInfo.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+   // @Temporary: make throw error
+   pathfindTribesman(tribesman, targetX, targetY, materialInfo.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
 
    // @Incomplete: also note which layer the tribesman is moving to
    tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;

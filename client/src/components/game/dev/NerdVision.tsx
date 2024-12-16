@@ -69,7 +69,7 @@ const NerdVision = (props: NerdVisionProps) => {
    if (!isEnabled) return null;
 
    return <div id="nerd-vision-wrapper">
-      <GameInfoDisplay />
+      <GameInfoDisplay setGameInteractState={props.setGameInteractState} />
       <DebugInfo />
       {/* <TerminalButton startingIsOpened={terminalStartingVisibility} /> */}
       <Terminal startingIsVisible={terminalStartingVisibility}/>

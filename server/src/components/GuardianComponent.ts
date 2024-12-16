@@ -378,9 +378,10 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
 function onHitboxCollision(guardian: Entity, collidingEntity: Entity, actingHitbox: Hitbox, _receivingHitbox: Hitbox, collisionPoint: Point): void {
    // Only the limbs can damage entities
-   if (!actingHitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
-      return;
-   }
+   // @Temporary?
+   // if (!actingHitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
+   //    return;
+   // }
 
    // Don't attack spiky balls or other guardians
    if (GuardianSpikyBallComponentArray.hasComponent(collidingEntity) || GuardianComponentArray.hasComponent(collidingEntity)) {

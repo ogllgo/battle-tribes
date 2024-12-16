@@ -377,7 +377,9 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
       const targetDirectRadius = pointDistance - distance;
 
       const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
-      const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
+      // @Temporary?
+      // const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
+      const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.returnEmpty;
       pathfindTribesman(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, goalRadius, failureDefault);
    }
 

@@ -4,8 +4,13 @@ import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { sendToggleSimulationPacket } from "../../../networking/packet-creation";
-import { getCurrentLayer } from "../../../world";
+import { sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-creation";
+import { getCurrentLayer, playerInstance } from "../../../world";
+import { GameInteractState } from "../GameScreen";
+
+interface GameInfoDisplayProps {
+   setGameInteractState(state: GameInteractState): void;
+}
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
 
@@ -28,7 +33,7 @@ export function clearServerTicks(): void {
    serverTicks = 0;
 }
 
-const GameInfoDisplay = () => {
+const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const rangeInputRef = useRef<HTMLInputElement | null>(null);
    const maxGreenSafetyInputRef = useRef<HTMLInputElement | null>(null);
    
@@ -182,6 +187,9 @@ const GameInfoDisplay = () => {
       <p>Server TPS: {tps}</p>
 
       <button onClick={toggleSimulation}>{isPaused ? "Resume" : "Pause"} Simulation</button>
+
+      <button onClick={() => props.setGameInteractState(GameInteractState.spectateEntity)}>Spectate Entity</button>
+      <button onClick={() => { playerInstance !== null ? sendSpectateEntityPacket(playerInstance) : undefined }}>Clear Spectate</button>
 
       <ul className="area options">
          <li>

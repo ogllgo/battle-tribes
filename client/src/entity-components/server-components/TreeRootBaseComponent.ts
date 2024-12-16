@@ -1,8 +1,13 @@
 import { ServerComponentType } from "../../../../shared/src/components";
+import { Entity } from "../../../../shared/src/entities";
+import { randFloat } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { createWoodSpeckParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface TreeRootBaseComponentParams {}
 
@@ -16,6 +21,8 @@ export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseC
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(): TreeRootBaseComponentParams {
@@ -42,3 +49,23 @@ function createComponent(): TreeRootBaseComponent {
 function padData(): void {}
 
 function updateFromData(): void {}
+
+function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (let i = 0; i < 6; i++) {
+      createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 16 * Math.random());
+   }
+
+   playSoundOnEntity("tree-root-base-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), entity);
+}
+
+function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (let i = 0; i < 10; i++) {
+      createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 16 * Math.random());
+   }
+
+   playSoundOnEntity("tree-root-base-death.mp3", 0.5, 1, entity);
+}

@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, randFloat, smoothstep } from "battletribes-shared/utils";
-import Layer, { getTileIndexIncludingEdges } from "../Layer";
+import { distance, lerp, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
@@ -51,25 +51,61 @@ const spreadDropdownCloseness = (dropdownTileX: number, dropdownTileY: number, c
    }
 }
 
-const generateDropdownClosenessArray = (surfaceLayer: Layer): Float32Array => {
-   const closenessArray = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<number> => {
+   // To instill some randomness into the depths
+   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
    
+   const depths = new Array<TileIndex>();
+   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+         let distTiles = Number.MAX_SAFE_INTEGER;
+         for (const dropdownTileIndex of dropdowns) {
+            const dropdownTileX = getTileX(dropdownTileIndex);
+            const dropdownTileY = getTileY(dropdownTileIndex);
+
+            const dx = dropdownTileX - tileX;
+            const dy = dropdownTileY - tileY;
+            const dist = dx * dx + dy + dy;
+            if (dist < distTiles) {
+               distTiles = dist;
+            }
+         }
+         distTiles = Math.sqrt(distTiles);
+
+         let depth = distTiles / 100;
+         
+         const weightFactor = Math.log(distTiles) * 0.07;
+         const weight = weightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+         depth += weight * weightFactor;
+         
+         if (depth > 1) {
+            depth = 1;
+         }
+
+         depths.push(depth);
+      }
+   }
+
+   return depths;
+}
+
+export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
+   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
+
+   const dropdownClosenessArray = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   const dropdowns = new Array<TileIndex>();
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
       for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tileType = surfaceLayer.tileTypes[tileIndex];
          if (tileType === TileType.dropdown) {
-            spreadDropdownCloseness(tileX, tileY, closenessArray);
+            spreadDropdownCloseness(tileX, tileY, dropdownClosenessArray);
+            dropdowns.push(tileIndex);
          }
       }
    }
 
-   return closenessArray;
-}
-
-export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
-   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
-   const dropdownClosenessArray = generateDropdownClosenessArray(surfaceLayer);
+   const depths = generateDepths(dropdowns);
 
    const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
    
@@ -88,8 +124,12 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             undergroundLayer.tileTypes[tileIndex] = TileType.stoneWallFloor;
             setWallInSubtiles(undergroundLayer.wallSubtileTypes, tileX, tileY, SubtileType.stoneWall);
          } else {
-            const waterWeight = waterGenerationNoise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
-            if (weight < 0.5 && weight > 0.45 && waterWeight > 0.65) {
+            const depth = depths[tileIndex];
+
+            let waterGenerationWeight = waterGenerationNoise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+            // Only generate water at low depths
+            waterGenerationWeight *= lerp(0.5, 1, 1 - depth);
+            if (weight > 0.44 && weight < 0.51 && waterGenerationWeight > 0.65) {
                undergroundLayer.tileTypes[tileIndex] = TileType.water;
             } else {
                undergroundLayer.tileTypes[tileIndex] = TileType.stone;
@@ -106,13 +146,15 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       const tileX = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
       const tileY = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
 
-      // Make sure the tile is a wall tile
-      if (!undergroundLayer.subtileIsWall(getSubtileIndex(tileX * 4, tileY * 4))) {
+      // Only generate at low depths
+      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+      const depth = depths[tileIndex];
+      if (depth > Math.random() * 0.5) {
          continue;
       }
 
-      // Make sure the tile is below a grasslands biome
-      if (surfaceLayer.getTileXYBiome(tileX, tileY) !== Biome.grasslands) {
+      // Make sure the tile is a wall tile
+      if (!undergroundLayer.subtileIsWall(getSubtileIndex(tileX * 4, tileY * 4))) {
          continue;
       }
 

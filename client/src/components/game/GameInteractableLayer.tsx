@@ -67,6 +67,7 @@ interface GameInteractableLayerProps {
    readonly heldItemSlot: Inventory;
    readonly cinematicModeIsEnabled: boolean;
    readonly gameInteractState: GameInteractState;
+   setGameInteractState(state: GameInteractState): void;
 }
 
 interface SelectedItemInfo {
@@ -1419,6 +1420,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       if (e.button === 0) { // Left click
          if (props.gameInteractState === GameInteractState.spectateEntity) {
             sendSpectateEntityPacket(getHoveredEntityID());
+            props.setGameInteractState(GameInteractState.none);
          } else {
             attemptAttack();
          }

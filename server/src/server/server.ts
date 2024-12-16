@@ -18,7 +18,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -194,7 +194,9 @@ class GameServer {
                   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
                   const player = createEntity(config, layer, 0);
                   
+                  // @Hack
                   playerClient.instance = player;
+                  playerClient.viewedEntity = player;
                   addPlayerClient(playerClient, player, surfaceLayer, config);
 
                   break;
@@ -281,6 +283,10 @@ class GameServer {
                }
                case PacketType.devTPToEntity: {
                   processTPToEntityPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devSpectateEntity: {
+                  processSpectateEntityPacket(playerClient, reader);
                   break;
                }
                default: {
@@ -379,9 +385,9 @@ class GameServer {
             }
          }
 
-         // Always send the player's data (if alive)
-         if (entityExists(playerClient.instance)) {
-            entitiesToSend.add(playerClient.instance);
+         // Always send the viewed entity (if alive)
+         if (entityExists(viewedEntity)) {
+            entitiesToSend.add(viewedEntity);
          }
          
          // Send the game data to the player

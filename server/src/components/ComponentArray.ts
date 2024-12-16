@@ -3,7 +3,8 @@ import { DamageSource, Entity } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
+import Layer from "../Layer";
 
 const enum ComponentArrayPriority {
    low,
@@ -43,9 +44,11 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
 
    private deactivateBuffer = new Array<number>();
 
+   // @Cleanup: Layer should probs be in entity config
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash. (Can't add components to the join buffer while iterating it). solution: make it not crash
-   /** Called after all the components for an entity are created, before the entity has joined the world. */
-   public onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity): void;
+   /** Called after all the components for an entity are created, before the entity is added to the join buffer. */
+   public onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity, layer: Layer): void;
+   // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash.
    public onJoin?(entity: Entity): void;
    public onTick?: {
       readonly tickInterval: number;
@@ -95,6 +98,8 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.getDataLength = getDataLength;
       this.addDataToPacket = addDataToPacket;
 
+      assert(typeof ComponentArrayRecord[componentType] === "undefined");
+
       ComponentArrays.push(this);
       // @Cleanup: cast
       ComponentArrayRecord[componentType] = this as any;
@@ -104,6 +109,9 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       if (typeof this.entityToIndexMap[entity] !== "undefined") {
          throw new Error("Component added to same entity twice.");
       }
+
+      // Note: when a component is inserted, it should be inserted after all the existing entities with the same join delay ticks,
+      // otherwise it will break onJoin functions which create entities.
 
       // @Speed
       // Find a spot for the component
@@ -150,25 +158,33 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       return this.componentBufferIDs;
    }
 
-   public clearJoinedComponents(shouldTickJoinInfos: boolean): void {
-      let finalPushedIdx: number | undefined;
+   public getFinalJoiningBufferIdx(): number | null {
+      let finalPushedIdx: number | null = null;
       for (let i = 0; i < this.componentBufferIDs.length; i++) {
          const ticksRemaining = this.bufferedComponentJoinTicksRemaining[i];
          if (ticksRemaining > 0) {
-            if (shouldTickJoinInfos) {
-               this.bufferedComponentJoinTicksRemaining[i]--;
-            }
-            continue;
+            break;
          } else {
             finalPushedIdx = i;
          }
       }
+      return finalPushedIdx;
+   }
 
-      if (typeof finalPushedIdx !== "undefined") {
+   public clearJoinedComponents(finalPushedIdx: number | null): void {
+      if (finalPushedIdx !== null) {
          const numPushedEntities = finalPushedIdx + 1;
          this.componentBuffer.splice(0, numPushedEntities);
          this.componentBufferIDs.splice(0, numPushedEntities);
          this.bufferedComponentJoinTicksRemaining.splice(0, numPushedEntities);
+      }
+   }
+
+   public tickJoinInfos(finalJoiningIdx: number | null): void {
+      const startIdx = finalJoiningIdx !== null ? finalJoiningIdx + 1 : 0;
+      for (let i = startIdx; i < this.componentBufferIDs.length; i++) {
+         const ticksRemaining = this.bufferedComponentJoinTicksRemaining[i];
+         this.bufferedComponentJoinTicksRemaining[i] = ticksRemaining - 1;
       }
    }
 

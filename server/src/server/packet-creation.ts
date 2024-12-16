@@ -175,6 +175,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // Layer
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   // Viewed entity
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Player is alive
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
@@ -256,6 +258,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    packet.addNumber(getGameTime());
 
    packet.addNumber(layers.indexOf(layer));
+
+   packet.addNumber(playerClient.viewedEntity);
 
    packet.addBoolean(player !== null);
    packet.padOffset(3);
