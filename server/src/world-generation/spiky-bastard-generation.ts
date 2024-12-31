@@ -5,7 +5,7 @@ import { SubtileType } from "../../../shared/src/tiles";
 import { angle, randSign } from "../../../shared/src/utils";
 import { createSpikyBastardConfig } from "../entities/spiky-bastard";
 import { createEntity } from "../Entity";
-import { undergroundLayer } from "../layers";
+import Layer from "../Layer";
 import { generatePerlinNoise } from "../perlin-noise";
 import { pushJoinBuffer } from "../world";
 
@@ -14,7 +14,7 @@ const enum Vars {
    GENERATION_DENSITY = 9
 }
 
-export function generateSpikyBastards(): void {
+export function generateSpikyBastards(undergroundLayer: Layer): void {
    // @Incomplete: generate in edges
 
    const numBastards = Math.ceil(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.GENERATION_DENSITY);
@@ -31,9 +31,15 @@ export function generateSpikyBastards(): void {
          continue;
       }
 
+      const tileX = Math.floor(attachedSubtileX / 4);
+      const tileY = Math.floor(attachedSubtileY / 4);
+
+      // Don't spawn bastards on mithril rich subtiles
+      if (undergroundLayer.getTileMithrilRichness(tileX, tileY) > 0) {
+         continue;
+      }
+
       // Factor in the noise spawn chance
-      const tileX = attachedSubtileX >> 2;
-      const tileY = attachedSubtileY >> 2;
       let spawnChance = noise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
       spawnChance *= spawnChance;
       if (Math.random() >= spawnChance) {

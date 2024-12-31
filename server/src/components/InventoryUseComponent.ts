@@ -1,8 +1,8 @@
-import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
+import { ServerComponentType } from "battletribes-shared/components";
+import { Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, PickaxeItemInfo } from "battletribes-shared/items/items";
+import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -18,14 +18,13 @@ import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { attemptAttack, calculateItemKnockback } from "../entities/tribes/limb-use";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
-import { destroyEntity, getEntityComponentTypes, getEntityLayer, getEntityType, getGameTicks } from "../world";
+import { destroyEntity, getGameTicks } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { TribesmanTitle } from "../../../shared/src/titles";
 import { hasTitle } from "./TribeMemberComponent";
-import { damageWallSubtitle } from "../collapses";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {

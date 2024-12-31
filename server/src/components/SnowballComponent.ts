@@ -93,7 +93,7 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
 
          damageEntity(collidingEntity, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, 100, hitDirection);
-         addLocalInvulnerabilityHash(healthComponent, "snowball", 0.3);
+         addLocalInvulnerabilityHash(collidingEntity, "snowball", 0.3);
       }
    }
 }

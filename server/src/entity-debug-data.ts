@@ -69,8 +69,11 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
          const path = tribesmanAIComponent.paths[0];
 
          pathData = {
+            goalX: path.goalX,
+            goalY: path.goalY,
             pathNodes: path.smoothPath,
-            rawPathNodes: path.rawPath
+            rawPathNodes: path.rawPath,
+            visitedNodes: path.visitedNodes
          };
       }
       
@@ -116,7 +119,6 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
       debugEntries: debugEntries,
       pathData: pathData
    };
-
 }
 
 export function getEntityDebugDataLength(debugData: EntityDebugData): number {
@@ -132,10 +134,18 @@ export function getEntityDebugDataLength(debugData: EntityDebugData): number {
       lengthBytes += getStringLengthBytes(debugEntry);
    }
 
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (typeof debugData.pathData !== "undefined") {
+      lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+      
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * debugData.pathData.pathNodes.length;
+
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * debugData.pathData.rawPathNodes.length;
+      
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT * debugData.pathData.visitedNodes.length;
    }
 
    return lengthBytes;
@@ -178,6 +188,12 @@ export function addEntityDebugDataToPacket(packet: Packet, entity: Entity, debug
    }
 
    if (typeof debugData.pathData !== "undefined") {
+      packet.addBoolean(true);
+      packet.padOffset(3);
+
+      packet.addNumber(debugData.pathData.goalX);
+      packet.addNumber(debugData.pathData.goalY);
+
       packet.addNumber(debugData.pathData.pathNodes.length);
       for (const nodeIndex of debugData.pathData.pathNodes) {
          packet.addNumber(nodeIndex);
@@ -187,8 +203,13 @@ export function addEntityDebugDataToPacket(packet: Packet, entity: Entity, debug
       for (const nodeIndex of debugData.pathData.rawPathNodes) {
          packet.addNumber(nodeIndex);
       }
+
+      packet.addNumber(debugData.pathData.visitedNodes.length);
+      for (const nodeIndex of debugData.pathData.visitedNodes) {
+         packet.addNumber(nodeIndex);
+      }
    } else {
-      packet.addNumber(0);
-      packet.addNumber(0);
+      packet.addBoolean(false);
+      packet.padOffset(3);
    }
 }

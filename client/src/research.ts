@@ -127,13 +127,13 @@ const getResearchSpeedMultiplier = (): number => {
 }
 
 export function attemptToResearch(): void {
-   if (currentResearchOrb === null || Game.cursorPositionX === null || Game.cursorPositionY === null) {
+   if (currentResearchOrb === null || Game.cursorX === null || Game.cursorY === null) {
       return;
    }
    
    const nodeSize = RESEARCH_ORB_SIZES[currentResearchOrb.size];
 
-   const distFromOrb = distance(Game.cursorPositionX, Game.cursorPositionY, currentResearchOrb.positionX, currentResearchOrb.positionY);
+   const distFromOrb = distance(Game.cursorX, Game.cursorY, currentResearchOrb.positionX, currentResearchOrb.positionY);
    if (distFromOrb < nodeSize / 2) {
       orbCompleteProgress += getResearchSpeedMultiplier() / Settings.TPS;
       if (orbCompleteProgress > RESEARCH_ORB_COMPLETE_TIME) {

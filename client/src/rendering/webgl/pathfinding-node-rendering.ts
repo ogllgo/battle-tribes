@@ -1,8 +1,7 @@
 import { createWebGLProgram, gl } from "../../webgl";
 import Game from "../../Game";
 import OPTIONS from "../../options";
-import Camera from "../../Camera";
-import { PathfindingSettings, Settings } from "battletribes-shared/settings";
+import { PathfindingSettings } from "battletribes-shared/settings";
 import { angle } from "battletribes-shared/utils";
 import { EntityDebugData, PathData, PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
@@ -12,13 +11,9 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 
 enum NodeType {
    occupied,
-   path,
-   rawPath
-}
-
-interface NodeInfo {
-   readonly node: PathfindingNodeIndex;
-   readonly type: NodeType;
+   inPath,
+   inRawPath,
+   visited
 }
 
 const NODE_THICKNESS = 3;
@@ -74,9 +69,12 @@ export function createPathfindNodeShaders(): void {
       if (v_nodeType == ${NodeType.occupied.toFixed(1)}) {
          // Red for occupied
          outputColour = vec4(1.0, 0.0, 0.0, 1.0);
-      } else if (v_nodeType == ${NodeType.path.toFixed(1)}) {
+      } else if (v_nodeType == ${NodeType.inPath.toFixed(1)}) {
          // Blue for path
          outputColour = vec4(0.0, 0.0, 1.0, 1.0);
+      } else if (v_nodeType == ${NodeType.visited.toFixed(1)}) {
+         // Yellow for visited
+         outputColour = vec4(225.0/255.0, 235.0/255.0, 52.0/255.0, 1.0);
       } else {
          // Orange for raw path
          outputColour = vec4(1.0, 0.5, 0.0, 1.0);
@@ -118,7 +116,33 @@ export function createPathfindNodeShaders(): void {
    bindUBOToProgram(gl, connectorProgram, UBOBindingIndex.CAMERA);
 }
 
-const renderConnectors = (mainPathNodes: ReadonlyArray<PathfindingNodeIndex>): void => {
+const addConnector = (vertices: Array<number>, startX: number, startY: number, endX: number, endY: number): void => {
+   const connectDirection = angle(endX - startX, endY - startY);
+      
+   // To the left of the start node
+   const x1 = startX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection - Math.PI/2);
+   const y1 = startY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection - Math.PI/2);
+   // To the right of the start node
+   const x2 = startX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection + Math.PI/2);
+   const y2 = startY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection + Math.PI/2);
+   // To the left of the end node
+   const x3 = endX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection - Math.PI/2);
+   const y3 = endY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection - Math.PI/2);
+   // To the right of the end node
+   const x4 = endX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection + Math.PI/2);
+   const y4 = endY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection + Math.PI/2);
+
+   vertices.push(
+      x1, y1,
+      x2, y2,
+      x3, y3,
+      x3, y3,
+      x2, y2,
+      x4, y4
+   );
+}
+
+const renderConnectors = (pathData: PathData): void => {
    const debugEntity = Game.getEntityDebugData()!.entityID;
    if (!entityExists(debugEntity)) {
       return;
@@ -129,39 +153,19 @@ const renderConnectors = (mainPathNodes: ReadonlyArray<PathfindingNodeIndex>): v
    const vertices = new Array<number>();
    let lastNodeX = transformComponent.position.x;
    let lastNodeY = transformComponent.position.y;
-   for (let i = 0; i < mainPathNodes.length; i++) {
-      const node = mainPathNodes[i];
+   for (let i = 0; i < pathData.pathNodes.length; i++) {
+      const node = pathData.pathNodes[i];
 
-      const endNodeX = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-      const endNodeY = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-
-      const connectDirection = angle(endNodeX - lastNodeX, endNodeY - lastNodeY);
+      const nodeX = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
+      const nodeY = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
       
-      // To the left of the start node
-      const x1 = lastNodeX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection - Math.PI/2);
-      const y1 = lastNodeY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection - Math.PI/2);
-      // To the right of the start node
-      const x2 = lastNodeX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection + Math.PI/2);
-      const y2 = lastNodeY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection + Math.PI/2);
-      // To the left of the end node
-      const x3 = endNodeX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection - Math.PI/2);
-      const y3 = endNodeY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection - Math.PI/2);
-      // To the right of the end node
-      const x4 = endNodeX + CONNECTOR_THICKNESS / 2 * Math.sin(connectDirection + Math.PI/2);
-      const y4 = endNodeY + CONNECTOR_THICKNESS / 2 * Math.cos(connectDirection + Math.PI/2);
-
-      vertices.push(
-         x1, y1,
-         x2, y2,
-         x3, y3,
-         x3, y3,
-         x2, y2,
-         x4, y4
-      );
+      addConnector(vertices, lastNodeX, lastNodeY, nodeX, nodeY);
       
-      lastNodeX = endNodeX;
-      lastNodeY = endNodeY;
+      lastNodeX = nodeX;
+      lastNodeY = nodeY;
    }
+
+   addConnector(vertices, transformComponent.position.x, transformComponent.position.y, pathData.goalX, pathData.goalY);
 
    gl.useProgram(connectorProgram);
 
@@ -257,14 +261,14 @@ export function renderPathfindingNodes(): void {
    const entityDebugData = Game.getEntityDebugData();
    
    if (nerdVisionIsVisible() && entityDebugData !== null && typeof entityDebugData.pathData !== "undefined") {
-      renderConnectors(entityDebugData.pathData.pathNodes);
+      renderConnectors(entityDebugData.pathData);
    }
 
    const debuggedPath = getDebuggedPath(entityDebugData);
 
    let numNodes = visiblePathfindingNodeOccupances.length;
    if (typeof debuggedPath !== "undefined") {
-      numNodes += debuggedPath.pathNodes.length + debuggedPath.rawPathNodes.length;
+      numNodes += debuggedPath.pathNodes.length + debuggedPath.rawPathNodes.length + debuggedPath.visitedNodes.length;
    }
    
    if (numNodes > 0) {
@@ -282,12 +286,16 @@ export function renderPathfindingNodes(): void {
       if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
          const pathData = entityDebugData.pathData;
          if (typeof pathData !== "undefined") {
+            for (const node of pathData.visitedNodes) {
+               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.visited);
+            }
+
             for (const node of pathData.rawPathNodes) {
-               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.rawPath);
+               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.inRawPath);
             }
       
             for (const node of pathData.pathNodes) {
-               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.path);
+               segmentIdx = addNodeData(vertexData, segmentIdx, node, NodeType.inPath);
             }
          }
       }

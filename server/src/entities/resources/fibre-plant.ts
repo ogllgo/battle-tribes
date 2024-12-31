@@ -30,6 +30,7 @@ export function createFibrePlantConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent
-      }
+      },
+      lights: []
    }
 }

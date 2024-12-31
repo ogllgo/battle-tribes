@@ -9,7 +9,7 @@ import { Point, randInt } from "../../../shared/src/utils";
 import { getEntityType, destroyEntity } from "../world";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback } from "./PhysicsComponent";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 export class CactusComponent {
    public readonly flowers: ReadonlyArray<CactusBodyFlowerData>;
@@ -90,7 +90,7 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox
 
    damageEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 200, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "cactus", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }
 
 function preRemove(cactus: Entity): void {

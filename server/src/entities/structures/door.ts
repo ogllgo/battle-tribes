@@ -13,6 +13,7 @@ import Tribe from "../../Tribe";
 import { TribeComponent } from "../../components/TribeComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { DoorComponent } from "../../components/DoorComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -25,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [15, 45];
 
-export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createDoorHitboxes(), null);
    
@@ -39,7 +40,7 @@ export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, conne
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 
@@ -58,6 +59,7 @@ export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, conne
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.door]: doorComponent
-      }
+      },
+      lights: []
    };
 }

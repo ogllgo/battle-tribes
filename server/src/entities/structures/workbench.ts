@@ -12,6 +12,7 @@ import Tribe from "../../Tribe";
 import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -20,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.craftingStation;
 
-export function createWorkbenchConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createWorkbenchConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWorkbenchHitboxes(), null);
    
@@ -28,7 +29,7 @@ export function createWorkbenchConfig(tribe: Tribe, connectionInfo: StructureCon
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
    
@@ -43,6 +44,7 @@ export function createWorkbenchConfig(tribe: Tribe, connectionInfo: StructureCon
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
-      }
+      },
+      lights: []
    };
 }

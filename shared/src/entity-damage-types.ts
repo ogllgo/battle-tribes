@@ -241,7 +241,15 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.axe],
       stoppedDamageTypes: []
    },
-   [EntityType.plant]: {
+   [EntityType.treePlanted]: {
+      effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.berryBushPlanted]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.iceSpikesPlanted]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
@@ -282,7 +290,7 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.guardian]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
    [EntityType.guardianGemQuake]: {
@@ -323,6 +331,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    },
    [EntityType.treeRootSegment]: {
       effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.mithrilOreNode]: {
+      effectiveDamageTypes: [DamageType.pickaxe],
       stoppedDamageTypes: []
    }
 };

@@ -11,6 +11,7 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [25, 75];
 
-export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualBuilding: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWallHitboxes(), null);
    
@@ -29,7 +30,7 @@ export function createWallConfig(tribe: Tribe, material: BuildingMaterial, conne
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualBuilding);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -44,6 +45,7 @@ export function createWallConfig(tribe: Tribe, material: BuildingMaterial, conne
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent
-      }
+      },
+      lights: []
    };
 }

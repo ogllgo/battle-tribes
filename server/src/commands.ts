@@ -35,8 +35,7 @@ const giveItem = (player: Entity, itemType: ItemType, amount: number): void => {
       return;
    }
 
-   const item = createItem(itemType, amount);
-   addItem(player, InventoryComponentArray.getComponent(player), item);
+   addItem(player, InventoryComponentArray.getComponent(player), itemType, amount);
 }
 
 const tp = (player: Entity, x: number, y: number): void => {

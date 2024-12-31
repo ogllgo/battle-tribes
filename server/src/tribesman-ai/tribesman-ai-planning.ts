@@ -8,13 +8,15 @@ import { AIPlanType } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
+import { getLightIntensityAtPos, getLightLevelNode } from "../light-levels";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
 import { areaHasOutsideDoor, getOutsideDoorPlacePlan } from "./ai-building-areas";
 import { tribeIsVulnerable } from "./ai-building-heuristics";
 import { findIdealWallPlacePosition, WallPlaceCandidate } from "./ai-building-plans";
 import { generateBuildingCandidate } from "./building-plans/ai-building-utils";
-import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
+import { generateLightPosition, structureLightLevelIsValid } from "./building-plans/ai-buildling-lights";
+import { createVirtualBuilding, VirtualStructure } from "./building-plans/TribeBuildingLayer";
 
 /*
 This file contains the logic for planning what AI tribes should do.
@@ -40,7 +42,7 @@ export interface AICraftRecipePlan extends AIBasePlan {
 
 export interface AIPlaceBuildingPlan extends AIBasePlan {
    readonly type: AIPlanType.placeBuilding;
-   readonly virtualBuilding: VirtualBuilding;
+   readonly virtualBuilding: VirtualStructure;
    /** If this plan is for a safety-related building, this contains the safety data for all the candidates considered. */
    potentialPlans: ReadonlyArray<WallPlaceCandidate>;
 }
@@ -166,6 +168,10 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.fireTorch]: null,
    [ItemType.slurb]: null,
    [ItemType.slurbTorch]: null,
+   [ItemType.rawYetiFlesh]: null,
+   [ItemType.cookedYetiFlesh]: null,
+   [ItemType.mithrilOre]: null,
+   [ItemType.mithrilBar]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -200,7 +206,7 @@ export function createCraftRecipePlanAssignment(children: Array<AIPlanAssignment
    }, children);
 }
 
-export function createPlaceBuildingPlanAssignment(children: Array<AIPlanAssignment>, virtualBuilding: VirtualBuilding): AIPlanAssignment<AIPlaceBuildingPlan> {
+export function createPlaceBuildingPlanAssignment(children: Array<AIPlanAssignment>, virtualBuilding: VirtualStructure): AIPlanAssignment<AIPlaceBuildingPlan> {
    return createAssignment({
       type: AIPlanType.placeBuilding,
       isComplete: false,
@@ -284,7 +290,7 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
    if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation)) {
       const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation]!;
       children.push(
-         planToPlaceBuildingRandomly(tribe, craftingStationItemType)
+         planToPlaceBuilding(tribe, craftingStationItemType, null)
       );
    }
 
@@ -342,7 +348,7 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    // If there is no bench to research at, go place one
    if (tech.researchStudyRequirements > 0 && !tribeHasResearchBench(tribe)) {
       children.push(
-         planToPlaceBuildingRandomly(tribe, ItemType.research_bench)
+         planToPlaceBuilding(tribe, ItemType.research_bench, null)
       );
    }
 
@@ -355,41 +361,46 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    return createTechCompletePlanAssignment(children, tech);
 }
 
-const planToPlaceBuilding = (tribe: Tribe, itemType: PlaceableItemType, virtualBuilding: VirtualBuilding): AIPlanAssignment<AIPlaceBuildingPlan> => {
+const planToPlaceBuilding = (tribe: Tribe, itemType: PlaceableItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> => {
    const children = new Array<AIPlanAssignment>();
    
-   children.push(
-      planToGetItem(tribe, itemType, 1)
-   );
+   let placedVirtualStructure: VirtualStructure;
+   if (virtualStructure === null) {
+      // Find a random spot to put the structure
+      // @Hack
+      const buildingLayer = tribe.getBuildingLayer(tribe.homeLayer);
+      const entityType = (ITEM_INFO_RECORD[itemType] as PlaceableItemInfo).entityType;
+      // @Cleanup: shouldn't have to define both entity type and placeable item type
+      const candidate = generateBuildingCandidate(buildingLayer, entityType);
+      placedVirtualStructure = createVirtualBuilding(buildingLayer, candidate.position, candidate.rotation, entityType);
+   } else {
+      placedVirtualStructure = virtualStructure;
+   }
    
-   // Place the virtual building
-   const buildingLayer = tribe.buildingLayers[virtualBuilding.layer.depth];
-   buildingLayer.addVirtualBuilding(virtualBuilding);
-   updateBuildingLayer(buildingLayer);
-
-   return createPlaceBuildingPlanAssignment(children, virtualBuilding);
-}
-
-/** Like planToPlaceBuilding, but decides a random place to place the building instead of it being specified */
-const planToPlaceBuildingRandomly = (tribe: Tribe, itemType: PlaceableItemType): AIPlanAssignment<AIPlaceBuildingPlan> => {
-   const children = new Array<AIPlanAssignment>();
-   
-   children.push(
-      planToGetItem(tribe, itemType, 1)
-   );
-
    // @Hack
-   const buildingLayer = tribe.buildingLayers[tribe.homeLayer.depth];
-   const entityType = (ITEM_INFO_RECORD[itemType] as PlaceableItemInfo).entityType;
-   // @Cleanup: shouldn't have to define both entity type and placeable item type
-   const candidate = generateBuildingCandidate(buildingLayer, entityType);
-   const virtualBuilding = createVirtualBuilding(buildingLayer, candidate.position, candidate.rotation, entityType);
+   const numWorkbenches = tribe.virtualBuildingsByEntityType[EntityType.workbench].length;
    
-   // Place the virtual building
-   buildingLayer.addVirtualBuilding(virtualBuilding);
+   // Place the virtual building (before the light so that the light can't take its spot)
+   const buildingLayer = tribe.getBuildingLayer(placedVirtualStructure.layer);
+   buildingLayer.addVirtualBuilding(placedVirtualStructure);
    updateBuildingLayer(buildingLayer);
 
-   return createPlaceBuildingPlanAssignment(children, virtualBuilding);
+   // If the area is too dark to be placed in, place a torch first
+   const lightLevel = getLightIntensityAtPos(placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
+   // @Hack: item type check
+   if (itemType !== ItemType.slurbTorch && numWorkbenches > 0 && !structureLightLevelIsValid(lightLevel)) {
+      // @Temporary
+      // const virtualStructure = generateLightPosition(tribe, placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
+      // children.push(
+      //    planToPlaceBuilding(tribe, ItemType.slurbTorch, virtualStructure)
+      // );
+   }
+   
+   children.push(
+      planToGetItem(tribe, itemType, 1)
+   );
+
+   return createPlaceBuildingPlanAssignment(children, placedVirtualStructure);
 }
 
 const getNumDesiredBarrels = (tribe: Tribe): number => {
@@ -449,14 +460,14 @@ export function updateTribePlans(tribe: Tribe): void {
    // If the tribe doesn't have a totem and isn't already planning to have one, place one
    if (tribe.virtualBuildingsByEntityType[EntityType.tribeTotem].length === 0) {
       tribe.assignment.children.push(
-         planToPlaceBuildingRandomly(tribe, ItemType.tribe_totem)
+         planToPlaceBuilding(tribe, ItemType.tribe_totem, null)
       );
    }
 
    // Plan to place a hut so the settler can respawn if it dies
    if (tribe.virtualBuildingsByEntityType[EntityType.workerHut].length === 0) {
       tribe.assignment.children.push(
-         planToPlaceBuildingRandomly(tribe, ItemType.worker_hut)
+         planToPlaceBuilding(tribe, ItemType.worker_hut, null)
       );
    }
 
@@ -476,7 +487,7 @@ export function updateTribePlans(tribe: Tribe): void {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
       if (getNumBarrels(tribe) < numDesiredBarrels) {
          tribe.assignment.children.push(
-            planToPlaceBuildingRandomly(tribe, ItemType.barrel)
+            planToPlaceBuilding(tribe, ItemType.barrel, null)
          );
          continue;
       }

@@ -49,7 +49,8 @@ export function createIceArrowConfig(tribe: Tribe, creator: Entity): EntityConfi
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.iceArrow]: iceArrowComponent
-      }
+      },
+      lights: []
    };
 }
 

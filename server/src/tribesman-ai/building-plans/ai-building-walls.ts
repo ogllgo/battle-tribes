@@ -1,12 +1,10 @@
-import { updateBox } from "../../../../shared/src/boxes/boxes";
-import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import { EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
-import { getAngleDiff, Point, TileIndex } from "../../../../shared/src/utils";
+import { getAngleDiff, TileIndex } from "../../../../shared/src/utils";
 import Tribe from "../../Tribe";
 import { SafetyNode } from "../ai-building";
 import TribeBuildingLayer from "./TribeBuildingLayer";
-import { BuildingCandidate, buildingCandidateIsValid } from "./ai-building-utils";
+import { BuildingCandidate, buildingCandidateIsOnSafeNode, buildingCandidateIsValid, createBuildingCandidate } from "./ai-building-utils";
 
 /*
 This file is responsible for finding all potential wall candidates.
@@ -107,20 +105,8 @@ const addGridAlignedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCa
       const x = (tileX + 0.5) * Settings.TILE_SIZE;
       const y = (tileY + 0.5) * Settings.TILE_SIZE;
 
-      const hitboxes = createNormalStructureHitboxes(EntityType.wall);
-      // @Copynpaste
-      for (const hitbox of hitboxes) {
-         updateBox(hitbox.box, x, y, 0);
-      }
-      
-      const candidate: BuildingCandidate = {
-         buildingLayer: buildingLayer,
-         position: new Point(x, y),
-         rotation: 0,
-         hitboxes: hitboxes
-      };
-      
-      if (buildingCandidateIsValid(buildingLayer, candidate) && !wallCandidateAlreadyExists(candidate, placeCandidates)) {
+      const candidate = createBuildingCandidate(EntityType.wall, buildingLayer, x, y, 0);
+      if (buildingCandidateIsOnSafeNode(candidate) && buildingCandidateIsValid(candidate) && !wallCandidateAlreadyExists(candidate, placeCandidates)) {
          placeCandidates.push(candidate);
       }
    }
@@ -139,20 +125,8 @@ const addSnappedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCandid
          const x = virtualBuilding.position.x + 64 * Math.sin(offsetDirection);
          const y = virtualBuilding.position.y + 64 * Math.cos(offsetDirection);
 
-         const hitboxes = createNormalStructureHitboxes(EntityType.wall);
-         // @Copynpaste
-         for (const hitbox of hitboxes) {
-            updateBox(hitbox.box, x, y, virtualBuilding.rotation);
-         }
-         
-         const candidate: BuildingCandidate = {
-            buildingLayer: buildingLayer,
-            position: new Point(x, y),
-            rotation: virtualBuilding.rotation,
-            hitboxes: hitboxes
-         };
-
-         if (buildingCandidateIsValid(buildingLayer, candidate) && !wallCandidateAlreadyExists(candidate, placeCandidates)) {
+         const candidate = createBuildingCandidate(EntityType.wall, buildingLayer, x, y, virtualBuilding.rotation);
+         if (buildingCandidateIsOnSafeNode(candidate) && buildingCandidateIsValid(candidate) && !wallCandidateAlreadyExists(candidate, placeCandidates)) {
             placeCandidates.push(candidate);
          }
       }

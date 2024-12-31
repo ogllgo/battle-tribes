@@ -333,8 +333,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
       // @Incomplete: This will cause a delay after the tribesman finishes repairing the building.
       const ageTicks = getEntityAgeTicks(tribesman);
       if (ageTicks % (Settings.TPS / 2) === 0) {
-         const tribeComponent = TribeComponentArray.getComponent(tribesman);
-         const pathExists = pathToEntityExists(tribesman, huntedEntity, tribeComponent.tribe, getTribesmanRadius(transformComponent));
+         const pathExists = pathToEntityExists(tribesman, huntedEntity, getTribesmanRadius(transformComponent));
          if (!pathExists) {
             const isRepairing = attemptToRepairBuildings(tribesman, hammerItemSlot);
             if (isRepairing) {
@@ -379,7 +378,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
       const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
       // @Temporary?
       // const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
-      const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.returnEmpty;
+      const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.none;
       pathfindTribesman(tribesman, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, goalRadius, failureDefault);
    }
 

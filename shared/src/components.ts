@@ -65,7 +65,10 @@ export enum ServerComponentType {
    tribeWarrior,
    healingTotem,
    planterBox,
-   plant,
+   planted,
+   treePlanted,
+   berryBushPlanted,
+   iceSpikesPlanted,
    structure,
    fence,
    fenceGate,
@@ -99,7 +102,8 @@ export enum ServerComponentType {
    patrolAI,
    aiAssignment,
    treeRootBase,
-   treeRootSegment
+   treeRootSegment,
+   mithrilOreNode
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -151,7 +155,10 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.tribeWarrior]: "Tribe Warrior Component",
    [ServerComponentType.healingTotem]: "Healing Totem Component",
    [ServerComponentType.planterBox]: "Planter Box Component",
-   [ServerComponentType.plant]: "Plant Component",
+   [ServerComponentType.planted]: "Planted Component",
+   [ServerComponentType.treePlanted]: "Tree Planted Component",
+   [ServerComponentType.berryBushPlanted]: "Berry Bush Planted Component",
+   [ServerComponentType.iceSpikesPlanted]: "Ice Spikes Planted Component",
    [ServerComponentType.structure]: "Structure Component",
    [ServerComponentType.fence]: "Fence Component",
    [ServerComponentType.fenceGate]: "Fence Gate Component",
@@ -192,6 +199,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.aiAssignment]: "AI Assignment Component",
    [ServerComponentType.treeRootBase]: "Tree Root Base Component",
    [ServerComponentType.treeRootSegment]: "Tree Root Segment Component",
+   [ServerComponentType.mithrilOreNode]: "Mithril Ore Node Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -253,7 +261,9 @@ export const EntityComponents = {
    [EntityType.slingTurret]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.turret, ServerComponentType.aiHelper, ServerComponentType.slingTurret] as const,
    [EntityType.tunnel]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.tunnel, ServerComponentType.buildingMaterial] as const,
    [EntityType.healingTotem]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.healingTotem] as const,
-   [EntityType.plant]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.plant] as const,
+   [EntityType.treePlanted]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.planted, ServerComponentType.treePlanted] as const,
+   [EntityType.berryBushPlanted]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.planted, ServerComponentType.berryBushPlanted] as const,
+   [EntityType.iceSpikesPlanted]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.planted, ServerComponentType.iceSpikesPlanted] as const,
    [EntityType.fence]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fence] as const,
    [EntityType.fenceGate]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fenceGate] as const,
    [EntityType.frostshaper]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.structure, ServerComponentType.craftingStation] as const,
@@ -274,6 +284,7 @@ export const EntityComponents = {
    [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
    [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
    [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],
+   [EntityType.mithrilOreNode]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.mithrilOreNode],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -710,29 +721,6 @@ export interface HealingTotemTargetData {
 export interface HealingTotemComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.healingTotem;
    readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
-}
-
-/* Plant Component Data */
-
-export enum PlanterBoxPlant {
-   tree,
-   berryBush,
-   iceSpikes
-}
-
-export interface PlantComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.plant;
-   readonly plant: PlanterBoxPlant;
-   readonly plantGrowthProgress: number;
-   readonly numFruit: number;
-}
-
-/* Planter Box Component Data */
-
-export interface PlanterBoxComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.planterBox;
-   readonly plantType: PlanterBoxPlant | null;
-   readonly isFertilised: boolean;
 }
 
 /* Structure Component Data */

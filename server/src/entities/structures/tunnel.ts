@@ -12,6 +12,7 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { TunnelComponent } from "../../components/TunnelComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -23,7 +24,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [25, 75];
 
-export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createTunnelHitboxes(), null);
    
@@ -31,7 +32,7 @@ export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, con
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
 
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -49,6 +50,7 @@ export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, con
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: materialComponent,
          [ServerComponentType.tunnel]: tunnelComponent
-      }
+      },
+      lights: []
    };
 }

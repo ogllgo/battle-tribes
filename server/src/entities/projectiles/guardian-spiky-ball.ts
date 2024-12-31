@@ -47,6 +47,7 @@ export function createGuardianSpikyBallConfig(creator: Entity): EntityConfig<Com
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.guardianSpikyBall]: guardianSpikyBallComponent
-      }
+      },
+      lights: []
    };
 }

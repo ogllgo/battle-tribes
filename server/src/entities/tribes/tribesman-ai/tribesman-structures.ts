@@ -141,7 +141,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       }
    } else {
       // Move to the building plan
-      const isFinished = pathfindTribesman(tribesman, virtualBuilding.position.x, virtualBuilding.position.y, virtualBuilding.layer, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+      const isFinished = pathfindTribesman(tribesman, virtualBuilding.position.x, virtualBuilding.position.y, virtualBuilding.layer, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       if (!isFinished) {
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          
@@ -197,7 +197,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
       }
    } else {
-      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -272,7 +272,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
          // }
       }
    } else {
-      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

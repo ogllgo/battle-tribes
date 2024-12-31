@@ -30,6 +30,7 @@ const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 10), 0, HitboxCo
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.guardianGemQuake]: guardianGemQuakeCompoennt
-      }
+      },
+      lights: []
    };
 }

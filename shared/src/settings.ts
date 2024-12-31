@@ -5,8 +5,9 @@ export const enum Settings {
    TILE_SIZE = 64,
    SUBTILE_SIZE = TILE_SIZE / 4,
    SUBTILES_IN_TILE = TILE_SIZE / SUBTILE_SIZE,
+   // @Temporary: for now the game uses too much memory to handle a board size of 64. thanks grass
    /** Number of chunks in the world's width and height */
-   BOARD_SIZE = 64,
+   BOARD_SIZE = 32,
    /** Number of tiles in a chunk's width and height */
    CHUNK_SIZE = 4,
    CHUNK_UNITS = CHUNK_SIZE * TILE_SIZE,
@@ -28,7 +29,8 @@ export const enum Settings {
    SAFETY_NODE_SEPARATION = 16,
    SAFETY_NODES_IN_WORLD_WIDTH = BOARD_UNITS / SAFETY_NODE_SEPARATION,
    MAX_CRAFTING_STATION_USE_DISTANCE = 150,
-   TIME_PASS_RATE = 150
+   TIME_PASS_RATE = 150,
+   NIGHT_LIGHT_LEVEL = 0.4
 }
 
 export const enum PathfindingSettings {

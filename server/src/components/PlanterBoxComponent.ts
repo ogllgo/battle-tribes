@@ -1,24 +1,27 @@
-import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
+import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { PlantComponentArray } from "./PlantComponent";
 import { Settings } from "battletribes-shared/settings";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { createPlantConfig } from "../entities/plant";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, entityExists, getEntityLayer } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { PlantedComponentArray } from "./PlantedComponent";
+import { EntityConfig } from "../components";
+import { createTreePlantedConfig } from "../entities/resources/tree-planted";
+import { createIceSpikesPlantedConfig } from "../entities/resources/ice-spikes-planted";
+import { createBerryBushPlantedConfig } from "../entities/resources/berry-bush-planted";
 
 const enum Vars {
    FERTILISER_DURATION_TICKS = 300 * Settings.TPS
 }
 
 export class PlanterBoxComponent {
-   public plantEntity: Entity = 0;
+   public plant: Entity | null = null;
    public remainingFertiliserTicks = 0;
 
-   /** Plant type that AI tribesman will attempt to place in the planter box */
-   public replantType: PlanterBoxPlant | null = null;
+   /** Plant entity type that AI tribesman will attempt to place in the planter box */
+   public replantEntityType: PlantedEntityType | null = null;
 }
 
 export const PlanterBoxComponentArray = new ComponentArray<PlanterBoxComponent>(ServerComponentType.planterBox, true, getDataLength, addDataToComponent);
@@ -33,8 +36,10 @@ function onRemove(entity: Entity): void {
    
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
 
-   const plant = planterBoxComponent.plantEntity;
-   destroyEntity(plant);
+   const plant = planterBoxComponent.plant;
+   if (plant !== null) {
+      destroyEntity(plant);
+   }
 }
 
 function onTick(entity: Entity): void {
@@ -51,35 +56,62 @@ function getDataLength(): number {
 function addDataToComponent(packet: Packet, entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    
-   let plantType = -1;
-   if (planterBoxComponent.plantEntity !== null) {
-      const plant = planterBoxComponent.plantEntity;
+   let plantedEntityType = -1;
+   if (planterBoxComponent.plant !== null) {
+      const plant = planterBoxComponent.plant;
       if (entityExists(plant)) {
-         const plantComponent = PlantComponentArray.getComponent(plant);
-         plantType = plantComponent.plantType;
+         plantedEntityType = getEntityType(plant);
       }
    }
 
-   packet.addNumber(plantType);
+   packet.addNumber(plantedEntityType);
    packet.addBoolean(planterBoxComponent.remainingFertiliserTicks > 0);
    packet.padOffset(3);
 }
 
-export function placePlantInPlanterBox(planterBox: Entity, plantType: PlanterBoxPlant): void {
+export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
 
    // Create plant
-   const config = createPlantConfig(plantType, planterBox);
+   let config: EntityConfig<ServerComponentType.transform>;
+   switch (plantedEntityType) {
+      case EntityType.treePlanted: {
+         config = createTreePlantedConfig(planterBox);
+         break;
+      }
+      case EntityType.berryBushPlanted: {
+         config = createBerryBushPlantedConfig(planterBox);
+         break;
+      }
+      case EntityType.iceSpikesPlanted: {
+         config = createIceSpikesPlantedConfig(planterBox);
+         break;
+      }
+   }
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
    config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
    const plant = createEntity(config, getEntityLayer(planterBox), 0);
 
-   planterBoxComponent.plantEntity = plant;
-   planterBoxComponent.replantType = plantType;
+   planterBoxComponent.plant = plant;
+   planterBoxComponent.replantEntityType = plantedEntityType;
 }
 
 export function fertilisePlanterBox(planterBoxComponent: PlanterBoxComponent): void {
    planterBoxComponent.remainingFertiliserTicks = Vars.FERTILISER_DURATION_TICKS;
+}
+
+export function getPlantGrowthSpeed(plant: Entity): number {
+   const plantedComponent = PlantedComponentArray.getComponent(plant);
+
+   const planterBoxComponent = PlanterBoxComponentArray.getComponent(plantedComponent.planterBox);
+   return planterBoxComponent.remainingFertiliserTicks > 0 ? 1.5 : 1;
+}
+
+export function plantIsFertilised(plant: Entity): boolean {
+   const plantedComponent = PlantedComponentArray.getComponent(plant);
+
+   const planterBoxComponent = PlanterBoxComponentArray.getComponent(plantedComponent.planterBox);
+   return planterBoxComponent.remainingFertiliserTicks > 0;
 }

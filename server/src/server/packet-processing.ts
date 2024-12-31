@@ -19,7 +19,7 @@ import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
-import { changeEntityLayer, entityExists, getEntityLayer } from "../world";
+import { changeEntityLayer, entityExists, getEntityLayer, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
@@ -537,5 +537,16 @@ export function processSpectateEntityPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    if (entityExists(entity)) {
       playerClient.viewedEntity = entity;
+   }
+}
+
+export function processSetAutogiveBaseResourcesPacket(reader: PacketReader): void {
+   const tribeID = reader.readNumber();
+   const autogiveBaseResources = reader.readBoolean();
+   reader.padOffset(3);
+
+   const tribe = getTribe(tribeID);
+   if (tribe !== null) {
+      tribe.autogiveBaseResources = autogiveBaseResources;
    }
 }

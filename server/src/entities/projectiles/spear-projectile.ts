@@ -38,7 +38,8 @@ export function createSpearProjectileConfig(tribeMember: Entity, itemID: number 
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.spearProjectile]: spearProjectileComponent
-      }
+      },
+      lights: []
    };
 }
 

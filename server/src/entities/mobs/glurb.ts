@@ -6,13 +6,14 @@ import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shar
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { GlurbComponent } from "../../components/GlurbComponent";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { addTetheredHitboxRestriction, TetheredHitboxComponent, TetheredHitboxRestriction } from "../../components/TetheredHitboxComponent";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
+import { createLight } from "../../light-levels";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tetheredHitbox
@@ -25,6 +26,8 @@ type ComponentTypes = ServerComponentType.transform
 export function createGlurbConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const tetheredHitboxComponent = new TetheredHitboxComponent(15, 0.5);
+
+   const lights = new Array<LightCreationInfo>();
    
    const numSegments = 5;
    // const numSegments = randInt(3, 5);
@@ -62,6 +65,28 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
          previousY: 0
       };
       addTetheredHitboxRestriction(tetheredHitboxComponent, restriction);
+
+      let lightIntensity: number;
+      let lightRadius: number;
+      if (i === 0) {
+         // Head segment
+         lightIntensity = 0.35;
+         lightRadius = 6;
+      } else if (i < numSegments - 1) {
+         // Middle segment
+         lightIntensity = 0.4;
+         lightRadius = 8;
+      } else {
+         // Tail segment
+         lightIntensity = 0.3;
+         lightRadius = 4;
+      }
+      
+      const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
+      lights.push({
+         light: light,
+         attachedHitbox: hitbox
+      });
    }
 
    const physicsComponent = new PhysicsComponent();
@@ -84,6 +109,7 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.glurb]: glurbComponent
-      }
+      },
+      lights: lights
    };
 }

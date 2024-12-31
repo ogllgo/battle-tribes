@@ -41,7 +41,8 @@ export function createBallistaSlimeballConfig(tribe: Tribe, creator: Entity): En
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
-      }
+      },
+      lights: []
    };
 }
 

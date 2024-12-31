@@ -1,10 +1,10 @@
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, positionIsInWorld, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import Layer, { positionIsInWorld } from "../Layer";
+import Layer from "../Layer";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
@@ -18,8 +18,8 @@ import { createIceShardConfig } from "../entities/projectiles/ice-shard";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback } from "./PhysicsComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
-import { createItemsOverEntity } from "./ItemComponent";
 import { getDistanceToClosestEntity } from "../layer-utils";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -181,7 +181,7 @@ function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, _pushedHi
          
          damageEntity(collidingEntity, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, 180, hitDirection);
-         addLocalInvulnerabilityHash(healthComponent, "ice_spikes", 0.3);
+         addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    
          if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
             applyStatusEffect(collidingEntity, StatusEffect.freezing, 5 * Settings.TPS);

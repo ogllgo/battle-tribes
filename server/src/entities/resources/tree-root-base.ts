@@ -33,6 +33,7 @@ export function createTreeRootBaseConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.treeRootBase]: treeRootBaseComponent
-      }
+      },
+      lights: []
    };
 }

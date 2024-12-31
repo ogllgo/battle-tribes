@@ -60,7 +60,7 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHit
          applyKnockback(collidingEntity, 100, directionFromGuardian);
       }
       
-      addLocalInvulnerabilityHash(healthComponent, "gemFragmentProjectile", 0.166);
+      addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
    }
 }
 

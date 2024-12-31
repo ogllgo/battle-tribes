@@ -1,8 +1,8 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex, Point } from "battletribes-shared/utils";
-import Layer, { getTileIndexIncludingEdges } from "./Layer";
+import { randInt, randFloat, TileIndex, Point, getTileIndexIncludingEdges } from "battletribes-shared/utils";
+import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
 import OPTIONS from "./options";
 import SRandom from "./SRandom";
@@ -39,14 +39,7 @@ import { undergroundLayer } from "./layers";
 
 const PACK_SPAWN_RANGE = 200;
 
-const unspawnableTiles = new Set<TileIndex>();
-
 let spawnInfoSpawnableTilesRecord: Record<number, ReadonlySet<TileIndex>>;
-
-/** Prevents entities from spawning on the specified tile. */
-export function markTileAsUnspawnable(tile: TileIndex): void {
-   unspawnableTiles.add(tile);
-}
 
 const findSpawnableTiles = (spawnInfo: EntitySpawnInfo): ReadonlySet<TileIndex> => {
    const spawnableTiles = new Set<TileIndex>();
@@ -55,7 +48,7 @@ const findSpawnableTiles = (spawnInfo: EntitySpawnInfo): ReadonlySet<TileIndex> 
    for (const tileType of spawnInfo.spawnableTileTypes) {
       const tileIndexes = getTilesOfType(spawnInfo.layer, tileType);
       for (const tileIndex of tileIndexes) {
-         if (!unspawnableTiles.has(tileIndex)) {
+         if (!spawnInfo.layer.unspawnableTiles.has(tileIndex)) {
             spawnableTiles.add(tileIndex);
          }
       }
@@ -205,7 +198,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
    // and make fish spawn with the same colour
    
    // const cowSpecies = randInt(0, 1);
-   
+
    attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, spawnInfo.layer, spawnOriginX, spawnOriginY);
 
    // Pack spawning
@@ -325,8 +318,7 @@ export function runSpawnAttempt(): void {
       }
 
       let numSpawnEvents = Settings.BOARD_SIZE * Settings.BOARD_SIZE * spawnInfo.spawnRate / Settings.TPS;
-      const rand = OPTIONS.inBenchmarkMode ? SRandom.next() : Math.random();
-      if (rand < numSpawnEvents % 1) {
+      if (Math.random() < numSpawnEvents % 1) {
          numSpawnEvents = Math.ceil(numSpawnEvents);
       } else {
          numSpawnEvents = Math.floor(numSpawnEvents);
@@ -364,9 +356,9 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      if(1+1===2)return;
+      // if(1+1===2)return;
       
-      const x = Settings.BOARD_UNITS * 0.5 + 900;
+      const x = Settings.BOARD_UNITS * 0.5 + 700;
       const y = Settings.BOARD_UNITS * 0.5;
       
       const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
@@ -374,5 +366,5 @@ export function spawnInitialEntities(): void {
       a.components[ServerComponentType.transform].position.x = x;
       a.components[ServerComponentType.transform].position.y = y;
       createEntity(a, undergroundLayer, 0);
-   }, 25000);
+   }, 10000);
 }

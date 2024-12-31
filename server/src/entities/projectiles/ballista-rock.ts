@@ -41,7 +41,8 @@ export function createBallistaRockConfig(tribe: Tribe, creator: Entity): EntityC
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
-      }
+      },
+      lights: []
    };
 }
 

@@ -59,10 +59,14 @@ export function createTextCanvasContext(): void {
    ctx = textCanvas.getContext("2d")!;
 }
 
-const getXPosInCamera = (x: number): number => {
+export function getTextContext(): CanvasRenderingContext2D {
+   return ctx;
+}
+
+export function getXPosInTextCanvas(x: number): number {
    return (x - Camera.position.x) * Camera.zoom + halfWindowWidth;
 }
-const getYPosInCamera = (y: number): number => {
+export function getYPosInTextCanvas(y: number): number {
    return (-y + Camera.position.y) * Camera.zoom + halfWindowHeight;
 }
 
@@ -177,8 +181,8 @@ const renderDamageNumbers = (): void => {
    ctx.lineWidth = 0;
 
    // Calculate position in camera
-   const cameraX = getXPosInCamera(damageNumberX);
-   const cameraY = getYPosInCamera(damageNumberY);
+   const cameraX = getXPosInTextCanvas(damageNumberX);
+   const cameraY = getYPosInTextCanvas(damageNumberY);
 
    ctx.font = "bold 35px sans-serif";
    ctx.lineJoin = "round";
@@ -223,8 +227,8 @@ const renderResearchNumbers = (): void => {
       ctx.lineWidth = 0;
    
       // Calculate position in camera
-      const cameraX = getXPosInCamera(researchNumber.positionX);
-      const cameraY = getYPosInCamera(researchNumber.positionY);
+      const cameraX = getXPosInTextCanvas(researchNumber.positionX);
+      const cameraY = getYPosInTextCanvas(researchNumber.positionY);
    
       ctx.font = "bold 35px sans-serif";
       ctx.lineJoin = "round";
@@ -256,8 +260,8 @@ const renderHealNumbers = (): void => {
       ctx.lineWidth = 0;
    
       // Calculate position in camera
-      const cameraX = getXPosInCamera(healNumber.positionX);
-      const cameraY = getYPosInCamera(healNumber.positionY);
+      const cameraX = getXPosInTextCanvas(healNumber.positionX);
+      const cameraY = getYPosInTextCanvas(healNumber.positionY);
    
       ctx.font = "bold 35px sans-serif";
       ctx.lineJoin = "round";
@@ -304,8 +308,8 @@ const renderPlayerNames = (): void => {
       const playerComponent = PlayerComponentArray.components[i];
       
       // Calculate position in camera
-      const cameraX = getXPosInCamera(renderInfo.renderPosition.x);
-      const cameraY = getYPosInCamera(renderInfo.renderPosition.y + 21);
+      const cameraX = getXPosInTextCanvas(renderInfo.renderPosition.x);
+      const cameraY = getYPosInTextCanvas(renderInfo.renderPosition.y + 21);
       
       const username = playerComponent.username;
 
@@ -375,8 +379,8 @@ const renderPotentialBuildingPlans = (): void => {
       const virtualBuilding = virtualBuildingSafetySimulation.virtualBuilding;
       
       // Calculate position in camera
-      const cameraX = getXPosInCamera(virtualBuilding.position.x);
-      const cameraY = getYPosInCamera(virtualBuilding.position.y);
+      const cameraX = getXPosInTextCanvas(virtualBuilding.position.x);
+      const cameraY = getYPosInTextCanvas(virtualBuilding.position.y);
       const height = 15;
 
       const idealness = calculatePotentialPlanIdealness(virtualBuildingSafetySimulation, stats);
@@ -550,8 +554,8 @@ const renderBuildingSafetys = (): void => {
 
       // Calculate position in camera
       const height = fontSize * 4;
-      const left = getXPosInCamera(buildingSafetyData.x) - width/2;
-      const top = getYPosInCamera(buildingSafetyData.y) - height/2;
+      const left = getXPosInTextCanvas(buildingSafetyData.x) - width/2;
+      const top = getYPosInTextCanvas(buildingSafetyData.y) - height/2;
 
       ctx.fillStyle = "#000";
       ctx.fillRect(left, top, width, height);

@@ -108,6 +108,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.cactus]: cactusComponent
-      }
+      },
+      lights: []
    };
 }

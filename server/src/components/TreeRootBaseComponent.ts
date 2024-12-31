@@ -4,13 +4,13 @@ import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getAbsAngleDiff, randFloat, randInt } from "../../../shared/src/utils";
+import { createItemsOverEntity } from "../entities/item-entity";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
 import { createEntity } from "../Entity";
 import Layer from "../Layer";
 import { destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { createItemsOverEntity } from "./ItemComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class TreeRootBaseComponent {

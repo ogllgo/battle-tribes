@@ -10,10 +10,9 @@ import Layer from "../../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { EntityConfig } from "../../components";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { getEntityLayer, getEntityType } from "../../world";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
@@ -79,6 +78,7 @@ export function createSlimeConfig(size: SlimeSize): EntityConfig<ComponentTypes>
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.slime]: slimeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
-      }
+      },
+      lights: []
    };
 }

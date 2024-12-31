@@ -15,6 +15,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -26,7 +27,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [15, 45];
 
-export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFloorSpikesHitboxes(), null);
 
@@ -34,7 +35,7 @@ export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -52,11 +53,12 @@ export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.spikes]: spikesComponent
-      }
+      },
+      lights: []
    };
 }
 
-export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWallSpikesHitboxes(), null);
 
@@ -64,7 +66,7 @@ export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial,
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -82,7 +84,8 @@ export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.spikes]: spikesComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -114,5 +117,5 @@ export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, colli
    
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   addLocalInvulnerabilityHash(healthComponent, "woodenSpikes", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
 }

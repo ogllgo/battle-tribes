@@ -401,6 +401,6 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, actingHitb
       
       damageEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 200, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "guardianLimb", 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, "guardianLimb", 0.3);
    }
 }

@@ -27,6 +27,7 @@ export const enum PacketType {
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))
+   devSetAutogiveBaseResource, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
    // -----------------

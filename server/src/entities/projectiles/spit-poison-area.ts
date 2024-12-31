@@ -32,7 +32,8 @@ export function createSpitPoisonAreaConfig(): EntityConfig<ComponentTypes> {
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.spitPoisonArea]: spitPoisonAreaComponent
-      }
+      },
+      lights: []
    }
 }
 
@@ -48,7 +49,7 @@ export function onSpitPoisonCollision(spit: Entity, collidingEntity: Entity, col
    }
 
    damageEntity(collidingEntity, spit, 1, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
-   addLocalInvulnerabilityHash(healthComponent, "spitPoison", 0.35);
+   addLocalInvulnerabilityHash(collidingEntity, "spitPoison", 0.35);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
       applyStatusEffect(collidingEntity, StatusEffect.poisoned, 3 * Settings.TPS);

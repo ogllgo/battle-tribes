@@ -81,6 +81,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.cow]: cowComponent
-      }
+      },
+      lights: []
    };
 }

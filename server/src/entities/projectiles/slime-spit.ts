@@ -31,6 +31,7 @@ export function createSlimeSpitConfig(size: number): EntityConfig<ComponentTypes
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.slimeSpit]: slimeSpitComponent
-      }
+      },
+      lights: []
    };
 }

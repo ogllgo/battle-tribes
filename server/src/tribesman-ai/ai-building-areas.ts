@@ -3,7 +3,7 @@ import { BlueprintType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { SafetyNode, getSafetyNode } from "./ai-building";
-import TribeBuildingLayer, { TribeDoorType, VirtualBuilding, VirtualDoor, VirtualWall } from "./building-plans/TribeBuildingLayer";
+import TribeBuildingLayer, { TribeDoorType, VirtualStructure, VirtualDoor, VirtualWall } from "./building-plans/TribeBuildingLayer";
 import { createUpgradeBuildingPlanAssignment, AIPlanAssignment, AIUpgradeBuildingPlan } from "./tribesman-ai-planning";
 
 export interface TribeRoom {
@@ -16,7 +16,7 @@ const getRoundedSafetyNode = (nodeX: number, nodeY: number): number => {
    return getSafetyNode(Math.round(nodeX), Math.round(nodeY));
 }
 
-const getDoorType = (buildingLayer: TribeBuildingLayer, door: VirtualBuilding): TribeDoorType => {
+const getDoorType = (buildingLayer: TribeBuildingLayer, door: VirtualStructure): TribeDoorType => {
    // If any of the top or bottom nodes are not in an area, then the door leads outside
 
    const topNodeOffsetX = Math.sin(door.rotation);
@@ -55,7 +55,7 @@ export function createTribeArea(buildingLayer: TribeBuildingLayer, nodes: Set<Sa
 
    // @Incomplete
    for (const nodeIndex of encounteredOccupiedNodeIndexes) {
-      const virtualBuildingIDs = buildingLayer.occupiedNodeToEntityIDRecord[nodeIndex];
+      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[nodeIndex];
       if (virtualBuildingIDs === undefined) {
          continue;
       }

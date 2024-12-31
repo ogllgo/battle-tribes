@@ -14,6 +14,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import { TurretComponent } from "../../components/TurretComponent";
 import Tribe from "../../Tribe";
 import { SlingTurretComponent } from "../../components/SlingTurretComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -27,7 +28,7 @@ type ComponentTypes = ServerComponentType.transform
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
 
-export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createSlingTurretHitboxes(), null);
    
@@ -35,7 +36,7 @@ export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureC
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 
@@ -56,6 +57,7 @@ export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureC
          [ServerComponentType.turret]: turretComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.slingTurret]: slingTurretComponent
-      }
+      },
+      lights: []
    };
 }

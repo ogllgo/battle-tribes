@@ -4,8 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { Point, randFloat, randInt, randItem, TileIndex, UtilVars } from "battletribes-shared/utils";
-import { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
+import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randInt, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
@@ -16,7 +15,7 @@ import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity } from "./HealthComponent";
-import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
+import { ItemComponentArray } from "./ItemComponent";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
@@ -25,6 +24,7 @@ import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -455,6 +455,6 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
       
       damageEntity(collidingEntity, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 200, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "yeti", 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, "yeti", 0.3);
    }
 }

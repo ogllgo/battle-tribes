@@ -2,17 +2,17 @@ import { EntityType } from "battletribes-shared/entities";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
 import { getBuildingSafety, getTribeSafety } from "./ai-building-heuristics";
-import { createVirtualBuilding, VirtualBuilding } from "./building-plans/TribeBuildingLayer";
+import { createVirtualBuilding, VirtualStructure } from "./building-plans/TribeBuildingLayer";
 import { getWallCandidates } from "./building-plans/ai-building-walls";
 import { PotentialPlanSafetyData } from "../../../shared/src/ai-building-types";
 
 export interface WallPlaceSearchResult {
-   readonly virtualBuilding: VirtualBuilding;
+   readonly virtualBuilding: VirtualStructure;
    readonly potentialPlans: ReadonlyArray<WallPlaceCandidate>;
 }
 
 export interface WallPlaceCandidate {
-   readonly virtualBuilding: VirtualBuilding;
+   readonly virtualBuilding: VirtualStructure;
    /** Resulting safety of the tribe */
    readonly safety: number;
 }
@@ -31,7 +31,7 @@ export function findIdealWallPlacePosition(tribe: Tribe): WallPlaceSearchResult 
    // 
 
    let maxSafety = -1;
-   let bestBuilding!: VirtualBuilding;
+   let bestBuilding!: VirtualStructure;
    for (let i = 0; i < potentialCandidates.length; i++) {
       const candidate = potentialCandidates[i];
 

@@ -46,7 +46,8 @@ export function createPebblumConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.pebblum]: pebblumComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -69,5 +70,5 @@ export function onPebblumCollision(pebblum: Entity, collidingEntity: Entity, col
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 150, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "pebblum", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "pebblum", 0.3);
 }

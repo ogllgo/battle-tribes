@@ -39,7 +39,8 @@ export function createSlingTurretRockConfig(owner: Entity): EntityConfig<Compone
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
-      }
+      },
+      lights: []
    };
 }
 

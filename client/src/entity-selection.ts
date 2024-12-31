@@ -1,6 +1,6 @@
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { PlanterBoxPlant, TunnelDoorSide } from "battletribes-shared/components";
+import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Game from "./Game";
 import Board from "./Board";
@@ -8,7 +8,6 @@ import Client from "./networking/Client";
 import { latencyGameState } from "./game-state/game-states";
 import { BuildMenu_hide, BuildMenu_setBuildingID, BuildMenu_updateBuilding, entityCanOpenBuildMenu, isHoveringInBlueprintMenu } from "./components/game/BuildMenu";
 import { InventoryMenuType, InventorySelector_inventoryIsOpen, InventorySelector_setInventoryMenuType } from "./components/game/inventories/InventorySelector";
-import { SEED_TO_PLANT_RECORD } from "./entity-components/server-components/PlantComponent";
 import { GhostInfo, GhostType, PARTIAL_OPACITY } from "./rendering/webgl/entity-ghost-rendering";
 import { getClosestGroupNum } from "./rendering/webgl/entity-selection-rendering";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./components/game/menus/CraftingMenu";
@@ -45,7 +44,7 @@ interface OpenBuildMenuAction extends BaseInteractAction {
 
 interface PlantSeedAction extends BaseInteractAction {
    readonly type: InteractActionType.plantSeed;
-   readonly plantType: PlanterBoxPlant;
+   readonly plantedEntityType: PlantedEntityType;
 }
 
 interface UseFertiliserAction extends BaseInteractAction {
@@ -84,6 +83,12 @@ const HIGHLIGHT_DISTANCE = 150;
 let hoveredEntityID = -1;
 let highlightedEntity = -1;
 let selectedEntityID = -1;
+
+const SEED_TO_PLANT_RECORD: Partial<Record<ItemType, PlantedEntityType>> = {
+   [ItemType.seed]: EntityType.treePlanted,
+   [ItemType.berry]: EntityType.berryBushPlanted,
+   [ItemType.frostcicle]: EntityType.iceSpikesPlanted
+};
 
 const getInventoryMenuType = (entity: Entity): InventoryMenuType | null => {
    switch (getEntityType(entity)) {
@@ -143,7 +148,7 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       if (typeof plant !== "undefined" && !planterBoxComponent.hasPlant) {
          return {
             type: InteractActionType.plantSeed,
-            plantType: plant
+            plantedEntityType: plant
          };
       }
    }
@@ -201,7 +206,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.plantSeed: {
-         Client.sendModifyBuilding(highlightedEntity, action.plantType);
+         Client.sendModifyBuilding(highlightedEntity, action.plantedEntityType);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
@@ -317,12 +322,12 @@ const getEntityID = (doPlayerProximityCheck: boolean, doCanSelectCheck: boolean)
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const layer = getEntityLayer(playerInstance!);
    
-   const minChunkX = Math.max(Math.floor((Game.cursorPositionX! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((Game.cursorPositionX! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((Game.cursorPositionY! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((Game.cursorPositionY! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((Game.cursorX! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkY = Math.max(Math.floor((Game.cursorY! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((Game.cursorY! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
-   const origin = new Point(Game.cursorPositionX!, Game.cursorPositionY!);
+   const origin = new Point(Game.cursorX!, Game.cursorY!);
 
    let minDist = HIGHLIGHT_RANGE + 1.1;
    let entityID = -1;
@@ -361,15 +366,15 @@ const getEntityID = (doPlayerProximityCheck: boolean, doCanSelectCheck: boolean)
    return entityID;
 }
 
-const getPlantGhostType = (plantType: PlanterBoxPlant): GhostType => {
-   switch (plantType) {
-      case PlanterBoxPlant.tree: {
+const getPlantGhostType = (plantedEntityType: PlantedEntityType): GhostType => {
+   switch (plantedEntityType) {
+      case EntityType.treePlanted: {
          return GhostType.treeSeed;
       }
-      case PlanterBoxPlant.berryBush: {
+      case EntityType.berryBushPlanted: {
          return GhostType.berryBushSeed;
       }
-      case PlanterBoxPlant.iceSpikes: {
+      case EntityType.iceSpikesPlanted: {
          return GhostType.iceSpikesSeed;
       }
    }
@@ -397,7 +402,7 @@ const updateHighlightedEntity = (entity: Entity | null): void => {
          const ghostInfo: GhostInfo = {
             position: entityTransformComponent.position,
             rotation: entityTransformComponent.rotation,
-            ghostType: getPlantGhostType(interactAction.plantType),
+            ghostType: getPlantGhostType(interactAction.plantedEntityType),
             tint: [1, 1, 1],
             opacity: PARTIAL_OPACITY
          };
@@ -426,7 +431,7 @@ const updateHighlightedEntity = (entity: Entity | null): void => {
 }
 
 export function updateHighlightedAndHoveredEntities(): void {
-   if (Game.cursorPositionX === null || Game.cursorPositionY === null) {
+   if (Game.cursorX === null || Game.cursorY === null) {
       return;
    }
 

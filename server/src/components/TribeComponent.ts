@@ -4,13 +4,13 @@ import Tribe from "../Tribe";
 import { ComponentArray } from "./ComponentArray";
 import { TribesmanAIComponentArray, getTribesmanRelationship } from "./TribesmanAIComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
-import { PlantComponentArray } from "./PlantComponent";
 import { GolemComponentArray } from "./GolemComponent";
 import { StructureComponentArray } from "./StructureComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "../world";
+import { PlantedComponentArray } from "./PlantedComponent";
 
-// /** Relationships a tribe member can have, in increasing order of threat */
+/** Relationships a tribe member can have, in increasing order of threat */
 export const enum EntityRelationship {
    friendly = 1,
    friendlyBuilding = 1 << 1,
@@ -52,11 +52,13 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
    
    const entityType = getEntityType(comparingEntity);
    switch (entityType) {
-      case EntityType.plant: {
-         const plantComponent = PlantComponentArray.getComponent(comparingEntity);
+      case EntityType.treePlanted:
+      case EntityType.berryBushPlanted:
+      case EntityType.iceSpikesPlanted: {
+         const plantedComponent = PlantedComponentArray.getComponent(comparingEntity);
          
          const tribeComponent = TribeComponentArray.getComponent(entity);
-         const planterBoxTribeComponent = TribeComponentArray.getComponent(plantComponent.planterBox);
+         const planterBoxTribeComponent = TribeComponentArray.getComponent(plantedComponent.planterBox);
 
          return planterBoxTribeComponent.tribe === tribeComponent.tribe ? EntityRelationship.neutral : EntityRelationship.enemyBuilding;
       }
@@ -97,7 +99,9 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.frozenYeti:
       case EntityType.yeti:
       case EntityType.slime:
-      case EntityType.guardian: {
+         case EntityType.guardian: {
+         // @Temporary
+         return EntityRelationship.enemy;
          const tribeComponent = TribeComponentArray.getComponent(entity);
          return tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }

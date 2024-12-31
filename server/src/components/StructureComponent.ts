@@ -1,4 +1,4 @@
-import { StructureConnectionInfo, getSnapDirection, getStructureSnapOrigin } from "battletribes-shared/structures";
+import { StructureConnectionInfo, StructureType, getSnapDirection, getStructureSnapOrigin } from "battletribes-shared/structures";
 import { createStructureGrassBlockers } from "../grass-blockers";
 import { BlueprintComponentArray } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -9,8 +9,9 @@ import { Entity } from "battletribes-shared/entities";
 import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityLayer } from "../world";
+import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { getLayerInfo } from "../layers";
+import { createVirtualBuilding, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 
 export class StructureComponent implements Mutable<StructureConnectionInfo> {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -19,9 +20,13 @@ export class StructureComponent implements Mutable<StructureConnectionInfo> {
    public connectedSidesBitset: number;
    public connectedEntityIDs: ConnectedEntityIDs;
 
-   constructor(connectionInfo: StructureConnectionInfo) {
+   /** The virtual building associated with the structure. If null, will automatically create a virtual building for the structure. */
+   public virtualBuilding: VirtualStructure | null;
+
+   constructor(connectionInfo: StructureConnectionInfo, virtualBuilding: VirtualStructure | null) {
       this.connectedSidesBitset = connectionInfo.connectedSidesBitset;
       this.connectedEntityIDs = connectionInfo.connectedEntityIDs;
+      this.virtualBuilding = virtualBuilding;
    }
 }
 
@@ -52,13 +57,22 @@ const removeConnectionWithStructure = (structureID: number, connectedStructureID
 }
 
 function onJoin(entity: Entity): void {
+   const structureComponent = StructureComponentArray.getComponent(entity);
    const tribeComponent = TribeComponentArray.getComponent(entity);
+
+   const layer = getEntityLayer(entity);
+
+   if (structureComponent.virtualBuilding === null) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const entityType = getEntityType(entity) as StructureType;
+      const buildingLayer = tribeComponent.tribe.buildingLayers[layer.depth];
+      
+      structureComponent.virtualBuilding = createVirtualBuilding(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType);
+   }
+   
    tribeComponent.tribe.addBuilding(entity);
 
    createStructureGrassBlockers(entity);
-
-   const structureComponent = StructureComponentArray.getComponent(entity);
-   const layer = getEntityLayer(entity);
    
    // Mark opposite connections
    for (let i = 0; i < 4; i++) {

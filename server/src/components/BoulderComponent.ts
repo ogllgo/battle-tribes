@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 export class BoulderComponent {
    public readonly boulderType = randInt(0, 1);

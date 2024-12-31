@@ -1,14 +1,14 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { Tech } from "battletribes-shared/techs";
-import { moveEntityToPosition, getDistanceFromPointToEntity } from "../../../ai-shared";
+import { getDistanceFromPointToEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearchBench, canResearchAtBench, shouldMoveToResearchBench } from "../../../components/ResearchBenchComponent";
 import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getTribesmanSlowAcceleration, getTribesmanAcceleration, getTribesmanRadius, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanSlowAcceleration, getTribesmanRadius, pathfindTribesman } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
@@ -93,7 +93,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const benchLayer = getEntityLayer(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
-      pathfindTribesman(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+      pathfindTribesman(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       
       tribesmanComponent.targetResearchBenchID = bench;
       tribesmanComponent.currentAIType = TribesmanAIType.researching;

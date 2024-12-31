@@ -11,6 +11,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -19,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.totemBanner;
 
-export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createTribeTotemHitboxes(), null);
    
@@ -27,7 +28,7 @@ export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureCo
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -42,6 +43,7 @@ export function createTribeTotemConfig(tribe: Tribe, connectionInfo: StructureCo
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.totemBanner]: totemBannerComponent
-      }
+      },
+      lights: []
    };
 }

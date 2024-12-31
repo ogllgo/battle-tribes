@@ -1,7 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, lerp, randItem, angle, TileIndex } from "battletribes-shared/utils";
-import { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
+import { Point, lerp, randItem, angle, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { entityHasReachedPosition } from "./ai-shared";

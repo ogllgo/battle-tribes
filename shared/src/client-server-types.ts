@@ -92,7 +92,8 @@ export enum GameDataPacketOptions {
    sendVisibleRestrictedBuildingAreas = 1 << 4,
    sendVisibleWalls = 1 << 5,
    sendVisibleWallConnections = 1 << 6,
-   sendSubtileSupports = 1 << 7
+   sendSubtileSupports = 1 << 7,
+   sendLightLevels = 1 << 8
 }
 
 // @Cleanup: A whole bunch of the data in this for the player can be deduced from the entity data array
@@ -219,8 +220,11 @@ export interface TileHighlightData extends DebugData {
 export type PathfindingNodeIndex = number;
 
 export interface PathData {
+   readonly goalX: number;
+   readonly goalY: number;
    readonly pathNodes: ReadonlyArray<PathfindingNodeIndex>;
    readonly rawPathNodes: ReadonlyArray<PathfindingNodeIndex>;
+   readonly visitedNodes: ReadonlyArray<PathfindingNodeIndex>;
 }
 
 export interface EntityDebugData {

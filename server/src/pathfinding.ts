@@ -1,9 +1,8 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, TileIndex } from "battletribes-shared/utils";
+import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, getTileX, getTileY, TileIndex } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
-import OPTIONS from "./options";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -14,7 +13,7 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityLayer, getEntityType, getGameTicks } from "./world";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
-import Layer, { getTileX, getTileY } from "./Layer";
+import Layer from "./Layer";
 import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 import { TileType } from "../../shared/src/tiles";
 import { getTilesOfType } from "./census";
@@ -26,9 +25,27 @@ const enum Vars {
 
 export interface Path {
    readonly layer: Layer;
+   readonly goalX: number;
+   readonly goalY: number;
    readonly rawPath: ReadonlyArray<PathfindingNodeIndex>;
    // @Cleanup: rename to something like 'active path'
    readonly smoothPath: Array<PathfindingNodeIndex>;
+   readonly visitedNodes: ReadonlyArray<PathfindingNodeIndex>;
+   readonly isFailed: boolean;
+}
+
+export const enum PathfindFailureDefault {
+   /** Default */
+   none,
+   /** Returns the path to the node which was closest to the goal */
+   returnClosest
+}
+
+export interface PathfindOptions {
+   readonly goalRadius: number;
+   readonly failureDefault: PathfindFailureDefault;
+   /** Determines the node budget used when finding a path. If not present, an appropriate node budget will be automatically determined. */
+   readonly nodeBudget?: number;
 }
 
 const activeGroupIDs = new Array<number>();
@@ -379,19 +396,6 @@ const aStarHeuristic = (startNode: PathfindingNodeIndex, endNode: PathfindingNod
    return Math.sqrt(diffX * diffX + diffY * diffY);
 }
 
-export const enum PathfindFailureDefault {
-   /** Returns an empty path */
-   returnEmpty,
-   /** Returns the path to the node which was closest to the goal */
-   returnClosest,
-   throwError
-}
-
-export interface PathfindOptions {
-   readonly goalRadius: number;
-   readonly failureDefault: PathfindFailureDefault;
-}
-
 export function getEntityFootprint(radius: number): number {
    // @Incomplete
    // @Hack: Add 1 to account for the fact that a node's occupance can mean that the hitbox overlaps anywhere in the 3x3 grid of nodes around that node
@@ -429,26 +433,27 @@ export function findClosestDropdownTile(startX: number, startY: number): TileInd
    return closestTileIndex;
 }
 
+const reconstructRawPath = (finalNode: PathfindingNodeIndex, cameFrom: Record<PathfindingNodeIndex, number>): Array<PathfindingNodeIndex> => {
+   let currentNode: PathfindingNodeIndex | undefined = finalNode;
+   
+   // Reconstruct the path
+   const path = new Array<PathfindingNodeIndex>();
+   // @Speed: two accesses
+   while (typeof currentNode !== "undefined") {
+      path.splice(0, 0, currentNode);
+      currentNode = cameFrom[currentNode];
+   }
+
+   return path;
+}
+
 /**
- * Uses an A-star pathfinding algorithm to generate an array of all paths needed to get from one point to another.
+ * Attempts to find a path from one position to another in a single layer. Uses A* pathfinding.
  * @param pathfindingEntityFootprint Radius of the entity's footprint in nodes
  */
-export function findSingleLayerPath(layer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Path {
+export function findSingleLayerPath(layer: Layer, startX: number, startY: number, goalX: number, goalY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Path {
    const start = getClosestPathfindNode(startX, startY);
-   const goal = getClosestPathfindNode(endX, endY);
-
-   if (options.goalRadius === 0 && !nodeIsAccessibleForEntity(layer, goal, ignoredGroupID, pathfindingEntityFootprint)) {
-      // @Temporary
-      // If we don't stop this from occuring in the first place. Ideally should throw an error, this will cause a massive slowdown
-      console.trace();
-      console.warn("Goal is inaccessible! @ " + endX + " " + endY);
-      // throw new Error();
-      return {
-         layer: layer,
-         rawPath: [],
-         smoothPath: []
-      };
-   }
+   const goal = getClosestPathfindNode(goalX, goalY);
 
    const cameFrom: Record<PathfindingNodeIndex, number> = {};
    
@@ -458,143 +463,76 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
    const fScore: Record<PathfindingNodeIndex, number> = {};
    fScore[start] = aStarHeuristic(start, goal);
 
-   const openSet = new PathfindingHeap(); // @Speed
-   openSet.gScore = gScore;
-   openSet.fScore = fScore;
+   const openSet = new PathfindingHeap(gScore, fScore);
    openSet.addNode(start);
 
    const closedSet = new Set<PathfindingNodeIndex>();
 
-   // @Speed: attempt prioritising the neighbour closest to direction
-   
-   let i = 0;
-   while (openSet.currentItemCount > 0) {
-      // @Speed: perhaps create a 'node budget' based on the distance between the two points
-      // @Temporary
-      if (++i >= 100000) {
-         // @Temporary
-         console.warn("!!! POTENTIAL UNRESOLVEABLE PATH !!!");
-         console.log("goal @ " + endX + " " + endY);
-         console.trace();
-         break;
+   const checkNeighbour = (currentNode: PathfindingNodeIndex, neighbour: PathfindingNodeIndex): void => {
+      if (!closedSet.has(neighbour)) {
+         if (nodeIsAccessibleForEntity(layer, neighbour, ignoredGroupID, pathfindingEntityFootprint)) {
+            const tentativeGScore = gScore[currentNode] + aStarHeuristic(currentNode, neighbour);
+            const neighbourGScore = gScore[neighbour] !== undefined ? gScore[neighbour] : 999999;
+            if (tentativeGScore < neighbourGScore) {
+               cameFrom[neighbour] = currentNode;
+               gScore[neighbour] = tentativeGScore;
+               fScore[neighbour] = tentativeGScore + aStarHeuristic(neighbour, goal);
+         
+               if (!openSet.containsNode(neighbour)) {
+                  openSet.addNode(neighbour);
+               }
+            }
+         }
+         closedSet.add(neighbour);
       }
+   }
 
-      // @Cleanup: name
-      const current = openSet.removeFirst();
-      closedSet.add(current);
+   const nodeBudget = options.nodeBudget || (Math.floor(distance(startX, startY, goalX, goalY) * 4) + 40);
+   
+   for (let i = 0; openSet.currentItemCount > 0 && i < nodeBudget; i++) {
+      const currentNode = openSet.removeFirst();
+      closedSet.add(currentNode);
 
       // If reached the goal, return the path from start to the goal
-      if ((options.goalRadius === 0 && current === goal) || (options.goalRadius > 0 && getDistBetweenNodes(current, goal) <= options.goalRadius)) {
-         let currentNode: PathfindingNodeIndex | undefined = current;
-         
-         // Reconstruct the path
-         const path = new Array<PathfindingNodeIndex>();
-         // @Speed: two accesses
-         while (typeof currentNode !== "undefined") {
-            path.splice(0, 0, currentNode);
-            currentNode = cameFrom[currentNode];
-         }
+      if ((options.goalRadius === 0 && currentNode === goal) || (options.goalRadius > 0 && getDistBetweenNodes(currentNode, goal) <= options.goalRadius)) {
+         const rawPath = reconstructRawPath(currentNode, cameFrom);
          return {
             layer: layer,
-            rawPath: path,
-            smoothPath: smoothPath(layer, path, ignoredGroupID, pathfindingEntityFootprint)
+            goalX: goalX,
+            goalY: goalY,
+            rawPath: rawPath,
+            smoothPath: smoothPath(layer, rawPath, ignoredGroupID, pathfindingEntityFootprint),
+            visitedNodes: Array.from(closedSet),
+            isFailed: false
          };
       }
 
-      const currentGScore = gScore[current];
+      const nodeX = currentNode % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
+      const nodeY = Math.floor(currentNode / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
       
-      const nodeX = current % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
-      const nodeY = Math.floor(current / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
-      
-      const neighbours = new Array<PathfindingNodeIndex>();
-
-      // Left neighbour
       const leftNode = getPathfindingNode(nodeX - 1, nodeY);
-      if (!closedSet.has(leftNode)) {
-         if (nodeIsAccessibleForEntity(layer, leftNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(leftNode);
-         }
-         closedSet.add(leftNode);
-      }
+      checkNeighbour(currentNode, leftNode);
       
-      // Right neighbour
       const rightNode = getPathfindingNode(nodeX + 1, nodeY);
-      if (!closedSet.has(rightNode)) {
-         if (nodeIsAccessibleForEntity(layer, rightNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(rightNode);
-         }
-         closedSet.add(rightNode);
-      }
+      checkNeighbour(currentNode, rightNode);
 
-      // Bottom neighbour
       const bottomNode = getPathfindingNode(nodeX, nodeY - 1);
-      if (!closedSet.has(bottomNode)) {
-         if (nodeIsAccessibleForEntity(layer, bottomNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(bottomNode);
-         }
-         closedSet.add(bottomNode);
-      }
+      checkNeighbour(currentNode, bottomNode);
 
-      // Top neighbour
       const topNode = getPathfindingNode(nodeX, nodeY + 1);
-      if (!closedSet.has(topNode)) {
-         if (nodeIsAccessibleForEntity(layer, topNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(topNode);
-         }
-         closedSet.add(topNode);
-      }
+      checkNeighbour(currentNode, topNode);
 
-      // Top left neighbour
       const topLeftNode = getPathfindingNode(nodeX - 1, nodeY + 1);
-      if (!closedSet.has(topLeftNode)) {
-         if (nodeIsAccessibleForEntity(layer, topLeftNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(topLeftNode);
-         }
-         closedSet.add(topLeftNode);
-      }
+      checkNeighbour(currentNode, topLeftNode);
 
-      // Top right neighbour
       const topRightNode = getPathfindingNode(nodeX + 1, nodeY + 1);
-      if (!closedSet.has(topRightNode)) {
-         if (nodeIsAccessibleForEntity(layer, topRightNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(topRightNode);
-         }
-         closedSet.add(topRightNode);
-      }
+      checkNeighbour(currentNode, topRightNode);
 
-      // Bottom left neighbour
       const bottomLeftNode = getPathfindingNode(nodeX - 1, nodeY - 1);
-      if (!closedSet.has(bottomLeftNode)) {
-         if (nodeIsAccessibleForEntity(layer, bottomLeftNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(bottomLeftNode);
-         }
-         closedSet.add(bottomLeftNode);
-      }
+      checkNeighbour(currentNode, bottomLeftNode);
 
-      // Bottom right neighbour
       const bottomRightNode = getPathfindingNode(nodeX + 1, nodeY - 1);
-      if (!closedSet.has(bottomRightNode)) {
-         if (nodeIsAccessibleForEntity(layer, bottomRightNode, ignoredGroupID, pathfindingEntityFootprint)) {
-            neighbours.push(bottomRightNode);
-         }
-         closedSet.add(bottomRightNode);
-      }
-
-      for (let i = 0; i < neighbours.length; i++) {
-         const neighbour = neighbours[i];
-
-         const tentativeGScore = currentGScore + aStarHeuristic(current, neighbour);
-         const neighbourGScore = gScore[neighbour] !== undefined ? gScore[neighbour] : 999999;
-         if (tentativeGScore < neighbourGScore) {
-            cameFrom[neighbour] = current;
-            gScore[neighbour] = tentativeGScore;
-            fScore[neighbour] = tentativeGScore + aStarHeuristic(neighbour, goal);
-
-            if (!openSet.containsNode(neighbour)) {
-               openSet.addNode(neighbour);
-            }
-         }
-      }
+      checkNeighbour(currentNode, bottomRightNode);
    }
 
    switch (options.failureDefault) {
@@ -628,23 +566,24 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
          }
          return {
             layer: layer,
+            goalX: goalX,
+            goalY: goalY,
             rawPath: path,
-            smoothPath: smoothPath(layer, path, ignoredGroupID, pathfindingEntityFootprint)
+            smoothPath: smoothPath(layer, path, ignoredGroupID, pathfindingEntityFootprint),
+            visitedNodes: Array.from(closedSet),
+            isFailed: false
          };
       }
-      case PathfindFailureDefault.returnEmpty: {
-         if (!OPTIONS.inBenchmarkMode) {
-            console.warn("FAILURE");
-            console.trace();
-         }
+      case PathfindFailureDefault.none: {
          return {
             layer: layer,
+            goalX: goalX,
+            goalY: goalY,
             rawPath: [],
-            smoothPath: []
+            smoothPath: [],
+            visitedNodes: Array.from(closedSet),
+            isFailed: true
          };
-      }
-      case PathfindFailureDefault.throwError: {
-         throw new Error("Pathfinding failed!");
       }
    }
 }
@@ -667,9 +606,10 @@ export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: n
       const changeLayerOptions: PathfindOptions = {
          // Should move right on the goal
          goalRadius: 0,
-         failureDefault: PathfindFailureDefault.throwError
+         failureDefault: PathfindFailureDefault.none
       };
       const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, changeLayerOptions);
+
       paths.push(path);
    } else {
       x1 = startX;

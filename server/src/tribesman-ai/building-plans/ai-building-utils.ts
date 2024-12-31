@@ -5,9 +5,8 @@ import { hitboxesAreColliding } from "../../../../shared/src/hitbox-collision";
 import { Settings } from "../../../../shared/src/settings";
 import { StructureType } from "../../../../shared/src/structures";
 import { getSubtileIndex } from "../../../../shared/src/subtiles";
-import { Point, randFloat } from "../../../../shared/src/utils";
+import { getTileIndexIncludingEdges, Point, randFloat } from "../../../../shared/src/utils";
 import { boxIsCollidingWithSubtile, hitboxArraysAreColliding } from "../../collision";
-import { getTileIndexIncludingEdges } from "../../Layer";
 import { SafetyNode, addHitboxesOccupiedNodes } from "../ai-building";
 import TribeBuildingLayer from "./TribeBuildingLayer";
 
@@ -22,14 +21,29 @@ export interface BuildingCandidate {
    readonly hitboxes: ReadonlyArray<Hitbox>;
 }
 
-const initialBuildingCandidateIsValid = (candidate: BuildingCandidate): boolean => {
+export function createBuildingCandidate(entityType: StructureType, buildingLayer: TribeBuildingLayer, x: number, y: number, rotation: number): BuildingCandidate {
+   const hitboxes = createNormalStructureHitboxes(entityType);
+
+   const candidate: BuildingCandidate = {
+      buildingLayer: buildingLayer,
+      position: new Point(x, y),
+      rotation: rotation,
+      hitboxes: hitboxes
+   };
+
+   for (const hitbox of candidate.hitboxes) {
+      const box = hitbox.box;
+      updateBox(box, candidate.position.x, candidate.position.y, candidate.rotation);
+   }
+
+   return candidate;
+}
+
+export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean {
+   // Make sure the hitboxes don't go outside the world
    for (const hitbox of candidate.hitboxes) {
       const box = hitbox.box;
 
-      // @Cleanup: side effects! Shouldn't do
-      updateBox(box, candidate.position.x, candidate.position.y, candidate.rotation);
-      
-      // Make sure the hitboxes don't go outside the world
       const minX = box.calculateBoundsMinX();
       const maxX = box.calculateBoundsMaxX();
       const minY = box.calculateBoundsMinY();
@@ -86,32 +100,10 @@ const initialBuildingCandidateIsValid = (candidate: BuildingCandidate): boolean 
          }
       }
    }
-
-   return true;
-}
-
-export function buildingCandidateIsValid(buildingLayer: TribeBuildingLayer, candidate: BuildingCandidate): boolean {
-   if (!initialBuildingCandidateIsValid(candidate)) {
-      return false;
-   }
-   
-   // Make sure that the building is in at least one 'safe' node
-   const occupiedNodes = new Set<SafetyNode>();
-   addHitboxesOccupiedNodes(candidate.hitboxes, occupiedNodes);
-   let isInSafeZone = false;
-   for (const node of occupiedNodes) {
-      if (buildingLayer.safetyNodes.has(node)) {
-         isInSafeZone = true;
-         break;
-      }
-   }
-   if (!isInSafeZone) {
-      return false;
-   }
    
    // Make sure the space doesn't collide with any buildings or their restricted building areas
    // @Speed!!
-   for (const virtualBuilding of buildingLayer.virtualBuildings) {
+   for (const virtualBuilding of candidate.buildingLayer.virtualBuildings) {
       if (hitboxArraysAreColliding(candidate.hitboxes, virtualBuilding.hitboxes)) {
          return false;
       }
@@ -126,21 +118,31 @@ export function buildingCandidateIsValid(buildingLayer: TribeBuildingLayer, cand
    return true;
 }
 
+export function buildingCandidateIsOnSafeNode(candidate: BuildingCandidate): boolean {
+   const occupiedNodes = new Set<SafetyNode>();
+   // @Speed
+   addHitboxesOccupiedNodes(candidate.hitboxes, occupiedNodes);
+   for (const node of occupiedNodes) {
+      if (candidate.buildingLayer.safetyNodes.has(node)) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 /** Generates a random valid building location */
 export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, entityType: StructureType): BuildingCandidate {
+   // If there are no virtual buildings, we can't use any existing buildings as reference so we go off the start position of the tribe
    let minX: number;
    let maxX: number;
    let minY: number;
    let maxY: number;
-   let isInitial: boolean;
-   
-   // If there are no virtual buildings, we can't use any existing buildings as reference so we go off the start position of the tribe
    if (buildingLayer.virtualBuildings.length === 0) {
       minX = buildingLayer.tribe.startPosition.x - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       maxX = buildingLayer.tribe.startPosition.x + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       minY = buildingLayer.tribe.startPosition.y - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       maxY = buildingLayer.tribe.startPosition.y + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
-      isInitial = true;
    } else {
       // Find min and max node positions
       // @Speed
@@ -170,7 +172,6 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
       maxX = (maxNodeX + 1) * Settings.SAFETY_NODE_SEPARATION + 150;
       minY = minNodeY * Settings.SAFETY_NODE_SEPARATION - 150;
       maxY = (maxNodeY + 1) * Settings.SAFETY_NODE_SEPARATION + 150;
-      isInitial = false;
    }
 
    let attempts = 0;
@@ -179,17 +180,9 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
       const y = randFloat(minY, maxY);
       const rotation = 2 * Math.PI * Math.random();
       
-      const hitboxes = createNormalStructureHitboxes(entityType);
+      const candidate = createBuildingCandidate(entityType, buildingLayer, x, y, rotation);
 
-      const candidate: BuildingCandidate = {
-         buildingLayer: buildingLayer,
-         position: new Point(x, y),
-         rotation: rotation,
-         hitboxes: hitboxes
-      };
-
-      if ((isInitial && initialBuildingCandidateIsValid(candidate)) ||
-          (!isInitial && buildingCandidateIsValid(buildingLayer, candidate))) {
+      if ((buildingLayer.virtualBuildings.length === 0 || buildingCandidateIsOnSafeNode(candidate)) && buildingCandidateIsValid(candidate)) {
          return candidate;
       }
    }

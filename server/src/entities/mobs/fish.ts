@@ -100,7 +100,8 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.fish]: fishComponent
-      }
+      },
+      lights: []
    };
 }
 

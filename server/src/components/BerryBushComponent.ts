@@ -5,10 +5,9 @@ import { Settings } from "battletribes-shared/settings";
 import { Packet } from "battletribes-shared/packets";
 import { registerDirtyEntity } from "../server/player-clients";
 import { ItemType } from "../../../shared/src/items/items";
-import { Point } from "../../../shared/src/utils";
+import { Point, positionIsInWorld } from "../../../shared/src/utils";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import Layer from "../Layer";
 import { getEntityLayer } from "../world";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -68,7 +67,7 @@ export function dropBerryOverEntity(entity: Entity): void {
       const spawnOffset = Point.fromVectorForm(40, spawnDirection);
 
       position.add(spawnOffset);
-   } while (!Layer.isInBoard(position));
+   } while (!positionIsInWorld(position.x, position.y));
 
    const velocityDirectionOffset = (Math.random() - 0.5) * Math.PI * 0.15;
 

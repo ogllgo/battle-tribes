@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, lerp, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "../Layer";
+import { distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import Layer from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
@@ -13,10 +13,14 @@ import { getEntityType, pushJoinBuffer } from "../world";
 import { generateSpikyBastards } from "./spiky-bastard-generation";
 import { getEntitiesInRange } from "../ai-shared";
 import { EntityType } from "../../../shared/src/entities";
+import { getLightLevelNode } from "../light-levels";
+import { LightLevelVars } from "../../../shared/src/light-levels";
+import { generateMithrilOre } from "./mithril-ore-generation";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
-   TREE_ROOT_SPAWN_ATTEMPT_DENSITY = 0.5
+   TREE_ROOT_SPAWN_ATTEMPT_DENSITY = 0.5,
+   MIN_MITHRIL_GENERATION_WEIGHT = 0.65
 }
 
 const NEIGHBOUR_TILE_OFFSETS: ReadonlyArray<[number, number]> = [
@@ -25,6 +29,32 @@ const NEIGHBOUR_TILE_OFFSETS: ReadonlyArray<[number, number]> = [
    [0, -1],
    [0, 1]
 ];
+
+const propagateAmbientLightFactor = (ambientLightFactors: Float32Array, nodeX: number, nodeY: number): void => {
+   // @Hack
+   const RANGE = 80;
+
+   const minNodeX = Math.max(nodeX - RANGE, -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxNodeX = Math.min(nodeX + RANGE, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const minNodeY = Math.max(nodeY - RANGE, -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxNodeY = Math.min(nodeY + RANGE, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   
+   // @Speed: only run this propagate function on the edge nodes of dropdown zones, and fill in the inside node with 1's
+   
+   for (let currentNodeX = minNodeX; currentNodeX <= maxNodeX; currentNodeX++) {
+      for (let currentNodeY = minNodeY; currentNodeY <= maxNodeY; currentNodeY++) {
+         const dist = distance(nodeX, nodeY, currentNodeX, currentNodeY) * LightLevelVars.LIGHT_NODE_SIZE;
+         
+         const intensity = Math.exp(-dist / 64 / LightLevelVars.DROPDOWN_LIGHT_STRENGTH) * 1;
+         
+         const node = getLightLevelNode(currentNodeX, currentNodeY);
+         const prevIntensity = ambientLightFactors[node];
+         if (intensity > prevIntensity) {
+            ambientLightFactors[node] = intensity;
+         }
+      }
+   }
+}
 
 const spreadDropdownCloseness = (dropdownTileX: number, dropdownTileY: number, closenessArray: Float32Array): void => {
    const minTileX = Math.max(dropdownTileX - Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, -Settings.EDGE_GENERATION_DISTANCE);
@@ -90,6 +120,18 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
 }
 
 export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
+   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+         if (surfaceLayer.getTileXYType(tileX, tileY) === TileType.dropdown) {
+            for (let nodeX = tileX * 4; nodeX < (tileX + 1) * 4; nodeX++) {
+               for (let nodeY = tileY * 4; nodeY < (tileY + 1) * 4; nodeY++) {
+                  propagateAmbientLightFactor(undergroundLayer.ambientLightFactors, nodeX, nodeY);
+               }
+            }
+         }
+      }
+   }
+
    const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
 
    const dropdownClosenessArray = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
@@ -108,6 +150,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
    const depths = generateDepths(dropdowns);
 
    const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
+   const mithrilGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 16);
    
    for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
       for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
@@ -120,11 +163,28 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          
          undergroundLayer.tileBiomes[tileIndex] = Biome.caves;
 
+         const depth = depths[tileIndex];
+         const mithrilGenerationWeight = mithrilGenerationNoise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+
+         let isMithrilRich = false;
+         let richnessFactor = 0;
+         let weightFactor = 0;
+         
          if (weight > 0.57) {
+            if (depth > 0.5 && weight < 0.65 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
+               isMithrilRich = true;
+               richnessFactor = (mithrilGenerationWeight - Vars.MIN_MITHRIL_GENERATION_WEIGHT) / (1 - Vars.MIN_MITHRIL_GENERATION_WEIGHT)
+               weightFactor = 1 - (weight - 0.57) / (0.65 - 0.57);
+            }
+
             undergroundLayer.tileTypes[tileIndex] = TileType.stoneWallFloor;
             setWallInSubtiles(undergroundLayer.wallSubtileTypes, tileX, tileY, SubtileType.stoneWall);
          } else {
-            const depth = depths[tileIndex];
+            if (depth > 0.5 && weight > 0.54 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
+               isMithrilRich = true;
+               richnessFactor = (mithrilGenerationWeight - Vars.MIN_MITHRIL_GENERATION_WEIGHT) / (1 - Vars.MIN_MITHRIL_GENERATION_WEIGHT)
+               weightFactor = (weight - 0.54) / (0.57 - 0.54);
+            }
 
             let waterGenerationWeight = waterGenerationNoise[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
             // Only generate water at low depths
@@ -135,10 +195,19 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
                undergroundLayer.tileTypes[tileIndex] = TileType.stone;
             }
          }
+
+         if (isMithrilRich) {
+            // Calculate the mithril richness
+            let richness = (1 - Math.pow(1 - richnessFactor, 2)) * (1 - Math.pow(1 - weightFactor, 2));
+            richness = lerp(0.35, 1, richness);
+            undergroundLayer.tileMithrilRichnesses[tileIndex] = richness;
+         }
       }
    }
 
-   generateSpikyBastards();
+   generateSpikyBastards(undergroundLayer);
+
+   generateMithrilOre(undergroundLayer);
 
    // Generate tree roots
    const numAttempts = Math.floor(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);
@@ -149,7 +218,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       // Only generate at low depths
       const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
       const depth = depths[tileIndex];
-      if (depth > Math.random() * 0.5) {
+      if (depth > Math.random() * 0.5 - 0.1) {
          continue;
       }
 

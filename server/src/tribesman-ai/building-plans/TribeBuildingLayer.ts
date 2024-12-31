@@ -67,9 +67,9 @@ export interface VirtualDoor extends BaseVirtualBuilding {
    doorType: TribeDoorType;
 }
 
-export type VirtualBuilding = VirtualUnidentifiedBuilding | VirtualWall | VirtualDoor;
+export type VirtualStructure = VirtualUnidentifiedBuilding | VirtualWall | VirtualDoor;
 
-export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualBuilding> };
+export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualStructure> };
 
 const createRestrictedBuildingArea = (position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea => {
    const box = new RectangularBox(new Point(0, 0), width, height, rotation);
@@ -91,7 +91,7 @@ const createRestrictedBuildingArea = (position: Point, width: number, height: nu
    };
 }
 
-export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualBuilding {
+export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualStructure {
    const hitboxes = createNormalStructureHitboxes(entityType);
    
    for (let i = 0; i < hitboxes.length; i++) {
@@ -197,7 +197,7 @@ export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, positio
    }
 }
 
-export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualBuilding): void {
+export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
    packet.addNumber(virtualBuilding.entityType);
    packet.addNumber(virtualBuilding.id);
    packet.addNumber(virtualBuilding.layer.depth);
@@ -222,7 +222,7 @@ export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualB
       }
    }
 }
-export function getVirtualBuildingDataLength(virtualBuilding: VirtualBuilding): number {
+export function getVirtualBuildingDataLength(virtualBuilding: VirtualStructure): number {
    let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
 
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -341,7 +341,7 @@ const wallSideIsConnected = (buildingLayer: TribeBuildingLayer, wallSideNodes: R
       }
 
       // Only make connections between walls and doors
-      const buildingIDs = buildingLayer.occupiedNodeToEntityIDRecord[node];
+      const buildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
       for (let i = 0; i < buildingIDs.length; i++) {
          const buildingID = buildingIDs[i];
          const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
@@ -413,12 +413,12 @@ export default class TribeBuildingLayer {
    public occupiedSafetyNodes = new Set<SafetyNode>();
    public safetyNodes = new Set<SafetyNode>();
 
-   public occupiedNodeToEntityIDRecord: Record<SafetyNode, Array<number>> = {};
+   public occupiedNodeToVirtualBuildingIDRecord: Record<SafetyNode, Array<number>> = {};
 
    public nodeToRoomRecord: Record<SafetyNode, TribeRoom> = {};
 
-   public virtualBuildings = new Array<VirtualBuilding>;
-   public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
+   public virtualBuildings = new Array<VirtualStructure>;
+   public virtualBuildingRecord: Record<number, VirtualStructure> = {};
    public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
 
    public rooms = new Array<TribeRoom>();
@@ -428,7 +428,7 @@ export default class TribeBuildingLayer {
       this.tribe = tribe;
    }
 
-   public addVirtualBuilding(virtualBuilding: VirtualBuilding): void {
+   public addVirtualBuilding(virtualBuilding: VirtualStructure): void {
       // Add to building layer
       this.virtualBuildings.push(virtualBuilding);
       this.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
@@ -440,7 +440,7 @@ export default class TribeBuildingLayer {
       this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
    }
 
-   public removeVirtualBuilding(virtualBuilding: VirtualBuilding): void {
+   public removeVirtualBuilding(virtualBuilding: VirtualStructure): void {
       // Remove from building layer
       
       delete this.virtualBuildingRecord[virtualBuilding.id];

@@ -11,6 +11,7 @@ import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { TribeComponent } from "../../components/TribeComponent";
 import { HealingTotemComponent } from "../../components/HealingTotemComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -19,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.healingTotem;
 
-export function createHealingTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createHealingTotemConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createHealingTotemHitboxes(), null);
    
@@ -27,7 +28,7 @@ export function createHealingTotemConfig(tribe: Tribe, connectionInfo: Structure
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
    
@@ -42,6 +43,7 @@ export function createHealingTotemConfig(tribe: Tribe, connectionInfo: Structure
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.healingTotem]: healingTotemComponent
-      }
+      },
+      lights: []
    };
 }

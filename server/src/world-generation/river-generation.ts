@@ -1,8 +1,7 @@
 import { WaterRockData, RiverSteppingStoneData, RiverSteppingStoneSize, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
-import { Point, TileCoordinates, lerp, randFloat } from "battletribes-shared/utils";
+import { Point, TileCoordinates, lerp, randFloat, tileIsInWorld } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
-import Layer, { tileIsInWorld } from "../Layer";
 import SRandom from "../SRandom";
 
 const NUM_RIVERS = 20;

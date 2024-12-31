@@ -1,8 +1,8 @@
 import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
-import { assert, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
-import Layer, { getTileIndexIncludingEdges } from "../Layer";
+import { assert, getTileIndexIncludingEdges, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
+import Layer from "../Layer";
 import Chunk from "../Chunk";
 import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
@@ -18,6 +18,7 @@ import { getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { TetheredHitboxComponentArray } from "./TetheredHitboxComponent";
+import { removeEntityLights, updateEntityLights } from "../light-levels";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
@@ -452,12 +453,6 @@ export const TransformComponentArray = new ComponentArray<TransformComponent>(Se
 TransformComponentArray.onJoin = onJoin;
 TransformComponentArray.onRemove = onRemove;
 
-export function getEntityTile(transformComponent: TransformComponent): TileIndex {
-   const tileX = Math.floor(transformComponent.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(transformComponent.position.y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
-}
-
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
@@ -482,6 +477,8 @@ function onJoin(entity: Entity): void {
    if (entityCanBlockPathfinding(entity)) {
       updateEntityPathfindingNodeOccupance(entity);
    }
+
+   updateEntityLights(entity);
 }
 
 function onRemove(entity: Entity): void {
@@ -498,6 +495,8 @@ function onRemove(entity: Entity): void {
    if (entityCanBlockPathfinding(entity)) {
       clearEntityPathfindingNodes(entity);
    }
+
+   removeEntityLights(entity);
 }
 
 const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): void => {
@@ -605,6 +604,12 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, localID);
       }
    }
+}
+
+export function getEntityTile(transformComponent: TransformComponent): TileIndex {
+   const tileX = Math.floor(transformComponent.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(transformComponent.position.y / Settings.TILE_SIZE);
+   return getTileIndexIncludingEdges(tileX, tileY);
 }
 
 export function getRandomPositionInBox(box: Box): Point {

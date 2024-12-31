@@ -68,6 +68,6 @@ function onHitboxCollision(rockSpikeProjectile: Entity, collidingEntity: Entity,
       
       damageEntity(collidingEntity, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 200, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "rock_spike", 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, "rock_spike", 0.3);
    }
 }

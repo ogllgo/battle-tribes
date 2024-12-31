@@ -25,12 +25,6 @@ export function createComponentTint(tintR: number, tintG: number, tintB: number)
    };
 }
 
-const calculateRenderDepthFromLayer = (renderLayer: RenderLayer): number => {
-   const rawRenderHeight = renderLayer + Math.random() * 0.9;
-   // Convert from [0, NUM_RENDER_LAYERS] to [-1, 1];
-   return rawRenderHeight / NUM_RENDER_LAYERS * 2 - 1;
-}
-
 /** Internally contains all the information required to render an entity to the screen. */
 export class EntityRenderInfo {
    public readonly associatedEntity: Entity;
@@ -58,10 +52,10 @@ export class EntityRenderInfo {
    public tintG = 0;
    public tintB = 0;
 
-   constructor(associatedEntity: Entity, renderLayer: RenderLayer) {
+   constructor(associatedEntity: Entity, renderLayer: RenderLayer, renderHeight: number) {
       this.associatedEntity = associatedEntity;
       this.renderLayer = renderLayer;
-      this.renderHeight = calculateRenderDepthFromLayer(renderLayer);
+      this.renderHeight = renderHeight;
    }
 
    public attachRenderPart(renderPart: RenderPart): void {

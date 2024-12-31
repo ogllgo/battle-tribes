@@ -1,6 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { Point, TileIndex } from "battletribes-shared/utils";
-import { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
+import { getTileIndexIncludingEdges, getTileX, getTileY, Point, TileIndex } from "battletribes-shared/utils";
 import { getSpawnInfoSpawnableTiles } from "./entity-spawning";
 import { SPAWN_INFOS } from "./entity-spawn-info";
 

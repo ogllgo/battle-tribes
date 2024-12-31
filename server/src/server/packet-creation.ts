@@ -23,6 +23,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
 import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
+import { TileType } from "../../../shared/src/tiles";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -483,7 +484,7 @@ export function createInitialGameDataPacket(player: Entity, spawnLayer: Layer, p
    // Layers
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Per-tile data
-   lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 6 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 7 * Float32Array.BYTES_PER_ELEMENT;
    // Subtile data
    lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16 * Float32Array.BYTES_PER_ELEMENT;
    // Subtile damage taken
@@ -516,10 +517,11 @@ export function createInitialGameDataPacket(player: Entity, spawnLayer: Layer, p
          packet.addNumber(layer.riverFlowDirections[tileIndex]);
          packet.addNumber(layer.tileTemperatures[tileIndex]);
          packet.addNumber(layer.tileHumidities[tileIndex]);
+         packet.addNumber(layer.tileMithrilRichnesses[tileIndex]);
       }
 
       // Subtiles
-      const subtiles = layer.getSubtileTypes();
+      const subtiles = layer.wallSubtileTypes;
       for (let i = 0; i < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16; i++) {
          packet.addNumber(subtiles[i]);
       }

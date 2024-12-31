@@ -10,6 +10,7 @@ import { getEntityTile, TransformComponent, TransformComponentArray } from "./Tr
 import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer, undergroundLayer } from "../layers";
+import { updateEntityLights } from "../light-levels";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -233,7 +234,7 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
 }
 
 const dirtifyPathfindingNodes = (entity: Entity, physicsComponent: PhysicsComponent): void => {
-   if (!physicsComponent.pathfindingNodesAreDirty && entityCanBlockPathfinding(entity)) {
+   if (entityCanBlockPathfinding(entity)) {
       physicsComponent.pathfindingNodesAreDirty = true;
    }
 }
@@ -277,12 +278,14 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
       physicsComponent.hitboxesAreDirty = false;
       
       dirtifyPathfindingNodes(entity, physicsComponent);
+      updateEntityLights(entity);
       registerDirtyEntity(entity);
    } else if (physicsComponent.positionIsDirty) {
       transformComponent.cleanHitboxes(entity);
       transformComponent.updateContainingChunks(entity);
 
       dirtifyPathfindingNodes(entity, physicsComponent);
+      updateEntityLights(entity);
       registerDirtyEntity(entity);
    }
 
@@ -323,6 +326,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
             physicsComponent.lastValidLayer = layer;
          // If the layer is valid and the entity is on a dropdown, move down
          } else if (layer === physicsComponent.lastValidLayer) {
+            // @Temporary
             changeEntityLayer(entity, undergroundLayer);
          }
       }

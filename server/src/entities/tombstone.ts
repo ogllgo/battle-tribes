@@ -37,6 +37,7 @@ export function createTombstoneConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tombstone]: tombstoneComponent
-      }
+      },
+      lights: []
    };
 }

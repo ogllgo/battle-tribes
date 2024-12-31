@@ -16,7 +16,7 @@ export const enum CollisionGroup {
    decoration,
    /** Resources such as cacti and ice spikes which are stationary and can damage other entities (have collision events). */
    damagingResource,
-   /** For static non-pushing entities whose only purpose is to damage other entities. */
+   /** For static non-pushing non-pushable entities whose only purpose is to damage other entities. */
    exclusiveDamaging,
    
    _LENGTH_
@@ -105,7 +105,9 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.ballista]: CollisionGroup.default,
    [EntityType.slingTurret]: CollisionGroup.default,
    [EntityType.healingTotem]: CollisionGroup.default,
-   [EntityType.plant]: CollisionGroup.default,
+   [EntityType.treePlanted]: CollisionGroup.boring,
+   [EntityType.berryBushPlanted]: CollisionGroup.boring,
+   [EntityType.iceSpikesPlanted]: CollisionGroup.damagingResource,
    [EntityType.fence]: CollisionGroup.default,
    [EntityType.fenceGate]: CollisionGroup.default,
    [EntityType.frostshaper]: CollisionGroup.default,
@@ -126,6 +128,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.slurbTorch]: CollisionGroup.default,
    [EntityType.treeRootBase]: CollisionGroup.boring,
    [EntityType.treeRootSegment]: CollisionGroup.boring,
+   [EntityType.mithrilOreNode]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

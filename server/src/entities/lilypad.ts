@@ -18,6 +18,7 @@ export function createLilypadConfig(): EntityConfig<ComponentTypes> {
       entityType: EntityType.lilypad,
       components: {
          [ServerComponentType.transform]: transformComponent
-      }
+      },
+      lights: []
    };
 }

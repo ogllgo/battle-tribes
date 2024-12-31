@@ -133,8 +133,8 @@ const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs
 }
 
 const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: Entity, chunk: Chunk): void => {
-   for (let k = 0; k < chunk.entities.length; k++) {
-      const entity2 = chunk.entities[k];
+   for (let i = 0; i < chunk.entities.length; i++) {
+      const entity2 = chunk.entities[i];
       // @Speed
       if (entity1 === entity2) {
          continue;

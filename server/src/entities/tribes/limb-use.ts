@@ -14,15 +14,15 @@ import { applyStatusEffect } from "../../components/StatusEffectComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { hasTitle } from "../../components/TribeMemberComponent";
 import { calculateItemDamage } from "./tribe-member";
-import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
+import { ServerComponentType } from "battletribes-shared/components";
 import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/BerryBushComponent";
-import { PlantComponentArray, plantIsFullyGrown } from "../../components/PlantComponent";
 import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
 import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, getEntityType } from "../../world";
 import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
+import { BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
@@ -34,24 +34,9 @@ const isBerryBushWithBerries = (entity: Entity): boolean => {
          const berryBushComponent = BerryBushComponentArray.getComponent(entity);
          return berryBushComponent.numBerries > 0;
       }
-      case EntityType.plant: {
-         const plantComponent = PlantComponentArray.getComponent(entity);
-         return plantComponent.plantType === PlanterBoxPlant.berryBush && plantComponent.numFruit > 0;
-      }
-      default: {
-         return false;
-      }
-   }
-}
-
-const isBerryBush = (entity: Entity): boolean => {
-   switch (getEntityType(entity)) {
-      case EntityType.berryBush: {
-         return true;
-      }
-      case EntityType.plant: {
-         const plantComponent = PlantComponentArray.getComponent(entity);
-         return plantComponent.plantType === PlanterBoxPlant.berryBush;
+      case EntityType.berryBushPlanted: {
+         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
+         return berryBushPlantedComponent.numFruit > 0;
       }
       default: {
          return false;
@@ -62,7 +47,8 @@ const isBerryBush = (entity: Entity): boolean => {
 const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | null): number => {
    let amount = 1;
 
-   if (hasTitle(tribeman, TribesmanTitle.berrymuncher) && isBerryBush(plant)) {
+   const entityType = getEntityType(plant);
+   if (hasTitle(tribeman, TribesmanTitle.berrymuncher) && (entityType === EntityType.berryBush || entityType === EntityType.berryBushPlanted)) {
       if (Math.random() < 0.3) {
          amount++;
       }
@@ -153,7 +139,7 @@ export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbIn
    const attackEffectiveness = calculateAttackEffectiveness(item, targetEntityType);
 
    // Harvest leaves from trees and berries when wearing the gathering or gardening gloves
-   if ((item === null || item.type === ItemType.leaf) && (targetEntityType === EntityType.tree || targetEntityType === EntityType.berryBush || targetEntityType === EntityType.plant)) {
+   if ((item === null || item.type === ItemType.leaf) && (targetEntityType === EntityType.tree || targetEntityType === EntityType.berryBush || targetEntityType === EntityType.treePlanted || targetEntityType === EntityType.berryBushPlanted)) {
       const inventoryComponent = InventoryComponentArray.getComponent(attacker);
       const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
       const gloves = gloveInventory.itemSlots[1];
@@ -260,59 +246,6 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // Swing was successful
    return true;
 }
-
-const getEntityAttackPriority = (entityType: EntityType): number => {
-   switch (entityType) {
-      case EntityType.planterBox: return 0;
-      default: return 1;
-   }
-}
-
-// @Cleanup: Not just for tribe members, move to different file
-export function calculateAttackTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>, attackableEntityRelationshipMask: number): Entity | null {
-   const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   
-   let closestEntity: Entity | null = null;
-   let minDistance = Number.MAX_SAFE_INTEGER;
-   let maxAttackPriority = 0;
-   for (const targetEntity of targetEntities) {
-      // Don't attack entities without health components
-      if (!HealthComponentArray.hasComponent(targetEntity)) {
-         continue;
-      }
-
-      // @Temporary
-      const targetEntityType = getEntityType(targetEntity);
-      if (targetEntityType === EntityType.plant) {
-         const plantComponent = PlantComponentArray.getComponent(targetEntity);
-         if (!plantIsFullyGrown(plantComponent)) {
-            continue;
-         }
-      }
-
-      const relationship = getEntityRelationship(tribeMember, targetEntity);
-      if ((relationship & attackableEntityRelationshipMask) === 0) {
-         continue;
-      }
-
-      const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
-
-      const attackPriority = getEntityAttackPriority(targetEntityType);
-      const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
-
-      if (attackPriority > maxAttackPriority) {
-         minDistance = dist;
-         maxAttackPriority = attackPriority;
-         closestEntity = targetEntity;
-      } else if (dist < minDistance) {
-         closestEntity = targetEntity;
-         minDistance = dist;
-      }
-   }
-   
-   return closestEntity;
-}
-
 
 export function calculateRepairTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);

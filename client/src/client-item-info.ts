@@ -518,6 +518,34 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Slurb Torch",
       description: "Less powerful than a regular torch, but doesn't burn out."
+   },
+   [ItemType.rawYetiFlesh]: {
+      entityTextureSource: "items/small/raw-yeti-flesh.png",
+      textureSource: "items/large/raw-yeti-flesh.png",
+      toolTextureSource: "",
+      name: "Raw Yeti Flesh",
+      description: "Disgusting."
+   },
+   [ItemType.cookedYetiFlesh]: {
+      entityTextureSource: "items/small/cooked-yeti-flesh.png",
+      textureSource: "items/large/cooked-yeti-flesh.png",
+      toolTextureSource: "",
+      name: "Cooked Yeti Flesh",
+      description: "Disgusting, but extremely nutritious"
+   },
+   [ItemType.mithrilOre]: {
+      entityTextureSource: "items/small/mithril-ore.png",
+      textureSource: "items/large/mithril-ore.png",
+      toolTextureSource: "",
+      name: "Mithril Ore",
+      description: "Unrefined mithril."
+   },
+   [ItemType.mithrilBar]: {
+      entityTextureSource: "items/small/mithril-bar.png",
+      textureSource: "items/large/mithril-bar.png",
+      toolTextureSource: "",
+      name: "Mithril Bar",
+      description: "Refined mithril."
    }
 };
 

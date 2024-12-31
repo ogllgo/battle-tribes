@@ -5,7 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { TechID, TechTreeUnlockProgress, Tech, getTechByID, TECHS, TechUnlockProgress } from "battletribes-shared/techs";
 import { TribeType, TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { Point, randItem, clampToBoardDimensions, TileIndex } from "battletribes-shared/utils";
+import { Point, randItem, clampToBoardDimensions, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
 import { TotemBannerComponentArray, addBannerToTotem, removeBannerFromTotem } from "./components/TotemBannerComponent";
 import { InventoryComponentArray, getInventory } from "./components/InventoryComponent";
@@ -16,16 +16,17 @@ import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { createEntity } from "./Entity";
 import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY } from "./Layer";
+import Layer from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
-import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualBuilding, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
+import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualStructure, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
 import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
+import { StructureComponentArray } from "./components/StructureComponent";
 
 const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
 const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
@@ -160,11 +161,13 @@ export default class Tribe {
    public virtualEntityIDCounter = 0;
 
    // Whereas each building layer stores these only for that building layer, this stores all virtual buildings in every building layer
-   public virtualBuildings = new Array<VirtualBuilding>;
-   public virtualBuildingRecord: Record<number, VirtualBuilding> = {};
+   public virtualBuildings = new Array<VirtualStructure>;
+   public virtualBuildingRecord: Record<number, VirtualStructure> = {};
    public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
 
    public readonly pathfindingGroupID: number;
+
+   public autogiveBaseResources = false;
 
    /**
     * When the tribe starts, there are no reference buildings to determine where future buildings should be placed.
@@ -185,17 +188,21 @@ export default class Tribe {
       addTribe(this);
    }
 
-   public addBuilding(building: Entity): void {
-      const transformComponent = TransformComponentArray.getComponent(building);
+   public getBuildingLayer(layer: Layer): TribeBuildingLayer {
+      return this.buildingLayers[layer.depth];
+   }
+
+   public addBuilding(structure: Entity): void {
+      const transformComponent = TransformComponentArray.getComponent(structure);
       
-      const entityType = getEntityType(building) as StructureType;
-      const layer = getEntityLayer(building);
+      const entityType = getEntityType(structure) as StructureType;
+      const layer = getEntityLayer(structure);
       
       const buildingLayer = this.buildingLayers[layer.depth];
-      const virtualBuilding = createVirtualBuilding(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType, )
-      buildingLayer.addVirtualBuilding(virtualBuilding);
+      const structureComponent = StructureComponentArray.getComponent(structure);
+      buildingLayer.addVirtualBuilding(structureComponent.virtualBuilding!);
 
-      this.buildings.push(building);
+      this.buildings.push(structure);
 
       this.buildingsAreDirty = true;
       this.isRemoveable = true;
@@ -207,13 +214,13 @@ export default class Tribe {
                return;
             }
 
-            this.totem = building;
+            this.totem = structure;
 
-            this.createTribeAreaAroundBuilding(getEntityLayer(building), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.tribeTotem]);
+            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.tribeTotem]);
             break;
          }
          case EntityType.researchBench: {
-            this.researchBenches.push(building);
+            this.researchBenches.push(structure);
             break;
          }
          case EntityType.workerHut:
@@ -223,9 +230,9 @@ export default class Tribe {
                return;
             }
 
-            this.huts.push(building);
+            this.huts.push(structure);
 
-            this.createTribeAreaAroundBuilding(getEntityLayer(building), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[entityType]);
+            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[entityType]);
             
             const bannerComponent = TotemBannerComponentArray.getComponent(this.totem);
             addBannerToTotem(bannerComponent, this.huts.length - 1);
@@ -233,7 +240,7 @@ export default class Tribe {
             break;
          }
          case EntityType.barrel: {
-            this.barrels.push(building);
+            this.barrels.push(structure);
             break;
          }
       }
@@ -244,8 +251,8 @@ export default class Tribe {
 
       const layer = getEntityLayer(building);
       const buildingLayer = this.buildingLayers[layer.depth];
-      const virtualBuilding = buildingLayer.virtualBuildingRecord[building];
-      buildingLayer.removeVirtualBuilding(virtualBuilding);
+      const structureComponent = StructureComponentArray.getComponent(building);
+      buildingLayer.removeVirtualBuilding(structureComponent.virtualBuilding!);
       
       this.buildingsAreDirty = true;
 

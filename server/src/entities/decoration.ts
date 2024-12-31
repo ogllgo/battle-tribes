@@ -23,6 +23,7 @@ export function createDecorationConfig(decorationType: DecorationType): EntityCo
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.decoration]: decorationComponent
-      }
+      },
+      lights: []
    };
 }

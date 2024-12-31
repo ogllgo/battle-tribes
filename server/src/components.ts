@@ -19,7 +19,6 @@ import { InventoryComponent } from "./components/InventoryComponent";
 import { InventoryUseComponent } from "./components/InventoryUseComponent";
 import { ItemComponent } from "./components/ItemComponent";
 import { PhysicsComponent } from "./components/PhysicsComponent";
-import { PlantComponent } from "./components/PlantComponent";
 import { PlanterBoxComponent } from "./components/PlanterBoxComponent";
 import { PlayerComponent } from "./components/PlayerComponent";
 import { ResearchBenchComponent } from "./components/ResearchBenchComponent";
@@ -83,6 +82,13 @@ import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
 import { TreeRootSegmentComponent } from "./components/TreeRootSegmentComponent";
 import { AIAssignmentComponent } from "./components/AIAssignmentComponent";
 import { PatrolAIComponent } from "./components/PatrolAIComponent";
+import { PlantedComponent } from "./components/PlantedComponent";
+import { TreePlantedComponent } from "./components/TreePlantedComponent";
+import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
+import { IceSpikesPlantedComponent } from "./components/IceSpikesPlantedComponent";
+import { Light } from "./light-levels";
+import { Hitbox } from "../../shared/src/boxes/boxes";
+import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -127,7 +133,10 @@ const ComponentClassRecord = {
    [ServerComponentType.tribeMember]: () => TribeMemberComponent,
    [ServerComponentType.healingTotem]: () => HealingTotemComponent,
    [ServerComponentType.planterBox]: () => PlanterBoxComponent,
-   [ServerComponentType.plant]: () => PlantComponent,
+   [ServerComponentType.planted]: () => PlantedComponent,
+   [ServerComponentType.treePlanted]: () => TreePlantedComponent,
+   [ServerComponentType.berryBushPlanted]: () => BerryBushPlantedComponent,
+   [ServerComponentType.iceSpikesPlanted]: () => IceSpikesPlantedComponent,
    [ServerComponentType.structure]: () => StructureComponent,
    [ServerComponentType.fence]: () => FenceComponent,
    [ServerComponentType.fenceGate]: () => FenceGateComponent,
@@ -170,6 +179,7 @@ const ComponentClassRecord = {
    [ServerComponentType.aiAssignment]: () => AIAssignmentComponent,
    [ServerComponentType.treeRootBase]: () => TreeRootBaseComponent,
    [ServerComponentType.treeRootSegment]: () => TreeRootSegmentComponent,
+   [ServerComponentType.mithrilOreNode]: () => MithrilOreNodeComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
@@ -180,7 +190,13 @@ type ComponentConfig<ComponentTypes extends ServerComponentType> = {
    [T in ComponentTypes]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
 }
 
-export interface EntityConfig<ComponentTypes extends ServerComponentType> {
+export interface LightCreationInfo {
+   readonly light: Light;
+   readonly attachedHitbox: Hitbox;
+}
+
+export interface EntityConfig<ComponentTypes extends ServerComponentType = never> {
    readonly entityType: EntityType;
    readonly components: ComponentConfig<ComponentTypes>;
+   readonly lights: ReadonlyArray<LightCreationInfo>;
 }

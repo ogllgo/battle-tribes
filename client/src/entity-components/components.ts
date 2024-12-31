@@ -8,6 +8,7 @@ import { BallistaComponentArray, BallistaComponentParams } from "./server-compon
 import { BarrelComponentArray, BarrelComponentParams } from "./server-components/BarrelComponent";
 import { BattleaxeProjectileComponentArray, BattleaxeProjectileComponentParams } from "./server-components/BattleaxeProjectileComponent";
 import { BerryBushComponentArray, BerryBushComponentParams } from "./server-components/BerryBushComponent";
+import { BerryBushPlantedComponentArray, BerryBushPlantedComponentParams } from "./server-components/BerryBushPlantedComponent";
 import { BlueprintComponentArray, BlueprintComponentParams } from "./server-components/BlueprintComponent";
 import { BoulderComponentArray, BoulderComponentParams } from "./server-components/BoulderComponent";
 import { BracingsComponentArray, BracingsComponentParams } from "./server-components/BracingsComponent";
@@ -40,15 +41,17 @@ import { HutComponentArray, HutComponentParams } from "./server-components/HutCo
 import { IceArrowComponentArray, IceArrowComponentParams } from "./server-components/IceArrowComponent";
 import { IceShardComponentArray, IceShardComponentParams } from "./server-components/IceShardComponent";
 import { IceSpikesComponentArray, IceSpikesComponentParams } from "./server-components/IceSpikesComponent";
+import { IceSpikesPlantedComponentArray, IceSpikesPlantedComponentParams } from "./server-components/IceSpikesPlantedComponent";
 import { InventoryComponentArray, InventoryComponentParams } from "./server-components/InventoryComponent";
 import { InventoryUseComponentArray, InventoryUseComponentParams } from "./server-components/InventoryUseComponent";
 import { ItemComponentArray, ItemComponentParams } from "./server-components/ItemComponent";
 import { KrumblidComponentArray, KrumblidComponentParams } from "./server-components/KrumblidComponent";
 import { LayeredRodComponentArray, LayeredRodComponentParams } from "./server-components/LayeredRodComponent";
+import { MithrilOreNodeComponentArray, MithrilOreNodeComponentParams } from "./server-components/MithrilOreNodeComponent";
 import { PatrolAIComponentArray, PatrolAIComponentParams } from "./server-components/PatrolAIComponent";
 import { PebblumComponentArray, PebblumComponentParams } from "./server-components/PebblumComponent";
 import { PhysicsComponentArray, PhysicsComponentParams } from "./server-components/PhysicsComponent";
-import { PlantComponentArray, PlantComponentParams } from "./server-components/PlantComponent";
+import { PlantedComponentArray, PlantedComponentParams } from "./server-components/PlantedComponent";
 import { PlanterBoxComponentArray, PlanterBoxComponentParams } from "./server-components/PlanterBoxComponent";
 import { PlayerComponentArray, PlayerComponentParams } from "./server-components/PlayerComponent";
 import { PunjiSticksComponentArray, PunjiSticksComponentParams } from "./server-components/PunjiSticksComponent";
@@ -72,6 +75,7 @@ import { TombstoneComponentArray, TombstoneComponentParams } from "./server-comp
 import { TotemBannerComponentArray, TotemBannerComponentParams } from "./server-components/TotemBannerComponent";
 import { TransformComponentArray, TransformComponentParams } from "./server-components/TransformComponent";
 import { TreeComponentArray, TreeComponentParams } from "./server-components/TreeComponent";
+import { TreePlantedComponentArray, TreePlantedComponentParams } from "./server-components/TreePlantedComponent";
 import { TreeRootBaseComponentArray, TreeRootBaseComponentParams } from "./server-components/TreeRootBaseComponent";
 import { TreeRootSegmentComponentArray, TreeRootSegmentComponentParams } from "./server-components/TreeRootSegmentComponent";
 import { TribeComponentArray, TribeComponentParams } from "./server-components/TribeComponent";
@@ -127,7 +131,10 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tribeMember]: TribeMemberComponentArray,
    [ServerComponentType.healingTotem]: HealingTotemComponentArray,
    [ServerComponentType.planterBox]: PlanterBoxComponentArray,
-   [ServerComponentType.plant]: PlantComponentArray,
+   [ServerComponentType.planted]: PlantedComponentArray,
+   [ServerComponentType.treePlanted]: TreePlantedComponentArray,
+   [ServerComponentType.berryBushPlanted]: BerryBushPlantedComponentArray,
+   [ServerComponentType.iceSpikesPlanted]: IceSpikesPlantedComponentArray,
    [ServerComponentType.structure]: StructureComponentArray,
    [ServerComponentType.fence]: FenceComponentArray,
    [ServerComponentType.fenceGate]: FenceGateComponentArray,
@@ -169,6 +176,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
    [ServerComponentType.treeRootBase]: TreeRootBaseComponentArray,
    [ServerComponentType.treeRootSegment]: TreeRootSegmentComponentArray,
+   [ServerComponentType.mithrilOreNode]: MithrilOreNodeComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -213,7 +221,10 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.tribeMember]: (): TribeMemberComponentParams => 0 as any,
    [ServerComponentType.healingTotem]: (): HealingTotemComponentParams => 0 as any,
    [ServerComponentType.planterBox]: (): PlanterBoxComponentParams => 0 as any,
-   [ServerComponentType.plant]: (): PlantComponentParams => 0 as any,
+   [ServerComponentType.planted]: (): PlantedComponentParams => 0 as any,
+   [ServerComponentType.treePlanted]: (): TreePlantedComponentParams => 0 as any,
+   [ServerComponentType.berryBushPlanted]: (): BerryBushPlantedComponentParams => 0 as any,
+   [ServerComponentType.iceSpikesPlanted]: (): IceSpikesPlantedComponentParams => 0 as any,
    [ServerComponentType.structure]: (): StructureComponentParams => 0 as any,
    [ServerComponentType.fence]: (): FenceComponentParams => 0 as any,
    [ServerComponentType.fenceGate]: (): FenceGateComponentParams => 0 as any,
@@ -255,6 +266,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,
    [ServerComponentType.treeRootBase]: (): TreeRootBaseComponentParams => 0 as any,
    [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponentParams => 0 as any,
+   [ServerComponentType.mithrilOreNode]: (): MithrilOreNodeComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

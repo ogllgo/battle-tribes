@@ -56,7 +56,7 @@ function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, _pushedHi
 
       damageEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 100, hitDirection);
-      addLocalInvulnerabilityHash(healthComponent, "gemSpikyBall", 0.5);
+      addLocalInvulnerabilityHash(collidingEntity, "gemSpikyBall", 0.5);
    }
 }
 function getDataLength(): number {

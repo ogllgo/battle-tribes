@@ -79,6 +79,9 @@ export function createPlayerDataPacket(): ArrayBuffer {
    if (OPTIONS.showSubtileSupports) {
       gameDataOptions |= GameDataPacketOptions.sendSubtileSupports;
    }
+   if (OPTIONS.showLightLevels) {
+      gameDataOptions |= GameDataPacketOptions.sendLightLevels;
+   }
    
    packet.addNumber(gameDataOptions);
    
@@ -235,5 +238,13 @@ export function sendTPTOEntityPacket(targetEntity: Entity): void {
 export function sendSpectateEntityPacket(entity: Entity): void {
    const packet = new Packet(PacketType.devSpectateEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entity);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetAutogiveBaseResourcesPacket(tribeID: number, autogiveBaseResource: boolean): void {
+   const packet = new Packet(PacketType.devSetAutogiveBaseResource, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(tribeID);
+   packet.addBoolean(autogiveBaseResource);
+   packet.padOffset(3);
    Client.sendPacket(packet.buffer);
 }

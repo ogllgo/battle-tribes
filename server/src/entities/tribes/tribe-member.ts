@@ -8,25 +8,23 @@ import { TribeType } from "battletribes-shared/tribes";
 import { Point, dotAngles, lerp } from "battletribes-shared/utils";
 import { createEntity } from "../../Entity";
 import Layer from "../../Layer";
-import { InventoryComponentArray, consumeItemFromSlot, consumeItemType, countItemType, getInventory, inventoryIsFull, pickupItemEntity } from "../../components/InventoryComponent";
+import { InventoryComponentArray, consumeItemFromSlot, consumeItemType, countItemType, getInventory, inventoryIsFull } from "../../components/InventoryComponent";
 import { getEntitiesInRange } from "../../ai-shared";
 import { HealthComponentArray, healEntity } from "../../components/HealthComponent";
 import { clearStatusEffects } from "../../components/StatusEffectComponent";
-import { onFishLeaderHurt } from "../mobs/fish";
 import { InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { createBattleaxeProjectileConfig } from "../projectiles/battleaxe-projectile";
 import { createIceArrowConfig } from "../projectiles/ice-arrow";
 import { TribeComponentArray } from "../../components/TribeComponent";
 import { PhysicsComponentArray } from "../../components/PhysicsComponent";
 import Tribe from "../../Tribe";
-import { entityIsResource } from "./tribesman-ai/tribesman-resource-gathering";
 import { TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";
 import { TribeMemberComponentArray, awardTitle, hasTitle } from "../../components/TribeMemberComponent";
 import { createItemEntityConfig } from "../item-entity";
 import { StructureComponentArray } from "../../components/StructureComponent";
 import { BuildingMaterialComponentArray } from "../../components/BuildingMaterialComponent";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
-import { Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, BattleaxeItemInfo, SwordItemInfo, AxeItemInfo, HammerItemInfo, InventoryName, ItemType, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, itemIsStackable, getItemStackSize, getItemAttackInfo } from "battletribes-shared/items/items";
+import { Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, BattleaxeItemInfo, SwordItemInfo, AxeItemInfo, InventoryName, ItemType, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, itemIsStackable, getItemStackSize } from "battletribes-shared/items/items";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { registerEntityTickEvent } from "../../server/player-clients";
 import { TransformComponentArray } from "../../components/TransformComponent";
@@ -168,7 +166,8 @@ const getRepairTimeMultiplier = (tribeMember: Entity): number => {
    return multiplier;
 }
 
-export function getSwingTimeMultiplier(entity: Entity, targetEntity: Entity, item: Item | null): number {
+// @Incomplete: unused
+export function getSwingTimeMultiplier(entity: Entity, item: Item | null): number {
    let swingTimeMultiplier = 1;
 
    if (TribeComponentArray.hasComponent(entity)) {
@@ -176,11 +175,6 @@ export function getSwingTimeMultiplier(entity: Entity, targetEntity: Entity, ite
       const tribeComponent = TribeComponentArray.getComponent(entity);
       if (tribeComponent.tribe.tribeType === TribeType.barbarians) {
          swingTimeMultiplier /= 0.7;
-      }
-   
-      // Warriors attack resources slower
-      if (getEntityType(entity) === EntityType.tribeWarrior && entityIsResource(targetEntity)) {
-         swingTimeMultiplier *= 2.5;
       }
    }
 
@@ -219,33 +213,33 @@ export function calculateRadialAttackTargets(entity: Entity, attackOffset: numbe
 export function placeBuilding(tribe: Tribe, layer: Layer, position: Point, rotation: number, entityType: StructureType, connectionInfo: StructureConnectionInfo, hitboxes: ReadonlyArray<Hitbox>): void {
    let config: EntityConfig<ServerComponentType.transform>;
    switch (entityType) {
-      case EntityType.wall: config = createWallConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.door: config = createDoorConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.embrasure: config = createEmbrasureConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.floorSpikes: config = createFloorSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.wallSpikes: config = createWallSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.tunnel: config = createTunnelConfig(tribe, BuildingMaterial.wood, connectionInfo); break;
-      case EntityType.floorPunjiSticks: config = createFloorPunjiSticksConfig(tribe, connectionInfo); break;
-      case EntityType.wallPunjiSticks: config = createWallPunjiSticksConfig(tribe, connectionInfo); break;
-      case EntityType.ballista: config = createBallistaConfig(tribe, connectionInfo); break;
-      case EntityType.slingTurret: config = createSlingTurretConfig(tribe, connectionInfo); break;
-      case EntityType.tribeTotem: config = createTribeTotemConfig(tribe, connectionInfo); break;
-      case EntityType.workerHut: config = createWorkerHutConfig(tribe, connectionInfo); break;
-      case EntityType.warriorHut: config = createWarriorHutConfig(tribe, connectionInfo); break;
-      case EntityType.barrel: config = createBarrelConfig(tribe, connectionInfo); break;
-      case EntityType.workbench: config = createWorkbenchConfig(tribe, connectionInfo); break;
-      case EntityType.researchBench: config = createResearchBenchConfig(tribe, connectionInfo); break;
-      case EntityType.healingTotem: config = createHealingTotemConfig(tribe, connectionInfo); break;
-      case EntityType.planterBox: config = createPlanterBoxConfig(tribe, connectionInfo); break;
-      case EntityType.furnace: config = createFurnaceConfig(tribe, connectionInfo); break;
-      case EntityType.campfire: config = createCampfireConfig(tribe, connectionInfo); break;
-      case EntityType.fence: config = createFenceConfig(tribe, connectionInfo); break;
-      case EntityType.fenceGate: config = createFenceGateConfig(tribe, connectionInfo); break;
-      case EntityType.frostshaper: config = createFrostshaperConfig(tribe, connectionInfo); break;
-      case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, connectionInfo); break;
-      case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood); break;
-      case EntityType.fireTorch: config = createFireTorchConfig(tribe, connectionInfo); break;
-      case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, connectionInfo); break;
+      case EntityType.wall: config = createWallConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.door: config = createDoorConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.embrasure: config = createEmbrasureConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.floorSpikes: config = createFloorSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.wallSpikes: config = createWallSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.tunnel: config = createTunnelConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
+      case EntityType.floorPunjiSticks: config = createFloorPunjiSticksConfig(tribe, connectionInfo, null); break;
+      case EntityType.wallPunjiSticks: config = createWallPunjiSticksConfig(tribe, connectionInfo, null); break;
+      case EntityType.ballista: config = createBallistaConfig(tribe, connectionInfo, null); break;
+      case EntityType.slingTurret: config = createSlingTurretConfig(tribe, connectionInfo, null); break;
+      case EntityType.tribeTotem: config = createTribeTotemConfig(tribe, connectionInfo, null); break;
+      case EntityType.workerHut: config = createWorkerHutConfig(tribe, connectionInfo, null); break;
+      case EntityType.warriorHut: config = createWarriorHutConfig(tribe, connectionInfo, null); break;
+      case EntityType.barrel: config = createBarrelConfig(tribe, connectionInfo, null); break;
+      case EntityType.workbench: config = createWorkbenchConfig(tribe, connectionInfo, null); break;
+      case EntityType.researchBench: config = createResearchBenchConfig(tribe, connectionInfo, null); break;
+      case EntityType.healingTotem: config = createHealingTotemConfig(tribe, connectionInfo, null); break;
+      case EntityType.planterBox: config = createPlanterBoxConfig(tribe, connectionInfo, null); break;
+      case EntityType.furnace: config = createFurnaceConfig(tribe, connectionInfo, null); break;
+      case EntityType.campfire: config = createCampfireConfig(tribe, connectionInfo, null); break;
+      case EntityType.fence: config = createFenceConfig(tribe, connectionInfo, null); break;
+      case EntityType.fenceGate: config = createFenceGateConfig(tribe, connectionInfo, null); break;
+      case EntityType.frostshaper: config = createFrostshaperConfig(tribe, connectionInfo, null); break;
+      case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, connectionInfo, null); break;
+      case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood, null); break;
+      case EntityType.fireTorch: config = createFireTorchConfig(tribe, connectionInfo, null); break;
+      case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, connectionInfo, null); break;
    }
    
    config.components[ServerComponentType.transform].position.x = position.x;
@@ -663,7 +657,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, 0);
+         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, 0, null);
          config.components[ServerComponentType.transform].position.x = position.x;
          config.components[ServerComponentType.transform].position.y = position.y;
          config.components[ServerComponentType.transform].rotation = dynamicRotation;
@@ -691,7 +685,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
 
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure);
+         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
@@ -712,7 +706,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
 
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure);
+         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
@@ -744,7 +738,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure);
+         const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = rotation;

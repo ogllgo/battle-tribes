@@ -14,6 +14,7 @@ import { StructureComponent } from "../../../components/StructureComponent";
 import { TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
 import { FurnaceComponent } from "../../../components/FurnaceComponent";
+import { VirtualStructure } from "../../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -24,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.cooking
    | ServerComponentType.furnace;
 
-export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFurnaceHitboxes(), null);
    
@@ -32,7 +33,7 @@ export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConne
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
 
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -64,6 +65,7 @@ export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConne
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.cooking]: cookingComponent,
          [ServerComponentType.furnace]: furnaceComponent
-      }
+      },
+      lights: []
    };
 }

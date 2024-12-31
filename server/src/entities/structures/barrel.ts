@@ -13,6 +13,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { BarrelComponent } from "../../components/BarrelComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -22,7 +23,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.inventory
    | ServerComponentType.barrel;
 
-export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createBarrelHitboxes(), null);
    
@@ -30,7 +31,7 @@ export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnec
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -51,6 +52,7 @@ export function createBarrelConfig(tribe: Tribe, connectionInfo: StructureConnec
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.barrel]: barrelComponent
-      }
+      },
+      lights: []
    };
 }

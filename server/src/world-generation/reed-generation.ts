@@ -7,8 +7,8 @@ import { WaterTileGenerationInfo } from "./river-generation";
 import { distance } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
 import { isTooCloseToSteppingStone } from "../entity-spawn-info";
-import { surfaceLayer } from "../layers";
 import { pushJoinBuffer } from "../world";
+import Layer from "../Layer";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35
@@ -32,7 +32,7 @@ const getClosestRiverMainTile = (x: number, y: number, riverMainTiles: ReadonlyA
    return closestTile;
 }
 
-export function generateReeds(riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>): void {
+export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>): void {
    const probabilityWeightMap1 = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 5, 3, 1.5, 0.75);
    
    // @Incomplete: generate in edges

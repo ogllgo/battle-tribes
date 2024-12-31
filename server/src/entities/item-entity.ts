@@ -2,14 +2,18 @@ import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, 
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
-import { ItemComponent, ItemComponentArray } from "../components/ItemComponent";
+import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { TransformComponent } from "../components/TransformComponent";
+import { getRandomPositionInEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
+import Layer from "../Layer";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { getEntityLayer } from "../world";
+import { createEntity } from "../Entity";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -31,16 +35,40 @@ export function createItemEntityConfig(itemType: ItemType, amount: number, throw
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent
-      }
+      },
+      lights: []
    };
 }
 
-export function addItemEntityPlayerPickupCooldown(itemEntity: Entity, entityID: number, cooldownDuration: number): void {
-   const itemComponent = ItemComponentArray.getComponent(itemEntity);
-   itemComponent.entityPickupCooldowns[entityID] = cooldownDuration;
+const getItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {
+   for (let attempts = 0; attempts < 50; attempts++) {
+      const position = getRandomPositionInEntity(transformComponent);
+
+      const subtileIndex = getSubtileIndex(Math.floor(position.x / Settings.SUBTILE_SIZE), Math.floor(position.y / Settings.SUBTILE_SIZE));
+      // Don't spawn item entities in walls otherwise they can get stuck in the wall
+      if (!entityLayer.subtileIsWall(subtileIndex)) {
+         return position;
+      }
+   }
+
+   return null;
 }
 
-export function itemEntityCanBePickedUp(itemEntity: Entity, entityID: Entity): boolean {
-   const itemComponent = ItemComponentArray.getComponent(itemEntity);
-   return typeof itemComponent.entityPickupCooldowns[entityID] === "undefined";
+export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount: number): void {
+   const layer = getEntityLayer(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (let i = 0; i < amount; i++) {
+      const spawnPosition = getItemEntitySpawnPosition(layer, transformComponent);
+      if (spawnPosition === null) {
+         continue;
+      }
+      
+      // Create item entity
+      const config = createItemEntityConfig(itemType, 1, null);
+      config.components[ServerComponentType.transform].position.x = spawnPosition.x;
+      config.components[ServerComponentType.transform].position.y = spawnPosition.y;
+      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      createEntity(config, getEntityLayer(entity), 0);
+   }
 }

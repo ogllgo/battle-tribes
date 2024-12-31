@@ -52,6 +52,7 @@ export function createSlimewispConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.slimewisp]: slimewispComponent
-      }
+      },
+      lights: []
    };
 }

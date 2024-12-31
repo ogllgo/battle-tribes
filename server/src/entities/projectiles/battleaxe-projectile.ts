@@ -44,7 +44,8 @@ export function createBattleaxeProjectileConfig(tribe: Tribe, tribeMember: Entit
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.battleaxeProjectile]: battleaxeProjectileComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -77,6 +78,6 @@ export function onBattleaxeProjectileCollision(battleaxe: Entity, collidingEntit
       // @Incomplete cause of death
       damageEntity(collidingEntity, tribeMember, 4, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 150, direction);
-      addLocalInvulnerabilityHash(HealthComponentArray.getComponent(collidingEntity), attackHash, 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, attackHash, 0.3);
    }
 }

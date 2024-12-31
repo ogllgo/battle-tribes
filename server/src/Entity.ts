@@ -28,7 +28,7 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
 
       if (typeof componentArray.onInitialise !== "undefined") {
          // @Cleanup: remove need for cast
-         componentArray.onInitialise(entityConfig as EntityConfig<ServerComponentType>, id, layer);
+         componentArray.onInitialise(entityConfig, id, layer);
       }
    }
    
@@ -41,7 +41,8 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
       componentArray.addComponent(id, component, joinDelayTicks);
    }
 
-   addEntityToJoinBuffer(id, entityConfig.entityType, layer, componentTypes, joinDelayTicks);
+   // @Hack: cast
+   addEntityToJoinBuffer(id, entityConfig, layer, componentTypes, joinDelayTicks);
 
    return id;
 }

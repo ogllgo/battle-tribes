@@ -35,6 +35,7 @@ export function createIceSpikesConfig(rootIceSpikes: Entity): EntityConfig<Compo
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.iceSpikes]: iceSpikesComponent
-      }
+      },
+      lights: []
    };
 }

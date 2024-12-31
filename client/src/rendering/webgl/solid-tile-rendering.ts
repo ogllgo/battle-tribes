@@ -20,7 +20,7 @@ export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string |
    [TileType.slime]: "tiles/slime.png",
    [TileType.dropdown]: null,
    [TileType.stone]: "tiles/stone.png",
-   [TileType.stoneWallFloor]: "tiles/stone-wall-floor.png"
+   [TileType.stoneWallFloor]: "tiles/stone-wall-floor.png",
 };
 const FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<TileType, number | null>> = {};
 (() => {
@@ -41,7 +41,7 @@ const FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<TileType, number 
 export const WALL_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<SubtileType, ReadonlyArray<string>>> = {
    [SubtileType.rockWall]: ["tiles/dark-rock.png"],
    [SubtileType.sandstoneWall]: ["tiles/sandstone.png"],
-   [SubtileType.stoneWall]: ["tiles/stone-wall-1.png", "tiles/stone-wall-2.png"]
+   [SubtileType.stoneWall]: ["tiles/stone-wall-1.png", "tiles/stone-wall-2.png"],
 };
 const WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<SubtileType, Array<number>>> = {};
 (() => {

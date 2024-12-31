@@ -95,6 +95,10 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.fireTorch]: 1,
    [ItemType.slurb]: 1,
    [ItemType.slurbTorch]: 1,
+   [ItemType.rawYetiFlesh]: 1,
+   [ItemType.cookedYetiFlesh]: 1,
+   [ItemType.mithrilOre]: 1,
+   [ItemType.mithrilBar]: 1,
 };
 
 export const enum TribesmanPathType {

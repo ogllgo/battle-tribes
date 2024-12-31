@@ -28,6 +28,7 @@ interface Options {
    maxGreenSafety: number;
    debugLights: boolean;
    showSubtileSupports: boolean;
+   showLightLevels: boolean;
 }
 
 const OPTIONS: Options = {
@@ -49,7 +50,8 @@ const OPTIONS: Options = {
    showWallConnections: false,
    maxGreenSafety: 100,
    debugLights: false,
-   showSubtileSupports: false
+   showSubtileSupports: false,
+   showLightLevels: false
 };
 
 document.documentElement.style.setProperty("--zoom", OPTIONS.uiZoom.toString());

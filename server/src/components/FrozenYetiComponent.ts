@@ -19,8 +19,8 @@ import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
 import { Biome } from "../../../shared/src/biomes";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,

@@ -2,6 +2,7 @@ import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
 import { AIPlanType } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
+import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, addTribeBuildingSafetyData, getTribeAssignmentDataLength, getTribeBuildingSafetyDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
@@ -83,6 +84,13 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
       lengthBytes += visibleSafetyNodes.length * 4 * Float32Array.BYTES_PER_ELEMENT;
    }
 
+   // Light levels
+   if (playerClient.hasPacketOption(GameDataPacketOptions.sendLightLevels)) {
+      lengthBytes += getPlayerLightLevelsDataLength(playerClient);
+   } else {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   }
+
    // Tribe assignments and virtual buildings
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (playerClient.isDev) {
@@ -150,6 +158,13 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
          packet.addBoolean(safetyNodeData.isContained);
          packet.padOffset(3);
       }
+   } else {
+      packet.addNumber(0);
+   }
+
+   // Light levels
+   if (playerClient.hasPacketOption(GameDataPacketOptions.sendLightLevels)) {
+      addPlayerLightLevelsData(packet, playerClient)
    } else {
       packet.addNumber(0);
    }

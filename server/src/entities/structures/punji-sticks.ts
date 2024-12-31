@@ -16,6 +16,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { PunjiSticksComponent } from "../../components/PunjiSticksComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -25,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.spikes
    | ServerComponentType.punjiSticks;
 
-export function createFloorPunjiSticksConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createFloorPunjiSticksConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFloorPunjiSticksHitboxes(), null);
    
@@ -33,7 +34,7 @@ export function createFloorPunjiSticksConfig(tribe: Tribe, connectionInfo: Struc
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -51,11 +52,12 @@ export function createFloorPunjiSticksConfig(tribe: Tribe, connectionInfo: Struc
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.spikes]: spikesComponent,
          [ServerComponentType.punjiSticks]: punjiSticksComponent
-      }
+      },
+      lights: []
    };
 }
 
-export function createWallPunjiSticksConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createWallPunjiSticksConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWallPunjiSticksHitboxes(), null);
    
@@ -63,7 +65,7 @@ export function createWallPunjiSticksConfig(tribe: Tribe, connectionInfo: Struct
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -81,7 +83,8 @@ export function createWallPunjiSticksConfig(tribe: Tribe, connectionInfo: Struct
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.spikes]: spikesComponent,
          [ServerComponentType.punjiSticks]: punjiSticksComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -112,7 +115,7 @@ export function onPunjiSticksCollision(punjiSticks: Entity, collidingEntity: Ent
    
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, punjiSticks, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   addLocalInvulnerabilityHash(healthComponent, "punjiSticks", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "punjiSticks", 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
       applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TPS);

@@ -47,7 +47,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    // @Cleanup: Layer should probs be in entity config
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash. (Can't add components to the join buffer while iterating it). solution: make it not crash
    /** Called after all the components for an entity are created, before the entity is added to the join buffer. */
-   public onInitialise?(config: EntityConfig<ServerComponentType>, entity: Entity, layer: Layer): void;
+   public onInitialise?(config: EntityConfig, entity: Entity, layer: Layer): void;
    // @Bug @Incomplete: This function shouldn't create an entity, as that will cause a crash.
    public onJoin?(entity: Entity): void;
    public onTick?: {
@@ -136,16 +136,16 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
          }
          
          const component = this.componentBuffer[i];
-         const entityID = this.componentBufferIDs[i];
+         const entity = this.componentBufferIDs[i];
       
          // Put new entry at end and update the maps
          const newIndex = this.components.length;
-         this.entityToIndexMap[entityID] = newIndex;
-         this.indexToEntityMap[newIndex] = entityID;
+         this.entityToIndexMap[entity] = newIndex;
+         this.indexToEntityMap[newIndex] = entity;
          this.components.push(component);
          
          if (this.isActiveByDefault) {
-            this.activateComponent(component, entityID);
+            this.activateComponent(entity);
          }
       }
    }
@@ -216,10 +216,13 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       return typeof this.entityToIndexMap[entity] !== "undefined";
    }
 
-   public activateComponent(component: T, entity: Entity): void {
+   public activateComponent(entity: Entity): void {
       if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
          return;
       }
+
+      const idx = this.entityToIndexMap[entity]!;
+      const component = this.components[idx];
       
       // Put new entry at end and update the maps
       const newIndex = this.activeComponents.length;
@@ -248,6 +251,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.activeEntities.pop();
    }
 
+   /** Queues a component to be deactivated */
    public queueComponentDeactivate(entity: Entity): void {
       this.deactivateBuffer.push(entity);
    }
@@ -264,7 +268,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
 export function sortComponentArrays(): void {
    const PRIORITIES: Record<ServerComponentType, ComponentArrayPriority> = {
       [ServerComponentType.aiHelper]: ComponentArrayPriority.low,
-      // Low so that any damage boxes created aren't immediately ticked
+      // Low so that any damage boxes created aren't immediately tickled
       [ServerComponentType.damageBox]: ComponentArrayPriority.low,
       [ServerComponentType.berryBush]: ComponentArrayPriority.medium,
       [ServerComponentType.blueprint]: ComponentArrayPriority.medium,
@@ -311,7 +315,10 @@ export function sortComponentArrays(): void {
       [ServerComponentType.tribeWarrior]: ComponentArrayPriority.medium,
       [ServerComponentType.healingTotem]: ComponentArrayPriority.medium,
       [ServerComponentType.planterBox]: ComponentArrayPriority.medium,
-      [ServerComponentType.plant]: ComponentArrayPriority.medium,
+      [ServerComponentType.planted]: ComponentArrayPriority.medium,
+      [ServerComponentType.treePlanted]: ComponentArrayPriority.medium,
+      [ServerComponentType.berryBushPlanted]: ComponentArrayPriority.medium,
+      [ServerComponentType.iceSpikesPlanted]: ComponentArrayPriority.medium,
       [ServerComponentType.structure]: ComponentArrayPriority.medium,
       [ServerComponentType.fence]: ComponentArrayPriority.medium,
       [ServerComponentType.fenceGate]: ComponentArrayPriority.medium,
@@ -345,6 +352,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.aiAssignment]: ComponentArrayPriority.medium,
       [ServerComponentType.treeRootBase]: ComponentArrayPriority.medium,
       [ServerComponentType.treeRootSegment]: ComponentArrayPriority.medium,
+      [ServerComponentType.mithrilOreNode]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

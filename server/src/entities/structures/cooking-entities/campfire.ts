@@ -14,6 +14,7 @@ import { TribeComponent } from "../../../components/TribeComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../../components/InventoryComponent";
 import { CookingComponent } from "../../../components/CookingComponent";
 import { CampfireComponent } from "../../../components/CampfireComponent";
+import { VirtualStructure } from "../../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -28,7 +29,7 @@ const LIFETIME_SECONDS = 30;
 
 // @Incomplete: Destroy campfire when remaining heat reaches 0
 
-export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createCampfireHitboxes(), null);
    
@@ -36,7 +37,7 @@ export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConn
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
 
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -68,6 +69,7 @@ export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConn
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.cooking]: cookingComponent,
          [ServerComponentType.campfire]: campfireComponent
-      }
+      },
+      lights: []
    };
 }

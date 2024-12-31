@@ -1,16 +1,15 @@
 import { WaterRockData, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { TileType } from "battletribes-shared/tiles";
-import { smoothstep } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, smoothstep } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNoise } from "../perlin-noise";
 import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo } from "./terrain-generation-info";
 import { WaterTileGenerationInfo, generateRiverFeatures, generateRiverTiles } from "./river-generation";
 import OPTIONS from "../options";
-import Layer, { getTileIndexIncludingEdges } from "../Layer";
+import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { generateReeds } from "./reed-generation";
 
 export interface TerrainGenerationInfo {
    readonly tileTypes: Float32Array;
@@ -27,6 +26,8 @@ export interface TerrainGenerationInfo {
 const HEIGHT_NOISE_SCALE = 50;
 const TEMPERATURE_NOISE_SCALE = 120;
 const HUMIDITY_NOISE_SCALE = 30;
+
+export let riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
 
 const matchesBiomeRequirements = (generationInfo: BiomeSpawnRequirements, height: number, temperature: number, humidity: number): boolean => {
    // Height
@@ -169,7 +170,11 @@ export function generateTileInfo(tileBiomes: Float32Array, tileTypes: Float32Arr
    }
 }
 
-function generateSurfaceTerrain(surfaceLayer: Layer): void {
+export function generateSurfaceTerrain(surfaceLayer: Layer): void {
+   for (let i = 0; i < surfaceLayer.ambientLightFactors.length; i++) {
+      surfaceLayer.ambientLightFactors[i] = 1;
+   }
+
    // Generate the noise
    const heightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, HEIGHT_NOISE_SCALE, 3, 1.5, 0.75);
    const temperatureMap = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, TEMPERATURE_NOISE_SCALE);
@@ -208,7 +213,6 @@ function generateSurfaceTerrain(surfaceLayer: Layer): void {
 
    // Generate rivers
    let riverTiles: ReadonlyArray<WaterTileGenerationInfo>;
-   let riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
    if (OPTIONS.generateRivers) {
       const riverGenerationInfo = generateRiverTiles();
       riverTiles = riverGenerationInfo.waterTiles;
@@ -244,10 +248,6 @@ function generateSurfaceTerrain(surfaceLayer: Layer): void {
    groupLocalBiomes(surfaceLayer);
 
    if (OPTIONS.generateCaves) {
-      generateCaveEntrances();
+      generateCaveEntrances(surfaceLayer);
    }
-   
-   generateReeds(riverMainTiles);
 }
-
-export default generateSurfaceTerrain;

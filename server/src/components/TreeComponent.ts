@@ -7,7 +7,7 @@ import { addGrassBlocker } from "../grass-blockers";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
 import { randInt } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 export const TREE_RADII: ReadonlyArray<number> = [40, 50];
 

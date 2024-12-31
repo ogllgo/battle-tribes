@@ -44,8 +44,6 @@ interface DistortionTriangle {
    readonly a: number;
 }
 
-const NIGHT_LIGHT = 0.4;
-
 let lightingProgram: WebGLProgram;
 
 let darknessFramebufferProgram: WebGLProgram;
@@ -310,13 +308,13 @@ const getAmbientLightLevel = (layer: Layer): number => {
    
    if (layer === surfaceLayer) {
       if (Board.time >= 6 && Board.time < 18) {
-         return  1;
+         return 1;
       } else if (Board.time >= 18 && Board.time < 20) {
-         return  lerp(1, NIGHT_LIGHT, (Board.time - 18) / 2);
+         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (Board.time - 18) / 2);
       } else if (Board.time >= 4 && Board.time < 6) {
-         return lerp(1, NIGHT_LIGHT, (6 - Board.time) / 2);
+         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (6 - Board.time) / 2);
       } else {
-         return NIGHT_LIGHT;
+         return Settings.NIGHT_LIGHT_LEVEL;
       }
    } else {
       return 0;
@@ -397,7 +395,6 @@ export function renderLighting(layer: Layer): void {
    gl.bindVertexArray(darknessVAO);
    // @Temporary
    // gl.bindFramebuffer(gl.FRAMEBUFFER, darknessFramebuffer);
-   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
    // if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
    //    darknessFramebufferTexture = createTexture(windowWidth, windowHeight);
@@ -455,7 +452,6 @@ export function renderLighting(layer: Layer): void {
    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
    gl.bindVertexArray(null);
-   gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
 
    gl.disable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ZERO);

@@ -5,10 +5,7 @@ import { removeFleshSword } from "../flesh-sword-ai";
 import { ItemType } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer } from "../world";
-import { createItemEntityConfig } from "../entities/item-entity";
-import { createEntity } from "../Entity";
-import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
+import { destroyEntity, getEntityAgeTicks } from "../world";
 
 const enum Vars {
    TICKS_TO_DESPAWN = 300 * Settings.TPS
@@ -76,16 +73,13 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(itemComponent.itemType);
 }
 
-export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount: number): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   for (let i = 0; i < amount; i++) {
-      const position = getRandomPositionInEntity(transformComponent);
+// @Cleanup: unused?
+export function addItemEntityPlayerPickupCooldown(itemEntity: Entity, entityID: number, cooldownDuration: number): void {
+   const itemComponent = ItemComponentArray.getComponent(itemEntity);
+   itemComponent.entityPickupCooldowns[entityID] = cooldownDuration;
+}
 
-      // Create item entity
-      const config = createItemEntityConfig(itemType, 1, null);
-      config.components[ServerComponentType.transform].position.x = position.x;
-      config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntity(config, getEntityLayer(entity), 0);
-   }
+export function itemEntityCanBePickedUp(itemEntity: Entity, entityID: Entity): boolean {
+   const itemComponent = ItemComponentArray.getComponent(itemEntity);
+   return typeof itemComponent.entityPickupCooldowns[entityID] === "undefined";
 }

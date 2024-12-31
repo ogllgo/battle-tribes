@@ -33,7 +33,20 @@ const getBlockerChunks = (blocker: GrassBlocker): ReadonlyArray<Chunk> => {
       maxY = blocker.position.y + blocker.height * 0.5;
    }
    
-   return surfaceLayer.getChunksInBounds(minX, maxX, minY, maxY);
+   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+
+   const chunks = new Array<Chunk>();
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = surfaceLayer.getChunk(chunkX, chunkY);
+         chunks.push(chunk);
+      }
+   }
+
+   return chunks;
 }
 
 export function addGrassBlocker(blocker: GrassBlocker, associatedEntityID: number): void {

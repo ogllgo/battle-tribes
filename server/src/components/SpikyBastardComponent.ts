@@ -37,5 +37,5 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, actingHitbo
 
    damageEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 100, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "spikyBastard", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

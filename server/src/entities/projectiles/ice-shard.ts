@@ -30,6 +30,7 @@ export function createIceShardConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.iceShard]: iceShardComponent
-      }
+      },
+      lights: []
    };
 }

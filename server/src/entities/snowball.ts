@@ -41,6 +41,7 @@ export function createSnowballConfig(yeti: Entity, size: SnowballSize): EntityCo
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.snowball]: snowballComponent
-      }
+      },
+      lights: []
    };
 }

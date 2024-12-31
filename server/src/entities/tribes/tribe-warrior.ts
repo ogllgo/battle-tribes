@@ -122,6 +122,7 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.tribeWarrior]: tribeWarriorComponent,
          [ServerComponentType.damageBox]: damageBoxComponent
-      }
+      },
+      lights: []
    };
 }

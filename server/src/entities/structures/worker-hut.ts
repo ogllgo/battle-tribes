@@ -11,6 +11,7 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -19,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.hut;
 
-export function createWorkerHutConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createWorkerHutConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWorkerHutHitboxes(), null);
    
@@ -27,7 +28,7 @@ export function createWorkerHutConfig(tribe: Tribe, connectionInfo: StructureCon
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structrureComponent = new StructureComponent(connectionInfo);
+   const structrureComponent = new StructureComponent(connectionInfo, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -42,6 +43,7 @@ export function createWorkerHutConfig(tribe: Tribe, connectionInfo: StructureCon
          [ServerComponentType.structure]: structrureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.hut]: hutComponent
-      }
+      },
+      lights: []
    };
 }

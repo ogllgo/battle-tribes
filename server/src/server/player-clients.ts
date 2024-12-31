@@ -2,7 +2,7 @@ import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData } from 
 import { BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
 import { TechID, Tech, getTechByID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Layer, { getTileX, getTileY } from "../Layer";
+import Layer from "../Layer";
 import { registerCommand } from "../commands";
 import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "../components/TribeMemberComponent";
 import { modifyBuilding } from "../entities/tribes/player";
@@ -13,7 +13,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { InventoryComponentArray, addItemToInventory, getInventory } from "../components/InventoryComponent";
 import { TribeComponentArray, recruitTribesman } from "../components/TribeComponent";
-import { Point, randInt, randItem } from "battletribes-shared/utils";
+import { getTileX, getTileY, Point, randInt, randItem } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { getTilesOfBiome } from "../census";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -32,8 +32,8 @@ import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { EntityConfig } from "../components";
 import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
-import { createItemsOverEntity } from "../components/ItemComponent";
 import { surfaceLayer } from "../layers";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 

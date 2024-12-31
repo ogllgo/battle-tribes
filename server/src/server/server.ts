@@ -18,7 +18,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -30,9 +30,10 @@ import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pus
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
-import { generateSpikyBastards } from "../world-generation/spiky-bastard-generation";
-import { surfaceLayer, layers } from "../layers";
 import { updateTribes } from "../tribes";
+import { surfaceLayer, layers } from "../layers";
+import { generateReeds } from "../world-generation/reed-generation";
+import { riverMainTiles } from "../world-generation/surface-layer-generation";
 
 /*
 
@@ -137,6 +138,8 @@ class GameServer {
       updateResourceDistributions();
       console.log("resources",performance.now() - a)
       a = performance.now();
+      
+      generateReeds(surfaceLayer, riverMainTiles);
 
       console.log("Spawning entities...");
       spawnInitialEntities();
@@ -164,6 +167,7 @@ class GameServer {
          let playerClient: PlayerClient;
 
          socket.on("close", () => {
+            // @Bug: there are cases where the playerClient is undefined here, which causes the server to crash
             handlePlayerDisconnect(playerClient);
          });
          
@@ -287,6 +291,10 @@ class GameServer {
                }
                case PacketType.devSpectateEntity: {
                   processSpectateEntityPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devSetAutogiveBaseResource: {
+                  processSetAutogiveBaseResourcesPacket(reader);
                   break;
                }
                default: {

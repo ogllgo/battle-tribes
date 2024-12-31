@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { PlanterBoxPlant, ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString, LimbAction } from "battletribes-shared/entities";
+import { ServerComponentType } from "battletribes-shared/components";
+import { Entity, EntityType, EntityTypeString, LimbAction, PlantedEntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { consumeItemFromSlot, consumeItemType, countItemType, getInventory, InventoryComponentArray, InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
@@ -88,7 +88,8 @@ export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): En
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.damageBox]: damageBoxComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -213,14 +214,14 @@ const modifySpikes = (player: Entity, spikes: Entity): void => {
    spikesComponent.isCovered = true;
 }
 
-const modifyPlanterBox = (player: Entity, planterBox: Entity, plantType: PlanterBoxPlant): void => {
+const modifyPlanterBox = (player: Entity, planterBox: Entity, plantedEntityType: PlantedEntityType): void => {
    // Don't place plant if there's already a plant
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
-   if (entityExists(planterBoxComponent.plantEntity)) {
+   if (planterBoxComponent.plant !== null && entityExists(planterBoxComponent.plant)) {
       return;
    }
    
-   placePlantInPlanterBox(planterBox, plantType);
+   placePlantInPlanterBox(planterBox, plantedEntityType);
 
    // Consume the item
 

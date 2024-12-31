@@ -131,7 +131,8 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.golem]: golemComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -159,5 +160,5 @@ export function onGolemCollision(golem: Entity, collidingEntity: Entity, collisi
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 300, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "golem", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

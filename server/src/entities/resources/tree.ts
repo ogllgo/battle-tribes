@@ -38,6 +38,7 @@ export function createTreeConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tree]: treeComponent
-      }
+      },
+      lights: []
    };
 }

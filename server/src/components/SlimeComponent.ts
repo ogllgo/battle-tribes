@@ -15,10 +15,10 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
 import { Biome } from "../../../shared/src/biomes";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -430,7 +430,7 @@ function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox:
       const damage = CONTACT_DAMAGE[slimeComponent.size];
 
       damageEntity(collidingEntity, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
-      addLocalInvulnerabilityHash(healthComponent, "slime", 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, "slime", 0.3);
    }
 }
 

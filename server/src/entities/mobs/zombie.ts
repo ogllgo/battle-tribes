@@ -82,7 +82,8 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent
-      }
+      },
+      lights: []
    };
 }
 

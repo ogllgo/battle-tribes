@@ -44,7 +44,7 @@ export const TileTypeString = {
    [TileType.fimbultur]: "fimbultur",
    [TileType.dropdown]: "dropdown",
    [TileType.stone]: "stone",
-   [TileType.stoneWallFloor]: "Stone Wall Floor"
+   [TileType.stoneWallFloor]: "Stone Wall Floor",
 } as Record<TileType, string>;
 
 export const NUM_TILE_TYPES = Object.keys(TileTypeString).length;

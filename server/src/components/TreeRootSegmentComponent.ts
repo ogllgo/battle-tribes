@@ -3,9 +3,9 @@ import { Entity } from "../../../shared/src/entities";
 import { ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { assert, randInt } from "../../../shared/src/utils";
+import { createItemsOverEntity } from "../entities/item-entity";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { createItemsOverEntity } from "./ItemComponent";
 import { TreeRootBaseComponentArray } from "./TreeRootBaseComponent";
 
 export class TreeRootSegmentComponent {

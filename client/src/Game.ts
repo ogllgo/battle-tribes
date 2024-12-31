@@ -72,6 +72,9 @@ import { Entity } from "../../shared/src/entities";
 import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 import { createTribePlanVisualiserGLContext, renderTribePlans } from "./rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { createBuildingBlockingTileShaders, renderBuildingBlockingTiles } from "./rendering/webgl/building-blocking-tiles-rendering";
+import { renderLightLevelsText } from "./rendering/light-levels-text-rendering";
+import { createLightLevelsBGShaders, renderLightLevelsBG } from "./rendering/webgl/light-levels-bg-rendering";
+import { createMithrilRichTileRenderingShaders, renderMithrilRichTileOverlays } from "./rendering/webgl/mithril-rich-tile-rendering";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -177,13 +180,18 @@ const renderLayer = (layer: Layer): void => {
    
    resetRenderOrder();
 
+   gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
+
    // @Incomplete: A whole lot of these are not layer specific
 
    renderTileShadows(layer, TileShadowType.dropdownShadow);
 
    renderSolidTiles(layer, false);
+   renderMithrilRichTileOverlays(layer, false);
    renderGrassBlockers();
+
    renderTurretRange();
+
    if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
       renderTriangleDebugData(entityDebugData);
    }
@@ -218,6 +226,7 @@ const renderLayer = (layer: Layer): void => {
    // Render walls
    renderTileShadows(layer, TileShadowType.wallShadow);
    renderSolidTiles(layer, true);
+   renderMithrilRichTileOverlays(layer, true);
    renderTileBreakProgress(layer);
    renderWallBorders(layer);
 
@@ -257,6 +266,8 @@ const renderLayer = (layer: Layer): void => {
       renderBuildingBlockingTiles();
    }
       
+   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
    renderLighting(layer);
    if (OPTIONS.debugLights) {
       renderLightingDebug(layer);
@@ -278,8 +289,8 @@ abstract class Game {
    public static lag = 0;
 
    // @Cleanup: Make these not be able to be null, just number
-   public static cursorPositionX: number | null = null;
-   public static cursorPositionY: number | null = null;
+   public static cursorX: number | null = null;
+   public static cursorY: number | null = null;
 
    // @Hack @Cleanup: remove this!
    public static playerID: number;
@@ -408,6 +419,8 @@ abstract class Game {
             createSubtileSupportShaders();
             createSlimeTrailShaders();
             createBuildingBlockingTileShaders();
+            createLightLevelsBGShaders();
+            createMithrilRichTileRenderingShaders();
             if (isDev()) {
                setupFrameGraph();
             }
@@ -456,8 +469,8 @@ abstract class Game {
       updateSounds();
       playRiverSounds();
 
-      this.cursorPositionX = calculateCursorWorldPositionX(cursorX!);
-      this.cursorPositionY = calculateCursorWorldPositionY(cursorY!);
+      this.cursorX = calculateCursorWorldPositionX(cursorX!);
+      this.cursorY = calculateCursorWorldPositionY(cursorY!);
       renderCursorTooltip();
 
       createCollapseParticles();
@@ -545,6 +558,11 @@ abstract class Game {
 
       if (OPTIONS.showSubtileSupports) {
          renderSubtileSupports();
+      }
+
+      if (OPTIONS.showLightLevels) {
+         renderLightLevelsBG();
+         renderLightLevelsText();
       }
 
       updateDebugScreenFPS();

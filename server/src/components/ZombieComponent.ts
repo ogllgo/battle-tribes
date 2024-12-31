@@ -10,7 +10,7 @@ import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
-import { createItemsOverEntity, ItemComponentArray } from "./ItemComponent";
+import { ItemComponentArray } from "./ItemComponent";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -25,6 +25,7 @@ import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { TombstoneComponentArray } from "./TombstoneComponent";
 import { entityIsStructure } from "../../../shared/src/structures";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = 3 * UtilVars.PI,
@@ -353,7 +354,7 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, actingHitbox
    // Damage and knock back the player
    damageEntity(collidingEntity, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, 150, hitDirection);
-   addLocalInvulnerabilityHash(healthComponent, "zombie", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 
    // Push the zombie away from the entity
    const flinchDirection = hitDirection + Math.PI;

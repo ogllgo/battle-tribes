@@ -97,11 +97,12 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
          const flowDirection = reader.readNumber();
          const temperature = reader.readNumber();
          const humidity = reader.readNumber();
+         const mithrilRichness = reader.readNumber();
    
          const tileX = getTileX(tileIndex);
          const tileY = getTileY(tileIndex);
    
-         const tile = new Tile(tileX, tileY, tileType, tileBiome);
+         const tile = new Tile(tileX, tileY, tileType, tileBiome, mithrilRichness);
          tiles.push(tile);
    
          if (typeof flowDirections[tileX] === "undefined") {
@@ -292,25 +293,42 @@ const readDebugData = (reader: PacketReader): EntityDebugData => {
 
    let pathData: PathData | undefined;
 
-   const pathNodes = new Array<PathfindingNodeIndex>();
-   const numPathNodes = reader.readNumber();
-   for (let i = 0; i < numPathNodes; i++) {
-      const nodeIndex = reader.readNumber();
-      pathNodes.push(nodeIndex);
-   }
-
-   const rawPathNodes = new Array<PathfindingNodeIndex>();
-   const numRawPathNodes = reader.readNumber();
-   for (let i = 0; i < numRawPathNodes; i++) {
-      const nodeIndex = reader.readNumber();
-      rawPathNodes.push(nodeIndex);
-   }
-
-   if (numPathNodes > 0 || numRawPathNodes > 0) {
-      pathData = {
-         pathNodes: pathNodes,
-         rawPathNodes: rawPathNodes
-      };
+   const hasPathData = reader.readBoolean();
+   reader.padOffset(3);
+   if (hasPathData) {
+      const goalX = reader.readNumber();
+      const goalY = reader.readNumber();
+      
+      const pathNodes = new Array<PathfindingNodeIndex>();
+      const numPathNodes = reader.readNumber();
+      for (let i = 0; i < numPathNodes; i++) {
+         const nodeIndex = reader.readNumber();
+         pathNodes.push(nodeIndex);
+      }
+   
+      const rawPathNodes = new Array<PathfindingNodeIndex>();
+      const numRawPathNodes = reader.readNumber();
+      for (let i = 0; i < numRawPathNodes; i++) {
+         const nodeIndex = reader.readNumber();
+         rawPathNodes.push(nodeIndex);
+      }
+   
+      const visitedNodes = new Array<PathfindingNodeIndex>();
+      const numVisitedNodes = reader.readNumber();
+      for (let i = 0; i < numVisitedNodes; i++) {
+         const nodeIndex = reader.readNumber();
+         visitedNodes.push(nodeIndex);
+      }
+   
+      if (numPathNodes > 0 || numRawPathNodes > 0 || numVisitedNodes > 0) {
+         pathData = {
+            goalX: goalX,
+            goalY: goalY,
+            pathNodes: pathNodes,
+            rawPathNodes: rawPathNodes,
+            visitedNodes: visitedNodes
+         };
+      }
    }
    
    return {

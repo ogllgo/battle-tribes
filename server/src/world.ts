@@ -10,19 +10,21 @@ import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
 import { addLayerBuildingBlockingTiles, layers, surfaceLayer, undergroundLayer } from "./layers";
-import generateSurfaceTerrain from "./world-generation/surface-terrain-generation";
-import { generateUndergroundTerrain } from "./world-generation/underground-terrain-generation";
 import OPTIONS from "./options";
 import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils";
 import { markWallTileInPathfinding } from "./pathfinding";
+import { generateSurfaceTerrain } from "./world-generation/surface-layer-generation";
+import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
+import { EntityConfig } from "./components";
+import { attachLightToHitbox } from "./light-levels";
 
 const enum Vars {
    START_TIME = 6
 }
 
 interface EntityJoinInfo {
-   readonly id: number;
-   readonly entityType: EntityType;
+   readonly entity: Entity;
+   readonly entityConfig: EntityConfig;
    readonly layer: Layer;
    readonly entityComponentTypes: ReadonlyArray<ServerComponentType>;
    /** Number of ticks remaining until the entity will be added. */
@@ -104,15 +106,15 @@ export function getTribes(): ReadonlyArray<Tribe> {
    return tribes;
 }
 
-export function getTribe(tribeID: number): Tribe {
-   for (let i = 0; i < tribes.length; i++) {
+export function getTribe(tribeID: number): Tribe | null {
+   for (let i = 0; i < tribes.length; i++) {``
       const tribe = tribes[i];
       if (tribe.id === tribeID) {
          return tribe;
       }
    }
 
-   throw new Error("Couldn't find a tribe with ID " + tribeID);
+   return null;
 }
 
 export function isNight(): boolean {
@@ -175,10 +177,15 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
       if (joinInfo.ticksRemaining === 0) {
-         entityTypes[joinInfo.id] = joinInfo.entityType;
-         entityLayers[joinInfo.id] = joinInfo.layer;
-         entityComponentTypes[joinInfo.id] = joinInfo.entityComponentTypes;
-         entitySpawnTicks[joinInfo.id] = ticks;
+         entityTypes[joinInfo.entity] = joinInfo.entityConfig.entityType;
+         entityLayers[joinInfo.entity] = joinInfo.layer;
+         entityComponentTypes[joinInfo.entity] = joinInfo.entityComponentTypes;
+         entitySpawnTicks[joinInfo.entity] = ticks;
+
+         // Add lights
+         for (const lightCreationInfo of joinInfo.entityConfig.lights) {
+            attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, joinInfo.entity)
+         }
 
          finalPushedIdx = i;
       } else if (shouldTickJoinInfos) {
@@ -286,7 +293,7 @@ export function destroyEntity(entity: Entity): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
 
-      if (joinInfo.id === entity) {
+      if (joinInfo.entity === entity) {
          entityJoinBuffer.splice(i, 1);
          break;
       }
@@ -303,12 +310,12 @@ export function destroyEntity(entity: Entity): void {
    }
 }
 
-export function addEntityToJoinBuffer(entity: Entity, entityType: EntityType, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
+export function addEntityToJoinBuffer(entity: Entity, entityConfig: EntityConfig, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
    // Find a spot for the entity
    
    const joinInfo: EntityJoinInfo = {
-      id: entity,
-      entityType: entityType,
+      entity: entity,
+      entityConfig: entityConfig,
       layer: layer,
       entityComponentTypes: entityComponentTypes,
       ticksRemaining: joinDelayTicks

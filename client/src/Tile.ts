@@ -13,11 +13,15 @@ export class Tile {
 
    public flowOffset = Math.random();
 
-   constructor(x: number, y: number, tileType: TileType, biome: Biome) {
+   public readonly mithrilRichness: number;
+
+   constructor(x: number, y: number, tileType: TileType, biome: Biome, mithrilRichness: number) {
       this.x = x;
       this.y = y;
 
       this.type = tileType;
       this.biome = biome;
+
+      this.mithrilRichness = mithrilRichness;
    }
 }

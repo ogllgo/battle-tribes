@@ -223,7 +223,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
             completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          } else {
-            gatherResource(entity, plan.itemType, visibleItemEntities);
+            gatherResource(entity, plan, visibleItemEntities);
          }
          break;
       }

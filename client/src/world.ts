@@ -10,7 +10,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import Layer from "./Layer";
 import { removeLightsAttachedToEntity, removeLightsAttachedToRenderPart } from "./lights";
 import { registerDirtyRenderInfo, removeEntityFromDirtyArrays } from "./rendering/render-part-matrices";
-import { getEntityRenderLayer } from "./render-layers";
+import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
@@ -109,7 +109,8 @@ export interface EntityPreCreationInfo {
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
 export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo): EntityCreationInfo {
    const renderLayer = getEntityRenderLayer(entityType, preCreationInfo);
-   const renderInfo = new EntityRenderInfo(entity, renderLayer);
+   const renderHeight = calculateRenderDepthFromLayer(renderLayer, preCreationInfo);
+   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight);
    
    // Create entity config
    const entityConfig: EntityConfig<never, never> = {

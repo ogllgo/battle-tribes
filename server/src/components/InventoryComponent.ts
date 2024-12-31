@@ -1,8 +1,8 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { createItemEntityConfig, itemEntityCanBePickedUp } from "../entities/item-entity";
+import { createItemEntityConfig } from "../entities/item-entity";
 import { ComponentArray } from "./ComponentArray";
 import { createItem } from "../items";
-import { ItemComponentArray } from "./ItemComponent";
+import { ItemComponentArray, itemEntityCanBePickedUp } from "./ItemComponent";
 import { CraftingRecipe, CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
@@ -166,13 +166,13 @@ export function pickupItemEntity(pickingUpEntity: Entity, itemEntity: Entity): b
  * Adds as much of an item as possible to any/all available inventories.
  * @returns The number of items added.
  */
-export function addItem(entity: Entity, inventoryComponent: InventoryComponent, item: Item): number {
+export function addItem(entity: Entity, inventoryComponent: InventoryComponent, itemType: ItemType, amount: number): number {
    let amountAdded = 0;
 
    for (const inventory of inventoryComponent.accessibleInventories) {
-      amountAdded += addItemToInventory(entity, inventory, item.type, item.count);
+      amountAdded += addItemToInventory(entity, inventory, itemType, amount);
 
-      if (amountAdded === item.count) {
+      if (amountAdded === amount) {
          break;
       }
    }

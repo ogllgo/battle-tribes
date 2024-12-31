@@ -29,6 +29,7 @@ export function createReedConfig(): EntityConfig<ComponentTypes> {
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.layeredRod]: layeredRodComponent
-      }
+      },
+      lights: []
    };
 }

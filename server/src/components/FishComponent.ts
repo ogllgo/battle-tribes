@@ -17,7 +17,7 @@ import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -183,7 +183,7 @@ function onTick(fish: Entity): void {
             
             damageEntity(target, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(target, 100, hitDirection);
-            addLocalInvulnerabilityHash(healthComponent, "fish", 0.3);
+            addLocalInvulnerabilityHash(target, "fish", 0.3);
          }
       }
       return;

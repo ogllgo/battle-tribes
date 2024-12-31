@@ -15,8 +15,8 @@ import { Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
 import { HealthComponentArray } from "./HealthComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,

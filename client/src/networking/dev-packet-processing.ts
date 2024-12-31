@@ -2,11 +2,12 @@ import { SafetyNodeData } from "../../../shared/src/ai-building-types";
 import { PathfindingNodeIndex } from "../../../shared/src/client-server-types";
 import { PacketReader } from "../../../shared/src/packets";
 import { readTribeBuildingSafeties, resetBuildingSafeties } from "../building-safety";
+import { updateLightLevelsFromData } from "../light-levels";
 import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { SubtileSupportInfo, setVisibleSubtileSupports } from "../rendering/webgl/subtile-support-rendering";
-import { GhostBuildingPlan, readGhostVirtualBuildings, updateVirtualBuildings, VirtualBuilding } from "../virtual-buildings";
+import { GhostBuildingPlan, readGhostVirtualBuildings, updateVirtualBuildings } from "../virtual-buildings";
 
 export function readPacketDevData(reader: PacketReader): void {
    // Subtile supports
@@ -64,6 +65,8 @@ export function readPacketDevData(reader: PacketReader): void {
 
       setVisibleSafetyNodes(visibleSafetyNodes);
    }
+
+   updateLightLevelsFromData(reader);
    
    const newVirtualBuildingsMap = new Map<number, GhostBuildingPlan>();
    resetBuildingSafeties();

@@ -1,148 +1,150 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { HealthComponent, HealthComponentArray } from "../../../components/HealthComponent";
+import { HealthComponentArray } from "../../../components/HealthComponent";
 import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
-import { InventoryComponent, InventoryComponentArray, countItemType, getInventory, inventoryIsFull } from "../../../components/InventoryComponent";
-import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
-import { PlantComponentArray, plantIsFullyGrown } from "../../../components/PlantComponent";
+import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType, inventoryIsFull } from "../../../components/InventoryComponent";
+import { TribesmanAIType } from "battletribes-shared/components";
 import { tribesmanShouldEscape } from "./tribesman-escaping";
-import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { ItemType, InventoryName, Inventory } from "battletribes-shared/items/items";
+import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { huntEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType } from "../../../world";
 import Layer from "../../../Layer";
-import { surfaceLayer } from "../../../layers";
+import { surfaceLayer, undergroundLayer } from "../../../layers";
 import { Biome } from "../../../../../shared/src/biomes";
 import { TileType } from "../../../../../shared/src/tiles";
 import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert } from "../../../../../shared/src/utils";
 import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
+import { plantedTreeIsFullyGrown } from "../../../components/TreePlantedComponent";
+import { BerryBushPlantedComponentArray } from "../../../components/BerryBushPlantedComponent";
+import { plantedIceSpikesIsFullyGrown } from "../../../components/IceSpikesPlantedComponent";
+import { TribeComponentArray } from "../../../components/TribeComponent";
 
 interface BiomeTileRequirement {
    readonly tileType: TileType;
    readonly minAmount: number;
 }
 
-export interface MaterialInfo {
-   readonly biome: Biome;
+export interface EntityHarvestingInfo {
    readonly layer: Layer;
+   readonly biome: Biome;
    readonly localBiomeRequiredTiles: ReadonlyArray<BiomeTileRequirement>;
 }
 
-const MATERIAL_INFO_RECORD: Partial<Record<ItemType, MaterialInfo>> = {
-   [ItemType.wood]: {
-      biome: Biome.grasslands,
+// @Robustness: when a new entity type is registered, this should automatically be populated with the appropriate information
+/** Record of which entities produce which item types */
+const MATERIAL_DROPPING_ENTITIES_RECORD = {
+   [ItemType.wood]: [EntityType.tree, EntityType.treeRootBase, EntityType.treeRootSegment, EntityType.treePlanted],
+   [ItemType.berry]: [EntityType.berryBush, EntityType.berryBushPlanted],
+   [ItemType.slimeball]: [EntityType.slime],
+   [ItemType.leather]: [EntityType.cow, EntityType.krumblid],
+   [ItemType.raw_beef]: [EntityType.cow],
+   [ItemType.rawYetiFlesh]: [EntityType.yeti, EntityType.frozenYeti],
+   [ItemType.rock]: [EntityType.boulder],
+   [ItemType.yeti_hide]: [EntityType.yeti, EntityType.frozenYeti],
+   [ItemType.eyeball]: [EntityType.zombie],
+   [ItemType.frostcicle]: [EntityType.iceSpikes, EntityType.iceSpikesPlanted],
+   [ItemType.seed]: [EntityType.tree, EntityType.treePlanted]
+} satisfies Partial<Record<ItemType, ReadonlyArray<EntityType>>>;
+
+const ENTITY_HARVESTING_INFO_RECORD: Partial<Record<EntityType, EntityHarvestingInfo>> = {
+   [EntityType.tree]: {
       layer: surfaceLayer,
+      biome: Biome.grasslands,
       localBiomeRequiredTiles: []
    },
-   [ItemType.slimeball]: {
-      biome: Biome.swamp,
-      layer: surfaceLayer,
-      localBiomeRequiredTiles: [
-         {
-            tileType: TileType.slime,
-            minAmount: 10
-         }
-      ]
+   [EntityType.treeRootBase]: {
+      layer: undergroundLayer,
+      biome: Biome.caves,
+      localBiomeRequiredTiles: []
+   },
+   [EntityType.treeRootSegment]: {
+      layer: undergroundLayer,
+      biome: Biome.caves,
+      localBiomeRequiredTiles: []
    }
 };
 
-const getResourceProducts = (entity: Entity): ReadonlyArray<ItemType> => {
-   switch (getEntityType(entity)) {
-      case EntityType.cow: return [ItemType.leather, ItemType.raw_beef];
-      case EntityType.berryBush: return [ItemType.berry];
-      case EntityType.tree: return [ItemType.wood, ItemType.seed];
-      case EntityType.iceSpikes: return [ItemType.frostcicle];
-      case EntityType.cactus: return [ItemType.cactus_spine];
-      case EntityType.boulder: return [ItemType.rock];
-      case EntityType.krumblid: return [ItemType.leather];
-      case EntityType.yeti: return [ItemType.yeti_hide, ItemType.raw_beef];
-      case EntityType.plant: {
-         const plantComponent = PlantComponentArray.getComponent(entity);
-         switch (plantComponent.plantType) {
-            case PlanterBoxPlant.tree: return [ItemType.wood, ItemType.seed];
-            case PlanterBoxPlant.berryBush: return [ItemType.berry];
-            case PlanterBoxPlant.iceSpikes: return [ItemType.frostcicle];
-            default: {
-               const unreachable: never = plantComponent.plantType;
-               return unreachable;
-            }
-         }
+const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: EntityType): boolean => {
+   switch (entityType) {
+      case EntityType.tree: {
+         // If the tribesman is underground, make sure they have enough items to take on the guardian
+         // @Incomplete: this won't make them go get those items yet...
+
+         const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+         const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+
+         return inventoryHasItemType(hotbar, ItemType.stone_sword);
       }
-      case EntityType.slime: return [ItemType.slimeball];
-      default: return [];
-   }
-}
-
-export function entityIsResource(entity: Entity): boolean {
-   const resourceProducts = getResourceProducts(entity);
-   return resourceProducts.length > 0;
-}
-
-const shouldGatherPlant = (plantID: number): boolean => {
-   const plantComponent = PlantComponentArray.getComponent(plantID);
-
-   switch (plantComponent.plantType) {
-      // Harvest when fully grown
-      case PlanterBoxPlant.tree:
-      case PlanterBoxPlant.iceSpikes: {
-         return plantIsFullyGrown(plantComponent);
-      }
-      // Harvest when they have fruit
-      case PlanterBoxPlant.berryBush: {
-         return plantComponent.numFruit > 0;
-      }
-   }
-}
-
-// @Incomplete: when the tribesman wants to gather a resource but there isn't enough space, should make space
-
-const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponent, inventoryIsFull: boolean, resource: Entity, resourceProducts: ReadonlyArray<ItemType>): boolean => {
-   if (resourceProducts.length === 0) {
-      return false;
-   }
-   
-   // @Incomplete
-   // If the tribesman is within the escape health threshold, make sure there wouldn't be any enemies visible while picking up the dropped item
-   // @Hack: the accessibility check doesn't work for plants in planter boxes
-   // const resourceTransformComponent = TransformComponentArray.getComponent(resource);
-   // if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent)) {
-   // // if (tribesmanShouldEscape(tribesman.type, healthComponent) || !positionIsSafeForTribesman(tribesman, resource.position.x, resource.position.y) || !entityIsAccessible(tribesman, resource, tribeComponent.tribe, getTribesmanAttackRadius(tribesman))) {
-   //    return false;
-   // }
-
-   // Only try to gather plants if they are fully grown
-   if (getEntityType(resource) === EntityType.plant && !shouldGatherPlant(resource)) {
-      return false;
-   }
-
-   // If the tribesman's inventory is full, make sure the tribesman would be able to pick up the products the resource would produce
-   if (inventoryIsFull) {
-      // If any of the resource products can't be picked up, don't try to gather.
-      // This is so the tribesmen don't leave un-picked-up items laying around.
-      for (const itemType of resourceProducts) {
-         if (!tribeMemberCanPickUpItem(tribesman, itemType)) {
-            return false;
-         }
+      // @Temporary
+      case EntityType.treePlanted: {
+         return false;
       }
    }
 
    return true;
 }
 
+// @Incomplete: when the tribesman wants to gather a resource but there isn't enough space, should make space
+
+// @Incomplete
+// const shouldGatherResource = (tribesman: Entity, healthComponent: HealthComponent, inventoryIsFull: boolean, resource: Entity, resourceProducts: ReadonlyArray<ItemType>): boolean => {
+//    if (resourceProducts.length === 0) {
+//       return false;
+//    }
+   
+//    // @Incomplete
+//    // If the tribesman is within the escape health threshold, make sure there wouldn't be any enemies visible while picking up the dropped item
+//    // @Hack: the accessibility check doesn't work for plants in planter boxes
+//    // const resourceTransformComponent = TransformComponentArray.getComponent(resource);
+//    // if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent)) {
+//    // // if (tribesmanShouldEscape(tribesman.type, healthComponent) || !positionIsSafeForTribesman(tribesman, resource.position.x, resource.position.y) || !entityIsAccessible(tribesman, resource, tribeComponent.tribe, getTribesmanAttackRadius(tribesman))) {
+//    //    return false;
+//    // }
+
+//    // If the tribesman's inventory is full, make sure the tribesman would be able to pick up the products the resource would produce
+//    if (inventoryIsFull) {
+//       // If any of the resource products can't be picked up, don't try to gather.
+//       // This is so the tribesmen don't leave un-picked-up items laying around.
+//       for (const itemType of resourceProducts) {
+//          if (!tribeMemberCanPickUpItem(tribesman, itemType)) {
+//             return false;
+//          }
+//       }
+//    }
+
+//    return true;
+// }
+
+const resourceIsHarvestable = (resource: Entity, resourceEntityType: EntityType): boolean => {
+   switch (resourceEntityType) {
+      case EntityType.treePlanted: {
+         return plantedTreeIsFullyGrown(resource);
+      }
+      case EntityType.berryBushPlanted: {
+         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(resource);
+         return berryBushPlantedComponent.numFruit > 0;
+      }
+      case EntityType.iceSpikesPlanted: {
+         return plantedIceSpikesIsFullyGrown(resource);
+      }
+      default: {
+         return true;
+      }
+   }
+}
+
 const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const healthComponent = HealthComponentArray.getComponent(tribesman);
-   const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    
-   // @Incomplete: Doesn't account for room in backpack/other
-   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   const isFull = inventoryIsFull(hotbarInventory);
+   const targetEntityTypes = MATERIAL_DROPPING_ENTITIES_RECORD[gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD];
+   assert(typeof targetEntityTypes !== "undefined");
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestResource: Entity | undefined;
@@ -150,18 +152,27 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
    for (let i = 0; i < visibleEntities.length; i++) {
       const resource = visibleEntities[i];
       
-      const resourceProducts = getResourceProducts(resource);
-      if (!shouldGatherResource(tribesman, healthComponent, isFull, resource, resourceProducts)) {
+      const entityType = getEntityType(resource);
+      // @Cleanup: cast
+      if (!(targetEntityTypes as any).includes(entityType)) {
+         continue;
+      }
+
+      if (!resourceIsHarvestable(resource, entityType)) {
+         continue;
+      }
+
+      // @Speed
+      // @Incomplete: goal radius doesn't match up with the hunting
+      if (!pathToEntityExists(tribesman, resource, 32)) {
          continue;
       }
       
       const resourceTransformComponent = TransformComponentArray.getComponent(resource);
       const dist = transformComponent.position.calculateDistanceBetween(resourceTransformComponent.position);
-      if (resourceProducts.some(itemType => itemType === gatheredItemType)) {
-         if (dist < minDist) {
-            closestResource = resource;
-            minDist = dist;
-         }
+      if (dist < minDist) {
+         closestResource = resource;
+         minDist = dist;
       }
    }
    
@@ -207,32 +218,81 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
    return closestDroppedItem;
 }
 
-export function tribesmanGoPickupItemEntity(tribesman: Entity, pickupTarget: Entity): void {
+const goPickupItemEntity = (tribesman: Entity, pickupTarget: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(pickupTarget);
    
-   pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+   pathfindTribesman(tribesman, targetTransformComponent.position.x, targetTransformComponent.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
    tribesmanAIComponent.currentAIType = TribesmanAIType.pickingUpDroppedItems;
 }
 
+const getTargettedEntityType = <T extends keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD>(tribesman: Entity, gatheredItemType: T): (typeof MATERIAL_DROPPING_ENTITIES_RECORD[T])[number] => {
+   const layer = getEntityLayer(tribesman);
+   
+   // @Cleanup: why is this cast needed??
+   switch (gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD) {
+      case ItemType.wood: {
+         // If the tribesman is underground and they aren't powerful enough to take on a guardian (to get wood),
+         // go for tree roots instead
+         if (layer === undergroundLayer) {
+            // @Incomplete: this won't make them go get those items yet...
+   
+            const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+            const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+   
+            if (!inventoryHasItemType(hotbar, ItemType.stone_sword)) {
+               return EntityType.treeRootBase;
+            }
+         }
+         
+         return EntityType.tree;
+      }
+      // @Incomplete: EntityType.berryBushPlanted
+      case ItemType.berry: return EntityType.berryBush;
+      case ItemType.slimeball: return EntityType.slime;
+      // @Incomplete: EntityType.krumblid
+      case ItemType.leather: return EntityType.cow;
+      case ItemType.raw_beef: return EntityType.cow;
+      // @Incomplete: EntityType.frozenYeti
+      case ItemType.rawYetiFlesh: return EntityType.yeti;
+      case ItemType.rock: return EntityType.boulder;
+      // @Incomplete: EntityType.frozenYeti
+      case ItemType.yeti_hide: return EntityType.yeti;
+      case ItemType.eyeball: return EntityType.zombie;
+      // @Incomplete: EntityType.iceSpikesPlanted
+      case ItemType.frostcicle: return EntityType.iceSpikes;
+      // @Incomplete: EntityType.treePlanted
+      case ItemType.seed: return EntityType.tree;
+   }
+}
+
 /** Controls the tribesman to gather the specified item types. */
-export function gatherResource(tribesman: Entity, itemType: ItemType, visibleItemEntities: ReadonlyArray<Entity>): void {
-   // @Incomplete:
-   // level 1) explore randomly if not gathering
-   // level 2) remember which places the tribesman has been to and go there to get more of those resources
+export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, visibleItemEntities: ReadonlyArray<Entity>): void {
+   const gatheredItemType = gatherPlan.itemType;
+
+   // If the tribe has autogiveBaseResources enabled, then just give all of the item required
+   const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   if (tribeComponent.tribe.autogiveBaseResources) {
+      const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+      const numItemsInInventory = countItemType(inventoryComponent, gatheredItemType);
+
+      const numToGive = gatherPlan.amount - numItemsInInventory;
+      addItem(tribesman, inventoryComponent, gatheredItemType, numToGive);
+      return;
+   }
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
    // First see if there are any items which match which we can pick up
-   const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, itemType);
+   const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, gatheredItemType);
    if (itemPickupTarget !== null) {
-      tribesmanGoPickupItemEntity(tribesman, itemPickupTarget);
+      goPickupItemEntity(tribesman, itemPickupTarget);
       return;
    }
    
-   // See if there are any entities they can harvest
-   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, itemType);
+   // See if there are any entities which can be harvested
+   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemType);
    if (harvestTarget !== null) {
       huntEntity(tribesman, harvestTarget, false);
       return;
@@ -240,14 +300,17 @@ export function gatherResource(tribesman: Entity, itemType: ItemType, visibleIte
 
    const layer = getEntityLayer(tribesman);
    
-   const materialInfo = MATERIAL_INFO_RECORD[itemType];
-   assert(typeof materialInfo !== "undefined");
+   // @Cleanup: cast
+   const targettedEntityType = getTargettedEntityType(tribesman, gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD);
+   
+   const harvestingInfo = ENTITY_HARVESTING_INFO_RECORD[targettedEntityType];
+   assert(typeof harvestingInfo !== "undefined");
 
    // If the entity isn't in the right biome, go to the right biome
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const currentTile = getEntityTile(transformComponent);
-   if (layer.getTileBiome(currentTile) !== materialInfo.biome) {
-      moveTribesmanToBiome(tribesman, materialInfo);
+   if (layer.getTileBiome(currentTile) !== harvestingInfo.biome) {
+      moveTribesmanToBiome(tribesman, harvestingInfo);
       return;
    }
 

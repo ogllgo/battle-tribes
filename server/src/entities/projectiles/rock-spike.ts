@@ -26,6 +26,7 @@ export function createRockSpikeConfig(size: number, frozenYeti: Entity): EntityC
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.rockSpike]: rockSpikeComponent
-      }
+      },
+      lights: []
    };
 }

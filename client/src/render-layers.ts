@@ -17,6 +17,7 @@ export enum RenderLayer {
    reeds,
    lowEntities,
    defaultEntities,
+   mithril,
    projectiles,
    highEntities,
    blueprints,
@@ -62,6 +63,9 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
       // Grass
       case EntityType.grassStrand: {
          return RenderLayer.grass;
+      }
+      case EntityType.mithrilOreNode: {
+         return RenderLayer.mithril;
       }
       // Decorations
       case EntityType.decoration: {
@@ -137,4 +141,19 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
          return RenderLayer.defaultEntities;
       }
    }
+}
+
+export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, preCreationInfo: EntityPreCreationInfo): number {
+   /** Variation between 0 and 1 */
+   let variation: number;
+   if (renderLayer === RenderLayer.mithril) {
+      const mithrilOreNodeComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.mithrilOreNode]!;
+      variation = mithrilOreNodeComponentParams.renderHeight;
+   } else {
+      variation = Math.random();
+   }
+   
+   const rawRenderHeight = renderLayer + variation * 0.9;
+   // Convert from [0, NUM_RENDER_LAYERS] to [-1, 1];
+   return rawRenderHeight / NUM_RENDER_LAYERS * 2 - 1;
 }

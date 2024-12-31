@@ -10,7 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    /** Average number of zombies that are created by the tombstone in a second */

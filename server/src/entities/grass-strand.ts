@@ -29,6 +29,7 @@ export function createGrassStrandConfig(): EntityConfig<ComponentTypes> {
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.layeredRod]: layeredRodComponent
-      }
+      },
+      lights: []
    };
 }

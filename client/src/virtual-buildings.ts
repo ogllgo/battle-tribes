@@ -249,7 +249,7 @@ export function readGhostVirtualBuildings(reader: PacketReader, virtualBuildings
 }
 
 export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
-   if (Game.cursorPositionX === null || Game.cursorPositionY === null) {
+   if (Game.cursorX === null || Game.cursorY === null) {
       return null;
    }
    
@@ -259,7 +259,7 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
       const ghostBuildingPlan = pair[1];
       const virtualBuilding = ghostBuildingPlan.virtualBuilding;
       
-      const dist = distance(Game.cursorPositionX, Game.cursorPositionY, virtualBuilding.position.x, virtualBuilding.position.y);
+      const dist = distance(Game.cursorX, Game.cursorY, virtualBuilding.position.x, virtualBuilding.position.y);
       if (dist < minDist) {
          minDist = dist;
          closestGhostBuildingPlan = ghostBuildingPlan;

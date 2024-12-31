@@ -56,6 +56,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [maxGreenSafety, setMaxGreenSafety] = useState(OPTIONS.maxGreenSafety);
    const [debugLights, setDebugLights] = useState(OPTIONS.debugLights);
    const [showSubtileSupport, setShowSubtileSupport] = useState(OPTIONS.showSubtileSupports);
+   const [showLightLevels, setShowLightLevels] = useState(OPTIONS.showLightLevels);
    
    useEffect(() => {
       if (typeof Board.time !== "undefined") {
@@ -136,6 +137,11 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       OPTIONS.showSubtileSupports = !showSubtileSupport;
       setShowSubtileSupport(!showSubtileSupport);
    }, [showSubtileSupport]);
+
+   const toggleShowLightLevels = useCallback(() => {
+      OPTIONS.showLightLevels = !showLightLevels;
+      setShowLightLevels(!showLightLevels);
+   }, [showLightLevels]);
 
    const toggleAIBuilding = useCallback(() => {
       const toggleResult = !showSafetyNodes || !showBuildingSafetys || !showBuildingPlans || !showRestrictedAreas || !showWallConnections;
@@ -238,6 +244,12 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
             <label className={showSubtileSupport ? "enabled" : undefined}>
                <input checked={showSubtileSupport} name="show-subtile-support-checkbox" type="checkbox" onChange={toggleShowSubtileSupport} />
                Subtile support
+            </label>
+         </li>
+         <li>
+            <label className={showLightLevels ? "enabled" : undefined}>
+               <input checked={showLightLevels} name="show-light-levels-checkbox" type="checkbox" onChange={toggleShowLightLevels} />
+               Light levels
             </label>
          </li>
       </ul>

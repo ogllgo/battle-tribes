@@ -426,3 +426,32 @@ export function getAbsAngleDiff(sourceAngle: number, targetAngle: number): numbe
 export function dotAngles(angle1: number, angle2: number): number {
    return Math.sin(angle1) * Math.sin(angle2) + Math.cos(angle1) * Math.cos(angle2);
 }
+
+export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
+   return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_BOARD_DIMENSIONS + tileX + Settings.EDGE_GENERATION_DISTANCE;
+}
+
+export function getTileX(tileIndex: TileIndex): number {
+   return tileIndex % Settings.FULL_BOARD_DIMENSIONS - Settings.EDGE_GENERATION_DISTANCE;
+}
+
+export function getTileY(tileIndex: TileIndex): number {
+   return Math.floor(tileIndex / Settings.FULL_BOARD_DIMENSIONS) - Settings.EDGE_GENERATION_DISTANCE;
+}
+
+export function tileIsInWorld(tileX: number, tileY: number): boolean {
+   return tileX >= 0 && tileX < Settings.BOARD_DIMENSIONS && tileY >= 0 && tileY < Settings.BOARD_DIMENSIONS;
+}
+
+export function tileIsInWorldIncludingEdges(tileX: number, tileY: number): boolean {
+   return tileX >= -Settings.EDGE_GENERATION_DISTANCE && tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE && tileY >= -Settings.EDGE_GENERATION_DISTANCE && tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE;
+}
+
+export function positionIsInWorld(x: number, y: number): boolean {
+   return x >= 0 && x < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE && y >= 0 && y < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE;
+}
+
+/** Returns x modulo n (according to the mathematical definition related to congruence) */
+export function mod(x: number, n: number): number {
+   return ((x % n) + n) % n;
+}

@@ -11,6 +11,7 @@ import { TribeComponent } from "../components/TribeComponent";
 import { createNormalStructureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { cloneHitbox, Hitbox } from "../../../shared/src/boxes/boxes";
 import { StructureComponent } from "../components/StructureComponent";
+import { VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -42,7 +43,7 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): StructureT
    }
 }
 
-export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity): EntityConfig<ComponentTypes> {
+export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.collisionBit = COLLISION_BITS.none;
    transformComponent.collisionMask = 0;
@@ -65,7 +66,7 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
    const healthComponent = new HealthComponent(5);
    
    // @Incomplete: connection info?
-   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo());
+   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo(), virtualStructure);
    
    const blueprintComponent = new BlueprintComponent(blueprintType, associatedEntityID);
 
@@ -79,6 +80,7 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.blueprint]: blueprintComponent,
          [ServerComponentType.tribe]: tribeComponent
-      }
+      },
+      lights: []
    };
 }

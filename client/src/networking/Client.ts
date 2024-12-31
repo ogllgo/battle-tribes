@@ -67,7 +67,7 @@ export function getVisibleBuildingPlans(): ReadonlyArray<BuildingPlanData> {
 }
 
 export function getHoveredBuildingPlan(): BuildingPlanData | null {
-   if (Game.cursorPositionX === null || Game.cursorPositionY === null) {
+   if (Game.cursorX === null || Game.cursorY === null) {
       return null;
    }
    
@@ -76,7 +76,7 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    for (let i = 0; i < buildingPlans.length; i++) {
       const plan = buildingPlans[i];
       
-      const cursorDist = distance(plan.x, plan.y, Game.cursorPositionX, Game.cursorPositionY);
+      const cursorDist = distance(plan.x, plan.y, Game.cursorX, Game.cursorY);
       if (cursorDist < minDist) {
          minDist = cursorDist;
          closestPlanToCursor = plan;

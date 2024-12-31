@@ -56,7 +56,10 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.tribeWarrior]: {},
    [ServerComponentType.healingTotem]: {},
    [ServerComponentType.planterBox]: {},
-   [ServerComponentType.plant]: {},
+   [ServerComponentType.planted]: {},
+   [ServerComponentType.treePlanted]: {},
+   [ServerComponentType.berryBushPlanted]: {},
+   [ServerComponentType.iceSpikesPlanted]: {},
    [ServerComponentType.structure]: {},
    [ServerComponentType.fence]: {},
    [ServerComponentType.fenceGate]: {},
@@ -91,6 +94,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.aiAssignment]: {},
    [ServerComponentType.treeRootBase]: {},
    [ServerComponentType.treeRootSegment]: {},
+   [ServerComponentType.mithrilOreNode]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

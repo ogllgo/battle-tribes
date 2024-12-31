@@ -75,7 +75,11 @@ export const enum ItemType {
    woodenBracings,
    fireTorch,
    slurb,
-   slurbTorch
+   slurbTorch,
+   rawYetiFlesh,
+   cookedYetiFlesh,
+   mithrilOre,
+   mithrilBar
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -150,7 +154,11 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.woodenBracings]: "Wooden Bracings",
    [ItemType.fireTorch]: "Fire Torch",
    [ItemType.slurb]: "Slurb",
-   [ItemType.slurbTorch]: "Slurb Torch"
+   [ItemType.slurbTorch]: "Slurb Torch",
+   [ItemType.rawYetiFlesh]: "Raw Yeti Flesh",
+   [ItemType.cookedYetiFlesh]: "Cooked Yeti Flesh",
+   [ItemType.mithrilOre]: "Mithril Ore",
+   [ItemType.mithrilBar]: "Mithril Bar",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -475,6 +483,10 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.fireTorch]: "placeable",
    [ItemType.slurb]: "material",
    [ItemType.slurbTorch]: "placeable",
+   [ItemType.rawYetiFlesh]: "healing",
+   [ItemType.cookedYetiFlesh]: "healing",
+   [ItemType.mithrilOre]: "material",
+   [ItemType.mithrilBar]: "material",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -540,7 +552,7 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.cooked_beef]: {
       stackSize: 99,
-      healAmount: 5,
+      healAmount: 3,
       consumeTime: 1.5,
       consumableItemCategory: ConsumableItemCategory.food
    },
@@ -858,6 +870,24 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.slurbTorch
    },
+   [ItemType.rawYetiFlesh]: {
+      stackSize: 99,
+      consumeTime: 1.5,
+      healAmount: 1,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.cookedYetiFlesh]: {
+      stackSize: 99,
+      consumeTime: 1.5,
+      healAmount: 5,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.mithrilOre]: {
+      stackSize: 99
+   },
+   [ItemType.mithrilBar]: {
+      stackSize: 99
+   }
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -933,7 +963,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.fireTorch]: {
       torch: {
          lightIntensity: 1,
-         lightStrength: 1.8,
+         lightStrength: 2,
          lightRadius: 10,
          lightR: 1,
          lightG: 0.6,
@@ -952,14 +982,18 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    },
    [ItemType.slurbTorch]: {
       torch: {
-         lightIntensity: 0.7,
-         lightStrength: 1.5,
+         lightIntensity: 0.8,
+         lightStrength: 2,
          lightRadius: 10,
          lightR: 1,
          lightG: 0.4,
          lightB: 1
       }
    },
+   [ItemType.rawYetiFlesh]: {},
+   [ItemType.cookedYetiFlesh]: {},
+   [ItemType.mithrilOre]: {},
+   [ItemType.mithrilBar]: {},
 };
 
 // Some typescript wizardry

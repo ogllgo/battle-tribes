@@ -1,11 +1,12 @@
 import { EntityInfo } from "../../shared/src/board-interface";
 import { Entity } from "../../shared/src/entities";
 import { WorldInfo } from "../../shared/src/structures";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "./Layer";
+import Layer from "./Layer";
 import { getEntityType } from "./world";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
+import { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../../shared/src/utils";
 
 // @Cleanup: this should probably be layerInfos
 const worldInfos = new Array<WorldInfo>();

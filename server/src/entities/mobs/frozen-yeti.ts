@@ -93,7 +93,8 @@ export function createFrozenYetiConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.frozenYeti]: frozenYetiComponent
-      }
+      },
+      lights: []
    };
 }
 
@@ -125,6 +126,6 @@ export function onFrozenYetiCollision(frozenYeti: Entity, collidingEntity: Entit
       damageEntity(collidingEntity, frozenYeti, 5, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, 250, hitDirection);
 
-      addLocalInvulnerabilityHash(healthComponent, "frozen_yeti", 0.3);
+      addLocalInvulnerabilityHash(collidingEntity, "frozen_yeti", 0.3);
    }
 }

@@ -31,13 +31,13 @@ const entityIsImmuneToStatusEffect = (statusEffectComponent: StatusEffectCompone
    return (statusEffectComponent.statusEffectImmunityBitset & statusEffect) !== 0;
 }
 
-export function applyStatusEffect(entityID: number, statusEffect: StatusEffect, durationTicks: number): void {
-   const statusEffectComponent = StatusEffectComponentArray.getComponent(entityID);
+export function applyStatusEffect(entity: Entity, statusEffect: StatusEffect, durationTicks: number): void {
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    if (entityIsImmuneToStatusEffect(statusEffectComponent, statusEffect)) {
       return;
    }
 
-   StatusEffectComponentArray.activateComponent(statusEffectComponent, entityID);
+   StatusEffectComponentArray.activateComponent(entity);
    
    if (!hasStatusEffect(statusEffectComponent, statusEffect)) {
       // New status effect
@@ -46,8 +46,8 @@ export function applyStatusEffect(entityID: number, statusEffect: StatusEffect, 
       statusEffectComponent.activeStatusEffectTicksElapsed.push(0);
       statusEffectComponent.activeStatusEffectTicksRemaining.push(durationTicks);
 
-      if (PhysicsComponentArray.hasComponent(entityID)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(entityID);
+      if (PhysicsComponentArray.hasComponent(entity)) {
+         const physicsComponent = PhysicsComponentArray.getComponent(entity);
          physicsComponent.moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
       }
    } else {

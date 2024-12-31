@@ -12,6 +12,7 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -24,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
 // @Memory
 const HEALTHS = [5, 20];
 
-export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tribe, material: BuildingMaterial): EntityConfig<ComponentTypes> {
+export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(hitboxes, null);
    
@@ -32,7 +33,7 @@ export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tri
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo());
+   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo(), virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -50,6 +51,7 @@ export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tri
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.bracings]: bracingsComponent
-      }
+      },
+      lights: []
    };
 }

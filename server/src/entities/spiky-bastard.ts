@@ -34,6 +34,7 @@ export function createSpikyBastardConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.spikyBastard]: spikyBastardComponent
-      }
+      },
+      lights: []
    };
 }

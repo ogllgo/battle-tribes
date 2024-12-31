@@ -1,8 +1,8 @@
 import { Entity, EntityType, NUM_ENTITY_TYPES } from "battletribes-shared/entities";
-import { TileType, NUM_TILE_TYPES } from "battletribes-shared/tiles";
+import { TileType } from "battletribes-shared/tiles";
 import { Biome } from "../../shared/src/biomes";
-import Layer, { getTileX, getTileY, tileIsInWorldIncludingEdges } from "./Layer";
-import { TileIndex } from "battletribes-shared/utils";
+import Layer from "./Layer";
+import { getTileX, getTileY, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
 import { getEntityType } from "./world";
 import { layers } from "./layers";
 import { Settings } from "../../shared/src/settings";

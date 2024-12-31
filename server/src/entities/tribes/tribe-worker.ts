@@ -97,6 +97,7 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.damageBox]: damageBoxComponent
-      }
+      },
+      lights: []
    };
 }

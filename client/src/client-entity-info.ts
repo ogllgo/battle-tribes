@@ -170,8 +170,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.healingTotem]: {
       name: "Healing Totem"
    },
-   [EntityType.plant]: {
-      name: "Plant"
+   [EntityType.treePlanted]: {
+      name: "Planted Tree"
+   },
+   [EntityType.berryBushPlanted]: {
+      name: "Planted Berry Bush"
+   },
+   [EntityType.iceSpikesPlanted]: {
+      name: "Planted Ice Spikes"
    },
    [EntityType.fence]: {
       name: "Fence"
@@ -232,6 +238,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.treeRootSegment]: {
       name: "Tree Root Segment"
+   },
+   [EntityType.mithrilOreNode]: {
+      name: "Mithril Ore Node"
    }
 };
 

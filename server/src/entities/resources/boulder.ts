@@ -34,6 +34,7 @@ export function createBoulderConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.boulder]: boulderComponent
-      }
+      },
+      lights: []
    };
 }

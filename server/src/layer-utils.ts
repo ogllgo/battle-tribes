@@ -1,9 +1,9 @@
 import { boxIsWithinRange } from "../../shared/src/boxes/boxes";
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import { Point } from "../../shared/src/utils";
+import { Point, positionIsInWorld } from "../../shared/src/utils";
 import { TransformComponentArray } from "./components/TransformComponent";
-import Layer, { positionIsInWorld } from "./Layer";
+import Layer from "./Layer";
 
 export function getDistanceToClosestEntity(layer: Layer, position: Point): number {
    let minDistance = 2000;

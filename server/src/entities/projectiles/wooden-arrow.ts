@@ -41,7 +41,8 @@ export function createWoodenArrowConfig(tribe: Tribe, owner: Entity): EntityConf
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
-      }
+      },
+      lights: []
    };
 }
 

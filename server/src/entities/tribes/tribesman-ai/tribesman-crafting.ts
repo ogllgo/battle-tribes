@@ -57,7 +57,7 @@ export function goCraftItem(tribesman: Entity, recipe: CraftingRecipe, tribe: Tr
 
       const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
       
-      const isFinished = pathfindTribesman(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.throwError);
+      const isFinished = pathfindTribesman(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       if (!isFinished) {
          const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);

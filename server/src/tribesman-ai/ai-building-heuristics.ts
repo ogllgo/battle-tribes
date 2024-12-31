@@ -5,7 +5,7 @@ import Tribe from "../Tribe";
 import { SafetyNode, addHitboxesOccupiedNodes, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
-import TribeBuildingLayer, { VirtualBuilding } from "./building-plans/TribeBuildingLayer";
+import TribeBuildingLayer, { VirtualStructure } from "./building-plans/TribeBuildingLayer";
 
 const enum Vars {
    /** Minimum safety that buildings should have */
@@ -175,7 +175,7 @@ const getAverageBuildingNodeSafety = (buildingLayer: TribeBuildingLayer, occupie
    return averageSafety / occupiedIndexes.size;
 }
 
-export function getBuildingSafety(tribe: Tribe, virtualBuilding: VirtualBuilding, safetyInfo: PotentialPlanSafetyData | null): number {
+export function getBuildingSafety(tribe: Tribe, virtualBuilding: VirtualStructure, safetyInfo: PotentialPlanSafetyData | null): number {
    const entityType = virtualBuilding.entityType as InfrastructureBuildingType;
    if (typeof BASE_BUILDING_WEIGHTS[entityType] === "undefined") {
       throw new Error("Base building weight not defined for entity type " + EntityTypeString[entityType]);

@@ -33,6 +33,7 @@ export function createTreeRootSegmentConfig(root: Entity): EntityConfig<Componen
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.treeRootSegment]: treeRootSegmentComponent
-      }
+      },
+      lights: []
    };
 }

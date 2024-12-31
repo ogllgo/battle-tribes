@@ -16,6 +16,7 @@ import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { AmmoBoxComponent } from "../../components/AmmoBoxComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { BallistaComponent } from "../../components/BallistaComponent";
+import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -28,7 +29,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.inventory
    | ServerComponentType.ballista;
 
-export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo): EntityConfig<ComponentTypes> {
+export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createBallistaHitboxes(), null);
    
@@ -36,7 +37,7 @@ export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConn
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
    
-   const structureComponent = new StructureComponent(connectionInfo);
+   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 
@@ -66,6 +67,7 @@ export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConn
          [ServerComponentType.ammoBox]: ammoBoxComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.ballista]: ballistaComponent
-      }
+      },
+      lights: []
    };
 }

@@ -1,15 +1,15 @@
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { Biome } from "../../../shared/src/biomes";
-import { TileIndex } from "../../../shared/src/utils";
-import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld } from "../Layer";
+import { getTileIndexIncludingEdges, getTileX, getTileY, TileIndex, tileIsInWorld } from "../../../shared/src/utils";
+import Layer from "../Layer";
 import { Settings } from "../../../shared/src/settings";
 
 export interface LocalBiome {
    readonly biome: Biome;
    readonly layer: Layer;
    readonly tiles: ReadonlyArray<TileIndex>;
-   /** All tiles which aren't outside the border */
+   /** All tiles which aren't outside the border, which AREN'T WALLS. */
    readonly tilesInBorder: ReadonlyArray<TileIndex>;
    /** Stores how many tiles of each type there are in the local chunk */
    readonly tileCensus: Partial<Record<TileType, number>>;
@@ -50,9 +50,9 @@ export function tileHasWallSubtile(subtileTypes: Float32Array, tileX: number, ti
    return false;
 }
 
-const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTiles: Set<TileIndex>, tileX: number, tileY: number): ReadonlyArray<TileIndex> => {
+const getConnectedBiomeTiles = (layer: Layer, processedTiles: Set<TileIndex>, tileX: number, tileY: number): ReadonlyArray<TileIndex> => {
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-   const targetBiome = tileBiomes[tileIndex];
+   const targetBiome = layer.getTileBiome(tileIndex);
 
    processedTiles.add(tileIndex);
    
@@ -69,8 +69,8 @@ const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTil
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX, currentTileY + 1);
          if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
+            const biome = layer.getTileBiome(tileIndex);
+            if (biome === targetBiome && !layer.tileHasWallSubtile(tileIndex)) {
                tilesToCheck.push(tileIndex);
                connectedTiles.push(tileIndex);
                processedTiles.add(tileIndex);
@@ -82,8 +82,8 @@ const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTil
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX + 1, currentTileY);
          if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
+            const biome = layer.getTileBiome(tileIndex);
+            if (biome === targetBiome && !layer.tileHasWallSubtile(tileIndex)) {
                tilesToCheck.push(tileIndex);
                connectedTiles.push(tileIndex);
                processedTiles.add(tileIndex);
@@ -95,8 +95,8 @@ const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTil
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX, currentTileY - 1);
          if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
+            const biome = layer.getTileBiome(tileIndex);
+            if (biome === targetBiome && !layer.tileHasWallSubtile(tileIndex)) {
                tilesToCheck.push(tileIndex);
                connectedTiles.push(tileIndex);
                processedTiles.add(tileIndex);
@@ -108,8 +108,8 @@ const getConnectedBiomeTiles = (tileBiomes: Readonly<Float32Array>, processedTil
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX - 1, currentTileY);
          if (!processedTiles.has(tileIndex)) {
-            const biome = tileBiomes[tileIndex];
-            if (biome === targetBiome) {
+            const biome = layer.getTileBiome(tileIndex);
+            if (biome === targetBiome && !layer.tileHasWallSubtile(tileIndex)) {
                tilesToCheck.push(tileIndex);
                connectedTiles.push(tileIndex);
                processedTiles.add(tileIndex);
@@ -135,7 +135,7 @@ export function groupLocalBiomes(layer: Layer): void {
          }
 
          // New tile! Make a local biome out of it
-         const connectedTiles = getConnectedBiomeTiles(tileBiomes, processedTiles, tileX, tileY);
+         const connectedTiles = getConnectedBiomeTiles(layer, processedTiles, tileX, tileY);
 
          let totalTileX = 0;
          let totalTileY = 0;

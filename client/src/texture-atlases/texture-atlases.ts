@@ -356,6 +356,11 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tree-root-segment/tree-root-segment-2.png",
    "entities/tree-root-segment/tree-root-segment-3.png",
    "entities/tree-root-segment/tree-root-segment-4.png",
+   "entities/mithril-ore-node/mithril-ore-node-small-1.png",
+   "entities/mithril-ore-node/mithril-ore-node-small-2.png",
+   "entities/mithril-ore-node/mithril-ore-node-medium-1.png",
+   "entities/mithril-ore-node/mithril-ore-node-medium-2.png",
+   "entities/mithril-ore-node/mithril-ore-node-large-1.png",
 ];
 
 const addTextureSource = (textureSource: string): void => {

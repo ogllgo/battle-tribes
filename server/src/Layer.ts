@@ -2,7 +2,7 @@ import { WaterRockData, RiverSteppingStoneData, ServerTileUpdateData } from "bat
 import { Entity } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { NUM_TILE_TYPES, SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, Point, TileIndex } from "battletribes-shared/utils";
+import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, TileIndex } from "battletribes-shared/utils";
 import { Biome } from "battletribes-shared/biomes";
 import { CollisionGroup } from "battletribes-shared/collision-groups";
 import { getSubtileIndex } from "battletribes-shared/subtiles";
@@ -12,6 +12,8 @@ import { EntityPairCollisionInfo, GlobalCollisionInfo } from "./collision-detect
 import { MinedSubtileInfo } from "./collapses";
 import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 import { LocalBiome } from "./world-generation/terrain-generation-utils";
+import { LightLevelNode } from "../../shared/src/light-levels";
+import { LightID } from "./light-levels";
 
 interface WallSubtileUpdate {
    readonly subtileIndex: number;
@@ -77,40 +79,6 @@ const createNodeGroupIDs = (): Array<Array<number>> => {
    return nodeGroupIDs;
 }
 
-export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
-   return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_BOARD_DIMENSIONS + tileX + Settings.EDGE_GENERATION_DISTANCE;
-}
-
-export function getTileX(tileIndex: TileIndex): number {
-   return tileIndex % Settings.FULL_BOARD_DIMENSIONS - Settings.EDGE_GENERATION_DISTANCE;
-}
-
-export function getTileY(tileIndex: TileIndex): number {
-   return Math.floor(tileIndex / Settings.FULL_BOARD_DIMENSIONS) - Settings.EDGE_GENERATION_DISTANCE;
-}
-
-export function tileIsInWorld(tileX: number, tileY: number): boolean {
-   return tileX >= 0 && tileX < Settings.BOARD_DIMENSIONS && tileY >= 0 && tileY < Settings.BOARD_DIMENSIONS;
-}
-
-export function tileIsInWorldIncludingEdges(tileX: number, tileY: number): boolean {
-   return tileX >= -Settings.EDGE_GENERATION_DISTANCE && tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE && tileY >= -Settings.EDGE_GENERATION_DISTANCE && tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE;
-}
-
-export function positionIsInWorld(x: number, y: number): boolean {
-   return x >= 0 && x < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE && y >= 0 && y < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE;
-}
-
-export function getTileIndexFromPos(x: number, y: number): TileIndex {
-   const tileX = Math.floor(x / Settings.TILE_SIZE);
-   const tileY = Math.floor(y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
-}
-
-export function getChunkIndex(chunkX: number, chunkY: number): number {
-   return chunkY * Settings.BOARD_SIZE + chunkX;
-}
-
 const createInitialChunksArray = (): Array<Chunk> => {
    const chunks = new Array<Chunk>();
    for (let i = 0; i < Settings.BOARD_SIZE * Settings.BOARD_SIZE; i++) {
@@ -144,6 +112,7 @@ export default class Layer {
    public readonly riverFlowDirections = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
    public readonly tileTemperatures = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
    public readonly tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly tileMithrilRichnesses = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
 
    public readonly tileCensus = createTileCensus();
    public readonly buildingBlockingTiles = new Set<TileIndex>();
@@ -172,6 +141,13 @@ export default class Layer {
    public readonly localBiomes = new Array<LocalBiome>();
    public readonly tileToLocalBiomeRecord: Record<TileIndex, LocalBiome> = {};
 
+   /** For each light level node, stores how much each light contributes to the light level */
+   public readonly entityLightLevels: Partial<Record<LightLevelNode, Map<LightID, number>>> = {};
+   /** For each light level node, stores the amount that ambient light affects that node's brightness */
+   public readonly ambientLightFactors = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+
+   public readonly unspawnableTiles = new Set<TileIndex>();
+
    constructor(depth: number) {
       this.depth = depth;
 
@@ -193,15 +169,16 @@ export default class Layer {
       // }
    }
 
-   public getSubtileTypes(): Readonly<Float32Array> {
-      return this.wallSubtileTypes;
+   public getTileMithrilRichness(tileX: number, tileY: number): number {
+      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+      return this.tileMithrilRichnesses[tileIndex];
    }
-
+   
    public getMinedSubtileType(subtileIndex: number): SubtileType {
       const minedSubtileInfo = this.minedSubtileInfoMap.get(subtileIndex);
-      console.assert(typeof minedSubtileInfo !== "undefined");
+      assert(typeof minedSubtileInfo !== "undefined");
 
-      return minedSubtileInfo!.subtileType;
+      return minedSubtileInfo.subtileType;
    }
 
    public restoreWallSubtile(subtileIndex: number, subtileType: SubtileType): void {
@@ -281,6 +258,25 @@ export default class Layer {
       return this.getTileXYBiome(tileX, tileY);
    }
 
+   public tileHasWallSubtile(tileIndex: number): boolean {
+      const tileX = getTileX(tileIndex);
+      const tileY = getTileY(tileIndex);
+      
+      const startSubtileX = tileX * 4;
+      const startSubtileY = tileY * 4;
+      
+      for (let subtileX = startSubtileX; subtileX < startSubtileX + 4; subtileX++) {
+         for (let subtileY = startSubtileY; subtileY < startSubtileY + 4; subtileY++) {
+            const idx = getSubtileIndex(subtileX, subtileY);
+            if (this.wallSubtileTypes[idx] !== SubtileType.none) {
+               return true;
+            }
+         }
+      }
+   
+      return false;
+   }
+
    public getChunk(chunkX: number, chunkY: number): Chunk {
       const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
       return this.chunks[chunkIndex];
@@ -332,27 +328,6 @@ export default class Layer {
       this.tileUpdateCoordinates.clear();
 
       return tileUpdates;
-   }
-
-   public static isInBoard(position: Point): boolean {
-      return position.x >= 0 && position.x <= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1 && position.y >= 0 && position.y <= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1;
-   }
-
-   public getChunksInBounds(minX: number, maxX: number, minY: number, maxY: number): ReadonlyArray<Chunk> {
-      const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   
-      const chunks = new Array<Chunk>();
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = this.getChunk(chunkX, chunkY);
-            chunks.push(chunk);
-         }
-      }
-   
-      return chunks;
    }
 
    /** Returns false if any of the tiles in the raycast don't match the inputted tile types. */

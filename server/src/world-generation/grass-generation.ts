@@ -1,10 +1,10 @@
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import Layer, { getTileIndexIncludingEdges, tileIsInWorldIncludingEdges } from "../Layer";
+import Layer from "../Layer";
 import { createGrassStrandConfig } from "../entities/grass-strand";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
-import { distance, TileIndex } from "battletribes-shared/utils";
+import { distance, getTileIndexIncludingEdges, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
 import { pushJoinBuffer } from "../world";
 import { surfaceLayer } from "../layers";
 

@@ -36,6 +36,7 @@ export function createGuardianGemFragmentProjectileConfig(creator: Entity): Enti
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.guardianGemFragmentProjectile]: guardianGemFragmentProjectileCompoennt
-      }
+      },
+      lights: []
    };
 }

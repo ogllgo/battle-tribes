@@ -1,10 +1,10 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType, Entity } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, Point } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { HealthComponent } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
-import Layer, { getTileIndexIncludingEdges } from "../../Layer";
+import Layer from "../../Layer";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -66,6 +66,7 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.yeti]: yetiComponent
-      }
+      },
+      lights: []
    };
 }

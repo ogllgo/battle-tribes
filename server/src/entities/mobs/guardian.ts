@@ -67,6 +67,7 @@ export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): Entit
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.guardian]: guardianComponent
-      }
+      },
+      lights: []
    };
 }

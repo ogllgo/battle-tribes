@@ -140,7 +140,7 @@ const updateTribeOccupiedNodesInfo = (buildingLayer: TribeBuildingLayer): void =
    }
 
    buildingLayer.occupiedSafetyNodes = occupiedNodes;
-   buildingLayer.occupiedNodeToEntityIDRecord = occupiedNodeToEntityIDRecord;
+   buildingLayer.occupiedNodeToVirtualBuildingIDRecord = occupiedNodeToEntityIDRecord;
 }
 
 /** Gets all nodes within the tribe's bounding area which aren't occupied */
@@ -162,7 +162,7 @@ const calculateNodeSafety = (buildingLayer: TribeBuildingLayer, minAdjacentSafet
    if (buildingLayer.occupiedSafetyNodes.has(node)) {
       let maxOccupiedSafety = 0;
       
-      for (const virtualBuildingID of buildingLayer.occupiedNodeToEntityIDRecord[node]) {
+      for (const virtualBuildingID of buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node]) {
          const virtualBuilding = buildingLayer.virtualBuildingRecord[virtualBuildingID];
    
          let occupiedSafety = BUILDING_SAFETY[virtualBuilding.entityType];

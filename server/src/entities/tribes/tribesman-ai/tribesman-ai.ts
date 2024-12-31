@@ -1,16 +1,15 @@
-import { PlanterBoxPlant, TribesmanAIType } from "battletribes-shared/components";
+import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
-import { getAngleDiff } from "battletribes-shared/utils";
 import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray } from "../../../components/InventoryComponent";
-import { TribesmanAIComponentArray, TribesmanPathType, itemThrowIsOnCooldown } from "../../../components/TribesmanAIComponent";
-import { calculateRadialAttackTargets, throwItem, } from "../tribe-member";
+import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
+import { calculateRadialAttackTargets, } from "../tribe-member";
 import { InventoryUseComponentArray, repairBuilding, setLimbActions } from "../../../components/InventoryUseComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { EntityRelationship, TribeComponentArray, getEntityRelationship, recruitTribesman } from "../../../components/TribeComponent";
+import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import Tribe from "../../../Tribe";
@@ -29,7 +28,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
 import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
-import { createItem } from "../../../items";
+import { replantPlanterBoxes } from "./tribesman-replanting";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -44,12 +43,6 @@ export const TRIBESMAN_TURN_SPEED = 2 * Math.PI;
 export const TRIBESMAN_COMMUNICATION_RANGE = 1000;
 
 const MESSAGE_INTERVAL_TICKS = 2 * Settings.TPS;
-
-export const PLANT_TO_SEED_RECORD: Record<PlanterBoxPlant, ItemType> = {
-   [PlanterBoxPlant.tree]: ItemType.seed,
-   [PlanterBoxPlant.berryBush]: ItemType.berry,
-   [PlanterBoxPlant.iceSpikes]: ItemType.frostcicle
-};
 
 const getCommunicationTargets = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
@@ -108,7 +101,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
       // @Cleanup: bad. should only change tribesman ai in that tribesman's tick function.
       const healthComponent = HealthComponentArray.getComponent(currentTribesman);
       if (!tribesmanShouldEscape(getEntityType(currentTribesman), healthComponent)) {
-         pathfindTribesman(currentTribesman, transformComponent.position.x, transformComponent.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+         pathfindTribesman(currentTribesman, transformComponent.position.x, transformComponent.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       }
    }
 }
@@ -295,11 +288,6 @@ const getAvailableHut = (tribe: Tribe): Entity | null => {
    return null;
 }
 
-const getSeedItemSlot = (hotbarInventory: Inventory, plantType: PlanterBoxPlant): number | null => {
-   const searchItemType = PLANT_TO_SEED_RECORD[plantType];
-   return getItemTypeSlot(hotbarInventory, searchItemType);
-}
-
 // @Cleanup: Move to tribesmanAIComponent
 export function tickTribesman(tribesman: Entity): void {
    // @Cleanup: This is an absolutely massive function
@@ -326,7 +314,7 @@ export function tickTribesman(tribesman: Entity): void {
          if (hutComponent.isRecalling) {
             const hutTransformComponent = TransformComponentArray.getComponent(hut);
             
-            pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(hut), hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+            pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(hut), hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
             
             if (entitiesAreColliding(tribesman, hut) !== CollisionVars.NO_COLLISION) {
                destroyEntity(tribesman);
@@ -465,7 +453,7 @@ export function tickTribesman(tribesman: Entity): void {
       if (availableHut !== null) {
          const hutTransformComponent = TransformComponentArray.getComponent(availableHut);
          
-         const isFinished = pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(availableHut), availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+         const isFinished = pathfindTribesman(tribesman, hutTransformComponent.position.x, hutTransformComponent.position.y, getEntityLayer(availableHut), availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
 
          if (entitiesAreColliding(tribesman, availableHut) !== CollisionVars.NO_COLLISION) {
             tribesmanAIComponent.hut = availableHut;
@@ -484,7 +472,6 @@ export function tickTribesman(tribesman: Entity): void {
       
    // Attack enemies
    if (visibleEnemies.length > 0) {
-      console.log("visible enemies!",Math.random());
       const target = getClosestAccessibleEntity(tribesman, visibleEnemies);
       huntEntity(tribesman, target, true);
       
@@ -721,85 +708,9 @@ export function tickTribesman(tribesman: Entity): void {
       return;
    }
 
-   // Replace plants in planter boxes
-   // @Speed
-   {
-      let closestReplantablePlanterBox: Entity | undefined;
-      let seedItemSlot: number | undefined;
-      let minDist = Number.MAX_SAFE_INTEGER;
-      for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
-         const entity = aiHelperComponent.visibleEntities[i];
-         if (getEntityType(entity) !== EntityType.planterBox) {
-            continue;
-         }
-   
-         const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
-         if (planterBoxComponent.replantType === null) {
-            continue;
-         }
-
-         if (!entityExists(planterBoxComponent.plantEntity)) {
-            continue;
-         }
-
-         const currentSeedItemSlot = getSeedItemSlot(hotbarInventory, planterBoxComponent.replantType);
-         if (currentSeedItemSlot === null) {
-            continue;
-         }
-
-         const entityTransformComponent = TransformComponentArray.getComponent(entity);
-
-         const dist = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-         if (dist < minDist) {
-            minDist = dist;
-            closestReplantablePlanterBox = entity;
-            seedItemSlot = currentSeedItemSlot;
-         }
-      }
-
-      if (typeof closestReplantablePlanterBox !== "undefined") {
-         // Select the seed
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-         const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-         hotbarUseInfo.selectedItemSlot = seedItemSlot!;
-         
-         const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-
-         // @Cleanup: copy and pasted from tribesman-combat-ai
-         const desiredDistance = getTribesmanAttackRadius(tribesman);
-         const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getTribesmanRadius(transformComponent);
-         if (willStopAtDesiredDistance(physicsComponent, desiredDistance, distance)) {
-            // @Incomplete: turn to face direction and then place
-            
-            // @Cleanup: copy and pasted from player replant logic
-   
-            const planterBoxComponent = PlanterBoxComponentArray.getComponent(closestReplantablePlanterBox);
-            placePlantInPlanterBox(closestReplantablePlanterBox, planterBoxComponent.replantType!);
-
-            // Consume the item
-            const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-            const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-            const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-
-            consumeItemFromSlot(tribesman, hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
-         } else {
-            const planterBoxTransformComponent = TransformComponentArray.getComponent(closestReplantablePlanterBox);
-
-            const pointDistance = transformComponent.position.calculateDistanceBetween(planterBoxTransformComponent.position);
-            const targetDirectRadius = pointDistance - distance;
-
-            const goalRadius = Math.floor((desiredDistance + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
-            // @Temporary: failure default
-            // pathfindToPosition(tribesman, closestReplantablePlanterBox.position.x, closestReplantablePlanterBox.position.y, closestReplantablePlanterBox.id, TribesmanPathType.default, goalRadius, PathfindFailureDefault.throwError);
-            pathfindTribesman(tribesman, planterBoxTransformComponent.position.x, planterBoxTransformComponent.position.y, getEntityLayer(closestReplantablePlanterBox), closestReplantablePlanterBox, TribesmanPathType.default, goalRadius, PathfindFailureDefault.returnClosest);
-
-            tribesmanAIComponent.currentAIType = TribesmanAIType.planting;
-            setLimbActions(inventoryUseComponent, LimbAction.none);
-
-            return;
-         }
-      }
+   const isReplanting = replantPlanterBoxes(tribesman, aiHelperComponent, transformComponent, hotbarInventory, tribesmanAIComponent);
+   if (isReplanting) {
+      return;
    }
 
    // If not in an AI tribe, try to gather any resources you can indiscriminantly
@@ -837,7 +748,7 @@ export function tickTribesman(tribesman: Entity): void {
          const barrelTransformComponent = TransformComponentArray.getComponent(closestBarrelWithFood);
          
          if (transformComponent.position.calculateDistanceBetween(barrelTransformComponent.position) > BARREL_INTERACT_DISTANCE) {
-            pathfindTribesman(tribesman, barrelTransformComponent.position.x, barrelTransformComponent.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnEmpty);
+            pathfindTribesman(tribesman, barrelTransformComponent.position.x, barrelTransformComponent.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
          } else {
             const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
             stopEntity(physicsComponent);

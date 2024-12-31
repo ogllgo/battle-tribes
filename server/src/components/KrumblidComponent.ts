@@ -10,7 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "./ItemComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2

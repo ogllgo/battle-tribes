@@ -41,7 +41,8 @@ export function createBallistaFrostcicleConfig(tribe: Tribe, creator: Entity): E
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
-      }
+      },
+      lights: []
    };
 }
 

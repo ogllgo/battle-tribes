@@ -28,13 +28,12 @@ export class HealthComponent {
    }
 }
 
-export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerComponentType.health, true, getDataLength, addDataToPacket);
+export const HealthComponentArray = new ComponentArray<HealthComponent>(ServerComponentType.health, false, getDataLength, addDataToPacket);
 HealthComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
 
-// @Speed: 1.3% CPU time. This really doesn't need to run for 100% of entities with health components every tick
 function onTick(entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    
@@ -45,6 +44,7 @@ function onTick(entity: Entity): void {
          healthComponent.localIframeHashes.splice(i, 1);
          healthComponent.localIframeDurations.splice(i, 1);
          i--;
+         HealthComponentArray.queueComponentDeactivate(entity);
       }
    }
 }
@@ -170,12 +170,16 @@ export function healEntity(entity: Entity, healAmount: number, healer: Entity): 
    }
 }
 
-export function addLocalInvulnerabilityHash(healthComponent: HealthComponent, hash: string, invulnerabilityDurationSeconds: number): void {
+export function addLocalInvulnerabilityHash(entity: Entity, hash: string, invulnerabilityDurationSeconds: number): void {
+   const healthComponent = HealthComponentArray.getComponent(entity);
+
    const idx = healthComponent.localIframeHashes.indexOf(hash);
    if (idx === -1) {
       // Add new entry
       healthComponent.localIframeHashes.push(hash);
       healthComponent.localIframeDurations.push(invulnerabilityDurationSeconds);
+
+      HealthComponentArray.activateComponent(entity);
    }
 }
 

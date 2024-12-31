@@ -37,6 +37,7 @@ export function createBerryBushConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.berryBush]: berryBushComponent
-      }
+      },
+      lights: []
    }
 }
