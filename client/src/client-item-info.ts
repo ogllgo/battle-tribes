@@ -178,7 +178,28 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Barrel",
       description: ""
    },
-   [ItemType.frost_armour]: {
+   [ItemType.frostSword]: {
+      entityTextureSource: "items/small/frost-sword.png",
+      textureSource: "items/large/frost-sword.png",
+      toolTextureSource: "items/large/frost-sword.png",
+      name: "Frost Sword",
+      description: ""
+   },
+   [ItemType.frostPickaxe]: {
+      entityTextureSource: "items/small/frost-pickaxe.png",
+      textureSource: "items/large/frost-pickaxe.png",
+      toolTextureSource: "items/large/frost-pickaxe.png",
+      name: "Frost Pickaxe",
+      description: ""
+   },
+   [ItemType.frostAxe]: {
+      entityTextureSource: "items/small/frost-axe.png",
+      textureSource: "items/large/frost-axe.png",
+      toolTextureSource: "items/large/frost-axe.png",
+      name: "Frost Axe",
+      description: ""
+   },
+   [ItemType.frostArmour]: {
       entityTextureSource: "items/small/frost-armour.png",
       textureSource: "items/large/frost-armour.png",
       toolTextureSource: "",
@@ -241,46 +262,18 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Deepfrost Heart",
       description: ""
    },
-   [ItemType.deepfrost_sword]: {
-      entityTextureSource: "items/small/deepfrost-sword.png",
-      textureSource: "items/large/deepfrost-sword.png",
-      toolTextureSource: "items/large/deepfrost-sword.png",
-      name: "Deepfrost Sword",
-      description: ""
-   },
-   [ItemType.deepfrost_pickaxe]: {
-      entityTextureSource: "items/small/deepfrost-pickaxe.png",
-      textureSource: "items/large/deepfrost-pickaxe.png",
-      toolTextureSource: "items/large/deepfrost-pickaxe.png",
-      name: "Deepfrost Pickaxe",
-      description: ""
-   },
-   [ItemType.deepfrost_axe]: {
-      entityTextureSource: "items/small/deepfrost-axe.png",
-      textureSource: "items/large/deepfrost-axe.png",
-      toolTextureSource: "items/large/deepfrost-axe.png",
-      name: "Deepfrost Axe",
-      description: ""
-   },
-   [ItemType.deepfrost_armour]: {
-      entityTextureSource: "items/small/deepfrost-armour.png",
-      textureSource: "items/large/deepfrost-armour.png",
-      toolTextureSource: "",
-      name: "Deepfrost Armour",
-      description: ""
-   },
    [ItemType.raw_fish]: {
       entityTextureSource: "items/small/raw-fish.png",
       textureSource: "items/large/raw-fish.png",
       toolTextureSource: "",
-      name: "Deepfrost Armour",
+      name: "Raw Fish",
       description: ""
    },
    [ItemType.cooked_fish]: {
       entityTextureSource: "items/small/cooked-fish.png",
       textureSource: "items/large/cooked-fish.png",
       toolTextureSource: "",
-      name: "Deepfrost Armour",
+      name: "Cooked Fish",
       description: ""
    },
    [ItemType.fishlord_suit]: {
@@ -546,7 +539,35 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Mithril Bar",
       description: "Refined mithril."
-   }
+   },
+   [ItemType.mithrilSword]: {
+      entityTextureSource: "items/small/mithril-sword.png",
+      textureSource: "items/large/mithril-sword.png",
+      toolTextureSource: "items/large/mithril-sword.png",
+      name: "Mithril Sword",
+      description: ""
+   },
+   [ItemType.mithrilPickaxe]: {
+      entityTextureSource: "items/small/mithril-pickaxe.png",
+      textureSource: "items/large/mithril-pickaxe.png",
+      toolTextureSource: "items/large/mithril-pickaxe.png",
+      name: "Mithril Pickaxe",
+      description: ""
+   },
+   [ItemType.mithrilAxe]: {
+      entityTextureSource: "items/small/mithril-axe.png",
+      textureSource: "items/large/mithril-axe.png",
+      toolTextureSource: "items/large/mithril-axe.png",
+      name: "Mithril Axe",
+      description: ""
+   },
+   [ItemType.mithrilArmour]: {
+      entityTextureSource: "items/small/mithril-armour.png",
+      textureSource: "items/large/mithril-armour.png",
+      toolTextureSource: "",
+      name: "Mithril Armour",
+      description: ""
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

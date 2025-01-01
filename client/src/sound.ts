@@ -256,6 +256,10 @@ export async function loadSoundEffects(): Promise<void> {
       "tree-root-segment-death-1.mp3",
       "tree-root-segment-death-2.mp3",
       "tree-root-segment-death-3.mp3",
+      "mithril-hit-1.mp3",
+      "mithril-hit-2.mp3",
+      "mithril-hit-3.mp3",
+      "mithril-death.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

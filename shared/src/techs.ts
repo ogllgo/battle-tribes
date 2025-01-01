@@ -330,7 +330,7 @@ export const TECHS: ReadonlyArray<Tech> = [
       name: "Frostshaping",
       description: "",
       iconSrc: "frostshaping.png",
-      unlockedItems: [ItemType.frost_armour, ItemType.deepfrost_pickaxe, ItemType.deepfrost_sword, ItemType.deepfrost_axe, ItemType.deepfrost_armour],
+      unlockedItems: [ItemType.frostArmour],
       positionX: -65,
       positionY: 0,
       dependencies: [TechID.stoneTools],

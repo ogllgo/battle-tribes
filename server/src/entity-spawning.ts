@@ -36,6 +36,7 @@ import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { boxIsCollidingWithSubtile } from "./collision";
 import { undergroundLayer } from "./layers";
+import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -311,6 +312,7 @@ export function runSpawnAttempt(): void {
       return;
    }
 
+   // Regular spawning
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
       const spawnInfo = SPAWN_INFOS[i];
       if (!spawnConditionsAreMet(i, spawnInfo)) {
@@ -330,6 +332,8 @@ export function runSpawnAttempt(): void {
          }
       }
    }
+
+   generateMithrilOre(undergroundLayer, false);
 }
 
 export function spawnInitialEntities(): void {

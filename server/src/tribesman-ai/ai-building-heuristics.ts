@@ -1,10 +1,8 @@
 import { PotentialPlanSafetyData } from "battletribes-shared/ai-building-types";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import Tribe from "../Tribe";
-import { SafetyNode, addHitboxesOccupiedNodes, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
-import { TransformComponentArray } from "../components/TransformComponent";
-import { getEntityLayer, getEntityType } from "../world";
+import { SafetyNode, getSafetyNode, safetyNodeIsInWall } from "./ai-building";
 import TribeBuildingLayer, { VirtualStructure } from "./building-plans/TribeBuildingLayer";
 
 const enum Vars {
@@ -16,7 +14,8 @@ const enum Vars {
    LN_SCALE_FACTOR = 30
 }
 
-type InfrastructureBuildingType = EntityType.tribeTotem | EntityType.workerHut | EntityType.workbench | EntityType.barrel | EntityType.researchBench | EntityType.warriorHut;
+/** Building types which the AI will try to protect with walls */
+type InfrastructureBuildingType = EntityType.tribeTotem | EntityType.workerHut | EntityType.workbench | EntityType.barrel | EntityType.researchBench | EntityType.warriorHut | EntityType.furnace;
 
 const BASE_BUILDING_WEIGHTS: Record<InfrastructureBuildingType, number> = {
    [EntityType.tribeTotem]: 10,
@@ -24,12 +23,12 @@ const BASE_BUILDING_WEIGHTS: Record<InfrastructureBuildingType, number> = {
    [EntityType.warriorHut]: 5,
    [EntityType.barrel]: 3,
    [EntityType.researchBench]: 3,
-   [EntityType.workbench]: 2
+   [EntityType.workbench]: 2,
+   [EntityType.furnace]: 2
 };
 
-export function buildingIsInfrastructure(entityType: EntityType): boolean {
-   // @Hack
-   return entityType !== EntityType.wall && entityType !== EntityType.embrasure && entityType !== EntityType.door && entityType !== EntityType.tunnel && entityType !== EntityType.fireTorch && entityType !== EntityType.slurbTorch;
+export function buildingIsInfrastructure(entityType: EntityType): entityType is InfrastructureBuildingType {
+   return typeof BASE_BUILDING_WEIGHTS[entityType as InfrastructureBuildingType] !== "undefined";
 }
 
 const getExtendedNodeSafety = (buildingLayer: TribeBuildingLayer, nodeIndex: number, extendDist: number): number => {

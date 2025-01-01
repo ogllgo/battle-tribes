@@ -207,7 +207,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
    generateSpikyBastards(undergroundLayer);
 
-   generateMithrilOre(undergroundLayer);
+   generateMithrilOre(undergroundLayer, true);
 
    // Generate tree roots
    const numAttempts = Math.floor(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);

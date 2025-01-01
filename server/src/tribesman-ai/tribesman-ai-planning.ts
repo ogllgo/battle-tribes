@@ -120,16 +120,15 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.tribe_totem]: null,
    [ItemType.worker_hut]: null,
    [ItemType.barrel]: null,
-   [ItemType.frost_armour]: null,
+   [ItemType.frostSword]: null,
+   [ItemType.frostPickaxe]: null,
+   [ItemType.frostAxe]: null,
+   [ItemType.frostArmour]: null,
    [ItemType.campfire]: null,
    [ItemType.furnace]: null,
    [ItemType.wooden_bow]: null,
    [ItemType.meat_suit]: null,
    [ItemType.deepfrost_heart]: "sword",
-   [ItemType.deepfrost_sword]: null,
-   [ItemType.deepfrost_pickaxe]: null,
-   [ItemType.deepfrost_axe]: null,
-   [ItemType.deepfrost_armour]: null,
    [ItemType.raw_fish]: "sword",
    [ItemType.cooked_fish]: null,
    [ItemType.fishlord_suit]: null,
@@ -172,6 +171,10 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.cookedYetiFlesh]: null,
    [ItemType.mithrilOre]: null,
    [ItemType.mithrilBar]: null,
+   [ItemType.mithrilSword]: null,
+   [ItemType.mithrilPickaxe]: null,
+   [ItemType.mithrilAxe]: null,
+   [ItemType.mithrilArmour]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -325,7 +328,6 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    // @Incomplete?
    // If the tech has any precursor techs which aren't researched, research them first
 
-
    // Add all required items to the tech
    for (const entry of tech.researchItemRequirements.getEntries()) {
       const requiredItemType = entry.itemType;
@@ -408,10 +410,6 @@ const getNumDesiredBarrels = (tribe: Tribe): number => {
    return Math.floor(tribe.virtualBuildings.length / 20);
 }
 
-const getNumBarrels = (tribe: Tribe): number => {
-   return tribe.virtualBuildingsByEntityType[EntityType.barrel].length;
-}
-
 const planIsValid = (tribe: Tribe, plan: AIPlan): boolean => {
    switch (plan.type) {
       case AIPlanType.root: return true;
@@ -457,7 +455,7 @@ export function updateTribePlans(tribe: Tribe): void {
    // Trim invalid plans
    trimAssignmentRecursively(tribe, tribe.assignment);
 
-   // If the tribe doesn't have a totem and isn't already planning to have one, place one
+   // If the tribe doesn't have a totem, place one
    if (tribe.virtualBuildingsByEntityType[EntityType.tribeTotem].length === 0) {
       tribe.assignment.children.push(
          planToPlaceBuilding(tribe, ItemType.tribe_totem, null)
@@ -485,7 +483,7 @@ export function updateTribePlans(tribe: Tribe): void {
 
    for (let i = 0; i < tribe.getNumHuts(); i++) {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
-      if (getNumBarrels(tribe) < numDesiredBarrels) {
+      if (tribe.virtualBuildingsByEntityType[EntityType.barrel].length < numDesiredBarrels) {
          tribe.assignment.children.push(
             planToPlaceBuilding(tribe, ItemType.barrel, null)
          );

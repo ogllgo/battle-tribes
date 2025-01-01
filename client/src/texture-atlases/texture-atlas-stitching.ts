@@ -1,5 +1,5 @@
 import { imageIsLoaded } from "../utils";
-import { TEXTURE_SOURCES } from "./texture-atlases";
+import { TEXTURE_SOURCES } from "./texture-sources";
 
 interface BaseTextureAtlasInfo {
    readonly atlasSize: number;

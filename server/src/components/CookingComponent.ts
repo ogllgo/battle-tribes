@@ -43,6 +43,14 @@ const HEATING_INFO: ReadonlyArray<HeatingRecipe> = [
       productAmount: 1,
       cookTime: 5,
       usableHeatingEntityTypes: [EntityType.campfire, EntityType.furnace]
+   },
+   {
+      ingredientType: ItemType.mithrilOre,
+      ingredientAmount: 3,
+      productType: ItemType.mithrilBar,
+      productAmount: 1,
+      cookTime: 5,
+      usableHeatingEntityTypes: [EntityType.furnace],
    }
 ];
 

@@ -161,7 +161,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       craftingStation: CraftingStation.workbench
    },
    {
-      product: ItemType.frost_armour,
+      product: ItemType.frostArmour,
       yield: 1,
       ingredients: createTallyFromRecord({
          [ItemType.frostcicle]: 20,
@@ -233,47 +233,6 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.workbench
-   },
-   {
-      product: ItemType.deepfrost_sword,
-      yield: 1,
-      ingredients: createTallyFromRecord({
-         [ItemType.deepfrost_heart]: 1,
-         [ItemType.frostcicle]: 30
-      }),
-      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
-   },
-   {
-      product: ItemType.deepfrost_pickaxe,
-      yield: 1,
-      ingredients: createTallyFromRecord({
-         [ItemType.deepfrost_heart]: 1,
-         [ItemType.frostcicle]: 25
-      }),
-      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
-   },
-   {
-      product: ItemType.deepfrost_axe,
-      yield: 1,
-      ingredients: createTallyFromRecord({
-         [ItemType.deepfrost_heart]: 1,
-         [ItemType.frostcicle]: 20
-      }),
-      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
-   },
-   {
-      product: ItemType.deepfrost_armour,
-      yield: 1,
-      ingredients: createTallyFromRecord({
-         [ItemType.deepfrost_heart]: 1,
-         [ItemType.yeti_hide]: 10,
-         [ItemType.frostcicle]: 50
-      }),
-      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
    },
    {
       product: ItemType.fishlord_suit,

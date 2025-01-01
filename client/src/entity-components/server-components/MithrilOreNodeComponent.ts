@@ -1,10 +1,15 @@
 import { ServerComponentType } from "../../../../shared/src/components";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
+import { randFloat, randInt } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { createColouredParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
+import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
 export interface MithrilOreNodeComponentParams {
    readonly size: number;
@@ -22,6 +27,8 @@ export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreN
    createComponent: createComponent,
    padData: padData,
    updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentParams {
@@ -80,4 +87,29 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader): void {
    padData(reader);
+}
+
+function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (let i = 0; i < 3; i++) {
+      const c = randFloat(0.25, 0.4);
+      
+      const position = getRandomPositionInEntity(transformComponent);
+      createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
+   }
+   
+   playSoundOnEntity("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity);
+}
+
+function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (let i = 0; i < 6; i++) {
+      const c = randFloat(0.25, 0.4);
+      
+      const position = getRandomPositionInEntity(transformComponent);
+      createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
+   }
+
+   playSoundOnEntity("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity);
+   playSoundOnEntity("mithril-death.mp3", 0.4, randFloat(0.9, 1.1), entity);
 }

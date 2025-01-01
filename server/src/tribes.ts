@@ -15,11 +15,14 @@ export function updateTribes(): void {
       const tribe = tribes[i];
       
       // If buildings have been added/removed, we need to update the building layers and re-determine the tribe's plans
-      if (tribe.buildingsAreDirty && tribe.isAIControlled) {
+      if (tribe.buildingsAreDirty) {
          for (const buildingLayer of tribe.buildingLayers) {
             updateBuildingLayer(buildingLayer);
          }
-         updateTribePlans(tribe);
+
+         if (tribe.isAIControlled) {
+            updateTribePlans(tribe);
+         }
 
          tribe.buildingsAreDirty = false;
       }

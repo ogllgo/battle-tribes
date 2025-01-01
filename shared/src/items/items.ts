@@ -28,16 +28,15 @@ export const enum ItemType {
    tribe_totem,
    worker_hut,
    barrel,
-   frost_armour,
+   frostSword,
+   frostPickaxe,
+   frostAxe,
+   frostArmour,
    campfire,
    furnace,
    wooden_bow,
    meat_suit,
    deepfrost_heart,
-   deepfrost_sword,
-   deepfrost_pickaxe,
-   deepfrost_axe,
-   deepfrost_armour,
    raw_fish,
    cooked_fish,
    fishlord_suit,
@@ -79,7 +78,11 @@ export const enum ItemType {
    rawYetiFlesh,
    cookedYetiFlesh,
    mithrilOre,
-   mithrilBar
+   mithrilBar,
+   mithrilSword,
+   mithrilPickaxe,
+   mithrilAxe,
+   mithrilArmour,
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -107,16 +110,15 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.tribe_totem]: "tribe_totem",
    [ItemType.worker_hut]: "worker_hut",
    [ItemType.barrel]: "barrel",
-   [ItemType.frost_armour]: "frost_armour",
+   [ItemType.frostSword]: "Frost Sword",
+   [ItemType.frostPickaxe]: "Frost Pickaxe",
+   [ItemType.frostAxe]: "Frost Axe",
+   [ItemType.frostArmour]: "Frost Armour",
    [ItemType.campfire]: "campfire",
    [ItemType.furnace]: "furnace",
    [ItemType.wooden_bow]: "wooden_bow",
    [ItemType.meat_suit]: "meat_suit",
    [ItemType.deepfrost_heart]: "deepfrost_heart",
-   [ItemType.deepfrost_sword]: "deepfrost_sword",
-   [ItemType.deepfrost_pickaxe]: "deepfrost_pickaxe",
-   [ItemType.deepfrost_axe]: "deepfrost_axe",
-   [ItemType.deepfrost_armour]: "deepfrost_armour",
    [ItemType.raw_fish]: "raw_fish",
    [ItemType.cooked_fish]: "cooked_fish",
    [ItemType.fishlord_suit]: "fishlord_suit",
@@ -159,6 +161,10 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.cookedYetiFlesh]: "Cooked Yeti Flesh",
    [ItemType.mithrilOre]: "Mithril Ore",
    [ItemType.mithrilBar]: "Mithril Bar",
+   [ItemType.mithrilSword]: "Mithril Sword",
+   [ItemType.mithrilPickaxe]: "Mithril Pickaxe",
+   [ItemType.mithrilAxe]: "Mithril Axe",
+   [ItemType.mithrilArmour]: "Mithril Armour",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -436,16 +442,15 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.tribe_totem]: "placeable",
    [ItemType.worker_hut]: "placeable",
    [ItemType.barrel]: "placeable",
-   [ItemType.frost_armour]: "armour",
+   [ItemType.frostSword]: "sword",
+   [ItemType.frostPickaxe]: "pickaxe",
+   [ItemType.frostAxe]: "axe",
+   [ItemType.frostArmour]: "armour",
    [ItemType.campfire]: "placeable",
    [ItemType.furnace]: "placeable",
    [ItemType.wooden_bow]: "bow",
    [ItemType.meat_suit]: "armour",
    [ItemType.deepfrost_heart]: "material",
-   [ItemType.deepfrost_sword]: "sword",
-   [ItemType.deepfrost_pickaxe]: "pickaxe",
-   [ItemType.deepfrost_axe]: "axe",
-   [ItemType.deepfrost_armour]: "armour",
    [ItemType.raw_fish]: "healing",
    [ItemType.cooked_fish]: "healing",
    [ItemType.fishlord_suit]: "armour",
@@ -487,6 +492,10 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.cookedYetiFlesh]: "healing",
    [ItemType.mithrilOre]: "material",
    [ItemType.mithrilBar]: "material",
+   [ItemType.mithrilSword]: "sword",
+   [ItemType.mithrilPickaxe]: "pickaxe",
+   [ItemType.mithrilAxe]: "axe",
+   [ItemType.mithrilArmour]: "armour",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -564,17 +573,6 @@ export const ITEM_INFO_RECORD = {
       toolType: "sword",
       damage: 3,
       knockback: 150,
-      // @Incomplete
-      // attackCooldown: 0.3,
-      level: 2
-   },
-   [ItemType.stone_axe]: {
-      stackSize: 1,
-      toolType: "axe",
-      damage: 5,
-      knockback: 100,
-      // @Incomplete
-      // attackCooldown: 0.5,
       level: 2
    },
    [ItemType.stone_pickaxe]: {
@@ -582,18 +580,21 @@ export const ITEM_INFO_RECORD = {
       toolType: "pickaxe",
       damage: 8,
       knockback: 100,
-      // @Incomplete
-      // attackCooldown: 0.5,
       level: 2,
       wallDamage: 2
+   },
+   [ItemType.stone_axe]: {
+      stackSize: 1,
+      toolType: "axe",
+      damage: 5,
+      knockback: 100,
+      level: 2
    },
    [ItemType.stone_hammer]: {
       stackSize: 1,
       toolType: "hammer",
       damage: 3,
       knockback: 150,
-      // @Incomplete
-      // attackCooldown: 0.7,
       level: 2,
       repairAmount: 5,
       workAmount: 2
@@ -642,7 +643,29 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.barrel
    },
-   [ItemType.frost_armour]: {
+   [ItemType.frostSword]: {
+      stackSize: 1,
+      toolType: "sword",
+      damage: 4,
+      knockback: 150,
+      level: 3
+   },
+   [ItemType.frostPickaxe]: {
+      stackSize: 1,
+      toolType: "pickaxe",
+      damage: 10,
+      knockback: 100,
+      level: 3,
+      wallDamage: 3
+   },
+   [ItemType.frostAxe]: {
+      stackSize: 1,
+      toolType: "axe",
+      damage: 8,
+      knockback: 100,
+      level: 3
+   },
+   [ItemType.frostArmour]: {
       defence: 0.25,
       level: 2
    },
@@ -692,39 +715,6 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.deepfrost_heart]: {
       stackSize: 99
-   },
-   [ItemType.deepfrost_sword]: {
-      stackSize: 1,
-      toolType: "sword",
-      damage: 4,
-      knockback: 170,
-      // @Incomplete
-      // attackCooldown: 0.3,
-      level: 3
-   },
-   [ItemType.deepfrost_pickaxe]: {
-      stackSize: 1,
-      toolType: "pickaxe",
-      damage: 13,
-      knockback: 100,
-      // @Incomplete
-      // attackCooldown: 0.5,
-      level: 3,
-      // @Temporary
-      wallDamage: 12
-   },
-   [ItemType.deepfrost_axe]: {
-      stackSize: 1,
-      toolType: "axe",
-      damage: 8,
-      knockback: 100,
-      // @Incomplete
-      // attackCooldown: 0.5,
-      level: 3
-   },
-   [ItemType.deepfrost_armour]: {
-      defence: 0.4,
-      level: 3
    },
    [ItemType.raw_fish]: {
       stackSize: 99,
@@ -887,7 +877,34 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.mithrilBar]: {
       stackSize: 99
-   }
+   },
+   [ItemType.mithrilSword]: {
+      stackSize: 1,
+      toolType: "sword",
+      damage: 4,
+      knockback: 170,
+      level: 4
+   },
+   [ItemType.mithrilPickaxe]: {
+      stackSize: 1,
+      toolType: "pickaxe",
+      damage: 13,
+      knockback: 100,
+      level: 4,
+      // @Temporary
+      wallDamage: 12
+   },
+   [ItemType.mithrilAxe]: {
+      stackSize: 1,
+      toolType: "axe",
+      damage: 8,
+      knockback: 100,
+      level: 4
+   },
+   [ItemType.mithrilArmour]: {
+      defence: 0.4,
+      level: 4
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -915,16 +932,15 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.tribe_totem]: {},
    [ItemType.worker_hut]: {},
    [ItemType.barrel]: {},
-   [ItemType.frost_armour]: {},
+   [ItemType.frostSword]: {},
+   [ItemType.frostPickaxe]: {},
+   [ItemType.frostAxe]: {},
+   [ItemType.frostArmour]: {},
    [ItemType.campfire]: {},
    [ItemType.furnace]: {},
    [ItemType.wooden_bow]: {},
    [ItemType.meat_suit]: {},
    [ItemType.deepfrost_heart]: {},
-   [ItemType.deepfrost_sword]: {},
-   [ItemType.deepfrost_pickaxe]: {},
-   [ItemType.deepfrost_axe]: {},
-   [ItemType.deepfrost_armour]: {},
    [ItemType.raw_fish]: {},
    [ItemType.cooked_fish]: {},
    [ItemType.fishlord_suit]: {},
@@ -994,6 +1010,10 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.cookedYetiFlesh]: {},
    [ItemType.mithrilOre]: {},
    [ItemType.mithrilBar]: {},
+   [ItemType.mithrilSword]: {},
+   [ItemType.mithrilPickaxe]: {},
+   [ItemType.mithrilAxe]: {},
+   [ItemType.mithrilArmour]: {},
 };
 
 // Some typescript wizardry
@@ -1001,14 +1021,18 @@ type ExcludeNonPlaceableItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[
 export type PlaceableItemType = keyof {
    [T in ItemType as ExcludeNonPlaceableItemTypes<T>]: T;
 }
+
 type ExcludeNonArmourItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "armour" ? T : never;
 export type ArmourItemType = keyof {
    [T in ItemType as ExcludeNonArmourItemTypes<T>]: T;
 }
+export const ARMOUR_ITEM_TYPES = ALL_ITEM_TYPES.filter(itemType => itemTypeIsArmour(itemType)) as ReadonlyArray<ArmourItemType>;
+
 type ExcludeNonGloveItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "glove" ? T : never;
 export type GloveItemType = keyof {
    [T in ItemType as ExcludeNonGloveItemTypes<T>]: T;
 }
+
 type ExcludeNonHammerItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "hammer" ? T : never;
 export type HammerItemType = keyof {
    [T in ItemType as ExcludeNonHammerItemTypes<T>]: T;
@@ -1183,7 +1207,7 @@ export function itemInfoIsPlaceable(itemType: ItemType, itemInfo: unknown): item
    return itemTypeInfo === "placeable";
 }
 
-export function itemTypeIsArmour(itemType: ItemType): boolean {
+export function itemTypeIsArmour(itemType: ItemType): itemType is ArmourItemType {
    return ITEM_TYPE_RECORD[itemType] === "armour";
 }
 
@@ -1191,7 +1215,7 @@ export function itemTypeIsBackpack(itemType: ItemType): boolean {
    return ITEM_TYPE_RECORD[itemType] === "backpack";
 }
 
-export function itemTypeIsGlove(itemType: ItemType): boolean {
+export function itemTypeIsGlove(itemType: ItemType): itemType is GloveItemType {
    return ITEM_TYPE_RECORD[itemType] === "glove";
 }
 

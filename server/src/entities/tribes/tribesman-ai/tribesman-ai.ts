@@ -2,7 +2,7 @@ import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
-import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
+import { willStopAtDesiredDistance, stopEntity, getDistanceFromPointToEntity, getClosestAccessibleEntity, moveEntityToEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, getItemTypeSlot, InventoryComponentArray } from "../../../components/InventoryComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
@@ -351,6 +351,23 @@ export function tickTribesman(tribesman: Entity): void {
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
 
+   // @Temporary
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let e = 0;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const dist = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+      if (getEntityType(entity) === EntityType.mithrilOreNode && dist < minDist) {
+         e = entity;
+         minDist = dist;
+      }
+   }
+   if (e !== 0) {
+      moveEntityToEntity(tribesman, e, getTribesmanAcceleration(tribesman), TRIBESMAN_TURN_SPEED);
+      return;
+   }
+
    // @Cleanup: A nicer way to do this might be to sort the visible entities array based on the 'threat level' of each entity
    // @Cleanup: A perhaps combine the visible enemies and visible hostile mobs arrays?
 
@@ -468,7 +485,7 @@ export function tickTribesman(tribesman: Entity): void {
       }
    }
 
-   // @Cleanup: rename these into attack threats
+   // @Cleanup: rename these into threats
       
    // Attack enemies
    if (visibleEnemies.length > 0) {
