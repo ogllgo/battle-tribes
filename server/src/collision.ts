@@ -199,17 +199,9 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    // }
 }
 
-export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: number): boolean {
-   // @Copynpaste
-   // @Speed
-   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
-   updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
-   
-   return box.isColliding(tileBox);
-}
-
 /** If no collision is found, does nothing. */
 export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: number, subtileY: number): void {
+   // @Copynpaste from boxIsCollidingWithSubtile
    // @Speed
    const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
    updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);

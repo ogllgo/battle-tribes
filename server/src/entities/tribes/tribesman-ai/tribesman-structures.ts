@@ -1,7 +1,7 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
-import { calculateStructureConnectionInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD, StructureType } from "battletribes-shared/structures";
+import { calculateStructurePlaceInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { angle, assert, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
@@ -117,8 +117,8 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // Place the item
          // 
          
-         const connectionInfo = calculateStructureConnectionInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
-         placeBuilding(tribe, getEntityLayer(tribesman), virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, connectionInfo, []);
+         const placeInfo = calculateStructurePlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
+         placeBuilding(tribe, getEntityLayer(tribesman), placeInfo);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {
             awardTitle(tribesman, TribesmanTitle.builder);

@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createFenceHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -12,6 +11,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -20,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.fence;
 
-export function createFenceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createFenceConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFenceHitboxes(), null);
    
@@ -28,7 +28,7 @@ export function createFenceConfig(tribe: Tribe, connectionInfo: StructureConnect
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 

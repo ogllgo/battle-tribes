@@ -104,7 +104,7 @@ export enum ServerComponentType {
    treeRootBase,
    treeRootSegment,
    mithrilOreNode,
-   rootTap
+   scrappy
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -201,7 +201,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.treeRootBase]: "Tree Root Base Component",
    [ServerComponentType.treeRootSegment]: "Tree Root Segment Component",
    [ServerComponentType.mithrilOreNode]: "Mithril Ore Node Component",
-   [ServerComponentType.rootTap]: "Root Tap Component",
+   [ServerComponentType.scrappy]: "Scrappy Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -287,7 +287,7 @@ export const EntityComponents = {
    [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
    [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],
    [EntityType.mithrilOreNode]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.mithrilOreNode],
-   [EntityType.rootTap]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.rootTap],
+   [EntityType.scrappy]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.scrappy],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

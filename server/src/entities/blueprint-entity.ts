@@ -1,7 +1,7 @@
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { createEmptyStructureConnectionInfo, StructureType } from "battletribes-shared/structures";
+import { StructureType } from "battletribes-shared/structures";
 import { EntityConfig } from "../components";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
@@ -66,7 +66,7 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
    const healthComponent = new HealthComponent(5);
    
    // @Incomplete: connection info?
-   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo(), virtualStructure);
+   const structureComponent = new StructureComponent([], virtualStructure);
    
    const blueprintComponent = new BlueprintComponent(blueprintType, associatedEntityID);
 

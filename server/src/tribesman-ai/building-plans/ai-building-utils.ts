@@ -1,12 +1,13 @@
 import { Hitbox, updateBox } from "../../../../shared/src/boxes/boxes";
 import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { boxIsCollidingWithSubtile } from "../../../../shared/src/collision";
 import { hitboxesAreColliding } from "../../../../shared/src/hitbox-collision";
 import { Settings } from "../../../../shared/src/settings";
 import { StructureType } from "../../../../shared/src/structures";
 import { getSubtileIndex } from "../../../../shared/src/subtiles";
 import { getTileIndexIncludingEdges, Point, randFloat } from "../../../../shared/src/utils";
-import { boxIsCollidingWithSubtile, hitboxArraysAreColliding } from "../../collision";
+import { hitboxArraysAreColliding } from "../../collision";
 import { SafetyNode, addHitboxesOccupiedNodes } from "../ai-building";
 import TribeBuildingLayer from "./TribeBuildingLayer";
 

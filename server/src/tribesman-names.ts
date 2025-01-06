@@ -1,14 +1,51 @@
-import { TribesmanTitle, TitleGenerationInfo, TRIBESMAN_TITLE_RECORD } from "../../shared/src/titles";
+import { TribesmanTitle } from "../../shared/src/titles";
 import { TribeType } from "../../shared/src/tribes";
+import { randItem } from "../../shared/src/utils";
 
 // @Incomplete: different names for workers and warriors
 
+const SCRAPPY_NAMES = [
+   "Scrapz",
+   "Klik",
+   "Tinker",
+   "Boltz",
+   "Clunk",
+   "Spindle",
+   "Patch",
+   "Nutz",
+   "Whizz",
+   "Sprocket"
+];
+
 // @Cleanup: location?
-const MACHINE_NAMES = [
+const COGWALKER_NAMES = [
    "Sparky",
-   "Bolts",
-   "Cogs"
-]
+   "Bill Cogsby",
+   "Gearlok",
+   "Axel",
+   "Brassik",
+   "Clanker",
+   "The Grindr",
+   "Torque",
+   "Mecham",
+   "Pistorius",
+   "Weldon",
+   "Chad Thunderclock"
+];
+
+const STRIDER_NAMES = [
+   "Treadnaught",
+   "Ironstrider",
+   "Tri-Gear",
+   "Blastrek",
+   "Warstalk",
+   "Gunlok",
+   "Thundraxx",
+   "Tripodion",
+   "Ironshot",
+   "Gearstride",
+   "Third-Leg"
+];
 
 const PLAINSPEOPLE_NAMES: ReadonlyArray<string> = [
    "Oda",
@@ -160,4 +197,8 @@ export function addTitleToTribesmanName(name: string, title: TribesmanTitle): st
    const displayOptions = TITLE_DISPLAY_OPTIONS[title];
    const displayText = displayOptions[Math.floor(Math.random() * displayOptions.length)];
    return name + ", " + displayText;
+}
+
+export function generateScrappyName(): string {
+   return randItem(SCRAPPY_NAMES);
 }

@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createStonecarvingTableHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -13,6 +12,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.craftingStation;
 
-export function createStonecarvingTableConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createStonecarvingTableConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createStonecarvingTableHitboxes(), null);
    
@@ -29,7 +29,7 @@ export function createStonecarvingTableConfig(tribe: Tribe, connectionInfo: Stru
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    

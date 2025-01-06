@@ -6,7 +6,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Tile } from "../../../Tile";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
-import { getCurrentLayer, getEntityType, playerInstance } from "../../../world";
+import { getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { Entity } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
@@ -15,6 +15,7 @@ import { HealthComponentArray } from "../../../entity-components/server-componen
 import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
+import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -128,6 +129,19 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
                   <br/>
                </div>
             })}
+         </>;
+      })() : undefined}
+
+      {StructureComponentArray.hasComponent(entity) ? (() => {
+         const structureComponent = StructureComponentArray.getComponent(entity);
+
+         return <>
+            <p>Connected to:</p>
+            <ul>
+               {structureComponent.connections.map((connection, i) => {
+                  return <li key={i}>{connection.entity}</li>
+               })}
+            </ul>
          </>;
       })() : undefined}
 

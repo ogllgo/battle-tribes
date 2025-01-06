@@ -2,7 +2,6 @@ import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createSlingTurretHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
@@ -15,6 +14,7 @@ import { TurretComponent } from "../../components/TurretComponent";
 import Tribe from "../../Tribe";
 import { SlingTurretComponent } from "../../components/SlingTurretComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -28,7 +28,7 @@ type ComponentTypes = ServerComponentType.transform
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
 
-export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createSlingTurretConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createSlingTurretHitboxes(), null);
    
@@ -36,7 +36,7 @@ export function createSlingTurretConfig(tribe: Tribe, connectionInfo: StructureC
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 

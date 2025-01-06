@@ -1,14 +1,16 @@
 import { Chunks, EntityInfo, getChunk } from "./board-interface";
 import { Entity, EntityType } from "./entities";
-import { estimateCollidingEntities, getBoxesCollidingEntities } from "./hitbox-collision";
+import { getBoxesCollidingEntities } from "./hitbox-collision";
 import { createBracingHitboxes, createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
 import { boxIsCircular, Hitbox, updateBox } from "./boxes/boxes";
 import { Settings } from "./settings";
-import { Point, TileIndex, distance, getAbsAngleDiff } from "./utils";
+import { Point, TileIndex, alignAngleToClosestAxis, distance, getAbsAngleDiff } from "./utils";
 import { getSubtileIndex, getSubtileX, getSubtileY, subtileIsInWorld } from "./subtiles";
 import { CollisionGroup, getEntityCollisionGroup } from "./collision-groups";
 import { ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType, NUM_ITEM_TYPES, PlaceableItemType } from "./items/items";
 import RectangularBox from "./boxes/RectangularBox";
+import { boxIsCollidingWithSubtile } from "./collision";
+import { SubtileType } from "./tiles";
 
 /*
 When snapping:
@@ -28,6 +30,34 @@ const enum Vars {
 export const STRUCTURE_TYPES = [EntityType.wall, EntityType.door, EntityType.embrasure, EntityType.floorSpikes, EntityType.wallSpikes, EntityType.floorPunjiSticks, EntityType.wallPunjiSticks, EntityType.ballista, EntityType.slingTurret, EntityType.tunnel, EntityType.tribeTotem, EntityType.workerHut, EntityType.warriorHut, EntityType.barrel, EntityType.workbench, EntityType.researchBench, EntityType.healingTotem, EntityType.planterBox, EntityType.furnace, EntityType.campfire, EntityType.fence, EntityType.fenceGate, EntityType.frostshaper, EntityType.stonecarvingTable, EntityType.bracings, EntityType.fireTorch, EntityType.slurbTorch] as const;
 export type StructureType = typeof STRUCTURE_TYPES[number];
 
+interface SnapCandidate {
+   readonly position: Point;
+   readonly rotation: number;
+   readonly connectedEntity: Entity;
+   readonly hitboxes: ReadonlyArray<Hitbox>;
+}
+
+export interface StructureConnection {
+   readonly entity: Entity;
+}
+
+export interface StructurePlaceInfo {
+   readonly position: Point;
+   readonly rotation: number;
+   readonly entityType: StructureType;
+   readonly connections: Array<StructureConnection>;
+   readonly hitboxes: ReadonlyArray<Hitbox>;
+   readonly isValid: boolean;
+}
+
+export interface WorldInfo {
+   readonly chunks: Chunks;
+   readonly wallSubtileTypes: Readonly<Float32Array>;
+   getEntityCallback(entity: Entity): EntityInfo;
+   subtileIsMined(subtileIndex: number): boolean;
+   tileIsBuildingBlocking(tileIndex: TileIndex): boolean;
+}
+
 export const STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD = {} as Record<StructureType, PlaceableItemType>;
 for (const structureType of STRUCTURE_TYPES) {
    for (let itemType: ItemType = 0; itemType < NUM_ITEM_TYPES; itemType++) {
@@ -40,54 +70,13 @@ for (const structureType of STRUCTURE_TYPES) {
    }
 }
 
-export const enum SnapDirection {
-   top,
-   right,
-   bottom,
-   left
-}
-
-export type ConnectedEntityIDs = [number, number, number, number];
-
-interface StructureTransformInfo {
-   readonly position: Point;
-   readonly rotation: number;
-   /** Direction from the structure being placed to the snap entity */
-   readonly snapDirection: SnapDirection;
-   readonly connectedEntityID: number;
-}
-
-export interface StructurePlaceInfo {
-   readonly position: Point;
-   readonly rotation: number;
-   readonly entityType: StructureType;
-   readonly connectedSidesBitset: number;
-   readonly connectedEntityIDs: ConnectedEntityIDs;
-   readonly hitboxes: ReadonlyArray<Hitbox>;
-   readonly isValid: boolean;
-}
-
-export interface StructureConnectionInfo {
-   readonly connectedSidesBitset: number;
-   readonly connectedEntityIDs: ConnectedEntityIDs;
-}
-
-export interface WorldInfo {
-   readonly chunks: Chunks;
-   readonly wallSubtileTypes: Readonly<Float32Array>;
-   getEntityCallback(entity: Entity): EntityInfo;
-   subtileIsMined(subtileIndex: number): boolean;
-   tileIsBuildingBlocking(tileIndex: TileIndex): boolean;
-}
-
-export function entityIsStructure(entityType: EntityType): boolean {
+export function entityIsStructure(entityType: EntityType): entityType is StructureType {
    return STRUCTURE_TYPES.indexOf(entityType as StructureType) !== -1;
 }
 
-export function createEmptyStructureConnectionInfo(): StructureConnectionInfo {
+export function createStructureConnection(entity: Entity): StructureConnection {
    return {
-      connectedSidesBitset: 0,
-      connectedEntityIDs: [0, 0, 0, 0]
+      entity: entity
    };
 }
 
@@ -127,6 +116,7 @@ const structureIntersectsWithBuildingBlockingTiles = (hitboxes: ReadonlyArray<Hi
 }
 
 const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, rotation: number, worldInfo: WorldInfo): boolean => {
+   // @Speed @Copynpaste: already done for candidates
    const testHitboxes = createNormalStructureHitboxes(entityType);
    for (let i = 0; i < testHitboxes.length; i++) {
       const hitbox = testHitboxes[i];
@@ -136,8 +126,28 @@ const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, 
    if (structureIntersectsWithBuildingBlockingTiles(testHitboxes, worldInfo)) {
       return false;
    }
+
+   // Make sure the structure wouldn't be in any walls
+   for (const hitbox of testHitboxes) {
+      const box = hitbox.box;
+
+      const minSubtileX = Math.floor(box.calculateBoundsMinX() / Settings.SUBTILE_SIZE);
+      const maxSubtileX = Math.floor(box.calculateBoundsMaxX() / Settings.SUBTILE_SIZE);
+      const minSubtileY = Math.floor(box.calculateBoundsMinY() / Settings.SUBTILE_SIZE);
+      const maxSubtileY = Math.floor(box.calculateBoundsMaxY() / Settings.SUBTILE_SIZE);
+
+      for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+         for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+            const subtileIndex = getSubtileIndex(subtileX, subtileY);
+            const subtileType = worldInfo.wallSubtileTypes[subtileIndex] as SubtileType;
+            if (subtileType !== SubtileType.none && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+               return false;
+            }
+         }
+      }
+   }
    
-   const collidingEntities = getBoxesCollidingEntities(worldInfo, testHitboxes);
+   const collidingEntities = getBoxesCollidingEntities(worldInfo, testHitboxes, Vars.COLLISION_EPSILON);
 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entityID = collidingEntities[i];
@@ -204,7 +214,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    return placePosition;
 }
 
-const getNearbyStructures = (regularPlacePosition: Point, worldInfo: WorldInfo): ReadonlyArray<EntityInfo<StructureType>> => {
+const getNearbyEntities = (regularPlacePosition: Point, worldInfo: WorldInfo): ReadonlyArray<EntityInfo> => {
    const minChunkX = Math.max(Math.floor((regularPlacePosition.x - Settings.STRUCTURE_SNAP_RANGE) / Settings.CHUNK_UNITS), 0);
    const maxChunkX = Math.min(Math.floor((regularPlacePosition.x + Settings.STRUCTURE_SNAP_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    const minChunkY = Math.max(Math.floor((regularPlacePosition.y - Settings.STRUCTURE_SNAP_RANGE) / Settings.CHUNK_UNITS), 0);
@@ -212,7 +222,7 @@ const getNearbyStructures = (regularPlacePosition: Point, worldInfo: WorldInfo):
    
    const seenEntityIDs = new Set<number>();
    
-   const nearbyStructures = new Array<EntityInfo<StructureType>>();
+   const nearbyEntities = new Array<EntityInfo>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = getChunk(worldInfo.chunks, chunkX, chunkY);
@@ -229,15 +239,12 @@ const getNearbyStructures = (regularPlacePosition: Point, worldInfo: WorldInfo):
                continue;
             }
             
-            // @Cleanup: casts
-            if (STRUCTURE_TYPES.includes(entity.type as StructureType)) {
-               nearbyStructures.push(entity as EntityInfo<StructureType>);
-            }
+            nearbyEntities.push(entity);
          }
       }
    }
 
-   return nearbyStructures;
+   return nearbyEntities;
 }
 
 export function getStructureSnapOrigin(structure: EntityInfo): Point {
@@ -249,77 +256,69 @@ export function getStructureSnapOrigin(structure: EntityInfo): Point {
    return snapOrigin;
 }
 
-export function getSnapDirection(directionToSnappingEntity: number, structureRotation: number): SnapDirection {
-   /*
-   Note: Assumes that the structure position can properly snap to the snapping entity.
-   */
-   
-   if (getAbsAngleDiff(directionToSnappingEntity, structureRotation) < 0.01) {
-      return SnapDirection.top;
-   } else if (getAbsAngleDiff(directionToSnappingEntity, structureRotation + Math.PI/2) < 0.01) {
-      return SnapDirection.right;
-   } else if (getAbsAngleDiff(directionToSnappingEntity, structureRotation + Math.PI) < 0.01) {
-      return SnapDirection.bottom;
-   } else if (getAbsAngleDiff(directionToSnappingEntity, structureRotation + Math.PI*3/2) < 0.01) {
-      return SnapDirection.left;
-   }
-
-   console.log(directionToSnappingEntity, structureRotation);
-   console.warn("Misaligned directions!");
-   return SnapDirection.top;
-}
-
-const getPositionsOffEntity = (snapOrigin: Readonly<Point>, connectingEntity: EntityInfo<StructureType>, placeRotation: number, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<StructureTransformInfo> => {
+const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<StructureType>, desiredPlacePosition: Point, desiredPlaceRotation: number, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<SnapCandidate> => {
    const placingEntityHitboxes = createNormalStructureHitboxes(structureType);
+   const snapOrigin = getStructureSnapOrigin(connectingEntity);
    
-   const snapPositions = new Array<StructureTransformInfo>();
+   const snapPositions = new Array<SnapCandidate>();
 
-   for (let i = 0; i < connectingEntity.hitboxes.length; i++) {
-      const hitbox = connectingEntity.hitboxes[i];
-      const box = hitbox.box;
-   
-      let hitboxHalfWidth: number;
-      let hitboxHalfHeight: number;
+   for (const placingEntityHitbox of placingEntityHitboxes) {
+      const box = placingEntityHitbox.box;
+
+      // @Cleanup: copy and paste
+      let placingEntityHitboxHalfWidth: number;
+      let placingEntityHitboxHalfHeight: number;
       if (boxIsCircular(box)) {
-         hitboxHalfWidth = box.radius;
-         hitboxHalfHeight = box.radius;
+         placingEntityHitboxHalfWidth = box.radius;
+         placingEntityHitboxHalfHeight = box.radius;
       } else {
-         hitboxHalfWidth = box.width * 0.5;
-         hitboxHalfHeight = box.height * 0.5;
+         placingEntityHitboxHalfWidth = box.width * 0.5;
+         placingEntityHitboxHalfHeight = box.height * 0.5;
       }
-
-      for (let j = 0; j < placingEntityHitboxes.length; j++) {
-         const placingEntityHitbox = placingEntityHitboxes[j];
-         const box = placingEntityHitbox.box;
-   
-         // @Cleanup: copy and paste
-         let placingEntityHitboxHalfWidth: number;
-         let placingEntityHitboxHalfHeight: number;
+      
+      for (const hitbox of connectingEntity.hitboxes) {
+         const box = hitbox.box;
+      
+         let hitboxHalfWidth: number;
+         let hitboxHalfHeight: number;
          if (boxIsCircular(box)) {
-            placingEntityHitboxHalfWidth = box.radius;
-            placingEntityHitboxHalfHeight = box.radius;
+            hitboxHalfWidth = box.radius;
+            hitboxHalfHeight = box.radius;
          } else {
-            placingEntityHitboxHalfWidth = box.width * 0.5;
-            placingEntityHitboxHalfHeight = box.height * 0.5;
+            hitboxHalfWidth = box.width * 0.5;
+            hitboxHalfHeight = box.height * 0.5;
          }
 
          // Add snap positions for each direction off the connecting entity hitbox
          for (let k = 0; k < 4; k++) {
-            const offsetDirection = k * Math.PI / 2 + connectingEntity.rotation;
+            const offsetDirection = connectingEntity.rotation + k * Math.PI / 2;
       
             const connectingEntityOffset = k % 2 === 0 ? hitboxHalfHeight : hitboxHalfWidth;
    
+            const placingEntityRotation = alignAngleToClosestAxis(desiredPlaceRotation, connectingEntity.rotation);
+            
+            let placingEntityOffset: number;
             // Direction to the snapping entity is opposite of the offset from the snapping entity
-            const snapDirection = getSnapDirection(offsetDirection + Math.PI, placeRotation);
-      
-            const placingEntityOffset = snapDirection % 2 === 0 ? placingEntityHitboxHalfHeight : placingEntityHitboxHalfWidth;
+            const angleDiff = getAbsAngleDiff(offsetDirection + Math.PI, placingEntityRotation);
+            if (angleDiff < Math.PI * 0.5) {
+               // Top or bottom is bing connected
+               placingEntityOffset = placingEntityHitboxHalfHeight;
+            } else {
+               // Left or right is being connected
+               placingEntityOffset = placingEntityHitboxHalfWidth;
+            }
       
             const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
             position.add(snapOrigin);
 
+            const hitboxes = createNormalStructureHitboxes(structureType);
+            for (const hitbox of hitboxes) {
+               updateBox(hitbox.box, position.x, position.y, placingEntityRotation);
+            }
+            
             // Don't add the position if it would be colliding with the connecting entity
             let isValid = true;
-            const collidingEntities = estimateCollidingEntities(worldInfo, structureType, position.x, position.y, placeRotation, Vars.COLLISION_EPSILON);
+            const collidingEntities = getBoxesCollidingEntities(worldInfo, hitboxes, Vars.COLLISION_EPSILON);
             for (let l = 0; l < collidingEntities.length; l++) {
                const collidingEntityID = collidingEntities[l];
                if (collidingEntityID === connectingEntity.id) {
@@ -331,11 +330,56 @@ const getPositionsOffEntity = (snapOrigin: Readonly<Point>, connectingEntity: En
             if (isValid) {
                snapPositions.push({
                   position: position,
-                  rotation: placeRotation,
-                  snapDirection: snapDirection,
-                  connectedEntityID: connectingEntity.id
+                  rotation: placingEntityRotation,
+                  connectedEntity: connectingEntity.id,
+                  hitboxes: hitboxes
                });
             }
+
+            // // If the hitbox is circular, add the free position
+            // if (hitboxIsCircular(hitbox)) {
+            //    const offsetDirection = connectingEntity.position.calculateAngleBetween(desiredPlacePosition);
+            //    // @Copynpaste
+   
+               
+            //    const placingEntityRotation = of
+               
+            //    let placingEntityOffset: number;
+            //    let placingEntityRotation: number;
+            //    // Direction to the snapping entity is opposite of the offset from the snapping entity
+            //    const angleDiff = getAbsAngleDiff(offsetDirection + Math.PI, placeRotation);
+            //    if (angleDiff < Math.PI * 0.5) {
+            //       // Top or bottom is bing connected
+            //       placingEntityOffset = placingEntityHitboxHalfHeight;
+            //       placingEntityRotation = connectingEntity.rotation;
+            //    } else {
+            //       // Left or right is being connected
+            //       placingEntityOffset = placingEntityHitboxHalfWidth;
+            //       placingEntityRotation = connectingEntity.rotation + Math.PI * 0.5;
+            //    }
+               
+            //    const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
+            //    position.add(snapOrigin);
+
+            //    // Don't add the position if it would be colliding with the connecting entity
+            //    let isValid = true;
+            //    const collidingEntities = estimateCollidingEntities(worldInfo, structureType, position.x, position.y, placingEntityRotation, Vars.COLLISION_EPSILON);
+            //    for (let l = 0; l < collidingEntities.length; l++) {
+            //       const collidingEntityID = collidingEntities[l];
+            //       if (collidingEntityID === connectingEntity.id) {
+            //          isValid = false;
+            //          break;
+            //       }
+            //    }
+      
+            //    if (isValid) {
+            //       snapPositions.push({
+            //          position: position,
+            //          rotation: placingEntityRotation,
+            //          connectedEntityID: connectingEntity.id
+            //       });
+            //    }
+            // }
          }
       }
    }
@@ -343,24 +387,12 @@ const getPositionsOffEntity = (snapOrigin: Readonly<Point>, connectingEntity: En
    return snapPositions;
 }
 
-const findCandidatePlacePositions = (nearbyStructures: ReadonlyArray<EntityInfo<StructureType>>, structureType: StructureType, placingEntityRotation: number, worldInfo: WorldInfo): Array<StructureTransformInfo> => {
-   const candidatePositions = new Array<StructureTransformInfo>();
+const findCandidatePlacePositions = (structureType: StructureType, desiredPlacePosition: Point, desiredPlaceRotation: number, worldInfo: WorldInfo): Array<SnapCandidate> => {
+   const candidatePositions = new Array<SnapCandidate>();
    
-   for (let i = 0; i < nearbyStructures.length; i++) {
-      const entity = nearbyStructures[i];
-
-      // @Cleanup
-      let clampedSnapRotation = entity.rotation;
-      while (clampedSnapRotation >= Math.PI * 0.25) {
-         clampedSnapRotation -= Math.PI * 0.5;
-      }
-      while (clampedSnapRotation < Math.PI * 0.25) {
-         clampedSnapRotation += Math.PI * 0.5;
-      }
-      const placeRotation = Math.round(placingEntityRotation / (Math.PI * 0.5)) * Math.PI * 0.5 + clampedSnapRotation;
-
-      const snapOrigin = getStructureSnapOrigin(entity);
-      const positionsOffEntity = getPositionsOffEntity(snapOrigin, entity, placeRotation, structureType, worldInfo);
+   const structuresInSnapRange = getNearbyEntities(desiredPlacePosition, worldInfo).filter(entityInfo => entityIsStructure(entityInfo.type)) as Array<EntityInfo<StructureType>>;
+   for (const entity of structuresInSnapRange) {
+      const positionsOffEntity = getSnapCandidatesOffConnectingEntity(entity, desiredPlacePosition, desiredPlaceRotation, structureType, worldInfo);
 
       for (let i = 0; i < positionsOffEntity.length; i++) {
          const position = positionsOffEntity[i];
@@ -372,7 +404,7 @@ const findCandidatePlacePositions = (nearbyStructures: ReadonlyArray<EntityInfo<
    return candidatePositions;
 }
 
-const transformsFormGroup = (transform1: StructureTransformInfo, transform2: StructureTransformInfo): boolean => {
+const transformsFormGroup = (transform1: SnapCandidate, transform2: SnapCandidate): boolean => {
    const dist = distance(transform1.position.x, transform1.position.y, transform2.position.x, transform2.position.y);
    if (dist > Vars.MULTI_SNAP_POSITION_TOLERANCE) {
       return false;
@@ -385,7 +417,7 @@ const transformsFormGroup = (transform1: StructureTransformInfo, transform2: Str
    return true;
 }
 
-const getExistingGroup = (transform: StructureTransformInfo, groups: ReadonlyArray<Array<StructureTransformInfo>>): Array<StructureTransformInfo> | null => {
+const getExistingGroup = (transform: SnapCandidate, groups: ReadonlyArray<Array<SnapCandidate>>): Array<SnapCandidate> | null => {
    for (let i = 0; i < groups.length; i++) {
       const group = groups[i];
 
@@ -399,8 +431,8 @@ const getExistingGroup = (transform: StructureTransformInfo, groups: ReadonlyArr
    return null;
 }
 
-const groupTransforms = (transforms: ReadonlyArray<StructureTransformInfo>, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<StructurePlaceInfo> => {
-   const groups = new Array<Array<StructureTransformInfo>>();
+const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<StructurePlaceInfo> => {
+   const groups = new Array<Array<SnapCandidate>>();
    
    for (let i = 0; i < transforms.length; i++) {
       const transform = transforms[i];
@@ -419,26 +451,16 @@ const groupTransforms = (transforms: ReadonlyArray<StructureTransformInfo>, stru
       const group = groups[i];
       const firstTransform = group[0];
       
-      let connectedSidesBitset = 0;
-      const connectedEntityIDs: ConnectedEntityIDs = [0, 0, 0, 0];
-      for (let j = 0; j < group.length; j++) {
-         const transform = group[j];
-
-         const bit = 1 << transform.snapDirection;
-         if ((connectedSidesBitset & bit)) {
-            console.warn("Found multiple snaps to the same side of the structure being placed!");
-         } else {
-            connectedSidesBitset |= bit;
-
-            connectedEntityIDs[transform.snapDirection] = transform.connectedEntityID;
-         }
+      const connections = new Array<StructureConnection>();
+      for (const transform of group) {
+         const connection = createStructureConnection(transform.connectedEntity);
+         connections.push(connection);
       }
 
       const placeInfo: StructurePlaceInfo = {
          position: firstTransform.position,
          rotation: firstTransform.rotation,
-         connectedSidesBitset: connectedSidesBitset,
-         connectedEntityIDs: connectedEntityIDs,
+         connections: connections,
          entityType: structureType,
          hitboxes: [],
          isValid: structurePlaceIsValid(structureType, firstTransform.position.x, firstTransform.position.y, firstTransform.rotation, worldInfo)
@@ -449,7 +471,7 @@ const groupTransforms = (transforms: ReadonlyArray<StructureTransformInfo>, stru
    return placeInfos;
 }
 
-const filterCandidatePositions = (candidates: Array<StructureTransformInfo>, regularPlacePosition: Readonly<Point>): void => {
+const filterCandidatePositions = (candidates: Array<SnapCandidate>, regularPlacePosition: Readonly<Point>): void => {
    for (let i = 0; i < candidates.length; i++) {
       const transform = candidates[i];
 
@@ -478,7 +500,7 @@ const getNearbyTileCornerSubtiles = (regularPlacePosition: Point): ReadonlyArray
 }
 
 const checkSubtileForWall = (subtileX: number, subtileY: number, worldInfo: WorldInfo): boolean => {
-   // A subtile can support bracings if it:
+   // A subtile can support bracings if it both:
    // - Is in the world
    // - Is mined out
    
@@ -511,7 +533,7 @@ const cornerIsPlaceable = (cornerSubtileX: number, cornerSubtileY: number, world
    return numConnected >= 1 && numConnected <= 4;
 }
 
-const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
+const getBracingsPlaceInfo = (regularPlacePosition: Point, worldInfo: WorldInfo): StructurePlaceInfo => {
    // Note: for each subtile, the corner position refers to the bottom-left corner of the subtile
    const nearbyTileCornerSubtiles = getNearbyTileCornerSubtiles(regularPlacePosition);
 
@@ -586,36 +608,32 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, entityType: Structure
    return {
       position: position,
       rotation: rotation,
-      connectedSidesBitset: 0,
-      connectedEntityIDs: [0, 0, 0, 0],
-      entityType: entityType,
+      connections: [],
+      entityType: EntityType.bracings,
       hitboxes: hitboxes,
       isValid: isValid
    };
 }
 
-const calculatePlaceInfo = (position: Point, rotation: number, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
+const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: number, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
    // @Hack?
    if (entityType === EntityType.bracings) {
-      return getBracingsPlaceInfo(position, entityType, worldInfo);
+      return getBracingsPlaceInfo(desiredPlacePosition, worldInfo);
    }
    
-   const nearbyStructures = getNearbyStructures(position, worldInfo);
+   const snapCandidates = findCandidatePlacePositions(entityType, desiredPlacePosition, desiredPlaceRotation, worldInfo);
+   filterCandidatePositions(snapCandidates, desiredPlacePosition);
    
-   const candidatePositions = findCandidatePlacePositions(nearbyStructures, entityType, rotation, worldInfo);
-   filterCandidatePositions(candidatePositions, position);
-   
-   const placeInfos = groupTransforms(candidatePositions, entityType, worldInfo);
+   const placeInfos = groupTransforms(snapCandidates, entityType, worldInfo);
    if (placeInfos.length === 0) {
       // If no connections are found, use the regular place position
       return {
-         position: position,
-         rotation: rotation,
-         connectedSidesBitset: 0,
-         connectedEntityIDs: [0, 0, 0, 0],
+         position: desiredPlacePosition,
+         rotation: desiredPlaceRotation,
+         connections: [],
          entityType: entityType,
          hitboxes: [],
-         isValid: structurePlaceIsValid(entityType, position.x, position.y, rotation, worldInfo)
+         isValid: structurePlaceIsValid(entityType, desiredPlacePosition.x, desiredPlacePosition.y, desiredPlaceRotation, worldInfo)
       };
    } else {
       // @Incomplete:
@@ -626,15 +644,7 @@ const calculatePlaceInfo = (position: Point, rotation: number, entityType: Struc
    }
 }
 
-export function calculateStructureConnectionInfo(position: Point, rotation: number, structureType: StructureType, worldInfo: WorldInfo): StructureConnectionInfo {
-   const placeInfo = calculatePlaceInfo(position, rotation, structureType, worldInfo);
-   return {
-      connectedSidesBitset: placeInfo.connectedSidesBitset,
-      connectedEntityIDs: placeInfo.connectedEntityIDs
-   };
-}
-
-export function calculateStructurePlaceInfo(placeOrigin: Point, placingEntityRotation: number, structureType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo {
-   const regularPlacePosition = calculateRegularPlacePosition(placeOrigin, placingEntityRotation, structureType);
-   return calculatePlaceInfo(regularPlacePosition, placingEntityRotation, structureType, worldInfo);
+export function calculateStructurePlaceInfo(placeOrigin: Point, desiredPlaceRotation: number, structureType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo {
+   const regularPlacePosition = calculateRegularPlacePosition(placeOrigin, desiredPlaceRotation, structureType);
+   return calculatePlaceInfo(regularPlacePosition, desiredPlaceRotation, structureType, worldInfo);
 }

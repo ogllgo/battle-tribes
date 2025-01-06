@@ -129,7 +129,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.treeRootBase]: CollisionGroup.boring,
    [EntityType.treeRootSegment]: CollisionGroup.boring,
    [EntityType.mithrilOreNode]: CollisionGroup.boring,
-   [EntityType.rootTap]: CollisionGroup.boring,
+   [EntityType.scrappy]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

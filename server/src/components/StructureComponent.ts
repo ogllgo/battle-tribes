@@ -1,31 +1,26 @@
-import { StructureConnectionInfo, StructureType, getSnapDirection, getStructureSnapOrigin } from "battletribes-shared/structures";
+import { createStructureConnection, StructureConnection, StructureType } from "battletribes-shared/structures";
 import { createStructureGrassBlockers } from "../grass-blockers";
 import { BlueprintComponentArray } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
-import { ConnectedEntityIDs } from "../entities/tribes/tribe-member";
-import { Mutable } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
-import { getLayerInfo } from "../layers";
 import { createVirtualBuilding, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 
-export class StructureComponent implements Mutable<StructureConnectionInfo> {
+export class StructureComponent {
    /** The blueprint currently placed on the structure. 0 if none is present */
    public activeBlueprint = 0;
-   
-   public connectedSidesBitset: number;
-   public connectedEntityIDs: ConnectedEntityIDs;
+
+   public readonly connections = new Array<StructureConnection>();
 
    /** The virtual building associated with the structure. If null, will automatically create a virtual building for the structure. */
    public virtualBuilding: VirtualStructure | null;
 
-   constructor(connectionInfo: StructureConnectionInfo, virtualBuilding: VirtualStructure | null) {
-      this.connectedSidesBitset = connectionInfo.connectedSidesBitset;
-      this.connectedEntityIDs = connectionInfo.connectedEntityIDs;
+   constructor(connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null) {
+      this.connections = connections;
       this.virtualBuilding = virtualBuilding;
    }
 }
@@ -34,24 +29,17 @@ export const StructureComponentArray = new ComponentArray<StructureComponent>(Se
 StructureComponentArray.onJoin = onJoin;
 StructureComponentArray.onRemove = onRemove;
 
-const addConnection = (structureComponent: StructureComponent, connectionIdx: number, connectedEntityID: number): void => {
-   structureComponent.connectedEntityIDs[connectionIdx] = connectedEntityID;
-   structureComponent.connectedSidesBitset |= 1 << connectionIdx;
+const addConnection = (structureComponent: StructureComponent, connectedEntity: Entity): void => {
+   const connection = createStructureConnection(connectedEntity);
+   structureComponent.connections.push(connection)
 }
 
-const removeConnection = (structureComponent: StructureComponent, connectionIdx: number): void => {
-   structureComponent.connectedEntityIDs[connectionIdx] = 0;
-   structureComponent.connectedSidesBitset &= ~(1 << connectionIdx);
-}
-
-const removeConnectionWithStructure = (structureID: number, connectedStructureID: number): void => {
-   const structureComponent = StructureComponentArray.getComponent(structureID);
-   
-   for (let i = 0; i < 4; i++) {
-      const entityID = structureComponent.connectedEntityIDs[i];
-      if (entityID === connectedStructureID) {
-         removeConnection(structureComponent, i);
-         break;
+const removeConnectionWithStructure = (structureComponent: StructureComponent, connectedStructure: Entity): void => {
+   for (let i = 0; i < structureComponent.connections.length; i++) {
+      const connection = structureComponent.connections[i];
+      if (connection.entity === connectedStructure) {
+         structureComponent.connections.splice(i, 1);
+         i--;
       }
    }
 }
@@ -74,21 +62,10 @@ function onJoin(entity: Entity): void {
 
    createStructureGrassBlockers(entity);
    
-   // Mark opposite connections
-   for (let i = 0; i < 4; i++) {
-      const connectedEntity = structureComponent.connectedEntityIDs[i];
-
-      if (connectedEntity !== 0 && StructureComponentArray.hasComponent(connectedEntity)) {
-         const otherStructureComponent = StructureComponentArray.getComponent(connectedEntity);
-         const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
-
-         const worldInfo = getLayerInfo(layer);
-         const snapOrigin = getStructureSnapOrigin(worldInfo.getEntityCallback(entity));
-         const connectedSnapOrigin = getStructureSnapOrigin(worldInfo.getEntityCallback(connectedEntity));
-         const connectionDirection = getSnapDirection(connectedSnapOrigin.calculateAngleBetween(snapOrigin), connectedEntityTransformComponent.rotation);
-
-         addConnection(otherStructureComponent, connectionDirection, entity);
-      }
+   // Register connections in any connected structures
+   for (const connection of structureComponent.connections) {
+      const connectedStructureComponent = StructureComponentArray.getComponent(connection.entity);
+      addConnection(connectedStructureComponent, entity);
    }
 }
 
@@ -98,10 +75,10 @@ function onRemove(entity: Entity): void {
 
    const structureComponent = StructureComponentArray.getComponent(entity);
 
-   for (let i = 0; i < 4; i++) {
-      const currentConnectedEntityID = structureComponent.connectedEntityIDs[i];
-      if (StructureComponentArray.hasComponent(currentConnectedEntityID)) {
-         removeConnectionWithStructure(currentConnectedEntityID, entity);
+   for (const connection of structureComponent.connections) {
+      if (StructureComponentArray.hasComponent(connection.entity)) {
+         const structureComponent = StructureComponentArray.getComponent(connection.entity);
+         removeConnectionWithStructure(structureComponent, entity);
       }
    }
 
@@ -111,13 +88,22 @@ function onRemove(entity: Entity): void {
    }
 }
 
-function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+function getDataLength(entity: Entity): number {
+   const structureComponent = StructureComponentArray.getComponent(entity);
+   
+   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += structureComponent.connections.length * Float32Array.BYTES_PER_ELEMENT;
+   return lengthBytes;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
+
    packet.addBoolean(BlueprintComponentArray.hasComponent(structureComponent.activeBlueprint));
    packet.padOffset(3);
-   packet.addNumber(structureComponent.connectedSidesBitset);
+
+   packet.addNumber(structureComponent.connections.length);
+   for (const connection of structureComponent.connections) {
+      packet.addNumber(connection.entity);
+   }
 }

@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
+import { StructureConnection } from "battletribes-shared/structures";
 import { createCampfireHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -29,7 +29,7 @@ const LIFETIME_SECONDS = 30;
 
 // @Incomplete: Destroy campfire when remaining heat reaches 0
 
-export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createCampfireConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createCampfireHitboxes(), null);
    
@@ -37,7 +37,7 @@ export function createCampfireConfig(tribe: Tribe, connectionInfo: StructureConn
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
 
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 

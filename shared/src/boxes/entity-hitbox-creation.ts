@@ -261,11 +261,6 @@ export function createSlurbTorchHitboxes(): Array<Hitbox> {
    return [hitbox];
 }
 
-
-/*
-Generic creation functions
-*/
-
 // @Incomplete: Include all entity types not just structures
 export function createNormalStructureHitboxes(entityType: StructureType): Array<Hitbox> {
    switch (entityType) {

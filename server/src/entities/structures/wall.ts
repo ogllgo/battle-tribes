@@ -1,7 +1,6 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createWallHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
@@ -12,6 +11,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [25, 75];
 
-export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualBuilding: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createWallHitboxes(), null);
    
@@ -30,7 +30,7 @@ export function createWallConfig(tribe: Tribe, material: BuildingMaterial, conne
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualBuilding);
+   const structureComponent = new StructureComponent(connections, virtualBuilding);
    
    const tribeComponent = new TribeComponent(tribe);
    

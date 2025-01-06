@@ -1,4 +1,6 @@
+import { Box, updateBox } from "./boxes/boxes";
 import { RectangularBox } from "./boxes/RectangularBox";
+import { Settings } from "./settings";
 import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
 // @Speed: Maybe make into const enum?
@@ -198,4 +200,12 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
    // Is colliding!
    collisionData.isColliding = true;
    return collisionData;
+}
+
+export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: number): boolean {
+   // @Speed
+   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+   updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
+   
+   return box.isColliding(tileBox);
 }

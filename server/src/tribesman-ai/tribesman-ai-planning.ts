@@ -1,14 +1,14 @@
 import { BlueprintType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { CRAFTING_STATION_ITEM_TYPE_RECORD, CraftingRecipe, CraftingStation, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
-import { InventoryName, ITEM_INFO_RECORD, ItemType, PlaceableItemInfo, PlaceableItemType, ToolType } from "../../../shared/src/items/items";
+import { InventoryName, ITEM_INFO_RECORD, ItemType, PlaceableItemInfo, PlaceableItemType, StructureItemType, ToolType } from "../../../shared/src/items/items";
 import { StructureType } from "../../../shared/src/structures";
 import { getTechRequiredForItem, Tech } from "../../../shared/src/techs";
-import { AIPlanType } from "../../../shared/src/utils";
+import { AIPlanType, assert } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { getLightIntensityAtPos, getLightLevelNode } from "../light-levels";
+import { getLightIntensityAtPos } from "../light-levels";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
 import { areaHasOutsideDoor, getOutsideDoorPlacePlan } from "./ai-building-areas";
@@ -175,6 +175,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.mithrilPickaxe]: null,
    [ItemType.mithrilAxe]: null,
    [ItemType.mithrilArmour]: null,
+   [ItemType.scrappy]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -291,9 +292,11 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
    
    // If there is no crafting station which can craft the recipe, first place that crafting station.
    if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation)) {
-      const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation]!;
+      const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation];
+      assert(typeof craftingStationItemType !== "undefined");
+      
       children.push(
-         planToPlaceBuilding(tribe, craftingStationItemType, null)
+         planToPlaceStructure(tribe, craftingStationItemType, null)
       );
    }
 
@@ -350,7 +353,7 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    // If there is no bench to research at, go place one
    if (tech.researchStudyRequirements > 0 && !tribeHasResearchBench(tribe)) {
       children.push(
-         planToPlaceBuilding(tribe, ItemType.research_bench, null)
+         planToPlaceStructure(tribe, ItemType.research_bench, null)
       );
    }
 
@@ -363,15 +366,15 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    return createTechCompletePlanAssignment(children, tech);
 }
 
-const planToPlaceBuilding = (tribe: Tribe, itemType: PlaceableItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> => {
+const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> => {
    const children = new Array<AIPlanAssignment>();
    
    let placedVirtualStructure: VirtualStructure;
    if (virtualStructure === null) {
       // Find a random spot to put the structure
-      // @Hack
+      // @Hack: home layer
       const buildingLayer = tribe.getBuildingLayer(tribe.homeLayer);
-      const entityType = (ITEM_INFO_RECORD[itemType] as PlaceableItemInfo).entityType;
+      const entityType = ITEM_INFO_RECORD[itemType].entityType;
       // @Cleanup: shouldn't have to define both entity type and placeable item type
       const candidate = generateBuildingCandidate(buildingLayer, entityType);
       placedVirtualStructure = createVirtualBuilding(buildingLayer, candidate.position, candidate.rotation, entityType);
@@ -391,11 +394,10 @@ const planToPlaceBuilding = (tribe: Tribe, itemType: PlaceableItemType, virtualS
    const lightLevel = getLightIntensityAtPos(placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
    // @Hack: item type check
    if (itemType !== ItemType.slurbTorch && numWorkbenches > 0 && !structureLightLevelIsValid(lightLevel)) {
-      // @Temporary
-      // const virtualStructure = generateLightPosition(tribe, placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
-      // children.push(
-      //    planToPlaceBuilding(tribe, ItemType.slurbTorch, virtualStructure)
-      // );
+      const virtualStructure = generateLightPosition(tribe, placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
+      children.push(
+         planToPlaceStructure(tribe, ItemType.slurbTorch, virtualStructure)
+      );
    }
    
    children.push(
@@ -458,14 +460,14 @@ export function updateTribePlans(tribe: Tribe): void {
    // If the tribe doesn't have a totem, place one
    if (tribe.virtualBuildingsByEntityType[EntityType.tribeTotem].length === 0) {
       tribe.assignment.children.push(
-         planToPlaceBuilding(tribe, ItemType.tribe_totem, null)
+         planToPlaceStructure(tribe, ItemType.tribe_totem, null)
       );
    }
 
    // Plan to place a hut so the settler can respawn if it dies
    if (tribe.virtualBuildingsByEntityType[EntityType.workerHut].length === 0) {
       tribe.assignment.children.push(
-         planToPlaceBuilding(tribe, ItemType.worker_hut, null)
+         planToPlaceStructure(tribe, ItemType.worker_hut, null)
       );
    }
 
@@ -485,7 +487,7 @@ export function updateTribePlans(tribe: Tribe): void {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
       if (tribe.virtualBuildingsByEntityType[EntityType.barrel].length < numDesiredBarrels) {
          tribe.assignment.children.push(
-            planToPlaceBuilding(tribe, ItemType.barrel, null)
+            planToPlaceStructure(tribe, ItemType.barrel, null)
          );
          continue;
       }
@@ -497,7 +499,7 @@ export function updateTribePlans(tribe: Tribe): void {
          const wallPlaceResult = findIdealWallPlacePosition(tribe);
          if (wallPlaceResult !== null) {
             // @Hack: item type
-            const assignment = planToPlaceBuilding(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
+            const assignment = planToPlaceStructure(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
             assignment.plan.potentialPlans = wallPlaceResult.potentialPlans;
 
             tribe.assignment.children.push(assignment);

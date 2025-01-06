@@ -99,18 +99,6 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
       debugEntries.push("Researched techs: " + tribeComponent.tribe.unlockedTechs.map(tech => tech.name).join(", "));
    }
 
-   if (StructureComponentArray.hasComponent(entity)) {
-      const structureComponent = StructureComponentArray.getComponent(entity);
-
-      const hasTopConnection = (structureComponent.connectedSidesBitset & 0b0001) !== 0;
-      const hasRightConnection = (structureComponent.connectedSidesBitset & 0b0010) !== 0;
-      const hasBottomConnection = (structureComponent.connectedSidesBitset & 0b0100) !== 0;
-      const hasLeftConnection = (structureComponent.connectedSidesBitset & 0b1000) !== 0;
-      
-      debugEntries.push("connectedSidesBitset: " + structureComponent.connectedSidesBitset);
-      debugEntries.push("Connections:" + (hasTopConnection ? " top" : "") + (hasRightConnection ? " right" : "") + (hasBottomConnection ? " bottom" : "") + (hasLeftConnection ? " left" : ""));
-   }
-
    return {
       entityID: entity,
       lines: lines,

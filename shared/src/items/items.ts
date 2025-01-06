@@ -83,6 +83,7 @@ export const enum ItemType {
    mithrilPickaxe,
    mithrilAxe,
    mithrilArmour,
+   scrappy
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -165,6 +166,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilPickaxe]: "Mithril Pickaxe",
    [ItemType.mithrilAxe]: "Mithril Axe",
    [ItemType.mithrilArmour]: "Mithril Armour",
+   [ItemType.scrappy]: "Scrappy"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -205,8 +207,6 @@ export interface ConsumableItemInfo extends StackableItemInfo {
 
 // @Cleanup: Is this necessary?
 export type ToolType = "sword" | "bow" | "axe" | "pickaxe" | "spear" | "hammer" | "battleaxe";
-
-   // Windup time, swing time, swing cooldown
 
 export interface ToolItemInfo extends StackableItemInfo {
    readonly toolType: ToolType;
@@ -249,7 +249,7 @@ export interface HammerItemInfo extends ToolItemInfo {
 }
 
 export interface PlaceableItemInfo extends StackableItemInfo {
-   readonly entityType: StructureType;
+   readonly entityType: EntityType;
 }
 
 export interface BackpackItemInfo extends BaseItemInfo {
@@ -496,6 +496,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.mithrilPickaxe]: "pickaxe",
    [ItemType.mithrilAxe]: "axe",
    [ItemType.mithrilArmour]: "armour",
+   [ItemType.scrappy]: "placeable"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -905,6 +906,10 @@ export const ITEM_INFO_RECORD = {
       defence: 0.4,
       level: 4
    },
+   [ItemType.scrappy]: {
+      stackSize: 99,
+      entityType: EntityType.scrappy
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1014,12 +1019,19 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.mithrilPickaxe]: {},
    [ItemType.mithrilAxe]: {},
    [ItemType.mithrilArmour]: {},
+   [ItemType.scrappy]: {},
 };
 
 // Some typescript wizardry
+
 type ExcludeNonPlaceableItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "placeable" ? T : never;
 export type PlaceableItemType = keyof {
    [T in ItemType as ExcludeNonPlaceableItemTypes<T>]: T;
+}
+
+type ExcludeNonStructureItemTypes<T extends PlaceableItemType> = (typeof ITEM_INFO_RECORD[T])["entityType"] extends StructureType ? T : never;
+export type StructureItemType = keyof {
+   [T in PlaceableItemType as ExcludeNonStructureItemTypes<T>]: T;
 }
 
 type ExcludeNonArmourItemTypes<T extends ItemType> = typeof ITEM_TYPE_RECORD[T] extends "armour" ? T : never;

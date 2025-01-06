@@ -455,3 +455,15 @@ export function positionIsInWorld(x: number, y: number): boolean {
 export function mod(x: number, n: number): number {
    return ((x % n) + n) % n;
 }
+
+export function alignAngleToClosestAxis(sourceAngle: number, targetAngle: number): number {
+   let clampedRotation = targetAngle;
+   while (clampedRotation >= Math.PI * 0.25) {
+      clampedRotation -= Math.PI * 0.5;
+   }
+   while (clampedRotation < Math.PI * 0.25) {
+      clampedRotation += Math.PI * 0.5;
+   }
+
+   return Math.round(sourceAngle / (Math.PI * 0.5)) * Math.PI * 0.5 + clampedRotation;
+}

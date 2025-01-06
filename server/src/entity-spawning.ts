@@ -34,9 +34,9 @@ import { createGlurbConfig } from "./entities/mobs/glurb";
 import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn-info";
 import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
-import { boxIsCollidingWithSubtile } from "./collision";
 import { undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
+import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 
 const PACK_SPAWN_RANGE = 200;
 

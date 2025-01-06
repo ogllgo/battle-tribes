@@ -336,7 +336,11 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    [EntityType.mithrilOreNode]: {
       effectiveDamageTypes: [DamageType.pickaxe],
       stoppedDamageTypes: []
-   }
+   },
+   [EntityType.scrappy]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

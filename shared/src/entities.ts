@@ -81,7 +81,7 @@ export const enum EntityType {
    treeRootBase,
    treeRootSegment,
    mithrilOreNode,
-   rootTap
+   scrappy
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -164,7 +164,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.treeRootBase]: "treeRootBase",
    [EntityType.treeRootSegment]: "treeRootSegment",
    [EntityType.mithrilOreNode]: "Mithril Ore Node",
-   [EntityType.rootTap]: "Root Tap",
+   [EntityType.scrappy]: "Scrappy"
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

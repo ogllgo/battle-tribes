@@ -241,7 +241,7 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.mithrilOreNode]: {
       name: "Mithril Ore Node"
-   }
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

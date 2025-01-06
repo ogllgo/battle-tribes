@@ -1,4 +1,4 @@
-import { ItemSlots, ItemType, ItemTypeString, PlaceableItemType } from "./items";
+import { ItemSlots, ItemType, ItemTypeString, StructureItemType } from "./items";
 import { Settings } from "../settings";
 import { ItemTally2, createTallyFromRecord } from "./ItemTally";
 
@@ -16,7 +16,7 @@ export enum CraftingStation {
    stonecarvingTable
 }
 
-export const CRAFTING_STATION_ITEM_TYPE_RECORD: Partial<Record<CraftingStation, PlaceableItemType>> = {
+export const CRAFTING_STATION_ITEM_TYPE_RECORD: Partial<Record<CraftingStation, StructureItemType>> = {
    [CraftingStation.workbench]: ItemType.workbench
 };
 

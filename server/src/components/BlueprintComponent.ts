@@ -3,7 +3,7 @@ import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getBlueprintEntityType } from "../entities/blueprint-entity";
 import { StructureComponentArray } from "./StructureComponent";
-import { calculateStructureConnectionInfo } from "battletribes-shared/structures";
+import { calculateStructurePlaceInfo } from "battletribes-shared/structures";
 import { TribeComponentArray } from "./TribeComponent";
 import { BuildingMaterialComponentArray, upgradeMaterial } from "./BuildingMaterialComponent";
 import { HutComponentArray } from "./HutComponent";
@@ -82,12 +82,13 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
    const position = transformComponent.position.copy();
    const layer = getEntityLayer(blueprintEntity);
-   const connectionInfo = calculateStructureConnectionInfo(position, transformComponent.rotation, entityType, getLayerInfo(layer));
+
+   const placeInfo = calculateStructurePlaceInfo(position, transformComponent.rotation, entityType, getLayerInfo(layer));
    
    // @Copynpaste
    switch (blueprintComponent.blueprintType) {
       case BlueprintType.woodenDoor: {
-         const config = createDoorConfig(tribe, BuildingMaterial.wood, connectionInfo, null);
+         const config = createDoorConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -95,7 +96,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.stoneDoor: {
-         const config = createDoorConfig(tribe, BuildingMaterial.stone, connectionInfo, null);
+         const config = createDoorConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -103,7 +104,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.woodenEmbrasure: {
-         const config = createEmbrasureConfig(tribe, BuildingMaterial.wood, connectionInfo, null);
+         const config = createEmbrasureConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -111,7 +112,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.stoneEmbrasure: {
-         const config = createEmbrasureConfig(tribe, BuildingMaterial.stone, connectionInfo, null);
+         const config = createEmbrasureConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -119,7 +120,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.ballista: {
-         const config = createBallistaConfig(tribe, connectionInfo, null);
+         const config = createBallistaConfig(tribe, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -127,7 +128,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.slingTurret: {
-         const config = createSlingTurretConfig(tribe, connectionInfo, null);
+         const config = createSlingTurretConfig(tribe, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -135,7 +136,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.woodenTunnel: {
-         const config = createTunnelConfig(tribe, BuildingMaterial.wood, connectionInfo, null);
+         const config = createTunnelConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -143,7 +144,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.stoneTunnel: {
-         const config = createTunnelConfig(tribe, BuildingMaterial.stone, connectionInfo, null);
+         const config = createTunnelConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -151,7 +152,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.fenceGate: {
-         const config = createFenceGateConfig(tribe, connectionInfo, null);
+         const config = createFenceGateConfig(tribe, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
@@ -162,7 +163,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.warriorHutUpgrade: {
-         const config = createWarriorHutConfig(tribe, connectionInfo, null);
+         const config = createWarriorHutConfig(tribe, placeInfo.connections, null);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;

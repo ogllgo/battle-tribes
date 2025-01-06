@@ -1,6 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createDoorHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -14,6 +13,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { DoorComponent } from "../../components/DoorComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -26,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [15, 45];
 
-export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createDoorHitboxes(), null);
    
@@ -40,7 +40,7 @@ export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, conne
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 

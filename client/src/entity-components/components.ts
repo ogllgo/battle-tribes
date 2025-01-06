@@ -57,6 +57,7 @@ import { PlayerComponentArray, PlayerComponentParams } from "./server-components
 import { PunjiSticksComponentArray, PunjiSticksComponentParams } from "./server-components/PunjiSticksComponent";
 import { ResearchBenchComponentArray, ResearchBenchComponentParams } from "./server-components/ResearchBenchComponent";
 import { RockSpikeComponentArray, RockSpikeComponentParams } from "./server-components/RockSpikeComponent";
+import { ScrappyComponentArray, ScrappyComponentParams } from "./server-components/ScrappyComponent";
 import { SlimeComponentArray, SlimeComponentParams } from "./server-components/SlimeComponent";
 import { SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
 import { SlimewispComponentArray, SlimewispComponentParams } from "./server-components/SlimewispComponent";
@@ -177,6 +178,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.treeRootBase]: TreeRootBaseComponentArray,
    [ServerComponentType.treeRootSegment]: TreeRootSegmentComponentArray,
    [ServerComponentType.mithrilOreNode]: MithrilOreNodeComponentArray,
+   [ServerComponentType.scrappy]: ScrappyComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -267,6 +269,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.treeRootBase]: (): TreeRootBaseComponentParams => 0 as any,
    [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponentParams => 0 as any,
    [ServerComponentType.mithrilOreNode]: (): MithrilOreNodeComponentParams => 0 as any,
+   [ServerComponentType.scrappy]: (): ScrappyComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

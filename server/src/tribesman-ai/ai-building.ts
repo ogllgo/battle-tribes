@@ -47,7 +47,7 @@ const BUILDING_SAFETY: Record<StructureType, number> = {
    [EntityType.stonecarvingTable]: 10,
    [EntityType.bracings]: 3,
    [EntityType.fireTorch]: 3,
-   [EntityType.slurbTorch]: 3
+   [EntityType.slurbTorch]: 3,
 };
 
 export function getSafetyNode(nodeX: number, nodeY: number): SafetyNode {

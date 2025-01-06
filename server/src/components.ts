@@ -89,6 +89,7 @@ import { IceSpikesPlantedComponent } from "./components/IceSpikesPlantedComponen
 import { Light } from "./light-levels";
 import { Hitbox } from "../../shared/src/boxes/boxes";
 import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
+import { ScrappyComponent } from "./components/ScrappyComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -180,6 +181,7 @@ const ComponentClassRecord = {
    [ServerComponentType.treeRootBase]: () => TreeRootBaseComponent,
    [ServerComponentType.treeRootSegment]: () => TreeRootSegmentComponent,
    [ServerComponentType.mithrilOreNode]: () => MithrilOreNodeComponent,
+   [ServerComponentType.scrappy]: () => ScrappyComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

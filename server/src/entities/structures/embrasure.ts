@@ -1,7 +1,6 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createEmbrasureHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { destroyEntity, getEntityType } from "../../world";
@@ -13,6 +12,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -23,7 +23,7 @@ type ComponentTypes = ServerComponentType.transform
 
 const HEALTHS = [15, 45];
 
-export function createEmbrasureConfig(tribe: Tribe, material: BuildingMaterial, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createEmbrasureConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createEmbrasureHitboxes(), null);
    
@@ -31,7 +31,7 @@ export function createEmbrasureConfig(tribe: Tribe, material: BuildingMaterial, 
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    

@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { createResearchBenchHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -12,6 +11,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { ResearchBenchComponent } from "../../components/ResearchBenchComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -20,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.tribe
    | ServerComponentType.researchBench;
 
-export function createResearchBenchConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createResearchBenchConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createResearchBenchHitboxes(), null);
    
@@ -28,7 +28,7 @@ export function createResearchBenchConfig(tribe: Tribe, connectionInfo: Structur
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 

@@ -1230,7 +1230,7 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.structure: {
-                  components[componentType] = createStructureComponentParams(false, 0);
+                  components[componentType] = createStructureComponentParams(false, []);
                   break;
                }
                case ServerComponentType.tribe: {

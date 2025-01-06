@@ -2,7 +2,6 @@ import { Hitbox } from "../../../../shared/src/boxes/boxes";
 import { BuildingMaterial, ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { createEmptyStructureConnectionInfo } from "../../../../shared/src/structures";
 import { EntityConfig } from "../../components";
 import { BracingsComponent } from "../../components/BracingsComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
@@ -33,7 +32,7 @@ export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tri
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent(createEmptyStructureConnectionInfo(), virtualStructure);
+   const structureComponent = new StructureComponent([], virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    

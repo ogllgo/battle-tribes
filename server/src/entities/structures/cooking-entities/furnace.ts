@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
+import { StructureConnection } from "battletribes-shared/structures";
 import { createFurnaceHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -25,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.cooking
    | ServerComponentType.furnace;
 
-export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createFurnaceConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createFurnaceHitboxes(), null);
    
@@ -33,7 +33,7 @@ export function createFurnaceConfig(tribe: Tribe, connectionInfo: StructureConne
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
 
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
 

@@ -4,7 +4,6 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { createBallistaHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
-import { StructureConnectionInfo } from "battletribes-shared/structures";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -17,6 +16,7 @@ import { AmmoBoxComponent } from "../../components/AmmoBoxComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { BallistaComponent } from "../../components/BallistaComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
+import { StructureConnection } from "../../../../shared/src/structures";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
@@ -29,7 +29,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.inventory
    | ServerComponentType.ballista;
 
-export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConnectionInfo, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createBallistaConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    transformComponent.addHitboxes(createBallistaHitboxes(), null);
    
@@ -37,7 +37,7 @@ export function createBallistaConfig(tribe: Tribe, connectionInfo: StructureConn
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
    
-   const structureComponent = new StructureComponent(connectionInfo, virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
 

@@ -2,7 +2,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { BlueprintType, BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { StructureConnectionInfo, StructureType, calculateStructurePlaceInfo } from "battletribes-shared/structures";
+import { StructurePlaceInfo, calculateStructurePlaceInfo } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TribeType } from "battletribes-shared/tribes";
 import { Point, dotAngles, lerp } from "battletribes-shared/utils";
@@ -57,7 +57,6 @@ import { createFenceGateConfig } from "../structures/fence-gate";
 import { createFrostshaperConfig } from "../structures/frostshaper";
 import { createStonecarvingTableConfig } from "../structures/stonecarving-table";
 import { createBracingsConfig } from "../structures/bracings";
-import { Hitbox } from "../../../../shared/src/boxes/boxes";
 import { createFireTorchConfig } from "../structures/fire-torch";
 import { createSlurbTorchConfig } from "../structures/slurb-torch";
 import { getLayerInfo } from "../../layers";
@@ -66,10 +65,6 @@ const enum Vars {
    ITEM_THROW_FORCE = 100,
    ITEM_THROW_OFFSET = 32
 }
-
-/** 1st bit = top, 2nd bit = right, 3rd bit = bottom, 4th bit = left */
-export type ConnectedSidesBitset = number;
-export type ConnectedEntityIDs = [number, number, number, number];
 
 export const VACUUM_RANGE = 85;
 
@@ -210,41 +205,41 @@ export function calculateRadialAttackTargets(entity: Entity, attackOffset: numbe
 }
 
 // @Incomplete: make this require place info
-export function placeBuilding(tribe: Tribe, layer: Layer, position: Point, rotation: number, entityType: StructureType, connectionInfo: StructureConnectionInfo, hitboxes: ReadonlyArray<Hitbox>): void {
+export function placeBuilding(tribe: Tribe, layer: Layer, placeInfo: StructurePlaceInfo): void {
    let config: EntityConfig<ServerComponentType.transform>;
-   switch (entityType) {
-      case EntityType.wall: config = createWallConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.door: config = createDoorConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.embrasure: config = createEmbrasureConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.floorSpikes: config = createFloorSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.wallSpikes: config = createWallSpikesConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.tunnel: config = createTunnelConfig(tribe, BuildingMaterial.wood, connectionInfo, null); break;
-      case EntityType.floorPunjiSticks: config = createFloorPunjiSticksConfig(tribe, connectionInfo, null); break;
-      case EntityType.wallPunjiSticks: config = createWallPunjiSticksConfig(tribe, connectionInfo, null); break;
-      case EntityType.ballista: config = createBallistaConfig(tribe, connectionInfo, null); break;
-      case EntityType.slingTurret: config = createSlingTurretConfig(tribe, connectionInfo, null); break;
-      case EntityType.tribeTotem: config = createTribeTotemConfig(tribe, connectionInfo, null); break;
-      case EntityType.workerHut: config = createWorkerHutConfig(tribe, connectionInfo, null); break;
-      case EntityType.warriorHut: config = createWarriorHutConfig(tribe, connectionInfo, null); break;
-      case EntityType.barrel: config = createBarrelConfig(tribe, connectionInfo, null); break;
-      case EntityType.workbench: config = createWorkbenchConfig(tribe, connectionInfo, null); break;
-      case EntityType.researchBench: config = createResearchBenchConfig(tribe, connectionInfo, null); break;
-      case EntityType.healingTotem: config = createHealingTotemConfig(tribe, connectionInfo, null); break;
-      case EntityType.planterBox: config = createPlanterBoxConfig(tribe, connectionInfo, null); break;
-      case EntityType.furnace: config = createFurnaceConfig(tribe, connectionInfo, null); break;
-      case EntityType.campfire: config = createCampfireConfig(tribe, connectionInfo, null); break;
-      case EntityType.fence: config = createFenceConfig(tribe, connectionInfo, null); break;
-      case EntityType.fenceGate: config = createFenceGateConfig(tribe, connectionInfo, null); break;
-      case EntityType.frostshaper: config = createFrostshaperConfig(tribe, connectionInfo, null); break;
-      case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, connectionInfo, null); break;
-      case EntityType.bracings: config = createBracingsConfig(hitboxes, tribe, BuildingMaterial.wood, null); break;
-      case EntityType.fireTorch: config = createFireTorchConfig(tribe, connectionInfo, null); break;
-      case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, connectionInfo, null); break;
+   switch (placeInfo.entityType) {
+      case EntityType.wall: config = createWallConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.door: config = createDoorConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.embrasure: config = createEmbrasureConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.floorSpikes: config = createFloorSpikesConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.wallSpikes: config = createWallSpikesConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.tunnel: config = createTunnelConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
+      case EntityType.floorPunjiSticks: config = createFloorPunjiSticksConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.wallPunjiSticks: config = createWallPunjiSticksConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.ballista: config = createBallistaConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.slingTurret: config = createSlingTurretConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.tribeTotem: config = createTribeTotemConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.workerHut: config = createWorkerHutConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.warriorHut: config = createWarriorHutConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.barrel: config = createBarrelConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.workbench: config = createWorkbenchConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.researchBench: config = createResearchBenchConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.healingTotem: config = createHealingTotemConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.planterBox: config = createPlanterBoxConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.furnace: config = createFurnaceConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.campfire: config = createCampfireConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.fence: config = createFenceConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.fenceGate: config = createFenceGateConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.frostshaper: config = createFrostshaperConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.stonecarvingTable: config = createStonecarvingTableConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.bracings: config = createBracingsConfig(placeInfo.hitboxes, tribe, BuildingMaterial.wood, null); break;
+      case EntityType.fireTorch: config = createFireTorchConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, placeInfo.connections, null); break;
    }
    
-   config.components[ServerComponentType.transform].position.x = position.x;
-   config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.transform].rotation = rotation;
+   config.components[ServerComponentType.transform].position.x = placeInfo.position.x;
+   config.components[ServerComponentType.transform].position.y = placeInfo.position.y;
+   config.components[ServerComponentType.transform].rotation = placeInfo.rotation;
    createEntity(config, layer, 0);
 }
 
@@ -337,20 +332,13 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const structureType = ITEM_INFO_RECORD[item.type as PlaceableItemType].entityType;
          const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
 
-         // Make sure the placeable item can be placed
-         if (!placeInfo.isValid) return;
-         
-         const structureInfo: StructureConnectionInfo = {
-            connectedEntityIDs: placeInfo.connectedEntityIDs,
-            connectedSidesBitset: placeInfo.connectedSidesBitset
-         };
-         
-         const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-         placeBuilding(tribeComponent.tribe, getEntityLayer(tribeMember), placeInfo.position, placeInfo.rotation, placeInfo.entityType, structureInfo, placeInfo.hitboxes);
+         if (placeInfo.isValid) {
+            const tribeComponent = TribeComponentArray.getComponent(tribeMember);
+            placeBuilding(tribeComponent.tribe, getEntityLayer(tribeMember), placeInfo);
 
-         const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
-         consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
-
+            const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
+            consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
+         }
          break;
       }
       case "bow": {
@@ -442,7 +430,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const itemInfo = ITEM_INFO_RECORD[item.type] as BowItemInfo;
 
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-         
+
          // @Copynpaste from bow above
          const config = createWoodenArrowConfig(tribeComponent.tribe, tribeMember);
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
@@ -616,22 +604,19 @@ const blueprintTypeMatchesBuilding = (structure: Entity, blueprintType: Blueprin
    return false;
 }
 
-// @Hack
-const getFenceGatePlaceDirection = (fence: Entity): number | null => {
+const getFenceGatePlaceDirection = (fence: Entity): number => {
    const structureComponent = StructureComponentArray.getComponent(fence);
 
-   // Top and bottom fence connections
-   let normalDirectionOffset: number;
-   if (structureComponent.connectedSidesBitset === 0b0101) {
-      normalDirectionOffset = Math.PI * 0.5;
-   } else if (structureComponent.connectedSidesBitset === 0b1010) {
-      normalDirectionOffset = 0;
-   } else {
-      return null;
-   }
+   // Fence gates always have two connections on their left and right, so we simply add 90deg to
+   // the direction of one of the connections.
+
+   const connection = structureComponent.connections[0];
 
    const transformComponent = TransformComponentArray.getComponent(fence);
-   return transformComponent.rotation + normalDirectionOffset;
+   const connectingFenceTransformComponent = TransformComponentArray.getComponent(connection.entity);
+
+   let direction = transformComponent.position.calculateAngleBetween(connectingFenceTransformComponent.position);
+   return direction + Math.PI * 0.5;
 }
 
 export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprintType: BlueprintType, dynamicRotation: number): void {
@@ -724,14 +709,9 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          }
 
          let rotation = getFenceGatePlaceDirection(structure);
-         if (rotation === null) {
-            console.warn("Tried to place a blueprint for a fence gate which had no valid direction!");
-            return;
-         }
-
-         const transformComponent = TransformComponentArray.getComponent(tribeMember);
 
          // Make rotation face away from player
+         const transformComponent = TransformComponentArray.getComponent(tribeMember);
          if (dotAngles(rotation, transformComponent.rotation) < 0) {
             rotation = rotation + Math.PI;
          }
