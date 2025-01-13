@@ -3,7 +3,7 @@ import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getBlueprintEntityType } from "../entities/blueprint-entity";
 import { StructureComponentArray } from "./StructureComponent";
-import { calculateStructurePlaceInfo } from "battletribes-shared/structures";
+import { calculateEntityPlaceInfo } from "battletribes-shared/structures";
 import { TribeComponentArray } from "./TribeComponent";
 import { BuildingMaterialComponentArray, upgradeMaterial } from "./BuildingMaterialComponent";
 import { HutComponentArray } from "./HutComponent";
@@ -83,7 +83,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const position = transformComponent.position.copy();
    const layer = getEntityLayer(blueprintEntity);
 
-   const placeInfo = calculateStructurePlaceInfo(position, transformComponent.rotation, entityType, getLayerInfo(layer));
+   const placeInfo = calculateEntityPlaceInfo(position, transformComponent.rotation, entityType, getLayerInfo(layer));
    
    // @Copynpaste
    switch (blueprintComponent.blueprintType) {

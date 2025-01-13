@@ -21,12 +21,12 @@ import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
 import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
-import { escapeFromEnemies, tribesmanShouldEscape } from "./tribesman-escaping";
+import { escapeFromEnemies, tribeMemberShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
-import { ItemType, InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory } from "battletribes-shared/items/items";
+import { InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, Inventory } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
-import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
+import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 
@@ -100,7 +100,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
 
       // @Cleanup: bad. should only change tribesman ai in that tribesman's tick function.
       const healthComponent = HealthComponentArray.getComponent(currentTribesman);
-      if (!tribesmanShouldEscape(getEntityType(currentTribesman), healthComponent)) {
+      if (!tribeMemberShouldEscape(getEntityType(currentTribesman), healthComponent)) {
          pathfindTribesman(currentTribesman, transformComponent.position.x, transformComponent.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       }
    }
@@ -329,44 +329,9 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
-
-   // Automatically equip armour from the hotbar
-   // @Speed: only do when inventory changes
-   if (typeof armourInventory.itemSlots[1] === "undefined") {
-      for (let i = 0; i < hotbarInventory.items.length; i++) {
-         const item = hotbarInventory.items[i];
-         if (ITEM_TYPE_RECORD[item.type] === "armour") {
-            armourInventory.addItem(item, 1);
-
-            // Remove from hotbar
-            const itemSlot = hotbarInventory.getItemSlot(item);
-            hotbarInventory.removeItem(itemSlot);
-            break;
-         }
-      }
-   }
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
-
-   // @Temporary
-   let minDist = Number.MAX_SAFE_INTEGER;
-   let e = 0;
-   for (const entity of aiHelperComponent.visibleEntities) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const dist = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-      if (getEntityType(entity) === EntityType.mithrilOreNode && dist < minDist) {
-         e = entity;
-         minDist = dist;
-      }
-   }
-   if (e !== 0) {
-      moveEntityToEntity(tribesman, e, getTribesmanAcceleration(tribesman), TRIBESMAN_TURN_SPEED);
-      return;
-   }
 
    // @Cleanup: A nicer way to do this might be to sort the visible entities array based on the 'threat level' of each entity
    // @Cleanup: A perhaps combine the visible enemies and visible hostile mobs arrays?
@@ -414,7 +379,7 @@ export function tickTribesman(tribesman: Entity): void {
    
    // Escape from enemies when low on health
    const healthComponent = HealthComponentArray.getComponent(tribesman);
-   if (tribesmanShouldEscape(getEntityType(tribesman), healthComponent) && (visibleEnemies.length > 0 || visibleHostileMobs.length > 0)) {
+   if (tribeMemberShouldEscape(getEntityType(tribesman), healthComponent) && (visibleEnemies.length > 0 || visibleHostileMobs.length > 0)) {
       escapeFromEnemies(tribesman, visibleEnemies, visibleHostileMobs);
 
       if (ageTicks % MESSAGE_INTERVAL_TICKS === 0) {
@@ -779,5 +744,5 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    // If there's nothing else to do, patrol the tribe area
-   tribesmanDoPatrol(tribesman, tribeComponent.tribe.getArea());
+   runPatrolAI(tribesman, tribeComponent.tribe.getArea());
 }

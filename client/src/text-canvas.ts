@@ -4,9 +4,12 @@ import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
 import { PlayerComponentArray } from "./entity-components/server-components/PlayerComponent";
-import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance } from "./world";
+import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "./world";
 import { getBuildingSafeties } from "./building-safety";
 import { getVisibleBuildingPlan, GhostBuildingPlan, VirtualBuildingSafetySimulation } from "./virtual-buildings";
+import { TribeMemberComponentArray } from "./entity-components/server-components/TribeMemberComponent";
+import { EntityType } from "../../shared/src/entities";
+import { getHumanoidRadius } from "./entity-components/server-components/TribesmanComponent";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -291,29 +294,29 @@ const renderHealNumbers = (): void => {
 // @Speed
 // @Speed
 // @Speed
-const renderPlayerNames = (): void => {
+const renderNames = (): void => {
    ctx.fillStyle = "#000";
    ctx.font = "400 20px Helvetica";
    ctx.lineJoin = "round";
    ctx.miterLimit = 2;
 
    const currentLayer = getCurrentLayer();
-   for (let i = 0; i < PlayerComponentArray.entities.length; i++) {
-      const player = PlayerComponentArray.entities[i];
-      if (player === playerInstance || getEntityLayer(player) !== currentLayer) {
+   for (let i = 0; i < TribeMemberComponentArray.entities.length; i++) {
+      const entity = TribeMemberComponentArray.entities[i];
+      if (entity === playerInstance || getEntityLayer(entity) !== currentLayer) {
          continue;
       }
 
-      const renderInfo = getEntityRenderInfo(player);
-      const playerComponent = PlayerComponentArray.components[i];
+      const renderInfo = getEntityRenderInfo(entity);
+      const tribeMemberComponent = TribeMemberComponentArray.components[i];
       
       // Calculate position in camera
       const cameraX = getXPosInTextCanvas(renderInfo.renderPosition.x);
-      const cameraY = getYPosInTextCanvas(renderInfo.renderPosition.y + 21);
+      const cameraY = getYPosInTextCanvas(renderInfo.renderPosition.y + getHumanoidRadius(entity) + 4);
       
-      const username = playerComponent.username;
+      const name = tribeMemberComponent.name;
 
-      const width = ctx.measureText(username).width; // @Speed
+      const width = ctx.measureText(name).width; // @Speed
 
       // Bg
       const bgWidthPadding = 4;
@@ -329,11 +332,11 @@ const renderPlayerNames = (): void => {
       // Draw text outline
       ctx.lineWidth = 6;
       ctx.strokeStyle = "#000";
-      ctx.strokeText(username, cameraX - width / 2, cameraY);
+      ctx.strokeText(name, cameraX - width / 2, cameraY);
       
       // Draw text
-      ctx.fillStyle = "#fff";
-      ctx.fillText(username, cameraX - width / 2, cameraY);
+      ctx.fillStyle = getEntityType(entity) === EntityType.player ? "#fff" : "#bbb";
+      ctx.fillText(name, cameraX - width / 2, cameraY);
    }
 }
 
@@ -580,7 +583,7 @@ const renderBuildingSafetys = (): void => {
 
 export function renderText(): void {
    clearTextCanvas();
-   renderPlayerNames();
+   renderNames();
    renderDamageNumbers();
    renderResearchNumbers();
    renderHealNumbers();

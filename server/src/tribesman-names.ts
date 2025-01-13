@@ -12,25 +12,25 @@ const SCRAPPY_NAMES = [
    "Clunk",
    "Spindle",
    "Patch",
-   "Nutz",
-   "Whizz",
-   "Sprocket"
+   "Sprocket",
+   "Nutscraper"
 ];
 
 // @Cleanup: location?
 const COGWALKER_NAMES = [
    "Sparky",
    "Bill Cogsby",
-   "Gearlok",
+   "Gearlok the Destroyer",
    "Axel",
    "Brassik",
    "Clanker",
-   "The Grindr",
+   "Grindr",
    "Torque",
-   "Mecham",
+   "Mechus",
    "Pistorius",
    "Weldon",
-   "Chad Thunderclock"
+   "Thunderclock",
+   "MiniLad"
 ];
 
 const STRIDER_NAMES = [
@@ -201,4 +201,8 @@ export function addTitleToTribesmanName(name: string, title: TribesmanTitle): st
 
 export function generateScrappyName(): string {
    return randItem(SCRAPPY_NAMES);
+}
+
+export function generateCogwalkerName(): string {
+   return randItem(COGWALKER_NAMES);
 }

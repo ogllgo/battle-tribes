@@ -3,7 +3,7 @@ import { HealthComponentArray } from "../../../components/HealthComponent";
 import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
 import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType, inventoryIsFull } from "../../../components/InventoryComponent";
 import { TribesmanAIType } from "battletribes-shared/components";
-import { tribesmanShouldEscape } from "./tribesman-escaping";
+import { tribeMemberShouldEscape } from "./tribesman-escaping";
 import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
@@ -20,7 +20,7 @@ import { Biome } from "../../../../../shared/src/biomes";
 import { TileType } from "../../../../../shared/src/tiles";
 import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert } from "../../../../../shared/src/utils";
-import { tribesmanDoPatrol } from "../../../components/PatrolAIComponent";
+import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { plantedTreeIsFullyGrown } from "../../../components/TreePlantedComponent";
 import { BerryBushPlantedComponentArray } from "../../../components/BerryBushPlantedComponent";
 import { plantedIceSpikesIsFullyGrown } from "../../../components/IceSpikesPlantedComponent";
@@ -182,7 +182,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
 const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const healthComponent = HealthComponentArray.getComponent(tribesman);
-   const shouldEscape = tribesmanShouldEscape(getEntityType(tribesman), healthComponent);
+   const shouldEscape = tribeMemberShouldEscape(getEntityType(tribesman), healthComponent);
    
    // @Cleanup: unused?
    const goalRadius = getTribesmanRadius(transformComponent);
@@ -316,7 +316,7 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
 
    // Explore the biome for things to harvest
    const localBiome = layer.getTileLocalBiome(currentTile);
-   tribesmanDoPatrol(tribesman, localBiome.tilesInBorder);
+   runPatrolAI(tribesman, localBiome.tilesInBorder);
 }
 
 export function gatherItemPlanIsComplete(inventoryComponent: InventoryComponent, plan: AIGatherItemPlan): boolean {

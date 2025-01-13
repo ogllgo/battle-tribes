@@ -90,6 +90,8 @@ import { Light } from "./light-levels";
 import { Hitbox } from "../../shared/src/boxes/boxes";
 import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 import { ScrappyComponent } from "./components/ScrappyComponent";
+import { CogwalkerComponent } from "./components/CogwalkerComponent";
+import { TribesmanComponent } from "./components/TribesmanComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -126,6 +128,7 @@ const ComponentClassRecord = {
    [ServerComponentType.rockSpike]: () => RockSpikeComponent,
    [ServerComponentType.slimeSpit]: () => SlimeSpitComponent,
    [ServerComponentType.door]: () => DoorComponent,
+   [ServerComponentType.tribesman]: () => TribesmanComponent,
    [ServerComponentType.tribesmanAI]: () => TribesmanAIComponent,
    [ServerComponentType.tunnel]: () => TunnelComponent,
    [ServerComponentType.buildingMaterial]: () => BuildingMaterialComponent,
@@ -182,6 +185,7 @@ const ComponentClassRecord = {
    [ServerComponentType.treeRootSegment]: () => TreeRootSegmentComponent,
    [ServerComponentType.mithrilOreNode]: () => MithrilOreNodeComponent,
    [ServerComponentType.scrappy]: () => ScrappyComponent,
+   [ServerComponentType.cogwalker]: () => CogwalkerComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

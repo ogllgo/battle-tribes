@@ -2,7 +2,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { BlueprintType, BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { StructurePlaceInfo, calculateStructurePlaceInfo } from "battletribes-shared/structures";
+import { calculateEntityPlaceInfo, StructurePlaceInfo } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TribeType } from "battletribes-shared/tribes";
 import { Point, dotAngles, lerp } from "battletribes-shared/utils";
@@ -19,7 +19,7 @@ import { TribeComponentArray } from "../../components/TribeComponent";
 import { PhysicsComponentArray } from "../../components/PhysicsComponent";
 import Tribe from "../../Tribe";
 import { TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";
-import { TribeMemberComponentArray, awardTitle, hasTitle } from "../../components/TribeMemberComponent";
+import { TribeMemberComponentArray } from "../../components/TribeMemberComponent";
 import { createItemEntityConfig } from "../item-entity";
 import { StructureComponentArray } from "../../components/StructureComponent";
 import { BuildingMaterialComponentArray } from "../../components/BuildingMaterialComponent";
@@ -60,6 +60,9 @@ import { createBracingsConfig } from "../structures/bracings";
 import { createFireTorchConfig } from "../structures/fire-torch";
 import { createSlurbTorchConfig } from "../structures/slurb-torch";
 import { getLayerInfo } from "../../layers";
+import { createScrappyConfig } from "./automatons/scrappy";
+import { createCogwalkerConfig } from "./automatons/cogwalker";
+import { awardTitle, hasTitle, TribesmanComponentArray } from "../../components/TribesmanComponent";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -71,11 +74,11 @@ export const VACUUM_RANGE = 85;
 const getDamageMultiplier = (entity: Entity): number => {
    let multiplier = 1;
 
-   if (TribeMemberComponentArray.hasComponent(entity)) {
-      const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
+   if (TribesmanComponentArray.hasComponent(entity)) {
+      const tribesmanComponent = TribesmanComponentArray.getComponent(entity);
 
-      for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
-         const title = tribeMemberComponent.titles[i].title;
+      for (let i = 0; i < tribesmanComponent.titles.length; i++) {
+         const title = tribesmanComponent.titles[i].title;
 
          switch (title) {
             case TribesmanTitle.deathbringer: {
@@ -235,6 +238,12 @@ export function placeBuilding(tribe: Tribe, layer: Layer, placeInfo: StructurePl
       case EntityType.bracings: config = createBracingsConfig(placeInfo.hitboxes, tribe, BuildingMaterial.wood, null); break;
       case EntityType.fireTorch: config = createFireTorchConfig(tribe, placeInfo.connections, null); break;
       case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.scrappy: config = createScrappyConfig(tribe); break;
+      case EntityType.cogwalker: config = createCogwalkerConfig(tribe); break;
+      // @Robustness?
+      default: {
+         throw new Error();
+      }
    }
    
    config.components[ServerComponentType.transform].position.x = placeInfo.position.x;
@@ -330,7 +339,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
          
          const structureType = ITEM_INFO_RECORD[item.type as PlaceableItemType].entityType;
-         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
+         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
 
          if (placeInfo.isValid) {
             const tribeComponent = TribeComponentArray.getComponent(tribeMember);
@@ -777,8 +786,8 @@ export function getAvailableCraftingStations(tribeMember: Entity): ReadonlyArray
 export function onTribeMemberCollision(tribesman: Entity, collidingEntity: Entity): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.berryBush || collidingEntityType === EntityType.tree) {
-      const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
-      tribeMemberComponent.lastPlantCollisionTicks = getGameTicks();
+      const tribesmanComponent = TribesmanComponentArray.getComponent(tribesman);
+      tribesmanComponent.lastPlantCollisionTicks = getGameTicks();
    }
 }
 

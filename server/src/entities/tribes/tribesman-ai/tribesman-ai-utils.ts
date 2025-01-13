@@ -7,12 +7,11 @@ import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } fr
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, findClosestDropdownTile, findMultiLayerPath, Path } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { distance, assert, TileIndex, randItem, Point, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
+import { distance, assert, randItem, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../../components/TribeMemberComponent";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
 import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo } from "battletribes-shared/items/items";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
@@ -24,6 +23,7 @@ import { TileType } from "../../../../../shared/src/tiles";
 import { TribesmanAIType } from "../../../../../shared/src/components";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
 import { EntityHarvestingInfo } from "./tribesman-resource-gathering";
+import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -86,22 +86,25 @@ const isCollidingWithCoveredSpikes = (tribesman: Entity): boolean => {
    return false;
 }
 
-const getAccelerationMultiplier = (tribesman: Entity): number => {
-   const tribeComponent = TribeComponentArray.getComponent(tribesman);
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
+const getAccelerationMultiplier = (tribeMember: Entity): number => {
+   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
    
    let multiplier = TRIBE_INFO_RECORD[tribeComponent.tribe.tribeType].moveSpeedMultiplier;
 
-   // @Incomplete: only do when wearing the bush suit
-   if (tribeMemberComponent.lastPlantCollisionTicks >= getGameTicks() - 1) {
-      multiplier *= 0.5;
-   }
-   
-   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter)) {
-      multiplier *= 1.2;
+   if (TribesmanComponentArray.hasComponent(tribeMember)) {
+      const tribesmanComponent = TribesmanComponentArray.getComponent(tribeMember);
+      
+      // @Incomplete: only do when wearing the bush suit
+      if (tribesmanComponent.lastPlantCollisionTicks >= getGameTicks() - 1) {
+         multiplier *= 0.5;
+      }
+      
+      if (tribeMemberHasTitle(tribesmanComponent, TribesmanTitle.sprinter)) {
+         multiplier *= 1.2;
+      }
    }
 
-   if (isCollidingWithCoveredSpikes(tribesman)) {
+   if (isCollidingWithCoveredSpikes(tribeMember)) {
       multiplier *= 0.5;
    }
 

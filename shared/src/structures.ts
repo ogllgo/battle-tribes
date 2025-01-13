@@ -44,7 +44,7 @@ export interface StructureConnection {
 export interface StructurePlaceInfo {
    readonly position: Point;
    readonly rotation: number;
-   readonly entityType: StructureType;
+   readonly entityType: EntityType;
    readonly connections: Array<StructureConnection>;
    readonly hitboxes: ReadonlyArray<Hitbox>;
    readonly isValid: boolean;
@@ -115,7 +115,7 @@ const structureIntersectsWithBuildingBlockingTiles = (hitboxes: ReadonlyArray<Hi
    return false;
 }
 
-const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, rotation: number, worldInfo: WorldInfo): boolean => {
+const structurePlaceIsValid = (entityType: EntityType, x: number, y: number, rotation: number, worldInfo: WorldInfo): boolean => {
    // @Speed @Copynpaste: already done for candidates
    const testHitboxes = createNormalStructureHitboxes(entityType);
    for (let i = 0; i < testHitboxes.length; i++) {
@@ -168,15 +168,15 @@ const structurePlaceIsValid = (entityType: StructureType, x: number, y: number, 
    return true;
 }
 
-const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation: number, structureType: StructureType): Point => {
+const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation: number, entityType: EntityType): Point => {
    // @Hack?
-   if (structureType === EntityType.bracings) {
+   if (entityType === EntityType.bracings) {
       const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityRotation);
       placePosition.add(placeOrigin);
       return placePosition;
    }
    
-   const hitboxes = createNormalStructureHitboxes(structureType);
+   const hitboxes = createNormalStructureHitboxes(entityType);
 
    let entityMinX = Number.MAX_SAFE_INTEGER;
    let entityMaxX = Number.MIN_SAFE_INTEGER;
@@ -256,8 +256,8 @@ export function getStructureSnapOrigin(structure: EntityInfo): Point {
    return snapOrigin;
 }
 
-const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<StructureType>, desiredPlacePosition: Point, desiredPlaceRotation: number, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<SnapCandidate> => {
-   const placingEntityHitboxes = createNormalStructureHitboxes(structureType);
+const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<StructureType>, desiredPlacePosition: Point, desiredPlaceRotation: number, entityType: EntityType, worldInfo: WorldInfo): ReadonlyArray<SnapCandidate> => {
+   const placingEntityHitboxes = createNormalStructureHitboxes(entityType);
    const snapOrigin = getStructureSnapOrigin(connectingEntity);
    
    const snapPositions = new Array<SnapCandidate>();
@@ -311,7 +311,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<Struc
             const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
             position.add(snapOrigin);
 
-            const hitboxes = createNormalStructureHitboxes(structureType);
+            const hitboxes = createNormalStructureHitboxes(entityType);
             for (const hitbox of hitboxes) {
                updateBox(hitbox.box, position.x, position.y, placingEntityRotation);
             }
@@ -387,12 +387,12 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<Struc
    return snapPositions;
 }
 
-const findCandidatePlacePositions = (structureType: StructureType, desiredPlacePosition: Point, desiredPlaceRotation: number, worldInfo: WorldInfo): Array<SnapCandidate> => {
+const findCandidatePlacePositions = (entityType: EntityType, desiredPlacePosition: Point, desiredPlaceRotation: number, worldInfo: WorldInfo): Array<SnapCandidate> => {
    const candidatePositions = new Array<SnapCandidate>();
    
    const structuresInSnapRange = getNearbyEntities(desiredPlacePosition, worldInfo).filter(entityInfo => entityIsStructure(entityInfo.type)) as Array<EntityInfo<StructureType>>;
    for (const entity of structuresInSnapRange) {
-      const positionsOffEntity = getSnapCandidatesOffConnectingEntity(entity, desiredPlacePosition, desiredPlaceRotation, structureType, worldInfo);
+      const positionsOffEntity = getSnapCandidatesOffConnectingEntity(entity, desiredPlacePosition, desiredPlaceRotation, entityType, worldInfo);
 
       for (let i = 0; i < positionsOffEntity.length; i++) {
          const position = positionsOffEntity[i];
@@ -431,7 +431,7 @@ const getExistingGroup = (transform: SnapCandidate, groups: ReadonlyArray<Array<
    return null;
 }
 
-const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, structureType: StructureType, worldInfo: WorldInfo): ReadonlyArray<StructurePlaceInfo> => {
+const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: EntityType, worldInfo: WorldInfo): ReadonlyArray<StructurePlaceInfo> => {
    const groups = new Array<Array<SnapCandidate>>();
    
    for (let i = 0; i < transforms.length; i++) {
@@ -461,9 +461,9 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, structureType
          position: firstTransform.position,
          rotation: firstTransform.rotation,
          connections: connections,
-         entityType: structureType,
+         entityType: entityType,
          hitboxes: [],
-         isValid: structurePlaceIsValid(structureType, firstTransform.position.x, firstTransform.position.y, firstTransform.rotation, worldInfo)
+         isValid: structurePlaceIsValid(entityType, firstTransform.position.x, firstTransform.position.y, firstTransform.rotation, worldInfo)
       };
       placeInfos.push(placeInfo);
    }
@@ -615,7 +615,7 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, worldInfo: WorldInfo)
    };
 }
 
-const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: number, entityType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo => {
+const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: number, entityType: EntityType, worldInfo: WorldInfo): StructurePlaceInfo => {
    // @Hack?
    if (entityType === EntityType.bracings) {
       return getBracingsPlaceInfo(desiredPlacePosition, worldInfo);
@@ -644,7 +644,7 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: n
    }
 }
 
-export function calculateStructurePlaceInfo(placeOrigin: Point, desiredPlaceRotation: number, structureType: StructureType, worldInfo: WorldInfo): StructurePlaceInfo {
-   const regularPlacePosition = calculateRegularPlacePosition(placeOrigin, desiredPlaceRotation, structureType);
-   return calculatePlaceInfo(regularPlacePosition, desiredPlaceRotation, structureType, worldInfo);
+export function calculateEntityPlaceInfo(placeOrigin: Point, desiredPlaceRotation: number, entityType: EntityType, worldInfo: WorldInfo): StructurePlaceInfo {
+   const regularPlacePosition = calculateRegularPlacePosition(placeOrigin, desiredPlaceRotation, entityType);
+   return calculatePlaceInfo(regularPlacePosition, desiredPlaceRotation, entityType, worldInfo);
 }

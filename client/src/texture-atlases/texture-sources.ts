@@ -345,6 +345,10 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/mithril-ore-node/mithril-ore-node-medium-1.png",
    "entities/mithril-ore-node/mithril-ore-node-medium-2.png",
    "entities/mithril-ore-node/mithril-ore-node-large-1.png",
+   "entities/scrappy/body.png",
+   "entities/scrappy/hand.png",
+   "entities/cogwalker/body.png",
+   "entities/cogwalker/hand.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

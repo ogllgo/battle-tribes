@@ -41,6 +41,7 @@ const SUMMON_DATA_RECORD = {
       tribeID: 0 as number
    },
    [ServerComponentType.tribeMember]: {},
+   [ServerComponentType.tribesman]: {},
    [ServerComponentType.tribesmanAI]: {},
    [ServerComponentType.turret]: {},
    [ServerComponentType.yeti]: {},
@@ -96,6 +97,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.treeRootSegment]: {},
    [ServerComponentType.mithrilOreNode]: {},
    [ServerComponentType.scrappy]: {},
+   [ServerComponentType.cogwalker]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

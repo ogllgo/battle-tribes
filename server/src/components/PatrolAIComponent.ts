@@ -59,9 +59,9 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
    return null;
 }
 
-export function tribesmanDoPatrol(tribesman: Entity, patrolArea: ReadonlyArray<TileIndex>): void {
-   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   const patrolAIComponent = PatrolAIComponentArray.getComponent(tribesman);
+export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileIndex>): void {
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribeMember);
+   const patrolAIComponent = PatrolAIComponentArray.getComponent(tribeMember);
 
    const currentTicks = getGameTicks();
    if (currentTicks > patrolAIComponent.lastActiveTicks + 1) {
@@ -71,11 +71,11 @@ export function tribesmanDoPatrol(tribesman: Entity, patrolArea: ReadonlyArray<T
    patrolAIComponent.lastActiveTicks = currentTicks;
    
    if (patrolAIComponent.targetPatrolPosition === null && Math.random() < 0.4 / Settings.TPS) {
-      patrolAIComponent.targetPatrolPosition = generatePatrolTarget(tribesman, patrolArea);
+      patrolAIComponent.targetPatrolPosition = generatePatrolTarget(tribeMember, patrolArea);
    }
    
    if (patrolAIComponent.targetPatrolPosition !== null) {
-      const isFinished = pathfindTribesman(tribesman, patrolAIComponent.targetPatrolPosition.x, patrolAIComponent.targetPatrolPosition.y, getEntityLayer(tribesman), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
+      const isFinished = pathfindTribesman(tribeMember, patrolAIComponent.targetPatrolPosition.x, patrolAIComponent.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
       if (!isFinished) {
          tribesmanAIComponent.currentAIType = TribesmanAIType.patrolling;
          return;
@@ -84,10 +84,10 @@ export function tribesmanDoPatrol(tribesman: Entity, patrolArea: ReadonlyArray<T
 
    // Reset target patrol position when not patrolling
 
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+   const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
    stopEntity(physicsComponent);
 
    tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
    patrolAIComponent.targetPatrolPosition = null;
-   clearTribesmanPath(tribesman);
+   clearTribesmanPath(tribeMember);
 }

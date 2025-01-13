@@ -22,6 +22,7 @@ import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { PatrolAIComponent } from "../../components/PatrolAIComponent";
 import { generateTribesmanName } from "../../tribesman-names";
+import { TribesmanComponent } from "../../components/TribesmanComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -29,6 +30,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.tribe
    | ServerComponentType.tribeMember
+   | ServerComponentType.tribesman
    | ServerComponentType.tribesmanAI
    | ServerComponentType.aiHelper
    | ServerComponentType.aiAssignment
@@ -89,6 +91,8 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
 
    const tribeMemberComponent = new TribeMemberComponent(generateTribesmanName(tribe.tribeType));
 
+   const tribesmanComponent = new TribesmanComponent();
+   
    const tribesmanAIComponent = new TribesmanAIComponent();
 
    const aiHelperComponent = new AIHelperComponent(560);
@@ -114,6 +118,7 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.tribeMember]: tribeMemberComponent,
+         [ServerComponentType.tribesman]: tribesmanComponent,
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,

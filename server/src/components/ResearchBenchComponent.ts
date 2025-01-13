@@ -7,13 +7,14 @@ import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbS
 import { ComponentArray } from "./ComponentArray";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
-import { TribeMemberComponentArray, awardTitle, hasTitle } from "./TribeMemberComponent";
+import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType, getGameTicks } from "../world";
+import { hasTitle, awardTitle } from "./TribesmanComponent";
 
 const ORB_COMPLETE_TICKS = Math.floor(RESEARCH_ORB_COMPLETE_TIME * Settings.TPS);
 

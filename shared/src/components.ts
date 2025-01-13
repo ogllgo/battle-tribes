@@ -50,6 +50,7 @@ export enum ServerComponentType {
    tree,
    tribe,
    tribeMember,
+   tribesman,
    tribesmanAI,
    turret,
    yeti,
@@ -104,7 +105,8 @@ export enum ServerComponentType {
    treeRootBase,
    treeRootSegment,
    mithrilOreNode,
-   scrappy
+   scrappy,
+   cogwalker
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -141,6 +143,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.tree]: "Tree Component",
    [ServerComponentType.tribe]: "Tribe Component",
    [ServerComponentType.tribeMember]: "Tribe Member Component",
+   [ServerComponentType.tribesman]: "Tribesman Component",
    [ServerComponentType.tribesmanAI]: "Tribesman AI Component",
    [ServerComponentType.turret]: "Turret Component",
    [ServerComponentType.yeti]: "Yeti Component",
@@ -202,6 +205,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.treeRootSegment]: "Tree Root Segment Component",
    [ServerComponentType.mithrilOreNode]: "Mithril Ore Node Component",
    [ServerComponentType.scrappy]: "Scrappy Component",
+   [ServerComponentType.cogwalker]: "Cogwalker Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -288,6 +292,7 @@ export const EntityComponents = {
    [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],
    [EntityType.mithrilOreNode]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.mithrilOreNode],
    [EntityType.scrappy]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.scrappy],
+   [EntityType.cogwalker]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.cogwalker],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

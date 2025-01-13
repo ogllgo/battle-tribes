@@ -455,10 +455,41 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
       craftingStation: CraftingStation.workbench
-   }
+   },
+   {
+      product: ItemType.mithrilSword,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 5,
+         [ItemType.mithrilBar]: 10
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.mithrilPickaxe,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 5,
+         [ItemType.mithrilBar]: 10
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.mithrilAxe,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 5,
+         [ItemType.mithrilBar]: 10
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
 ];
 
 export function getItemRecipe(itemType: ItemType): CraftingRecipe | null {
+   // @Speed
    for (let i = 0; i < CRAFTING_RECIPES.length; i++) {
       const recipe = CRAFTING_RECIPES[i];
 

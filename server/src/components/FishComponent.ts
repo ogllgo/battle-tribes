@@ -18,6 +18,7 @@ import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } fro
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { TribesmanComponentArray } from "./TribesmanComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -86,8 +87,8 @@ const move = (fish: Entity, direction: number): void => {
 }
 
 const followLeader = (fish: Entity, leader: Entity): void => {
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
-   tribeMemberComponent.fishFollowerIDs.push(fish);
+   const tribesmanComponent = TribesmanComponentArray.getComponent(leader);
+   tribesmanComponent.fishFollowerIDs.push(fish);
 }
 
 const entityIsWearingFishlordSuit = (entityID: number): boolean => {
@@ -107,10 +108,10 @@ const entityIsWearingFishlordSuit = (entityID: number): boolean => {
 }
 
 const unfollowLeader = (fish: Entity, leader: Entity): void => {
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(leader);
-   const idx = tribeMemberComponent.fishFollowerIDs.indexOf(fish);
+   const tribesmanComponent = TribesmanComponentArray.getComponent(leader);
+   const idx = tribesmanComponent.fishFollowerIDs.indexOf(fish);
    if (idx !== -1) {
-      tribeMemberComponent.fishFollowerIDs.splice(idx, 1);
+      tribesmanComponent.fishFollowerIDs.splice(idx, 1);
    }
 }
 

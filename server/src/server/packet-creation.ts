@@ -23,7 +23,6 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
 import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
-import { TileType } from "../../../shared/src/tiles";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;

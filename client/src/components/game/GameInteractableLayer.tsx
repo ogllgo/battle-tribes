@@ -4,7 +4,7 @@ import { LimbAction } from "../../../../shared/src/entities";
 import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
-import { calculateStructurePlaceInfo } from "../../../../shared/src/structures";
+import { calculateEntityPlaceInfo } from "../../../../shared/src/structures";
 import { TribesmanTitle } from "../../../../shared/src/titles";
 import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
@@ -30,7 +30,7 @@ import { createTransformComponentParams, TransformComponentArray } from "../../e
 import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
 import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
-import { TribeMemberComponentArray, tribeMemberHasTitle } from "../../entity-components/server-components/TribeMemberComponent";
+import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
@@ -479,8 +479,8 @@ const getAttackTimeMultiplier = (itemType: ItemType | null): number => {
    }
 
    // Builders swing hammers 30% faster
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
-   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.builder) && itemType !== null && ITEM_TYPE_RECORD[itemType] === "hammer") {
+   const tribesmanComponent = TribesmanComponentArray.getComponent(playerInstance!);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.builder) && itemType !== null && ITEM_TYPE_RECORD[itemType] === "hammer") {
       swingTimeMultiplier /= 1.3;
    }
 
@@ -731,8 +731,8 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
 
    moveSpeedMultiplier *= TRIBE_INFO_RECORD[playerTribe.tribeType].moveSpeedMultiplier;
 
-   const tribeMemberComponent = TribeMemberComponentArray.getComponent(playerInstance!);
-   if (tribeMemberHasTitle(tribeMemberComponent, TribesmanTitle.sprinter)) {
+   const tribesmanComponent = TribesmanComponentArray.getComponent(playerInstance!);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter)) {
       moveSpeedMultiplier *= 1.2;
    }
 
@@ -1020,7 +1020,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       case "placeable": {
          const layer = getEntityLayer(playerInstance!);
          const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
-         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, structureType, layer.getWorldInfo());
+         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, structureType, layer.getWorldInfo());
          
          if (placeInfo.isValid) {
             const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
@@ -1190,7 +1190,7 @@ const tickItem = (itemType: ItemType): void => {
          const itemInfo = ITEM_INFO_RECORD[itemType] as PlaceableItemInfo;
          const entityType = itemInfo.entityType;
          
-         const placeInfo = calculateStructurePlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
+         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
 
          const components: EntityServerComponentParams = {};
 
@@ -1281,6 +1281,14 @@ const tickItem = (itemType: ItemType): void => {
                }
                case ServerComponentType.researchBench: {
                   components[componentType] = createResearchBenchComponentParams(false);
+                  break;
+               }
+               case ServerComponentType.scrappy: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.cogwalker: {
+                  components[componentType] = {};
                   break;
                }
                default: {

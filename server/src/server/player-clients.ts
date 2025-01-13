@@ -4,7 +4,6 @@ import { TechID, Tech, getTechByID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
-import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "../components/TribeMemberComponent";
 import { modifyBuilding } from "../entities/tribes/player";
 import PlayerClient from "./PlayerClient";
 import { SERVER } from "./server";
@@ -34,6 +33,7 @@ import { EntityConfig } from "../components";
 import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
 import { surfaceLayer } from "../layers";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { acceptTitleOffer, rejectTitleOffer, forceAddTitle, removeTitle } from "../components/TribesmanComponent";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 

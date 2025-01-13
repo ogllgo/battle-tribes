@@ -24,6 +24,7 @@ import { PlayerComponent } from "../../components/PlayerComponent";
 import { DamageBoxComponent } from "../../components/DamageBoxComponent";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import PlayerClient from "../../server/PlayerClient";
+import { TribesmanComponent } from "../../components/TribesmanComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -31,6 +32,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.tribe
    | ServerComponentType.tribeMember
+   | ServerComponentType.tribesman
    | ServerComponentType.player
    | ServerComponentType.inventory
    | ServerComponentType.inventoryUse
@@ -67,6 +69,8 @@ export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): En
 
    const tribeMemberComponent = new TribeMemberComponent(playerClient.username);
 
+   const tribesmanComponent = new TribesmanComponent();
+
    const playerComponent = new PlayerComponent(playerClient);
    
    const inventoryComponent = new InventoryComponent();
@@ -84,6 +88,7 @@ export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): En
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.tribeMember]: tribeMemberComponent,
+         [ServerComponentType.tribesman]: tribesmanComponent,
          [ServerComponentType.player]: playerComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,

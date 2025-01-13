@@ -568,6 +568,21 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Mithril Armour",
       description: ""
    },
+   [ItemType.scrappy]: {
+      entityTextureSource: "items/small/scrappy.png",
+      textureSource: "items/large/scrappy.png",
+      toolTextureSource: "",
+      name: "Scrappy",
+      description: ""
+   },
+   [ItemType.cogwalker]: {
+      // @Temporary
+      entityTextureSource: "items/small/scrappy.png",
+      textureSource: "items/large/scrappy.png",
+      toolTextureSource: "",
+      name: "Cogwalker",
+      description: ""
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

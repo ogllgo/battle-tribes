@@ -12,7 +12,6 @@ import { getHeldItem, InventoryUseComponentArray, LimbInfo } from "../../compone
 import { applyKnockback, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { applyStatusEffect } from "../../components/StatusEffectComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
-import { hasTitle } from "../../components/TribeMemberComponent";
 import { calculateItemDamage } from "./tribe-member";
 import { ServerComponentType } from "battletribes-shared/components";
 import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/BerryBushComponent";
@@ -23,6 +22,7 @@ import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCK
 import { getEntityLayer, getEntityType } from "../../world";
 import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
 import { BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
+import { hasTitle } from "../../components/TribesmanComponent";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125

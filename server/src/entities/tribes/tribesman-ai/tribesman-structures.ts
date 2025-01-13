@@ -1,7 +1,7 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
-import { calculateStructurePlaceInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD } from "battletribes-shared/structures";
+import { calculateEntityPlaceInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { angle, assert, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
@@ -11,7 +11,6 @@ import { consumeItemFromSlot, InventoryComponentArray, getInventory, getItemType
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
-import { awardTitle } from "../../../components/TribeMemberComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
@@ -27,6 +26,7 @@ import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { getLayerInfo } from "../../../layers";
 import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan, planToGetItem } from "../../../tribesman-ai/tribesman-ai-planning";
 import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
+import { awardTitle } from "../../../components/TribesmanComponent";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -117,7 +117,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // Place the item
          // 
          
-         const placeInfo = calculateStructurePlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
+         const placeInfo = calculateEntityPlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
          placeBuilding(tribe, getEntityLayer(tribesman), placeInfo);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {

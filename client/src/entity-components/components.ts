@@ -15,6 +15,7 @@ import { BracingsComponentArray, BracingsComponentParams } from "./server-compon
 import { BuildingMaterialComponentArray, BuildingMaterialComponentParams } from "./server-components/BuildingMaterialComponent";
 import { CactusComponentArray, CactusComponentParams } from "./server-components/CactusComponent";
 import { CampfireComponentArray, CampfireComponentParams } from "./server-components/CampfireComponent";
+import { CogwalkerComponentArray, CogwalkerComponentParams } from "./server-components/CogwalkerComponent";
 import { CookingComponentArray, CookingComponentParams } from "./server-components/CookingComponent";
 import { CowComponentArray, CowComponentParams } from "./server-components/CowComponent";
 import { CraftingStationComponentArray, CraftingStationComponentParams } from "./server-components/CraftingStationComponent";
@@ -80,13 +81,14 @@ import { TreePlantedComponentArray, TreePlantedComponentParams } from "./server-
 import { TreeRootBaseComponentArray, TreeRootBaseComponentParams } from "./server-components/TreeRootBaseComponent";
 import { TreeRootSegmentComponentArray, TreeRootSegmentComponentParams } from "./server-components/TreeRootSegmentComponent";
 import { TribeComponentArray, TribeComponentParams } from "./server-components/TribeComponent";
-import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-components/TribeMemberComponent";
+import { TribesmanComponentArray, TribesmanComponentParams } from "./server-components/TribesmanComponent";
 import { TribesmanAIComponentArray, TribesmanAIComponentParams } from "./server-components/TribesmanAIComponent";
 import { TribeWarriorComponentArray, TribeWarriorComponentParams } from "./server-components/TribeWarriorComponent";
 import { TunnelComponentArray, TunnelComponentParams } from "./server-components/TunnelComponent";
 import { TurretComponentArray, TurretComponentParams } from "./server-components/TurretComponent";
 import { YetiComponentArray, YetiComponentParams } from "./server-components/YetiComponent";
 import { ZombieComponentArray, ZombieComponentParams } from "./server-components/ZombieComponent";
+import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-components/TribeMemberComponent";
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -124,6 +126,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.rockSpike]: RockSpikeComponentArray,
    [ServerComponentType.slimeSpit]: SlimeSpitComponentArray,
    [ServerComponentType.door]: DoorComponentArray,
+   [ServerComponentType.tribesman]: TribesmanComponentArray,
    [ServerComponentType.tribesmanAI]: TribesmanAIComponentArray,
    [ServerComponentType.tunnel]: TunnelComponentArray,
    [ServerComponentType.buildingMaterial]: BuildingMaterialComponentArray,
@@ -179,6 +182,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.treeRootSegment]: TreeRootSegmentComponentArray,
    [ServerComponentType.mithrilOreNode]: MithrilOreNodeComponentArray,
    [ServerComponentType.scrappy]: ScrappyComponentArray,
+   [ServerComponentType.cogwalker]: CogwalkerComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -215,6 +219,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.rockSpike]: (): RockSpikeComponentParams => 0 as any,
    [ServerComponentType.slimeSpit]: (): SlimeSpitComponentParams => 0 as any,
    [ServerComponentType.door]: (): DoorComponentParams => 0 as any,
+   [ServerComponentType.tribesman]: (): TribesmanComponentParams => 0 as any,
    [ServerComponentType.tribesmanAI]: (): TribesmanAIComponentParams => 0 as any,
    [ServerComponentType.tunnel]: (): TunnelComponentParams => 0 as any,
    [ServerComponentType.buildingMaterial]: (): BuildingMaterialComponentParams => 0 as any,
@@ -270,6 +275,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponentParams => 0 as any,
    [ServerComponentType.mithrilOreNode]: (): MithrilOreNodeComponentParams => 0 as any,
    [ServerComponentType.scrappy]: (): ScrappyComponentParams => 0 as any,
+   [ServerComponentType.cogwalker]: (): CogwalkerComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

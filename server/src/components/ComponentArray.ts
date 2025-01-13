@@ -300,6 +300,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.tree]: ComponentArrayPriority.medium,
       [ServerComponentType.tribe]: ComponentArrayPriority.medium,
       [ServerComponentType.tribeMember]: ComponentArrayPriority.medium,
+      [ServerComponentType.tribesman]: ComponentArrayPriority.medium,
       [ServerComponentType.tribesmanAI]: ComponentArrayPriority.medium,
       [ServerComponentType.turret]: ComponentArrayPriority.medium,
       [ServerComponentType.yeti]: ComponentArrayPriority.medium,
@@ -354,6 +355,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.treeRootSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.mithrilOreNode]: ComponentArrayPriority.medium,
       [ServerComponentType.scrappy]: ComponentArrayPriority.medium,
+      [ServerComponentType.cogwalker]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

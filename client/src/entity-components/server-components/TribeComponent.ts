@@ -2,7 +2,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { randFloat } from "battletribes-shared/utils";
 import { playSoundOnEntity } from "../../sound";
-import { getHumanoidRadius, TribeMemberComponentArray } from "./TribeMemberComponent";
+import { getHumanoidRadius, TribesmanComponentArray } from "./TribesmanComponent";
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -66,7 +66,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribeID = reader.readNumber();
    
    // Tribesman conversion
-   if (tribeID !== tribeComponent.tribeID && TribeMemberComponentArray.hasComponent(entity)) {
+   if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
       playSoundOnEntity("conversion.mp3", 0.4, 1, entity);

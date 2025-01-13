@@ -167,6 +167,13 @@ export const TRIBESMAN_RESTING_LIMB_STATE: LimbState = {
    extraOffsetX: 0,
    extraOffsetY: 0
 };
+export const SINGLE_LIMB_RESTING_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 0,
+   rotation: 0,
+   extraOffsetX: 0,
+   extraOffsetY: 0
+};
 
 export const SPEAR_CHARGED_LIMB_STATE: LimbState = {
    direction: Math.PI * 0.6,

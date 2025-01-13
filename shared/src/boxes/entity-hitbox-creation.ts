@@ -261,8 +261,18 @@ export function createSlurbTorchHitboxes(): Array<Hitbox> {
    return [hitbox];
 }
 
+export function createScrappyHitboxes(): Array<Hitbox> {
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 20), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   return [hitbox];
+}
+
+export function createCogwalkerHitboxes(): Array<Hitbox> {
+   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 28), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   return [hitbox];
+}
+
 // @Incomplete: Include all entity types not just structures
-export function createNormalStructureHitboxes(entityType: StructureType): Array<Hitbox> {
+export function createNormalStructureHitboxes(entityType: EntityType): Array<Hitbox> {
    switch (entityType) {
       case EntityType.wall:              return createWallHitboxes();
       case EntityType.workbench:         return createWorkbenchHitboxes();
@@ -289,8 +299,10 @@ export function createNormalStructureHitboxes(entityType: StructureType): Array<
       case EntityType.frostshaper:       return createFrostshaperHitboxes();
       case EntityType.stonecarvingTable: return createStonecarvingTableHitboxes();
       case EntityType.fireTorch:         return createFireTorchHitboxes();
-      case EntityType.slurbTorch:        return createFireTorchHitboxes();
-      case EntityType.bracings: {
+      case EntityType.slurbTorch:        return createSlurbTorchHitboxes();
+      case EntityType.scrappy:           return createScrappyHitboxes();
+      case EntityType.cogwalker:         return createCogwalkerHitboxes();
+      default: {
          throw new Error();
       }
    }

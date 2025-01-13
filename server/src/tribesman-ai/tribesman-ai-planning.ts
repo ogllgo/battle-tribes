@@ -176,6 +176,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.mithrilAxe]: null,
    [ItemType.mithrilArmour]: null,
    [ItemType.scrappy]: null,
+   [ItemType.cogwalker]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -294,7 +295,7 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
    if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation)) {
       const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation];
       assert(typeof craftingStationItemType !== "undefined");
-      
+
       children.push(
          planToPlaceStructure(tribe, craftingStationItemType, null)
       );

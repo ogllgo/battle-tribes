@@ -18,6 +18,7 @@ import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 import { TileType } from "../../shared/src/tiles";
 import { getTilesOfType } from "./census";
 import { surfaceLayer } from "./layers";
+import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
 
 const enum Vars {
    NODE_ACCESSIBILITY_RESOLUTION = 3
@@ -751,18 +752,12 @@ export function entityCanBlockPathfinding(entity: Entity): boolean {
 }
 
 export function getEntityPathfindingGroupID(entity: Entity): number {
-   switch (getEntityType(entity)) {
-      case EntityType.door:
-      case EntityType.player:
-      case EntityType.tribeWorker:
-      case EntityType.tribeWarrior: {
-         const tribeComponent = TribeComponentArray.getComponent(entity);
-         return tribeComponent.tribe.pathfindingGroupID;
-      }
-      default: {
-         return 0;
-      }
+   if (getEntityType(entity) === EntityType.door || TribeMemberComponentArray.hasComponent(entity)) {
+      const tribeComponent = TribeComponentArray.getComponent(entity);
+      return tribeComponent.tribe.pathfindingGroupID;
    }
+
+   return 0;
 }
 
 export function updateEntityPathfindingNodeOccupance(entity: Entity): void {

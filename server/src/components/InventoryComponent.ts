@@ -483,7 +483,7 @@ function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null):
    let numSentInventories = 0;
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {
       const isSentToEnemyPlayers = inventoryComponent.inventoryIsSentToEnemyPlayersArray[i];
-      if (isSentToEnemyPlayers || relationship !== EntityRelationship.enemy) {
+      if (relationship !== EntityRelationship.enemy || isSentToEnemyPlayers) {
          numSentInventories++;
       }
    }
@@ -492,11 +492,9 @@ function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null):
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {
       const isSentToEnemyPlayers = inventoryComponent.inventoryIsSentToEnemyPlayersArray[i];
       const inventory = inventoryComponent.inventories[i];
-      if (!isSentToEnemyPlayers && relationship === EntityRelationship.enemy) {
-         continue;
+      if (relationship !== EntityRelationship.enemy || isSentToEnemyPlayers) {
+         addInventoryDataToPacket(packet, inventory);
       }
-
-      addInventoryDataToPacket(packet, inventory);
    }
 }
 

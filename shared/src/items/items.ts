@@ -83,7 +83,8 @@ export const enum ItemType {
    mithrilPickaxe,
    mithrilAxe,
    mithrilArmour,
-   scrappy
+   scrappy,
+   cogwalker
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -166,7 +167,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilPickaxe]: "Mithril Pickaxe",
    [ItemType.mithrilAxe]: "Mithril Axe",
    [ItemType.mithrilArmour]: "Mithril Armour",
-   [ItemType.scrappy]: "Scrappy"
+   [ItemType.scrappy]: "Scrappy",
+   [ItemType.cogwalker]: "Cogwalker",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -496,7 +498,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.mithrilPickaxe]: "pickaxe",
    [ItemType.mithrilAxe]: "axe",
    [ItemType.mithrilArmour]: "armour",
-   [ItemType.scrappy]: "placeable"
+   [ItemType.scrappy]: "placeable",
+   [ItemType.cogwalker]: "placeable"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -910,6 +913,10 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.scrappy
    },
+   [ItemType.cogwalker]: {
+      stackSize: 99,
+      entityType: EntityType.cogwalker
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1020,6 +1027,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.mithrilAxe]: {},
    [ItemType.mithrilArmour]: {},
    [ItemType.scrappy]: {},
+   [ItemType.cogwalker]: {},
 };
 
 // Some typescript wizardry

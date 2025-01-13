@@ -7,10 +7,11 @@ import { HealthComponent } from "../../../components/HealthComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 
-export function tribesmanShouldEscape(entityType: EntityType, healthComponent: HealthComponent): boolean {
+export function tribeMemberShouldEscape(entityType: EntityType, healthComponent: HealthComponent): boolean {
    const remainingHealthRatio = healthComponent.health / healthComponent.maxHealth;
    
    switch (entityType) {
+      case EntityType.cogwalker:
       case EntityType.tribeWorker: return remainingHealthRatio <= 0.5;
       case EntityType.tribeWarrior: return remainingHealthRatio <= 0.4;
       // @Robustness

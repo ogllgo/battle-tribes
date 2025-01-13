@@ -6,13 +6,14 @@ import { getSelectedEntity } from "../../../entity-selection";
 import Client from "../../../networking/Client";
 import { InventoryName, itemTypeIsArmour, itemTypeIsBackpack } from "battletribes-shared/items/items";
 import { TribeComponentArray } from "../../../entity-components/server-components/TribeComponent";
-import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
 import { Entity } from "../../../../../shared/src/entities";
 import { TribesmanAIComponentArray } from "../../../entity-components/server-components/TribesmanAIComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
 import { getEntityAgeTicks, playerInstance } from "../../../world";
 import { getTribeByID, playerTribe } from "../../../tribes";
+import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
+import { TribesmanComponentArray } from "../../../entity-components/server-components/TribesmanComponent";
 
 const getTitleByTier = (titles: ReadonlyArray<TitleGenerationInfo>, tier: number): TitleGenerationInfo | null => {
    for (let i = 0; i < titles.length; i++) {
@@ -56,12 +57,14 @@ interface TribesmanInfocardProps {
 const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
-   const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   const tribesmanComponent = TribesmanComponentArray.getComponent(tribesman);
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
 
-   if (tribeMemberComponent.titles.length === 0) {
+   // @Cleanup: what?
+   if (tribesmanComponent.titles.length === 0) {
    } else {
-      for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
-         const titleGenerationInfo = tribeMemberComponent.titles[i];
+      for (let i = 0; i < tribesmanComponent.titles.length; i++) {
+         const titleGenerationInfo = tribesmanComponent.titles[i];
       }
    }
 
@@ -69,7 +72,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    for (let i = 0; i < 3; i++) {
       const tier = i + 1;
 
-      const titleGenerationInfo = getTitleByTier(tribeMemberComponent.titles, tier);
+      const titleGenerationInfo = getTitleByTier(tribesmanComponent.titles, tier);
       
       if (titleGenerationInfo !== null) {
          const titleInfo = TRIBESMAN_TITLE_RECORD[titleGenerationInfo.title];
@@ -93,7 +96,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
       tribeName = tribeData.name;
    }
 
-   const canRecruit = tribesmanComponent.relationsWithPlayer >= 50;
+   const canRecruit = tribesmanAIComponent.relationsWithPlayer >= 50;
 
    const recruit = (): void => {
       if (canRecruit) {
@@ -119,7 +122,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
          <div className="area">
             <div className="flex-container space-around">
                <button className={`recruit-button${canRecruit ? " clickable" : ""}`} onClick={recruit}>Recruit</button>
-               <RelationSlider relation={tribesmanComponent.relationsWithPlayer} />
+               <RelationSlider relation={tribesmanAIComponent.relationsWithPlayer} />
             </div>
          </div>
       ) : undefined}

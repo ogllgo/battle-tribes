@@ -24,7 +24,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { hasTitle } from "./TribeMemberComponent";
+import { hasTitle } from "./TribesmanComponent";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
