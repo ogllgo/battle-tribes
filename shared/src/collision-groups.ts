@@ -131,6 +131,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.mithrilOreNode]: CollisionGroup.boring,
    [EntityType.scrappy]: CollisionGroup.default,
    [EntityType.cogwalker]: CollisionGroup.default,
+   [EntityType.automatonAssembler]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

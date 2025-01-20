@@ -82,7 +82,8 @@ export const enum EntityType {
    treeRootSegment,
    mithrilOreNode,
    scrappy,
-   cogwalker
+   cogwalker,
+   automatonAssembler
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -166,7 +167,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.treeRootSegment]: "treeRootSegment",
    [EntityType.mithrilOreNode]: "Mithril Ore Node",
    [EntityType.scrappy]: "Scrappy",
-   [EntityType.cogwalker]: "Cogwalker"
+   [EntityType.cogwalker]: "Cogwalker",
+   [EntityType.automatonAssembler]: "Automaton Assembler",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

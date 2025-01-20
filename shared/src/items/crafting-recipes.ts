@@ -13,7 +13,8 @@ export enum CraftingStation {
    slime,
    water,
    frostshaper,
-   stonecarvingTable
+   stonecarvingTable,
+   automatonAssembler
 }
 
 export const CRAFTING_STATION_ITEM_TYPE_RECORD: Partial<Record<CraftingStation, StructureItemType>> = {
@@ -485,6 +486,24 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.automatonAssembler,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.mithrilBar]: 15
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.scrappy,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.mithrilBar]: 3
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.automatonAssembler
    },
 ];
 

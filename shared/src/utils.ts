@@ -457,13 +457,5 @@ export function mod(x: number, n: number): number {
 }
 
 export function alignAngleToClosestAxis(sourceAngle: number, targetAngle: number): number {
-   let clampedRotation = targetAngle;
-   while (clampedRotation >= Math.PI * 0.25) {
-      clampedRotation -= Math.PI * 0.5;
-   }
-   while (clampedRotation < Math.PI * 0.25) {
-      clampedRotation += Math.PI * 0.5;
-   }
-
-   return Math.round(sourceAngle / (Math.PI * 0.5)) * Math.PI * 0.5 + clampedRotation;
+   return Math.round((sourceAngle - targetAngle) / (Math.PI * 0.5)) * Math.PI * 0.5 + targetAngle;
 }

@@ -16,6 +16,11 @@ export const enum AttackVars {
    SHIELD_BLOCK_REST_TIME_TICKS = (Settings.TPS * 2) | 0
 }
 
+export const enum LimbConfiguration {
+   singleHanded,
+   twoHanded
+}
+
 export interface LimbState {
    /** Limb direction */
    direction: number;
@@ -53,54 +58,108 @@ export interface LimbHeldItemDamageBoxInfo {
 /* ATTACK PATTERNS */
 /* --------------- */
 
-export const DEFAULT_ATTACK_PATTERN: AttackPatternInfo = {
-   windedBack: {
-      direction: Math.PI * 0.6,
-      extraOffset: 0,
-      rotation: Math.PI * 1/3,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+export const UNARMED_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo> = {
+   [LimbConfiguration.singleHanded]: {
+      windedBack: {
+         direction: 0,
+         extraOffset: 0,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: 0,
+         extraOffset: 16,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    },
-   swung: {
-      direction: 0,
-      extraOffset: 16,
-      rotation: Math.PI * -2/3,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+   [LimbConfiguration.twoHanded]: {
+      windedBack: {
+         direction: Math.PI * 0.6,
+         extraOffset: 0,
+         rotation: Math.PI * 1/3,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: 0,
+         extraOffset: 16,
+         rotation: Math.PI * -2/3,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    }
 };
 
-export const PICKAXE_ATTACK_PATTERN: AttackPatternInfo = {
-   windedBack: {
-      direction: Math.PI * 0.6,
-      extraOffset: 0,
-      rotation: Math.PI * 1/3,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+export const PICKAXE_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo> = {
+   [LimbConfiguration.singleHanded]: {
+      windedBack: {
+         direction: Math.PI * 0.6,
+         extraOffset: 0,
+         rotation: Math.PI * 1/3,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: 0,
+         extraOffset: 16,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    },
-   swung: {
-      direction: 0,
-      extraOffset: 16,
-      rotation: 0,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+   [LimbConfiguration.twoHanded]: {
+      windedBack: {
+         direction: Math.PI * 0.6,
+         extraOffset: 0,
+         rotation: Math.PI * 1/3,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: 0,
+         extraOffset: 16,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    }
 };
 
-export const SPEAR_ATTACK_PATTERN: AttackPatternInfo = {
-   windedBack: {
-      direction: Math.PI * 0.6,
-      extraOffset: 0,
-      rotation: 0,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+export const SPEAR_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo> = {
+   [LimbConfiguration.singleHanded]: {
+      windedBack: {
+         direction: Math.PI * 0.6,
+         extraOffset: 0,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: Math.PI * 0.13,
+         extraOffset: 26,
+         rotation: Math.PI * -1/6,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    },
-   swung: {
-      direction: Math.PI * 0.13,
-      extraOffset: 26,
-      rotation: Math.PI * -1/6,
-      extraOffsetX: 0,
-      extraOffsetY: 0
+   [LimbConfiguration.twoHanded]: {
+      windedBack: {
+         direction: Math.PI * 0.6,
+         extraOffset: 0,
+         rotation: 0,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      },
+      swung: {
+         direction: Math.PI * 0.13,
+         extraOffset: 26,
+         rotation: Math.PI * -1/6,
+         extraOffsetX: 0,
+         extraOffsetY: 0
+      }
    }
 };
 
@@ -160,19 +219,21 @@ export const HAMMER_ATTACK_TIMINGS: AttackTimingsInfo = {
 /* LIMB STATES */
 /* ----------- */
 
-export const TRIBESMAN_RESTING_LIMB_STATE: LimbState = {
-   direction: Math.PI * 0.4,
-   extraOffset: 0,
-   rotation: 0,
-   extraOffsetX: 0,
-   extraOffsetY: 0
-};
-export const SINGLE_LIMB_RESTING_LIMB_STATE: LimbState = {
-   direction: 0,
-   extraOffset: 0,
-   rotation: 0,
-   extraOffsetX: 0,
-   extraOffsetY: 0
+export const RESTING_LIMB_STATES: Record<LimbConfiguration, Readonly<LimbState>> = {
+   [LimbConfiguration.singleHanded]: {
+      direction: 0,
+      extraOffset: 0,
+      rotation: 0,
+      extraOffsetX: 0,
+      extraOffsetY: 0
+   },
+   [LimbConfiguration.twoHanded]: {
+      direction: Math.PI * 0.4,
+      extraOffset: 0,
+      rotation: 0,
+      extraOffsetX: 0,
+      extraOffsetY: 0
+   }
 };
 
 export const SPEAR_CHARGED_LIMB_STATE: LimbState = {

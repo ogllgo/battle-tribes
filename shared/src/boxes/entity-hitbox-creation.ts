@@ -271,37 +271,44 @@ export function createCogwalkerHitboxes(): Array<Hitbox> {
    return [hitbox];
 }
 
+export function createAutomatonAssemblerHitboxes(): Array<Hitbox> {
+   const box = new RectangularBox(new Point(0, 0), 160, 80, 0);
+   const hitbox = createHitbox(box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   return [hitbox];
+}
+
 // @Incomplete: Include all entity types not just structures
 export function createNormalStructureHitboxes(entityType: EntityType): Array<Hitbox> {
    switch (entityType) {
-      case EntityType.wall:              return createWallHitboxes();
-      case EntityType.workbench:         return createWorkbenchHitboxes();
-      case EntityType.door:              return createDoorHitboxes();
-      case EntityType.tunnel:            return createTunnelHitboxes();
-      case EntityType.embrasure:         return createEmbrasureHitboxes();
-      case EntityType.barrel:            return createBarrelHitboxes();
-      case EntityType.workerHut:         return createWorkerHutHitboxes();
-      case EntityType.warriorHut:        return createWarriorHutHitboxes();
-      case EntityType.tribeTotem:        return createTribeTotemHitboxes();
-      case EntityType.researchBench:     return createResearchBenchHitboxes();
-      case EntityType.ballista:          return createBallistaHitboxes();
-      case EntityType.slingTurret:       return createSlingTurretHitboxes();
-      case EntityType.fence:             return createFenceHitboxes();
-      case EntityType.fenceGate:         return createFenceGateHitboxes();
-      case EntityType.floorSpikes:       return createFloorSpikesHitboxes();
-      case EntityType.wallSpikes:        return createWallSpikesHitboxes();
-      case EntityType.floorPunjiSticks:  return createFloorPunjiSticksHitboxes();
-      case EntityType.wallPunjiSticks:   return createWallPunjiSticksHitboxes();
-      case EntityType.healingTotem:      return createHealingTotemHitboxes();
-      case EntityType.planterBox:        return createPlanterBoxHitboxes();
-      case EntityType.furnace:           return createFurnaceHitboxes();
-      case EntityType.campfire:          return createCampfireHitboxes();
-      case EntityType.frostshaper:       return createFrostshaperHitboxes();
-      case EntityType.stonecarvingTable: return createStonecarvingTableHitboxes();
-      case EntityType.fireTorch:         return createFireTorchHitboxes();
-      case EntityType.slurbTorch:        return createSlurbTorchHitboxes();
-      case EntityType.scrappy:           return createScrappyHitboxes();
-      case EntityType.cogwalker:         return createCogwalkerHitboxes();
+      case EntityType.wall:               return createWallHitboxes();
+      case EntityType.workbench:          return createWorkbenchHitboxes();
+      case EntityType.door:               return createDoorHitboxes();
+      case EntityType.tunnel:             return createTunnelHitboxes();
+      case EntityType.embrasure:          return createEmbrasureHitboxes();
+      case EntityType.barrel:             return createBarrelHitboxes();
+      case EntityType.workerHut:          return createWorkerHutHitboxes();
+      case EntityType.warriorHut:         return createWarriorHutHitboxes();
+      case EntityType.tribeTotem:         return createTribeTotemHitboxes();
+      case EntityType.researchBench:      return createResearchBenchHitboxes();
+      case EntityType.ballista:           return createBallistaHitboxes();
+      case EntityType.slingTurret:        return createSlingTurretHitboxes();
+      case EntityType.fence:              return createFenceHitboxes();
+      case EntityType.fenceGate:          return createFenceGateHitboxes();
+      case EntityType.floorSpikes:        return createFloorSpikesHitboxes();
+      case EntityType.wallSpikes:         return createWallSpikesHitboxes();
+      case EntityType.floorPunjiSticks:   return createFloorPunjiSticksHitboxes();
+      case EntityType.wallPunjiSticks:    return createWallPunjiSticksHitboxes();
+      case EntityType.healingTotem:       return createHealingTotemHitboxes();
+      case EntityType.planterBox:         return createPlanterBoxHitboxes();
+      case EntityType.furnace:            return createFurnaceHitboxes();
+      case EntityType.campfire:           return createCampfireHitboxes();
+      case EntityType.frostshaper:        return createFrostshaperHitboxes();
+      case EntityType.stonecarvingTable:  return createStonecarvingTableHitboxes();
+      case EntityType.fireTorch:          return createFireTorchHitboxes();
+      case EntityType.slurbTorch:         return createSlurbTorchHitboxes();
+      case EntityType.scrappy:            return createScrappyHitboxes();
+      case EntityType.cogwalker:          return createCogwalkerHitboxes();
+      case EntityType.automatonAssembler: return createAutomatonAssemblerHitboxes();
       default: {
          throw new Error();
       }

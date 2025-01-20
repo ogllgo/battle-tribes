@@ -106,7 +106,8 @@ export enum ServerComponentType {
    treeRootSegment,
    mithrilOreNode,
    scrappy,
-   cogwalker
+   cogwalker,
+   automatonAssembler
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -206,6 +207,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.mithrilOreNode]: "Mithril Ore Node Component",
    [ServerComponentType.scrappy]: "Scrappy Component",
    [ServerComponentType.cogwalker]: "Cogwalker Component",
+   [ServerComponentType.automatonAssembler]: "Automaton Assembler",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -272,8 +274,8 @@ export const EntityComponents = {
    [EntityType.iceSpikesPlanted]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.planted, ServerComponentType.iceSpikesPlanted] as const,
    [EntityType.fence]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fence] as const,
    [EntityType.fenceGate]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fenceGate] as const,
-   [EntityType.frostshaper]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.structure, ServerComponentType.craftingStation] as const,
-   [EntityType.stonecarvingTable]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.structure, ServerComponentType.craftingStation] as const,
+   [EntityType.frostshaper]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation] as const,
+   [EntityType.stonecarvingTable]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation] as const,
    [EntityType.grassStrand]: [ServerComponentType.transform, ServerComponentType.layeredRod] as const,
    [EntityType.decoration]: [ServerComponentType.transform, ServerComponentType.decoration] as const,
    [EntityType.reed]: [ServerComponentType.transform, ServerComponentType.layeredRod] as const,
@@ -293,6 +295,7 @@ export const EntityComponents = {
    [EntityType.mithrilOreNode]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.mithrilOreNode],
    [EntityType.scrappy]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.scrappy],
    [EntityType.cogwalker]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.cogwalker],
+   [EntityType.automatonAssembler]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation, ServerComponentType.automatonAssembler],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -333,7 +336,9 @@ export enum BlueprintType {
    stoneWallSpikes,
    warriorHutUpgrade,
    fenceGate,
-   stoneBracings
+   stoneBracings,
+   scrappy,
+   cogwalker
 }
 
 export interface BlueprintComponentData extends BaseComponentData {

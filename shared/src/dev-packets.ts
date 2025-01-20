@@ -98,6 +98,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.mithrilOreNode]: {},
    [ServerComponentType.scrappy]: {},
    [ServerComponentType.cogwalker]: {},
+   [ServerComponentType.automatonAssembler]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

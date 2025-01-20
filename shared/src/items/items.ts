@@ -1,4 +1,4 @@
-import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, DEFAULT_ATTACK_PATTERN, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, HAMMER_ATTACK_TIMINGS, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERN, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERN, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO } from "../attack-patterns";
+import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, UNARMED_ATTACK_PATTERNS, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, HAMMER_ATTACK_TIMINGS, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERNS, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERNS, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO, LimbConfiguration } from "../attack-patterns";
 import { EntityType } from "../entities";
 import { Settings } from "../settings";
 import { StructureType } from "../structures";
@@ -84,7 +84,8 @@ export const enum ItemType {
    mithrilAxe,
    mithrilArmour,
    scrappy,
-   cogwalker
+   cogwalker,
+   automatonAssembler
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -169,6 +170,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilArmour]: "Mithril Armour",
    [ItemType.scrappy]: "Scrappy",
    [ItemType.cogwalker]: "Cogwalker",
+   [ItemType.automatonAssembler]: "Automaton Assembler"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -316,13 +318,13 @@ interface ItemTraitRecord {
 type ItemTraits = Partial<{ [T in keyof ItemTraitRecord]: ItemTraitRecord[T] }>;
 
 export interface AttackInfo {
-   readonly attackPattern: AttackPatternInfo | null;
+   readonly attackPatterns: Record<LimbConfiguration, AttackPatternInfo> | null;
    readonly attackTimings: AttackTimingsInfo;
    readonly heldItemDamageBoxInfo: LimbHeldItemDamageBoxInfo | null;
 }
 
 const UNARMED_ATTACK_INFO: Readonly<AttackInfo> = {
-   attackPattern: DEFAULT_ATTACK_PATTERN,
+   attackPatterns: UNARMED_ATTACK_PATTERNS,
    attackTimings: DEFAULT_ATTACK_TIMINGS,
    heldItemDamageBoxInfo: null
 };
@@ -330,77 +332,77 @@ const UNARMED_ATTACK_INFO: Readonly<AttackInfo> = {
 /** If an entry is null, then that item category can't attack. */
 const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<AttackInfo>> = {
    material: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    healing: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    sword: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: SWORD_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: SWORD_ITEM_DAMAGE_BOX_INFO
    },
    bow: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    axe: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: AXE_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: TOOL_ITEM_DAMAGE_BOX_INFO
    },
    pickaxe: {
-      attackPattern: PICKAXE_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: PICKAXE_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: PICKAXE_ITEM_DAMAGE_BOX_INFO
    },
    placeable: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    backpack: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    armour: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    glove: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    spear: {
-      attackPattern: SPEAR_ATTACK_PATTERN,
+      attackPatterns: SPEAR_ATTACK_PATTERNS,
       attackTimings: SPEAR_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: SPEAR_DAMAGE_BOX_INFO
    },
    hammer: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: TOOL_ITEM_DAMAGE_BOX_INFO
    },
    battleaxe: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: HAMMER_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: SWORD_ITEM_DAMAGE_BOX_INFO
    },
    crossbow: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    },
    shield: {
-      attackPattern: null,
+      attackPatterns: null,
       attackTimings: {
          windupTimeTicks: 0,
          swingTimeTicks: 0,
@@ -412,7 +414,7 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<At
       heldItemDamageBoxInfo: SHIELD_BLOCKING_DAMAGE_BOX_INFO
    },
    slingshot: {
-      attackPattern: DEFAULT_ATTACK_PATTERN,
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    }
@@ -499,7 +501,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.mithrilAxe]: "axe",
    [ItemType.mithrilArmour]: "armour",
    [ItemType.scrappy]: "placeable",
-   [ItemType.cogwalker]: "placeable"
+   [ItemType.cogwalker]: "placeable",
+   [ItemType.automatonAssembler]: "placeable",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -917,6 +920,10 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.cogwalker
    },
+   [ItemType.automatonAssembler]: {
+      stackSize: 99,
+      entityType: EntityType.automatonAssembler
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1028,6 +1035,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.mithrilArmour]: {},
    [ItemType.scrappy]: {},
    [ItemType.cogwalker]: {},
+   [ItemType.automatonAssembler]: {},
 };
 
 // Some typescript wizardry
