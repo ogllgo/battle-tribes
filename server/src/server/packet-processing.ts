@@ -486,10 +486,7 @@ export function processPlayerCraftingPacket(playerClient: PlayerClient, reader: 
    const inventoryComponent = InventoryComponentArray.getComponent(player);
    const craftingRecipe = CRAFTING_RECIPES[recipeIndex];
 
-   const availableCraftingStations = getAvailableCraftingStations(player);
-   if (!recipeCraftingStationIsAvailable(availableCraftingStations, craftingRecipe)) {
-      return;
-   }
+   // @Incomplete: Check that the player is interacting with the necessary crafting station
 
    if (inventoryComponentCanAffordRecipe(inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot)) {
       craftRecipe(player, inventoryComponent, craftingRecipe, InventoryName.craftingOutputSlot);

@@ -4,7 +4,7 @@ import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
 import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType, inventoryIsFull } from "../../../components/InventoryComponent";
 import { TribesmanAIType } from "battletribes-shared/components";
 import { tribeMemberShouldEscape } from "./tribesman-escaping";
-import { getTribesmanRadius, moveTribesmanToBiome, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { getHumanoidRadius, moveTribesmanToBiome, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
@@ -185,7 +185,7 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
    const shouldEscape = tribeMemberShouldEscape(getEntityType(tribesman), healthComponent);
    
    // @Cleanup: unused?
-   const goalRadius = getTribesmanRadius(transformComponent);
+   const goalRadius = getHumanoidRadius(transformComponent);
       
    let closestDroppedItem: Entity | null = null;
    let minDistance = Number.MAX_SAFE_INTEGER;

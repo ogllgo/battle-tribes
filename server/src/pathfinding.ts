@@ -473,8 +473,8 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
       if (!closedSet.has(neighbour)) {
          if (nodeIsAccessibleForEntity(layer, neighbour, ignoredGroupID, pathfindingEntityFootprint)) {
             const tentativeGScore = gScore[currentNode] + aStarHeuristic(currentNode, neighbour);
-            const neighbourGScore = gScore[neighbour] !== undefined ? gScore[neighbour] : 999999;
-            if (tentativeGScore < neighbourGScore) {
+            const neighbourGScore = gScore[neighbour];
+            if (typeof neighbourGScore === "undefined" || tentativeGScore < neighbourGScore) {
                cameFrom[neighbour] = currentNode;
                gScore[neighbour] = tentativeGScore;
                fScore[neighbour] = tentativeGScore + aStarHeuristic(neighbour, goal);

@@ -1,14 +1,14 @@
 import { ServerComponentType, TribesmanAIType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { getTileX, getTileY, Point, TileIndex } from "../../../shared/src/utils";
+import { distance, getTileX, getTileY, Point, TileIndex } from "../../../shared/src/utils";
 import { stopEntity } from "../ai-shared";
-import { getTribesmanRadius, pathfindTribesman, clearTribesmanPath } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
+import { getHumanoidRadius, pathfindTribesman, clearTribesmanPath } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { getEntityFootprint, PathfindFailureDefault, findSingleLayerPath, PathfindOptions } from "../pathfinding";
 import { getEntityLayer, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "./TribesmanAIComponent";
 
@@ -27,6 +27,38 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+const getTargetTileHeuristic = (transformComponent: TransformComponent, tileIndex: TileIndex): number => {
+   const IDEAL_DIST = 1000;
+
+   const tileX = getTileX(tileIndex);
+   const tileY = getTileY(tileIndex);
+   const x = (tileX + 0.5) * Settings.TILE_SIZE;
+   const y = (tileY + 0.5) * Settings.TILE_SIZE;
+
+   const dist = distance(transformComponent.position.x, transformComponent.position.y, x, y);
+
+   const u = dist / IDEAL_DIST;
+   return u * Math.exp(-u);
+}
+
+/** Tries to generate a patrol target tile not to close and not too far */
+const generateRandomPatrolTargetTile = (transformComponent: TransformComponent, patrolArea: ReadonlyArray<TileIndex>): TileIndex => {
+   let bestHeuristic = -999999;
+   let bestTile = 0;
+   for (let i = 0; i < 15; i++) {
+      const idx = Math.floor(Math.random() * patrolArea.length);
+      const tileIndex = patrolArea[idx];
+
+      const heuristic = getTargetTileHeuristic(transformComponent, tileIndex);
+      if (heuristic > bestHeuristic) {
+         bestHeuristic = heuristic;
+         bestTile = tileIndex;
+      }
+   }
+
+   return bestTile;
+}
+
 const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileIndex>): Point | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
@@ -36,8 +68,7 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
    
    // Randomly look for a place to patrol to
    for (let attempts = 0; attempts < 30; attempts++) {
-      const idx = Math.floor(Math.random() * patrolArea.length);
-      const tileIndex = patrolArea[idx];
+      const tileIndex = generateRandomPatrolTargetTile(transformComponent, patrolArea);
       
       const tileX = getTileX(tileIndex);
       const tileY = getTileY(tileIndex);
@@ -49,18 +80,18 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
          failureDefault: 0,
          nodeBudget: 1000
       };
-      const path = findSingleLayerPath(layer, transformComponent.position.x, transformComponent.position.y, x, y, tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(transformComponent)), options);
-
+      const path = findSingleLayerPath(layer, transformComponent.position.x, transformComponent.position.y, x, y, tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), options);
       if (!path.isFailed) {
+         console.log("Success.")
          return new Point(x, y);
       }
    }
+   console.log("Failed!");
 
    return null;
 }
 
 export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileIndex>): void {
-   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribeMember);
    const patrolAIComponent = PatrolAIComponentArray.getComponent(tribeMember);
 
    const currentTicks = getGameTicks();
@@ -77,7 +108,11 @@ export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileI
    if (patrolAIComponent.targetPatrolPosition !== null) {
       const isFinished = pathfindTribesman(tribeMember, patrolAIComponent.targetPatrolPosition.x, patrolAIComponent.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
       if (!isFinished) {
-         tribesmanAIComponent.currentAIType = TribesmanAIType.patrolling;
+         // @Hack
+         if (TribesmanAIComponentArray.hasComponent(tribeMember)) {
+            const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribeMember);
+            tribesmanAIComponent.currentAIType = TribesmanAIType.patrolling;
+         }
          return;
       }
    }
@@ -87,7 +122,12 @@ export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileI
    const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
    stopEntity(physicsComponent);
 
-   tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
+   // @Hack
+   if (TribesmanAIComponentArray.hasComponent(tribeMember)) {
+      const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribeMember);
+      tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
+   }
+
    patrolAIComponent.targetPatrolPosition = null;
    clearTribesmanPath(tribeMember);
 }

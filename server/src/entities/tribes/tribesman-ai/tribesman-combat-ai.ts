@@ -12,7 +12,7 @@ import { calculateItemDamage, useItem } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
@@ -172,7 +172,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
             physicsComponent.targetRotation = direction;
          }
 
-         const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getTribesmanRadius(transformComponent);
+         const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
          if (distance > 250) {
             // Move closer
             physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(direction);
@@ -220,7 +220,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
          if (isInLineOfSight || (getGameTicks() - tribesmanComponent.lastEnemyLineOfSightTicks) <= Vars.BOW_LINE_OF_SIGHT_WAIT_TIME) {
             const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
 
-            const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getTribesmanRadius(transformComponent);
+            const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
             
             // If there are any nearby embrasure use points, move to them
             const nearbyEmbrasureUsePoints = getNearbyEmbrasureUsePoints(tribesman);
@@ -279,7 +279,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
 
       if (isAggressive && weaponCategory === "battleaxe") {
          // Use the battleaxe if the entity is in the use range
-         const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getTribesmanRadius(transformComponent);
+         const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
          if (distance >= Vars.BATTLEAXE_MIN_USE_RANGE && distance <= Vars.BATTLEAXE_MAX_USE_RANGE && selectedItem.id !== hotbarUseInfo.thrownBattleaxeItemID) {
             if (hotbarUseInfo.action !== LimbAction.chargeBattleaxe) {
                hotbarUseInfo.lastBattleaxeChargeTicks = getGameTicks();
@@ -333,7 +333,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
       // @Incomplete: This will cause a delay after the tribesman finishes repairing the building.
       const ageTicks = getEntityAgeTicks(tribesman);
       if (ageTicks % (Settings.TPS / 2) === 0) {
-         const pathExists = pathToEntityExists(tribesman, huntedEntity, getTribesmanRadius(transformComponent));
+         const pathExists = pathToEntityExists(tribesman, huntedEntity, getHumanoidRadius(transformComponent));
          if (!pathExists) {
             const isRepairing = attemptToRepairBuildings(tribesman, hammerItemSlot);
             if (isRepairing) {
@@ -354,7 +354,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
    const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
 
-   const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getTribesmanRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {

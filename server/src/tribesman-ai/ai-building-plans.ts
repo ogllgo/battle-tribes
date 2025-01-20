@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import Tribe from "../Tribe";
 import { updateBuildingLayer } from "./ai-building";
 import { getBuildingSafety, getTribeSafety } from "./ai-building-heuristics";
-import { createVirtualBuilding, VirtualStructure } from "./building-plans/TribeBuildingLayer";
+import { createVirtualStructure, VirtualStructure } from "./building-plans/TribeBuildingLayer";
 import { getWallCandidates } from "./building-plans/ai-building-walls";
 import { PotentialPlanSafetyData } from "../../../shared/src/ai-building-types";
 
@@ -35,7 +35,7 @@ export function findIdealWallPlacePosition(tribe: Tribe): WallPlaceSearchResult 
    for (let i = 0; i < potentialCandidates.length; i++) {
       const candidate = potentialCandidates[i];
 
-      const virtualBuilding = createVirtualBuilding(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.wall);
+      const virtualBuilding = createVirtualStructure(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.wall);
 
       // Simulate placing the wall
       candidate.buildingLayer.addVirtualBuilding(virtualBuilding);

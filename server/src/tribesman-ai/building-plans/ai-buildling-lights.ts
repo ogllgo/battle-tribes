@@ -7,7 +7,7 @@ import Layer from "../../Layer";
 import { calculateLightRangeNodes, getLightIntensityAtNode, getLightLevelNode } from "../../light-levels";
 import Tribe from "../../Tribe";
 import { BuildingCandidate, buildingCandidateIsValid, createBuildingCandidate } from "./ai-building-utils";
-import { createVirtualBuilding, VirtualStructure } from "./TribeBuildingLayer";
+import { createVirtualStructure, VirtualStructure } from "./TribeBuildingLayer";
 
 const enum Vars {
    MIN_PLACEABLE_LIGHT_LEVEL = 0.3
@@ -69,5 +69,5 @@ export function generateLightPosition(tribe: Tribe, layer: Layer, x: number, y: 
    assert(validCandidates.length > 0);
    const candidate = validCandidates[Math.floor(Math.random() * validCandidates.length)];
    // @Copynpaste from findIdealWallPlacePosition
-   return createVirtualBuilding(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.slurbTorch);
+   return createVirtualStructure(candidate.buildingLayer, candidate.position, candidate.rotation, EntityType.slurbTorch);
 }

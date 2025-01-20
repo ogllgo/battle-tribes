@@ -1,5 +1,6 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
+import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityType } from "../world";
 import { runAssignmentAI } from "./AIAssignmentComponent";
 import { AIHelperComponentArray } from "./AIHelperComponent";
@@ -21,9 +22,10 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 function onTick(cogwalker: Entity): void {
+   // @Copynpaste
+
    const aiHelperComponent = AIHelperComponentArray.getComponent(cogwalker);
 
-   // @Copynpaste
    const visibleEnemies = new Array<Entity>();
    const visibleEnemyBuildings = new Array<Entity>();
    const visibleHostileMobs = new Array<Entity>();

@@ -349,6 +349,10 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/scrappy/hand.png",
    "entities/cogwalker/body.png",
    "entities/cogwalker/hand.png",
+   "entities/automaton-assembler/automaton-assembler.png",
+   "entities/automaton-assembler/back.png",
+   "entities/automaton-assembler/gear.png",
+   "entities/automaton-assembler/gear-2.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

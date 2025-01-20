@@ -8,7 +8,7 @@ import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearch
 import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getTribesmanSlowAcceleration, getTribesmanRadius, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanSlowAcceleration, getHumanoidRadius, pathfindTribesman } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
@@ -100,7 +100,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
 
       // If close enough, switch to doing research
       if (benchLayer === getEntityLayer(tribesman)) {
-         const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getTribesmanRadius(transformComponent);
+         const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getHumanoidRadius(transformComponent);
          if (dist < 30) {
             attemptToOccupyResearchBench(bench, tribesman);
          }

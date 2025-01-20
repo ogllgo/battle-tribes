@@ -3,8 +3,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { VisualRenderPart } from "../../render-parts/render-parts";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
+import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
+import { updateLimb_TEMP } from "./InventoryUseComponent";
 
 export interface CogwalkerComponentParams {}
 
@@ -57,6 +58,9 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       );
       handRenderPart.addTag("inventoryUseComponent:hand");
       renderInfo.attachRenderPart(handRenderPart);
+
+      // @Temporary: so that the hand shows correctly when the player is placing a cogwalker
+      updateLimb_TEMP(handRenderPart, attachPoint, 28, LimbConfiguration.twoHanded);
    }
 
    return {};

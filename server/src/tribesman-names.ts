@@ -1,11 +1,13 @@
 import { TribesmanTitle } from "../../shared/src/titles";
 import { TribeType } from "../../shared/src/tribes";
 import { randItem } from "../../shared/src/utils";
+import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
+import Tribe from "./Tribe";
 
 // @Incomplete: different names for workers and warriors
 
 const SCRAPPY_NAMES = [
-   "Scrapz",
+   "Scrap",
    "Klik",
    "Tinker",
    "Boltz",
@@ -13,7 +15,8 @@ const SCRAPPY_NAMES = [
    "Spindle",
    "Patch",
    "Sprocket",
-   "Nutscraper"
+   "Nut",
+   "Bit",
 ];
 
 // @Cleanup: location?
@@ -199,10 +202,33 @@ export function addTitleToTribesmanName(name: string, title: TribesmanTitle): st
    return name + ", " + displayText;
 }
 
-export function generateScrappyName(): string {
-   return randItem(SCRAPPY_NAMES);
+const nameAlreadyExists = (tribe: Tribe, name: string): boolean => {
+   for (const tribeMember of tribe.tribesmanIDs) {
+      const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribeMember);
+      if (tribeMemberComponent.name === name) {
+         return true;
+      }
+   }
+
+   return false;
 }
 
-export function generateCogwalkerName(): string {
-   return randItem(COGWALKER_NAMES);
+const generateAutomatonName = (tribe: Tribe, names: ReadonlyArray<string>): string => {
+   const baseName = randItem(names);
+   
+   for (let numDuplicates = 0; ; numDuplicates++) {
+      const name = numDuplicates > 0 ? baseName + " " + (numDuplicates + 1) + ".0" : baseName;
+
+      if (!nameAlreadyExists(tribe, name)) {
+         return name;
+      }
+   }
+}
+
+export function generateScrappyName(tribe: Tribe): string {
+   return generateAutomatonName(tribe, SCRAPPY_NAMES);
+}
+
+export function generateCogwalkerName(tribe: Tribe): string {
+   return generateAutomatonName(tribe, COGWALKER_NAMES);
 }

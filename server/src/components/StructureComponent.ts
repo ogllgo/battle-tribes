@@ -8,7 +8,7 @@ import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
-import { createVirtualBuilding, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
+import { createVirtualStructure, createVirtualStructureFromHitboxes, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 
 export class StructureComponent {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -55,7 +55,7 @@ function onJoin(entity: Entity): void {
       const entityType = getEntityType(entity) as StructureType;
       const buildingLayer = tribeComponent.tribe.buildingLayers[layer.depth];
       
-      structureComponent.virtualBuilding = createVirtualBuilding(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType);
+      structureComponent.virtualBuilding = createVirtualStructureFromHitboxes(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType, transformComponent.hitboxes);
    }
    
    tribeComponent.tribe.addBuilding(entity);

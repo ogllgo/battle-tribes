@@ -14,9 +14,9 @@ import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
-import { placeBuilding, placeBlueprint } from "../tribe-member";
+import { placeStructure, placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
+import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { huntEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
@@ -118,7 +118,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // 
          
          const placeInfo = calculateEntityPlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
-         placeBuilding(tribe, getEntityLayer(tribesman), placeInfo);
+         placeStructure(tribe, getEntityLayer(tribesman), placeInfo);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {
             awardTitle(tribesman, TribesmanTitle.builder);
@@ -178,7 +178,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
 
-   const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getTribesmanRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
@@ -247,7 +247,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
    
-   const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getTribesmanRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {

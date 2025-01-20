@@ -13,6 +13,8 @@ import ServerComponentArray from "../ServerComponentArray";
 import { BALLISTA_GEAR_X, BALLISTA_GEAR_Y, BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import { WARRIOR_HUT_SIZE } from "./HutComponent";
 import { EntityConfig } from "../ComponentArray";
+import { TribeComponentArray } from "./TribeComponent";
+import { playerTribe } from "../../tribes";
 
 export interface BlueprintComponentParams {
    readonly blueprintType: BlueprintType;
@@ -312,6 +314,50 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
          rotation: 0,
          zIndex: 0
       }
+   ],
+   [BlueprintType.scrappy]: [
+      {
+         progressTextureSources: ["entities/scrappy/body.png"],
+         completedTextureSource: "entities/scrappy/body.png",
+         offsetX: 0,
+         offsetY: 0,
+         rotation: 0,
+         zIndex: 0
+      },
+      {
+         progressTextureSources: ["entities/scrappy/hand.png"],
+         completedTextureSource: "entities/scrappy/hand.png",
+         offsetX: 0,
+         offsetY: 20,
+         rotation: 0,
+         zIndex: 0
+      }
+   ],
+   [BlueprintType.cogwalker]: [
+      {
+         progressTextureSources: ["entities/cogwalker/body.png"],
+         completedTextureSource: "entities/cogwalker/body.png",
+         offsetX: 0,
+         offsetY: 0,
+         rotation: 0,
+         zIndex: 0
+      },
+      {
+         progressTextureSources: ["entities/cogwalker/hand.png"],
+         completedTextureSource: "entities/cogwalker/hand.png",
+         offsetX: 28 * Math.sin(0.4 * Math.PI),
+         offsetY: 28 * Math.cos(0.4 * Math.PI),
+         rotation: 0,
+         zIndex: 0
+      },
+      {
+         progressTextureSources: ["entities/cogwalker/hand.png"],
+         completedTextureSource: "entities/cogwalker/hand.png",
+         offsetX: -28 * Math.sin(0.4 * Math.PI),
+         offsetY: 28 * Math.cos(0.4 * Math.PI),
+         rotation: 0,
+         zIndex: 0
+      }
    ]
 };
 
@@ -442,9 +488,10 @@ const updatePartialTexture = (entity: Entity): void => {
 }
 
 function onLoad(entity: Entity): void {
-   const blueprintComponent = BlueprintComponentArray.getComponent(entity);
-
    updatePartialTexture(entity);
+   
+   const blueprintComponent = BlueprintComponentArray.getComponent(entity);
+   const tribeComponent = TribeComponentArray.getComponent(entity);
    
    // Create completed render parts
    const progressTextureInfoArray = BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintComponent.blueprintType];
@@ -461,9 +508,15 @@ function onLoad(entity: Entity): void {
       renderPart.offset.x = progressTextureInfo.offsetX;
       renderPart.offset.y = progressTextureInfo.offsetY;
       renderPart.opacity = 0.5;
-      renderPart.tintR = 0.2;
-      renderPart.tintG = 0.1;
-      renderPart.tintB = 0.8;
+      if (tribeComponent.tribeID === playerTribe.id) {
+         renderPart.tintR = 0.2;
+         renderPart.tintG = 0.1;
+         renderPart.tintB = 0.8;
+      } else {
+         renderPart.tintR = 0.8;
+         renderPart.tintG = 0.0;
+         renderPart.tintB = 0.15;
+      }
       renderInfo.attachRenderPart(renderPart);
    }
 }
@@ -560,6 +613,11 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             createStoneBlueprintWorkParticleEffects(particleOriginX, particleOriginY);
             break;
          }
+         case BlueprintType.scrappy:
+         case BlueprintType.cogwalker: {
+            createStoneBlueprintWorkParticleEffects(particleOriginX, particleOriginY);
+            break;
+         }
          default: {
             assertUnreachable(blueprintComponent.blueprintType);
          }
@@ -620,6 +678,10 @@ function onDie(entity: Entity): void {
             const y = transformComponent.position.y + randFloat(-32, 32);
             createDustCloud(x, y);
          }
+         break;
+      }
+      case BlueprintType.scrappy:
+      case BlueprintType.cogwalker: {
          break;
       }
       default: {

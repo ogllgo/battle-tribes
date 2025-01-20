@@ -21,7 +21,7 @@ import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
-import TribeBuildingLayer, { createVirtualBuilding, createVirtualBuildingsByEntityType, VirtualStructure, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
+import TribeBuildingLayer, { createVirtualStructure, createVirtualBuildingsByEntityType, VirtualStructure, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
 import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";

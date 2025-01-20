@@ -10,13 +10,14 @@ import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../
 import { TribeComponentArray } from "../components/TribeComponent";
 import { getLightIntensityAtPos } from "../light-levels";
 import Tribe from "../Tribe";
+import { getEntityType } from "../world";
 import { updateBuildingLayer } from "./ai-building";
 import { areaHasOutsideDoor, getOutsideDoorPlacePlan } from "./ai-building-areas";
 import { tribeIsVulnerable } from "./ai-building-heuristics";
 import { findIdealWallPlacePosition, WallPlaceCandidate } from "./ai-building-plans";
 import { generateBuildingCandidate } from "./building-plans/ai-building-utils";
 import { generateLightPosition, structureLightLevelIsValid } from "./building-plans/ai-buildling-lights";
-import { createVirtualBuilding, VirtualStructure } from "./building-plans/TribeBuildingLayer";
+import { createVirtualStructure, VirtualStructure } from "./building-plans/TribeBuildingLayer";
 
 /*
 This file contains the logic for planning what AI tribes should do.
@@ -177,6 +178,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.mithrilArmour]: null,
    [ItemType.scrappy]: null,
    [ItemType.cogwalker]: null,
+   [ItemType.automatonAssembler]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -284,10 +286,11 @@ const craftingStationExists = (tribe: Tribe, craftingStation: CraftingStation): 
 const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: number): AIPlanAssignment<AICraftRecipePlan> => {
    const children = new Array<AIPlanAssignment>();
 
-   // First plan to gather any necessary resources
-   for (const entry of recipe.ingredients.getEntries()) {
+   // If a tech is required for the recipe, plan to research that tech first
+   const requiredTech = getTechRequiredForItem(recipe.product);
+   if (requiredTech !== null) {
       children.push(
-         planToGetItem(tribe, entry.itemType, entry.count * productAmount)
+         planToResearchTech(tribe, requiredTech)
       );
    }
    
@@ -301,11 +304,10 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
       );
    }
 
-   // If a tech is required for the recipe, plan to research that tech first
-   const requiredTech = getTechRequiredForItem(recipe.product);
-   if (requiredTech !== null) {
+   // Plan to gather any necessary resources
+   for (const entry of recipe.ingredients.getEntries()) {
       children.push(
-         planToResearchTech(tribe, requiredTech)
+         planToGetItem(tribe, entry.itemType, entry.count * productAmount)
       );
    }
 
@@ -378,7 +380,7 @@ const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtual
       const entityType = ITEM_INFO_RECORD[itemType].entityType;
       // @Cleanup: shouldn't have to define both entity type and placeable item type
       const candidate = generateBuildingCandidate(buildingLayer, entityType);
-      placedVirtualStructure = createVirtualBuilding(buildingLayer, candidate.position, candidate.rotation, entityType);
+      placedVirtualStructure = createVirtualStructure(buildingLayer, candidate.position, candidate.rotation, entityType);
    } else {
       placedVirtualStructure = virtualStructure;
    }
@@ -536,39 +538,42 @@ export function checkForAvailableAssignment(tribe: Tribe): AIPlanAssignment | nu
 export function createPersonalAssignment(entity: Entity, assignment: AIPlanAssignment): AIPlanAssignment {
    const children = new Array<AIPlanAssignment>();
 
-   const plan = assignment.plan;
-   if (plan.type === AIPlanType.gatherItem) {
-      // Make tools to complete the gather task faster
-      const toolTypeToGather = TOOL_TYPE_FOR_MATERIAL_RECORD[plan.itemType];
-      if (toolTypeToGather !== null) {
-         const tribeComponent = TribeComponentArray.getComponent(entity);
-         const inventoryComponent = InventoryComponentArray.getComponent(entity);
-         const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-         // @Cleanup: can be simplified
-         switch (toolTypeToGather) {
-            case "axe": {
-               if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_axe)) {
-                  children.push(
-                     planToGetItem(tribeComponent.tribe, ItemType.wooden_axe, 1)
-                  );
+   // Scrappy's can't make tools
+   if (getEntityType(entity) !== EntityType.scrappy) {
+      const plan = assignment.plan;
+      if (plan.type === AIPlanType.gatherItem) {
+         // Make tools to complete the gather task faster
+         const toolTypeToGather = TOOL_TYPE_FOR_MATERIAL_RECORD[plan.itemType];
+         if (toolTypeToGather !== null) {
+            const tribeComponent = TribeComponentArray.getComponent(entity);
+            const inventoryComponent = InventoryComponentArray.getComponent(entity);
+            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+            // @Cleanup: can be simplified
+            switch (toolTypeToGather) {
+               case "axe": {
+                  if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_axe)) {
+                     children.push(
+                        planToGetItem(tribeComponent.tribe, ItemType.wooden_axe, 1)
+                     );
+                  }
+                  break;
                }
-               break;
-            }
-            case "sword": {
-               if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_sword)) {
-                  children.push(
-                     planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
-                  );
+               case "sword": {
+                  if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_sword)) {
+                     children.push(
+                        planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
+                     );
+                  }
+                  break;
                }
-               break;
-            }
-            case "pickaxe": {
-               if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_pickaxe)) {
-                  children.push(
-                     planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
-                  );
+               case "pickaxe": {
+                  if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_pickaxe)) {
+                     children.push(
+                        planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
+                     );
+                  }
+                  break;
                }
-               break;
             }
          }
       }

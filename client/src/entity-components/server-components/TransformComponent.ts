@@ -1,4 +1,4 @@
-import { distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { distance, Point, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
@@ -375,32 +375,6 @@ function onRemove(entity: Entity): void {
    }
 }
 
-export function getRandomPositionInBox(box: Box): Point {
-   if (boxIsCircular(box)) {
-      const offsetMagnitude = box.radius * Math.random();
-      const offsetDirection = 2 * Math.PI * Math.random();
-      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
-   } else {
-      const halfWidth = box.width / 2;
-      const halfHeight = box.height / 2;
-      
-      const xOffset = randFloat(-halfWidth, halfWidth);
-      const yOffset = randFloat(-halfHeight, halfHeight);
-
-      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
-      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
-      return new Point(x, y);
-   }
-}
-
-// @Cleanup: copy and paste from server
-export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
-   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
-   const box = hitbox.box;
-
-   return getRandomPositionInBox(box);
-}
-
 function padData(reader: PacketReader): void {
    // @Bug: This should be 7...? Length of entity data is wrong then?
    reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
@@ -634,5 +608,56 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
       updateFromData(reader, playerInstance!);
    } else {
       padData(reader);
+   }
+}
+
+export function getRandomPositionInBox(box: Box): Point {
+   if (boxIsCircular(box)) {
+      const offsetMagnitude = box.radius * Math.random();
+      const offsetDirection = 2 * Math.PI * Math.random();
+      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
+   } else {
+      const halfWidth = box.width / 2;
+      const halfHeight = box.height / 2;
+      
+      const xOffset = randFloat(-halfWidth, halfWidth);
+      const yOffset = randFloat(-halfHeight, halfHeight);
+
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      return new Point(x, y);
+   }
+}
+
+// @Cleanup: copy and paste from server
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
+   const box = hitbox.box;
+
+   return getRandomPositionInBox(box);
+}
+
+export function getRandomPositionOnBoxEdge(box: Box): Point {
+   if (boxIsCircular(box)) {
+      const offsetMagnitude = box.radius;
+      const offsetDirection = 2 * Math.PI * Math.random();
+      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
+   } else {
+      const halfWidth = box.width / 2;
+      const halfHeight = box.height / 2;
+      
+      let xOffset: number;
+      let yOffset: number;
+      if (Math.random() < 0.5) {
+         xOffset = randFloat(-halfWidth, halfWidth);
+         yOffset = halfHeight * randSign();
+      } else {
+         xOffset = halfWidth * randSign();
+         yOffset = randFloat(-halfHeight, halfHeight);
+      }
+
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      return new Point(x, y);
    }
 }

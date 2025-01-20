@@ -1,9 +1,11 @@
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
-import { randFloat } from "battletribes-shared/utils";
+import { randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnEntity } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
+import { getRandomPositionOnBoxEdge, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { createHotSparkParticle } from "./particles";
 
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
    switch (bowItemType) {
@@ -31,6 +33,24 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
       case EntityTickEventType.fireBow: {
          // @Cleanup: why need cast?
          playBowFireSound(entity, tickEvent.data as ItemType);
+         break;
+      }
+      case EntityTickEventType.automatonAccident: {
+         playSoundOnEntity("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), entity);
+
+         // Make sparks fly off
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
+         const position = getRandomPositionOnBoxEdge(hitbox.box);
+
+         for (let i = 0; i < 5; i++) {
+            const spawnOffsetRange = 6;
+            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnPositionX = position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
+            const spawnPositionY = position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
+            createHotSparkParticle(spawnPositionX, spawnPositionY);
+         }
+
          break;
       }
    }

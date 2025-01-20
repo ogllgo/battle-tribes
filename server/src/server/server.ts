@@ -117,11 +117,12 @@ class GameServer {
 
    public async start(): Promise<void> {
       // Seed the random number generator
-      if (OPTIONS.inBenchmarkMode) {
-         SRandom.seed(40404040404);
-      } else {
-         SRandom.seed(randInt(0, 9999999999));
-      }
+      // if (OPTIONS.inBenchmarkMode) {
+      //    SRandom.seed(40404040404);
+      // } else {
+      //    SRandom.seed(randInt(0, 9999999999));
+      // }
+      SRandom.seed(629093757);
 
       let a = performance.now();
       console.log("start",a)

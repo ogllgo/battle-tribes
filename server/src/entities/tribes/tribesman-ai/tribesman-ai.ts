@@ -19,7 +19,7 @@ import { PlanterBoxComponentArray, placePlantInPlanterBox } from "../../../compo
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getTribesmanRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanAttackOffset, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { escapeFromEnemies, tribeMemberShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
@@ -545,7 +545,7 @@ export function tickTribesman(tribesman: Entity): void {
          
          // @Incomplete: use pathfinding
          // @Cleanup: Copy and pasted from huntEntity. Should be combined into its own function
-         const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getTribesmanRadius(transformComponent);
+         const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getHumanoidRadius(transformComponent);
          if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
             physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);

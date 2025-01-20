@@ -576,11 +576,17 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       description: ""
    },
    [ItemType.cogwalker]: {
-      // @Temporary
-      entityTextureSource: "items/small/scrappy.png",
-      textureSource: "items/large/scrappy.png",
+      entityTextureSource: "items/small/cogwalker.png",
+      textureSource: "items/large/cogwalker.png",
       toolTextureSource: "",
       name: "Cogwalker",
+      description: ""
+   },
+   [ItemType.automatonAssembler]: {
+      entityTextureSource: "items/small/automaton-assembler.png",
+      textureSource: "items/large/automaton-assembler.png",
+      toolTextureSource: "",
+      name: "Automaton Assembler",
       description: ""
    },
 };

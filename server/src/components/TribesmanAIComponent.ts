@@ -104,6 +104,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.mithrilArmour]: 1,
    [ItemType.scrappy]: 1,
    [ItemType.cogwalker]: 1,
+   [ItemType.automatonAssembler]: 1,
 };
 
 export const enum TribesmanPathType {

@@ -19,7 +19,6 @@ import { TribeComponentArray } from "../../components/TribeComponent";
 import { PhysicsComponentArray } from "../../components/PhysicsComponent";
 import Tribe from "../../Tribe";
 import { TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";
-import { TribeMemberComponentArray } from "../../components/TribeMemberComponent";
 import { createItemEntityConfig } from "../item-entity";
 import { StructureComponentArray } from "../../components/StructureComponent";
 import { BuildingMaterialComponentArray } from "../../components/BuildingMaterialComponent";
@@ -63,6 +62,7 @@ import { getLayerInfo } from "../../layers";
 import { createScrappyConfig } from "./automatons/scrappy";
 import { createCogwalkerConfig } from "./automatons/cogwalker";
 import { awardTitle, hasTitle, TribesmanComponentArray } from "../../components/TribesmanComponent";
+import { createAutomatonAssemblerConfig } from "../structures/crafting-stations/automaton-assembler";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -207,8 +207,7 @@ export function calculateRadialAttackTargets(entity: Entity, attackOffset: numbe
    return attackedEntities;
 }
 
-// @Incomplete: make this require place info
-export function placeBuilding(tribe: Tribe, layer: Layer, placeInfo: StructurePlaceInfo): void {
+export function placeStructure(tribe: Tribe, layer: Layer, placeInfo: StructurePlaceInfo): void {
    let config: EntityConfig<ServerComponentType.transform>;
    switch (placeInfo.entityType) {
       case EntityType.wall: config = createWallConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null); break;
@@ -238,8 +237,9 @@ export function placeBuilding(tribe: Tribe, layer: Layer, placeInfo: StructurePl
       case EntityType.bracings: config = createBracingsConfig(placeInfo.hitboxes, tribe, BuildingMaterial.wood, null); break;
       case EntityType.fireTorch: config = createFireTorchConfig(tribe, placeInfo.connections, null); break;
       case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, placeInfo.connections, null); break;
-      case EntityType.scrappy: config = createScrappyConfig(tribe); break;
-      case EntityType.cogwalker: config = createCogwalkerConfig(tribe); break;
+      case EntityType.scrappy: config = createBlueprintEntityConfig(tribe, BlueprintType.scrappy, 0, null); break;
+      case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
+      case EntityType.automatonAssembler: config = createAutomatonAssemblerConfig(tribe, placeInfo.connections, null); break;
       // @Robustness?
       default: {
          throw new Error();
@@ -343,7 +343,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          if (placeInfo.isValid) {
             const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-            placeBuilding(tribeComponent.tribe, getEntityLayer(tribeMember), placeInfo);
+            placeStructure(tribeComponent.tribe, getEntityLayer(tribeMember), placeInfo);
 
             const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
             consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);

@@ -23,7 +23,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          null,
-         1,
+         0,
          0,
          getTextureArrayIndex("entities/frostshaper/frostshaper.png")
       )

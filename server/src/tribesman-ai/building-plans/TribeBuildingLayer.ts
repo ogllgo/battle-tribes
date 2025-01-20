@@ -2,6 +2,7 @@ import { BoxType, createHitbox, Hitbox, hitboxIsCircular, updateBox } from "../.
 import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
+import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
@@ -91,14 +92,7 @@ const createRestrictedBuildingArea = (position: Point, width: number, height: nu
    };
 }
 
-export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualStructure {
-   const hitboxes = createNormalStructureHitboxes(entityType);
-   
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-      updateBox(hitbox.box, position.x, position.y, rotation);
-   }
-   
+export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType, hitboxes: ReadonlyArray<Hitbox>): VirtualStructure {
    const occupiedNodes = new Set<SafetyNode>();
    addHitboxesOccupiedNodes(hitboxes, occupiedNodes);
    
@@ -195,6 +189,17 @@ export function createVirtualBuilding(buildingLayer: TribeBuildingLayer, positio
          return virtualBuilding;
       }
    }
+}
+
+export function createVirtualStructure(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualStructure {
+   const hitboxes = createNormalStructureHitboxes(entityType);
+   
+   for (let i = 0; i < hitboxes.length; i++) {
+      const hitbox = hitboxes[i];
+      updateBox(hitbox.box, position.x, position.y, rotation);
+   }
+
+   return createVirtualStructureFromHitboxes(buildingLayer, position, rotation, entityType, hitboxes);
 }
 
 export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
@@ -402,6 +407,8 @@ export function createVirtualBuildingsByEntityType(): VirtualBuildingsByEntityTy
    for (const entityType of STRUCTURE_TYPES) {
       record[entityType] = [];
    }
+   // @Hack
+   record[EntityType.blueprintEntity as StructureType] = [];
    return record as VirtualBuildingsByEntityType;
 }
 

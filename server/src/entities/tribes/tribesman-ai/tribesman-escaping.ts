@@ -12,6 +12,7 @@ export function tribeMemberShouldEscape(entityType: EntityType, healthComponent:
    
    switch (entityType) {
       case EntityType.cogwalker:
+      case EntityType.scrappy:
       case EntityType.tribeWorker: return remainingHealthRatio <= 0.5;
       case EntityType.tribeWarrior: return remainingHealthRatio <= 0.4;
       // @Robustness

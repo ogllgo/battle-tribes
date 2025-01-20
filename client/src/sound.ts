@@ -259,7 +259,9 @@ export async function loadSoundEffects(): Promise<void> {
       "mithril-hit-1.mp3",
       "mithril-hit-2.mp3",
       "mithril-hit-3.mp3",
-      "mithril-death.mp3"
+      "mithril-death.mp3",
+      "automaton-accident-1.mp3",
+      "automaton-accident-2.mp3",
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

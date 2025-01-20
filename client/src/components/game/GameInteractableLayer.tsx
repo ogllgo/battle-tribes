@@ -14,7 +14,7 @@ import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItem
 import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
-import { getLimbByInventoryName, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
+import { getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection, getHoveredEntityID } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
@@ -27,7 +27,7 @@ import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInvent
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
 import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
+import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
 import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
@@ -205,7 +205,7 @@ const itemIsResting = (itemSlot: number): boolean => {
    return restTime.remainingTimeTicks > 0;
 }
 
-export function cancelAttack(limb: LimbInfo): void {
+export function cancelAttack(limb: LimbInfo, limbConfiguration: LimbConfiguration): void {
    const attackInfo = getItemAttackInfo(limb.heldItemType);
 
    limb.action = LimbAction.returnAttackToRest;
@@ -214,7 +214,7 @@ export function cancelAttack(limb: LimbInfo): void {
 
    limb.currentActionStartLimbState = limb.currentActionEndLimbState;
    // @Speed: Garbage collection
-   limb.currentActionEndLimbState = copyLimbState(TRIBESMAN_RESTING_LIMB_STATE);
+   limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
 }
 
 // @Cleanup: bad name. mostly updating limbs
@@ -263,14 +263,16 @@ export function updatePlayerItems(): void {
       if (limb.action === LimbAction.windAttack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
          const attackInfo = getItemAttackInfo(limb.heldItemType);
 
+         const attackPattern = attackInfo.attackPatterns![getLimbConfiguration(inventoryUseComponent)];
+         
          limb.action = LimbAction.attack;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = attackInfo.attackTimings.swingTimeTicks * getAttackTimeMultiplier(limb.heldItemType);
 
          // @Speed: Garbage collection
-         limb.currentActionStartLimbState = copyLimbState(attackInfo.attackPattern!.windedBack);
+         limb.currentActionStartLimbState = copyLimbState(attackPattern.windedBack);
          // @Speed: Garbage collection
-         limb.currentActionEndLimbState = copyLimbState(attackInfo.attackPattern!.swung);
+         limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
          const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
@@ -290,7 +292,7 @@ export function updatePlayerItems(): void {
 
       // If finished attacking, go to rest
       if (limb.action === LimbAction.attack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
-         cancelAttack(limb);
+         cancelAttack(limb, getLimbConfiguration(inventoryUseComponent));
       }
 
       // If finished going to rest, set to default
@@ -431,7 +433,7 @@ const tryToSwing = (inventoryName: InventoryName): boolean => {
    const attackInfo = getItemAttackInfo(limb.heldItemType);
 
    // Shield-bash
-   if (attackInfo.attackPattern === null) {
+   if (attackInfo.attackPatterns === null) {
       if (limb.action === LimbAction.block) {
          limb.action = LimbAction.windShieldBash;
          limb.currentActionElapsedTicks = 0;
@@ -453,15 +455,18 @@ const tryToSwing = (inventoryName: InventoryName): boolean => {
       return false;
    }
 
+   const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+   const attackPattern = attackInfo.attackPatterns[limbConfiguration];
+
    limb.action = LimbAction.windAttack;
    limb.currentActionElapsedTicks = 0;
    limb.currentActionDurationTicks = attackInfo.attackTimings.windupTimeTicks * getAttackTimeMultiplier(limb.heldItemType);
    limb.currentActionRate = 1;
 
    // @Speed: Garbage collection
-   limb.currentActionStartLimbState = copyLimbState(TRIBESMAN_RESTING_LIMB_STATE);
+   limb.currentActionStartLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
    // @Speed: Garbage collection
-   limb.currentActionEndLimbState = copyLimbState(attackInfo.attackPattern.windedBack);
+   limb.currentActionEndLimbState = copyLimbState(attackPattern.windedBack);
 
    const attackPacket = createAttackPacket();
    Client.sendPacket(attackPacket);
@@ -911,12 +916,14 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const progress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
 
+         const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+         
          limb.action = LimbAction.feignAttack;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionElapsedTicks = AttackVars.FEIGN_TIME_TICKS;
          limb.currentActionRate = 1;
          limb.currentActionStartLimbState = copyCurrentLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
-         limb.currentActionEndLimbState = TRIBESMAN_RESTING_LIMB_STATE;
+         limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
       // Buffer block
       } else {
          attackBufferTime = INPUT_COYOTE_TIME;
@@ -1288,6 +1295,43 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.cogwalker: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.craftingStation: {
+                  components[componentType] = {
+                     craftingStation: 0
+                  };
+                  break;
+               }
+               case ServerComponentType.automatonAssembler: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.turret: {
+                  components[componentType] = {
+                     aimDirection: 0,
+                     chargeProgress: 0,
+                     reloadProgress: 0
+                  };
+                  break;
+               }
+               case ServerComponentType.aiHelper: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.slingTurret: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.ammoBox: {
+                  components[componentType] = {
+                     ammoType: 0,
+                     ammoRemaining: 0
+                  };
+                  break;
+               }
+               case ServerComponentType.ballista: {
                   components[componentType] = {};
                   break;
                }

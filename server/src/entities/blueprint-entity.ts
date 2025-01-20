@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
 
 // @Incomplete: Remove if the associated entity is removed
 
-export function getBlueprintEntityType(blueprintType: BlueprintType): StructureType {
+export function getBlueprintEntityType(blueprintType: BlueprintType): EntityType {
    switch (blueprintType) {
       case BlueprintType.woodenTunnel:
       case BlueprintType.stoneTunnel:
@@ -40,6 +40,8 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): StructureT
       case BlueprintType.warriorHutUpgrade: return EntityType.warriorHut;
       case BlueprintType.fenceGate: return EntityType.fenceGate;
       case BlueprintType.stoneBracings: return EntityType.bracings;
+      case BlueprintType.scrappy: return EntityType.scrappy;
+      case BlueprintType.cogwalker: return EntityType.cogwalker;
    }
 }
 

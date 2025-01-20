@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
 import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
@@ -11,20 +11,21 @@ import { DamageBoxComponentArray } from "./DamageBoxComponent";
 import { ServerBlockBox, ServerDamageBox } from "../boxes";
 import { assertBoxIsRectangular, BlockType, Box, updateBox } from "battletribes-shared/boxes/boxes";
 import { TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { attemptAttack, calculateItemKnockback } from "../entities/tribes/limb-use";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
-import { destroyEntity, getGameTicks } from "../world";
+import { destroyEntity, getEntityType, getGameTicks } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { TribesmanTitle } from "../../../shared/src/titles";
 import { hasTitle } from "./TribesmanComponent";
+import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -88,7 +89,8 @@ export class InventoryUseComponent {
 
    public globalAttackCooldown = 0;
 
-   public createLimb(entity: Entity, associatedInventory: Inventory): void {
+   // @Hack: limb configuration. Can't be called in this function as the limbInfos array won't have been populated
+   public createLimb(entity: Entity, associatedInventory: Inventory, limbConfiguration: LimbConfiguration): void {
       const limbDamageBox = new ServerDamageBox(new CircularBox(new Point(0, 0), 0, 12), associatedInventory.name, false);
       const heldItemDamageBox = new ServerDamageBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
       const blockBox = new ServerBlockBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
@@ -97,6 +99,8 @@ export class InventoryUseComponent {
       damageBoxComponent.addDamageBox(limbDamageBox);
       damageBoxComponent.addDamageBox(heldItemDamageBox);
       damageBoxComponent.addBlockBox(blockBox);
+
+      const restingLimbState = RESTING_LIMB_STATES[limbConfiguration];
 
       const useInfo: LimbInfo = {
          associatedInventory: associatedInventory,
@@ -120,8 +124,8 @@ export class InventoryUseComponent {
          currentActionDurationTicks: 0,
          currentActionPauseTicksRemaining: 0,
          currentActionRate: 1,
-         currentActionStartLimbState: copyLimbState(TRIBESMAN_RESTING_LIMB_STATE),
-         currentActionEndLimbState: copyLimbState(TRIBESMAN_RESTING_LIMB_STATE),
+         currentActionStartLimbState: copyLimbState(restingLimbState),
+         currentActionEndLimbState: copyLimbState(restingLimbState),
          limbDamageBox: limbDamageBox,
          heldItemDamageBox: heldItemDamageBox,
          blockBox: blockBox,
@@ -165,7 +169,9 @@ function onJoin(entity: Entity): void {
       const inventoryName = inventoryUseComponent.associatedInventoryNames[i];
       const inventory = getInventory(inventoryComponent, inventoryName);
 
-      inventoryUseComponent.createLimb(entity, inventory);
+      // @Hack
+      const limbConfiguration = inventoryUseComponent.associatedInventoryNames.length - 1;
+      inventoryUseComponent.createLimb(entity, inventory, limbConfiguration);
    }
 }
 
@@ -180,19 +186,26 @@ export function getHeldItem(limbInfo: LimbInfo): Item | null {
    return typeof item !== "undefined" ? item : null;
 }
 
+export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponent): LimbConfiguration {
+   switch (inventoryUseComponent.limbInfos.length) {
+      case 1: return LimbConfiguration.singleHanded;
+      case 2: return LimbConfiguration.twoHanded;
+      default: throw new Error();
+   }
+}
+
 const setLimb = (entity: Entity, limb: LimbInfo, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
    const flipMultiplier = isFlipped ? -1 : 1;
    const limbDamageBox = limb.limbDamageBox;
 
-   // @Temporary @Hack
-   const offset = extraOffset + 34;
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const offset = extraOffset + getHumanoidRadius(transformComponent) + 2;
 
    const limbBox = limbDamageBox.box;
    limbBox.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
    limbBox.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
    limbBox.relativeRotation = limbRotation * flipMultiplier;
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
    updateBox(limbBox, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
    
    updateBox(limb.heldItemDamageBox.box, limbBox.position.x, limbBox.position.y, limbBox.rotation);
@@ -363,17 +376,20 @@ const getBoxCollidingWallSubtiles = (layer: Layer, box: Box): ReadonlyArray<numb
    return collidingWallSubtiles;
 }
 
-const cancelAttack = (limb: LimbInfo): void => {
+const cancelAttack = (limb: LimbInfo, limbConfiguration: LimbConfiguration): void => {
    const heldItem = getHeldItem(limb);
    const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+
+   const attackPattern = heldItemAttackInfo.attackPatterns![limbConfiguration];
 
    limb.action = LimbAction.returnAttackToRest;
    limb.currentActionElapsedTicks = 0;
    limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.returnTimeTicks;
+   // @Bug: shouldn't it copy the current state?
    // @Speed: Garbage collection
-   limb.currentActionStartLimbState = copyLimbState(heldItemAttackInfo.attackPattern!.swung);
+   limb.currentActionStartLimbState = copyLimbState(attackPattern.swung);
    // @Speed: Garbage collection
-   limb.currentActionEndLimbState = copyLimbState(TRIBESMAN_RESTING_LIMB_STATE);
+   limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
 
    limb.limbDamageBox.isActive = false;
    limb.heldItemDamageBox.isActive = false;
@@ -473,14 +489,16 @@ function onTick(entity: Entity): void {
             case LimbAction.windAttack: {
                const heldItem = getHeldItem(limb);
                const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+
+               const attackPattern = heldItemAttackInfo.attackPatterns![getLimbConfiguration(inventoryUseComponent)];
                
                limb.action = LimbAction.attack;
                limb.currentActionElapsedTicks = 0;
                limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.swingTimeTicks;
                // @Speed: Garbage collection
-               limb.currentActionStartLimbState = copyLimbState(heldItemAttackInfo.attackPattern!.windedBack);
+               limb.currentActionStartLimbState = copyLimbState(attackPattern.windedBack);
                // @Speed: Garbage collection
-               limb.currentActionEndLimbState = copyLimbState(heldItemAttackInfo.attackPattern!.swung);
+               limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
                
                limb.limbDamageBox.isActive = true;
                limb.limbDamageBox.isBlocked = false;
@@ -503,7 +521,7 @@ function onTick(entity: Entity): void {
                break;
             }
             case LimbAction.attack: {
-               cancelAttack(limb);
+               cancelAttack(limb, getLimbConfiguration(inventoryUseComponent));
                break;
             }
             case LimbAction.returnAttackToRest: {
@@ -632,7 +650,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
       packet.addNumber(limb.associatedInventory.name);
       packet.addNumber(limb.selectedItemSlot);
-      packet.addNumber(limb.associatedInventory.itemSlots[limb.selectedItemSlot]?.type || -1)
+      const heldItem = getHeldItem(limb);
+      packet.addNumber(heldItem !== null ? heldItem.type : -1);
 
       // @Cleanup: Copy and paste
       const spearWindupCooldownEntries = Object.entries(limb.spearWindupCooldowns).map(([a, b]) => [Number(a), b]) as Array<[number, number]>;

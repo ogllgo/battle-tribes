@@ -64,7 +64,7 @@ export function getTribesmanDesiredAttackRange(tribesman: Entity): number {
 /**
  * @param transformComponent The tribesman's transform component
  */
-export function getTribesmanRadius(transformComponent: TransformComponent): number {
+export function getHumanoidRadius(transformComponent: TransformComponent): number {
    return (transformComponent.hitboxes[0].box as CircularBox).radius;
 }
 
@@ -168,7 +168,7 @@ const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const layer = getEntityLayer(tribesman);
    
-   const offsetMagnitude = getTribesmanRadius(transformComponent) + 20;
+   const offsetMagnitude = getHumanoidRadius(transformComponent) + 20;
    const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.rotation);
    const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.rotation);
    const entitiesInFront = getEntitiesInRange(layer, checkX, checkY, 40);
@@ -346,7 +346,7 @@ export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: numbe
       const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
       const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
       
-      const footprint = getEntityFootprint(getTribesmanRadius(transformComponent));
+      const footprint = getEntityFootprint(getHumanoidRadius(transformComponent));
       const tribe = tribeComponent.tribe;
       const layer = getEntityLayer(tribesman);
 
@@ -400,7 +400,7 @@ export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goal
       goalRadius: Math.floor(goalRadius / PathfindingSettings.NODE_SEPARATION),
       failureDefault: PathfindFailureDefault.none
    };
-   const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), transformComponent.position.x, transformComponent.position.y, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, tribeComponent.tribe.pathfindingGroupID, getEntityFootprint(getTribesmanRadius(transformComponent)), options);
+   const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), transformComponent.position.x, transformComponent.position.y, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, tribeComponent.tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), options);
 
    cleanupPathfinding(huntedEntity, tribeComponent.tribe, blockingTribesmen);
 

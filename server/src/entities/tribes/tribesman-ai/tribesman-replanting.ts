@@ -12,7 +12,7 @@ import { TransformComponent, TransformComponentArray } from "../../../components
 import { TribesmanAIComponent, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { getEntityType, entityExists, getEntityLayer } from "../../../world";
-import { getTribesmanAttackRadius, getTribesmanRadius, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanAttackRadius, getHumanoidRadius, pathfindTribesman } from "./tribesman-ai-utils";
 
 export const PLANT_TO_SEED_RECORD: Record<PlantedEntityType, ItemType> = {
    [EntityType.treePlanted]: ItemType.seed,
@@ -72,7 +72,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
 
       // @Cleanup: copy and pasted from tribesman-combat-ai
       const desiredDistance = getTribesmanAttackRadius(tribesman);
-      const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getTribesmanRadius(transformComponent);
+      const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getHumanoidRadius(transformComponent);
       if (willStopAtDesiredDistance(physicsComponent, desiredDistance, distance)) {
          // @Incomplete: turn to face direction and then place
          

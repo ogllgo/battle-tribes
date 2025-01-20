@@ -20,6 +20,8 @@ import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
 import { getLayerInfo } from "../layers";
+import { createScrappyConfig } from "../entities/tribes/automatons/scrappy";
+import { createCogwalkerConfig } from "../entities/tribes/automatons/cogwalker";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -38,7 +40,9 @@ const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.stoneWallSpikes]: 3,
    [BlueprintType.warriorHutUpgrade]: 25,
    [BlueprintType.fenceGate]: 3,
-   [BlueprintType.stoneBracings]: 2
+   [BlueprintType.stoneBracings]: 2,
+   [BlueprintType.scrappy]: 10,
+   [BlueprintType.cogwalker]: 20,
 };
 
 export class BlueprintComponent {
@@ -145,6 +149,22 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
       }
       case BlueprintType.stoneTunnel: {
          const config = createTunnelConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
+         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
+         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
+         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
+         return;
+      }
+      case BlueprintType.scrappy: {
+         const config = createScrappyConfig(tribe);
+         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
+         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
+         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
+         return;
+      }
+      case BlueprintType.cogwalker: {
+         const config = createCogwalkerConfig(tribe);
          config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;

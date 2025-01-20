@@ -35,7 +35,8 @@ const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStation, string> = {
    [CraftingStation.slime]: CLIENT_ITEM_INFO_RECORD[ItemType.slimeball].textureSource,
    [CraftingStation.water]: "miscellaneous/water-droplet.png",
    [CraftingStation.frostshaper]: CLIENT_ITEM_INFO_RECORD[ItemType.frostshaper].textureSource,
-   [CraftingStation.stonecarvingTable]: CLIENT_ITEM_INFO_RECORD[ItemType.stonecarvingTable].textureSource
+   [CraftingStation.stonecarvingTable]: CLIENT_ITEM_INFO_RECORD[ItemType.stonecarvingTable].textureSource,
+   [CraftingStation.automatonAssembler]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
 };
 
 const CRAFTING_RECIPE_RECORD: Record<CraftingStation | "hand", Array<CraftingRecipe>> = {
@@ -44,7 +45,8 @@ const CRAFTING_RECIPE_RECORD: Record<CraftingStation | "hand", Array<CraftingRec
    [CraftingStation.slime]: [],
    [CraftingStation.water]: [],
    [CraftingStation.frostshaper]: [],
-   [CraftingStation.stonecarvingTable]: []
+   [CraftingStation.stonecarvingTable]: [],
+   [CraftingStation.automatonAssembler]: []
 };
 
 // Categorise the crafting recipes
@@ -369,7 +371,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       return isCraftable ? "craftable" : undefined;
    }
 
-   return <div id="crafting-menu" className="inventory" ref={onCraftingMenuRefChange}>
+   return <div id="crafting-menu" className="inventory" onContextMenu={e => e.preventDefault()} ref={onCraftingMenuRefChange}>
       {/*
       // @Temporary?
       <div className="available-crafting-stations">

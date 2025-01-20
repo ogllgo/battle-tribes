@@ -8,7 +8,7 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { Point } from "battletribes-shared/utils";
 import { damageEntity, HealthComponentArray } from "../../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../../components/InventoryComponent";
-import { getHeldItem, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
+import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
 import { applyKnockback, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { applyStatusEffect } from "../../components/StatusEffectComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
@@ -18,7 +18,7 @@ import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/B
 import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
-import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, TRIBESMAN_RESTING_LIMB_STATE } from "battletribes-shared/attack-patterns";
+import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, getEntityType } from "../../world";
 import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
 import { BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
@@ -192,7 +192,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
    
    // Shield bash
-   if (heldItemAttackInfo.attackPattern === null) {
+   if (heldItemAttackInfo.attackPatterns === null) {
       if (limb.action === LimbAction.block) {
          limb.selectedItemSlot = itemSlot;
          limb.action = LimbAction.windShieldBash;
@@ -211,6 +211,9 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    if (limb.action !== LimbAction.none || limb.currentActionElapsedTicks < limb.currentActionDurationTicks) {
       return false;
    }
+
+   const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+   const attackPattern = heldItemAttackInfo.attackPatterns![limbConfiguration];
    
    // Begin winding up the attack
    limb.selectedItemSlot = itemSlot;
@@ -219,9 +222,9 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.windupTimeTicks;
    limb.currentActionRate = 1;
    // @Speed: Garbage collection
-   limb.currentActionStartLimbState = copyLimbState(TRIBESMAN_RESTING_LIMB_STATE);
+   limb.currentActionStartLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
    // @Speed: Garbage collection
-   limb.currentActionEndLimbState = copyLimbState(heldItemAttackInfo.attackPattern.windedBack);
+   limb.currentActionEndLimbState = copyLimbState(attackPattern.windedBack);
 
    limb.heldItemDamageBox.wallSubtileDamageGiven = 0;
    

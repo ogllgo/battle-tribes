@@ -92,6 +92,7 @@ import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 import { ScrappyComponent } from "./components/ScrappyComponent";
 import { CogwalkerComponent } from "./components/CogwalkerComponent";
 import { TribesmanComponent } from "./components/TribesmanComponent";
+import { AutomatonAssemblerComponent } from "./components/AutomatonAssemblerComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -186,6 +187,7 @@ const ComponentClassRecord = {
    [ServerComponentType.mithrilOreNode]: () => MithrilOreNodeComponent,
    [ServerComponentType.scrappy]: () => ScrappyComponent,
    [ServerComponentType.cogwalker]: () => CogwalkerComponent,
+   [ServerComponentType.automatonAssembler]: () => AutomatonAssemblerComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

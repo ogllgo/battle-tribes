@@ -248,6 +248,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.cogwalker]: {
       name: "Cogwalker"
    },
+   [EntityType.automatonAssembler]: {
+      name: "Automaton Assembler"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

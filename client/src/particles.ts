@@ -1917,3 +1917,47 @@ export function createSlurbParticle(spawnPositionX: number, spawnPositionY: numb
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createHotSparkParticle(x: number, y: number): void {
+   const lifetime = randFloat(0.2, 0.25);
+   const opacityMult = randFloat(0.5, 0.75);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = () => {
+      const progress = particle.age / lifetime;
+      return (1 - progress * progress) * opacityMult;
+   };
+
+   const velocityMagnitude = randFloat(180, 250);
+   const velocityDirection = 2 * Math.PI * Math.random();
+   const vx = velocityMagnitude * Math.sin(velocityDirection);
+   const vy = velocityMagnitude * Math.cos(velocityDirection);
+
+   const height = Math.random() < 0.5 ? 8 : 4;
+
+   const rHigh = 255/255;
+   const gHigh = 226/255;
+   const bHigh = 145/255;
+
+   const rLow = 255/255;
+   const gLow = 197/255;
+   const bLow = 168/255;
+
+   const u = Math.random();
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      4, height,
+      x, y,
+      vx, vy,
+      0, 0,
+      velocityMagnitude / lifetime / 1.3,
+      velocityDirection,
+      0,
+      3,
+      0,
+      lerp(rLow, rHigh, u), lerp(gLow, gHigh, u), lerp(bLow, bHigh, u)
+   );
+   Board.highMonocolourParticles.push(particle);
+}

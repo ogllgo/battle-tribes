@@ -38,6 +38,7 @@ import { undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createCogwalkerConfig } from "./entities/tribes/automatons/cogwalker";
+import { createScrappyConfig } from "./entities/tribes/automatons/scrappy";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -376,10 +377,11 @@ export function spawnInitialEntities(): void {
       const x = Settings.BOARD_UNITS * 0.5 + 800;
       const y = Settings.BOARD_UNITS * 0.5;
       
-      const a = createCogwalkerConfig(tribe);
-      a.components[ServerComponentType.transform].position.x = x;
-      a.components[ServerComponentType.transform].position.y = y;
-      createEntity(a, undergroundLayer, 0);
+      // const a = createCogwalkerConfig(tribe);
+      // const a = createScrappyConfig(tribe);
+      // a.components[ServerComponentType.transform].position.x = x;
+      // a.components[ServerComponentType.transform].position.y = y;
+      // createEntity(a, undergroundLayer, 0);
       }
    }, 10000);
 }

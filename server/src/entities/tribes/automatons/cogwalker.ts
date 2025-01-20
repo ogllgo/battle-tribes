@@ -26,6 +26,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.tribe
    | ServerComponentType.tribeMember
+   // @Hack @Temporary?
    | ServerComponentType.tribesmanAI
    | ServerComponentType.aiHelper
    | ServerComponentType.aiAssignment
@@ -48,7 +49,7 @@ export function createCogwalkerConfig(tribe: Tribe): EntityConfig<ComponentTypes
 
    const tribeComponent = new TribeComponent(tribe);
 
-   const tribeMemberComponent = new TribeMemberComponent(generateCogwalkerName());
+   const tribeMemberComponent = new TribeMemberComponent(generateCogwalkerName(tribe));
 
    const tribesmanAIComponent = new TribesmanAIComponent();
 

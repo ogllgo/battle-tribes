@@ -5,6 +5,9 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import VisualRenderPart from "../../render-parts/VisualRenderPart";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
+import { updateLimb_TEMP } from "./InventoryUseComponent";
+import { EntityConfig } from "../ComponentArray";
+import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
 
 export interface ScrappyComponentParams {}
 
@@ -53,6 +56,9 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    );
    handRenderPart.addTag("inventoryUseComponent:hand");
    renderInfo.attachRenderPart(handRenderPart);
+
+   // @Temporary: so that the hand shows correctly when the player is placing a scrappy
+   updateLimb_TEMP(handRenderPart, attachPoint, 20, LimbConfiguration.singleHanded);
 
    return {};
 }
