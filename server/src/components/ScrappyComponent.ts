@@ -39,44 +39,44 @@ function addDataToPacket(): void {}
 function onTick(scrappy: Entity): void {
    // @Copynpaste
 
-   const aiHelperComponent = AIHelperComponentArray.getComponent(scrappy);
+   // const aiHelperComponent = AIHelperComponentArray.getComponent(scrappy);
 
-   const visibleEnemies = new Array<Entity>();
-   const visibleEnemyBuildings = new Array<Entity>();
-   const visibleHostileMobs = new Array<Entity>();
-   const visibleItemEntities = new Array<Entity>();
-   for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
-      const entity = aiHelperComponent.visibleEntities[i];
+   // const visibleEnemies = new Array<Entity>();
+   // const visibleEnemyBuildings = new Array<Entity>();
+   // const visibleHostileMobs = new Array<Entity>();
+   // const visibleItemEntities = new Array<Entity>();
+   // for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
+   //    const entity = aiHelperComponent.visibleEntities[i];
 
-      // @Temporary: may want to reintroduce
-      // But use paths instead!! :D
-      // if (!entityIsAccessible(tribesman, entity)) {
-      //    continue;
-      // }
+   //    // @Temporary: may want to reintroduce
+   //    // But use paths instead!! :D
+   //    // if (!entityIsAccessible(tribesman, entity)) {
+   //    //    continue;
+   //    // }
 
-      switch (getEntityRelationship(scrappy, entity)) {
-         case EntityRelationship.enemy: {
-            visibleEnemies.push(entity);
-            break;
-         }
-         case EntityRelationship.enemyBuilding: {
-            visibleEnemyBuildings.push(entity);
-            break;
-         }
-         case EntityRelationship.hostileMob: {
-            visibleHostileMobs.push(entity);
-            break;
-         }
-         case EntityRelationship.neutral: {
-            if (getEntityType(entity) === EntityType.itemEntity) {
-               visibleItemEntities.push(entity);
-            }
-            break;
-         }
-      }
-   }
+   //    switch (getEntityRelationship(scrappy, entity)) {
+   //       case EntityRelationship.enemy: {
+   //          visibleEnemies.push(entity);
+   //          break;
+   //       }
+   //       case EntityRelationship.enemyBuilding: {
+   //          visibleEnemyBuildings.push(entity);
+   //          break;
+   //       }
+   //       case EntityRelationship.hostileMob: {
+   //          visibleHostileMobs.push(entity);
+   //          break;
+   //       }
+   //       case EntityRelationship.neutral: {
+   //          if (getEntityType(entity) === EntityType.itemEntity) {
+   //             visibleItemEntities.push(entity);
+   //          }
+   //          break;
+   //       }
+   //    }
+   // }
    
-   runAssignmentAI(scrappy, visibleItemEntities);
+   // runAssignmentAI(scrappy, visibleItemEntities);
 
    const scrappyComponent = ScrappyComponentArray.getComponent(scrappy);
    scrappyComponent.accidentTimer--;

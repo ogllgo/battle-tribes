@@ -179,35 +179,63 @@ export function updateSlimeTrails(): void {
 }
 
 export function renderSlimeTrails(layer: Layer): void {
-   const minGamePixelX = convertToGamePixel(Camera.minVisibleX);
-   const maxGamePixelX = convertToGamePixel(Camera.maxVisibleX);
-   const minGamePixelY = convertToGamePixel(Camera.minVisibleY);
-   const maxGamePixelY = convertToGamePixel(Camera.maxVisibleY);
+   if (layer.slimeTrailPixels.size === 0) {
+      return;
+   }
+   
+   // const minGamePixelX = convertToGamePixel(Camera.minVisibleX);
+   // const maxGamePixelX = convertToGamePixel(Camera.maxVisibleX);
+   // const minGamePixelY = convertToGamePixel(Camera.minVisibleY);
+   // const maxGamePixelY = convertToGamePixel(Camera.maxVisibleY);
 
    // Create vertices
    // @Garbage
-   const vertices = new Array<number>();
-   for (let gamePixelX = minGamePixelX; gamePixelX <= maxGamePixelX; gamePixelX++) {
-      for (let gamePixelY = minGamePixelY; gamePixelY <= maxGamePixelY; gamePixelY++) {
-         const gamePixelIndex = getGamePixelIndex(gamePixelX, gamePixelY);
+   const vertexData = new Float32Array(layer.slimeTrailPixels.size * 6 * 3);
+   let i = 0;
+   for (const pair of layer.slimeTrailPixels) {
+      const gamePixelIndex = pair[0];
+      const slimeOpacity = pair[1];
 
-         const slimeOpacity = layer.slimeTrailPixels.get(gamePixelIndex);
-         if (typeof slimeOpacity !== "undefined") {
-            const x1 = gamePixelX * 4;
-            const x2 = x1 + 4;
-            const y1 = gamePixelY * 4;
-            const y2 = y1 + 4;
-            
-            vertices.push(
-               x1, y1, slimeOpacity,
-               x2, y1, slimeOpacity,
-               x1, y2, slimeOpacity,
-               x1, y2, slimeOpacity,
-               x2, y1, slimeOpacity,
-               x2, y2, slimeOpacity
-            );
-         }
-      }
+      const gamePixelX = getGamePixelX(gamePixelIndex);
+      const gamePixelY = getGamePixelY(gamePixelIndex);
+
+      // @Temporary?
+      // if (gamePixelX < minGamePixelX || gamePixelX > maxGamePixelX || gamePixelY < minGamePixelY || gamePixelY > maxGamePixelY) {
+      //    continue;
+      // }
+
+      const x1 = gamePixelX * 4;
+      const x2 = x1 + 4;
+      const y1 = gamePixelY * 4;
+      const y2 = y1 + 4;
+
+      const dataOffset = i * 6 * 3;
+
+      vertexData[dataOffset] = x1;
+      vertexData[dataOffset + 1] = y1;
+      vertexData[dataOffset + 2] = slimeOpacity;
+
+      vertexData[dataOffset + 3] = x2;
+      vertexData[dataOffset + 4] = y1;
+      vertexData[dataOffset + 5] = slimeOpacity;
+
+      vertexData[dataOffset + 6] = x1;
+      vertexData[dataOffset + 7] = y2;
+      vertexData[dataOffset + 8] = slimeOpacity;
+
+      vertexData[dataOffset + 9] = x1;
+      vertexData[dataOffset + 10] = y2;
+      vertexData[dataOffset + 11] = slimeOpacity;
+
+      vertexData[dataOffset + 12] = x2;
+      vertexData[dataOffset + 13] = y1;
+      vertexData[dataOffset + 14] = slimeOpacity;
+
+      vertexData[dataOffset + 15] = x2;
+      vertexData[dataOffset + 16] = y2;
+      vertexData[dataOffset + 17] = slimeOpacity;
+
+      i++;
    }
 
    gl.useProgram(program);
@@ -219,7 +247,7 @@ export function renderSlimeTrails(layer: Layer): void {
    // @Speed
    const buffer = gl.createBuffer()!;
    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+   gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
 
    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
@@ -228,7 +256,7 @@ export function renderSlimeTrails(layer: Layer): void {
    gl.enableVertexAttribArray(1);
 
 
-   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+   gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
 
    gl.disable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ZERO);

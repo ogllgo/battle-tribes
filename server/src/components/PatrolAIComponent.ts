@@ -82,11 +82,9 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
       };
       const path = findSingleLayerPath(layer, transformComponent.position.x, transformComponent.position.y, x, y, tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), options);
       if (!path.isFailed) {
-         console.log("Success.")
          return new Point(x, y);
       }
    }
-   console.log("Failed!");
 
    return null;
 }

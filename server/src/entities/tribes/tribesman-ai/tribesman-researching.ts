@@ -109,7 +109,9 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       return;
    }
 
-   throw new Error();
+   // Somehow there aren't any research benches to work at.
+   // This can happen if the research bench is placed but is still in the join queue (not in the world).
+   // If we can get here without there being a bench in the join queue then that would be preeetty bad.
 }
 
 export function techStudyIsComplete(tribe: Tribe, tech: Tech): boolean {

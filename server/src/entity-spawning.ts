@@ -362,10 +362,12 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      // if(1+1===2)return;
+      if(1+1===2)return;
       
-      const x = Settings.BOARD_UNITS * 0.5 + 700;
-      const y = Settings.BOARD_UNITS * 0.5;
+      // // const x = Settings.BOARD_UNITS * 0.5 + 700;
+      const x = 6400;
+      // // const y = Settings.BOARD_UNITS * 0.5;
+      const y = 3400;
       
       const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
       // const a = createTribeWorkerConfig(tribe);
@@ -373,15 +375,15 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
 
-      {
-      const x = Settings.BOARD_UNITS * 0.5 + 800;
-      const y = Settings.BOARD_UNITS * 0.5;
+      // {
+      // const x = Settings.BOARD_UNITS * 0.5 + 800;
+      // const y = Settings.BOARD_UNITS * 0.5;
       
-      // const a = createCogwalkerConfig(tribe);
+      const a = createCogwalkerConfig(tribe);
       // const a = createScrappyConfig(tribe);
-      // a.components[ServerComponentType.transform].position.x = x;
-      // a.components[ServerComponentType.transform].position.y = y;
-      // createEntity(a, undergroundLayer, 0);
-      }
+      a.components[ServerComponentType.transform].position.x = x;
+      a.components[ServerComponentType.transform].position.y = y;
+      createEntity(a, undergroundLayer, 0);
+      // }
    }, 10000);
 }

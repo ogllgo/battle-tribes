@@ -1117,7 +1117,6 @@ export function selectItemSlot(itemSlot: number): void {
    // Don't switch if the player is blocking
    const playerAction = getInstancePlayerAction(InventoryName.hotbar);
    if (playerAction === LimbAction.block || playerAction === LimbAction.returnBlockToRest) {
-      playSound("error.mp3", 0.4, 1, Camera.position, null);
       return;
    }
 
@@ -1332,6 +1331,10 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.ballista: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.mithrilAnvil: {
                   components[componentType] = {};
                   break;
                }

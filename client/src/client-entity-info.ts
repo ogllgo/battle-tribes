@@ -251,6 +251,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.automatonAssembler]: {
       name: "Automaton Assembler"
    },
+   [EntityType.mithrilAnvil]: {
+      name: "Mithril Anvil"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

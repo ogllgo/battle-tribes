@@ -29,7 +29,7 @@ interface CraftingMenuProps {
    readonly backpack: Inventory;
 }
 
-// @Temporary?
+// @Temporary? @Robustness
 const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStation, string> = {
    [CraftingStation.workbench]: CLIENT_ITEM_INFO_RECORD[ItemType.workbench].textureSource,
    [CraftingStation.slime]: CLIENT_ITEM_INFO_RECORD[ItemType.slimeball].textureSource,
@@ -37,8 +37,10 @@ const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStation, string> = {
    [CraftingStation.frostshaper]: CLIENT_ITEM_INFO_RECORD[ItemType.frostshaper].textureSource,
    [CraftingStation.stonecarvingTable]: CLIENT_ITEM_INFO_RECORD[ItemType.stonecarvingTable].textureSource,
    [CraftingStation.automatonAssembler]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
+   [CraftingStation.mithrilAnvil]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
 };
 
+// @Robustness
 const CRAFTING_RECIPE_RECORD: Record<CraftingStation | "hand", Array<CraftingRecipe>> = {
    hand: [],
    [CraftingStation.workbench]: [],
@@ -46,7 +48,8 @@ const CRAFTING_RECIPE_RECORD: Record<CraftingStation | "hand", Array<CraftingRec
    [CraftingStation.water]: [],
    [CraftingStation.frostshaper]: [],
    [CraftingStation.stonecarvingTable]: [],
-   [CraftingStation.automatonAssembler]: []
+   [CraftingStation.automatonAssembler]: [],
+   [CraftingStation.mithrilAnvil]: [],
 };
 
 // Categorise the crafting recipes

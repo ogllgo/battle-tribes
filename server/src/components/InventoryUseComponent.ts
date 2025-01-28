@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
+import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemTypeString } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -11,7 +11,7 @@ import { DamageBoxComponentArray } from "./DamageBoxComponent";
 import { ServerBlockBox, ServerDamageBox } from "../boxes";
 import { assertBoxIsRectangular, BlockType, Box, updateBox } from "battletribes-shared/boxes/boxes";
 import { TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, HAMMER_ATTACK_TIMINGS } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { healEntity, HealthComponentArray } from "./HealthComponent";
@@ -71,6 +71,10 @@ export interface LimbInfo {
    blockPositionX: number;
    blockPositionY: number;
    blockType: BlockType;
+}
+
+export function limbHeldItemCanBeSwitched(limb: LimbInfo): boolean {
+   return limb.action === LimbAction.none && limb.currentActionElapsedTicks >= limb.currentActionDurationTicks;
 }
 
 const addLimbStateToPacket = (packet: Packet, limbState: LimbState): void => {
@@ -525,7 +529,12 @@ function onTick(entity: Entity): void {
                break;
             }
             case LimbAction.returnAttackToRest: {
+               const heldItem = getHeldItem(limb);
+               const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+
                limb.action = LimbAction.none;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.restTimeTicks;
                break;
             }
             case LimbAction.returnBlockToRest: {

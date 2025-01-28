@@ -26,6 +26,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.statusEffect
    | ServerComponentType.tribe
    | ServerComponentType.tribeMember
+   | ServerComponentType.tribesmanAI
    | ServerComponentType.aiHelper
    | ServerComponentType.aiAssignment
    | ServerComponentType.patrolAI
@@ -48,6 +49,8 @@ export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> 
    const tribeComponent = new TribeComponent(tribe);
 
    const tribeMemberComponent = new TribeMemberComponent(generateScrappyName(tribe));
+
+   const tribesmanAIComponent = new TribesmanAIComponent();
    
    const aiHelperComponent = new AIHelperComponent(300);
 
@@ -74,6 +77,7 @@ export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> 
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.tribeMember]: tribeMemberComponent,
+         [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
          [ServerComponentType.patrolAI]: patrolAIComponent,

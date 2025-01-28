@@ -589,6 +589,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Automaton Assembler",
       description: ""
    },
+   [ItemType.mithrilAnvil]: {
+      entityTextureSource: "items/small/mithril-anvil.png",
+      textureSource: "items/large/mithril-anvil.png",
+      toolTextureSource: "",
+      name: "Mithril Anvil",
+      description: ""
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

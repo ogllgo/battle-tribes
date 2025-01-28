@@ -12,8 +12,11 @@ import { itemEntityCanBePickedUp, ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
-import { pickupItemEntity } from "./InventoryComponent";
+import { getInventory, hasInventory, InventoryComponentArray, pickupItemEntity } from "./InventoryComponent";
 import { adjustTribesmanRelationsAfterGift } from "./TribesmanAIComponent";
+import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
+import { addDefence, HealthComponentArray, removeDefence } from "./HealthComponent";
+import { COLLISION_BITS } from "../../../shared/src/collision";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -42,9 +45,9 @@ function onJoin(entity: Entity): void {
    tribeComponent.tribe.registerNewTribeMember(entity);
 }
 
-function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const layer = getEntityLayer(entity);
+function onTick(tribeMember: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(tribeMember);
+   const layer = getEntityLayer(tribeMember);
    
    // Vacuum nearby items to the tribesman
    // @Incomplete: Don't vacuum items which the player doesn't have the inventory space for
@@ -57,12 +60,12 @@ function onTick(entity: Entity): void {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const itemEntity of chunk.entities) {
-            if (getEntityType(itemEntity) !== EntityType.itemEntity || !itemEntityCanBePickedUp(itemEntity, entity)) {
+            if (getEntityType(itemEntity) !== EntityType.itemEntity || !itemEntityCanBePickedUp(itemEntity, tribeMember)) {
                continue;
             }
 
             const itemComponent = ItemComponentArray.getComponent(itemEntity);
-            if (!tribeMemberCanPickUpItem(entity, itemComponent.itemType)) {
+            if (!tribeMemberCanPickUpItem(tribeMember, itemComponent.itemType)) {
                continue;
             }
 
@@ -78,6 +81,46 @@ function onTick(entity: Entity): void {
                const physicsComponent = PhysicsComponentArray.getComponent(itemEntity);
                physicsComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
                physicsComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
+            }
+         }
+      }
+   }
+
+   // @Hack: This really shouldn't be done in this component with this check!
+   const inventoryComponent = InventoryComponentArray.getComponent(tribeMember);
+   if (hasInventory(inventoryComponent, InventoryName.armourSlot)) {
+      const healthComponent = HealthComponentArray.getComponent(tribeMember);
+   
+      // @Speed: Shouldn't be done every tick, only do when the armour changes
+      // Armour defence
+      const armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
+      const armour = armourSlotInventory.itemSlots[1];
+      if (typeof armour !== "undefined") {
+         const itemInfo = ITEM_INFO_RECORD[armour.type] as ArmourItemInfo;
+         addDefence(healthComponent, itemInfo.defence, "armour");
+   
+         if (armour.type === ItemType.leaf_suit) {
+            transformComponent.collisionMask &= ~COLLISION_BITS.plants;
+         } else {
+            transformComponent.collisionMask |= COLLISION_BITS.plants;
+         }
+      } else {
+         removeDefence(healthComponent, "armour");
+   
+         // Automatically equip armour from the hotbar
+         // @Speed: only do when inventory changes
+         if (typeof armourSlotInventory.itemSlots[1] === "undefined") {
+            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+            for (let i = 0; i < hotbarInventory.items.length; i++) {
+               const item = hotbarInventory.items[i];
+               if (ITEM_TYPE_RECORD[item.type] === "armour") {
+                  armourSlotInventory.addItem(item, 1);
+      
+                  // Remove from hotbar
+                  const itemSlot = hotbarInventory.getItemSlot(item);
+                  hotbarInventory.removeItem(itemSlot);
+                  break;
+               }
             }
          }
       }

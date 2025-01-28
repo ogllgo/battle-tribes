@@ -9,7 +9,6 @@ import Tribe from "./Tribe";
 const SCRAPPY_NAMES = [
    "Scrap",
    "Klik",
-   "Tinker",
    "Boltz",
    "Clunk",
    "Spindle",
@@ -17,6 +16,19 @@ const SCRAPPY_NAMES = [
    "Sprocket",
    "Nut",
    "Bit",
+   "Blinky",
+   "Gidget",
+   "Buzzlet",
+   "Clanky",
+   "Scrapple",
+   "Jibby",
+   "Tink",
+   "Sporky",
+   "Twitchy",
+   "Nibbit",
+   "Blinky",
+   "Fizzle",
+   "Chippy"
 ];
 
 // @Cleanup: location?

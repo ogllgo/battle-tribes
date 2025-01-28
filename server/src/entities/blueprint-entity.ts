@@ -1,7 +1,6 @@
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { StructureType } from "battletribes-shared/structures";
 import { EntityConfig } from "../components";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";

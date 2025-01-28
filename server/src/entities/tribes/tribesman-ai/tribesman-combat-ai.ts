@@ -4,7 +4,7 @@ import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { Point, distance } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, stopEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
 import { InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
-import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
+import { InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
@@ -29,12 +29,13 @@ const enum Vars {
    DESIRED_RANGED_ATTACK_DISTANCE = 360
 }
 
+// @Incomplete?
 const EXTRA_BOW_COOLDOWNS: Partial<Record<EntityType, number>> = {
    [EntityType.tribeWorker]: Math.floor(0.3 * Settings.TPS),
    [EntityType.tribeWarrior]: Math.floor(0.1 * Settings.TPS)
 };
 
-const doMeleeAttack = (tribesman: Entity, itemSlot: number): void => {
+export function doMeleeAttack(tribesman: Entity, itemSlot: number): void {
    beginSwing(tribesman, itemSlot, InventoryName.hotbar);
 
    // Barbarians can attack with offhand
@@ -152,7 +153,9 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
    const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    
    // Select the item slot
-   hotbarUseInfo.selectedItemSlot = mostDamagingItemSlot;
+   if (limbHeldItemCanBeSwitched(hotbarUseInfo)) {
+      hotbarUseInfo.selectedItemSlot = mostDamagingItemSlot;
+   }
    
    const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
    if (inventory.hasItem(mostDamagingItemSlot)) {

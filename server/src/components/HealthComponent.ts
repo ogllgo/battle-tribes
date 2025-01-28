@@ -5,7 +5,7 @@ import { Point, clamp } from "battletribes-shared/utils";
 import { onZombieVisibleEntityHurt } from "../entities/mobs/zombie";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { registerEntityHeal, registerEntityHit } from "../server/player-clients";
+import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -72,6 +72,7 @@ export function damageEntity(entity: Entity, attackingEntity: Entity | null, dam
    healthComponent.health -= actualDamage;
 
    registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
+   registerDirtyEntity(entity);
 
    const componentArrayRecord = getComponentArrayRecord();
    const entityComponentTypes = getEntityComponentTypes(entity);
@@ -168,6 +169,8 @@ export function healEntity(entity: Entity, healAmount: number, healer: Entity): 
    } else {
       registerEntityHeal(entity, healer, healAmount);
    }
+
+   registerDirtyEntity(entity);
 }
 
 export function addLocalInvulnerabilityHash(entity: Entity, hash: string, invulnerabilityDurationSeconds: number): void {

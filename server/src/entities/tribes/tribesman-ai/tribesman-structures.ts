@@ -3,7 +3,7 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { calculateEntityPlaceInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import { angle, assert, getAngleDiff } from "battletribes-shared/utils";
+import { angle, assert, getAbsAngleDiff, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
 import { getDistanceFromPointToEntity, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
@@ -16,8 +16,8 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
 import { placeStructure, placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
-import { huntEntity } from "./tribesman-combat-ai";
+import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
+import { doMeleeAttack, huntEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
@@ -118,7 +118,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // 
          
          const placeInfo = calculateEntityPlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
-         placeStructure(tribe, getEntityLayer(tribesman), placeInfo);
+         placeStructure(tribe, layer, placeInfo);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {
             awardTitle(tribesman, TribesmanTitle.builder);
@@ -169,7 +169,6 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
    const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    useInfo.selectedItemSlot = hammerItemSlot;
-   setLimbActions(inventoryUseComponent, LimbAction.none);
 
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
    const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
@@ -240,7 +239,6 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
    const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    useInfo.selectedItemSlot = hammerItemSlot;
-   setLimbActions(inventoryUseComponent, LimbAction.none);
 
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
    const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
@@ -261,16 +259,11 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       physicsComponent.targetRotation = targetRotation;
       physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
 
-      if (Math.abs(getAngleDiff(transformComponent.rotation, targetRotation)) < 0.1) {
-         // @Incomplete
-
-         // // If in melee range, try to repair the building
-         // const targets = calculateRadialAttackTargets(tribesman, getTribesmanAttackOffset(tribesman), getTribesmanAttackRadius(tribesman));
-         // const repairTarget = calculateRepairTarget(tribesman, targets);
-         // if (repairTarget !== null) {
-         //    repairBuilding(tribesman, repairTarget, hammerItemSlot, InventoryName.hotbar);
-         // }
+      if (getAbsAngleDiff(transformComponent.rotation, targetRotation) < 0.1) {
+         doMeleeAttack(tribesman, hammerItemSlot);
       }
+
+      clearTribesmanPath(tribesman);
    } else {
       pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    }

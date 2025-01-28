@@ -54,11 +54,9 @@ export function getTribesmanAttackRadius(tribesman: Entity): number {
 /** How far the tribesman wants to be away from their target when attacking */
 export function getTribesmanDesiredAttackRange(tribesman: Entity): number {
    // @Incomplete: these shouldn't be hardcoded, they should be per-swing.
-   if (getEntityType(tribesman) === EntityType.tribeWorker) {
-      return 28;
-   } else {
-      return 38;
-   }
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const radius = getHumanoidRadius(transformComponent);
+   return radius + 4;
 }
 
 /**

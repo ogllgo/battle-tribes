@@ -14,7 +14,8 @@ export enum CraftingStation {
    water,
    frostshaper,
    stonecarvingTable,
-   automatonAssembler
+   automatonAssembler,
+   mithrilAnvil
 }
 
 export const CRAFTING_STATION_ITEM_TYPE_RECORD: Partial<Record<CraftingStation, StructureItemType>> = {
@@ -458,6 +459,15 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       craftingStation: CraftingStation.workbench
    },
    {
+      product: ItemType.mithrilAnvil,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.mithrilBar]: 15
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
       product: ItemType.mithrilSword,
       yield: 1,
       ingredients: createTallyFromRecord({
@@ -465,7 +475,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: CraftingStation.mithrilAnvil
    },
    {
       product: ItemType.mithrilPickaxe,
@@ -475,7 +485,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: CraftingStation.mithrilAnvil
    },
    {
       product: ItemType.mithrilAxe,
@@ -485,7 +495,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: CraftingStation.mithrilAnvil
    },
    {
       product: ItemType.automatonAssembler,
@@ -494,7 +504,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 15
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: CraftingStation.mithrilAnvil
    },
    {
       product: ItemType.scrappy,

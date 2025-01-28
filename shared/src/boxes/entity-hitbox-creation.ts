@@ -277,6 +277,33 @@ export function createAutomatonAssemblerHitboxes(): Array<Hitbox> {
    return [hitbox];
 }
 
+export function createMithrilAnvilHitboxes(): Array<Hitbox> {
+   const hitboxes = new Array<Hitbox>();
+   
+   // Middle box
+   {
+      const box = new RectangularBox(new Point(-16, 0), 48, 56, 0);
+      const hitbox = createHitbox(box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitboxes.push(hitbox);
+   }
+
+   // Left box
+   {
+      const box = new RectangularBox(new Point(-48, 0), 16, 40, 0);
+      const hitbox = createHitbox(box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitboxes.push(hitbox);
+   }
+
+   // Right box
+   {
+      const box = new RectangularBox(new Point(30, 0), 44, 40, 0);
+      const hitbox = createHitbox(box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitboxes.push(hitbox);
+   }
+   
+   return hitboxes;
+}
+
 // @Incomplete: Include all entity types not just structures
 export function createNormalStructureHitboxes(entityType: EntityType): Array<Hitbox> {
    switch (entityType) {
@@ -309,6 +336,7 @@ export function createNormalStructureHitboxes(entityType: EntityType): Array<Hit
       case EntityType.scrappy:            return createScrappyHitboxes();
       case EntityType.cogwalker:          return createCogwalkerHitboxes();
       case EntityType.automatonAssembler: return createAutomatonAssemblerHitboxes();
+      case EntityType.mithrilAnvil:       return createMithrilAnvilHitboxes();
       default: {
          throw new Error();
       }

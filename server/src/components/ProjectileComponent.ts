@@ -4,6 +4,9 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { onWoodenArrowCollision } from "../entities/projectiles/wooden-arrow";
+import { Point } from "../../../shared/src/utils";
 
 const ARROW_WIDTH = 12;
 const ARROW_HEIGHT = 64;
@@ -25,6 +28,7 @@ ProjectileComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
+ProjectileComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(projectile: Entity): void {
    // @Hack
@@ -51,3 +55,13 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
+
+function onHitboxCollision(entity: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+   // @Hack
+   switch (getEntityType(entity)) {
+      case EntityType.woodenArrow: {
+         onWoodenArrowCollision(entity, collidingEntity, collisionPoint);
+         break;
+      }
+   }
+}

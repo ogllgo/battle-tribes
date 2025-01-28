@@ -85,7 +85,8 @@ export const enum ItemType {
    mithrilArmour,
    scrappy,
    cogwalker,
-   automatonAssembler
+   automatonAssembler,
+   mithrilAnvil
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -170,7 +171,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilArmour]: "Mithril Armour",
    [ItemType.scrappy]: "Scrappy",
    [ItemType.cogwalker]: "Cogwalker",
-   [ItemType.automatonAssembler]: "Automaton Assembler"
+   [ItemType.automatonAssembler]: "Automaton Assembler",
+   [ItemType.mithrilAnvil]: "Mithril Anvil",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -388,7 +390,7 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<At
    },
    hammer: {
       attackPatterns: UNARMED_ATTACK_PATTERNS,
-      attackTimings: DEFAULT_ATTACK_TIMINGS,
+      attackTimings: HAMMER_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: TOOL_ITEM_DAMAGE_BOX_INFO
    },
    battleaxe: {
@@ -503,6 +505,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.scrappy]: "placeable",
    [ItemType.cogwalker]: "placeable",
    [ItemType.automatonAssembler]: "placeable",
+   [ItemType.mithrilAnvil]: "placeable",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -924,6 +927,10 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.automatonAssembler
    },
+   [ItemType.mithrilAnvil]: {
+      stackSize: 99,
+      entityType: EntityType.mithrilAnvil
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1036,6 +1043,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.scrappy]: {},
    [ItemType.cogwalker]: {},
    [ItemType.automatonAssembler]: {},
+   [ItemType.mithrilAnvil]: {},
 };
 
 // Some typescript wizardry

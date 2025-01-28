@@ -63,6 +63,7 @@ import { createScrappyConfig } from "./automatons/scrappy";
 import { createCogwalkerConfig } from "./automatons/cogwalker";
 import { awardTitle, hasTitle, TribesmanComponentArray } from "../../components/TribesmanComponent";
 import { createAutomatonAssemblerConfig } from "../structures/crafting-stations/automaton-assembler";
+import { createMithrilAnvilConfig } from "../structures/crafting-stations/mithril-anvil";
 
 const enum Vars {
    ITEM_THROW_FORCE = 100,
@@ -237,9 +238,14 @@ export function placeStructure(tribe: Tribe, layer: Layer, placeInfo: StructureP
       case EntityType.bracings: config = createBracingsConfig(placeInfo.hitboxes, tribe, BuildingMaterial.wood, null); break;
       case EntityType.fireTorch: config = createFireTorchConfig(tribe, placeInfo.connections, null); break;
       case EntityType.slurbTorch: config = createSlurbTorchConfig(tribe, placeInfo.connections, null); break;
-      case EntityType.scrappy: config = createBlueprintEntityConfig(tribe, BlueprintType.scrappy, 0, null); break;
-      case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
+      // @Temporary
+      case EntityType.scrappy: config = createScrappyConfig(tribe); break;
+      // case EntityType.scrappy: config = createBlueprintEntityConfig(tribe, BlueprintType.scrappy, 0, null); break;
+      // @Temporary
+      case EntityType.cogwalker: config = createCogwalkerConfig(tribe); break;
+      // case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
       case EntityType.automatonAssembler: config = createAutomatonAssemblerConfig(tribe, placeInfo.connections, null); break;
+      case EntityType.mithrilAnvil: config = createMithrilAnvilConfig(tribe, placeInfo.connections, null); break;
       // @Robustness?
       default: {
          throw new Error();

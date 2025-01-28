@@ -6,6 +6,8 @@ import { getGameTicks, getTribes } from "./world";
 export function updateTribes(): void {
    const tribes = getTribes();
    
+   // @Cleanup: why aren't these loops combined?
+   
    for (const tribe of tribes) {
       tribe.tick();
    }

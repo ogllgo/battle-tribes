@@ -122,7 +122,10 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(629093757);
+      SRandom.seed(2620761354);
+
+      const builtinRandomFunc = Math.random;
+      Math.random = () => SRandom.next();
 
       let a = performance.now();
       console.log("start",a)
@@ -158,6 +161,8 @@ class GameServer {
       spawnGuardians();
       console.log("guardians",performance.now() - a)
       a = performance.now();
+
+      Math.random = builtinRandomFunc;
 
       this.server = new Server({
          port: Settings.SERVER_PORT

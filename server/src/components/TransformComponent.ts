@@ -36,7 +36,7 @@ export class TransformComponent {
    public collisionPushForceMultiplier = 1;
 
    /** Set of all chunks the entity is contained in */
-   public chunks = new Array<Chunk>();
+   public readonly chunks = new Array<Chunk>();
    // @Hack: used just so we can get chunk chunkIndex of a chunk in the addChunk function. Cursed. Remove this
    // public chunkIndexes = new Array<number>();
 

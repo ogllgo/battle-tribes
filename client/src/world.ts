@@ -188,7 +188,7 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
          const componentArray = componentArrays[i];
          if (typeof componentArray.onDie !== "undefined" && componentArray.hasComponent(entity)) {
             componentArray.onDie(entity);
-         }
+         } 
       }
    }
    
@@ -236,29 +236,24 @@ export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    previousLayer.removeEntityFromRendering(entity, renderInfo.renderLayer);
    newLayer.addEntityToRendering(entity, renderInfo.renderLayer, renderInfo.renderHeight);
 
-   // Remove from all previous chunks and add to new ones
-   const newChunks = new Set<Chunk>();
+   // Remove from all previous chunks
+   for (const chunk of transformComponent.chunks) {
+      chunk.removeEntity(entity);
+      transformComponent.chunks.delete(chunk);
+   }
+
+   // Add to new ones
+   // @Cleanup: this logic should be in transformcomponent, perhaps there is a function which already does this...
    const minChunkX = Math.max(Math.floor(transformComponent.boundingAreaMinX / Settings.CHUNK_UNITS), 0);
    const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    const minChunkY = Math.max(Math.floor(transformComponent.boundingAreaMinY / Settings.CHUNK_UNITS), 0);
    const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = previousLayer.getChunk(chunkX, chunkY);
-
-         if (transformComponent.chunks.has(chunk)) {
-            chunk.removeEntity(entity);
-            transformComponent.chunks.delete(chunk);
-
-            const newChunk = newLayer.getChunk(chunkX, chunkY);
-            newChunk.addEntity(entity);
-            newChunks.add(newChunk);
-         }
+         const newChunk = newLayer.getChunk(chunkX, chunkY);
+         newChunk.addEntity(entity);
+         transformComponent.chunks.add(newChunk);
       }
-   }
-   transformComponent.chunks.clear();
-   for (const chunk of newChunks) {
-      transformComponent.chunks.add(chunk);
    }
 
    entityLayers[entity] = newLayer;

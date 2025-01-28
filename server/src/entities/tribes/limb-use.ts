@@ -7,7 +7,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { Point } from "battletribes-shared/utils";
 import { damageEntity, HealthComponentArray } from "../../components/HealthComponent";
-import { InventoryComponentArray, getInventory } from "../../components/InventoryComponent";
+import { InventoryComponentArray, getInventory, hasInventory } from "../../components/InventoryComponent";
 import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
 import { applyKnockback, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { applyStatusEffect } from "../../components/StatusEffectComponent";
@@ -18,7 +18,7 @@ import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/B
 import { createEntity } from "../../Entity";
 import { createItemEntityConfig } from "../item-entity";
 import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
-import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, HAMMER_ATTACK_TIMINGS } from "battletribes-shared/attack-patterns";
 import { getEntityLayer, getEntityType } from "../../world";
 import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
 import { BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
@@ -141,11 +141,13 @@ export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbIn
    // Harvest leaves from trees and berries when wearing the gathering or gardening gloves
    if ((item === null || item.type === ItemType.leaf) && (targetEntityType === EntityType.tree || targetEntityType === EntityType.berryBush || targetEntityType === EntityType.treePlanted || targetEntityType === EntityType.berryBushPlanted)) {
       const inventoryComponent = InventoryComponentArray.getComponent(attacker);
-      const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
-      const gloves = gloveInventory.itemSlots[1];
-      if (typeof gloves !== "undefined" && (gloves.type === ItemType.gathering_gloves || gloves.type === ItemType.gardening_gloves)) {
-         gatherPlant(victim, attacker, gloves);
-         return true;
+      if (hasInventory(inventoryComponent, InventoryName.gloveSlot)) {
+         const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
+         const gloves = gloveInventory.itemSlots[1];
+         if (typeof gloves !== "undefined" && (gloves.type === ItemType.gathering_gloves || gloves.type === ItemType.gardening_gloves)) {
+            gatherPlant(victim, attacker, gloves);
+            return true;
+         }
       }
    }
 

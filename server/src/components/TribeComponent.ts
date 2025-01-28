@@ -63,9 +63,12 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
          return planterBoxTribeComponent.tribe === tribeComponent.tribe ? EntityRelationship.neutral : EntityRelationship.enemyBuilding;
       }
       // Friendlies
+      // @Hack @Hardcoded
       case EntityType.player:
       case EntityType.tribeWorker:
       case EntityType.tribeWarrior:
+      case EntityType.scrappy:
+      case EntityType.cogwalker:
       case EntityType.woodenArrow:
       case EntityType.ballistaWoodenBolt:
       case EntityType.ballistaRock:

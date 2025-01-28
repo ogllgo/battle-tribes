@@ -49,6 +49,7 @@ const BUILDING_SAFETY: Record<StructureType, number> = {
    [EntityType.fireTorch]: 3,
    [EntityType.slurbTorch]: 3,
    [EntityType.automatonAssembler]: 3,
+   [EntityType.mithrilAnvil]: 3,
 };
 
 export function getSafetyNode(nodeX: number, nodeY: number): SafetyNode {

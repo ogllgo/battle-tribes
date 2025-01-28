@@ -286,42 +286,6 @@ function onTick(tribeMember: Entity): void {
    } else {
       resizeInventory(inventoryComponent, InventoryName.backpack, 0, 0);
    }
-      
-   const healthComponent = HealthComponentArray.getComponent(tribeMember);
-
-   // @Speed: Shouldn't be done every tick, only do when the armour changes
-   // Armour defence
-   const armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
-   const armour = armourSlotInventory.itemSlots[1];
-   if (typeof armour !== "undefined") {
-      const itemInfo = ITEM_INFO_RECORD[armour.type] as ArmourItemInfo;
-      addDefence(healthComponent, itemInfo.defence, "armour");
-
-      if (armour.type === ItemType.leaf_suit) {
-         transformComponent.collisionMask &= ~COLLISION_BITS.plants;
-      } else {
-         transformComponent.collisionMask |= COLLISION_BITS.plants;
-      }
-   } else {
-      removeDefence(healthComponent, "armour");
-
-      // Automatically equip armour from the hotbar
-      // @Speed: only do when inventory changes
-      if (typeof armourSlotInventory.itemSlots[1] === "undefined") {
-         const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-         for (let i = 0; i < hotbarInventory.items.length; i++) {
-            const item = hotbarInventory.items[i];
-            if (ITEM_TYPE_RECORD[item.type] === "armour") {
-               armourSlotInventory.addItem(item, 1);
-   
-               // Remove from hotbar
-               const itemSlot = hotbarInventory.getItemSlot(item);
-               hotbarInventory.removeItem(itemSlot);
-               break;
-            }
-         }
-      }
-   }
 }
 
 function onDeath(entity: Entity, attackingEntity: Entity | null): void {

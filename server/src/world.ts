@@ -350,29 +350,28 @@ export function tickEntities(): void {
 
 export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   
+   // Remove from previous chunks
    const previousLayer = getEntityLayer(entity);
+   while (transformComponent.chunks.length > 0) {
+      const chunk = transformComponent.chunks[0];
+      transformComponent.removeFromChunk(entity, previousLayer, chunk);
+      transformComponent.chunks.splice(0, 1);
+   }
 
-   // Remove from all previous chunks and add to new ones
-   const newChunks = new Array<Chunk>();
+   // Add to the new ones
+   // @Cleanup: this logic should be in transformcomponent, perhaps there is a function which already does this...
    const minChunkX = Math.max(Math.floor(transformComponent.boundingAreaMinX / Settings.CHUNK_UNITS), 0);
    const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    const minChunkY = Math.max(Math.floor(transformComponent.boundingAreaMinY / Settings.CHUNK_UNITS), 0);
    const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = previousLayer.getChunk(chunkX, chunkY);
-         const idx = transformComponent.chunks.indexOf(chunk);
-         if (idx !== -1) {
-            transformComponent.removeFromChunk(entity, previousLayer, chunk);
-            transformComponent.chunks.splice(idx, 1);
-
-            const newChunk = newLayer.getChunk(chunkX, chunkY);
-            transformComponent.addToChunk(entity, newLayer, newChunk);
-            newChunks.push(newChunk);
-         }
+         const newChunk = newLayer.getChunk(chunkX, chunkY);
+         transformComponent.addToChunk(entity, newLayer, newChunk);
+         transformComponent.chunks.push(newChunk);
       }
    }
-   transformComponent.chunks = newChunks;
 
    entityLayers[entity] = newLayer;
 }

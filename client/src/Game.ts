@@ -75,6 +75,7 @@ import { createBuildingBlockingTileShaders, renderBuildingBlockingTiles } from "
 import { renderLightLevelsText } from "./rendering/light-levels-text-rendering";
 import { createLightLevelsBGShaders, renderLightLevelsBG } from "./rendering/webgl/light-levels-bg-rendering";
 import { createMithrilRichTileRenderingShaders, renderMithrilRichTileOverlays } from "./rendering/webgl/mithril-rich-tile-rendering";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -124,7 +125,7 @@ const main = (currentTime: number): void => {
    
                processGameDataPacket(packet);
                GameScreen_update();
-   
+               
                updateTextNumbers();
                Board.updateTickCallbacks();
                Board.tickEntities();

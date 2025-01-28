@@ -14,7 +14,7 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import Tribe from "../../../Tribe";
 import { CollisionVars, entitiesAreColliding } from "../../../collision";
-import { huntEntity } from "./tribesman-combat-ai";
+import { doMeleeAttack, huntEntity } from "./tribesman-combat-ai";
 import { PlanterBoxComponentArray, placePlantInPlanterBox } from "../../../components/PlanterBoxComponent";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
@@ -29,6 +29,7 @@ import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEnti
 import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
+import { getAbsAngleDiff } from "../../../../../shared/src/utils";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -565,14 +566,9 @@ export function tickTribesman(tribesman: Entity): void {
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
          useInfo.selectedItemSlot = hammerItemSlot;
-         setLimbActions(inventoryUseComponent, LimbAction.none);
 
-         // Find the target
-         const targets = calculateRadialAttackTargets(tribesman, getTribesmanAttackOffset(tribesman), getTribesmanAttackRadius(tribesman));
-         if (targets.includes(closestBlueprint)) {
-            const limb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-            const item = useInfo.associatedInventory.itemSlots[useInfo.selectedItemSlot]!;
-            repairBuilding(tribesman, closestBlueprint, limb, item);
+         if (getAbsAngleDiff(transformComponent.rotation, targetDirection) < 0.1) {
+            doMeleeAttack(tribesman, hammerItemSlot);
          }
          
          return;
@@ -744,5 +740,12 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    // If there's nothing else to do, patrol the tribe area
-   runPatrolAI(tribesman, tribeComponent.tribe.getArea());
+   const tribeArea = tribeComponent.tribe.getArea();
+   if (tribeArea.length > 0) {
+      runPatrolAI(tribesman, tribeArea);
+      return;
+   }
+
+   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+   stopEntity(physicsComponent);
 }

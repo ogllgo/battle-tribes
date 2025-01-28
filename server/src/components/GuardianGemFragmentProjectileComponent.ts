@@ -38,30 +38,35 @@ function onWallCollision(fragment: Entity): void {
 }
 
 function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
-   if (HealthComponentArray.hasComponent(collidingEntity)) {
-      const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-      if (!canDamageEntity(healthComponent, "gemFragmentProjectile")) {
-         return;
-      }
-
-      const transformComponent = TransformComponentArray.getComponent(fragment);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      
-      const fragmentHitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-
-      damageEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 50, fragmentHitDirection);
-
-      const projectileComponent = ProjectileComponentArray.getComponent(fragment);
-      if (entityExists(projectileComponent.creator)) {
-         const guardianTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
-
-         const directionFromGuardian = guardianTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-         applyKnockback(collidingEntity, 100, directionFromGuardian);
-      }
-      
-      addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
+   if (!HealthComponentArray.hasComponent(collidingEntity)) {
+      return;
    }
+
+   // Destroyed regardless of whether it actually damages the entity
+   destroyEntity(fragment);
+
+   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+   if (!canDamageEntity(healthComponent, "gemFragmentProjectile")) {
+      return;
+   }
+
+   const transformComponent = TransformComponentArray.getComponent(fragment);
+   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   
+   const fragmentHitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+
+   damageEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, 50, fragmentHitDirection);
+
+   const projectileComponent = ProjectileComponentArray.getComponent(fragment);
+   if (entityExists(projectileComponent.creator)) {
+      const guardianTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
+
+      const directionFromGuardian = guardianTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+      applyKnockback(collidingEntity, 100, directionFromGuardian);
+   }
+   
+   addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
 }
 
 function getDataLength(): number {

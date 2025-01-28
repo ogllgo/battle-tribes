@@ -30,7 +30,7 @@ export function generateCaveEntrances(surfaceLayer: Layer): void {
          continue;
       }
 
-      for (let M = 0; M < 150; M++) {
+      // for (let M = 0; M < 150; M++) {
 
       // Pick a random tile some distance away from other biomes to generate the cave
       let originTile: TileIndex | undefined;
@@ -56,13 +56,13 @@ export function generateCaveEntrances(surfaceLayer: Layer): void {
       // @Temporary
       let originX = (originTileX + Math.random()) * Settings.TILE_SIZE;
       let originY = (originTileY + Math.random()) * Settings.TILE_SIZE;
-      if (first) {
-         originX = Settings.BOARD_UNITS * 0.5 + 600;
-         originY = Settings.BOARD_UNITS * 0.5;
-         first = false;
-      } else {
-         continue;
-      }
+      // if (first) {
+      //    originX = Settings.BOARD_UNITS * 0.5 + 600;
+      //    originY = Settings.BOARD_UNITS * 0.5;
+      //    first = false;
+      // } else {
+      //    continue;
+      // }
 
       const caveDirection = 2 * Math.PI * Math.random();
 
@@ -192,7 +192,7 @@ export function generateCaveEntrances(surfaceLayer: Layer): void {
       }
       guardianSpawnZones.push(tiles);
 
-      }
+      // }
 
    }
 }

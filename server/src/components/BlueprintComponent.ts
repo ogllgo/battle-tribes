@@ -22,6 +22,7 @@ import { destroyEntity, getEntityLayer } from "../world";
 import { getLayerInfo } from "../layers";
 import { createScrappyConfig } from "../entities/tribes/automatons/scrappy";
 import { createCogwalkerConfig } from "../entities/tribes/automatons/cogwalker";
+import { registerDirtyEntity } from "../server/player-clients";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -227,6 +228,8 @@ export function doBlueprintWork(blueprintEntity: Entity, hammerItem: Item): void
       // Construct the building
       completeBlueprint(blueprintEntity, blueprintComponent);
    }
+
+   registerDirtyEntity(blueprintEntity);
 }
 
 function getDataLength(): number {
