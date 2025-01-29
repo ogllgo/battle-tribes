@@ -9,7 +9,7 @@ import TechTree from "./tech-tree/TechTree";
 import BuildMenu from "./BuildMenu";
 import TechInfocard from "./TechInfocard";
 import InventorySelector from "./inventories/InventorySelector";
-import InspectHealthBar from "./InspectHealthBar";
+import HealthInspector from "./HealthInspector";
 import Infocards from "./infocards/Infocards";
 import SummonCrosshair from "./SummonCrosshair";
 import { AppState } from "../App";
@@ -27,6 +27,7 @@ import LayerChangeMessage from "./LayerChangeMessage";
 import { getEntityTile, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
+import { ItemTooltip } from "./inventories/ItemTooltip";
 
 export const enum GameInteractState {
    none,
@@ -215,7 +216,9 @@ const GameScreen = (props: GameScreenProps) => {
 
       <InventorySelector />
 
-      <InspectHealthBar />
+      <HealthInspector />
+
+      <ItemTooltip />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

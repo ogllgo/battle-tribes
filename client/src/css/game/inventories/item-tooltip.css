@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
+
+#item-tooltip {
+   max-width: 450px;
+   font-family: "Noto Sans";
+   border: 2px solid #000;
+   background-color: #808080;
+   padding: 3px;
+   position: absolute;
+   pointer-events: none;
+   z-index: 3;
+   transform: scale(var(--zoom));
+   transform-origin: 0% 0%;
+   box-shadow: 0 0 0 4px #666 inset;
+}
+
+#item-tooltip .item-name {
+   font-size: 1rem;
+   color: #fff;
+   margin: 0 0 0.5rem 0;
+}
+
+#item-tooltip .description {
+   font-size: 0.9rem;
+   color: #ddd;
+   margin: 0;
+}

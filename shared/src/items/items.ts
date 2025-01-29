@@ -86,7 +86,9 @@ export const enum ItemType {
    scrappy,
    cogwalker,
    automatonAssembler,
-   mithrilAnvil
+   mithrilAnvil,
+   yuriMinecraft,
+   yuriSonichu
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -173,6 +175,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.cogwalker]: "Cogwalker",
    [ItemType.automatonAssembler]: "Automaton Assembler",
    [ItemType.mithrilAnvil]: "Mithril Anvil",
+   [ItemType.yuriMinecraft]: "Yuri Minecraft",
+   [ItemType.yuriSonichu]: "Yuri Sonichu",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -506,6 +510,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.cogwalker]: "placeable",
    [ItemType.automatonAssembler]: "placeable",
    [ItemType.mithrilAnvil]: "placeable",
+   [ItemType.yuriMinecraft]: "material",
+   [ItemType.yuriSonichu]: "material",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -931,6 +937,12 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       entityType: EntityType.mithrilAnvil
    },
+   [ItemType.yuriMinecraft]: {
+      stackSize: 99
+   },
+   [ItemType.yuriSonichu]: {
+      stackSize: 99
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1044,6 +1056,8 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.cogwalker]: {},
    [ItemType.automatonAssembler]: {},
    [ItemType.mithrilAnvil]: {},
+   [ItemType.yuriMinecraft]: {},
+   [ItemType.yuriSonichu]: {},
 };
 
 // Some typescript wizardry

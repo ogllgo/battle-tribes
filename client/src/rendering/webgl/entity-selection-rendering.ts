@@ -129,10 +129,10 @@ export function createStructureHighlightShaders(): void {
             outputColour = vec4(245.0/255.0, 234.0/255.0, 113.0/255.0, 1.0);
          } else {
             float theta = atan2(v_position.y - u_originPosition.y, v_position.x - u_originPosition.x);
-      
+
             float opacity = sin(theta * 3.0 + u_time * 0.003);
             opacity = mix(0.65, 1.0, opacity);
-      
+
             outputColour = vec4(245.0/255.0, 234.0/255.0, 113.0/255.0, opacity);
          }
       } else {

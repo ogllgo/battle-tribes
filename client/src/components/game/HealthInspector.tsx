@@ -2,7 +2,6 @@ import { clamp, distance, lerp } from "battletribes-shared/utils";
 import { useEffect, useState } from "react";
 import Camera from "../../Camera";
 import { getHoveredEntityID } from "../../entity-selection";
-import Game from "../../Game";
 import { latencyGameState } from "../../game-state/game-states";
 import { BuildMenu_isOpen } from "./BuildMenu";
 import { getEntityRenderInfo, playerInstance } from "../../world";
@@ -19,7 +18,7 @@ let InspectHealthBar_setPos: (x: number, y: number) => void;
 let InspectHealthBar_setHealth: (health: number) => void;
 let InspectHealthBar_setOpacity: (opacity: number) => void;
 
-const InspectHealthBar = () => {
+const HealthInspector = () => {
    const [entity, setEntity] = useState<Entity | null>(null);
    const [x, setX] = useState(0);
    const [y, setY] = useState(0);
@@ -42,22 +41,21 @@ const InspectHealthBar = () => {
       }
    }, []);
 
-   // @Temporary
    if (entity === null) {
       return null;
    }
    
    const healthComponent = HealthComponentArray.getComponent(entity);
    
-   return <div id="inspect-health-bar" style={{left: x + "px", bottom: y + "px", opacity: opacity}}>
-      <div className="health-slider" style={{width: (health / healthComponent.maxHealth) * 100 + "%"}}></div>
-      <div className="health-counter-container">
-         <span>{healthComponent.health}</span>
-      </div>
+   return <div id="health-inspector" style={{left: x + "px", bottom: y + "px", opacity: opacity}}>
+      {/* <div className="health-slider" style={{width: (health / healthComponent.maxHealth) * 100 + "%"}}></div> */}
+      <div className="bg"></div>
+      <div className="fill" style={{"--fullness": (health / healthComponent.maxHealth) * 100 + "%"} as React.CSSProperties}></div>
+      <span className="health-counter">{health}</span>
    </div>;
 }
 
-export default InspectHealthBar;
+export default HealthInspector;
 
 export function updateInspectHealthBar(): void {
    if (playerInstance === null || latencyGameState.playerIsPlacingEntity || BuildMenu_isOpen()) {
@@ -93,7 +91,7 @@ export function updateInspectHealthBar(): void {
    InspectHealthBar_setPos(Camera.calculateXScreenPos(barX), Camera.calculateYScreenPos(barY));
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   
+
    const dist = distance(barX, barY, transformComponent.position.x, transformComponent.position.y);
    const opacity = lerp(0.4, 1, clamp((dist - 80) / 80, 0, 1));
    InspectHealthBar_setOpacity(opacity);

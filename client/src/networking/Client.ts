@@ -525,12 +525,6 @@ abstract class Client {
       }
    }
 
-   public static sendStructureInteract(structureID: number, interactData: number): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("structure_interact", structureID, interactData);
-      }
-   }
-
    public static sendStructureUninteract(structureID: number): void {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("structure_uninteract", structureID);

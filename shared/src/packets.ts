@@ -24,6 +24,7 @@ export const enum PacketType {
    craftItem,
    devSetDebugEntity,
    ascend,
+   structureInteract,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

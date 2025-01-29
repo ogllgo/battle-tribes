@@ -41,7 +41,7 @@ import { createStructureHighlightShaders, renderEntitySelection } from "./render
 import { InventorySelector_forceUpdate } from "./components/game/inventories/InventorySelector";
 import { createTurretRangeShaders, renderTurretRange } from "./rendering/webgl/turret-range-rendering";
 import { createPathfindNodeShaders, renderPathfindingNodes } from "./rendering/webgl/pathfinding-node-rendering";
-import { updateInspectHealthBar } from "./components/game/InspectHealthBar";
+import { updateInspectHealthBar } from "./components/game/HealthInspector";
 import { createSafetyNodeShaders, renderSafetyNodes } from "./rendering/webgl/safety-node-rendering";
 import { createRestrictedBuildingAreaShaders, renderRestrictedBuildingAreas } from "./rendering/webgl/restricted-building-areas-rendering";
 import { createWallConnectionShaders, renderWallConnections } from "./rendering/webgl/wall-connection-rendering";

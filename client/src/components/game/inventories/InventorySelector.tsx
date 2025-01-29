@@ -34,10 +34,9 @@ const InventorySelector = () => {
    }, []);
 
    useEffect(() => {
-      if (inventoryMenuType !== InventoryMenuType.none) {
-         addMenuCloseFunction(() => {
-            setInventoryMenuType(InventoryMenuType.none);
-         });
+      // If an inventory is being closed, deselect the entity
+      if (inventoryMenuType === InventoryMenuType.none) {
+         deselectSelectedEntity(false);
       }
       
       InventorySelector_inventoryIsOpen = () => {
@@ -45,12 +44,14 @@ const InventorySelector = () => {
       }
 
       InventorySelector_setInventoryMenuType = (newInventoryMenuType: InventoryMenuType): void => {
-         // If the tribesman inventory is being closed, deselect the tribesman
-         if (inventoryMenuType === InventoryMenuType.tribesman) {
-            deselectSelectedEntity(false);
-         }
-         
          setInventoryMenuType(newInventoryMenuType);
+      }
+
+      if (inventoryMenuType !== InventoryMenuType.none) {
+         addMenuCloseFunction(() => {
+            // @Hack: should call setInventoryMenuType but that won't check for the deselect
+            setInventoryMenuType(InventoryMenuType.none);
+         });
       }
    }, [inventoryMenuType]);
 

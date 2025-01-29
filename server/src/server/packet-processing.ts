@@ -19,7 +19,7 @@ import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
-import { changeEntityLayer, entityExists, getEntityLayer, getTribe } from "../world";
+import { changeEntityLayer, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
@@ -27,6 +27,10 @@ import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { CRAFTING_RECIPES } from "../../../shared/src/items/crafting-recipes";
 import { surfaceLayer, undergroundLayer } from "../layers";
 import { TileType } from "../../../shared/src/tiles";
+import { toggleDoor } from "../components/DoorComponent";
+import { toggleFenceGateDoor } from "../components/FenceGateComponent";
+import { attemptToOccupyResearchBench } from "../components/ResearchBenchComponent";
+import { toggleTunnelDoor } from "../components/TunnelComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -545,5 +549,38 @@ export function processSetAutogiveBaseResourcesPacket(reader: PacketReader): voi
    const tribe = getTribe(tribeID);
    if (tribe !== null) {
       tribe.autogiveBaseResources = autogiveBaseResources;
+   }
+}
+
+export function processStructureInteractPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const structure = reader.readNumber() as Entity;
+   if (!entityExists(structure)) {
+      return;
+   }
+
+   const interactData = reader.readNumber();
+
+   switch (getEntityType(structure)) {
+      case EntityType.door: {
+         toggleDoor(structure);
+         break;
+      }
+      case EntityType.researchBench: {
+         attemptToOccupyResearchBench(structure, playerClient.instance);
+         break;
+      }
+      case EntityType.tunnel: {
+         const doorBit = interactData;
+         toggleTunnelDoor(structure, doorBit);
+         break;
+      }
+      case EntityType.fenceGate: {
+         toggleFenceGateDoor(structure);
+         break;
+      }
    }
 }

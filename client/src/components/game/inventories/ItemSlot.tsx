@@ -2,6 +2,8 @@ import { Inventory, ItemType } from "battletribes-shared/items/items";
 import { onItemSlotMouseDown } from "../../../inventory-manipulation";
 import { getItemTypeImage } from "../../../client-item-info";
 import { ItemRestTime } from "../GameInteractableLayer";
+import { ItemTooltip_hide, ItemTooltip_setItem, ItemTooltip_setPos } from "./ItemTooltip";
+import { useEffect } from "react";
 
 export interface ItemSlotCallbackInfo {
    readonly itemSlot: number;
@@ -31,7 +33,14 @@ export interface ItemSlotProps {
 
 const ItemSlot = (props: ItemSlotProps) => {
    const isManipulable = typeof props.isManipulable === "undefined" || props.isManipulable;
+   const item = props.inventory?.itemSlots[props.itemSlot];
 
+   useEffect(() => {
+      return () => {
+         ItemTooltip_hide();
+      }
+   }, []);
+   
    const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>): void => {
       if (isManipulable && props.inventory !== null && typeof props.entityID !== "undefined") {
          onItemSlotMouseDown(e.nativeEvent, props.entityID, props.inventory, props.itemSlot);
@@ -42,7 +51,31 @@ const ItemSlot = (props: ItemSlotProps) => {
       }
    }
 
-   const item = props.inventory?.itemSlots[props.itemSlot];
+   const onMouseOver = (e: MouseEvent): void => {
+      ItemTooltip_setItem(item || null)
+      ItemTooltip_setPos(e.clientX, e.clientY);
+
+      if (typeof props.onMouseOver !== "undefined") {
+         props.onMouseOver(e, callbackInfo);
+      }
+   }
+
+   const onMouseOut = (e: MouseEvent): void => {
+      ItemTooltip_setItem(null)
+
+      if (typeof props.onMouseOver !== "undefined") {
+         props.onMouseOver(e, callbackInfo);
+      }
+   }
+
+   const onMouseMove = (e: MouseEvent): void => {
+      ItemTooltip_setItem(item || null);
+      ItemTooltip_setPos(e.clientX, e.clientY);
+
+      if (typeof props.onMouseMove !== "undefined") {
+         props.onMouseMove(e);
+      }
+   }
 
    const callbackInfo: ItemSlotCallbackInfo = {
       itemSlot: props.itemSlot,
@@ -52,9 +85,9 @@ const ItemSlot = (props: ItemSlotProps) => {
    const img = typeof item !== "undefined" ? getItemTypeImage(item.type) : props.placeholderImg;
    
    return <div onContextMenu={typeof props.onContextMenu !== "undefined" ? (e => props.onContextMenu!(e.nativeEvent)) : undefined}
-   onMouseOver={typeof props.onMouseOver !== "undefined" ? e => props.onMouseOver!(e.nativeEvent, callbackInfo) : undefined}
-   onMouseOut={props.onMouseOut}
-   onMouseMove={typeof props.onMouseMove !== "undefined" ? e => props.onMouseMove!(e.nativeEvent) : undefined}
+   onMouseOver={e => onMouseOver(e.nativeEvent)}
+   onMouseOut={e => onMouseOut(e.nativeEvent)}
+   onMouseMove={e => onMouseMove(e.nativeEvent)}
    className={`item-slot${typeof props.className !== "undefined" ? " " + props.className : ""}${props.isSelected ? " selected" : ""}${typeof item === "undefined" ? " empty" : ""}`}
    onMouseDown={onMouseDown}>
       {typeof img !== "undefined" ? (

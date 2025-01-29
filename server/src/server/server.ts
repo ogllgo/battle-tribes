@@ -18,7 +18,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -301,6 +301,10 @@ class GameServer {
                }
                case PacketType.devSetAutogiveBaseResource: {
                   processSetAutogiveBaseResourcesPacket(reader);
+                  break;
+               }
+               case PacketType.structureInteract: {
+                  processStructureInteractPacket(playerClient, reader);
                   break;
                }
                default: {

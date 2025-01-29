@@ -1,6 +1,8 @@
 import { ItemSlots, ItemType, ItemTypeString, StructureItemType } from "./items";
 import { Settings } from "../settings";
 import { ItemTally2, createTallyFromRecord } from "./ItemTally";
+import { VisibleChunkBounds } from "../client-server-types";
+import { LimbAction } from "../entities";
 
 const enum Vars {
    FAST_CRAFT_TIME = (0.5 * Settings.TPS) | 0,

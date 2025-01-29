@@ -248,3 +248,10 @@ export function sendSetAutogiveBaseResourcesPacket(tribeID: number, autogiveBase
    packet.padOffset(3);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendStructureInteractPacket(structureID: number, interactData: number): void {
+   const packet = new Packet(PacketType.structureInteract, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(structureID);
+   packet.addNumber(interactData);
+   Client.sendPacket(packet.buffer);
+}

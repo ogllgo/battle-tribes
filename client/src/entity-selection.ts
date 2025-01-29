@@ -22,6 +22,9 @@ import { PlanterBoxComponentArray } from "./entity-components/server-components/
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
+import { playerTribe } from "./tribes";
+import { sendStructureInteractPacket } from "./networking/packet-creation";
 
 const enum InteractActionType {
    openBuildMenu,
@@ -91,6 +94,14 @@ const SEED_TO_PLANT_RECORD: Partial<Record<ItemType, PlantedEntityType>> = {
 };
 
 const getInventoryMenuType = (entity: Entity): InventoryMenuType | null => {
+   // First make sure that the entity's inventory can be accessed by the player.
+   if (TribeComponentArray.hasComponent(entity)) {
+      const tribeComponent = TribeComponentArray.getComponent(entity);
+      if (tribeComponent.tribeID !== playerTribe.id) {
+         return null;
+      }
+   }
+
    switch (getEntityType(entity)) {
       case EntityType.barrel: return InventoryMenuType.barrel;
       case EntityType.tribeWorker:
@@ -226,7 +237,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.toggleTunnelDoor: {
-         Client.sendStructureInteract(highlightedEntity, action.doorSide);
+         sendStructureInteractPacket(highlightedEntity, action.doorSide);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
@@ -238,11 +249,11 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
       case InteractActionType.startResearching: {
          selectedEntityID = entity;
 
-         Client.sendStructureInteract(highlightedEntity, 0);
+         sendStructureInteractPacket(highlightedEntity, 0);
          break;
       }
       case InteractActionType.toggleDoor: {
-         Client.sendStructureInteract(highlightedEntity, 0);
+         sendStructureInteractPacket(highlightedEntity, 0);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);

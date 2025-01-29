@@ -1338,6 +1338,10 @@ const tickItem = (itemType: ItemType): void => {
                   components[componentType] = {};
                   break;
                }
+               case ServerComponentType.punjiSticks: {
+                  components[componentType] = {};
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }
@@ -1481,25 +1485,25 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          }
       } else if (e.button === 2) { // Right click
          rightMouseButtonIsPressed = true;
-   
-         const selectedItemInfo = getSelectedItemInfo();
-         if (selectedItemInfo !== null) {
-            onItemStartUse(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
-   
-            // Special case: Barbarians can eat with both hands at once
-            if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
-               const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
-               const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
-               const offhandHeldItem = offhandInventory.getItem(1);
-               if (offhandHeldItem !== null) {
-                  onItemStartUse(offhandHeldItem.type, InventoryName.offhand, 1);
-               }
-            }
-         }
          
          const didSelectEntity = attemptEntitySelection();
          if (didSelectEntity) {
             e.preventDefault();
+         } else {
+            const selectedItemInfo = getSelectedItemInfo();
+            if (selectedItemInfo !== null) {
+               onItemStartUse(selectedItemInfo.item.type, selectedItemInfo.inventoryName, selectedItemInfo.itemSlot);
+      
+               // Special case: Barbarians can eat with both hands at once
+               if (selectedItemInfo.inventoryName === InventoryName.hotbar && ITEM_TYPE_RECORD[selectedItemInfo.item.type] === "healing") {
+                  const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+                  const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand)!;
+                  const offhandHeldItem = offhandInventory.getItem(1);
+                  if (offhandHeldItem !== null) {
+                     onItemStartUse(offhandHeldItem.type, InventoryName.offhand, 1);
+                  }
+               }
+            }
          }
          
          attemptToCompleteNode();

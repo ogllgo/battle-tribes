@@ -247,32 +247,6 @@ const processDeconstructPacket = (playerClient: PlayerClient, structure: Entity)
    }
 }
 
-const processStructureInteractPacket = (playerClient: PlayerClient, structure: Entity, interactData: number): void => {
-   if (!entityExists(playerClient.instance) || !entityExists(structure)) {
-      return;
-   }
-
-   switch (getEntityType(structure)) {
-      case EntityType.door: {
-         toggleDoor(structure);
-         break;
-      }
-      case EntityType.researchBench: {
-         attemptToOccupyResearchBench(structure, playerClient.instance);
-         break;
-      }
-      case EntityType.tunnel: {
-         const doorBit = interactData;
-         toggleTunnelDoor(structure, doorBit);
-         break;
-      }
-      case EntityType.fenceGate: {
-         toggleFenceGateDoor(structure);
-         break;
-      }
-   }
-}
-
 const processStructureUninteractPacket = (playerClient: PlayerClient, structure: Entity): void => {
    if (!entityExists(playerClient.instance) || !entityExists(playerClient.instance)) {
       return;
@@ -425,10 +399,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
 
    socket.on("deconstruct_building", (structureID: number): void => {
       processDeconstructPacket(playerClient, structureID);
-   });
-
-   socket.on("structure_interact", (structureID: number, interactData: number): void => {
-      processStructureInteractPacket(playerClient, structureID, interactData);
    });
 
    socket.on("structure_uninteract", (structureID: number): void => {

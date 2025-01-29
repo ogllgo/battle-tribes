@@ -596,6 +596,20 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Mithril Anvil",
       description: ""
    },
+   [ItemType.yuriMinecraft]: {
+      entityTextureSource: "items/small/scrappy.png",
+      textureSource: "items/large/minecraft.png",
+      toolTextureSource: "",
+      name: "The Evoker's Cold Touch | Alex's Awakening (a Minecraft fanfic)",
+      description: "Alex's thoughts keep drifting back to that encounter in the woodland mansion, as much as she wills herself not to. She can't put the cold shivers out of her mind, the cold shivers which make her feel so warm. Perhaps the Illager's intentions weren't hostile..."
+   },
+   [ItemType.yuriSonichu]: {
+      entityTextureSource: "items/small/cogwalker.png",
+      textureSource: "items/large/sonichu.png",
+      toolTextureSource: "",
+      name: "Sonichu x FemShrek - Alone in Shrekke's Love Shack (Chapters 1-5)",
+      description: "Stuck alone and pent up in the woods for a week, Sonichu has an affliction only Shrekke's gentle yet controlling hands can cure."
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {
