@@ -10,7 +10,9 @@ export const enum HitboxFlag {
    IGNORES_WALL_COLLISIONS,
    GUARDIAN_LIMB_HITBOX,
    GLURB_HEAD_SEGMENT,
-   GLURB_TAIL_SEGMENT
+   GLURB_TAIL_SEGMENT,
+   COW_BODY,
+   COW_HEAD
 }
 
 export const enum HitboxCollisionType {

@@ -18,7 +18,7 @@ type ComponentTypes = ServerComponentType.transform
 export function createTreeRootBaseConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 17), 1.25, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(15);
 

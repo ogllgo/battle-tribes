@@ -19,7 +19,7 @@ export function createSlimeSpitConfig(size: number): EntityConfig<ComponentTypes
    const transformComponent = new TransformComponent();
    const hitboxSize = HITBOX_SIZES[size];
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), hitboxSize, hitboxSize, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    

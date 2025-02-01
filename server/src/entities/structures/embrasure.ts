@@ -25,7 +25,7 @@ const HEALTHS = [15, 45];
 
 export function createEmbrasureConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createEmbrasureHitboxes(), null);
+   transformComponent.addStaticHitboxes(createEmbrasureHitboxes(), null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

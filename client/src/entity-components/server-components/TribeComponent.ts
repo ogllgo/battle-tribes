@@ -69,7 +69,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
-      playSoundOnEntity("conversion.mp3", 0.4, 1, entity);
+      playSoundOnEntity("conversion.mp3", 0.4, 1, entity, false);
 
       const radius = getHumanoidRadius(entity);
       for (let i = 0; i < 10; i++) {

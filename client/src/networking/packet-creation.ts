@@ -11,6 +11,7 @@ import { entityExists, getEntityType, playerInstance } from "../world";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { BlueprintType } from "../../../shared/src/components";
+import { TechID } from "../../../shared/src/techs";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -253,5 +254,23 @@ export function sendStructureInteractPacket(structureID: number, interactData: n
    const packet = new Packet(PacketType.structureInteract, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(structureID);
    packet.addNumber(interactData);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendUnlockTechPacket(techID: TechID): void {
+   const packet = new Packet(PacketType.unlockTech, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(techID);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendStudyTechPacket(studyAmount: number): void {
+   const packet = new Packet(PacketType.studyTech, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(studyAmount);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSelectTechPacket(techID: TechID): void {
+   const packet = new Packet(PacketType.selectTech, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(techID);
    Client.sendPacket(packet.buffer);
 }

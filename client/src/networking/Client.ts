@@ -487,27 +487,9 @@ abstract class Client {
       }
    }
 
-   public static sendSelectTech(techID: TechID): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("select_tech", techID);
-      }
-   }
-
-   public static sendUnlockTech(techID: TechID): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("unlock_tech", techID);
-      }
-   }
-
    public static sendForceUnlockTech(techID: TechID): void {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("force_unlock_tech", techID);
-      }
-   }
-
-   public static sendStudyTech(studyAmount: number): void {
-      if (Game.isRunning && this.socket !== null) {
-         // this.socket.emit("study_tech", studyAmount);
       }
    }
 

@@ -10,15 +10,15 @@ import { createHotSparkParticle } from "./particles";
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
    switch (bowItemType) {
       case ItemType.wooden_bow: {
-         playSoundOnEntity("bow-fire.mp3", 0.4, 1, sourceEntity);
+         playSoundOnEntity("bow-fire.mp3", 0.4, 1, sourceEntity, false);
          break;
       }
       case ItemType.reinforced_bow: {
-         playSoundOnEntity("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity);
+         playSoundOnEntity("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity, false);
          break;
       }
       case ItemType.ice_bow: {
-         playSoundOnEntity("ice-bow-fire.mp3", 0.4, 1, sourceEntity);
+         playSoundOnEntity("ice-bow-fire.mp3", 0.4, 1, sourceEntity, false);
          break;
       }
    }
@@ -27,7 +27,7 @@ export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): v
 const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {
-         playSoundOnEntity("fart.mp3", 0.3, randFloat(0.9, 1.2), entity);
+         playSoundOnEntity("fart.mp3", 0.3, randFloat(0.9, 1.2), entity, false);
          break;
       }
       case EntityTickEventType.fireBow: {
@@ -36,7 +36,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.automatonAccident: {
-         playSoundOnEntity("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), entity);
+         playSoundOnEntity("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), entity, false);
 
          // Make sparks fly off
          const transformComponent = TransformComponentArray.getComponent(entity);

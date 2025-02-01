@@ -14,7 +14,7 @@ type ComponentTypes = ServerComponentType.transform
 export function createGrassStrandConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 4, 4, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const colour: Colour = {
       r: randFloat(0.4, 0.5),

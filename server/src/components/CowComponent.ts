@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { positionIsInWorld, randFloat, randInt } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
-import { COW_GRAZE_TIME_TICKS, CowVars } from "../entities/mobs/cow";
+import { CowVars } from "../entities/mobs/cow";
 import { ComponentArray } from "./ComponentArray";
 import { ItemType } from "battletribes-shared/items/items";
 import { registerEntityTickEvent } from "../server/player-clients";
@@ -17,7 +17,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, continueFollowingEntity, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
-import { healEntity, getEntityHealth } from "./HealthComponent";
+import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { GrassBlockerCircle } from "battletribes-shared/grass-blockers";
@@ -30,6 +30,7 @@ import { getEntitiesAtPosition } from "../layer-utils";
 const enum Vars {
    MIN_POOP_PRODUCTION_COOLDOWN = 5 * Settings.TPS,
    MAX_POOP_PRODUCTION_COOLDOWN = 15 * Settings.TPS,
+   GRAZE_TIME_TICKS = 5 * Settings.TPS,
    BERRY_FULLNESS_VALUE = 0.15,
    MIN_POOP_PRODUCTION_FULLNESS = 0.4,
    BOWEL_EMPTY_TIME_TICKS = 55 * Settings.TPS,
@@ -43,6 +44,8 @@ const enum Vars {
    ALIGNMENT_INFLUENCE = 0.5,
    COHESION_INFLUENCE = 0.3
 }
+
+
 
 export class CowComponent {
    public readonly species: CowSpecies = randInt(0, 1);
@@ -107,7 +110,7 @@ const graze = (cow: Entity, cowComponent: CowComponent): void => {
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
    stopEntity(physicsComponent);
 
-   if (++cowComponent.grazeProgressTicks >= COW_GRAZE_TIME_TICKS) {
+   if (++cowComponent.grazeProgressTicks >= Vars.GRAZE_TIME_TICKS) {
       const transformComponent = TransformComponentArray.getComponent(cow);
 
       // 
@@ -239,7 +242,8 @@ function onTick(cow: Entity): void {
    }
 
    // Shake berries off berry bushes
-   if (getEntityHealth(cow) < CowVars.MAX_HEALTH) {
+   const healthComponent = HealthComponentArray.getComponent(cow);
+   if (healthComponent.health < healthComponent.maxHealth) {
       // Attempt to find a berry bush
       if (!entityExists(cowComponent.targetBushID)) {
          let target: Entity | null = null;
@@ -320,7 +324,7 @@ function onTick(cow: Entity): void {
    // @Incomplete: Steer the herd away from non-grasslands biomes
    const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
-      runHerdAI(cow, herdMembers, CowVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
+      runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
       physicsComponent.acceleration.x = 200 * Math.sin(transformComponent.rotation);
       physicsComponent.acceleration.y = 200 * Math.cos(transformComponent.rotation);
@@ -340,7 +344,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
 
    packet.addNumber(cowComponent.species);
-   packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / COW_GRAZE_TIME_TICKS : -1);
+   packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / Vars.GRAZE_TIME_TICKS : -1);
 }
 
 export function eatBerry(berryItemEntity: Entity, cowComponent: CowComponent): void {

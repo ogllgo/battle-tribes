@@ -71,7 +71,6 @@ import { SpikyBastardComponentArray, SpikyBastardComponentParams } from "./serve
 import { SpitPoisonAreaComponentArray, SpitPoisonAreaComponentParams } from "./server-components/SpitPoisonAreaComponent";
 import { StatusEffectComponentArray, StatusEffectComponentParams } from "./server-components/StatusEffectComponent";
 import { StructureComponentArray, StructureComponentParams } from "./server-components/StructureComponent";
-import { TetheredHitboxComponentArray, TetheredHitboxComponentParams } from "./server-components/TetheredHitboxComponent";
 import { ThrowingProjectileComponentArray, ThrowingProjectileComponentParams } from "./server-components/ThrowingProjectileComponent";
 import { TombstoneComponentArray, TombstoneComponentParams } from "./server-components/TombstoneComponent";
 import { TotemBannerComponentArray, TotemBannerComponentParams } from "./server-components/TotemBannerComponent";
@@ -175,7 +174,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.fireTorch]: FireTorchComponentArray,
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
    [ServerComponentType.glurb]: GlurbComponentArray,
-   [ServerComponentType.tetheredHitbox]: TetheredHitboxComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
    [ServerComponentType.patrolAI]: PatrolAIComponentArray,
@@ -270,7 +268,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
    [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
-   [ServerComponentType.tetheredHitbox]: (): TetheredHitboxComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
    [ServerComponentType.patrolAI]: (): PatrolAIComponentParams => 0 as any,

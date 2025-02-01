@@ -116,7 +116,7 @@ const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: numb
    renderInfo.attachRenderPart(renderPart);
 
    // @Temporary
-   playSoundOnEntity("spike-place.mp3", 0.5, 1, entity);
+   playSoundOnEntity("spike-place.mp3", 0.5, 1, entity, false);
 }
 
 const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgress: number): void => {
@@ -148,10 +148,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {
-      playSoundOnEntity("door-open.mp3", 0.4, 1, entity);
+      playSoundOnEntity("door-open.mp3", 0.4, 1, entity, false);
    }
    if ((topDoorOpenProgress < 1 && tunnelComponent.topDoorOpenProgress === 1) || (bottomDoorOpenProgress < 1 && tunnelComponent.bottomDoorOpenProgress === 1)) {
-      playSoundOnEntity("door-close.mp3", 0.4, 1, entity);
+      playSoundOnEntity("door-close.mp3", 0.4, 1, entity, false);
    }
    
    tunnelComponent.doorBitset = doorBitset;

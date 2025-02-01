@@ -26,7 +26,7 @@ const HEALTHS = [5, 20];
 
 export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(hitboxes, null);
+   transformComponent.addStaticHitboxes(hitboxes, null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

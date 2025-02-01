@@ -15,6 +15,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { EntityConfig } from "../ComponentArray";
+import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
 export interface CowComponentParams {
    readonly species: CowSpecies;
@@ -27,11 +28,6 @@ export interface CowComponent {
    readonly species: CowSpecies;
    grazeProgress: number;
 }
-
-const HEAD_SIZE = 64;
-/** How far the head overlaps the body */
-const HEAD_OVERLAP = 24;
-const BODY_HEIGHT = 96;
 
 export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, RenderParts>(ServerComponentType.cow, true, {
    createParamsFromData: createParamsFromData,
@@ -54,29 +50,32 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.cow, never>): RenderParts {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.cow, never>): RenderParts {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+   
    const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
    const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
 
-   // Body
-   const bodyRenderPart = new TexturedRenderPart(
-      null,
-      0,
-      0,
-      getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
-   );
-   bodyRenderPart.offset.y = -(HEAD_SIZE - HEAD_OVERLAP) / 2;
-   renderInfo.attachRenderPart(bodyRenderPart);
-
-   // Head
-   const headRenderPart = new TexturedRenderPart(
-      null,
-      1,
-      0,
-      getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
-   );
-   headRenderPart.offset.y = (BODY_HEIGHT - HEAD_OVERLAP) / 2;
-   renderInfo.attachRenderPart(headRenderPart);
+   for (const hitbox of transformComponentParams.hitboxes) {
+      if (hitbox.flags.includes(HitboxFlag.COW_BODY)) {
+         const bodyRenderPart = new TexturedRenderPart(
+            hitbox,
+            0,
+            0,
+            getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
+         );
+         renderInfo.attachRenderPart(bodyRenderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
+         // Head
+         const headRenderPart = new TexturedRenderPart(
+            hitbox,
+            1,
+            0,
+            getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
+         );
+         renderInfo.attachRenderPart(headRenderPart);
+      }
+   }
 
    return {};
 }
@@ -103,7 +102,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.1 / Settings.TPS) {
-      playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity);
+      playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, true);
    }
 }
 
@@ -150,7 +149,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnEntity("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+   playSoundOnEntity("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
@@ -161,5 +160,5 @@ function onDie(entity: Entity): void {
 
    createBloodParticleFountain(entity, 0.1, 1.1);
 
-   playSoundOnEntity("cow-die-1.mp3", 0.2, 1, entity);
+   playSoundOnEntity("cow-die-1.mp3", 0.2, 1, entity, false);
 }

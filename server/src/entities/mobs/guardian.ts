@@ -34,13 +34,13 @@ export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): Entit
    const transformComponent = new TransformComponent();
 
    // Head
-   transformComponent.addHitbox(createHitbox(new CircularBox(new Point(0, 0), 0, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+   transformComponent.addStaticHitbox(createHitbox(new CircularBox(new Point(0, 0), 0, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
 
    // Limbs
    const limbOrbitRadius = getGuardianLimbOrbitRadius();
    for (let i = 0; i < 2; i++) {
       const hitbox = createHitbox(new CircularBox(new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
-      transformComponent.addHitbox(hitbox, null);
+      transformComponent.addStaticHitbox(hitbox, null);
    }
    
    const physicsComponent = new PhysicsComponent();

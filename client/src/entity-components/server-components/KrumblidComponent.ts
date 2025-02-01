@@ -5,9 +5,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { Entity } from "../../../../shared/src/entities";
-import { angle, randFloat } from "../../../../shared/src/utils";
-import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
+import { angle, randFloat, randInt } from "../../../../shared/src/utils";
+import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
+import { playSoundOnEntity } from "../../sound";
 
 export interface KrumblidComponentParams {}
 
@@ -20,7 +21,9 @@ export const KrumblidComponentArray = new ServerComponentArray<KrumblidComponent
    createRenderParts: createRenderParts,
    createComponent: createComponent,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(): KrumblidComponentParams {
@@ -48,8 +51,8 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+function onHit(krumblid: Entity, hitData: HitData): void {
+   const transformComponent = TransformComponentArray.getComponent(krumblid);
    
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
    
@@ -62,13 +65,25 @@ function onHit(entity: Entity, hitData: HitData): void {
       const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
+
+   playSoundOnEntity("krumblid-hit-shell.mp3", 0.6, randFloat(0.9, 1.1), krumblid, false);
+   playSoundOnEntity("krumblid-hit-flesh-" + randInt(1, 2) + ".mp3", 0.6, randFloat(0.9, 1.1), krumblid, false);
 }
 
-function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+function onDie(krumblid: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(krumblid);
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 35);
    }
 
-   createBloodParticleFountain(entity, 0.1, 0.8);
+   createBloodParticleFountain(krumblid, 0.1, 0.8);
+
+   for (let i = 0; i < 10; i++) {
+      const offsetDirection = 2 * Math.PI * Math.random();
+      const spawnPositionX = transformComponent.position.x + 20 * Math.sin(offsetDirection);
+      const spawnPositionY = transformComponent.position.y + 20 * Math.cos(offsetDirection);
+      createKrumblidChitinParticle(spawnPositionX, spawnPositionY);
+   }
+
+   playSoundOnEntity("krumblid-death.mp3", 0.6, randFloat(0.9, 1.1), krumblid, false);
 }

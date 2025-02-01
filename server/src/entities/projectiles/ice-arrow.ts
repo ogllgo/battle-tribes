@@ -29,7 +29,7 @@ const ARROW_HEIGHT = 14 * 4;
 export function createIceArrowConfig(tribe: Tribe, creator: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), ARROW_WIDTH, ARROW_HEIGHT, 0), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;

@@ -72,7 +72,7 @@ function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number)
 export function createFishConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), FISH_WIDTH, FISH_HEIGHT, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
 

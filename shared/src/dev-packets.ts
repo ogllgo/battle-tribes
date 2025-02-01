@@ -66,7 +66,6 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.fenceGate]: {},
    [ServerComponentType.craftingStation]: {},
    [ServerComponentType.transform]: {},
-   [ServerComponentType.tetheredHitbox]: {},
    [ServerComponentType.projectile]: {},
    [ServerComponentType.iceArrow]: {},
    [ServerComponentType.layeredRod]: {},

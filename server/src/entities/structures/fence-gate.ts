@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createFenceGateConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createFenceGateHitboxes(), null);
+   transformComponent.addStaticHitboxes(createFenceGateHitboxes(), null);
    
    const healthComponent = new HealthComponent(5);
    

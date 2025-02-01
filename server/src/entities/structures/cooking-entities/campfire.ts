@@ -31,7 +31,7 @@ const LIFETIME_SECONDS = 30;
 
 export function createCampfireConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createCampfireHitboxes(), null);
+   transformComponent.addStaticHitboxes(createCampfireHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);
 

@@ -114,10 +114,10 @@ function onHit(entity: Entity, hitData: HitData): void {
          createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
       }
       
-      playSoundOnEntity(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity);
+      playSoundOnEntity(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity, false);
    } else {
       // @Temporary
-      playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+      playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
    }
 }
 
@@ -152,5 +152,5 @@ function onDie(entity: Entity): void {
       createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSoundOnEntity(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity);
+   playSoundOnEntity(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity, false);
 }

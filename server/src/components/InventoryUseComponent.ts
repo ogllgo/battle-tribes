@@ -295,7 +295,7 @@ export function onDamageBoxCollision(attacker: Entity, victim: Entity, limb: Lim
 
    // Don't attack friendlies
    const relationship = getEntityRelationship(attacker, victim);
-   if (relationship === EntityRelationship.friendly || relationship === EntityRelationship.friendlyBuilding) {
+   if (relationship === EntityRelationship.friendly) {
       return;
    }
    

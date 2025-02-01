@@ -219,7 +219,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    reader.padOffset(3);
 
    if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
-      playSoundOnEntity("golem-angry.mp3", 0.4, 1, entity);
+      playSoundOnEntity("golem-angry.mp3", 0.4, 1, entity, true);
    }
    
    golemComponent.wakeProgress = wakeProgress;
@@ -243,5 +243,5 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, false);
 }

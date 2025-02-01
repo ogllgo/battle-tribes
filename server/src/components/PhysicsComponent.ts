@@ -333,12 +333,63 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
    }
 }
 
+const applyTethers = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+   const tethers = transformComponent.tethers;
+   
+   // Apply the spring physics
+   for (const tether of tethers) {
+      const hitbox = tether.hitbox;
+      const otherHitbox = tether.otherHitbox;
+
+      const diffX = otherHitbox.box.position.x - hitbox.box.position.x;
+      const diffY = otherHitbox.box.position.y - hitbox.box.position.y;
+      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+
+      const normalisedDiffX = diffX / distance;
+      const normalisedDiffY = diffY / distance;
+
+      const displacement = distance - tether.idealDistance;
+      
+      // Calculate spring force
+      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      
+      // Apply spring force
+      hitbox.box.position.x += springForceX;
+      hitbox.box.position.y += springForceY;
+      otherHitbox.box.position.x -= springForceX;
+      otherHitbox.box.position.y -= springForceY;
+   }
+
+   // Verlet integration
+   for (const tether of tethers) {
+      const hitbox = tether.hitbox;
+      
+      const velocityX = (hitbox.box.position.x - tether.previousX) * (1 - tether.damping);
+      const velocityY = (hitbox.box.position.y - tether.previousY) * (1 - tether.damping);
+      
+      const tempX = hitbox.box.position.x;
+      const tempY = hitbox.box.position.y;
+
+      hitbox.box.position.x += velocityX;
+      hitbox.box.position.y += velocityY;
+
+      // Update previous position for next frame
+      tether.previousX = tempX;
+      tether.previousY = tempY;
+   }
+
+   // @Speed: Is this necessary every tick?
+   physicsComponent.hitboxesAreDirty = true;
+}
+
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    turnEntity(entity, transformComponent, physicsComponent);
    applyPhysics(entity, transformComponent, physicsComponent);
+   applyTethers(transformComponent, physicsComponent);
    updatePosition(entity, transformComponent, physicsComponent);
 }
 

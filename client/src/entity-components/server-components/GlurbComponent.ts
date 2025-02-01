@@ -134,5 +134,5 @@ function onDie(entity: Entity): void {
       }
    }
 
-   playSoundOnEntity("glurb-death.mp3", 0.2, 1, entity);
+   playSoundOnEntity("glurb-death.mp3", 0.2, 1, entity, false);
 }

@@ -61,36 +61,36 @@ function onSpawn(entity: Entity): void {
    switch (getEntityType(entity)) {
       case EntityType.wall: {
          // @Incomplete: Add sounds for stone+ walls
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity);
+         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
          break;
       }
       case EntityType.barrel: {
-         playSoundOnEntity("barrel-place.mp3", 0.4, 1, entity);
+         playSoundOnEntity("barrel-place.mp3", 0.4, 1, entity, false);
          break;
       }
       case EntityType.campfire: {
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity);
+         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
          break;
       }
       case EntityType.planterBox: {
          // @Temporary
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity);
+         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
          break;
       }
       case EntityType.floorPunjiSticks:
       case EntityType.wallPunjiSticks:
       case EntityType.floorSpikes:
       case EntityType.wallSpikes: {
-         playSoundOnEntity("spike-place.mp3", 0.5, 1, entity);
+         playSoundOnEntity("spike-place.mp3", 0.5, 1, entity, false);
          break;
       }
       case EntityType.researchBench: {
          // @Temporary
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity);
+         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
          break;
       }
       case EntityType.bracings: {
-         playSoundOnEntity("wooden-bracings-place.mp3", 0.4, 1, entity);
+         playSoundOnEntity("wooden-bracings-place.mp3", 0.4, 1, entity, false);
          break;
       }
    }

@@ -26,7 +26,7 @@ function createComponent(): BattleaxeProjectileComponent {
 }
 
 const playWhoosh = (entity: Entity): void => {
-   playSoundOnEntity("air-whoosh.mp3", 0.25, 1, entity);
+   playSoundOnEntity("air-whoosh.mp3", 0.25, 1, entity, true);
 }
 
 function onLoad(entity: Entity): void {

@@ -6,7 +6,6 @@ import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { noteSpawnableTiles, runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
 import Tribe from "../Tribe";
-import OPTIONS from "../options";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
 import { countTileTypesForResourceDistributions, updateResourceDistributions } from "../resource-distributions";
@@ -18,7 +17,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -34,6 +33,7 @@ import { updateTribes } from "../tribes";
 import { surfaceLayer, layers } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
+import OPTIONS from "../options";
 
 /*
 
@@ -117,12 +117,12 @@ class GameServer {
 
    public async start(): Promise<void> {
       // Seed the random number generator
-      // if (OPTIONS.inBenchmarkMode) {
-      //    SRandom.seed(40404040404);
-      // } else {
-      //    SRandom.seed(randInt(0, 9999999999));
-      // }
-      SRandom.seed(2620761354);
+      if (OPTIONS.inBenchmarkMode) {
+         SRandom.seed(40404040404);
+      } else {
+         SRandom.seed(randInt(0, 9999999999));
+      }
+      // SRandom.seed(2620761354);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -305,6 +305,18 @@ class GameServer {
                }
                case PacketType.structureInteract: {
                   processStructureInteractPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.unlockTech: {
+                  processTechUnlockPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.selectTech: {
+                  processSelectTechPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.studyTech: {
+                  processTechStudyPacket(playerClient, reader);
                   break;
                }
                default: {

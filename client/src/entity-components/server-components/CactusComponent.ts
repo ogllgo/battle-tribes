@@ -253,14 +253,14 @@ function onHit(entity: Entity): void {
       createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
    }
 
-   playSoundOnEntity("cactus-hit.mp3", 0.4, 1, entity);
+   playSoundOnEntity("cactus-hit.mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
-   playSoundOnEntity("cactus-destroy.mp3", 0.4, 1, entity);
+   playSoundOnEntity("cactus-destroy.mp3", 0.4, 1, entity, false);
    
    for (const flower of cactusComponent.flowerData) {
       const offsetDirection = flower.column * Math.PI / 4;

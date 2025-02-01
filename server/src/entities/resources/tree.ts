@@ -22,7 +22,7 @@ export function createTreeConfig(): EntityConfig<ComponentTypes> {
    
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);

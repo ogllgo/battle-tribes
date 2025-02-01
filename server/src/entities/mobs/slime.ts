@@ -2,10 +2,9 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { SlimeSize, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, lerp } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
-import { SlimeComponent, SlimeComponentArray } from "../../components/SlimeComponent";
-import { getEntitiesInRange } from "../../ai-shared";
+import { SlimeComponent } from "../../components/SlimeComponent";
 import Layer from "../../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
@@ -53,7 +52,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 export function createSlimeConfig(size: SlimeSize): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    

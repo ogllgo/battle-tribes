@@ -56,7 +56,7 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
 }
 
 function onLoad(entity: Entity): void {
-   playSoundOnEntity("slime-spit.mp3", 0.5, 1, entity);
+   playSoundOnEntity("slime-spit.mp3", 0.5, 1, entity, false);
 }
 
 function onTick(entity: Entity): void {

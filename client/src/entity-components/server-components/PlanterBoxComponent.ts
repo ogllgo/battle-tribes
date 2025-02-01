@@ -124,14 +124,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          createGrowthParticleInEntity(transformComponent);
       }
 
-      playSoundOnEntity("fertiliser.mp3", 0.6, 1, entity);
+      playSoundOnEntity("fertiliser.mp3", 0.6, 1, entity, false);
    }
    planterBoxComponent.isFertilised = isFertilised;
    
    const hasPlant = plantType !== -1;
    if (hasPlant && planterBoxComponent.hasPlant !== hasPlant) {
       // Plant sound effect
-      playSoundOnEntity("plant.mp3", 0.4, 1, entity);
+      playSoundOnEntity("plant.mp3", 0.4, 1, entity, false);
    }
    planterBoxComponent.hasPlant = hasPlant;
 

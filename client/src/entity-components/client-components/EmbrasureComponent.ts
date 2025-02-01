@@ -54,7 +54,7 @@ function createComponent(): EmbrasureComponent {
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity);
+   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity, false);
 
    for (let i = 0; i < 4; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 20);
@@ -73,7 +73,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity);
+   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity, false);
 
    for (let i = 0; i < 7; i++) {
       createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random());

@@ -370,20 +370,20 @@ export function spawnInitialEntities(): void {
       const y = 3400;
       
       const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
-      // const a = createTribeWorkerConfig(tribe);
-      // a.components[ServerComponentType.transform].position.x = x;
-      // a.components[ServerComponentType.transform].position.y = y;
-      // createEntity(a, undergroundLayer, 0);
+      const a = createTribeWorkerConfig(tribe);
+      a.components[ServerComponentType.transform].position.x = x;
+      a.components[ServerComponentType.transform].position.y = y;
+      createEntity(a, undergroundLayer, 0);
 
       // {
       // const x = Settings.BOARD_UNITS * 0.5 + 800;
       // const y = Settings.BOARD_UNITS * 0.5;
       
-      const a = createCogwalkerConfig(tribe);
-      // const a = createScrappyConfig(tribe);
-      a.components[ServerComponentType.transform].position.x = x;
-      a.components[ServerComponentType.transform].position.y = y;
-      createEntity(a, undergroundLayer, 0);
+      // const a = createCogwalkerConfig(tribe);
+      // // const a = createScrappyConfig(tribe);
+      // a.components[ServerComponentType.transform].position.x = x;
+      // a.components[ServerComponentType.transform].position.y = y;
+      // createEntity(a, undergroundLayer, 0);
       // }
    }, 10000);
 }

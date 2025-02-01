@@ -24,13 +24,14 @@ import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
-import { CRAFTING_RECIPES } from "../../../shared/src/items/crafting-recipes";
+import { CRAFTING_RECIPES, ItemRequirements } from "../../../shared/src/items/crafting-recipes";
 import { surfaceLayer, undergroundLayer } from "../layers";
 import { TileType } from "../../../shared/src/tiles";
 import { toggleDoor } from "../components/DoorComponent";
 import { toggleFenceGateDoor } from "../components/FenceGateComponent";
 import { attemptToOccupyResearchBench } from "../components/ResearchBenchComponent";
 import { toggleTunnelDoor } from "../components/TunnelComponent";
+import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -582,5 +583,92 @@ export function processStructureInteractPacket(playerClient: PlayerClient, reade
          toggleFenceGateDoor(structure);
          break;
       }
+   }
+}
+
+const itemIsNeededInTech = (tech: Tech, itemRequirements: ItemRequirements, itemType: ItemType): boolean => {
+   // If the item isn't present in the item requirements then it isn't needed
+   const amountNeeded = tech.researchItemRequirements.getItemCount(itemType);
+   if (amountNeeded === 0) {
+      return false;
+   }
+   
+   const amountCommitted = itemRequirements[itemType] || 0;
+   return amountCommitted < amountNeeded;
+}
+
+export function processTechUnlockPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const techID = reader.readNumber() as TechID;
+
+   const tech = getTechByID(techID);
+   
+   const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
+   const inventoryComponent = InventoryComponentArray.getComponent(playerClient.instance);
+
+   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+   
+   // Consume any available items
+   for (let i = 0; i < hotbarInventory.items.length; i++) {
+      const item = hotbarInventory.items[i];
+
+      const itemProgress = tribeComponent.tribe.techTreeUnlockProgress[techID]?.itemProgress || {};
+      if (itemIsNeededInTech(tech, itemProgress, item.type)) {
+         const amountNeeded = tech.researchItemRequirements.getItemCount(item.type);
+         const amountCommitted = itemProgress[item.type] || 0;
+
+         const amountToAdd = Math.min(item.count, amountNeeded - amountCommitted);
+
+         item.count -= amountToAdd;
+         if (item.count === 0) {
+            const itemSlot = hotbarInventory.getItemSlot(item);
+            hotbarInventory.removeItem(itemSlot);
+         }
+
+         const unlockProgress = tribeComponent.tribe.techTreeUnlockProgress[techID];
+         if (typeof unlockProgress !== "undefined") {
+            unlockProgress.itemProgress[item.type] = amountCommitted + amountToAdd;
+         } else {
+            tribeComponent.tribe.techTreeUnlockProgress[techID] = {
+               itemProgress: {
+                  [item.type]: amountCommitted + amountToAdd
+               },
+               studyProgress: 0
+            };
+         }
+      }
+   }
+
+   if (tribeComponent.tribe.techIsComplete(tech)) {
+      tribeComponent.tribe.unlockTech(tech);
+   }
+}
+
+export function processSelectTechPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const techID = reader.readNumber() as TechID;
+
+   playerClient.tribe.selectedTechID = techID;
+}
+
+export function processTechStudyPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const studyAmount = reader.readNumber();
+
+   const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
+   
+   if (tribeComponent.tribe.selectedTechID !== null) {
+      const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
+      const selectedTech = getTechByID(tribeComponent.tribe.selectedTechID);
+      playerClient.tribe.studyTech(selectedTech, transformComponent.position.x, transformComponent.position.y, studyAmount);
    }
 }

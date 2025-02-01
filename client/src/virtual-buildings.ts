@@ -68,11 +68,13 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
       const isCircular = reader.readBoolean();
       reader.padOffset(3);
 
+      const localID = reader.readNumber();
+      
       let hitbox: ClientHitbox;
       if (isCircular) {
-         hitbox = readCircularHitboxFromData(reader);
+         hitbox = readCircularHitboxFromData(reader, localID);
       } else {
-         hitbox = readRectangularHitboxFromData(reader);
+         hitbox = readRectangularHitboxFromData(reader, localID);
       }
       hitboxes.push(hitbox);
    }
@@ -92,6 +94,7 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
             const transformComponentParams = createTransformComponentParams(
                new Point(x, y),
                rotation,
+               hitboxes.slice(),
                hitboxes.slice(),
                COLLISION_BITS.default,
                DEFAULT_COLLISION_MASK

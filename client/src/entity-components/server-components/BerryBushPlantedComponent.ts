@@ -102,10 +102,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    // @Incomplete: particles?
-   playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+   playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
    // @Incomplete: particles?
-   playSoundOnEntity("berry-bush-destroy-1.mp3", 0.4, 1, entity);
+   playSoundOnEntity("berry-bush-destroy-1.mp3", 0.4, 1, entity, false);
 }

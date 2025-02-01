@@ -346,7 +346,6 @@ export function sortComponentArrays(): void {
       [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
       [ServerComponentType.glurb]: ComponentArrayPriority.medium,
-      [ServerComponentType.tetheredHitbox]: ComponentArrayPriority.medium,
       [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.attackingEntities]: ComponentArrayPriority.medium,
       [ServerComponentType.patrolAI]: ComponentArrayPriority.medium,

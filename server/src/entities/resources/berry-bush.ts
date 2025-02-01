@@ -21,7 +21,7 @@ export const BERRY_BUSH_RADIUS = 40;
 export function createBerryBushConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, BERRY_BUSH_RADIUS), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    
    const healthComponent = new HealthComponent(10);

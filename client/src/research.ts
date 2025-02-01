@@ -13,6 +13,7 @@ import { getRandomPositionInEntity, TransformComponentArray } from "./entity-com
 import { entityExists, getEntityType, playerInstance } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TribesmanComponentArray, tribesmanHasTitle } from "./entity-components/server-components/TribesmanComponent";
+import { sendStudyTechPacket } from "./networking/packet-creation";
 
 export interface ResearchOrb {
    /* X position of the node in the world */
@@ -91,7 +92,7 @@ export function updateResearchOrb(): void {
 
 const completeOrb = (): void => {
    const studyAmount = RESEARCH_ORB_AMOUNTS[currentResearchOrb!.size];
-   Client.sendStudyTech(studyAmount);
+   sendStudyTechPacket(studyAmount);
 
    for (let i = 0; i < ORB_NUM_PARTICLES[currentResearchOrb!.size]; i++) {
       const offsetDirection = 2 * Math.PI * Math.random();

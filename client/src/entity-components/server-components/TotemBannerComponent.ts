@@ -188,5 +188,5 @@ function onHit(entity: Entity): void {
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("building-destroy-1.mp3", 0.4, 1, entity);
+   playSoundOnEntity("building-destroy-1.mp3", 0.4, 1, entity, false);
 }

@@ -55,7 +55,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;

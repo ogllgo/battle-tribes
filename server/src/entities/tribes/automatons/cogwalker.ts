@@ -38,7 +38,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createCogwalkerConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createCogwalkerHitboxes(), null);
+   transformComponent.addStaticHitboxes(createCogwalkerHitboxes(), null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;

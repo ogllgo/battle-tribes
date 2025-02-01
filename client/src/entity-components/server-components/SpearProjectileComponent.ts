@@ -44,7 +44,7 @@ function createComponent(): SpearProjectileComponent {
 }
 
 function onSpawn(entity: Entity): void {
-   playSoundOnEntity("spear-throw.mp3", 0.4, 1, entity);
+   playSoundOnEntity("spear-throw.mp3", 0.4, 1, entity, false);
 }
 
 function padData(): void {}
@@ -52,5 +52,5 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("spear-hit.mp3", 0.4, 1, entity);
+   playSoundOnEntity("spear-hit.mp3", 0.4, 1, entity, false);
 }

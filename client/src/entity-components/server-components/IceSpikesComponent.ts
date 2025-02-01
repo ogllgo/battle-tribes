@@ -99,7 +99,7 @@ function onHit(entity: Entity): void {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+   playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
@@ -109,5 +109,5 @@ function onDie(entity: Entity): void {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity);
+   playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity, false);
 }

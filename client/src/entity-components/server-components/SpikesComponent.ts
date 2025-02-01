@@ -121,10 +121,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       if (spikesComponent.isCovered) {
          // When covering trap
-         playSoundOnEntity("trap-cover.mp3", 0.4, 1, entity);
+         playSoundOnEntity("trap-cover.mp3", 0.4, 1, entity, false);
       } else {
          // When trap is sprung
-         playSoundOnEntity("trap-spring.mp3", 0.4, 1, entity);
+         playSoundOnEntity("trap-spring.mp3", 0.4, 1, entity, false);
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {

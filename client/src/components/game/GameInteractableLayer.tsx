@@ -1208,16 +1208,20 @@ const tickItem = (itemType: ItemType): void => {
             switch (componentType) {
                case ServerComponentType.transform: {
                   const hitboxes = new Array<ClientHitbox>();
+                  const staticHitboxes = new Array<ClientHitbox>();
                   for (let i = 0; i < placeInfo.hitboxes.length; i++) {
                      const hitbox = placeInfo.hitboxes[i];
                      const clientHitbox = new ClientHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags, i);
                      hitboxes.push(clientHitbox);
+                     // @Hack
+                     staticHitboxes.push(clientHitbox);
                   }
 
                   const transformComponentParams = createTransformComponentParams(
                      placeInfo.position.copy(),
                      placeInfo.rotation,
                      hitboxes,
+                     staticHitboxes,
                      COLLISION_BITS.default,
                      DEFAULT_COLLISION_MASK
                   );
@@ -1339,6 +1343,10 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.punjiSticks: {
+                  components[componentType] = {};
+                  break;
+               }
+               case ServerComponentType.fence: {
                   components[componentType] = {};
                   break;
                }

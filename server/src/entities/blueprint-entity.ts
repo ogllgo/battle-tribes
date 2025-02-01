@@ -62,7 +62,7 @@ export function createBlueprintEntityConfig(tribe: Tribe, blueprintType: Bluepri
       hitboxes = createNormalStructureHitboxes(entityType);
    }
 
-   transformComponent.addHitboxes(hitboxes, null);
+   transformComponent.addStaticHitboxes(hitboxes, null);
    
    const healthComponent = new HealthComponent(5);
    

@@ -4,6 +4,7 @@ import { Box } from "./boxes";
 abstract class BaseBox {
    public readonly position = new Point(0, 0);
    
+   /** Offset of the box from its parent */
    public readonly offset: Point;
    
    // Although it doesn't really make sense for a circle to have rotation, it is useful for propagating changes when a hitbox's parent is a circular hitbox.

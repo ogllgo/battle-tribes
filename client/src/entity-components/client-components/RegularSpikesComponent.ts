@@ -57,9 +57,9 @@ function createComponent(): RegularSpikesComponent {
 }
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-hit.mp3", 0.2, 1, entity);
+   playSoundOnEntity("wooden-spikes-hit.mp3", 0.2, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity);
+   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity, false);
 }

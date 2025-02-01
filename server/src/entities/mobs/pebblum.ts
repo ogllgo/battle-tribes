@@ -24,10 +24,10 @@ export function createPebblumConfig(): EntityConfig<ComponentTypes> {
    
    // Body
    const bodyHitbox = createHitbox(new CircularBox(new Point(0, -4), 0, 10 * 2), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(bodyHitbox, null);
+   transformComponent.addStaticHitbox(bodyHitbox, null);
    // Nose
    const noseHitbox = createHitbox(new CircularBox(new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(noseHitbox, null);
+   transformComponent.addStaticHitbox(noseHitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    

@@ -75,7 +75,6 @@ import { FurnaceComponent } from "./components/FurnaceComponent";
 import { FireTorchComponent } from "./components/FireTorchComponent";
 import { SpikyBastardComponent } from "./components/SpikyBastardComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
-import { TetheredHitboxComponent } from "./components/TetheredHitboxComponent";
 import { SlurbTorchComponent } from "./components/SlurbTorchComponent";
 import { AttackingEntitiesComponent } from "./components/AttackingEntitiesComponent";
 import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
@@ -156,7 +155,6 @@ const ComponentClassRecord = {
    [ServerComponentType.tribeWarrior]: () => TribeWarriorComponent,
    [ServerComponentType.craftingStation]: () => CraftingStationComponent,
    [ServerComponentType.transform]: () => TransformComponent,
-   [ServerComponentType.tetheredHitbox]: () => TetheredHitboxComponent,
    [ServerComponentType.projectile]: () => ProjectileComponent,
    [ServerComponentType.iceArrow]: () => IceArrowComponent,
    [ServerComponentType.layeredRod]: () => LayeredRodComponent,

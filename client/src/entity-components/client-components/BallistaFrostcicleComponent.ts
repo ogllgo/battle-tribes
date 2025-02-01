@@ -52,5 +52,5 @@ function onDie(entity: Entity): void {
       createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
    }
 
-   playSoundOnEntity("ice-break.mp3", 0.4, 1, entity);
+   playSoundOnEntity("ice-break.mp3", 0.4, 1, entity, false);
 }

@@ -788,19 +788,19 @@ function onHit(entity: Entity, hitData: HitData): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnEntity(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, entity);
+         playSoundOnEntity(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, entity, true);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnEntity("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+         playSoundOnEntity("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, true);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnEntity("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+         playSoundOnEntity("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, true);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnEntity("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity);
+         playSoundOnEntity("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, true);
          break;
       }
    }
@@ -831,19 +831,19 @@ function onDie(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnEntity(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, entity);
+         playSoundOnEntity(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, entity, false);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnEntity("plainsperson-die-1.mp3", 0.4, 1, entity);
+         playSoundOnEntity("plainsperson-die-1.mp3", 0.4, 1, entity, false);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnEntity("barbarian-die-1.mp3", 0.4, 1, entity);
+         playSoundOnEntity("barbarian-die-1.mp3", 0.4, 1, entity, false);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnEntity("frostling-die.mp3", 0.4, 1, entity);
+         playSoundOnEntity("frostling-die.mp3", 0.4, 1, entity, false);
          break;
       }
    }

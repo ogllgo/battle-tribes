@@ -12,7 +12,6 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { getGameTicks } from "../../world";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
 export const enum GolemVars {
@@ -69,10 +68,10 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
    
    // Create core hitbox
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
 
    // Create head hitbox
-   transformComponent.addHitbox(createHitbox(new CircularBox(new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+   transformComponent.addStaticHitbox(createHitbox(new CircularBox(new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
    
    // Create body hitboxes
    let i = 0;
@@ -99,7 +98,7 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
 
       const mass = size === 0 ? ROCK_SMALL_MASS : ROCK_MEDIUM_MASS;
       const hitbox = createHitbox(new CircularBox(new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      transformComponent.addStaticHitbox(hitbox, null);
 
       i++;
    }
@@ -108,11 +107,11 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
    for (let j = 0; j < 2; j++) {
       const offsetX = 60 * (j === 0 ? -1 : 1);
       const hitbox = createHitbox(new CircularBox(new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      transformComponent.addStaticHitbox(hitbox, null);
 
       // Wrist
       const inFactor = 0.75;
-      transformComponent.addHitbox(createHitbox(new CircularBox(new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+      transformComponent.addStaticHitbox(createHitbox(new CircularBox(new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
    }
    
    const physicsComponent = new PhysicsComponent();

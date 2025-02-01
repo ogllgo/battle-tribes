@@ -27,7 +27,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createFurnaceConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createFurnaceHitboxes(), null);
+   transformComponent.addStaticHitboxes(createFurnaceHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);
 

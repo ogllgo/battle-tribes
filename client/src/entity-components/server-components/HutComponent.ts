@@ -164,7 +164,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // @Incomplete: What if this packet is skipped?
    if (lastDoorSwingTicks === Board.serverTicks) {
-      playSoundOnEntity("door-open.mp3", 0.4, 1, entity);
+      playSoundOnEntity("door-open.mp3", 0.4, 1, entity, false);
    }
    
    hutComponent.isRecalling = isRecalling;

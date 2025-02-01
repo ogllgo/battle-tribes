@@ -81,7 +81,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
    transformComponent.collisionBit = COLLISION_BITS.cactus;
    
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
 
    const flowers = generateRandomFlowers();
    const limbs = generateRandomLimbs();
@@ -92,7 +92,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
 
       const box = new CircularBox(Point.fromVectorForm(37, limb.direction), 0, 18);
       const hitbox = createHitbox(box, 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      transformComponent.addStaticHitbox(hitbox, null);
    }
 
    const healthComponent = new HealthComponent(15);

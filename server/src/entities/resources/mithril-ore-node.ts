@@ -18,7 +18,7 @@ type ComponentTypes = ServerComponentType.transform
 export function createMithrilOreNodeConfig(size: number, variant: number, children: ReadonlyArray<Entity>, renderHeight: number): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 16, 16, 0), 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(15);
 

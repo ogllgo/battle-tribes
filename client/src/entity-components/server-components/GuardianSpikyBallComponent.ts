@@ -53,7 +53,7 @@ function onLoad(entity: Entity): void {
    );
    attachLightToEntity(light, entity);
 
-   playSoundOnEntity("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity);
+   playSoundOnEntity("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity, false);
 }
 
 function padData(): void {}
@@ -62,7 +62,7 @@ function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   playSoundOnEntity("guardian-spiky-ball-death.mp3", 0.4, 1, entity);
+   playSoundOnEntity("guardian-spiky-ball-death.mp3", 0.4, 1, entity, false);
 
    for (let i = 0; i < 10; i++) {
       const offsetMagnitude = 10 * Math.random();

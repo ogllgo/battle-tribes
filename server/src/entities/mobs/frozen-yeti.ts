@@ -61,16 +61,16 @@ export function createFrozenYetiConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    
    const bodyHitbox = createHitbox(new CircularBox(new Point(0, 0), 0, FrozenYetiVars.FROZEN_YETI_SIZE / 2), 4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(bodyHitbox, null);
+   transformComponent.addStaticHitbox(bodyHitbox, null);
 
    const headHitbox = createHitbox(new CircularBox(new Point(0, HEAD_DISTANCE), 0, HEAD_HITBOX_SIZE / 2), 0.8, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(headHitbox, null);
+   transformComponent.addStaticHitbox(headHitbox, null);
 
    // Paw hitboxes
    for (let i = 0; i < 2; i++) {
       const pawDirection = PAW_RESTING_ANGLE * (i === 0 ? -1 : 1);
       const hitbox = createHitbox(new CircularBox(Point.fromVectorForm(PAW_OFFSET, pawDirection), 0, PAW_SIZE / 2), 0.6, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      transformComponent.addStaticHitbox(hitbox, null);
    }
 
    const physicsComponent = new PhysicsComponent();

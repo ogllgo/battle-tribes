@@ -23,7 +23,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createWorkbenchConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createWorkbenchHitboxes(), null);
+   transformComponent.addStaticHitboxes(createWorkbenchHitboxes(), null);
    
    const healthComponent = new HealthComponent(15);
    

@@ -85,8 +85,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.zombie, 
 }
 
 function onTick(entity: Entity): void {
+   // @Sync should be a server event
    if (Math.random() < 0.1 / Settings.TPS) {
-      playSoundOnEntity("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+      playSoundOnEntity("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, true);
    }
 }
 
@@ -115,7 +116,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnEntity("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity);
+   playSoundOnEntity("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
@@ -124,5 +125,5 @@ function onDie(entity: Entity): void {
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);
 
-   playSoundOnEntity("zombie-die-1.mp3", 0.4, 1, entity);
+   playSoundOnEntity("zombie-die-1.mp3", 0.4, 1, entity, false);
 }

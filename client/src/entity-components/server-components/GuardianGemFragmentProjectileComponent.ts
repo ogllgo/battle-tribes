@@ -110,7 +110,7 @@ function onDie(entity: Entity): void {
    }
 
    if (Math.random() < 0.5) {
-      playSoundOnEntity("guardian-gem-fragment-death.mp3", 0.3, 1, entity);
+      playSoundOnEntity("guardian-gem-fragment-death.mp3", 0.3, 1, entity, false);
    }
 }
    

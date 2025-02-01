@@ -17,6 +17,7 @@ import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { playerInstance } from "../../../world";
 import { playerTribe } from "../../../tribes";
+import { sendSelectTechPacket, sendUnlockTechPacket } from "../../../networking/packet-creation";
 
 const boundsScale = 16;
 
@@ -51,12 +52,12 @@ export function techIsHovered(techID: TechID): boolean {
 }
 
 const selectTech = (techID: TechID): void => {
-   Client.sendSelectTech(techID);
+   sendSelectTechPacket(techID);
 }
    
 const researchTech = (tech: Tech): void => {
    if (!playerTribe.unlockedTechs.includes(tech)) {
-      Client.sendUnlockTech(tech.id);
+      sendUnlockTechPacket(tech.id);
    }
 }
 
@@ -221,6 +222,7 @@ const TechNode = ({ tech, positionX, positionY, zoom }: TechNodeProps) => {
          const itemTally = getResearchedItems(tech);
          addResearchedItems(tech, itemTally);
          
+         // @Incomplete: This sounds like an error sound when it's not...
          // @Incomplete @Bug: will decrease in loudness as the sound plays: - attach to camera so it doesn't decrease in loudness. or make 'global sounds'
          playSound("item-research.mp3", 0.4, 1, Camera.position, null);
       }

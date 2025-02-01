@@ -1,8 +1,8 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point } from "battletribes-shared/utils";
+import { assert, Point, randInt } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { createHitbox, Hitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { GlurbComponent } from "../../components/GlurbComponent";
 import { StatusEffect } from "../../../../shared/src/status-effects";
@@ -11,12 +11,10 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { addTetheredHitboxRestriction, TetheredHitboxComponent, TetheredHitboxRestriction } from "../../components/TetheredHitboxComponent";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { createLight } from "../../light-levels";
 
 type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.tetheredHitbox
    | ServerComponentType.physics
    | ServerComponentType.health
    | ServerComponentType.statusEffect
@@ -25,12 +23,11 @@ type ComponentTypes = ServerComponentType.transform
    
 export function createGlurbConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const tetheredHitboxComponent = new TetheredHitboxComponent(15, 0.5);
 
    const lights = new Array<LightCreationInfo>();
    
-   const numSegments = 5;
-   // const numSegments = randInt(3, 5);
+   let lastHitbox: Hitbox | undefined;
+   const numSegments = randInt(3, 5);
    for (let i = 0; i < numSegments; i++) {
       let radius: number;
       let flags: Array<HitboxFlag>;
@@ -52,19 +49,16 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
          mass = 0.4;
       }
       
-      const offsetY = i * -30 + numSegments * 30 / 2;
+      const offsetY = i * -30;
       
       const hitbox = createHitbox(new CircularBox(new Point(0, offsetY), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
-      transformComponent.addHitbox(hitbox, null);
 
-      // @Hack
-      const restriction: TetheredHitboxRestriction = {
-         hitbox: hitbox,
-         idealDistance: 30,
-         previousX: 0,
-         previousY: 0
-      };
-      addTetheredHitboxRestriction(tetheredHitboxComponent, restriction);
+      if (i === 0) {
+         transformComponent.addStaticHitbox(hitbox, null);
+      } else {
+         assert(typeof lastHitbox !== "undefined");
+         transformComponent.addTetheredHitbox(hitbox, lastHitbox, 30, 15, 0.5, null)
+      }
 
       let lightIntensity: number;
       let lightRadius: number;
@@ -87,6 +81,8 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
          light: light,
          attachedHitbox: hitbox
       });
+
+      lastHitbox = hitbox;
    }
 
    const physicsComponent = new PhysicsComponent();
@@ -103,7 +99,6 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
       entityType: EntityType.glurb,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.tetheredHitbox]: tetheredHitboxComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,

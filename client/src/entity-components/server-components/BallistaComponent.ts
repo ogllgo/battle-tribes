@@ -110,10 +110,10 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    // @Temporary
-   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
    // @Temporary
-   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity);
+   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity, false);
 }

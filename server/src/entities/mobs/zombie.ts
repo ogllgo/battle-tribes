@@ -2,7 +2,7 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
+import { HealthComponent } from "../../components/HealthComponent";
 import { ZombieComponent, ZombieComponentArray } from "../../components/ZombieComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -12,7 +12,6 @@ import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { getEntityType } from "../../world";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
@@ -45,7 +44,7 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
 
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
    

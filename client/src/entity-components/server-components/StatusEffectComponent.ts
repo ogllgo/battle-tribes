@@ -289,7 +289,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
-               playSoundOnEntity("freezing.mp3", 0.4, 1, entity);
+               playSoundOnEntity("freezing.mp3", 0.4, 1, entity, false);
                break;
             }
          }

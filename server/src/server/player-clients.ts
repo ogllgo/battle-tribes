@@ -128,73 +128,6 @@ const processCommandPacket = (playerClient: PlayerClient, command: string): void
    registerCommand(command, playerClient.instance);
 }
 
-const processSelectTechPacket = (playerClient: PlayerClient, techID: TechID): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-
-   playerClient.tribe.selectedTechID = techID;
-}
-
-const itemIsNeededInTech = (tech: Tech, itemRequirements: ItemRequirements, itemType: ItemType): boolean => {
-   // If the item isn't present in the item requirements then it isn't needed
-   const amountNeeded = tech.researchItemRequirements.getItemCount(itemType);
-   if (amountNeeded === 0) {
-      return false;
-   }
-   
-   const amountCommitted = itemRequirements[itemType] || 0;
-   return amountCommitted < amountNeeded;
-}
-
-const processTechUnlock = (playerClient: PlayerClient, techID: TechID): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-
-   const tech = getTechByID(techID);
-   
-   const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
-   const inventoryComponent = InventoryComponentArray.getComponent(playerClient.instance);
-
-   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   
-   // Consume any available items
-   for (let i = 0; i < hotbarInventory.items.length; i++) {
-      const item = hotbarInventory.items[i];
-
-      const itemProgress = tribeComponent.tribe.techTreeUnlockProgress[techID]?.itemProgress || {};
-      if (itemIsNeededInTech(tech, itemProgress, item.type)) {
-         const amountNeeded = tech.researchItemRequirements.getItemCount(item.type);
-         const amountCommitted = itemProgress[item.type] || 0;
-
-         const amountToAdd = Math.min(item.count, amountNeeded - amountCommitted);
-
-         item.count -= amountToAdd;
-         if (item.count === 0) {
-            const itemSlot = hotbarInventory.getItemSlot(item);
-            hotbarInventory.removeItem(itemSlot);
-         }
-
-         const unlockProgress = tribeComponent.tribe.techTreeUnlockProgress[techID];
-         if (typeof unlockProgress !== "undefined") {
-            unlockProgress.itemProgress[item.type] = amountCommitted + amountToAdd;
-         } else {
-            tribeComponent.tribe.techTreeUnlockProgress[techID] = {
-               itemProgress: {
-                  [item.type]: amountCommitted + amountToAdd
-               },
-               studyProgress: 0
-            };
-         }
-      }
-   }
-
-   if (tribeComponent.tribe.techIsComplete(tech)) {
-      tribeComponent.tribe.unlockTech(tech);
-   }
-}
-
 const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): void => {
    if (!entityExists(playerClient.instance)) {
       return;
@@ -202,20 +135,6 @@ const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): voi
 
    // @Incomplete
    // playerClient.tribe.forceUnlockTech(techID);
-}
-
-const processStudyPacket = (playerClient: PlayerClient, studyAmount: number): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-
-   const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
-   
-   if (tribeComponent.tribe.selectedTechID !== null) {
-      const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
-      const selectedTech = getTechByID(tribeComponent.tribe.selectedTechID);
-      playerClient.tribe.studyTech(selectedTech, transformComponent.position.x, transformComponent.position.y, studyAmount);
-   }
 }
 
 const processModifyBuildingPacket = (playerClient: PlayerClient, structure: Entity, data: number): void => {
@@ -377,20 +296,8 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
       processCommandPacket(playerClient, command);
    });
 
-   socket.on("select_tech", (techID: TechID): void => {
-      processSelectTechPacket(playerClient, techID);
-   });
-
-   socket.on("unlock_tech", (techID: TechID): void => {
-      processTechUnlock(playerClient, techID);
-   });
-
    socket.on("force_unlock_tech", (techID: TechID): void => {
       processTechForceUnlock(playerClient, techID);
-   });
-
-   socket.on("study_tech", (studyAmount: number): void => {
-      processStudyPacket(playerClient, studyAmount);
    });
 
    socket.on("modify_building", (structureID: number, data: number): void => {

@@ -25,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createAutomatonAssemblerConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createAutomatonAssemblerHitboxes(), null);
+   transformComponent.addStaticHitboxes(createAutomatonAssemblerHitboxes(), null);
    
    const healthComponent = new HealthComponent(50);
    

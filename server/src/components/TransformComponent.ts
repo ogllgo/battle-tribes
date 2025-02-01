@@ -17,8 +17,20 @@ import { Box, boxIsCircular, BoxType, Hitbox, HitboxFlag, hitboxIsCircular, upda
 import { getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { TetheredHitboxComponentArray } from "./TetheredHitboxComponent";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
+
+interface HitboxTether {
+   readonly hitbox: Hitbox;
+   readonly otherHitbox: Hitbox;
+   
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
+
+   // Used for verlet integration
+   previousX: number;
+   previousY: number;
+}
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
@@ -45,6 +57,9 @@ export class TransformComponent {
    /** All hitboxes attached to the entity */
    public hitboxes = new Array<Hitbox>();
    public hitboxLocalIDs = new Array<number>();
+
+   public readonly staticHitboxes = new Array<Hitbox>();
+   public readonly tethers = new Array<HitboxTether>();
    
    public boundingAreaMinX = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
@@ -95,9 +110,31 @@ export class TransformComponent {
       this.isInRiver = true;
    }
 
+   public addTetheredHitbox(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, entity: Entity | null): void {
+      const tether: HitboxTether = {
+         hitbox: hitbox,
+         otherHitbox: otherHitbox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping,
+         previousX: 0,
+         previousY: 0
+      };
+
+      this.tethers.push(tether);
+
+      this.addHitbox(hitbox, entity);
+   }
+
+   public addStaticHitbox(hitbox: Hitbox, entity: Entity | null): void {
+      this.staticHitboxes.push(hitbox);
+
+      this.addHitbox(hitbox, entity);
+   }
+
    // @Cleanup: is there a way to avoid having this be optionally null? Or having the entity parameter here entirely?
    // Note: entity is null if the hitbox hasn't been created yet
-   public addHitbox(hitbox: Hitbox, entity: Entity | null): void {
+   private addHitbox(hitbox: Hitbox, entity: Entity | null): void {
       this.hitboxes.push(hitbox);
 
       const localID = this.nextHitboxLocalID++;
@@ -136,10 +173,10 @@ export class TransformComponent {
       }
    }
 
-   public addHitboxes(hitboxes: ReadonlyArray<Hitbox>, entity: Entity | null): void {
+   public addStaticHitboxes(hitboxes: ReadonlyArray<Hitbox>, entity: Entity | null): void {
       for (let i = 0; i < hitboxes.length; i++) {
          const hitbox = hitboxes[i];
-         this.addHitbox(hitbox, entity);
+         this.addStaticHitbox(hitbox, entity);
       }
    }
 
@@ -211,27 +248,31 @@ export class TransformComponent {
    public cleanHitboxes(entity: Entity): void {
       assert(this.hitboxes.length > 0);
 
-      if (TetheredHitboxComponentArray.hasComponent(entity)) {
-         // Update the first hitbox in the link
-         const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
-         const box = tetheredHitboxComponent.restrictions[0].hitbox.box;
-
-         // @Hack
-         const tempX = box.offset.x;
-         const tempY = box.offset.y;
-         box.offset.x = 0;
-         box.offset.y = 0;
-         
-         updateBox(box, this.position.x, this.position.y, this.rotation);
-
-         box.offset.x = tempX;
-         box.offset.y = tempY;
-      } else {
-         // Update all of them
-         for (const hitbox of this.hitboxes) {
-            updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
-         }
+      for (const hitbox of this.staticHitboxes) {
+         updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
       }
+
+      // if (TetheredHitboxComponentArray.hasComponent(entity)) {
+      //    // Update the first hitbox in the link
+      //    const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
+      //    const box = tetheredHitboxComponent.restrictions[0].hitbox.box;
+
+      //    // @Hack
+      //    const tempX = box.offset.x;
+      //    const tempY = box.offset.y;
+      //    box.offset.x = 0;
+      //    box.offset.y = 0;
+         
+      //    updateBox(box, this.position.x, this.position.y, this.rotation);
+
+      //    box.offset.x = tempX;
+      //    box.offset.y = tempY;
+      // } else {
+      //    // Update all of them
+      //    for (const hitbox of this.hitboxes) {
+      //       updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
+      //    }
+      // }
 
       this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
       this.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
@@ -459,13 +500,12 @@ function onJoin(entity: Entity): void {
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.resetHitboxes(entity);
 
+   // Initialise tethers
    // @Hack @Cleanup
-   if (TetheredHitboxComponentArray.hasComponent(entity)) {
-      const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
-      for (const restriction of tetheredHitboxComponent.restrictions) {
-         restriction.previousX = restriction.hitbox.box.position.x;
-         restriction.previousY = restriction.hitbox.box.position.y;
-      }
+   // @Bug won't account for hitboxes added after init
+   for (const tether of transformComponent.tethers) {
+      tether.previousX = tether.hitbox.box.position.x;
+      tether.previousY = tether.hitbox.box.position.y;
    }
    
    transformComponent.updateIsInRiver(entity);
@@ -500,6 +540,9 @@ function onRemove(entity: Entity): void {
 }
 
 const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): void => {
+   // Important that local ID is important (see how the client uses it when updating from data)
+   packet.addNumber(localID);
+   
    const box = hitbox.box;
    packet.addNumber(box.position.x);
    packet.addNumber(box.position.y);
@@ -512,7 +555,6 @@ const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): voi
    packet.addNumber(hitbox.collisionType);
    packet.addNumber(hitbox.collisionBit);
    packet.addNumber(hitbox.collisionMask);
-   packet.addNumber(localID);
    // Flags
    packet.addNumber(hitbox.flags.length);
    for (const flag of hitbox.flags) {
@@ -549,15 +591,18 @@ export function getRectangularHitboxDataLength(hitbox: Hitbox<BoxType.rectangula
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 7 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       if (hitboxIsCircular(hitbox)) {
          lengthBytes += getCircularHitboxDataLength(hitbox);
       } else {
          // @Hack: cast
          lengthBytes += getRectangularHitboxDataLength(hitbox as Hitbox<BoxType.rectangular>);
       }
+
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    }
 
    return lengthBytes;
@@ -565,8 +610,6 @@ function getDataLength(entity: Entity): number {
 
 // @Speed
 function addDataToPacket(packet: Packet, entity: Entity): void {
-   // @Speed: can be made faster if we pre-filter which hitboxes are circular and rectangular
-
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    packet.addNumber(transformComponent.position.x);
@@ -575,33 +618,37 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(transformComponent.collisionBit);
    packet.addNumber(transformComponent.collisionMask);
    
-   // @Speed
-   let numCircularHitboxes = 0;
+   packet.addNumber(transformComponent.hitboxes.length);
    for (const hitbox of transformComponent.hitboxes) {
-      if (boxIsCircular(hitbox.box)) {
-         numCircularHitboxes++;
-      }
-   }
-   const numRectangularHitboxes = transformComponent.hitboxes.length - numCircularHitboxes;
-   
-   // Circular
-   packet.addNumber(numCircularHitboxes);
-   for (const hitbox of transformComponent.hitboxes) {
-      // @Speed
+      const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
+
       if (hitboxIsCircular(hitbox)) {
-         const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
+         packet.addBoolean(true);
+         packet.padOffset(3);
+         
          addCircularHitboxData(packet, hitbox, localID);
-      }
-   }
-   
-   // Rectangular
-   packet.addNumber(numRectangularHitboxes);
-   for (const hitbox of transformComponent.hitboxes) {
-      // @Speed
-      if (!hitboxIsCircular(hitbox)) {
-         const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
+      } else {
+         packet.addBoolean(false);
+         packet.padOffset(3);
+
          // @Hack: cast
          addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, localID);
+      }
+
+      let tether: HitboxTether | undefined;
+      for (const currentTether of transformComponent.tethers) {
+         if (currentTether.hitbox === hitbox) {
+            tether = currentTether;
+         }
+      }
+
+      // Tether data
+      if (typeof tether !== "undefined") {
+         packet.addBoolean(true);
+         packet.padOffset(3);
+      } else {
+         packet.addBoolean(false);
+         packet.padOffset(3);
       }
    }
 }

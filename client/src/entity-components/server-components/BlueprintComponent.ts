@@ -523,7 +523,7 @@ function onLoad(entity: Entity): void {
 
 
 function onSpawn(entity: Entity): void {
-   playSoundOnEntity("blueprint-place.mp3", 0.4, 1, entity);
+   playSoundOnEntity("blueprint-place.mp3", 0.4, 1, entity, false);
 }
 
 function padData(reader: PacketReader): void {
@@ -575,7 +575,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (blueprintProgress !== blueprintComponent.lastBlueprintProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
 
-      playSoundOnEntity("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity);
+      playSoundOnEntity("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity, false);
 
       const progressTexture = getCurrentBlueprintProgressTexture(blueprintComponent.blueprintType, blueprintProgress);
       
@@ -629,8 +629,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSoundOnEntity("blueprint-work.mp3", 0.4, 1, entity);
-   playSoundOnEntity("structure-shaping.mp3", 0.4, 1, entity);
+   playSoundOnEntity("blueprint-work.mp3", 0.4, 1, entity, false);
+   playSoundOnEntity("structure-shaping.mp3", 0.4, 1, entity, false);
 
    // @Cleanup: Copy and pasted from blueprint component
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);

@@ -67,6 +67,6 @@ function onTick(entity: Entity): void {
       randomSoundComponent.soundTimerTicks = randFloat(randomSoundComponent.minSoundIntervalTicks, randomSoundComponent.maxSoundIntervalTicks);
 
       const soundSrc = randItem(randomSoundComponent.sounds);
-      playSoundOnEntity(soundSrc, randomSoundComponent.volume, 1, entity);
+      playSoundOnEntity(soundSrc, randomSoundComponent.volume, 1, entity, false);
    }
 }

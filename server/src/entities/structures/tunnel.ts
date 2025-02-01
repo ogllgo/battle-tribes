@@ -26,7 +26,7 @@ const HEALTHS = [25, 75];
 
 export function createTunnelConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(createTunnelHitboxes(), null);
+   transformComponent.addStaticHitboxes(createTunnelHitboxes(), null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

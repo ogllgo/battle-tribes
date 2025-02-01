@@ -14,7 +14,7 @@ type ComponentTypes = ServerComponentType.transform
 export function createDecorationConfig(decorationType: DecorationType): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 50, 100, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   transformComponent.addStaticHitbox(hitbox, null);
    
    const decorationComponent = new DecorationComponent(decorationType);
    

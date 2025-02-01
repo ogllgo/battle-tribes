@@ -171,7 +171,8 @@ function onHit(entity: Entity): void {
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity);
+   // @Hack @Temporary
+   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
@@ -191,5 +192,6 @@ function onDie(entity: Entity): void {
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
-   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity);
+   // @Hack @Temporary
+   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity, false);
 }

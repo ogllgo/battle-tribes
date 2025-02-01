@@ -102,11 +102,11 @@ const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): nu
 const playFireSound = (entity: Entity): void => {
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
-         playSoundOnEntity("sling-turret-fire.mp3", 0.2, 1, entity);
+         playSoundOnEntity("sling-turret-fire.mp3", 0.2, 1, entity, false);
          break;
       }
       case EntityType.ballista: {
-         playSoundOnEntity("sling-turret-fire.mp3", 0.25, 0.7, entity);
+         playSoundOnEntity("sling-turret-fire.mp3", 0.25, 0.7, entity, false);
          break;
       }
    }

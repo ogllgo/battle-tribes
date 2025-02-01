@@ -504,36 +504,36 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       case GuardianAttackType.crystalSlam: {
          // If just starting the slam, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalSlam) {
-            playSoundOnEntity("guardian-rock-smash-charge.mp3", 0.4, 1, entity);
+            playSoundOnEntity("guardian-rock-smash-charge.mp3", 0.4, 1, entity, true);
          }
 
          // If starting slam, play start sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.windup && attackStage === GuardianCrystalSlamStage.slam) {
-            playSoundOnEntity("guardian-rock-smash-start.mp3", 0.2, 1, entity);
+            playSoundOnEntity("guardian-rock-smash-start.mp3", 0.2, 1, entity, false);
          }
          
          // If going from slam to return, then play the slam sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.slam && attackStage === GuardianCrystalSlamStage.return) {
-            playSoundOnEntity("guardian-rock-smash-impact.mp3", 0.65, 1, entity);
+            playSoundOnEntity("guardian-rock-smash-impact.mp3", 0.65, 1, entity, false);
          }
          break;
       }
       case GuardianAttackType.crystalBurst: {
          // If just starting, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalBurst) {
-            playSoundOnEntity("guardian-rock-burst-charge.mp3", 0.4, 1, entity);
+            playSoundOnEntity("guardian-rock-burst-charge.mp3", 0.4, 1, entity, true);
          }
 
          // If starting burst, play burst sound
          if (guardianComponent.attackStage === GuardianCrystalBurstStage.windup && attackStage === GuardianCrystalBurstStage.burst) {
-            playSoundOnEntity("guardian-rock-burst.mp3", 0.7, 1, entity);
+            playSoundOnEntity("guardian-rock-burst.mp3", 0.7, 1, entity, false);
          }
          break;
       }
       case GuardianAttackType.summonSpikyBalls: {
          // If just starting, play focus sound
          if (attackStage === GuardianSpikyBallSummonStage.focus && guardianComponent.attackStage === GuardianSpikyBallSummonStage.windup) {
-            playSoundOnEntity("guardian-summon-focus.mp3", 0.55, 1, entity);
+            playSoundOnEntity("guardian-summon-focus.mp3", 0.55, 1, entity, true);
          }
 
          for (let i = 0; i < guardianComponent.limbRenderParts.length; i++) {

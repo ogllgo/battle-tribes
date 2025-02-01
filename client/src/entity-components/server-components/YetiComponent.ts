@@ -135,7 +135,7 @@ function onTick(entity: Entity): void {
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   playSoundOnEntity(randItem(HURT_SOUNDS), 0.7, 1, entity);
+   playSoundOnEntity(randItem(HURT_SOUNDS), 0.7, 1, entity, false);
 
    // Blood pool particle
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
@@ -153,7 +153,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   playSoundOnEntity(randItem(DEATH_SOUNDS), 0.7, 1, entity);
+   playSoundOnEntity(randItem(DEATH_SOUNDS), 0.7, 1, entity, false);
 
    createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, BLOOD_POOL_SIZE);
 

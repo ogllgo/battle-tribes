@@ -27,7 +27,7 @@ export function createSlurbTorchConfig(tribe: Tribe, connections: Array<Structur
    const hitboxes = createFireTorchHitboxes();
    
    const transformComponent = new TransformComponent();
-   transformComponent.addHitboxes(hitboxes, null); 
+   transformComponent.addStaticHitboxes(hitboxes, null); 
    
    const healthComponent = new HealthComponent(3);
    

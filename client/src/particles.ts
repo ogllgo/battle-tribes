@@ -1961,3 +1961,34 @@ export function createHotSparkParticle(x: number, y: number): void {
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createKrumblidChitinParticle(spawnPositionX: number, spawnPositionY: number): void {
+   const lifetime = randFloat(5, 7);
+
+   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityMagnitude = randFloat(60, 80);
+   const vx = velocityMagnitude * Math.sin(velocityDirection);
+   const vy = velocityMagnitude * Math.cos(velocityDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return Math.pow(1 - particle.age / lifetime, 0.5);
+   };
+
+   addTexturedParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.low,
+      64, 64,
+      spawnPositionX, spawnPositionY,
+      vx, vy,
+      0, 0,
+      85,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      7 * 8 + randInt(3, 6),
+      0, 0, 0
+   );
+   Board.lowTexturedParticles.push(particle);
+}

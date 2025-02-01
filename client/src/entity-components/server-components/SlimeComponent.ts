@@ -158,7 +158,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.2 / Settings.TPS) {
-      playSoundOnEntity("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity);
+      playSoundOnEntity("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, false);
    }
 
    const slimeComponent = SlimeComponentArray.getComponent(entity);
@@ -287,7 +287,7 @@ function onHit(entity: Entity): void {
       createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSoundOnEntity("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, entity);
+   playSoundOnEntity("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
@@ -304,5 +304,5 @@ function onDie(entity: Entity): void {
       createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
    }
 
-   playSoundOnEntity("slime-death.mp3", 0.4, 1, entity);
+   playSoundOnEntity("slime-death.mp3", 0.4, 1, entity, false);
 }

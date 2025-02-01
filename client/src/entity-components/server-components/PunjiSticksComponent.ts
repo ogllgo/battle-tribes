@@ -80,7 +80,7 @@ function onTick(entity: Entity): void {
    punjiSticksComponent.ticksSinceLastFlySound++;
    const soundChance = ((punjiSticksComponent.ticksSinceLastFlySound / Settings.TPS) - 0.3) * 2;
    if (Math.random() < soundChance / Settings.TPS) {
-      playSoundOnEntity("flies.mp3", 0.15, randFloat(0.9, 1.1), entity);
+      playSoundOnEntity("flies.mp3", 0.15, randFloat(0.9, 1.1), entity, false);
       punjiSticksComponent.ticksSinceLastFlySound = 0;
    }
 }
@@ -90,9 +90,9 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-hit.mp3", 0.3, 1, entity);
+   playSoundOnEntity("wooden-spikes-hit.mp3", 0.3, 1, entity, false);
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity);
+   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity, false);
 }
