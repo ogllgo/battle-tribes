@@ -12,10 +12,10 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPos
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
-import { Entity, EntityType } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
@@ -59,9 +59,26 @@ const padBaseHitboxData = (reader: PacketReader): void => {
 
    const numFlags = reader.readNumber();
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numFlags);
+
+   // Parent local ID
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-export function readCircularHitboxFromData(reader: PacketReader, localID: number): ClientHitbox<BoxType.circular> {
+const getParentBoxByLocalID = (hitboxes: ReadonlyArray<ClientHitbox>, localID: number): Box | null => {
+   if (localID === -1) {
+      return null;
+   }
+
+   for (const hitbox of hitboxes) {
+      if (hitbox.localID === localID) {
+         return hitbox.box;
+      }
+   }
+
+   throw new Error();
+}
+
+export function readCircularHitboxFromData(reader: PacketReader, hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox<BoxType.circular> {
    const x = reader.readNumber();
    const y = reader.readNumber();
    const relativeRotation = reader.readNumber();
@@ -80,10 +97,13 @@ export function readCircularHitboxFromData(reader: PacketReader, localID: number
       flags.push(reader.readNumber());
    }
 
+   const parentLocalID = reader.readNumber();
+   const parent = getParentBoxByLocalID(hitboxes, parentLocalID);
+
    const radius = reader.readNumber();
 
    const offset = new Point(offsetX, offsetY);
-   const box = new CircularBox(offset, 0, radius);
+   const box = new CircularBox(parent, offset, 0, radius);
    // @Hack
    box.scale = scale;
    box.position.x = x;
@@ -98,7 +118,7 @@ const padCircularHitboxData = (reader: PacketReader): void => {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-export function readRectangularHitboxFromData(reader: PacketReader, localID: number): ClientHitbox<BoxType.rectangular> {
+export function readRectangularHitboxFromData(reader: PacketReader, hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox<BoxType.rectangular> {
    const x = reader.readNumber();
    const y = reader.readNumber();
    const relativeRotation = reader.readNumber();
@@ -116,12 +136,15 @@ export function readRectangularHitboxFromData(reader: PacketReader, localID: num
    for (let i = 0; i < numFlags; i++) {
       flags.push(reader.readNumber());
    }
+
+   const parentLocalID = reader.readNumber();
+   const parent = getParentBoxByLocalID(hitboxes, parentLocalID);
    
    const width = reader.readNumber();
    const height = reader.readNumber();
 
    const offset = new Point(offsetX, offsetY);
-   const box = new RectangularBox(offset, width, height, rotation);
+   const box = new RectangularBox(parent, offset, width, height, rotation);
    // @Hack
    box.scale = scale;
    box.position.x = x;
@@ -169,9 +192,9 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
 
       let hitbox: ClientHitbox;
       if (isCircular) {
-         hitbox = readCircularHitboxFromData(reader, localID);
+         hitbox = readCircularHitboxFromData(reader, hitboxes, localID);
       } else {
-         hitbox = readRectangularHitboxFromData(reader, localID);
+         hitbox = readRectangularHitboxFromData(reader, hitboxes, localID);
       }
 
       hitboxes.push(hitbox);
@@ -433,6 +456,9 @@ const updateBaseHitbox = (hitbox: ClientHitbox, reader: PacketReader): void => {
       flags.push(reader.readNumber());
    }
 
+   // Skip parent local ID
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+
    const box = hitbox.box;
    
    box.position.x = x;
@@ -510,12 +536,12 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          // Create new hitbox
          let hitbox: ClientHitbox;
          if (isCircular) {
-            hitbox = readCircularHitboxFromData(reader, localID);
+            hitbox = readCircularHitboxFromData(reader, transformComponent.hitboxes, localID);
 
             newNumCircular++;
             hasAddedCircular = true;
          } else {
-            hitbox = readRectangularHitboxFromData(reader, localID);
+            hitbox = readRectangularHitboxFromData(reader, transformComponent.hitboxes, localID);
 
             newNumRectangular++;
             hasAddedRectangular = true;

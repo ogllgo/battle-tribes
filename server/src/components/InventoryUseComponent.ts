@@ -95,9 +95,9 @@ export class InventoryUseComponent {
 
    // @Hack: limb configuration. Can't be called in this function as the limbInfos array won't have been populated
    public createLimb(entity: Entity, associatedInventory: Inventory, limbConfiguration: LimbConfiguration): void {
-      const limbDamageBox = new ServerDamageBox(new CircularBox(new Point(0, 0), 0, 12), associatedInventory.name, false);
-      const heldItemDamageBox = new ServerDamageBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
-      const blockBox = new ServerBlockBox(new RectangularBox(new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
+      const limbDamageBox = new ServerDamageBox(new CircularBox(null, new Point(0, 0), 0, 12), associatedInventory.name, false);
+      const heldItemDamageBox = new ServerDamageBox(new RectangularBox(null, new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
+      const blockBox = new ServerBlockBox(new RectangularBox(null, new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
       
       const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
       damageBoxComponent.addDamageBox(limbDamageBox);
@@ -350,7 +350,7 @@ export function repairBuilding(tribeMember: Entity, targetEntity: Entity, attack
 
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {
    // @Speed
-   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+   const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
    updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
    
    return box.isColliding(tileBox);

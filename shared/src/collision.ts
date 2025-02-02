@@ -204,7 +204,7 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
 
 export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: number): boolean {
    // @Speed
-   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+   const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
    updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
    
    return box.isColliding(tileBox);

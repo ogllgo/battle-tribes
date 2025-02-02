@@ -5,7 +5,7 @@ import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsCom
 import { CollisionPushInfo, collisionBitsAreCompatible, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getComponentArrayRecord } from "./components/ComponentArray";
-import { HitboxCollisionType, Hitbox, updateBox, Box } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityComponentTypes, getEntityType } from "./world";
 import { HitboxCollisionPair } from "./collision-detection";
@@ -203,7 +203,7 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
 export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: number, subtileY: number): void {
    // @Copynpaste from boxIsCollidingWithSubtile
    // @Speed
-   const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+   const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
    updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
    
    if (!hitbox.box.isColliding(tileBox)) {

@@ -16,7 +16,7 @@ const TURN_CONSTANT = Math.PI / Settings.TPS;
 const WALL_AVOIDANCE_MULTIPLIER = 1.5;
    
 // @Cleanup: remove
-const testCircularBox = new CircularBox(new Point(0, 0), 0, -1);
+const testCircularBox = new CircularBox(null, new Point(0, 0), 0, -1);
 
 // @Cleanup: Only used in tribesman.ts, so move there.
 export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArray<Entity>): Entity {

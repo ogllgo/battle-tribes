@@ -13,8 +13,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createReedConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 4, 4, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 4, 4, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const colour: Colour = {
       r: 0.68,

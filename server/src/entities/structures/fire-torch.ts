@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createFireTorchConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createFireTorchHitboxes(), null); 
+   transformComponent.addHitboxes(createFireTorchHitboxes(), null); 
    
    const healthComponent = new HealthComponent(3);
    

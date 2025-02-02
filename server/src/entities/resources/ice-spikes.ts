@@ -18,8 +18,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createIceSpikesConfig(rootIceSpikes: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 40), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 40), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~COLLISION_BITS.iceSpikes;
    
    const healthComponent = new HealthComponent(5);

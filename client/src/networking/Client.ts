@@ -92,22 +92,6 @@ export function getGrassBlockers(): ReadonlyArray<GrassBlocker> {
    return grassBlockers;
 }
 
-// @Cleanup: put these 2 in a more appropriate file
-
-export function createCircularHitboxFromData(data: CircularHitboxData): Hitbox {
-   const offset = new Point(data.offsetX, data.offsetY);
-   const box = new CircularBox(offset, 0, data.radius);
-   box.scale = data.scale;
-   return createHitbox(box, data.mass, data.collisionType, data.collisionBit, data.collisionMask, data.flags);
-}
-
-export function createRectangularHitboxFromData(data: RectangularHitboxData): Hitbox {
-   const offset = new Point(data.offsetX, data.offsetY);
-   const box = new RectangularBox(offset, data.width, data.height, data.rotation);
-   box.scale = data.scale;
-   return createHitbox(box, data.mass, data.collisionType, data.collisionBit, data.collisionMask, data.flags);
-}
-
 // @Cleanup: De-singleton-ify
 abstract class Client {
    private static socket: WebSocket | null = null;

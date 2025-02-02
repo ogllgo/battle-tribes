@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createResearchBenchConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createResearchBenchHitboxes(), null);
+   transformComponent.addHitboxes(createResearchBenchHitboxes(), null);
    
    const healthComponent = new HealthComponent(40);
    

@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createWorkerHutConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createWorkerHutHitboxes(), null);
+   transformComponent.addHitboxes(createWorkerHutHitboxes(), null);
    
    const healthComponent = new HealthComponent(50);
    

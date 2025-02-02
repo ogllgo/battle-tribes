@@ -123,7 +123,7 @@ function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
       reader.padOffset(3);
       const blockingSubtileIndex = reader.readNumber();
 
-      const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+      const box = new CircularBox(null, new Point(offsetX, offsetY), 0, radius);
       // @Cleanup: why is this cast needed?
       const damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive) as ClientDamageBox<BoxType.circular>;
 
@@ -159,7 +159,7 @@ function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
       reader.padOffset(3);
       const blockingSubtileIndex = reader.readNumber();
 
-      const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+      const box = new RectangularBox(null, new Point(offsetX, offsetY), width, height, relativeRotation);
       const damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive) as ClientDamageBox<BoxType.rectangular>;
 
       damageBoxes.push(damageBox);
@@ -192,7 +192,7 @@ function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
       const isActive = reader.readBoolean();
       reader.padOffset(3);
 
-      const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+      const box = new CircularBox(null, new Point(offsetX, offsetY), 0, radius);
       const blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive) as ClientBlockBox<BoxType.circular>;
 
       blockBoxes.push(blockBox);
@@ -224,7 +224,7 @@ function createParamsFromData(reader: PacketReader): DamageBoxComponentParams {
       const isActive = reader.readBoolean();
       reader.padOffset(3);
 
-      const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+      const box = new RectangularBox(null, new Point(offsetX, offsetY), width, height, relativeRotation);
       const blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive) as ClientBlockBox<BoxType.rectangular>;
 
       blockBoxes.push(blockBox);
@@ -423,7 +423,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       let damageBox = damageBoxComponent.damageBoxesRecord[localID] as ClientDamageBox<BoxType.circular> | undefined;
       if (typeof damageBox === "undefined") {
-         const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+         const box = new CircularBox(null, new Point(offsetX, offsetY), 0, radius);
          damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive);
 
          damageBoxComponent.damageBoxes.push(damageBox);
@@ -467,7 +467,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       let damageBox = damageBoxComponent.damageBoxesRecord[localID] as ClientDamageBox<BoxType.rectangular> | undefined;
       if (typeof damageBox === "undefined") {
-         const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+         const box = new RectangularBox(null, new Point(offsetX, offsetY), width, height, relativeRotation);
          damageBox = new ClientDamageBox(box, associatedLimbInventoryName, isActive);
 
          damageBoxComponent.damageBoxes.push(damageBox);
@@ -514,7 +514,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       let blockBox = damageBoxComponent.blockBoxesRecord[localID] as ClientBlockBox<BoxType.circular> | undefined;
       if (typeof blockBox === "undefined") {
-         const box = new CircularBox(new Point(offsetX, offsetY), 0, radius);
+         const box = new CircularBox(null, new Point(offsetX, offsetY), 0, radius);
          blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive);
 
          damageBoxComponent.blockBoxes.push(blockBox);
@@ -553,7 +553,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       let blockBox = damageBoxComponent.blockBoxesRecord[localID] as ClientBlockBox<BoxType.rectangular> | undefined;
       if (typeof blockBox === "undefined") {
-         const box = new RectangularBox(new Point(offsetX, offsetY), width, height, relativeRotation);
+         const box = new RectangularBox(null, new Point(offsetX, offsetY), width, height, relativeRotation);
          blockBox = new ClientBlockBox(box, associatedLimbInventoryName, isActive);
 
          damageBoxComponent.blockBoxes.push(blockBox);

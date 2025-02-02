@@ -92,7 +92,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
             }
             
             // @Speed
-            const tileBox = new RectangularBox(new Point(0, 0), Settings.TILE_SIZE, Settings.TILE_SIZE, 0);
+            const tileBox = new RectangularBox(null, new Point(0, 0), Settings.TILE_SIZE, Settings.TILE_SIZE, 0);
             updateBox(tileBox, (tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE, 0);
 
             if (box.isColliding(tileBox)) {

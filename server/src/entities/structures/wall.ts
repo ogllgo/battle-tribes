@@ -24,7 +24,7 @@ const HEALTHS = [25, 75];
 
 export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createWallHitboxes(), null);
+   transformComponent.addHitboxes(createWallHitboxes(), null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

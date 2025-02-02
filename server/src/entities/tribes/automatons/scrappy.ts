@@ -37,7 +37,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createScrappyHitboxes(), null);
+   transformComponent.addHitboxes(createScrappyHitboxes(), null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;

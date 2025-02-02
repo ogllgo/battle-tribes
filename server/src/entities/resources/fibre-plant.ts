@@ -16,8 +16,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createFibrePlantConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 36), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 36), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    
    const healthComponent = new HealthComponent(10);

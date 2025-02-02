@@ -43,12 +43,15 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 
 export function createCowConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
+
    // Body hitbox
-   const bodyHitbox = createHitbox(new RectangularBox(new Point(0, -20), 50, 80, 0), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
-   transformComponent.addStaticHitbox(bodyHitbox, null);
+   const bodyHitbox = createHitbox(new RectangularBox(null, new Point(0, -20), 50, 80, 0), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   transformComponent.addHitbox(bodyHitbox, null);
+   
    // Head hitbox
-   const headHitbox = createHitbox(new CircularBox(new Point(0, 22), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
-   transformComponent.addTetheredHitbox(headHitbox, bodyHitbox, 42, 15, 0.5, null);
+   const headHitbox = createHitbox(new CircularBox(bodyHitbox.box, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   transformComponent.addHitbox(headHitbox, null);
+   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 15, 0.5);
 
    const physicsComponent = new PhysicsComponent();
 

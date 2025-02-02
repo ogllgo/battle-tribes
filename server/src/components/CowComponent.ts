@@ -1,6 +1,6 @@
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { positionIsInWorld, randFloat, randInt } from "battletribes-shared/utils";
+import { angle, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -146,6 +146,31 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
       }
    }
    return herdMembers;
+}
+
+const move = (cow: Entity, targetX: number, targetY: number, acceleration: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const headHitbox = transformComponent.hitboxes[1];
+
+   const targetDirection = angle(targetX - headHitbox.box.position.x, targetY - headHitbox.box.position.y);
+   const parentRotation = headHitbox.box.parent!.rotation;
+
+   headHitbox.box.relativeRotation = targetDirection - parentRotation;
+   
+   const moveX = 400 * Settings.I_TPS * Math.sin(targetDirection);
+   const moveY = 400 * Settings.I_TPS * Math.cos(targetDirection);
+
+   // @Hack
+   // Counteract the cow's rotation
+   const rotatedMoveX = rotateXAroundOrigin(moveX, moveY, -parentRotation);
+   const rotatedMoveY = rotateYAroundOrigin(moveX, moveY, -parentRotation);
+   
+   headHitbox.box.offset.x += rotatedMoveX;
+   headHitbox.box.offset.y += rotatedMoveY;
+   // physicsComponent.acceleration.x = acceleration * Math.sin(targetDirection);
+   // physicsComponent.acceleration.y = acceleration * Math.cos(targetDirection);
+   // physicsComponent.targetRotation = targetDirection;
+   // physicsComponent.turnSpeed = turnSpeed;
 }
 
 const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEntity: Entity, acceleration: number): boolean => {
@@ -307,7 +332,12 @@ function onTick(cow: Entity): void {
    updateFollowAIComponent(cow, aiHelperComponent.visibleEntities, 7)
 
    if (entityExists(followAIComponent.followTargetID)) {
-      continueFollowingEntity(cow, followAIComponent.followTargetID, 200, Vars.TURN_SPEED);
+      // @Temporary
+      const targetTransformComponent = TransformComponentArray.getComponent(followAIComponent.followTargetID);
+      move(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, 0);
+      const physicsComponent = PhysicsComponentArray.getComponent(cow);
+      stopEntity(physicsComponent);
+      // continueFollowingEntity(cow, followAIComponent.followTargetID, 200, Vars.TURN_SPEED);
       return;
    } else {
       const followTarget = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);

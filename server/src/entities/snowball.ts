@@ -22,8 +22,8 @@ const MAX_HEALTHS: ReadonlyArray<number> = [1, 3];
 
 export function createSnowballConfig(yeti: Entity, size: SnowballSize): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
 

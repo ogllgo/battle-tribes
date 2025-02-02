@@ -31,7 +31,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createBallistaConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createBallistaHitboxes(), null);
+   transformComponent.addHitboxes(createBallistaHitboxes(), null);
    
    const healthComponent = new HealthComponent(100);
    

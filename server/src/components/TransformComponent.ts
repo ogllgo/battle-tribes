@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, getTileIndexIncludingEdges, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -28,8 +28,8 @@ interface HitboxTether {
    readonly damping: number;
 
    // Used for verlet integration
-   previousX: number;
-   previousY: number;
+   previousOffsetX: number;
+   previousOffsetY: number;
 }
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
@@ -58,7 +58,8 @@ export class TransformComponent {
    public hitboxes = new Array<Hitbox>();
    public hitboxLocalIDs = new Array<number>();
 
-   public readonly staticHitboxes = new Array<Hitbox>();
+   /** Hitboxes with no parent */
+   public readonly rootHitboxes = new Array<Hitbox>();
    public readonly tethers = new Array<HitboxTether>();
    
    public boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -110,32 +111,28 @@ export class TransformComponent {
       this.isInRiver = true;
    }
 
-   public addTetheredHitbox(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, entity: Entity | null): void {
+   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number): void {
       const tether: HitboxTether = {
          hitbox: hitbox,
          otherHitbox: otherHitbox,
          idealDistance: idealDistance,
          springConstant: springConstant,
          damping: damping,
-         previousX: 0,
-         previousY: 0
+         previousOffsetX: hitbox.box.offset.x,
+         previousOffsetY: hitbox.box.offset.y
       };
-
       this.tethers.push(tether);
-
-      this.addHitbox(hitbox, entity);
-   }
-
-   public addStaticHitbox(hitbox: Hitbox, entity: Entity | null): void {
-      this.staticHitboxes.push(hitbox);
-
-      this.addHitbox(hitbox, entity);
    }
 
    // @Cleanup: is there a way to avoid having this be optionally null? Or having the entity parameter here entirely?
    // Note: entity is null if the hitbox hasn't been created yet
-   private addHitbox(hitbox: Hitbox, entity: Entity | null): void {
+   public addHitbox(hitbox: Hitbox, entity: Entity | null): void {
       this.hitboxes.push(hitbox);
+      if (hitbox.box.parent === null) {
+         this.rootHitboxes.push(hitbox);
+      } else {
+         hitbox.box.parent.children.push(hitbox.box);
+      }
 
       const localID = this.nextHitboxLocalID++;
       this.hitboxLocalIDs.push(localID);
@@ -173,74 +170,10 @@ export class TransformComponent {
       }
    }
 
-   public addStaticHitboxes(hitboxes: ReadonlyArray<Hitbox>, entity: Entity | null): void {
+   public addHitboxes(hitboxes: ReadonlyArray<Hitbox>, entity: Entity | null): void {
       for (let i = 0; i < hitboxes.length; i++) {
          const hitbox = hitboxes[i];
-         this.addStaticHitbox(hitbox, entity);
-      }
-   }
-
-   // @Copynpaste
-   public resetHitboxes(entity: Entity): void {
-      assert(this.hitboxes.length > 0);
-
-      // @Cleanup: lmao this is the only thing that's different
-      for (const hitbox of this.hitboxes) {
-         updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
-      }
-
-      this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
-      this.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
-      this.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
-      this.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
-
-      // An object only changes their chunks if a hitboxes' bounds change chunks.
-      let hitboxChunkBoundsHaveChanged = false;
-      const numHitboxes = this.hitboxes.length;
-      for (let i = 0; i < numHitboxes; i++) {
-         const hitbox = this.hitboxes[i];
-         const box = hitbox.box;
-
-         const boundsMinX = box.calculateBoundsMinX();
-         const boundsMaxX = box.calculateBoundsMaxX();
-         const boundsMinY = box.calculateBoundsMinY();
-         const boundsMaxY = box.calculateBoundsMaxY();
-
-         // Update bounding area
-         if (boundsMinX < this.boundingAreaMinX) {
-            this.boundingAreaMinX = boundsMinX;
-         }
-         if (boundsMaxX > this.boundingAreaMaxX) {
-            this.boundingAreaMaxX = boundsMaxX;
-         }
-         if (boundsMinY < this.boundingAreaMinY) {
-            this.boundingAreaMinY = boundsMinY;
-         }
-         if (boundsMaxY > this.boundingAreaMaxY) {
-            this.boundingAreaMaxY = boundsMaxY;
-         }
-
-         // Check if the hitboxes' chunk bounds have changed
-         // @Speed
-         // @Speed
-         // @Speed
-         if (!hitboxChunkBoundsHaveChanged) {
-            if (Math.floor(boundsMinX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinX / Settings.CHUNK_UNITS) ||
-                Math.floor(boundsMaxX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxX / Settings.CHUNK_UNITS) ||
-                Math.floor(boundsMinY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinY / Settings.CHUNK_UNITS) ||
-                Math.floor(boundsMaxY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxY / Settings.CHUNK_UNITS)) {
-               hitboxChunkBoundsHaveChanged = true;
-            }
-         }
-
-         hitbox.boundsMinX = boundsMinX;
-         hitbox.boundsMaxX = boundsMaxX;
-         hitbox.boundsMinY = boundsMinY;
-         hitbox.boundsMaxY = boundsMaxY;
-      }
-
-      if (entity !== null && hitboxChunkBoundsHaveChanged) {
-         this.updateContainingChunks(entity);
+         this.addHitbox(hitbox, entity);
       }
    }
    
@@ -248,31 +181,9 @@ export class TransformComponent {
    public cleanHitboxes(entity: Entity): void {
       assert(this.hitboxes.length > 0);
 
-      for (const hitbox of this.staticHitboxes) {
-         updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
+      for (const hitbox of this.rootHitboxes) {
+         cleanHitbox(this, hitbox, this.position, this.rotation);
       }
-
-      // if (TetheredHitboxComponentArray.hasComponent(entity)) {
-      //    // Update the first hitbox in the link
-      //    const tetheredHitboxComponent = TetheredHitboxComponentArray.getComponent(entity);
-      //    const box = tetheredHitboxComponent.restrictions[0].hitbox.box;
-
-      //    // @Hack
-      //    const tempX = box.offset.x;
-      //    const tempY = box.offset.y;
-      //    box.offset.x = 0;
-      //    box.offset.y = 0;
-         
-      //    updateBox(box, this.position.x, this.position.y, this.rotation);
-
-      //    box.offset.x = tempX;
-      //    box.offset.y = tempY;
-      // } else {
-      //    // Update all of them
-      //    for (const hitbox of this.hitboxes) {
-      //       updateBox(hitbox.box, this.position.x, this.position.y, this.rotation);
-      //    }
-      // }
 
       this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
       this.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
@@ -490,6 +401,27 @@ export class TransformComponent {
    }
 }
 
+// @Hack: THIS SHIT STINKY
+const getHitboxByBox = (transformComponent: TransformComponent, box: Box): Hitbox => {
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.box === box) {
+         return hitbox;
+      }
+   }
+
+   throw new Error();
+}
+
+// @Cleanup: name is bad, doesn't fully 'clean' the hitbox.
+const cleanHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, parentPosition: Readonly<Point>, parentRotation: number): void => {
+   updateBox(hitbox.box, parentPosition.x, parentPosition.y, parentRotation);
+
+   for (const child of hitbox.box.children) {
+      const childHitbox = getHitboxByBox(transformComponent, child);
+      cleanHitbox(transformComponent, childHitbox, hitbox.box.position, hitbox.box.rotation);
+   }
+}
+
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
 TransformComponentArray.onJoin = onJoin;
 TransformComponentArray.onRemove = onRemove;
@@ -498,15 +430,7 @@ function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
-   transformComponent.resetHitboxes(entity);
-
-   // Initialise tethers
-   // @Hack @Cleanup
-   // @Bug won't account for hitboxes added after init
-   for (const tether of transformComponent.tethers) {
-      tether.previousX = tether.hitbox.box.position.x;
-      tether.previousY = tether.hitbox.box.position.y;
-   }
+   transformComponent.cleanHitboxes(entity);
    
    transformComponent.updateIsInRiver(entity);
    
@@ -539,7 +463,19 @@ function onRemove(entity: Entity): void {
    removeEntityLights(entity);
 }
 
-const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): void => {
+const getBoxLocalID = (transformComponent: TransformComponent, box: Box): number => {
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
+      if (hitbox.box === box) {
+         const localID = transformComponent.hitboxLocalIDs[i];
+         return localID;
+      }
+   }
+
+   throw new Error();
+}
+
+const addBaseHitboxData = (packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox, localID: number): void => {
    // Important that local ID is important (see how the client uses it when updating from data)
    packet.addNumber(localID);
    
@@ -560,15 +496,19 @@ const addBaseHitboxData = (packet: Packet, hitbox: Hitbox, localID: number): voi
    for (const flag of hitbox.flags) {
       packet.addNumber(flag);
    }
+
+   const parentHitboxLocalID = hitbox.box.parent !== null && transformComponent !== null ? getBoxLocalID(transformComponent, hitbox.box.parent) : -1;
+   packet.addNumber(parentHitboxLocalID);
 }
 const getBaseHitboxDataLength = (hitbox: Hitbox): number => {
    let lengthBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    return lengthBytes;
 }
 
-export function addCircularHitboxData(packet: Packet, hitbox: Hitbox<BoxType.circular>, localID: number): void {
-   addBaseHitboxData(packet, hitbox, localID);
+export function addCircularHitboxData(packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox<BoxType.circular>, localID: number): void {
+   addBaseHitboxData(packet, transformComponent, hitbox, localID);
    
    const box = hitbox.box;
    packet.addNumber(box.radius);
@@ -577,8 +517,8 @@ export function getCircularHitboxDataLength(hitbox: Hitbox<BoxType.circular>): n
    return getBaseHitboxDataLength(hitbox) + Float32Array.BYTES_PER_ELEMENT;
 }
 
-export function addRectangularHitboxData(packet: Packet, hitbox: Hitbox<BoxType.rectangular>, localID: number): void {
-   addBaseHitboxData(packet, hitbox, localID);
+export function addRectangularHitboxData(packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox<BoxType.rectangular>, localID: number): void {
+   addBaseHitboxData(packet, transformComponent, hitbox, localID);
 
    const box = hitbox.box;
    packet.addNumber(box.width);
@@ -626,13 +566,13 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.addBoolean(true);
          packet.padOffset(3);
          
-         addCircularHitboxData(packet, hitbox, localID);
+         addCircularHitboxData(packet, transformComponent, hitbox, localID);
       } else {
          packet.addBoolean(false);
          packet.padOffset(3);
 
          // @Hack: cast
-         addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, localID);
+         addRectangularHitboxData(packet, transformComponent, hitbox as Hitbox<BoxType.rectangular>, localID);
       }
 
       let tether: HitboxTether | undefined;

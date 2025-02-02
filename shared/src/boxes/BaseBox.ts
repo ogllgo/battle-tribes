@@ -2,8 +2,10 @@ import { Point } from "../utils";
 import { Box } from "./boxes";
 
 abstract class BaseBox {
-   public readonly position = new Point(0, 0);
+   public readonly parent: Box | null;
+   public readonly children = new Array<Box>();
    
+   public readonly position = new Point(0, 0);
    /** Offset of the box from its parent */
    public readonly offset: Point;
    
@@ -14,7 +16,8 @@ abstract class BaseBox {
 
    public scale = 1;
 
-   constructor(offset: Point, rotation: number) {
+   constructor(parent: Box | null, offset: Point, rotation: number) {
+      this.parent = parent;
       this.offset = offset;
       
       this.relativeRotation = rotation;

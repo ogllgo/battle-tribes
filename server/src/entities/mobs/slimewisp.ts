@@ -29,8 +29,8 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 
 export function createSlimewispConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 16), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 16), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
    

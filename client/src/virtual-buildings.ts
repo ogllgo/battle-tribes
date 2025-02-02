@@ -72,9 +72,9 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
       
       let hitbox: ClientHitbox;
       if (isCircular) {
-         hitbox = readCircularHitboxFromData(reader, localID);
+         hitbox = readCircularHitboxFromData(reader, [], localID);
       } else {
-         hitbox = readRectangularHitboxFromData(reader, localID);
+         hitbox = readRectangularHitboxFromData(reader, [], localID);
       }
       hitboxes.push(hitbox);
    }

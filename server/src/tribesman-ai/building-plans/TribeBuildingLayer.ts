@@ -2,7 +2,6 @@ import { BoxType, createHitbox, Hitbox, hitboxIsCircular, updateBox } from "../.
 import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
-import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
@@ -73,7 +72,7 @@ export type VirtualStructure = VirtualUnidentifiedBuilding | VirtualWall | Virtu
 export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualStructure> };
 
 const createRestrictedBuildingArea = (position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea => {
-   const box = new RectangularBox(new Point(0, 0), width, height, rotation);
+   const box = new RectangularBox(null, new Point(0, 0), width, height, rotation);
    const hitbox = createHitbox<BoxType.rectangular>(box, 0, 0, HitboxCollisionBit.DEFAULT, 0, []);
    box.position.x = position.x;
    box.position.y = position.y;
@@ -220,10 +219,10 @@ export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualS
       packet.padOffset(3);
 
       if (isCircular) {
-         addCircularHitboxData(packet, hitbox, 0);
+         addCircularHitboxData(packet, null, hitbox, 0);
       } else {
          // @Hack: cast
-         addRectangularHitboxData(packet, hitbox as Hitbox<BoxType.rectangular>, 0);
+         addRectangularHitboxData(packet, null, hitbox as Hitbox<BoxType.rectangular>, 0);
       }
    }
 }

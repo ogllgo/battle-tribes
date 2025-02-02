@@ -4,13 +4,14 @@ import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entiti
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
-import { Point } from "battletribes-shared/utils";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer, undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -333,11 +334,34 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
    }
 }
 
-const applyTethers = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const pushHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, otherHitbox: Hitbox, springForceX: number, springForceY: number): void => {
+   if (hitbox.box.parent !== null) {
+      // We need to adjust the offset of the hitbox such that the position is moved by (springForceX, springForceY)
+      const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -hitbox.box.parent.rotation);
+      const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -hitbox.box.parent.rotation);
+
+      hitbox.box.offset.x += rotatedSpringForceX;
+      hitbox.box.offset.y += rotatedSpringForceY;
+   } else {
+      // Add the raw spring force here because the position is already world-relative
+      transformComponent.position.x += springForceX;
+      transformComponent.position.y += springForceY;
+
+      // So that it doesn't affect the other hitboxes' position
+      const otherParentRotation = otherHitbox.box.parent !== null ? otherHitbox.box.parent.rotation : transformComponent.rotation;
+      const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -otherParentRotation);
+      const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -otherParentRotation);
+      otherHitbox.box.offset.x -= rotatedSpringForceX;
+      otherHitbox.box.offset.y -= rotatedSpringForceY;
+   }
+}
+
+const applyHitboxTethers = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
    const tethers = transformComponent.tethers;
    
    // Apply the spring physics
    for (const tether of tethers) {
+      // console.log("-=-=-=-=-=-=-=-=--")
       const hitbox = tether.hitbox;
       const otherHitbox = tether.otherHitbox;
 
@@ -354,29 +378,44 @@ const applyTethers = (transformComponent: TransformComponent, physicsComponent: 
       const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
       const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
       
+      // console.log("distance:",distance,"ideal distance:",tether.idealDistance);
+      // console.log("spring force:",springForceX,springForceY);
+
       // Apply spring force
-      hitbox.box.position.x += springForceX;
-      hitbox.box.position.y += springForceY;
-      otherHitbox.box.position.x -= springForceX;
-      otherHitbox.box.position.y -= springForceY;
+      // We need to adjust the offset of the hitbox such that the position is moved by (springForceX, springForceY)
+      const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -transformComponent.rotation);
+      const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -transformComponent.rotation);
+      
+      pushHitbox(transformComponent, hitbox, otherHitbox, springForceX, springForceY);
+      pushHitbox(transformComponent, otherHitbox, hitbox, -springForceX, -springForceY);
+
+      // hitbox.box.offset.x += rotatedSpringForceX;
+      // hitbox.box.offset.y += rotatedSpringForceY;
+      // otherHitbox.box.offset.x -= rotatedSpringForceX;
+      // otherHitbox.box.offset.y -= rotatedSpringForceY;
+      // hitbox.box.offset.x += springForceX;
+      // hitbox.box.offset.y += springForceY;
+      // otherHitbox.box.offset.x -= springForceX;
+      // otherHitbox.box.offset.y -= springForceY;
+
+      // console.log("new offset for hitbox:",hitbox.box.offset.x,hitbox.box.offset.y);
    }
 
    // Verlet integration
    for (const tether of tethers) {
       const hitbox = tether.hitbox;
       
-      const velocityX = (hitbox.box.position.x - tether.previousX) * (1 - tether.damping);
-      const velocityY = (hitbox.box.position.y - tether.previousY) * (1 - tether.damping);
+      const velocityX = (hitbox.box.offset.x - tether.previousOffsetX) * (1 - tether.damping);
+      const velocityY = (hitbox.box.offset.y - tether.previousOffsetY) * (1 - tether.damping);
       
-      const tempX = hitbox.box.position.x;
-      const tempY = hitbox.box.position.y;
-
-      hitbox.box.position.x += velocityX;
-      hitbox.box.position.y += velocityY;
-
       // Update previous position for next frame
-      tether.previousX = tempX;
-      tether.previousY = tempY;
+      tether.previousOffsetX = hitbox.box.offset.x;
+      tether.previousOffsetY = hitbox.box.offset.y;
+
+      hitbox.box.offset.x += velocityX;
+      hitbox.box.offset.y += velocityY;
+      // console.log("resulting offset:",hitbox.box.offset.x,hitbox.box.offset.y);
+      // console.log("previous offset:",tether.previousOffsetX,tether.previousOffsetY);
    }
 
    // @Speed: Is this necessary every tick?
@@ -389,7 +428,7 @@ function onTick(entity: Entity): void {
 
    turnEntity(entity, transformComponent, physicsComponent);
    applyPhysics(entity, transformComponent, physicsComponent);
-   applyTethers(transformComponent, physicsComponent);
+   applyHitboxTethers(transformComponent, physicsComponent);
    updatePosition(entity, transformComponent, physicsComponent);
 }
 

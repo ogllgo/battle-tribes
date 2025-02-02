@@ -51,13 +51,12 @@ export function createGlurbConfig(): EntityConfig<ComponentTypes> {
       
       const offsetY = i * -30;
       
-      const hitbox = createHitbox(new CircularBox(new Point(0, offsetY), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
+      const hitbox = createHitbox(new CircularBox(null, new Point(0, offsetY), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
 
-      if (i === 0) {
-         transformComponent.addStaticHitbox(hitbox, null);
-      } else {
+      transformComponent.addHitbox(hitbox, null);
+      if (i > 0) {
          assert(typeof lastHitbox !== "undefined");
-         transformComponent.addTetheredHitbox(hitbox, lastHitbox, 30, 15, 0.5, null)
+         transformComponent.addHitboxTether(hitbox, lastHitbox, 30, 15, 0.5);
       }
 
       let lightIntensity: number;

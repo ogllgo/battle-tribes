@@ -25,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createMithrilAnvilConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createMithrilAnvilHitboxes(), null);
+   transformComponent.addHitboxes(createMithrilAnvilHitboxes(), null);
    
    const healthComponent = new HealthComponent(50);
    

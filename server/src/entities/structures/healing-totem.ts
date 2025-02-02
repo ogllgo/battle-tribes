@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createHealingTotemConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createHealingTotemHitboxes(), null);
+   transformComponent.addHitboxes(createHealingTotemHitboxes(), null);
    
    const healthComponent = new HealthComponent(50);
    

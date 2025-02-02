@@ -28,7 +28,7 @@ const HEALTHS = [15, 45];
 
 export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createDoorHitboxes(), null);
+   transformComponent.addHitboxes(createDoorHitboxes(), null);
    
    // @Hack: Shouldn't need!
    const physicsComponent = new PhysicsComponent();

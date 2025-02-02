@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createPlanterBoxConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   transformComponent.addStaticHitboxes(createPlanterBoxHitboxes(), null);
+   transformComponent.addHitboxes(createPlanterBoxHitboxes(), null);
    
    const healthComponent = new HealthComponent(15);
    

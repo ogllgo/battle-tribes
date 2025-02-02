@@ -22,8 +22,8 @@ const RADIUS = 55;
 export function createSpitPoisonAreaConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
    // @Hack mass
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, RADIUS), Number.EPSILON, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, RADIUS), Number.EPSILON, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();
    

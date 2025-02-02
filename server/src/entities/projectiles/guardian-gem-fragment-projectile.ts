@@ -17,8 +17,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createGuardianGemFragmentProjectileConfig(creator: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 8, 16, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 8, 16, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByAirFriction = false;

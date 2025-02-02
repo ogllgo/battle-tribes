@@ -23,8 +23,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createBallistaFrostcicleConfig(tribe: Tribe, creator: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 80, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 80, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
+   transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;

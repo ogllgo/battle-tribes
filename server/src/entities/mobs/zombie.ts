@@ -43,8 +43,8 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new CircularBox(new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
    

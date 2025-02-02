@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { Hitbox, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { TransformComponent, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
@@ -246,6 +246,9 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
 
 const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Matrix3x3 => {
    const matrix = createIdentityMatrix();
+   if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
+      console.log(hitbox.box.rotation);
+   }
 
    // Rotation
    overrideWithRotationMatrix(matrix, hitbox.box.rotation);

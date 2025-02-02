@@ -21,8 +21,8 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createSpearProjectileConfig(tribeMember: Entity, itemID: number | null): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(new RectangularBox(new Point(0, 0), 12, 60, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addStaticHitbox(hitbox, null);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 60, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
