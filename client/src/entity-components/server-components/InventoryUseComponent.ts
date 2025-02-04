@@ -394,6 +394,13 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          showLargeTexture = true;
          break;
       }
+      case "animalStaff": {
+         offsetX = 26;
+         offsetY = 24;
+         rotation = 0;
+         showLargeTexture = true;
+         break;
+      }
       default: {
          offsetX = 8;
          offsetY = 8;

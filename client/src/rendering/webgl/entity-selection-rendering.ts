@@ -4,7 +4,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { entityExists, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { renderEntities } from "./entity-rendering";
-import { cleanEntityRenderInfo } from "../render-part-matrices";
+import { cleanEntityRenderInfo, translateEntityRenderParts } from "../render-part-matrices";
 import { gameFramebuffer } from "../../Game";
 
 let renderProgram: WebGLProgram;
@@ -201,78 +201,54 @@ export function renderEntitySelection(): void {
 
    const renderInfo = getEntityRenderInfo(highlightedEntity);
 
-   const startRenderPositionX = renderInfo.renderPosition.x;
-   const startRenderPositionY = renderInfo.renderPosition.y;
-
    // For the outline, we render normally
    gl.enable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ONE);
 
    // Right
-   renderInfo.renderPosition.x += 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, 4, 0);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Left
-   renderInfo.renderPosition.x -= 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, -4, 0);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Top
-   renderInfo.renderPosition.y += 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, 0, 4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Bottom
-   renderInfo.renderPosition.y -= 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, 0, -4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Top right
-   renderInfo.renderPosition.x += 4;
-   renderInfo.renderPosition.y += 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, 4, 4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Bottom right
-   renderInfo.renderPosition.x += 4;
-   renderInfo.renderPosition.y -= 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, 4, -4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Bottom left
-   renderInfo.renderPosition.x -= 4;
-   renderInfo.renderPosition.y -= 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, -4, -4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Top left
-   renderInfo.renderPosition.x -= 4;
-   renderInfo.renderPosition.y += 4;
-   cleanEntityRenderInfo(renderInfo);
+   translateEntityRenderParts(renderInfo, -4, 4);
    renderEntities([renderInfo]);
-   renderInfo.renderPosition.x = startRenderPositionX;
-   renderInfo.renderPosition.y = startRenderPositionY;
+   cleanEntityRenderInfo(renderInfo);
 
    // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
    // (dfactor) by 1 minus the middle alpha.
    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
 
-   cleanEntityRenderInfo(renderInfo);
    renderEntities([renderInfo], { overrideAlphaWithOne: true });
 
    // 

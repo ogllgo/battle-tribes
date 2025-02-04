@@ -467,6 +467,21 @@ export function cleanAngle(angle: number): number {
    return angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI));
 }
 
+/** Clamps an angle into the [-PI, PI) range. */
+// @Cleanup: The game should only use this function instead of the above one
+export function cleanAngleNEW(angle: number): number {
+   // @Speed
+
+   let res = angle;
+   while (res < -Math.PI) {
+      res += Math.PI * 2;
+   }
+   while (res >= Math.PI) {
+      res -= Math.PI * 2;
+   }
+   return res;
+}
+
 export function getMinAngleToCircularBox(x: number, y: number, hitbox: CircularBox): number {
    const xDiff = hitbox.position.x - x;
    const yDiff = hitbox.position.y - y;
@@ -543,19 +558,23 @@ export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: numb
 }
 
 export function turnAngle(angle: number, targetAngle: number, turnSpeed: number): number {
+   // @Copynpaste from turnEntity in PhysicsComponent
+   
    const clockwiseDist = getClockwiseAngleDistance(angle, targetAngle);
    if (clockwiseDist < Math.PI) {
       // Turn clockwise
       let result = angle + turnSpeed * Settings.I_TPS;
       // @Incomplete: Will this sometimes cause snapping?
-      if (result > targetAngle) {
+      if (turnSpeed * Settings.I_TPS >= clockwiseDist) {
          result = targetAngle;
       }
       return result;
    } else {
+      const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
+      
       // Turn counterclockwise
       let result = angle - turnSpeed * Settings.I_TPS;
-      if (result < targetAngle) {
+      if (turnSpeed * Settings.I_TPS >= anticlockwiseDist) {
          result = targetAngle;
       }
       return result;
@@ -726,4 +745,15 @@ export function snapRotationToOtherAngle(rotation: number, snapAngle: number): n
 
    snapRotation += rotation;
    return snapRotation;
+}
+
+/** Calculates how closely 2 angles are aligned */
+export function findAngleAlignment(a1: number, a2: number): number {
+   const x1 = Math.sin(a1);
+   const y1 = Math.cos(a1);
+   const x2 = Math.sin(a2);
+   const y2 = Math.cos(a2);
+
+   const dot = x1 * x2 + y1 * y2;
+   return dot * 0.5 + 0.5;
 }

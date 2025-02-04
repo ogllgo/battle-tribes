@@ -1,12 +1,13 @@
 import { Point, randFloat, randSign, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
 import { createWebGLProgram, halfWindowHeight, halfWindowWidth } from "../../webgl";
 import { ATLAS_SLOT_SIZE } from "../../texture-atlases/texture-atlas-stitching";
-import { ENTITY_TEXTURE_ATLAS_LENGTH, getTechTreeEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { getTechTreeEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import { getTechTreeGL, techTreeX, techTreeY, techTreeZoom } from "./tech-tree-rendering";
 import { Settings } from "battletribes-shared/settings";
 import { UBOBindingIndex, bindUBOToProgram } from "../ubos";
 import { ItemType } from "battletribes-shared/items/items";
+import { TEXTURE_SOURCES } from "../../texture-atlases/texture-sources";
 
 interface TechTreeItem {
    readonly itemType: ItemType;
@@ -75,8 +76,8 @@ export function createTechTreeItemShaders(): void {
    uniform sampler2D u_textureAtlas;
    uniform float u_atlasPixelSize;
    uniform float u_atlasSlotSize;
-   uniform float u_textureSlotIndexes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
-   uniform vec2 u_textureSizes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
+   uniform float u_textureSlotIndexes[${TEXTURE_SOURCES.length}];
+   uniform vec2 u_textureSizes[${TEXTURE_SOURCES.length}];
    
    in vec2 v_texCoord;
    in float v_textureArrayIndex;
@@ -115,13 +116,13 @@ export function createTechTreeItemShaders(): void {
 
    const textureAtlas = getTechTreeEntityTextureAtlas();
    
-   const textureSlotIndexes = new Float32Array(ENTITY_TEXTURE_ATLAS_LENGTH);
-   for (let textureArrayIndex = 0; textureArrayIndex < ENTITY_TEXTURE_ATLAS_LENGTH; textureArrayIndex++) {
+   const textureSlotIndexes = new Float32Array(TEXTURE_SOURCES.length);
+   for (let textureArrayIndex = 0; textureArrayIndex < TEXTURE_SOURCES.length; textureArrayIndex++) {
       textureSlotIndexes[textureArrayIndex] = textureAtlas.textureSlotIndexes[textureArrayIndex];
    }
 
-   const textureSizes = new Float32Array(ENTITY_TEXTURE_ATLAS_LENGTH * 2);
-   for (let textureArrayIndex = 0; textureArrayIndex < ENTITY_TEXTURE_ATLAS_LENGTH; textureArrayIndex++) {
+   const textureSizes = new Float32Array(TEXTURE_SOURCES.length * 2);
+   for (let textureArrayIndex = 0; textureArrayIndex < TEXTURE_SOURCES.length; textureArrayIndex++) {
       textureSizes[textureArrayIndex * 2] = textureAtlas.textureWidths[textureArrayIndex];
       textureSizes[textureArrayIndex * 2 + 1] = textureAtlas.textureHeights[textureArrayIndex];
    }

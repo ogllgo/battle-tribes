@@ -36,18 +36,18 @@ export interface EntitySpawnInfo {
 }
 
 export const SPAWN_INFOS = [
-   // {
-   //    entityType: EntityType.cow,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.01,
-   //    maxDensity: 0.004,
-   //    spawnableTileTypes: [TileType.grass],
-   //    minPackSize: 2,
-   //    maxPackSize: 5,
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    usesSpawnDistribution: false
-   // },
+   {
+      entityType: EntityType.cow,
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.grass],
+      minPackSize: 2,
+      maxPackSize: 5,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      usesSpawnDistribution: false
+   },
    {
       entityType: EntityType.berryBush,
       layer: surfaceLayer,
@@ -247,18 +247,18 @@ export const SPAWN_INFOS = [
          return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
       }
    },
-   // {
-   //    entityType: EntityType.glurb,
-   //    layer: undergroundLayer,
-   //    spawnRate: 0.0025,
-   //    maxDensity: 0.004,
-   //    spawnableTileTypes: [TileType.stone],
-   //    minPackSize: 1,
-   //    maxPackSize: 1,
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 100,
-   //    usesSpawnDistribution: true
-   // }
+   {
+      entityType: EntityType.glurb,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.stone],
+      minPackSize: 1,
+      maxPackSize: 1,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      usesSpawnDistribution: true
+   }
 ] satisfies ReadonlyArray<EntitySpawnInfo>;
 
 export type SpawningEntityType = (typeof SPAWN_INFOS)[number]["entityType"];

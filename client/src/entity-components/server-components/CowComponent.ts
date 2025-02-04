@@ -1,13 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { angle, randFloat, randInt } from "battletribes-shared/utils";
+import { angle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSoundOnEntity } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityLayer } from "../../world";
+import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -16,17 +16,27 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { EntityConfig } from "../ComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import { RenderPart } from "../../render-parts/render-parts";
 
 export interface CowComponentParams {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
+   readonly isFollowing: boolean;
 }
 
-interface RenderParts {}
+interface RenderParts {
+   readonly headRenderPart: RenderPart;
+   readonly followHalo: RenderPart | null;
+}
 
 export interface CowComponent {
    readonly species: CowSpecies;
    grazeProgress: number;
+
+   isFollowing: boolean;
+   
+   readonly headRenderPart: RenderPart;
+   followHalo: RenderPart | null;
 }
 
 export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, RenderParts>(ServerComponentType.cow, true, {
@@ -43,11 +53,25 @@ export const CowComponentArray = new ServerComponentArray<CowComponent, CowCompo
 function createParamsFromData(reader: PacketReader): CowComponentParams {
    const species = reader.readNumber();
    const grazeProgress = reader.readNumber();
+   const isFollowing = reader.readBoolean();
+   reader.padOffset(3);
 
    return {
       species: species,
-      grazeProgress: grazeProgress
+      grazeProgress: grazeProgress,
+      isFollowing: isFollowing
    };
+}
+
+const createFollowHalo = (headRenderPart: RenderPart): RenderPart => {
+   const followHalo = new TexturedRenderPart(
+      headRenderPart,
+      2,
+      0,
+      getTextureArrayIndex("entities/miscellaneous/follow-halo.png")
+   );
+   followHalo.inheritParentRotation = false;
+   return followHalo;
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.cow, never>): RenderParts {
@@ -56,6 +80,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
    const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
 
+   let headRenderPart!: RenderPart;
    for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.COW_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
@@ -67,7 +92,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
          // Head
-         const headRenderPart = new TexturedRenderPart(
+         headRenderPart = new TexturedRenderPart(
             hitbox,
             1,
             0,
@@ -77,15 +102,30 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       }
    }
 
-   return {};
+   // Follow halo
+   let followHalo: RenderPart | null;
+   if (cowComponentParams.isFollowing) {
+      followHalo = createFollowHalo(headRenderPart);
+      renderInfo.attachRenderPart(followHalo);
+   } else {
+      followHalo = null;
+   }
+
+   return {
+      headRenderPart: headRenderPart,
+      followHalo: followHalo
+   };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, never>): CowComponent {
+function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, never>, renderParts: RenderParts): CowComponent {
    const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
    
    return {
       species: cowComponentParams.species,
-      grazeProgress: cowComponentParams.grazeProgress
+      grazeProgress: cowComponentParams.grazeProgress,
+      isFollowing: cowComponentParams.isFollowing,
+      headRenderPart: renderParts.headRenderPart,
+      followHalo: renderParts.followHalo
    };
 }
 
@@ -104,10 +144,14 @@ function onTick(entity: Entity): void {
    if (Math.random() < 0.1 / Settings.TPS) {
       playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, true);
    }
+
+   if (cowComponent.followHalo !== null) {
+      cowComponent.followHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
+   }
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -129,6 +173,21 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
    cowComponent.grazeProgress = grazeProgress;
+
+   cowComponent.isFollowing = reader.readBoolean();
+   reader.padOffset(3);
+
+   if (cowComponent.isFollowing) {
+      if (cowComponent.followHalo === null) {
+         const renderInfo = getEntityRenderInfo(entity);
+         cowComponent.followHalo = createFollowHalo(cowComponent.headRenderPart);
+         renderInfo.attachRenderPart(cowComponent.followHalo);
+      }
+   } else if (cowComponent.followHalo !== null) {
+      const renderInfo = getEntityRenderInfo(entity);
+      renderInfo.removeRenderPart(cowComponent.followHalo);
+      cowComponent.followHalo = null;
+   }
 }
 
 function onHit(entity: Entity, hitData: HitData): void {

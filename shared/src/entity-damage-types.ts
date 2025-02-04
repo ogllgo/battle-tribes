@@ -373,6 +373,7 @@ const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {
       case "placeable":
       case "shield":
       case "slingshot":
+      case "animalStaff":
       case "armour": return [DamageType.basic];
       case "axe": return [DamageType.axe];
       case "battleaxe": return [DamageType.axe, DamageType.weapon];

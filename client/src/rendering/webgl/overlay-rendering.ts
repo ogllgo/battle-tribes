@@ -1,7 +1,7 @@
 import { rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
-import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../ubos";
+import { bindUBOToProgram, getEntityTextureAtlasUBO, UBOBindingIndex } from "../ubos";
 import { createImage } from "../../textures";
 import { RenderableType, addRenderable } from "../render-loop";
 import { VisualRenderPart, renderPartIsTextured } from "../../render-parts/render-parts";
@@ -97,7 +97,7 @@ export async function createEntityOverlayShaders(): Promise<void> {
    precision highp float;
 
    uniform sampler2D u_entityTextureAtlas;
-   ${ENTITY_TEXTURE_ATLAS_UBO}
+   ${getEntityTextureAtlasUBO()}
    
    uniform highp sampler2DArray u_overlayTextures;
    

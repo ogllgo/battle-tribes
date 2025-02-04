@@ -37,6 +37,7 @@ import "./css/game/infocards.css";
 import "./css/game/attack-charge-bar.css";
 import "./css/game/layer-change-message.css";
 import "./css/game/tribe-plan-visualiser.css";
+import "./css/game/animal-staff-options.css";
 
 // We have to manually import this so that the component arrays are all detected
 import "./entity-components/components";

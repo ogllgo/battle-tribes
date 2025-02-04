@@ -361,7 +361,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
    
    // Apply the spring physics
    for (const tether of tethers) {
-      // console.log("-=-=-=-=-=-=-=-=--")
       const hitbox = tether.hitbox;
       const otherHitbox = tether.otherHitbox;
 
@@ -378,27 +377,9 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
       const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
       const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
       
-      // console.log("distance:",distance,"ideal distance:",tether.idealDistance);
-      // console.log("spring force:",springForceX,springForceY);
-
       // Apply spring force
-      // We need to adjust the offset of the hitbox such that the position is moved by (springForceX, springForceY)
-      const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -transformComponent.rotation);
-      const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -transformComponent.rotation);
-      
       pushHitbox(transformComponent, hitbox, otherHitbox, springForceX, springForceY);
       pushHitbox(transformComponent, otherHitbox, hitbox, -springForceX, -springForceY);
-
-      // hitbox.box.offset.x += rotatedSpringForceX;
-      // hitbox.box.offset.y += rotatedSpringForceY;
-      // otherHitbox.box.offset.x -= rotatedSpringForceX;
-      // otherHitbox.box.offset.y -= rotatedSpringForceY;
-      // hitbox.box.offset.x += springForceX;
-      // hitbox.box.offset.y += springForceY;
-      // otherHitbox.box.offset.x -= springForceX;
-      // otherHitbox.box.offset.y -= springForceY;
-
-      // console.log("new offset for hitbox:",hitbox.box.offset.x,hitbox.box.offset.y);
    }
 
    // Verlet integration
@@ -414,8 +395,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
 
       hitbox.box.offset.x += velocityX;
       hitbox.box.offset.y += velocityY;
-      // console.log("resulting offset:",hitbox.box.offset.x,hitbox.box.offset.y);
-      // console.log("previous offset:",tether.previousOffsetX,tether.previousOffsetY);
    }
 
    // @Speed: Is this necessary every tick?

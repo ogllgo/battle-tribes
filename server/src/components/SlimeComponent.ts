@@ -6,7 +6,7 @@ import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
-import { turnAngle, stopEntity, getEntitiesInRange } from "../ai-shared";
+import { turnAngle, stopEntity, getEntitiesInRange, moveEntityToPosition } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
@@ -298,7 +298,12 @@ function onTick(slime: Entity): void {
    // Wander AI
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(slime);
+   wanderAI.update(slime);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(slime, wanderAI.targetPositionX, wanderAI.targetPositionY, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI);
+   } else {
+      stopEntity(physicsComponent);
+   }
 }
 
 function onDeath(slime: Entity): void {

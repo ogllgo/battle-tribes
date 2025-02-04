@@ -94,7 +94,7 @@ export class EntityRenderInfo {
       registerDirtyRenderInfo(this);
    }
 
-   public removeRenderPart(renderPart: VisualRenderPart): void {
+   public removeRenderPart(renderPart: RenderPart): void {
       // Don't remove if already removed
       const idx = this.allRenderThings.indexOf(renderPart);
       if (idx === -1) {

@@ -4,7 +4,7 @@ import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition } from "../ai-shared";
+import { moveEntityToPosition, stopEntity } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { createSlimeConfig } from "../entities/mobs/slime";
 import { createEntity } from "../Entity";
@@ -72,7 +72,12 @@ function onTick(slimewisp: Entity): void {
    
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(slimewisp);
+   wanderAI.update(slimewisp);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI);
+   } else {
+      stopEntity(physicsComponent);
+   }
 }
 
 function getDataLength(): number {

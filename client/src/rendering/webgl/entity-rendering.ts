@@ -1,6 +1,6 @@
 import { createWebGLProgram, gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
-import { bindUBOToProgram, ENTITY_TEXTURE_ATLAS_UBO, UBOBindingIndex } from "../ubos";
+import { bindUBOToProgram, getEntityTextureAtlasUBO, UBOBindingIndex } from "../ubos";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart, renderPartIsTextured, thingIsVisualRenderPart } from "../../render-parts/render-parts";
 
@@ -43,7 +43,7 @@ export function createEntityShaders(): void {
       uniform float u_zoom;
    };
 
-   ${ENTITY_TEXTURE_ATLAS_UBO}
+   ${getEntityTextureAtlasUBO()}
    
    layout(location = 0) in vec2 a_position;
    layout(location = 1) in float a_depth;
@@ -95,7 +95,7 @@ export function createEntityShaders(): void {
    precision highp float;
 
    uniform sampler2D u_textureAtlas;
-   ${ENTITY_TEXTURE_ATLAS_UBO}
+   ${getEntityTextureAtlasUBO()}
    
    uniform float u_overrideAlphaWithOne;
    

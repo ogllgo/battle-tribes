@@ -95,6 +95,7 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
                new Point(x, y),
                rotation,
                hitboxes.slice(),
+               [],
                hitboxes.slice(),
                COLLISION_BITS.default,
                DEFAULT_COLLISION_MASK

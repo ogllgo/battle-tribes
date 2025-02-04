@@ -5,7 +5,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { getAngleDiff, lerp, Point, randInt, TileIndex, UtilVars } from "battletribes-shared/utils";
-import { stopEntity } from "../ai-shared";
+import { moveEntityToPosition, stopEntity } from "../ai-shared";
 import { registerDirtyEntity } from "../server/player-clients";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -322,7 +322,13 @@ function onTick(guardian: Entity): void {
       
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(guardian);
+   wanderAI.update(guardian);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(guardian, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.5 * Math.PI);
+   } else {
+      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
+      stopEntity(physicsComponent);
+   }
 }
 
 function getDataLength(): number {

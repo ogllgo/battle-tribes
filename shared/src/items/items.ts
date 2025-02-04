@@ -88,7 +88,8 @@ export const enum ItemType {
    automatonAssembler,
    mithrilAnvil,
    yuriMinecraft,
-   yuriSonichu
+   yuriSonichu,
+   animalStaff
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -177,6 +178,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilAnvil]: "Mithril Anvil",
    [ItemType.yuriMinecraft]: "Yuri Minecraft",
    [ItemType.yuriSonichu]: "Yuri Sonichu",
+   [ItemType.animalStaff]: "Animal Staff"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -289,6 +291,10 @@ export interface ShieldItemInfo extends BaseItemInfo {}
 
 export interface SlingshotItemInfo extends BaseItemInfo {}
 
+export interface AnimalStaffItemInfo extends BaseItemInfo {
+   readonly controlRange: number;
+}
+
 export interface ItemInfoRecord {
    material: MaterialItemInfo;
    healing: ConsumableItemInfo;
@@ -306,6 +312,7 @@ export interface ItemInfoRecord {
    crossbow: CrossbowItemInfo;
    shield: ShieldItemInfo;
    slingshot: SlingshotItemInfo;
+   animalStaff: AnimalStaffItemInfo;
 }
 
 interface TorchItemTrait {
@@ -423,6 +430,11 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<At
       attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
+   },
+   animalStaff: {
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
+      attackTimings: DEFAULT_ATTACK_TIMINGS,
+      heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    }
 };
 
@@ -512,6 +524,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.mithrilAnvil]: "placeable",
    [ItemType.yuriMinecraft]: "material",
    [ItemType.yuriSonichu]: "material",
+   [ItemType.animalStaff]: "animalStaff",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -943,6 +956,9 @@ export const ITEM_INFO_RECORD = {
    [ItemType.yuriSonichu]: {
       stackSize: 99
    },
+   [ItemType.animalStaff]: {
+      controlRange: 320
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1058,6 +1074,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.mithrilAnvil]: {},
    [ItemType.yuriMinecraft]: {},
    [ItemType.yuriSonichu]: {},
+   [ItemType.animalStaff]: {},
 };
 
 // Some typescript wizardry

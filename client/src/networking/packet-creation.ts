@@ -274,3 +274,9 @@ export function sendSelectTechPacket(techID: TechID): void {
    packet.addNumber(techID);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendAnimalStaffFollowCommandPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.animalStaffFollowCommand, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   Client.sendPacket(packet.buffer);
+}

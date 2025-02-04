@@ -7,7 +7,7 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
-import { stopEntity, runHerdAI } from "../ai-shared";
+import { stopEntity, runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
@@ -235,7 +235,12 @@ function onTick(fish: Entity): void {
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(fish);
+   wanderAI.update(fish);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI);
+   } else {
+      stopEntity(physicsComponent);
+   }
 }
 
 function preRemove(fish: Entity): void {

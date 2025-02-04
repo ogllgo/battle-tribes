@@ -251,7 +251,7 @@ export function resolveWallCollisions(entity: Entity): boolean {
             const tileCenterX = (subtileX + 0.5) * Settings.SUBTILE_SIZE;
             const tileCenterY = (subtileY + 0.5) * Settings.SUBTILE_SIZE;
 
-            const tileBox = new RectangularBox(new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
+            const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
             updateBox(tileBox, tileCenterX, tileCenterY, 0);
 
             if (box.isColliding(tileBox)) {

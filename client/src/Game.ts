@@ -75,7 +75,8 @@ import { createBuildingBlockingTileShaders, renderBuildingBlockingTiles } from "
 import { renderLightLevelsText } from "./rendering/light-levels-text-rendering";
 import { createLightLevelsBGShaders, renderLightLevelsBG } from "./rendering/webgl/light-levels-bg-rendering";
 import { createMithrilRichTileRenderingShaders, renderMithrilRichTileOverlays } from "./rendering/webgl/mithril-rich-tile-rendering";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/debug-image-rendering";
+import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -273,6 +274,11 @@ const renderLayer = (layer: Layer): void => {
    if (OPTIONS.debugLights) {
       renderLightingDebug(layer);
    }
+
+   if (OPTIONS.debugTethers) {
+      // @Incomplete: not per layer
+      renderDebugImages();
+   }
 }
 
 abstract class Game {
@@ -422,6 +428,7 @@ abstract class Game {
             createBuildingBlockingTileShaders();
             createLightLevelsBGShaders();
             createMithrilRichTileRenderingShaders();
+            createDebugImageShaders();
             if (isDev()) {
                setupFrameGraph();
             }
@@ -461,6 +468,7 @@ abstract class Game {
       updateSelectedStructure();
       BuildMenu_updateBuilding();
       BuildMenu_refreshBuildingID();
+      AnimalStaffOptions_update();
       // @Incomplete?
       // updateInspectHealthBar();
       InventorySelector_forceUpdate();

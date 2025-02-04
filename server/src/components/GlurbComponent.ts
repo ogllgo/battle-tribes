@@ -2,8 +2,8 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
-import { lerp } from "../../../shared/src/utils";
-import { moveEntityToEntity, stopEntity } from "../ai-shared";
+import { angle, lerp, UtilVars } from "../../../shared/src/utils";
+import { stopEntity, turnAngle } from "../ai-shared";
 import { CollisionVars, entitiesAreColliding } from "../collision";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
@@ -32,7 +32,27 @@ const getAcceleration = (glurb: Entity): number => {
    const age = getEntityAgeTicks(glurb);
    
    const u = (Math.sin(age * Settings.I_TPS * 6.5) + 1) * 0.5;
-   return lerp(140, 550, u);
+   // @Hack: Since we are doing velocity here not acceleration
+   // return lerp(140, 550, u);
+   return lerp(125, 250, u);
+}
+
+const move = (glurb: Entity, targetEntity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(glurb);
+   const headHitbox = transformComponent.hitboxes[0];
+
+   const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
+
+   const headTargetDirection = angle(targetTransformComponent.position.x - headHitbox.box.position.x, targetTransformComponent.position.y - headHitbox.box.position.y);
+
+   headHitbox.box.relativeRotation = turnAngle(headHitbox.box.relativeRotation, headTargetDirection - transformComponent.rotation, UtilVars.PI);
+   
+   const acceleration = getAcceleration(glurb) * 0.5 * Settings.I_TPS;
+   const moveX = acceleration * Math.sin(headTargetDirection - transformComponent.rotation);
+   const moveY = acceleration * Math.cos(headTargetDirection - transformComponent.rotation);
+
+   headHitbox.box.offset.x += moveX;
+   headHitbox.box.offset.y += moveY;
 }
 
 function onTick(glurb: Entity): void {
@@ -41,7 +61,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
-         moveEntityToEntity(glurb, entity, getAcceleration(glurb), Math.PI * 1);
+         move(glurb, entity);
 
          if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
@@ -54,7 +74,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.player) {
-         moveEntityToEntity(glurb, entity, getAcceleration(glurb), Math.PI * 1);
+         move(glurb, entity);
          
          return;
       }

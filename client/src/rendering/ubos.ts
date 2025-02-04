@@ -1,8 +1,9 @@
 import Camera from "../Camera";
-import { ENTITY_TEXTURE_ATLAS_LENGTH, getEntityTextureAtlas } from "../texture-atlases/texture-atlases";
+import { getEntityTextureAtlas } from "../texture-atlases/texture-atlases";
 import { ATLAS_SLOT_SIZE } from "../texture-atlases/texture-atlas-stitching";
 import { gl, halfWindowHeight, halfWindowWidth } from "../webgl";
 import { getTechTreeGL } from "./webgl/tech-tree-rendering";
+import { TEXTURE_SOURCES } from "../texture-atlases/texture-sources";
 
 export const enum UBOBindingIndex {
    CAMERA = 0,
@@ -16,18 +17,21 @@ export const UBO_NAME_RECORD: Record<UBOBindingIndex, string> = {
    [UBOBindingIndex.ENTITY_TEXTURE_ATLAS]: "EntityTextureAtlas"
 };
 
-export const ENTITY_TEXTURE_ATLAS_UBO = `
-#define ATLAS_SLOT_SIZE ${ATLAS_SLOT_SIZE.toFixed(1)}
+// This is in a function so that the ENTITY_TEXTURE_ATLAS_LENGTH value can wait until all the files register their texture sources
+export function getEntityTextureAtlasUBO(): string {
+   return `
+   #define ATLAS_SLOT_SIZE ${ATLAS_SLOT_SIZE.toFixed(1)}
 
-// Entity Texture Atlas
-layout(std140) uniform ${UBO_NAME_RECORD[UBOBindingIndex.ENTITY_TEXTURE_ATLAS]} {
-   // @Cleanup @Speed: might be better to premultiply this by ATLAS_SLOT_SIZE if it isn't used
-   float u_atlasSize;
-   // @Cleanup: Use a struct for these 2
-   float u_textureSlotIndexes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
-   vec2 u_textureSizes[${ENTITY_TEXTURE_ATLAS_LENGTH}];
-};
-`;
+   // Entity Texture Atlas
+   layout(std140) uniform ${UBO_NAME_RECORD[UBOBindingIndex.ENTITY_TEXTURE_ATLAS]} {
+      // @Cleanup @Speed: might be better to premultiply this by ATLAS_SLOT_SIZE if it isn't used
+      float u_atlasSize;
+      // @Cleanup: Use a struct for these 2
+      float u_textureSlotIndexes[${TEXTURE_SOURCES.length}];
+      vec2 u_textureSizes[${TEXTURE_SOURCES.length}];
+   };
+   `;
+}
 
 const cameraData = new Float32Array(8);
 let cameraBuffer: WebGLBuffer;   
@@ -39,7 +43,7 @@ let cameraBufferTechTree: WebGLBuffer;
 const timeData = new Float32Array(4);
 let timeBuffer: WebGLBuffer;
 
-const entityTextureAtlasData = new Float32Array(4 + ENTITY_TEXTURE_ATLAS_LENGTH * 8);
+let entityTextureAtlasData: Float32Array;
 let entityTextureAtlasBuffer: WebGLBuffer;
 
 export function createUBOs(): void {
@@ -63,14 +67,18 @@ export function createUBOs(): void {
 
    // Entity texture atlas uniform buffer
 
+   if (typeof entityTextureAtlasData === "undefined") {
+      entityTextureAtlasData = new Float32Array(4 + TEXTURE_SOURCES.length * 8);
+   }
+
    const textureAtlas = getEntityTextureAtlas();
    entityTextureAtlasData[0] = textureAtlas.atlasSize;
-   for (let i = 0; i < ENTITY_TEXTURE_ATLAS_LENGTH; i++) {
+   for (let i = 0; i < TEXTURE_SOURCES.length; i++) {
       entityTextureAtlasData[4 + i * 4] = textureAtlas.textureSlotIndexes[i];
    }
-   for (let i = 0; i < ENTITY_TEXTURE_ATLAS_LENGTH; i++) {
-      entityTextureAtlasData[4 + ENTITY_TEXTURE_ATLAS_LENGTH * 4 + i * 4] = textureAtlas.textureWidths[i];
-      entityTextureAtlasData[4 + ENTITY_TEXTURE_ATLAS_LENGTH * 4 + i * 4 + 1] = textureAtlas.textureHeights[i];
+   for (let i = 0; i < TEXTURE_SOURCES.length; i++) {
+      entityTextureAtlasData[4 + TEXTURE_SOURCES.length * 4 + i * 4] = textureAtlas.textureWidths[i];
+      entityTextureAtlasData[4 + TEXTURE_SOURCES.length * 4 + i * 4 + 1] = textureAtlas.textureHeights[i];
    }
 
    entityTextureAtlasBuffer = gl.createBuffer()!;

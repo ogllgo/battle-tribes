@@ -25,6 +25,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
 import { sendStructureInteractPacket } from "./networking/packet-creation";
+import { AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible } from "./components/game/AnimalStaffOptions";
 
 const enum InteractActionType {
    openBuildMenu,
@@ -34,7 +35,8 @@ const enum InteractActionType {
    startResearching,
    toggleDoor,
    openInventory,
-   openCraftingStation
+   openCraftingStation,
+   openAnimalStaffMenu
 }
 
 interface BaseInteractAction {
@@ -77,7 +79,11 @@ interface OpenCraftingMenuAction extends BaseInteractAction {
    readonly craftingStation: CraftingStation;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction;
+interface OpenAnimalStaffMenuAction extends BaseInteractAction {
+   readonly type: InteractActionType.openAnimalStaffMenu;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction;
 
 const HIGHLIGHT_RANGE = 75;
 const HIGHLIGHT_DISTANCE = 150;
@@ -195,6 +201,13 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       };
    }
 
+   // Animal staff menu
+   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && entityType === EntityType.cow) {
+      return {
+         type: InteractActionType.openAnimalStaffMenu
+      }
+   }
+
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
       return {
@@ -273,6 +286,12 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          CraftingMenu_setIsVisible(true);
          break;
       }
+      case InteractActionType.openAnimalStaffMenu: {
+         selectedEntityID = entity;
+         AnimalStaffOptions_setIsVisible(true);
+         AnimalStaffOptions_setEntity(highlightedEntity);
+         break;
+      }
       default: {
          const unreachable: never = action;
          return unreachable;
@@ -311,6 +330,7 @@ export function deselectSelectedEntity(closeInventory: boolean = true): void {
       Client.sendStructureUninteract(selectedEntityID);
 
       BuildMenu_hide();
+      AnimalStaffOptions_setIsVisible(false);
    }
 
    selectedEntityID = -1;
@@ -350,8 +370,8 @@ const getEntityID = (doPlayerProximityCheck: boolean, doCanSelectCheck: boolean)
                continue;
             }
 
-            const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
 
+            const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck) {
                // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from center
                if (playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position) > HIGHLIGHT_DISTANCE) {

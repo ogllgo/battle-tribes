@@ -397,7 +397,13 @@ function onTick(yeti: Entity): void {
    
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(yeti);
+   wanderAI.update(yeti);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(yeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, 1.5 * Math.PI);
+   } else {
+      const physicsComponent = PhysicsComponentArray.getComponent(yeti);
+      stopEntity(physicsComponent);
+   }
 }
 
 export function preRemove(yeti: Entity): void {

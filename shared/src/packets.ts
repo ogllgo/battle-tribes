@@ -28,6 +28,7 @@ export const enum PacketType {
    unlockTech,
    selectTech,
    studyTech,
+   animalStaffFollowCommand,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

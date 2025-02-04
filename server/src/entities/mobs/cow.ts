@@ -51,7 +51,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
    // Head hitbox
    const headHitbox = createHitbox(new CircularBox(bodyHitbox.box, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    transformComponent.addHitbox(headHitbox, null);
-   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 15, 0.5);
+   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4);
 
    const physicsComponent = new PhysicsComponent();
 

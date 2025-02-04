@@ -3,7 +3,6 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { Settings } from "../../../../shared/src/settings";
 import { distBetweenPointAndRectangularBox } from "../../../../shared/src/utils";
-import Camera from "../../Camera";
 import Layer from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
 import { layers } from "../../world";

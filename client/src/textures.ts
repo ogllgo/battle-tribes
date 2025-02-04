@@ -21,7 +21,8 @@ const TEXTURE_SOURCES: Array<string> = [
    "miscellaneous/particle-texture-atlas.png",
    "miscellaneous/gravel-noise-texture.png",
    // @Temporary
-   "tiles/dirt2.png"
+   "tiles/dirt2.png",
+   "debug/spring.png"
 ];
 
 // @Hack. remove

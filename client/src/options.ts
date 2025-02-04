@@ -29,6 +29,7 @@ interface Options {
    debugLights: boolean;
    showSubtileSupports: boolean;
    showLightLevels: boolean;
+   debugTethers: boolean;
 }
 
 const OPTIONS: Options = {
@@ -51,7 +52,8 @@ const OPTIONS: Options = {
    maxGreenSafety: 100,
    debugLights: false,
    showSubtileSupports: false,
-   showLightLevels: false
+   showLightLevels: false,
+   debugTethers: false
 };
 
 document.documentElement.style.setProperty("--zoom", OPTIONS.uiZoom.toString());

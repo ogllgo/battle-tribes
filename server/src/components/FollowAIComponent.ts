@@ -14,6 +14,7 @@ export class FollowAIComponent {
    public followCooldownTicks: number;
    /** Keeps track of how long the mob has been interested in its target */
    public interestTimer = 0;
+   public currentTargetIsForgettable = true;
 
    public readonly followChancePerSecond: number;
    public readonly followDistance: number;
@@ -45,17 +46,20 @@ export function updateFollowAIComponent(entity: Entity, visibleEntities: Readonl
       return;
    }
    
-   followAIComponent.interestTimer += Settings.I_TPS;
-   if (followAIComponent.interestTimer >= interestDuration) {
-      followAIComponent.followTargetID = 0;
+   if (followAIComponent.currentTargetIsForgettable) {
+      followAIComponent.interestTimer += Settings.I_TPS;
+      if (followAIComponent.interestTimer >= interestDuration) {
+         followAIComponent.followTargetID = 0;
+      }
    }
 }
 
-export function startFollowingEntity(entity: Entity, followedEntity: Entity, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number): void {
+export function startFollowingEntity(entity: Entity, followedEntity: Entity, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number, isForgettable: boolean): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    followAIComponent.followTargetID = followedEntity;
    followAIComponent.followCooldownTicks = newFollowCooldownTicks;
    followAIComponent.interestTimer = 0;
+   followAIComponent.currentTargetIsForgettable = isForgettable;
 
    const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
    moveEntityToPosition(entity, followedEntityTransformComponent.position.x, followedEntityTransformComponent.position.y, acceleration, turnSpeed);
@@ -68,7 +72,7 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
    const followTargetTransformComponent = TransformComponentArray.getComponent(followTarget);
    
    // @Incomplete: do getDistanceBetweenEntities
-   // @Hack
+   // @Hack: not right - assumes 1 circular hitbox with radius of 32
    const distance = getDistanceFromPointToEntity(followTargetTransformComponent.position, entity) - 32;
    if (willStopAtDesiredDistance(physicsComponent, followAIComponent.followDistance, distance)) {
       stopEntity(physicsComponent);

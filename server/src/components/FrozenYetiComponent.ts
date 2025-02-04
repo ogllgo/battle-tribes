@@ -7,7 +7,7 @@ import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { getAngleDifference, entityIsInVisionRange, getEntitiesInRange, stopEntity } from "../ai-shared";
+import { getAngleDifference, entityIsInVisionRange, getEntitiesInRange, stopEntity, moveEntityToPosition } from "../ai-shared";
 import { createRockSpikeConfig, ROCK_SPIKE_HITBOX_SIZES } from "../entities/projectiles/rock-spike";
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
@@ -419,7 +419,13 @@ function onTick(frozenYeti: Entity): void {
 
       // Wander AI
       const wanderAI = aiHelperComponent.getWanderAI();
-      wanderAI.run(frozenYeti);
+      wanderAI.update(frozenYeti);
+      if (wanderAI.targetPositionX !== -1) {
+         moveEntityToPosition(frozenYeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.7 * Math.PI);
+      } else {
+         const physicsComponent = PhysicsComponentArray.getComponent(frozenYeti);
+         stopEntity(physicsComponent);
+      }
       return;
    }
 

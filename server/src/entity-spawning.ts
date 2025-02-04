@@ -30,15 +30,13 @@ import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { TribeType } from "battletribes-shared/tribes";
 import Tribe from "./Tribe";
 import { createTreeConfig } from "./entities/resources/tree";
-import { createGlurbConfig } from "./entities/mobs/glurb";
 import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn-info";
 import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
-import { createCogwalkerConfig } from "./entities/tribes/automatons/cogwalker";
-import { createScrappyConfig } from "./entities/tribes/automatons/scrappy";
+import { createGlurbConfig } from "./entities/mobs/glurb";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -160,7 +158,7 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
 const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y: number): void => {
    let config: EntityConfig<ServerComponentType.transform>;
    switch (entityType) {
-      // case EntityType.cow: config = createCowConfig(); break;
+      case EntityType.cow: config = createCowConfig(); break;
       case EntityType.tree: config = createTreeConfig(); break;
       case EntityType.berryBush: config = createBerryBushConfig(); break;
       case EntityType.tombstone: config = createTombstoneConfig(); break;
@@ -175,7 +173,7 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.lilypad: config = createLilypadConfig(); break;
       case EntityType.golem: config = createGolemConfig(); break;
       case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
-      // case EntityType.glurb: config = createGlurbConfig(); break;
+      case EntityType.glurb: config = createGlurbConfig(); break;
    }
    
    const transformComponent = config.components[ServerComponentType.transform];
@@ -363,7 +361,8 @@ export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
       // if(1+1===2)return;
-      const cow = createCowConfig();
+      // const cow = createCowConfig();
+      const cow = createGlurbConfig();
       cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
       cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
       createEntity(cow, surfaceLayer, 0);

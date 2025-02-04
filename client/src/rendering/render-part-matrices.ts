@@ -244,11 +244,9 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    translateMatrix(matrix, tx, ty);
 }
 
+// @Cleanup: unused parameter?
 const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Matrix3x3 => {
    const matrix = createIdentityMatrix();
-   if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
-      console.log(hitbox.box.rotation);
-   }
 
    // Rotation
    overrideWithRotationMatrix(matrix, hitbox.box.rotation);
@@ -270,31 +268,41 @@ export function renderParentIsHitbox(parent: RenderParent): parent is Hitbox {
    return parent !== null && typeof (parent as Hitbox).mass !== "undefined";
 }
 
+export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: number, ty: number): void {
+   for (const thing of renderInfo.allRenderThings) {
+      translateMatrix(thing.modelMatrix, tx, ty);
+   }
+}
+
 export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo): void {
    const numRenderThings = renderInfo.allRenderThings.length;
    
    calculateAndOverrideEntityModelMatrix(renderInfo);
 
-   const entityRenderPosition = renderInfo.renderPosition;
-   
    for (let j = 0; j < numRenderThings; j++) {
       const thing = renderInfo.allRenderThings[j];
 
       // Model matrix for the render part
       calculateAndOverrideRenderThingMatrix(thing);
 
-      if (thing.inheritParentRotation) {
-         let parentModelMatrix: Matrix3x3;
-         if (renderParentIsHitbox(thing.parent)) {
-            // @Speed?
-            parentModelMatrix = calculateHitboxMatrix(renderInfo.modelMatrix, thing.parent);
-         } else {
-            parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
-         }
-         matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
+      let parentRotation: number;
+      let parentModelMatrix: Matrix3x3;
+      if (renderParentIsHitbox(thing.parent)) {
+         // @Speed?
+         parentModelMatrix = calculateHitboxMatrix(renderInfo.modelMatrix, thing.parent);
+         parentRotation = thing.parent.box.rotation;
       } else {
-         translateMatrix(thing.modelMatrix, entityRenderPosition.x, entityRenderPosition.y);
+         parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
+         parentRotation = thing.parent !== null ? thing.parent.rotation : renderInfo.rotation;
       }
+
+      // @Hack Speed: If the thing doesn't inherit its' parents rotation, undo the rotation before the matrix is applied.
+      // But would be faster to branch the whole logic based on the inheritParentRotation flag, instead of cancelling out the rotation step
+      if (!thing.inheritParentRotation) {
+         rotateMatrix(thing.modelMatrix, -parentRotation)
+      }
+      
+      matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
    }
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {

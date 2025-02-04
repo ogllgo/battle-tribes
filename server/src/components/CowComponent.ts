@@ -1,6 +1,6 @@
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -12,11 +12,11 @@ import { createItemEntityConfig, createItemsOverEntity } from "../entities/item-
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { TileType } from "battletribes-shared/tiles";
-import { moveEntityToPosition, runHerdAI, stopEntity } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, moveEntityToPosition, runHerdAI, stopEntity, turnAngle } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, continueFollowingEntity, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
+import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -42,10 +42,11 @@ const enum Vars {
    MIN_SEPARATION_DISTANCE = 150,
    SEPARATION_INFLUENCE = 0.7,
    ALIGNMENT_INFLUENCE = 0.5,
-   COHESION_INFLUENCE = 0.3
+   COHESION_INFLUENCE = 0.3,
+   /** Amount of rotation the head can be offset relative to the body */
+   HEAD_DIRECTION_LEEWAY = 0.3,
+   HEAD_TURN_SPEED = UtilVars.PI
 }
-
-
 
 export class CowComponent {
    public readonly species: CowSpecies = randInt(0, 1);
@@ -59,6 +60,9 @@ export class CowComponent {
    /** Used when producing poop. */
    public bowelFullness = 0;
    public poopProductionCooldownTicks = 0;
+
+   // @Temporary
+   public followTarget: Entity = 0;
 }
 
 export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponentType.cow, true, getDataLength, addDataToPacket);
@@ -148,39 +152,89 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
    return herdMembers;
 }
 
-const move = (cow: Entity, targetX: number, targetY: number, acceleration: number): void => {
+const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boolean): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const headHitbox = transformComponent.hitboxes[1];
 
-   const targetDirection = angle(targetX - headHitbox.box.position.x, targetY - headHitbox.box.position.y);
-   const parentRotation = headHitbox.box.parent!.rotation;
-
-   headHitbox.box.relativeRotation = targetDirection - parentRotation;
+   // 
+   // Move whole cow to the target
+   // 
    
-   const moveX = 400 * Settings.I_TPS * Math.sin(targetDirection);
-   const moveY = 400 * Settings.I_TPS * Math.cos(targetDirection);
+   const physicsComponent = PhysicsComponentArray.getComponent(cow);
 
-   // @Hack
+   const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
+   const acceleration = isRunning ? 500 : 200;
+   
+   const alignmentToTarget = findAngleAlignment(transformComponent.rotation, targetDirection);
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
+   physicsComponent.acceleration.x = acceleration * accelerationMultiplier * Math.sin(targetDirection);
+   physicsComponent.acceleration.y = acceleration * accelerationMultiplier * Math.cos(targetDirection);
+
+   physicsComponent.targetRotation = targetDirection;
+   // Don't turn if it's within neck reach range
+   if (getAbsAngleDiff(transformComponent.rotation, targetDirection) > 0.3) {
+      physicsComponent.turnSpeed = 1;
+   } else {
+      physicsComponent.turnSpeed = 0.1;
+   }
+   
+   // 
+   // Move head to the target
+   // 
+   
+   const headHitbox = transformComponent.hitboxes[1];
+   const headTargetDirection = angle(targetX - headHitbox.box.position.x, targetY - headHitbox.box.position.y);
+
+   const parentRotation = headHitbox.box.parent!.rotation;
+   
+   const moveX = 40 * Settings.I_TPS * Math.sin(headTargetDirection);
+   const moveY = 40 * Settings.I_TPS * Math.cos(headTargetDirection);
+
    // Counteract the cow's rotation
    const rotatedMoveX = rotateXAroundOrigin(moveX, moveY, -parentRotation);
    const rotatedMoveY = rotateYAroundOrigin(moveX, moveY, -parentRotation);
    
    headHitbox.box.offset.x += rotatedMoveX;
    headHitbox.box.offset.y += rotatedMoveY;
-   // physicsComponent.acceleration.x = acceleration * Math.sin(targetDirection);
-   // physicsComponent.acceleration.y = acceleration * Math.cos(targetDirection);
-   // physicsComponent.targetRotation = targetDirection;
-   // physicsComponent.turnSpeed = turnSpeed;
+
+   // Turn the head to face the target
+   headHitbox.box.relativeRotation = turnAngle(headHitbox.box.relativeRotation, headTargetDirection - parentRotation, Vars.HEAD_TURN_SPEED);
+   // @Cleanup: should really be done in the turnAngle func
+   headHitbox.box.relativeRotation = cleanAngleNEW(headHitbox.box.relativeRotation);
+   // Clamp the head's relative rotation (purely for visuals)
+   if (headHitbox.box.relativeRotation < -0.5) {
+      headHitbox.box.relativeRotation = -0.5;
+   } else if (headHitbox.box.relativeRotation > 0.5) {
+      headHitbox.box.relativeRotation = 0.5;
+   }
+
+   // 
+   // Turn the body with the head
+   // 
+
+   let headOffsetDirection = angle(headHitbox.box.offset.x, headHitbox.box.offset.y);
+   headOffsetDirection = cleanAngleNEW(headOffsetDirection);
+
+   if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
+      // Force is in the direction which will get head offset direction back towards 0
+      const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY * Math.sign(headOffsetDirection));
+
+      transformComponent.rotation += rotationForce;
+
+      const headOffsetX = headHitbox.box.offset.x;
+      const headOffsetY = headHitbox.box.offset.y;
+      headHitbox.box.offset.x = rotateXAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
+      headHitbox.box.offset.y = rotateYAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
+   }
 }
 
-const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEntity: Entity, acceleration: number): boolean => {
+const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEntity: Entity): boolean => {
    if (entitiesAreColliding(cow, berryItemEntity) !== CollisionVars.NO_COLLISION) {
       eatBerry(berryItemEntity, cowComponent);
       return true;
    }
 
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
-   moveEntityToPosition(cow, berryTransformComponent.position.x, berryTransformComponent.position.y, acceleration, Vars.TURN_SPEED);
+   moveCow(cow, berryTransformComponent.position.x, berryTransformComponent.position.y, false);
 
    return false;
 }
@@ -200,7 +254,7 @@ const entityIsHoldingBerry = (entity: Entity): boolean => {
    return false;
 }
 
-const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
+const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
    const wantsToFollow = entityWantsToFollow(followAIComponent);
 
    let currentTargetIsHoldingBerry = false;
@@ -221,19 +275,29 @@ const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: 
       }
    }
 
-   return target;
+   return [target, currentTargetIsHoldingBerry];
 }
 
 function onTick(cow: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(cow);
    const cowComponent = CowComponentArray.getComponent(cow);
    updateCowComponent(cow, cowComponent);
 
-   const transformComponent = TransformComponentArray.getComponent(cow);
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 
    const escapeTarget = getEscapeTarget(cow);
    if (escapeTarget !== null) {
-      runEscapeAI(cow, escapeTarget);
+      const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
+      const targetX = transformComponent.position.x * 2 - escapeTargetTransformComponent.position.x;
+      const targetY = transformComponent.position.y * 2 - escapeTargetTransformComponent.position.y;
+      moveCow(cow, targetX, targetY, true);
+      return;
+   }
+
+   // Go to follow target if possible
+   if (entityExists(cowComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.followTarget);
+      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
       return;
    }
 
@@ -255,7 +319,7 @@ function onTick(cow: Entity): void {
          if (getEntityType(itemEntity) === EntityType.itemEntity) {
             const itemComponent = ItemComponentArray.getComponent(itemEntity);
             if (itemComponent.itemType === ItemType.berry) {
-               const wasEaten = chaseAndEatBerry(cow, cowComponent, itemEntity, 200);
+               const wasEaten = chaseAndEatBerry(cow, cowComponent, itemEntity);
                if (wasEaten) {
                   healEntity(cow, 3, cow);
                   break;
@@ -300,8 +364,7 @@ function onTick(cow: Entity): void {
 
       if (entityExists(cowComponent.targetBushID)) {
          const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
-
-         moveEntityToPosition(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, 200, Vars.TURN_SPEED);
+         moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
 
          // If the target entity is directly in front of the cow, start eatin it
          const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.rotation);
@@ -329,21 +392,17 @@ function onTick(cow: Entity): void {
 
    // Follow AI
    const followAIComponent = FollowAIComponentArray.getComponent(cow);
-   updateFollowAIComponent(cow, aiHelperComponent.visibleEntities, 7)
+   updateFollowAIComponent(cow, aiHelperComponent.visibleEntities, 7);
 
    if (entityExists(followAIComponent.followTargetID)) {
-      // @Temporary
       const targetTransformComponent = TransformComponentArray.getComponent(followAIComponent.followTargetID);
-      move(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, 0);
-      const physicsComponent = PhysicsComponentArray.getComponent(cow);
-      stopEntity(physicsComponent);
-      // continueFollowingEntity(cow, followAIComponent.followTargetID, 200, Vars.TURN_SPEED);
+      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
       return;
    } else {
-      const followTarget = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
+      const [followTarget, isHoldingBerry] = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
-         startFollowingEntity(cow, followTarget, 200, Vars.TURN_SPEED, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN));
+         startFollowingEntity(cow, followTarget, 200, Vars.TURN_SPEED, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
          return;
       }
    }
@@ -363,11 +422,16 @@ function onTick(cow: Entity): void {
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(cow);
+   wanderAI.update(cow);
+   if (wanderAI.targetPositionX !== -1) {
+      moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, false);
+   } else {
+      stopEntity(physicsComponent);
+   }
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -375,6 +439,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    packet.addNumber(cowComponent.species);
    packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / Vars.GRAZE_TIME_TICKS : -1);
+   packet.addBoolean(entityExists(cowComponent.followTarget));
+   packet.padOffset(3);
 }
 
 export function eatBerry(berryItemEntity: Entity, cowComponent: CowComponent): void {

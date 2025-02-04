@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { randInt, UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition } from "../ai-shared";
+import { moveEntityToPosition, stopEntity } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, startFollowingEntity } from "./FollowAIComponent";
@@ -11,6 +11,7 @@ import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
 import { ItemType } from "../../../shared/src/items/items";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -49,7 +50,7 @@ function onTick(krumblid: Entity): void {
          const entity = aiHelperComponent.visibleEntities[i];
          if (getEntityType(entity) === EntityType.player) {
             // Follow the entity
-            startFollowingEntity(krumblid, entity, 200, Vars.TURN_SPEED, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN));
+            startFollowingEntity(krumblid, entity, 200, Vars.TURN_SPEED, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), true);
             return;
          }
       }
@@ -57,7 +58,13 @@ function onTick(krumblid: Entity): void {
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(krumblid);
+   wanderAI.update(krumblid);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 2 * Math.PI);
+   } else {
+      const physicsComponent = PhysicsComponentArray.getComponent(krumblid);
+      stopEntity(physicsComponent);
+   }
 }
 
 function getDataLength(): number {

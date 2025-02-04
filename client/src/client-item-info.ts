@@ -6,7 +6,10 @@ export type ClientItemInfo = {
    /** Texture source when used as a tool in a tribe members' hand. Empty string if not used as a tool */
    readonly toolTextureSource: string;
    readonly name: string;
+   /** A description of what the item is for. */
    readonly description: string;
+   /** Random shit shown in small text at the bottom of the item tooltip */
+   readonly flavourText?: string;
 }
 
 const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
@@ -22,14 +25,15 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-sword.png",
       toolTextureSource: "items/large/wooden-sword.png",
       name: "Wooden Sword",
-      description: "The splinters hurt you as much as the blade hurts the enemy."
+      description: "Basic sword.",
+      flavourText: "The splinters hurt you as much as the blade hurts the enemy."
    },
    [ItemType.wooden_axe]: {
       entityTextureSource: "items/small/wooden-axe.png",
       textureSource: "items/large/wooden-axe.png",
       toolTextureSource: "items/large/wooden-axe.png",
       name: "Wooden Axe",
-      description: ""
+      description: "Basic axe."
    },
    [ItemType.wooden_pickaxe]: {
       entityTextureSource: "items/small/wooden-pickaxe.png",
@@ -609,6 +613,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Sonichu x FemShrek - Alone in Shrekke's Love Shack (Chapters 1-5)",
       description: "Stuck alone and pent up in the woods for a week, Sonichu has an affliction only Shrekke's gentle yet controlling hands can cure."
+   },
+   [ItemType.animalStaff]: {
+      entityTextureSource: "items/small/animal-staff.png",
+      textureSource: "items/large/animal-staff.png",
+      toolTextureSource: "items/large/animal-staff.png",
+      name: "Animal Staff",
+      description: "Allows you to control animals."
    },
 };
 

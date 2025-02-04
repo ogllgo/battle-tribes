@@ -17,7 +17,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAnimalStaffFollowCommandPacket, processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -317,6 +317,10 @@ class GameServer {
                }
                case PacketType.studyTech: {
                   processTechStudyPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.animalStaffFollowCommand: {
+                  processAnimalStaffFollowCommandPacket(playerClient, reader);
                   break;
                }
                default: {

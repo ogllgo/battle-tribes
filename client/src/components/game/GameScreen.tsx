@@ -28,6 +28,7 @@ import { getEntityTile, TransformComponentArray } from "../../entity-components/
 import { TileType } from "../../../../shared/src/tiles";
 import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
+import AnimalStaffOptions from "./AnimalStaffOptions";
 
 export const enum GameInteractState {
    none,
@@ -219,6 +220,8 @@ const GameScreen = (props: GameScreenProps) => {
       <HealthInspector />
 
       <ItemTooltip />
+
+      <AnimalStaffOptions />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

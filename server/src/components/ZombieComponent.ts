@@ -6,7 +6,7 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, randFloat, UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition, runHerdAI } from "../ai-shared";
+import { moveEntityToPosition, runHerdAI, stopEntity } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
@@ -321,7 +321,13 @@ function onTick(zombie: Entity): void {
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.run(zombie);
+   wanderAI.update(zombie);
+   if (wanderAI.targetPositionX !== -1) {
+      moveEntityToPosition(zombie, wanderAI.targetPositionX, wanderAI.targetPositionY, 150, 3 * Math.PI);
+   } else {
+      const physicsComponent = PhysicsComponentArray.getComponent(zombie);
+      stopEntity(physicsComponent);
+   }
 }
 
 function getDataLength(): number {

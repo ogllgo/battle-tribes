@@ -31,14 +31,13 @@ export default class WanderAI {
    private shouldTryAndWander(physicsComponent: PhysicsComponent): boolean {
       return physicsComponent.selfVelocity.x === 0 && physicsComponent.selfVelocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
    }
-   
-   public run(entity: Entity): void {
+
+   public update(entity: Entity): void {
       const physicsComponent = PhysicsComponentArray.getComponent(entity);
       
       if (this.targetPositionX !== -1) {
          if (entityHasReachedPosition(entity, this.targetPositionX, this.targetPositionY)) {
             this.targetPositionX = -1;
-            stopEntity(physicsComponent);
          }
       } else if (this.shouldTryAndWander(physicsComponent)) {
          const layer = getEntityLayer(entity);
@@ -68,12 +67,8 @@ export default class WanderAI {
             y = (tileY + Math.random()) * Settings.TILE_SIZE;
          } while (++attempts <= 50 && !this.positionIsValidCallback(entity, layer, x, y));
 
-         // Wander to that target position
          this.targetPositionX = x;
          this.targetPositionY = y;
-         moveEntityToPosition(entity, this.targetPositionX, this.targetPositionY, this.acceleration, this.turnSpeed);
-      } else {
-         stopEntity(physicsComponent);
       }
    }
 }

@@ -24,8 +24,6 @@ for (const progressTextureInfoArray of Object.values(BLUEPRINT_PROGRESS_TEXTURE_
    }
 }
 
-export const ENTITY_TEXTURE_ATLAS_LENGTH = TEXTURE_SOURCES.length;
-
 let ENTITY_TEXTURE_ATLAS: TextureAtlasInfo;
 let TECH_TREE_ENTITY_TEXTURE_ATLAS: TextureAtlasInfo;
 

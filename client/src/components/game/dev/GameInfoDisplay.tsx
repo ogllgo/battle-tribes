@@ -57,6 +57,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [debugLights, setDebugLights] = useState(OPTIONS.debugLights);
    const [showSubtileSupport, setShowSubtileSupport] = useState(OPTIONS.showSubtileSupports);
    const [showLightLevels, setShowLightLevels] = useState(OPTIONS.showLightLevels);
+   const [debugTethers, setDebugTethers] = useState(OPTIONS.debugTethers);
    
    useEffect(() => {
       if (typeof Board.time !== "undefined") {
@@ -142,6 +143,11 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       OPTIONS.showLightLevels = !showLightLevels;
       setShowLightLevels(!showLightLevels);
    }, [showLightLevels]);
+
+   const toggleDebugTethers = useCallback(() => {
+      OPTIONS.debugTethers = !debugTethers;
+      setDebugTethers(!debugTethers);
+   }, [debugTethers]);
 
    const toggleAIBuilding = useCallback(() => {
       const toggleResult = !showSafetyNodes || !showBuildingSafetys || !showBuildingPlans || !showRestrictedAreas || !showWallConnections;
@@ -250,6 +256,12 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
             <label className={showLightLevels ? "enabled" : undefined}>
                <input checked={showLightLevels} name="show-light-levels-checkbox" type="checkbox" onChange={toggleShowLightLevels} />
                Light levels
+            </label>
+         </li>
+         <li>
+            <label className={debugTethers ? "enabled" : undefined}>
+               <input checked={debugTethers} name="debug-tethers-checkbox" type="checkbox" onChange={toggleDebugTethers} />
+               Debug tethers
             </label>
          </li>
       </ul>

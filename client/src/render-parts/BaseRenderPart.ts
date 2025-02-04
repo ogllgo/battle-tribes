@@ -21,7 +21,7 @@ export default abstract class BaseRenderPart {
    // @Cleanup: change to total rotation
    public totalParentRotation = 0;
    
-   /** Whether or not the thing will inherit its parents' rotation */
+   /** True by default. If false, the render part will be considered as if its parent's rotation is always zero. */
    public inheritParentRotation = true;
    public flipXMultiplier = 1;
 

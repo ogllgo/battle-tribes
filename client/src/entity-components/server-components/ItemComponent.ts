@@ -10,7 +10,7 @@ import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { attachLightToEntity, attachLightToRenderPart, createLight } from "../../lights";
+import { attachLightToRenderPart, createLight } from "../../lights";
 import { Point } from "../../../../shared/src/utils";
 
 export interface ItemComponentParams {

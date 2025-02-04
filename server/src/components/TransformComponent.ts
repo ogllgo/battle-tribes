@@ -543,6 +543,18 @@ function getDataLength(entity: Entity): number {
       }
 
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+
+      // @Copynpaste
+      let tether: HitboxTether | undefined;
+      for (const currentTether of transformComponent.tethers) {
+         if (currentTether.hitbox === hitbox) {
+            tether = currentTether;
+         }
+      }
+
+      if (typeof tether !== "undefined") {
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      }
    }
 
    return lengthBytes;
@@ -586,6 +598,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       if (typeof tether !== "undefined") {
          packet.addBoolean(true);
          packet.padOffset(3);
+
+         // Other hitbox
+         packet.addNumber(getBoxLocalID(transformComponent, tether.otherHitbox.box));
       } else {
          packet.addBoolean(false);
          packet.padOffset(3);

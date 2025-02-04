@@ -32,6 +32,7 @@ import { toggleFenceGateDoor } from "../components/FenceGateComponent";
 import { attemptToOccupyResearchBench } from "../components/ResearchBenchComponent";
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
+import { CowComponentArray } from "../components/CowComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -670,5 +671,24 @@ export function processTechStudyPacket(playerClient: PlayerClient, reader: Packe
       const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
       const selectedTech = getTechByID(tribeComponent.tribe.selectedTechID);
       playerClient.tribe.studyTech(selectedTech, transformComponent.position.x, transformComponent.position.y, studyAmount);
+   }
+}
+
+export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   if (!entityExists(entity)) {
+      return;
+   }
+
+   const cowComponent = CowComponentArray.getComponent(entity);
+   // Toggle the follow target
+   if (!entityExists(cowComponent.followTarget)) {
+      cowComponent.followTarget = playerClient.instance;
+   } else {
+      cowComponent.followTarget = 0;
    }
 }
