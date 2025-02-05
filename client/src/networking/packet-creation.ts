@@ -280,3 +280,9 @@ export function sendAnimalStaffFollowCommandPacket(entity: Entity): void {
    packet.addNumber(entity);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendMountCarrySlotPacket(mount: Entity): void {
+   const packet = new Packet(PacketType.mountCarrySlot, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(mount);
+   Client.sendPacket(packet.buffer);
+}

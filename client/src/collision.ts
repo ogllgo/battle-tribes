@@ -140,6 +140,15 @@ const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity
          continue;
       }
 
+      // @Speed: re-gotten further in the line
+      const entity1TransformComponent = TransformComponentArray.getComponent(entity1);
+      const entity2TransformComponent = TransformComponentArray.getComponent(entity2);
+
+      // Make sure the entities aren't in the same carry heirarchy
+      if (entity1TransformComponent.carryRoot === entity2TransformComponent.carryRoot) {
+         continue;
+      }
+
       let minID: number;
       let maxID: number;
       if (entity1 > entity2) {

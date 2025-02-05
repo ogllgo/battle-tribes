@@ -127,6 +127,15 @@ export function resolveEntityCollisions(layer: Layer): void {
                   continue;
                }
 
+               // @Speed: We re-get these components in markEntityCollisions
+               const affectedEntityTransformComponent = TransformComponentArray.getComponent(affectedEntity);
+               const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+
+               // Make sure the entities aren't in the same carry heirarchy
+               if (affectedEntityTransformComponent.carryRoot === collidingEntityTransformComponent.carryRoot) {
+                  continue;
+               }
+
                markEntityCollisions(entityCollisionPairs, globalCollisionInfo, affectedEntity, collidingEntity);
             }
          }

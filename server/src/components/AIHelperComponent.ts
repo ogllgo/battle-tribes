@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Chunk from "../Chunk";
 import { ComponentArray } from "./ComponentArray";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
@@ -105,6 +105,11 @@ const boxIsVisible = (transformComponent: TransformComponent, box: Box, visionRa
 const entityIsVisible = (transformComponent: TransformComponent, checkEntity: Entity, visionRange: number): boolean => {
    const checkEntityTransformComponent = TransformComponentArray.getComponent(checkEntity);
 
+   // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
+   if (transformComponent.carryRoot === checkEntityTransformComponent.carryRoot) {
+      return false;
+   }
+   
    const xDiff = transformComponent.position.x - checkEntityTransformComponent.position.x;
    const yDiff = transformComponent.position.y - checkEntityTransformComponent.position.y;
    if (xDiff * xDiff + yDiff * yDiff <= visionRange * visionRange) {

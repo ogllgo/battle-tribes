@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, assert, customTickIntervalHasPassed, lerp, randInt } from "battletribes-shared/utils";
+import { Point, assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import Board from "../../Board";
@@ -12,7 +12,7 @@ import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
 import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
-import { entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
+import { EntityCarryInfo, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
@@ -275,26 +275,60 @@ function onTick(entity: Entity): void {
 
       playSoundOnEntity("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, false);
    }
+
+   // If the entity isn't being carried, update its' physics
+   if (transformComponent.carryRoot === entity) {
+      // Propagate to children
+      for (const carryInfo of transformComponent.carriedEntities) {
+         tickCarriedEntity(transformComponent, carryInfo);
+      }
+   }
+}
+
+const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+}
+
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
+   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+   
+   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+   // @Incomplete
+   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   // (Don't apply physics for carried entities)
+   // @Incomplete
+   // applyHitboxTethers(transformComponent, physicsComponent);
+   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
+
+   // Propagate to children
+   for (const carryInfo of transformComponent.carriedEntities) {
+      tickCarriedEntity(transformComponent, carryInfo);
+   }
 }
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
-   applyPhysics(transformComponent, physicsComponent, entity);
+   // If the entity isn't being carried, update its' physics
+   if (transformComponent.carryRoot === entity) {
+      applyPhysics(transformComponent, physicsComponent, entity);
 
-   // Don't resolve wall tile collisions in lightspeed mode
-   if (entity !== playerInstance || !keyIsPressed("l")) { 
-      const hasMoved = resolveWallCollisions(entity);
-
+      // Don't resolve wall tile collisions in lightspeed mode
+      if (entity !== playerInstance || !keyIsPressed("l")) { 
+         const hasMoved = resolveWallCollisions(entity);
+   
+         if (hasMoved) {
+            updateEntityPosition(transformComponent, entity);
+         }
+      }
+   
+      const hasMoved = resolveBorderCollisions(physicsComponent, entity);
       if (hasMoved) {
          updateEntityPosition(transformComponent, entity);
       }
-   }
-
-   const hasMoved = resolveBorderCollisions(physicsComponent, entity);
-   if (hasMoved) {
-      updateEntityPosition(transformComponent, entity);
    }
 
    // @Incomplete: some entities are able to be outside the border!

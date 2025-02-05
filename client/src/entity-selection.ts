@@ -24,7 +24,7 @@ import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-com
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendStructureInteractPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendStructureInteractPacket } from "./networking/packet-creation";
 import { AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
@@ -45,7 +45,7 @@ const enum InteractActionType {
    openInventory,
    openCraftingStation,
    openAnimalStaffMenu,
-   rideCarrySlot
+   mountCarrySlot
 }
 
 interface BaseInteractAction {
@@ -94,11 +94,11 @@ interface OpenAnimalStaffMenuAction extends BaseInteractAction {
    readonly type: InteractActionType.openAnimalStaffMenu;
 }
 
-interface RideCarrySlotAction extends BaseInteractAction {
-   readonly type: InteractActionType.rideCarrySlot;
+interface MountCarrySlotAction extends BaseInteractAction {
+   readonly type: InteractActionType.mountCarrySlot;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | RideCarrySlotAction;
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -247,7 +247,7 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
    // Rideable entities
    if (RideableComponentArray.hasComponent(entity)) {
       return {
-         type: InteractActionType.rideCarrySlot,
+         type: InteractActionType.mountCarrySlot,
          interactEntity: entity,
          interactRange: Vars.DEFAULT_INTERACT_RANGE
       };
@@ -279,7 +279,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.openAnimalStaffMenu: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
-      case InteractActionType.rideCarrySlot: {
+      case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
          
          const renderInfo = new EntityRenderInfo(0, 0, 0);
@@ -381,7 +381,10 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          AnimalStaffOptions_setEntity(highlightedEntity);
          break;
       }
-      case InteractActionType.rideCarrySlot: {
+      case InteractActionType.mountCarrySlot: {
+         console.log("send");
+         sendMountCarrySlotPacket(entity);
+         deselectSelectedEntity();
          break;
       }
       default: {

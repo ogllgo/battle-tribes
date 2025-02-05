@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, getTileIndexIncludingEdges, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -82,6 +82,8 @@ export class TransformComponent {
 
    public nextHitboxLocalID = 1;
 
+   /** The entity at the bottom of the carry chain. */
+   public carryRoot: Entity = 0;
    public carriedEntities = new Array<EntityCarryInfo>();
 
    public updateIsInRiver(entity: Entity): void {
@@ -437,6 +439,8 @@ TransformComponentArray.onRemove = onRemove;
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
+   transformComponent.carryRoot = entity;
+   
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.cleanHitboxes(entity);
    
@@ -565,6 +569,9 @@ function getDataLength(entity: Entity): number {
       }
    }
 
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * transformComponent.carriedEntities.length;
+
    return lengthBytes;
 }
 
@@ -614,6 +621,27 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.padOffset(3);
       }
    }
+
+   packet.addNumber(transformComponent.carryRoot);
+   packet.addNumber(transformComponent.carriedEntities.length);
+   for (const entityCarryInfo of transformComponent.carriedEntities) {
+      packet.addNumber(entityCarryInfo.carriedEntity);
+      packet.addNumber(entityCarryInfo.offsetX);
+      packet.addNumber(entityCarryInfo.offsetY);
+   }
+}
+
+export function carryEntity(mount: Entity, entity: Entity, offsetX: number, offsetY: number): void {
+   const mountTransformComponent = TransformComponentArray.getComponent(mount);
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+
+   const carryInfo: EntityCarryInfo = {
+      carriedEntity: entity,
+      offsetX: offsetX,
+      offsetY: offsetY
+   };
+   mountTransformComponent.carriedEntities.push(carryInfo);
+   entityTransformComponent.carryRoot = mount;
 }
 
 export function getEntityTile(transformComponent: TransformComponent): TileIndex {

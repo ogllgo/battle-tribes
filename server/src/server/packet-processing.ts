@@ -7,7 +7,7 @@ import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { getEntityTile, TransformComponentArray } from "../components/TransformComponent";
+import { carryEntity, getEntityTile, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
 import { calculateRadialAttackTargets, getAvailableCraftingStations, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
@@ -33,6 +33,7 @@ import { attemptToOccupyResearchBench } from "../components/ResearchBenchCompone
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
+import { RideableComponentArray } from "../components/RideableComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -691,4 +692,21 @@ export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient
    } else {
       cowComponent.followTarget = 0;
    }
+}
+
+export function processMountCarrySlotPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const mount = reader.readNumber() as Entity;
+   if (!entityExists(mount)) {
+      return;
+   }
+
+   const rideableComponent = RideableComponentArray.getComponent(mount);
+   const carrySlot = rideableComponent.carrySlots[0];
+
+   carryEntity(mount, player, carrySlot.offsetX, carrySlot.offsetY);
 }

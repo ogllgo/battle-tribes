@@ -6,7 +6,7 @@ import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
-import { getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { EntityCarryInfo, getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer, undergroundLayer } from "../layers";
@@ -401,14 +401,42 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
    physicsComponent.hitboxesAreDirty = true;
 }
 
+const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+}
+
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
+   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+   
+   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+   turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   // (Don't apply physics for carried entities)
+   applyHitboxTethers(transformComponent, physicsComponent);
+   updatePosition(carryInfo.carriedEntity, transformComponent, physicsComponent);
+
+   // Propagate to children
+   for (const carryInfo of transformComponent.carriedEntities) {
+      tickCarriedEntity(transformComponent, carryInfo);
+   }
+}
+
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
-   turnEntity(entity, transformComponent, physicsComponent);
-   applyPhysics(entity, transformComponent, physicsComponent);
-   applyHitboxTethers(transformComponent, physicsComponent);
-   updatePosition(entity, transformComponent, physicsComponent);
+   // If the entity isn't being carried, update its' physics
+   if (transformComponent.carryRoot === entity) {
+      turnEntity(entity, transformComponent, physicsComponent);
+      applyPhysics(entity, transformComponent, physicsComponent);
+      applyHitboxTethers(transformComponent, physicsComponent);
+      updatePosition(entity, transformComponent, physicsComponent);
+
+      for (const carryInfo of transformComponent.carriedEntities) {
+         tickCarriedEntity(transformComponent, carryInfo);
+      }
+   }
 }
 
 export function applyKnockback(entity: Entity, knockback: number, knockbackDirection: number): void {
