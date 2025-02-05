@@ -107,7 +107,8 @@ export enum ServerComponentType {
    scrappy,
    cogwalker,
    automatonAssembler,
-   mithrilAnvil
+   mithrilAnvil,
+   rideable
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -208,6 +209,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.cogwalker]: "Cogwalker Component",
    [ServerComponentType.automatonAssembler]: "Automaton Assembler",
    [ServerComponentType.mithrilAnvil]: "Mithril Anvil",
+   [ServerComponentType.rideable]: "Rideable",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;

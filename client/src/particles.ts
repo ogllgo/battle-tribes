@@ -1992,3 +1992,34 @@ export function createKrumblidChitinParticle(spawnPositionX: number, spawnPositi
    );
    Board.lowTexturedParticles.push(particle);
 }
+
+export function createAnimalStaffFollowCommandParticle(x: number, y: number, moveDirection: number): void {
+   const lifetime = randFloat(0.8, 0.9);
+   const opacityMult = randFloat(0.5, 0.75);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = () => {
+      const progress = particle.age / lifetime;
+      return (1 - progress * progress) * opacityMult;
+   };
+
+   const velocityMagnitude = randFloat(40, 50);
+   const vx = velocityMagnitude * Math.sin(moveDirection);
+   const vy = velocityMagnitude * Math.cos(moveDirection);
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      4, 4,
+      x, y,
+      vx, vy,
+      0, 0,
+      0,
+      moveDirection,
+      0,
+      0,
+      0,
+      165/255, 255/255, 163/255
+   );
+   Board.highMonocolourParticles.push(particle);
+}

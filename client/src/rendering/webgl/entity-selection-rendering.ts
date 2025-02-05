@@ -1,7 +1,6 @@
-import { getHighlightedEntityID, getSelectedEntityID } from "../../entity-selection";
+import { getHighlightedEntityID, getHighlightedRenderInfo, getSelectedEntityID } from "../../entity-selection";
 import { createWebGLProgram, gl, windowWidth, windowHeight, createTexture } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
-import { entityExists, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { renderEntities } from "./entity-rendering";
 import { cleanEntityRenderInfo, translateEntityRenderParts } from "../render-part-matrices";
@@ -173,8 +172,8 @@ export function createStructureHighlightShaders(): void {
 }
 
 export function renderEntitySelection(): void {
-   const highlightedEntity = getHighlightedEntityID();
-   if (!entityExists(highlightedEntity)) {
+   const renderInfo = getHighlightedRenderInfo();
+   if (renderInfo === null) {
       return;
    }
 
@@ -198,8 +197,6 @@ export function renderEntitySelection(): void {
    // Reset the previous texture
    gl.clearColor(0, 0, 0, 0);
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-   const renderInfo = getEntityRenderInfo(highlightedEntity);
 
    // For the outline, we render normally
    gl.enable(gl.BLEND);
@@ -270,7 +267,7 @@ export function renderEntitySelection(): void {
 
    gl.enableVertexAttribArray(0);
    
-   gl.uniform1f(isSelectedUniformLocation, highlightedEntity === getSelectedEntityID() ? 1 : 0);
+   gl.uniform1f(isSelectedUniformLocation, getHighlightedEntityID() === getSelectedEntityID() ? 1 : 0);
    gl.uniform2f(originPositionUniformLocation, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
 
    gl.activeTexture(gl.TEXTURE0);

@@ -19,6 +19,7 @@ import { CowComponent } from "../../components/CowComponent";
 import { FollowAIComponent } from "../../components/FollowAIComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 30 * Settings.TPS,
@@ -35,6 +36,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
    | ServerComponentType.followAI
+   | ServerComponentType.rideable
    | ServerComponentType.cow;
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
@@ -68,6 +70,9 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
 
    const followAIComponent = new FollowAIComponent(randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), 0.2, 60);
    
+   const rideableComponent = new RideableComponent();
+   rideableComponent.carrySlots.push(createCarrySlot(0, -22));
+   
    const cowComponent = new CowComponent();
    
    return {
@@ -81,6 +86,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
+         [ServerComponentType.rideable]: rideableComponent,
          [ServerComponentType.cow]: cowComponent
       },
       lights: []

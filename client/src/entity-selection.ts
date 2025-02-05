@@ -12,10 +12,10 @@ import { GhostInfo, GhostType, PARTIAL_OPACITY } from "./rendering/webgl/entity-
 import { getClosestGroupNum } from "./rendering/webgl/entity-selection-rendering";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./components/game/menus/CraftingMenu";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
-import { ItemType, InventoryName } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, ITEM_INFO_RECORD } from "battletribes-shared/items/items";
 import { boxIsWithinRange } from "battletribes-shared/boxes/boxes";
 import { getPlayerSelectedItem } from "./components/game/GameInteractableLayer";
-import { entityExists, getEntityLayer, getEntityType, playerInstance } from "./world";
+import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "./world";
 import { TombstoneComponentArray } from "./entity-components/server-components/TombstoneComponent";
 import { TunnelComponentArray } from "./entity-components/server-components/TunnelComponent";
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
@@ -26,6 +26,14 @@ import { TribeComponentArray } from "./entity-components/server-components/Tribe
 import { playerTribe } from "./tribes";
 import { sendStructureInteractPacket } from "./networking/packet-creation";
 import { AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible } from "./components/game/AnimalStaffOptions";
+import { EntityRenderInfo } from "./EntityRenderInfo";
+import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
+import TexturedRenderPart from "./render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
+
+const enum Vars {
+   DEFAULT_INTERACT_RANGE = 150
+}
 
 const enum InteractActionType {
    openBuildMenu,
@@ -36,11 +44,14 @@ const enum InteractActionType {
    toggleDoor,
    openInventory,
    openCraftingStation,
-   openAnimalStaffMenu
+   openAnimalStaffMenu,
+   rideCarrySlot
 }
 
 interface BaseInteractAction {
    readonly type: InteractActionType;
+   readonly interactEntity: Entity;
+   readonly interactRange: number;
 }
 
 interface OpenBuildMenuAction extends BaseInteractAction {
@@ -83,21 +94,30 @@ interface OpenAnimalStaffMenuAction extends BaseInteractAction {
    readonly type: InteractActionType.openAnimalStaffMenu;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction;
+interface RideCarrySlotAction extends BaseInteractAction {
+   readonly type: InteractActionType.rideCarrySlot;
+}
 
-const HIGHLIGHT_RANGE = 75;
-const HIGHLIGHT_DISTANCE = 150;
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | RideCarrySlotAction;
+
+const HIGHLIGHT_CURSOR_RANGE = 75;
 
 // @Cleanup: should we merge hovered and highlighted? having two very similar ones is confusing.
 let hoveredEntityID = -1;
 let highlightedEntity = -1;
 let selectedEntityID = -1;
+/** The render info which an outline will be rendered around. */
+let highlightedRenderInfo: Readonly<EntityRenderInfo> | null = null;
 
 const SEED_TO_PLANT_RECORD: Partial<Record<ItemType, PlantedEntityType>> = {
    [ItemType.seed]: EntityType.treePlanted,
    [ItemType.berry]: EntityType.berryBushPlanted,
    [ItemType.frostcicle]: EntityType.iceSpikesPlanted
 };
+
+export function getHighlightedRenderInfo(): Readonly<EntityRenderInfo> | null {
+   return highlightedRenderInfo;
+}
 
 const getInventoryMenuType = (entity: Entity): InventoryMenuType | null => {
    // First make sure that the entity's inventory can be accessed by the player.
@@ -144,6 +164,8 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       if (groupNum !== 0) {
          return {
             type: InteractActionType.toggleTunnelDoor,
+            interactEntity: entity,
+            interactRange: Vars.DEFAULT_INTERACT_RANGE,
             doorSide: getTunnelDoorSide(groupNum)
          };
       }
@@ -156,7 +178,9 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       // If holding fertiliser, try to fertilise the planter box
       if (selectedItem.type === ItemType.fertiliser && planterBoxComponent.hasPlant && !planterBoxComponent.isFertilised) {
          return {
-            type: InteractActionType.useFertiliser
+            type: InteractActionType.useFertiliser,
+            interactEntity: entity,
+            interactRange: Vars.DEFAULT_INTERACT_RANGE
          };
       }
       
@@ -165,6 +189,8 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       if (typeof plant !== "undefined" && !planterBoxComponent.hasPlant) {
          return {
             type: InteractActionType.plantSeed,
+            interactEntity: entity,
+            interactRange: Vars.DEFAULT_INTERACT_RANGE,
             plantedEntityType: plant
          };
       }
@@ -173,7 +199,9 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
    // See if the entity can be used in the build menu
    if (entityCanOpenBuildMenu(entity)) {
       return {
-         type: InteractActionType.openBuildMenu
+         type: InteractActionType.openBuildMenu,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
       };
    }
 
@@ -181,14 +209,18 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
    const entityType = getEntityType(entity);
    if (entityType === EntityType.researchBench) {
       return {
-         type: InteractActionType.startResearching
+         type: InteractActionType.startResearching,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
       };
    }
 
    // Toggle door
    if (entityType === EntityType.door || entityType === EntityType.fenceGate) {
       return {
-         type: InteractActionType.toggleDoor
+         type: InteractActionType.toggleDoor,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
       };
    }
 
@@ -197,26 +229,83 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       const craftingStationComponent = CraftingStationComponentArray.getComponent(entity);
       return {
          type: InteractActionType.openCraftingStation,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE,
          craftingStation: craftingStationComponent.craftingStation
       };
    }
 
-   // Animal staff menu
+   // Animal staff options
    if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && entityType === EntityType.cow) {
       return {
-         type: InteractActionType.openAnimalStaffMenu
-      }
+         type: InteractActionType.openAnimalStaffMenu,
+         interactEntity: entity,
+         interactRange: ITEM_INFO_RECORD[ItemType.animalStaff].controlRange
+      };
+   }
+
+   // Rideable entities
+   if (RideableComponentArray.hasComponent(entity)) {
+      return {
+         type: InteractActionType.rideCarrySlot,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
    }
 
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
       return {
          type: InteractActionType.openInventory,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE,
          inventoryMenuType: inventoryMenuType
       };
    }
    
    return null;
+}
+
+const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderInfo => {
+   switch (interactAction.type) {
+      case InteractActionType.openBuildMenu:
+      case InteractActionType.plantSeed:
+      case InteractActionType.useFertiliser:
+      case InteractActionType.toggleTunnelDoor:
+      case InteractActionType.startResearching:
+      case InteractActionType.toggleDoor:
+      case InteractActionType.openInventory:
+      case InteractActionType.openCraftingStation:
+      case InteractActionType.openAnimalStaffMenu: {
+         return getEntityRenderInfo(interactAction.interactEntity);
+      }
+      case InteractActionType.rideCarrySlot: {
+         const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
+         
+         const renderInfo = new EntityRenderInfo(0, 0, 0);
+         renderInfo.renderPosition = new Point(transformComponent.position.x, transformComponent.position.y);
+         renderInfo.rotation = transformComponent.rotation;
+
+         const rideableComponent = RideableComponentArray.getComponent(interactAction.interactEntity);
+         const carrySlot = rideableComponent.carrySlots[0];
+
+         const renderPart = new TexturedRenderPart(
+            null,
+            0,
+            0,
+            getTextureArrayIndex("entities/miscellaneous/carry-slot.png")
+         );
+         renderPart.offset.x = carrySlot.offsetX;
+         renderPart.offset.y = carrySlot.offsetY;
+         renderInfo.attachRenderPart(renderPart);
+         
+         return renderInfo;
+      }
+      default: {
+         const unreachable: never = interactAction;
+         return unreachable;
+      }
+   }
 }
 
 const interactWithEntity = (entity: Entity, action: InteractAction): void => {
@@ -292,6 +381,9 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          AnimalStaffOptions_setEntity(highlightedEntity);
          break;
       }
+      case InteractActionType.rideCarrySlot: {
+         break;
+      }
       default: {
          const unreachable: never = action;
          return unreachable;
@@ -353,35 +445,36 @@ const getEntityID = (doPlayerProximityCheck: boolean, doCanSelectCheck: boolean)
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const layer = getEntityLayer(playerInstance!);
    
-   const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((Game.cursorX! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((Game.cursorY! - HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((Game.cursorY! + HIGHLIGHT_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((Game.cursorX! + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkY = Math.max(Math.floor((Game.cursorY! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((Game.cursorY! + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
    const origin = new Point(Game.cursorX!, Game.cursorY!);
 
-   let minDist = HIGHLIGHT_RANGE + 1.1;
+   let minDist = HIGHLIGHT_CURSOR_RANGE + 1.1;
    let entityID = -1;
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const currentEntity of chunk.nonGrassEntities) {
-            if (doCanSelectCheck && getEntityInteractAction(currentEntity) === null) {
+            const interactAction = getEntityInteractAction(currentEntity);
+            if (doCanSelectCheck && interactAction === null) {
                continue;
             }
 
 
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
-            if (doPlayerProximityCheck) {
+            if (doPlayerProximityCheck && doCanSelectCheck) {
                // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from center
-               if (playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position) > HIGHLIGHT_DISTANCE) {
+               if (playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position) > interactAction!.interactRange) {
                   continue;
                }
             }
             
             // Distance from cursor
             for (const hitbox of entityTransformComponent.hitboxes) {
-               if (boxIsWithinRange(hitbox.box, origin, HIGHLIGHT_RANGE)) {
+               if (boxIsWithinRange(hitbox.box, origin, HIGHLIGHT_CURSOR_RANGE)) {
                   const distance = origin.calculateDistanceBetween(entityTransformComponent.position);
                   if (distance < minDist) {
                      minDist = distance;
@@ -416,15 +509,20 @@ const updateHighlightedEntity = (entity: Entity | null): void => {
    if (entity === null) {
       // @Incomplete
       // setGhostInfo(null);
+      highlightedRenderInfo = null;
       return;
    }
    
+   // @Speed: could just pass this in
    const interactAction = getEntityInteractAction(entity);
+
    if (interactAction === null) {
       // @Incomplete
       // setGhostInfo(null);
       return;
    }
+
+   highlightedRenderInfo = createInteractRenderInfo(interactAction);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
    
@@ -490,7 +588,7 @@ export function updateHighlightedAndHoveredEntities(): void {
       const entityTransformComponent = TransformComponentArray.getComponent(selectedEntity);
       
       const distance = playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-      if (distance <= HIGHLIGHT_DISTANCE) {
+      if (distance <= Vars.DEFAULT_INTERACT_RANGE) {
          hoveredEntityID = getEntityID(false, false);
          return;
       }

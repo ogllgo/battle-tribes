@@ -12,6 +12,6 @@ export function renderPartIsTextured(renderPart: VisualRenderPart): renderPart i
    return typeof (renderPart as TexturedRenderPart).textureArrayIndex !== "undefined";
 }
 
-export function thingIsVisualRenderPart(thing: RenderPart): thing is VisualRenderPart {
+export function thingIsVisualRenderPart(thing: Readonly<RenderPart>): thing is VisualRenderPart {
    return typeof (thing as VisualRenderPart).tintR !== "undefined";
 }

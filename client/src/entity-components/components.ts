@@ -90,6 +90,7 @@ import { ZombieComponentArray, ZombieComponentParams } from "./server-components
 import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-components/TribeMemberComponent";
 import { AutomatonAssemblerComponentArray, AutomatonAssemblerComponentParams } from "./server-components/AutomatonAssemblerComponent";
 import { MithrilAnvilComponentArray, MithrilAnvilComponentParams } from "./server-components/MithrilAnvilComponent";
+import { RideableComponentArray, RideableComponentParams } from "./server-components/RideableComponent";
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -185,6 +186,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.cogwalker]: CogwalkerComponentArray,
    [ServerComponentType.automatonAssembler]: AutomatonAssemblerComponentArray,
    [ServerComponentType.mithrilAnvil]: MithrilAnvilComponentArray,
+   [ServerComponentType.rideable]: RideableComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -279,6 +281,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.cogwalker]: (): CogwalkerComponentParams => 0 as any,
    [ServerComponentType.automatonAssembler]: (): AutomatonAssemblerComponentParams => 0 as any,
    [ServerComponentType.mithrilAnvil]: (): MithrilAnvilComponentParams => 0 as any,
+   [ServerComponentType.rideable]: (): RideableComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

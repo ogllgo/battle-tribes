@@ -360,7 +360,7 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      // if(1+1===2)return;
+      if(1+1===2)return;
       // const cow = createCowConfig();
       const cow = createGlurbConfig();
       cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;

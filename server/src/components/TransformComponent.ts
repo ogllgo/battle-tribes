@@ -32,6 +32,12 @@ interface HitboxTether {
    previousOffsetY: number;
 }
 
+export interface EntityCarryInfo {
+   readonly carriedEntity: Entity;
+   readonly offsetX: number;
+   readonly offsetY: number;
+}
+
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
 export class TransformComponent {
@@ -75,6 +81,8 @@ export class TransformComponent {
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();
 
    public nextHitboxLocalID = 1;
+
+   public carriedEntities = new Array<EntityCarryInfo>();
 
    public updateIsInRiver(entity: Entity): void {
       const tileIndex = getEntityTile(this);

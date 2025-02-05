@@ -1,6 +1,7 @@
 import Game from "./Game";
 import { focusChatbox } from "./components/game/ChatBox";
 import { toggleCinematicMode } from "./components/game/GameScreen";
+import { getEntityRenderInfo, playerInstance } from "./world";
 
 const keyListeners: { [key: string]: Array<(e: KeyboardEvent) => void> } = {};
 
@@ -77,6 +78,12 @@ const onKeyDown = (e: KeyboardEvent): void => {
          return;
       } else if (key === "o") {
          toggleCinematicMode();
+      } else if (key === "m") {
+         const renderInfo = getEntityRenderInfo(playerInstance!);
+         while (renderInfo.allRenderThings.length > 0) {
+            const a = renderInfo.allRenderThings[0];
+            renderInfo.removeRenderPart(a);
+         }
       }
    }
 

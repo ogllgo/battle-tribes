@@ -4,8 +4,8 @@ import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
-import { Hitbox, HitboxFlag } from "../../../shared/src/boxes/boxes";
-import { TransformComponent, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
 
@@ -67,6 +67,13 @@ const rotateMatrix = (matrix: Matrix3x3, rotation: number): void => {
 export function getRenderPartRenderPosition(renderPart: RenderPart): Point {
    const matrix = renderPart.modelMatrix;
    
+   const x = matrix[6];
+   const y = matrix[7];
+
+   return new Point(x, y);
+}
+// @Copynpaste
+export function getMatrixPosition(matrix: Matrix3x3): Point {
    const x = matrix[6];
    const y = matrix[7];
 
