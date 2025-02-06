@@ -26,6 +26,7 @@ import { addGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
+import { RideableComponentArray } from "./RideableComponent";
 
 const enum Vars {
    MIN_POOP_PRODUCTION_COOLDOWN = 5 * Settings.TPS,
@@ -45,7 +46,7 @@ const enum Vars {
    COHESION_INFLUENCE = 0.3,
    /** Amount of rotation the head can be offset relative to the body */
    HEAD_DIRECTION_LEEWAY = 0.3,
-   HEAD_TURN_SPEED = UtilVars.PI
+   HEAD_TURN_SPEED = 0.75 * UtilVars.PI
 }
 
 export class CowComponent {
@@ -162,7 +163,7 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
 
    const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
-   const acceleration = isRunning ? 500 : 200;
+   const acceleration = isRunning ? 950 : 200;
    
    const alignmentToTarget = findAngleAlignment(transformComponent.rotation, targetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
@@ -174,7 +175,7 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
    if (getAbsAngleDiff(transformComponent.rotation, targetDirection) > 0.3) {
       physicsComponent.turnSpeed = 1;
    } else {
-      physicsComponent.turnSpeed = 0.1;
+      physicsComponent.turnSpeed = 0.15;
    }
    
    // 
@@ -282,6 +283,23 @@ function onTick(cow: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowComponent = CowComponentArray.getComponent(cow);
    updateCowComponent(cow, cowComponent);
+
+   // When something is riding the cow, that entity controls the cow's movement
+   const rideableComponent = RideableComponentArray.getComponent(cow);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   if (entityExists(rider)) {
+      const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
+      const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
+      if (accelerationMagnitude > 0) {
+         const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
+         const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
+
+         const targetX = transformComponent.position.x + 400 * normalisedAccelerationX;
+         const targetY = transformComponent.position.y + 400 * normalisedAccelerationY;
+         moveCow(cow, targetX, targetY, true);
+         return;
+      }
+   }
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 

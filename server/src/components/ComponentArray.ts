@@ -268,8 +268,6 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
 export function sortComponentArrays(): void {
    const PRIORITIES: Record<ServerComponentType, ComponentArrayPriority> = {
       [ServerComponentType.aiHelper]: ComponentArrayPriority.low,
-      // Low so that any damage boxes created aren't immediately tickled
-      [ServerComponentType.damageBox]: ComponentArrayPriority.low,
       [ServerComponentType.berryBush]: ComponentArrayPriority.medium,
       [ServerComponentType.blueprint]: ComponentArrayPriority.medium,
       [ServerComponentType.boulder]: ComponentArrayPriority.medium,
@@ -358,6 +356,8 @@ export function sortComponentArrays(): void {
       [ServerComponentType.automatonAssembler]: ComponentArrayPriority.medium,
       [ServerComponentType.mithrilAnvil]: ComponentArrayPriority.medium,
       [ServerComponentType.rideable]: ComponentArrayPriority.medium,
+      [ServerComponentType.swingAttack]: ComponentArrayPriority.medium,
+      [ServerComponentType.blockAttack]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

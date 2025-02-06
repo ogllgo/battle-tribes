@@ -19,7 +19,7 @@ interface EntityDamageInfo {
    readonly stoppedDamageTypes: ReadonlyArray<DamageType>;
 }
 
-// @Cleanup: make this a parameter of the healthcomponent?
+// @Cleanup: make this a parameter of the healthcomponent
 const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    [EntityType.cow]: {
       effectiveDamageTypes: [DamageType.weapon],
@@ -351,6 +351,14 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    },
    [EntityType.mithrilAnvil]: {
       effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.swingAttack]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.blockAttack]: {
+      effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
 };

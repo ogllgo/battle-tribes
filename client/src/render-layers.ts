@@ -17,6 +17,8 @@ export enum RenderLayer {
    reeds,
    lowEntities,
    defaultEntities,
+   // @Hack So that these will be shown above the default entities which they are carried on
+   ridingEntities,
    mithril,
    projectiles,
    highEntities,
@@ -135,6 +137,13 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
       }
       case EntityType.treeRootBase: {
          return RenderLayer.treeRootBase;
+      }
+      case EntityType.player:
+      case EntityType.tribeWorker:
+      case EntityType.tribeWarrior:
+      // @Incomplete: barrel should be shown below player (so that their limbs can go over it)
+      case EntityType.barrel: {
+         return RenderLayer.ridingEntities;
       }
       // (default)
       default: {

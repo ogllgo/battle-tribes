@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.craftingStation;
 
 export function createFrostshaperConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createFrostshaperHitboxes(), null);
    
    const healthComponent = new HealthComponent(20);

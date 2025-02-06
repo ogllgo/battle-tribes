@@ -3,7 +3,6 @@ import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/col
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "battletribes-shared/entities";
 import { getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
@@ -251,30 +250,6 @@ export function renderHitboxes(layer: Layer): void {
          
          const box = hitbox.box;
          addBoxVertices(vertices, box, adjustment, r, g, b);
-      }
-   }
-
-   renderVertices(vertices);
-}
-
-export function renderDamageBoxes(): void {
-   const vertices = new Array<number>();
-
-   for (let i = 0; i < DamageBoxComponentArray.components.length; i++) {
-      const damageBoxComponent = DamageBoxComponentArray.components[i];
-      const entityID = DamageBoxComponentArray.entities[i];
-
-      const adjustment = calculateBoxAdjustment(entityID);
-
-      for (let j = 0; j < damageBoxComponent.damageBoxes.length; j++) {
-         const damageBox = damageBoxComponent.damageBoxes[j];
-         const b = damageBox.isActive ? 0 : 1;
-         addBoxVertices(vertices, damageBox.box, adjustment, 1, 0.6, b);
-      }
-      for (let j = 0; j < damageBoxComponent.blockBoxes.length; j++) {
-         const blockBox = damageBoxComponent.blockBoxes[j];
-         const b = blockBox.isActive ? 0 : 1;
-         addBoxVertices(vertices, blockBox.box, adjustment, 1, 0.6, b);
       }
    }
 

@@ -29,7 +29,7 @@ export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
 
 export function createSlingTurretConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createSlingTurretHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);

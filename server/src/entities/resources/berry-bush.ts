@@ -19,7 +19,7 @@ type ComponentTypes = ServerComponentType.transform
 export const BERRY_BUSH_RADIUS = 40;
 
 export function createBerryBushConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, BERRY_BUSH_RADIUS), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;

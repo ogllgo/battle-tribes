@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.guardianSpikyBall;
 
 export function createGuardianSpikyBallConfig(creator: Entity): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 20), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

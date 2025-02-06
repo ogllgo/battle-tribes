@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
 const MAX_HEALTHS: ReadonlyArray<number> = [1, 3];
 
 export function createSnowballConfig(yeti: Entity, size: SnowballSize): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

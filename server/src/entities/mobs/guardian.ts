@@ -31,7 +31,7 @@ function tileIsValidCallback(entity: Entity, _layer: Layer, tileIndex: TileIndex
 }
 
 export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
 
    // Head
    transformComponent.addHitbox(createHitbox(new CircularBox(null, new Point(0, 0), 0, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);

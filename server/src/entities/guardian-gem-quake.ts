@@ -14,7 +14,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.guardianGemQuake;
 
 export function createGuardianGemQuakeConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
 const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 10), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

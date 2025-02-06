@@ -9,15 +9,16 @@ import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
 import { TileType } from "battletribes-shared/tiles";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { fixCarriedEntityPosition, PhysicsComponentArray } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, BoxType, Hitbox, HitboxFlag, hitboxIsCircular, updateBox } from "battletribes-shared/boxes/boxes";
-import { getEntityLayer, getEntityType } from "../world";
+import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
+import { registerDirtyEntity } from "../server/player-clients";
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -84,7 +85,13 @@ export class TransformComponent {
 
    /** The entity at the bottom of the carry chain. */
    public carryRoot: Entity = 0;
+   /** The entity carrying it. (Or 0 if it isn't being carried) */
+   public mount: Entity;
    public carriedEntities = new Array<EntityCarryInfo>();
+
+   constructor(mount: Entity) {
+      this.mount = mount;
+   }
 
    public updateIsInRiver(entity: Entity): void {
       const tileIndex = getEntityTile(this);
@@ -191,8 +198,14 @@ export class TransformComponent {
    public cleanHitboxes(entity: Entity): void {
       assert(this.hitboxes.length > 0);
 
+      // @Hack
+      let rotation = this.rotation;
+      if (entityExists(this.mount)) {
+         const mountTransformComponent = TransformComponentArray.getComponent(this.mount);
+         rotation += mountTransformComponent.rotation;
+      }
       for (const hitbox of this.rootHitboxes) {
-         cleanHitbox(this, hitbox, this.position, this.rotation);
+         cleanHitbox(this, hitbox, this.position, rotation);
       }
 
       this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -439,7 +452,11 @@ TransformComponentArray.onRemove = onRemove;
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   transformComponent.carryRoot = entity;
+   if (transformComponent.mount !== 0) {
+      mountEntity(entity, transformComponent.mount, 0, 0);
+   } else {
+      transformComponent.carryRoot = entity;
+   }
    
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.cleanHitboxes(entity);
@@ -460,6 +477,28 @@ function onJoin(entity: Entity): void {
 function onRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
+   // Remove from mount if being carried
+   if (entityExists(transformComponent.mount)) {
+      const mountTransformComponent = TransformComponentArray.getComponent(transformComponent.mount);
+
+      let idx: number | undefined;
+      for (let i = 0; i < mountTransformComponent.carriedEntities.length; i++) {
+         const carryInfo = mountTransformComponent.carriedEntities[i];
+         if (carryInfo.carriedEntity === entity) {
+            idx = i;
+            break;
+         }
+      }
+      assert(typeof idx !== "undefined");
+
+      mountTransformComponent.carriedEntities.splice(idx, 1);
+   }
+
+   // Unmount any chilren
+   for (const carryInfo of transformComponent.carriedEntities) {
+      dismountEntity(carryInfo.carriedEntity);
+   }
+   
    // Remove from chunks
    const layer = getEntityLayer(entity);
    for (let i = 0; i < transformComponent.chunks.length; i++) {
@@ -569,7 +608,7 @@ function getDataLength(entity: Entity): number {
       }
    }
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * transformComponent.carriedEntities.length;
 
    return lengthBytes;
@@ -623,6 +662,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 
    packet.addNumber(transformComponent.carryRoot);
+   packet.addNumber(transformComponent.mount);
    packet.addNumber(transformComponent.carriedEntities.length);
    for (const entityCarryInfo of transformComponent.carriedEntities) {
       packet.addNumber(entityCarryInfo.carriedEntity);
@@ -631,9 +671,14 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-export function carryEntity(mount: Entity, entity: Entity, offsetX: number, offsetY: number): void {
+export function mountEntity(entity: Entity, mount: Entity, offsetX: number, offsetY: number): void {
+   assert(mount !== entity);
+   
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   
+   entityTransformComponent.carryRoot = mountTransformComponent.carryRoot;
+   entityTransformComponent.mount = mount;
 
    const carryInfo: EntityCarryInfo = {
       carriedEntity: entity,
@@ -641,7 +686,40 @@ export function carryEntity(mount: Entity, entity: Entity, offsetX: number, offs
       offsetY: offsetY
    };
    mountTransformComponent.carriedEntities.push(carryInfo);
-   entityTransformComponent.carryRoot = mount;
+
+   fixCarriedEntityPosition(entityTransformComponent, carryInfo, mountTransformComponent);
+}
+
+const propagateCarryRootChange = (transformComponent: TransformComponent, carryRoot: Entity): void => {
+   transformComponent.carryRoot = carryRoot;
+   
+   for (const carryInfo of transformComponent.carriedEntities) {
+      const carriedEntityTransformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+      propagateCarryRootChange(carriedEntityTransformComponent, carryRoot);
+   }
+}
+
+export function dismountEntity(entity: Entity): void {
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+
+   const mount = entityTransformComponent.mount;
+   const mountTransformComponent = TransformComponentArray.getComponent(mount);
+
+   let idx: number | undefined;
+   for (let i = 0; i < mountTransformComponent.carriedEntities.length; i++) {
+      const carryInfo = mountTransformComponent.carriedEntities[i];
+      if (carryInfo.carriedEntity === entity) {
+         idx = i;
+         break;
+      }
+   }
+   assert(typeof idx !== "undefined");
+
+   mountTransformComponent.carriedEntities.splice(idx, 1);
+   registerDirtyEntity(mount);
+
+   propagateCarryRootChange(entityTransformComponent, entity);
+   entityTransformComponent.mount = 0;
 }
 
 export function getEntityTile(transformComponent: TransformComponent): TileIndex {

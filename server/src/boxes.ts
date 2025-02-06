@@ -1,7 +1,8 @@
-import { BlockBox, BlockType, BoxFromType, BoxType, DamageBox, GenericCollisionBoxInfo, GenericCollisionBoxType } from "battletribes-shared/boxes/boxes";
+import { BlockBox, BoxFromType, BoxType, DamageBox, GenericCollisionBoxInfo, GenericCollisionBoxType } from "battletribes-shared/boxes/boxes";
 import { LimbInfo } from "./components/InventoryUseComponent";
 import { Entity } from "battletribes-shared/entities";
 import { InventoryName } from "battletribes-shared/items/items";
+import { BlockType } from "../../shared/src/components";
 
 type CollisionCallback = (attacker: Entity, victim: Entity, limb: LimbInfo, collidingDamageBox: ServerDamageBox | null) => void;
 

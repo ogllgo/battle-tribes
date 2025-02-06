@@ -246,11 +246,15 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
 
    // Rideable entities
    if (RideableComponentArray.hasComponent(entity)) {
-      return {
-         type: InteractActionType.mountCarrySlot,
-         interactEntity: entity,
-         interactRange: Vars.DEFAULT_INTERACT_RANGE
-      };
+      const rideableComponent = RideableComponentArray.getComponent(entity);
+      const carrySlot = rideableComponent.carrySlots[0];
+      if (!carrySlot.isOccupied) {
+         return {
+            type: InteractActionType.mountCarrySlot,
+            interactEntity: entity,
+            interactRange: Vars.DEFAULT_INTERACT_RANGE
+         };
+      }
    }
 
    const inventoryMenuType = getInventoryMenuType(entity);
@@ -382,7 +386,6 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.mountCarrySlot: {
-         console.log("send");
          sendMountCarrySlotPacket(entity);
          deselectSelectedEntity();
          break;

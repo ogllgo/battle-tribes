@@ -21,7 +21,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.hut;
 
 export function createWarriorHutConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createWarriorHutHitboxes(), null);
    
    const healthComponent = new HealthComponent(75);

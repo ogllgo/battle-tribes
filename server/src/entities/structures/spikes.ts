@@ -28,7 +28,7 @@ type ComponentTypes = ServerComponentType.transform
 const HEALTHS = [15, 45];
 
 export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createFloorSpikesHitboxes(), null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
@@ -59,7 +59,7 @@ export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial
 }
 
 export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createWallSpikesHitboxes(), null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);

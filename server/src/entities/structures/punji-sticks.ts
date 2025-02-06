@@ -27,7 +27,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.punjiSticks;
 
 export function createFloorPunjiSticksConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createFloorPunjiSticksHitboxes(), null);
    
    const healthComponent = new HealthComponent(10);
@@ -58,7 +58,7 @@ export function createFloorPunjiSticksConfig(tribe: Tribe, connections: Array<St
 }
 
 export function createWallPunjiSticksConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createWallPunjiSticksHitboxes(), null);
    
    const healthComponent = new HealthComponent(10);

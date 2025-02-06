@@ -16,7 +16,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.treeRootSegment;
 
 export function createTreeRootSegmentConfig(root: Entity): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 24, 40, 0), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

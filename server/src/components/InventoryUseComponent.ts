@@ -1,30 +1,23 @@
-import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
+import { BlockType, ServerComponentType } from "battletribes-shared/components";
+import { Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { getItemAttackInfo, HammerItemInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemTypeString } from "battletribes-shared/items/items";
+import { getItemAttackInfo, Inventory, InventoryName, Item, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
-import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { lerp, Point } from "battletribes-shared/utils";
-import { DamageBoxComponentArray } from "./DamageBoxComponent";
-import { ServerBlockBox, ServerDamageBox } from "../boxes";
-import { assertBoxIsRectangular, BlockType, Box, updateBox } from "battletribes-shared/boxes/boxes";
-import { TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, HAMMER_ATTACK_TIMINGS } from "battletribes-shared/attack-patterns";
+import { Box, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { healEntity, HealthComponentArray } from "./HealthComponent";
-import { attemptAttack, calculateItemKnockback } from "../entities/tribes/limb-use";
-import { ProjectileComponentArray } from "./ProjectileComponent";
 import { applyKnockback } from "./PhysicsComponent";
-import { destroyEntity, getEntityType, getGameTicks } from "../world";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { doBlueprintWork } from "./BlueprintComponent";
-import { EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
-import { TribesmanTitle } from "../../../shared/src/titles";
-import { hasTitle } from "./TribesmanComponent";
+import { createBlockAttackConfig } from "../entities/block-attack";
+import { createEntity } from "../Entity";
+import { destroyEntity, entityExists, getEntityLayer } from "../world";
+import { createSwingAttackConfig } from "../entities/swing-attack";
 import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 
 // @Cleanup: Make into class Limb with getHeldItem method
@@ -59,12 +52,10 @@ export interface LimbInfo {
 
    currentActionStartLimbState: LimbState;
    currentActionEndLimbState: LimbState;
-   
-   /** Damage box used to create limb attacks. */
-   limbDamageBox: ServerDamageBox;
-   heldItemDamageBox: ServerDamageBox;
-   blockBox: ServerBlockBox;
 
+   swingAttack: Entity;
+   blockAttack: Entity;
+   
    // @Hack @Memory: Shouldn't be stored like this, should only be sent when block events happen
    // @Bug: If multiple attacks are blocked in 1 tick by the same damage box, only one of them is sent. 
    lastBlockTick: number;
@@ -94,16 +85,7 @@ export class InventoryUseComponent {
    public globalAttackCooldown = 0;
 
    // @Hack: limb configuration. Can't be called in this function as the limbInfos array won't have been populated
-   public createLimb(entity: Entity, associatedInventory: Inventory, limbConfiguration: LimbConfiguration): void {
-      const limbDamageBox = new ServerDamageBox(new CircularBox(null, new Point(0, 0), 0, 12), associatedInventory.name, false);
-      const heldItemDamageBox = new ServerDamageBox(new RectangularBox(null, new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
-      const blockBox = new ServerBlockBox(new RectangularBox(null, new Point(0, 0), 0, 0, 0), associatedInventory.name, false);
-      
-      const damageBoxComponent = DamageBoxComponentArray.getComponent(entity);
-      damageBoxComponent.addDamageBox(limbDamageBox);
-      damageBoxComponent.addDamageBox(heldItemDamageBox);
-      damageBoxComponent.addBlockBox(blockBox);
-
+   public createLimb(associatedInventory: Inventory, limbConfiguration: LimbConfiguration): void {
       const restingLimbState = RESTING_LIMB_STATES[limbConfiguration];
 
       const useInfo: LimbInfo = {
@@ -130,9 +112,8 @@ export class InventoryUseComponent {
          currentActionRate: 1,
          currentActionStartLimbState: copyLimbState(restingLimbState),
          currentActionEndLimbState: copyLimbState(restingLimbState),
-         limbDamageBox: limbDamageBox,
-         heldItemDamageBox: heldItemDamageBox,
-         blockBox: blockBox,
+         swingAttack: 0,
+         blockAttack: 0,
          lastBlockTick: 0,
          blockPositionX: 0,
          blockPositionY: 0,
@@ -175,7 +156,7 @@ function onJoin(entity: Entity): void {
 
       // @Hack
       const limbConfiguration = inventoryUseComponent.associatedInventoryNames.length - 1;
-      inventoryUseComponent.createLimb(entity, inventory, limbConfiguration);
+      inventoryUseComponent.createLimb(inventory, limbConfiguration);
    }
 }
 
@@ -187,7 +168,7 @@ const currentActionHasFinished = (limbInfo: LimbInfo): boolean => {
 // @Cleanup: also make getHeldItemAttackInfo method
 export function getHeldItem(limbInfo: LimbInfo): Item | null {
    const item = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
-   return typeof item !== "undefined" ? item : null;
+   return (typeof item !== "undefined" && limbInfo.thrownBattleaxeItemID !== item.id) ? item : null;
 }
 
 export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponent): LimbConfiguration {
@@ -198,154 +179,30 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
    }
 }
 
-const setLimb = (entity: Entity, limb: LimbInfo, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
    const flipMultiplier = isFlipped ? -1 : 1;
-   const limbDamageBox = limb.limbDamageBox;
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const offset = extraOffset + getHumanoidRadius(transformComponent) + 2;
 
-   const limbBox = limbDamageBox.box;
-   limbBox.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
-   limbBox.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
-   limbBox.relativeRotation = limbRotation * flipMultiplier;
+   const box = hitbox.box;
+   box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
+   box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
+   box.relativeRotation = limbRotation * flipMultiplier;
 
-   updateBox(limbBox, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
-   
-   updateBox(limb.heldItemDamageBox.box, limbBox.position.x, limbBox.position.y, limbBox.rotation);
-   updateBox(limb.blockBox.box, limbBox.position.x, limbBox.position.y, limbBox.rotation);
+   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
 }
 
-const lerpLimbBetweenStates = (entity: Entity, limbInfo: LimbInfo, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void => {
+export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
    const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
    const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
    const rotation = lerp(startingLimbState.rotation, targetLimbState.rotation, progress);
    const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
    const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
-   setLimb(entity, limbInfo, direction, extraOffset, rotation, extraOffsetX, extraOffsetY, isFlipped);
+   setHitbox(transformComponent, hitbox, direction, extraOffset, rotation, extraOffsetX, extraOffsetY, isFlipped);
 }
 
-const setLimbToState = (entity: Entity, limbInfo: LimbInfo, state: LimbState, isFlipped: boolean): void => {
-   setLimb(entity, limbInfo, state.direction, state.extraOffset, state.rotation, state.extraOffsetX, state.extraOffsetY, isFlipped);
-}
-
-export function onBlockBoxCollisionWithDamageBox(attacker: Entity, victim: Entity, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox, collidingDamageBox: ServerDamageBox): void {
-   const victimInventoryUseComponent = InventoryUseComponentArray.getComponent(attacker);
-   const attackerLimb = victimInventoryUseComponent.getLimbInfo(collidingDamageBox.associatedLimbInventoryName);
-
-   // Pause the attacker's attack for a brief period
-   attackerLimb.currentActionPauseTicksRemaining = Math.floor(Settings.TPS / 15);
-   attackerLimb.currentActionRate = 0.4;
-
-   attackerLimb.limbDamageBox.isBlocked = true;
-   attackerLimb.heldItemDamageBox.isBlocked = true;
-   registerDirtyEntity(attacker);
-
-   // If the block box is a shield, just deactivate the attack boxes
-   if (blockBox.blockType === BlockType.shieldBlock) {
-      attackerLimb.limbDamageBox.isActive = false;
-      attackerLimb.heldItemDamageBox.isActive = false;
-
-      const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-      const victimTransformComponent = TransformComponentArray.getComponent(victim);
-      // Push back
-      const pushDirection = attackerTransformComponent.position.calculateAngleBetween(victimTransformComponent.position);
-      const attackingItem = getHeldItem(attackerLimb);
-      const knockbackAmount = calculateItemKnockback(attackingItem, true);
-      applyKnockback(victim, knockbackAmount, pushDirection);
-   }
-
-   blockBox.hasBlocked = true;
-
-   // @Copynpaste
-   blockBoxLimb.lastBlockTick = getGameTicks();
-   blockBoxLimb.blockPositionX = blockBox.box.position.x;
-   blockBoxLimb.blockPositionY = blockBox.box.position.y;
-   blockBoxLimb.blockType = blockBox.blockType;
-}
-
-export function onBlockBoxCollisionWithProjectile(blockingEntity: Entity, projectile: Entity, blockBoxLimb: LimbInfo, blockBox: ServerBlockBox): void {
-   blockBox.hasBlocked = true;
-   // @Copynpaste
-   blockBoxLimb.lastBlockTick = getGameTicks();
-   blockBoxLimb.blockPositionX = blockBox.box.position.x;
-   blockBoxLimb.blockPositionY = blockBox.box.position.y;
-   blockBoxLimb.blockType = blockBox.blockType;
-
-   if (blockBox.blockType === BlockType.shieldBlock) {
-      const blockingEntityTransformComponent = TransformComponentArray.getComponent(blockingEntity);
-      const projectileTransformComponent = TransformComponentArray.getComponent(projectile);
-      
-      // Push back
-      const pushDirection = projectileTransformComponent.position.calculateAngleBetween(blockingEntityTransformComponent.position);
-      // @Hack @Hardcoded: knockback amount
-      applyKnockback(blockingEntity, 75, pushDirection);
-      
-      destroyEntity(projectile);
-   } else {
-      const projectileComponent = ProjectileComponentArray.getComponent(projectile);
-      projectileComponent.isBlocked = true;
-   }
-}
-
-export function onDamageBoxCollision(attacker: Entity, victim: Entity, limb: LimbInfo): void {
-   if (!HealthComponentArray.hasComponent(victim)) {
-      return;
-   }
-
-   // Don't attack friendlies
-   const relationship = getEntityRelationship(attacker, victim);
-   if (relationship === EntityRelationship.friendly) {
-      return;
-   }
-   
-   // Deactivate the damage boxes
-   limb.limbDamageBox.isActive = false;
-   limb.heldItemDamageBox.isActive = false;
-   
-   attemptAttack(attacker, victim, limb);
-}
-
-const getRepairAmount = (tribeMember: Entity, hammerItem: Item): number => {
-   const itemInfo = ITEM_INFO_RECORD[hammerItem.type] as HammerItemInfo;
-   let repairAmount = itemInfo.repairAmount;
-
-   if (hasTitle(tribeMember, TribesmanTitle.builder)) {
-      repairAmount *= 1.5;
-   }
-   
-   return Math.round(repairAmount);
-}
-
-export function workOnBlueprint(tribeMember: Entity, targetEntity: Entity, attackingLimb: LimbInfo, item: Item): boolean {
-   // Deactivate the damage boxes
-   attackingLimb.limbDamageBox.isActive = false;
-   attackingLimb.heldItemDamageBox.isActive = false;
-
-   // If holding a hammer and attacking a friendly blueprint, work on the blueprint instead of damaging it
-   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-   const blueprintTribeComponent = TribeComponentArray.getComponent(targetEntity);
-   if (blueprintTribeComponent.tribe === tribeComponent.tribe) {
-      doBlueprintWork(targetEntity, item);
-      return true;
-   }
-   return false;
-}
-
-export function repairBuilding(tribeMember: Entity, targetEntity: Entity, attackingLimb: LimbInfo, item: Item): boolean {
-   // Deactivate the damage boxes
-   attackingLimb.limbDamageBox.isActive = false;
-   attackingLimb.heldItemDamageBox.isActive = false;
-
-   // Heal friendly structures
-   const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-   const buildingTribeComponent = TribeComponentArray.getComponent(targetEntity);
-   if (buildingTribeComponent.tribe === tribeComponent.tribe) {
-      const repairAmount = getRepairAmount(tribeMember, item);
-      healEntity(targetEntity, repairAmount, tribeMember);
-      return true;
-   }
-   return false;
+export function setHitboxToState(transformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
+   setHitbox(transformComponent, hitbox, state.direction, state.extraOffset, state.rotation, state.extraOffsetX, state.extraOffsetY, isFlipped);
 }
 
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {
@@ -380,25 +237,6 @@ const getBoxCollidingWallSubtiles = (layer: Layer, box: Box): ReadonlyArray<numb
    return collidingWallSubtiles;
 }
 
-const cancelAttack = (limb: LimbInfo, limbConfiguration: LimbConfiguration): void => {
-   const heldItem = getHeldItem(limb);
-   const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
-
-   const attackPattern = heldItemAttackInfo.attackPatterns![limbConfiguration];
-
-   limb.action = LimbAction.returnAttackToRest;
-   limb.currentActionElapsedTicks = 0;
-   limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.returnTimeTicks;
-   // @Bug: shouldn't it copy the current state?
-   // @Speed: Garbage collection
-   limb.currentActionStartLimbState = copyLimbState(attackPattern.swung);
-   // @Speed: Garbage collection
-   limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
-
-   limb.limbDamageBox.isActive = false;
-   limb.heldItemDamageBox.isActive = false;
-}
-
 function onTick(entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    if (inventoryUseComponent.globalAttackCooldown > 0) {
@@ -425,22 +263,8 @@ function onTick(entity: Entity): void {
       if (currentActionHasFinished(limb)) {
          switch (limb.action) {
             case LimbAction.engageBlock: {
-               const heldItem = getHeldItem(limb);
-
-               limb.limbDamageBox.isActive = false;
-               limb.blockBox.isActive = true;
-               limb.blockBox.blockType = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? BlockType.shieldBlock : BlockType.toolBlock;
-
-               const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
-               const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo!;
-               
-               // @Copynpaste
-               assertBoxIsRectangular(limb.blockBox.box);
-               limb.blockBox.box.offset.x = damageBoxInfo.offsetX * (isFlipped ? -1 : 1);
-               limb.blockBox.box.offset.y = damageBoxInfo.offsetY;
-               limb.blockBox.box.width = damageBoxInfo.width;
-               limb.blockBox.box.height = damageBoxInfo.height;
-               limb.blockBox.box.relativeRotation = damageBoxInfo.rotation * (isFlipped ? -1 : 1);
+               const blockAttack = createBlockAttackConfig(entity, limb);
+               createEntity(blockAttack, getEntityLayer(entity), 0);
 
                limb.action = LimbAction.block;
                limb.currentActionElapsedTicks = 0;
@@ -457,22 +281,25 @@ function onTick(entity: Entity): void {
                const transformComponent = TransformComponentArray.getComponent(entity);
                applyKnockback(entity, 250, transformComponent.rotation);
 
-               limb.blockBox.isActive = false;
+               // const blockAttack = createBlockAttackConfig(entity, limb);
+               // createEntity(blockAttack, getEntityLayer(entity), 0);
+
+               // limb.blockBox.isActive = false;
                
-               limb.limbDamageBox.isActive = true;
-               limb.limbDamageBox.isBlocked = false;
-               limb.heldItemDamageBox.isActive = true;
-               limb.heldItemDamageBox.isBlocked = false;
+               // limb.limbDamageBox.isActive = true;
+               // limb.limbDamageBox.isBlocked = false;
+               // limb.heldItemDamageBox.isActive = true;
+               // limb.heldItemDamageBox.isBlocked = false;
 
-               const damageBoxInfo = SHIELD_BLOCKING_DAMAGE_BOX_INFO;
+               // const damageBoxInfo = SHIELD_BLOCKING_DAMAGE_BOX_INFO;
 
-               // @Copynpaste
-               assertBoxIsRectangular(limb.heldItemDamageBox.box);
-               limb.heldItemDamageBox.box.offset.x = damageBoxInfo.offsetX * (isFlipped ? -1 : 1);
-               limb.heldItemDamageBox.box.offset.y = damageBoxInfo.offsetY;
-               limb.heldItemDamageBox.box.width = damageBoxInfo.width;
-               limb.heldItemDamageBox.box.height = damageBoxInfo.height;
-               limb.heldItemDamageBox.box.relativeRotation = damageBoxInfo.rotation * (isFlipped ? -1 : 1);
+               // // @Copynpaste
+               // assertBoxIsRectangular(limb.heldItemDamageBox.box);
+               // limb.heldItemDamageBox.box.offset.x = damageBoxInfo.offsetX * (isFlipped ? -1 : 1);
+               // limb.heldItemDamageBox.box.offset.y = damageBoxInfo.offsetY;
+               // limb.heldItemDamageBox.box.width = damageBoxInfo.width;
+               // limb.heldItemDamageBox.box.height = damageBoxInfo.height;
+               // limb.heldItemDamageBox.box.relativeRotation = damageBoxInfo.rotation * (isFlipped ? -1 : 1);
                break;
             }
             case LimbAction.pushShieldBash: {
@@ -480,8 +307,8 @@ function onTick(entity: Entity): void {
                limb.currentActionElapsedTicks = 0;
                limb.currentActionDurationTicks = AttackVars.SHIELD_BASH_RETURN_TIME_TICKS;
 
-               limb.limbDamageBox.isActive = false;
-               limb.heldItemDamageBox.isActive = false;
+               // limb.limbDamageBox.isActive = false;
+               // limb.heldItemDamageBox.isActive = false;
                break;
             }
             case LimbAction.returnShieldBashToRest: {
@@ -504,28 +331,31 @@ function onTick(entity: Entity): void {
                // @Speed: Garbage collection
                limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
                
-               limb.limbDamageBox.isActive = true;
-               limb.limbDamageBox.isBlocked = false;
-               limb.heldItemDamageBox.isBlocked = false;
-
-               const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo;
-               if (damageBoxInfo !== null) {
-                  limb.heldItemDamageBox.isActive = true;
-
-                  // @Copynpaste
-                  assertBoxIsRectangular(limb.heldItemDamageBox.box);
-                  limb.heldItemDamageBox.box.offset.x = damageBoxInfo.offsetX * (isFlipped ? -1 : 1);
-                  limb.heldItemDamageBox.box.offset.y = damageBoxInfo.offsetY;
-                  limb.heldItemDamageBox.box.width = damageBoxInfo.width;
-                  limb.heldItemDamageBox.box.height = damageBoxInfo.height;
-                  limb.heldItemDamageBox.box.relativeRotation = damageBoxInfo.rotation * (isFlipped ? -1 : 1);
-               } else {
-                  limb.heldItemDamageBox.isActive = false;
-               }
+               const swingAttackConfig = createSwingAttackConfig(entity, limb);
+               limb.swingAttack = createEntity(swingAttackConfig, getEntityLayer(entity), 0);
                break;
             }
             case LimbAction.attack: {
-               cancelAttack(limb, getLimbConfiguration(inventoryUseComponent));
+               const heldItem = getHeldItem(limb);
+
+               const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+            
+               const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+               const attackPattern = heldItemAttackInfo.attackPatterns![limbConfiguration];
+            
+               limb.action = LimbAction.returnAttackToRest;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.returnTimeTicks;
+               // @Bug: shouldn't it copy the current state?
+               // @Speed: Garbage collection
+               limb.currentActionStartLimbState = copyLimbState(attackPattern.swung);
+               // @Speed: Garbage collection
+               limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
+            
+               // If the swing hits something partway through it can be destroyed
+               if (entityExists(limb.swingAttack)) {
+                  destroyEntity(limb.swingAttack);
+               }
                break;
             }
             case LimbAction.returnAttackToRest: {
@@ -553,7 +383,8 @@ function onTick(entity: Entity): void {
          swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
       }
          
-      lerpLimbBetweenStates(entity, limb, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
+      // @Incomplete?
+      // lerpLimbBetweenStates(entity, limb, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
 
       // @Temporary?
       // If the attack collides with a wall, cancel it
@@ -597,7 +428,8 @@ function onTick(entity: Entity): void {
       // Update damage box for shield bashes
       if (limb.action === LimbAction.pushShieldBash) {
          const swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
-         lerpLimbBetweenStates(entity, limb, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BASH_PUSHED_LIMB_STATE, swingProgress, isFlipped);
+         // @Incomplete
+         // lerpLimbBetweenStates(entity, limb, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BASH_PUSHED_LIMB_STATE, swingProgress, isFlipped);
       }
 
       // Update blocking damage box when blocking
@@ -605,7 +437,8 @@ function onTick(entity: Entity): void {
          if (limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
             const heldItem = getHeldItem(limb);
             const blockingState = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE;
-            setLimbToState(entity, limb, blockingState, isFlipped);
+            // @Incomplete
+            // setHitboxToState(entity, limb, blockingState, isFlipped);
          }
       }
 
@@ -642,7 +475,7 @@ function getDataLength(entity: Entity): number {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * Object.keys(useInfo.spearWindupCooldowns).length;
       lengthBytes += getCrossbowLoadProgressRecordLength(useInfo);
-      lengthBytes += 19 * Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += 21 * Float32Array.BYTES_PER_ELEMENT;
       // Limb states
       lengthBytes += 2 * 5 * Float32Array.BYTES_PER_ELEMENT;
    }
@@ -688,6 +521,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       packet.addNumber(limb.currentActionDurationTicks);
       packet.addNumber(limb.currentActionPauseTicksRemaining);
       packet.addNumber(limb.currentActionRate);
+      packet.addNumber(limb.swingAttack);
+      packet.addNumber(limb.blockAttack);
       packet.addNumber(limb.lastBlockTick);
       packet.addNumber(limb.blockPositionX);
       packet.addNumber(limb.blockPositionY);
@@ -698,6 +533,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
+// @Cleanup: this shit is ASS. Kill it all
 export function setLimbActions(inventoryUseComponent: InventoryUseComponent, limbAction: LimbAction): void {
    for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
       const limbInfo = inventoryUseComponent.limbInfos[i];

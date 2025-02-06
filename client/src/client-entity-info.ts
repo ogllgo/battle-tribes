@@ -254,6 +254,12 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.mithrilAnvil]: {
       name: "Mithril Anvil"
    },
+   [EntityType.swingAttack]: {
+      name: "Swing Attack"
+   },
+   [EntityType.blockAttack]: {
+      name: "Block Attack"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

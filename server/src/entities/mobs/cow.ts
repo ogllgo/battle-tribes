@@ -44,7 +44,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createCowConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
 
    // Body hitbox
    const bodyHitbox = createHitbox(new RectangularBox(null, new Point(0, -20), 50, 80, 0), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
@@ -71,7 +71,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
    const followAIComponent = new FollowAIComponent(randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), 0.2, 60);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(0, -22));
+   rideableComponent.carrySlots.push(createCarrySlot(0, -14, 48, 0));
    
    const cowComponent = new CowComponent();
    

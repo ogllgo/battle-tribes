@@ -10,8 +10,7 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket } from "../../networking/packet-creation";
-import { DamageBoxComponentArray } from "../../entity-components/server-components/DamageBoxComponent";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket } from "../../networking/packet-creation";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
@@ -29,7 +28,7 @@ import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./me
 import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
+import { createEntity, entityExists, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -52,6 +51,7 @@ import { playerTribe } from "../../tribes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createResearchBenchComponentParams } from "../../entity-components/server-components/ResearchBenchComponent";
 import { GameInteractState } from "./GameScreen";
+import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -187,18 +187,6 @@ export function discombobulate(discombobulationTimeSeconds: number): void {
    }
 }
 
-const hasBlockedAttack = (limb: LimbInfo): boolean => {
-   const damageBoxComponent = DamageBoxComponentArray.getComponent(playerInstance!);
-
-   for (const blockBox of damageBoxComponent.blockBoxes) {
-      if (blockBox.associatedLimbInventoryName === limb.inventoryName && blockBox.hasBlocked) {
-         return true;
-      }
-   }
-
-   return false;
-}
-
 const itemIsResting = (itemSlot: number): boolean => {
    // @Hack
    const restTime = GameInteractableLayer_getHotbarRestTimes()[itemSlot - 1];
@@ -314,12 +302,14 @@ export function updatePlayerItems(): void {
       // @Incomplete: Double-check there isn't a tick immediately after depressing the button where this hasn't registered in the limb yet
       // If blocking but not right clicking, return to rest
       if (limb.action === LimbAction.block && !rightMouseButtonIsPressed) {
+         const blockAttackComponent = BlockAttackComponentArray.getComponent(limb.blockAttack);
+
          const attackInfo = getItemAttackInfo(limb.heldItemType);
          limb.action = LimbAction.returnBlockToRest;
          limb.currentActionElapsedTicks = 0;
          // @Temporary? Perhaps use separate blockReturnTimeTicks.
          limb.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks!;
-         limb.currentActionRate = hasBlockedAttack(limb) ? 2 : 1;
+         limb.currentActionRate = blockAttackComponent.hasBlocked ? 2 : 1;
 
          sendStopItemUsePacket();
       }
@@ -702,6 +692,15 @@ export function createPlayerInputListeners(): void {
          const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const dropAmount = keyIsPressed("shift") ? 99999 : 1;
          sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerTransformComponent.rotation);
+      }
+   });
+
+   addKeyListener("shift", () => {
+      if (playerInstance !== null) {
+         const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         if (entityExists(transformComponent.mount)) {
+            sendDismountCarrySlotPacket();
+         }
       }
    });
 }
@@ -1225,7 +1224,10 @@ const tickItem = (itemType: ItemType): void => {
                      tethers,
                      staticHitboxes,
                      COLLISION_BITS.default,
-                     DEFAULT_COLLISION_MASK
+                     DEFAULT_COLLISION_MASK,
+                     0,
+                     0,
+                     []
                   );
 
                   components[componentType] = transformComponentParams;

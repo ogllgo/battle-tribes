@@ -17,15 +17,15 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAnimalStaffFollowCommandPacket, processAscendPacket, processDevGiveItemPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processMountCarrySlotPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
-import { Entity } from "battletribes-shared/entities";
+import { processAnimalStaffFollowCommandPacket, processAscendPacket, processDevGiveItemPacket, processDismountCarrySlotPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processMountCarrySlotPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pushJoinBuffer, tickGameTime, tickEntities, generateLayers } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, getGameTicks, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType } from "../world";
 import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
@@ -325,6 +325,10 @@ class GameServer {
                }
                case PacketType.mountCarrySlot: {
                   processMountCarrySlotPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.dismountCarrySlot: {
+                  processDismountCarrySlotPacket(playerClient);
                   break;
                }
                default: {

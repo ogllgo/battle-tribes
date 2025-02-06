@@ -60,7 +60,6 @@ import { KrumblidComponent } from "./components/KrumblidComponent";
 import { SpearProjectileComponent } from "./components/SpearProjectileComponent";
 import { PunjiSticksComponent } from "./components/PunjiSticksComponent";
 import { IceArrowComponent } from "./components/IceArrowComponent";
-import { DamageBoxComponent } from "./components/DamageBoxComponent";
 import { GuardianComponent } from "./components/GuardianComponent";
 import { GuardianGemQuakeComponent } from "./components/GuardianGemQuakeComponent";
 import { GuardianGemFragmentProjectileComponent } from "./components/GuardianGemFragmentProjectileComponent";
@@ -94,6 +93,8 @@ import { TribesmanComponent } from "./components/TribesmanComponent";
 import { AutomatonAssemblerComponent } from "./components/AutomatonAssemblerComponent";
 import { MithrilAnvilComponent } from "./components/MithrilAnvilComponent";
 import { RideableComponent } from "./components/RideableComponent";
+import { SwingAttackComponent } from "./components/SwingAttackComponent";
+import { BlockAttackComponent } from "./components/BlockAttackComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -164,7 +165,6 @@ const ComponentClassRecord = {
    [ServerComponentType.battleaxeProjectile]: () => BattleaxeProjectileComponent,
    [ServerComponentType.spearProjectile]: () => SpearProjectileComponent,
    [ServerComponentType.krumblid]: () => KrumblidComponent,
-   [ServerComponentType.damageBox]: () => DamageBoxComponent,
    [ServerComponentType.guardian]: () => GuardianComponent,
    [ServerComponentType.guardianGemQuake]: () => GuardianGemQuakeComponent,
    [ServerComponentType.guardianGemFragmentProjectile]: () => GuardianGemFragmentProjectileComponent,
@@ -190,6 +190,8 @@ const ComponentClassRecord = {
    [ServerComponentType.automatonAssembler]: () => AutomatonAssemblerComponent,
    [ServerComponentType.mithrilAnvil]: () => MithrilAnvilComponent,
    [ServerComponentType.rideable]: () => RideableComponent,
+   [ServerComponentType.swingAttack]: () => SwingAttackComponent,
+   [ServerComponentType.blockAttack]: () => BlockAttackComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

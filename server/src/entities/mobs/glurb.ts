@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.glurb;
    
 export function createGlurbConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
 
    const lights = new Array<LightCreationInfo>();
    

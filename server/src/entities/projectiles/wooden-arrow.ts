@@ -13,7 +13,7 @@ import { ProjectileComponent, ProjectileComponentArray } from "../../components/
 import { ItemType } from "battletribes-shared/items/items";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { destroyEntity, getEntityType, validateEntity } from "../../world";
+import { destroyEntity, entityExists, getEntityType, validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 
 type ComponentTypes = ServerComponentType.transform
@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.projectile;
 
 export function createWoodenArrowConfig(tribe: Tribe, owner: Entity): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 64, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
    
@@ -61,6 +61,16 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    if (collidingEntityType === EntityType.embrasure) {
       const collidingEntityTribeComponent = TribeComponentArray.getComponent(collidingEntity);
       if (tribeComponent.tribe === collidingEntityTribeComponent.tribe) {
+         return;
+      }
+   }
+
+   // Don't collide with anything attached to the owner
+   const projectileComponent = ProjectileComponentArray.getComponent(arrow);
+   if (entityExists(projectileComponent.creator)) {
+      const creatorTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
+      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+      if (creatorTransformComponent.carryRoot === collidingEntityTransformComponent.carryRoot) {
          return;
       }
    }

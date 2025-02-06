@@ -77,7 +77,7 @@ const generateRandomLimbs = (): ReadonlyArray<CactusLimbData> => {
 }
 
 export function createCactusConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.collisionBit = COLLISION_BITS.cactus;
    
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);

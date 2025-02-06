@@ -17,7 +17,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.spikyBastard;
    
 export function createSpikyBastardConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 16, 32, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    

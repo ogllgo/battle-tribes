@@ -286,3 +286,8 @@ export function sendMountCarrySlotPacket(mount: Entity): void {
    packet.addNumber(mount);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendDismountCarrySlotPacket(): void {
+   const packet = new Packet(PacketType.dismountCarrySlot, Float32Array.BYTES_PER_ELEMENT);
+   Client.sendPacket(packet.buffer);
+}

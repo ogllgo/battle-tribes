@@ -8,7 +8,6 @@ import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { DamageBoxComponent } from "../../components/DamageBoxComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
@@ -37,8 +36,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.patrolAI
    | ServerComponentType.inventoryUse
    | ServerComponentType.inventory
-   | ServerComponentType.tribeWarrior
-   | ServerComponentType.damageBox;
+   | ServerComponentType.tribeWarrior;
 
 const generateScars = (): ReadonlyArray<ScarInfo> => {
    let numScars = 1;
@@ -75,7 +73,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 }
 
 export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
@@ -107,8 +105,6 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
 
    const tribeWarriorComponent = new TribeWarriorComponent(generateScars());
 
-   const damageBoxComponent = new DamageBoxComponent();
-
    return {
       entityType: EntityType.tribeWarrior,
       components: {
@@ -125,8 +121,7 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
          [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
-         [ServerComponentType.tribeWarrior]: tribeWarriorComponent,
-         [ServerComponentType.damageBox]: damageBoxComponent
+         [ServerComponentType.tribeWarrior]: tribeWarriorComponent
       },
       lights: []
    };

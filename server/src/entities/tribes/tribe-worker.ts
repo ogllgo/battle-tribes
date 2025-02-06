@@ -10,7 +10,6 @@ import { EntityConfig } from "../../components";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
-import { DamageBoxComponent } from "../../components/DamageBoxComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
@@ -35,8 +34,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.aiAssignment
    | ServerComponentType.patrolAI
    | ServerComponentType.inventoryUse
-   | ServerComponentType.inventory
-   | ServerComponentType.damageBox;
+   | ServerComponentType.inventory;
 
 const getHitboxRadius = (tribeType: TribeType): number => {
    switch (tribeType) {
@@ -53,7 +51,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 }
 
 export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
@@ -83,8 +81,6 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
 
    const inventoryUseComponent = new InventoryUseComponent();
 
-   const damageBoxComponent = new DamageBoxComponent();
-
    return {
       entityType: EntityType.tribeWorker,
       components: {
@@ -100,8 +96,7 @@ export function createTribeWorkerConfig(tribe: Tribe): EntityConfig<ComponentTyp
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
          [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
-         [ServerComponentType.inventoryUse]: inventoryUseComponent,
-         [ServerComponentType.damageBox]: damageBoxComponent
+         [ServerComponentType.inventoryUse]: inventoryUseComponent
       },
       lights: []
    };

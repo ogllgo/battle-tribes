@@ -96,14 +96,16 @@ function onTick(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const footprintComponent = FootprintComponentArray.getComponent(entity);
 
-   // Footsteps
-   if (physicsComponent.selfVelocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
-      createFootprintParticle(entity, footprintComponent.numFootstepsTaken, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
-      footprintComponent.numFootstepsTaken++;
-   }
-   footprintComponent.distanceTracker += physicsComponent.selfVelocity.length() / Settings.TPS;
-   if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
-      footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
-      createFootstepSound(entity);
+   if (transformComponent.carryRoot === entity) {
+      // Footsteps
+      if (physicsComponent.selfVelocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+         createFootprintParticle(entity, footprintComponent.numFootstepsTaken, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
+         footprintComponent.numFootstepsTaken++;
+      }
+      footprintComponent.distanceTracker += physicsComponent.selfVelocity.length() / Settings.TPS;
+      if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
+         footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
+         createFootstepSound(entity);
+      }
    }
 }

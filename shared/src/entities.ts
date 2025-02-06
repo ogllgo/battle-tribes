@@ -84,7 +84,9 @@ export const enum EntityType {
    scrappy,
    cogwalker,
    automatonAssembler,
-   mithrilAnvil
+   mithrilAnvil,
+   swingAttack,
+   blockAttack,
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -171,6 +173,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.cogwalker]: "Cogwalker",
    [EntityType.automatonAssembler]: "Automaton Assembler",
    [EntityType.mithrilAnvil]: "Mithril Anvil",
+   [EntityType.swingAttack]: "Swing Attack",
+   [EntityType.blockAttack]: "Block Attack",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

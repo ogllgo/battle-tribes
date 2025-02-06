@@ -22,7 +22,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.craftingStation;
 
 export function createStonecarvingTableConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createStonecarvingTableHitboxes(), null);
    
    const healthComponent = new HealthComponent(40);

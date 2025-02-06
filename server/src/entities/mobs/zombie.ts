@@ -42,7 +42,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 export function createZombieConfig(isGolden: boolean, tombstone: Entity): EntityConfig<ComponentTypes> {
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 

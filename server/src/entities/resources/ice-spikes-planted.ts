@@ -19,7 +19,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.iceSpikesPlanted;
 
 export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;

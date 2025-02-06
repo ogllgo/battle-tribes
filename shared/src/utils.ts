@@ -409,7 +409,7 @@ export function assertUnreachable(x: never): never {
 
 export function assert(condition: unknown, errorMessage?: string): asserts condition {
    if (!condition) {
- throw  new Error(errorMessage);
+      throw new Error(errorMessage);
    }
 }
 

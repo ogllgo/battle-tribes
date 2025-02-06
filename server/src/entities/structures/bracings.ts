@@ -25,7 +25,7 @@ type ComponentTypes = ServerComponentType.transform
 const HEALTHS = [5, 20];
 
 export function createBracingsConfig(hitboxes: ReadonlyArray<Hitbox>, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(hitboxes, null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

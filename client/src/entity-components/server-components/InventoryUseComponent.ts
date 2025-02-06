@@ -1,6 +1,6 @@
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Point, lerp, randFloat, randItem } from "battletribes-shared/utils";
-import { ServerComponentType } from "battletribes-shared/components";
+import { BlockType, ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Board, { getElapsedTimeInSeconds, getSecondsSinceTickTimestamp } from "../../Board";
@@ -17,7 +17,6 @@ import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/i
 import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
-import { BlockType } from "../../../../shared/src/boxes/boxes";
 import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -51,6 +50,9 @@ export interface LimbInfo {
    currentActionDurationTicks: number;
    currentActionPauseTicksRemaining: number;
    currentActionRate: number;
+
+   swingAttack: Entity;
+   blockAttack: Entity;
 
    currentActionStartLimbState: LimbState;
    currentActionEndLimbState: LimbState;
@@ -222,6 +224,7 @@ const BOW_CHARGE_NON_DOMINANT_LIMB_STATE: LimbState = {
    extraOffsetY: 40
 };
 
+// @Cleanup: unused?
 type InventoryUseEntityType = EntityType.player | EntityType.tribeWorker | EntityType.tribeWarrior | EntityType.zombie;
 
 const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
@@ -249,6 +252,8 @@ const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
       currentActionRate: 0,
       currentActionStartLimbState: createZeroedLimbState(),
       currentActionEndLimbState: createZeroedLimbState(),
+      swingAttack: 0,
+      blockAttack: 0,
       animationStartOffset: new Point(-1, -1),
       animationEndOffset: new Point(-1, -1),
       animationDurationTicks: 0,
@@ -1268,7 +1273,7 @@ function padData(reader: PacketReader): void {
       // @Speed
       readCrossbowLoadProgressRecord(reader);
 
-      reader.padOffset(19 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(21 * Float32Array.BYTES_PER_ELEMENT);
       // Limb states
       reader.padOffset(2 * 5 * Float32Array.BYTES_PER_ELEMENT);
    }
@@ -1316,6 +1321,8 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void 
    const currentActionDurationTicks = reader.readNumber();
    const currentActionPauseTicksRemaining = reader.readNumber();
    const currentActionRate = reader.readNumber();
+   const swingAttack = reader.readNumber();
+   const blockAttack = reader.readNumber();
    const lastBlockTick = reader.readNumber();
    const blockPositionX = reader.readNumber();
    const blockPositionY = reader.readNumber();
@@ -1339,6 +1346,8 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void 
    limbInfo.lastCraftTicks = lastCraftTicks;
    limbInfo.thrownBattleaxeItemID = thrownBattleaxeItemID;
    limbInfo.lastAttackCooldown = lastAttackCooldown;
+   limbInfo.swingAttack = swingAttack;
+   limbInfo.blockAttack = blockAttack;
    limbInfo.currentActionElapsedTicks = currentActionElapsedTicks;
    limbInfo.currentActionDurationTicks = currentActionDurationTicks;
    limbInfo.currentActionPauseTicksRemaining = currentActionPauseTicksRemaining;
@@ -1426,7 +1435,7 @@ function updatePlayerFromData(reader: PacketReader): void {
 
       reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
       const thrownBattleaxeItemID = reader.readNumber();
-      reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
       // @Copynpaste
       const lastBlockTick = reader.readNumber();
       const blockPositionX = reader.readNumber();

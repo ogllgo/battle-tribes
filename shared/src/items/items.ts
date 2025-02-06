@@ -1286,6 +1286,10 @@ export function itemTypeIsGlove(itemType: ItemType): itemType is GloveItemType {
    return ITEM_TYPE_RECORD[itemType] === "glove";
 }
 
+export function itemTypeIsHammer(itemType: ItemType): itemType is HammerItemType {
+   return ITEM_TYPE_RECORD[itemType] === "hammer";
+}
+
 export function getItemAttackInfo(itemType: ItemType | null): AttackInfo {
    if (itemType === null) {
       return UNARMED_ATTACK_INFO;
@@ -1293,4 +1297,8 @@ export function getItemAttackInfo(itemType: ItemType | null): AttackInfo {
 
    const itemCategory = ITEM_TYPE_RECORD[itemType];
    return ITEM_CATEGORY_ATTACK_INFO_RECORD[itemCategory];
+}
+
+export function getItemType(item: Item | null): ItemType | null {
+   return item !== null ? item.type : null;
 }

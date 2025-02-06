@@ -20,7 +20,7 @@ type ComponentTypes = ServerComponentType.transform
 const RADIUS = 55;
 
 export function createSpitPoisonAreaConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    // @Hack mass
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, RADIUS), Number.EPSILON, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);

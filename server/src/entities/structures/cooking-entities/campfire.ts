@@ -30,7 +30,7 @@ const LIFETIME_SECONDS = 30;
 // @Incomplete: Destroy campfire when remaining heat reaches 0
 
 export function createCampfireConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createCampfireHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);

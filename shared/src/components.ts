@@ -83,7 +83,6 @@ export enum ServerComponentType {
    battleaxeProjectile,
    spearProjectile,
    krumblid,
-   damageBox,
    guardian,
    guardianGemQuake,
    guardianGemFragmentProjectile,
@@ -108,7 +107,9 @@ export enum ServerComponentType {
    cogwalker,
    automatonAssembler,
    mithrilAnvil,
-   rideable
+   rideable,
+   swingAttack,
+   blockAttack,
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -178,7 +179,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.battleaxeProjectile]: "Battleaxe Projectile Component",
    [ServerComponentType.spearProjectile]: "Spear Projectile Component",
    [ServerComponentType.krumblid]: "Krumblid Component",
-   [ServerComponentType.damageBox]: "Damage Box Component",
    [ServerComponentType.guardian]: "Guardian Component",
    [ServerComponentType.guardianGemQuake]: "Guardian Gem Quake Component",
    [ServerComponentType.guardianGemFragmentProjectile]: "Guardian Gem Fragment Projectile Component",
@@ -210,6 +210,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.automatonAssembler]: "Automaton Assembler",
    [ServerComponentType.mithrilAnvil]: "Mithril Anvil",
    [ServerComponentType.rideable]: "Rideable",
+   [ServerComponentType.swingAttack]: "Swing Attack",
+   [ServerComponentType.blockAttack]: "Block Attack",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -228,9 +230,9 @@ export const EntityComponents = {
    [EntityType.iceSpikes]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.iceSpikes] as const,
    [EntityType.slime]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.slime, ServerComponentType.aiHelper] as const,
    [EntityType.slimewisp]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.slimewisp, ServerComponentType.aiHelper] as const,
-   [EntityType.player]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.player, ServerComponentType.damageBox] as const,
-   [EntityType.tribeWorker]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.tribesmanAI, ServerComponentType.damageBox] as const,
-   [EntityType.tribeWarrior]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.tribesmanAI, ServerComponentType.tribeWarrior, ServerComponentType.damageBox] as const,
+   [EntityType.player]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.player] as const,
+   [EntityType.tribeWorker]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.tribesmanAI] as const,
+   [EntityType.tribeWarrior]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.tribeMember, ServerComponentType.inventory, ServerComponentType.inventoryUse, ServerComponentType.tribesmanAI, ServerComponentType.tribeWarrior] as const,
    [EntityType.tribeTotem]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.totemBanner] as const,
    [EntityType.workerHut]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.hut] as const,
    [EntityType.warriorHut]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.hut] as const,
@@ -299,6 +301,8 @@ export const EntityComponents = {
    [EntityType.cogwalker]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tribe, ServerComponentType.cogwalker],
    [EntityType.automatonAssembler]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation, ServerComponentType.automatonAssembler],
    [EntityType.mithrilAnvil]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation, ServerComponentType.mithrilAnvil],
+   [EntityType.swingAttack]: [],
+   [EntityType.blockAttack]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -939,4 +943,14 @@ export const enum GuardianSpikyBallSummonStage {
    windup,
    focus,
    return
+}
+
+
+
+
+
+// @Cleanup: Should be defined in server
+export const enum BlockType {
+   toolBlock,
+   shieldBlock
 }

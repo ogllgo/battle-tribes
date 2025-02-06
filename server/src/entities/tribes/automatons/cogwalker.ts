@@ -5,7 +5,6 @@ import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
 import { CogwalkerComponent } from "../../../components/CogwalkerComponent";
-import { DamageBoxComponent } from "../../../components/DamageBoxComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { InventoryComponent } from "../../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../../components/InventoryUseComponent";
@@ -33,11 +32,10 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.patrolAI
    | ServerComponentType.inventory
    | ServerComponentType.inventoryUse
-   | ServerComponentType.damageBox
    | ServerComponentType.cogwalker;
 
 export function createCogwalkerConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createCogwalkerHitboxes(), null);
    
    const physicsComponent = new PhysicsComponent();
@@ -65,8 +63,6 @@ export function createCogwalkerConfig(tribe: Tribe): EntityConfig<ComponentTypes
 
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, EntityType.cogwalker);
 
-   const damageBoxComponent = new DamageBoxComponent();
-
    const cogwalkerComponent = new CogwalkerComponent();
 
    return {
@@ -84,7 +80,6 @@ export function createCogwalkerConfig(tribe: Tribe): EntityConfig<ComponentTypes
          [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
-         [ServerComponentType.damageBox]: damageBoxComponent,
          [ServerComponentType.cogwalker]: cogwalkerComponent
       },
       lights: []

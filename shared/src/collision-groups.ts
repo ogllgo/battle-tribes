@@ -16,7 +16,7 @@ export const enum CollisionGroup {
    decoration,
    /** Resources such as cacti and ice spikes which are stationary and can damage other entities (have collision events). */
    damagingResource,
-   /** For static non-pushing non-pushable entities whose only purpose is to damage other entities. */
+   /** For non-pushing non-pushable entities whose only purpose is to damage other entities. */
    exclusiveDamaging,
    
    _LENGTH_
@@ -133,6 +133,8 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.cogwalker]: CollisionGroup.default,
    [EntityType.automatonAssembler]: CollisionGroup.boring,
    [EntityType.mithrilAnvil]: CollisionGroup.boring,
+   [EntityType.swingAttack]: CollisionGroup.exclusiveDamaging,
+   [EntityType.blockAttack]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

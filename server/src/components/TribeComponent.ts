@@ -149,3 +149,9 @@ export function recruitTribesman(tribesman: Entity, newTribe: Tribe): void {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    tribeComponent.tribe = newTribe;
 }
+
+export function entitiesBelongToSameTribe(entity1: Entity, entity2: Entity): boolean {
+   const tribeComponent1 = TribeComponentArray.getComponent(entity1);
+   const tribeComponent2 = TribeComponentArray.getComponent(entity2);
+   return tribeComponent1.tribe === tribeComponent2.tribe;
+}

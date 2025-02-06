@@ -11,7 +11,7 @@ import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
-import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { EntityCarryInfo, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -233,6 +233,31 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.physics,
    }
 }
 
+const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+}
+
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
+   assert(entityExists(carryInfo.carriedEntity));
+   
+   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+   
+   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+   // @Incomplete
+   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   // (Don't apply physics for carried entities)
+   // @Incomplete
+   // applyHitboxTethers(transformComponent, physicsComponent);
+   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
+
+   // Propagate to children
+   for (const carryInfo of transformComponent.carriedEntities) {
+      tickCarriedEntity(transformComponent, carryInfo);
+   }
+}
+
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -282,29 +307,6 @@ function onTick(entity: Entity): void {
       for (const carryInfo of transformComponent.carriedEntities) {
          tickCarriedEntity(transformComponent, carryInfo);
       }
-   }
-}
-
-const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-}
-
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
-   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
-   
-   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
-   // @Incomplete
-   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
-   // (Don't apply physics for carried entities)
-   // @Incomplete
-   // applyHitboxTethers(transformComponent, physicsComponent);
-   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
-
-   // Propagate to children
-   for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(transformComponent, carryInfo);
    }
 }
 

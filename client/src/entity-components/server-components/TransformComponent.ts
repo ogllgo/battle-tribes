@@ -12,7 +12,7 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPos
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
 import { Entity } from "../../../../shared/src/entities";
@@ -20,6 +20,8 @@ import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
+import { playSound } from "../../sound";
+import Camera from "../../Camera";
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -41,6 +43,7 @@ export interface TransformComponentParams {
    readonly collisionBit: HitboxCollisionBit;
    readonly collisionMask: number;
    readonly carryRoot: Entity;
+   readonly mount: Entity;
    readonly carriedEntities: Array<EntityCarryInfo>;
 }
 
@@ -69,6 +72,7 @@ export interface TransformComponent {
    boundingAreaMaxY: number;
 
    carryRoot: Entity;
+   mount: Entity;
    // @Cleanup: should be readonly
    carriedEntities: Array<EntityCarryInfo>;
 }
@@ -178,7 +182,7 @@ const padRectangularHitboxData = (reader: PacketReader): void => {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-export function createTransformComponentParams(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, tethers: Array<HitboxTether>, rootHitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams {
+export function createTransformComponentParams(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, tethers: Array<HitboxTether>, rootHitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams {
    return {
       position: position,
       rotation: rotation,
@@ -188,6 +192,7 @@ export function createTransformComponentParams(position: Point, rotation: number
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       carryRoot: carryRoot,
+      mount: mount,
       carriedEntities: carriedEntities
    };
 }
@@ -204,7 +209,7 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
 
    const hitboxes = new Array<ClientHitbox>();
    const tethers = new Array<HitboxTether>();
-   const staticHitboxes = new Array<ClientHitbox>();
+   const rootHitboxes = new Array<ClientHitbox>();
    
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
@@ -221,6 +226,9 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       }
 
       hitboxes.push(hitbox);
+      if (hitbox.box.parent === null) {
+         rootHitboxes.push(hitbox);
+      }
 
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
@@ -234,12 +242,11 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
             otherHitbox: otherHitbox
          };
          tethers.push(tether);
-      } else {
-         staticHitboxes.push(hitbox);
       }
    }
 
    const carryRoot = reader.readNumber() as Entity;
+   const mount = reader.readNumber() as Entity;
    const carriedEntities = new Array<EntityCarryInfo>();
    
    const numCarriedEntities = reader.readNumber();
@@ -256,7 +263,7 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       carriedEntities.push(carryInfo);
    }
 
-   return createTransformComponentParams(position, rotation, hitboxes, tethers, staticHitboxes, collisionBit, collisionMask, carryRoot, carriedEntities);
+   return createTransformComponentParams(position, rotation, hitboxes, tethers, rootHitboxes, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
@@ -277,7 +284,7 @@ const getHitboxLocalID = (transformComponent: TransformComponent, hitbox: Client
    throw new Error();
 }
 
-const addHitboxToEntity = (transformComponent: TransformComponent, hitbox: ClientHitbox): void => {
+const addHitbox = (transformComponent: TransformComponent, hitbox: ClientHitbox): void => {
    updateBox(hitbox.box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
    transformComponent.hitboxes.push(hitbox);
    transformComponent.hitboxMap.set(hitbox.localID, hitbox);
@@ -343,8 +350,13 @@ const cleanHitbox = (transformComponent: TransformComponent, hitbox: ClientHitbo
 }
 
 const updateHitboxes = (transformComponent: TransformComponent): void => {
+   let rotation = transformComponent.rotation;
+   if (entityExists(transformComponent.mount)) {
+      const mountTransformComponent = TransformComponentArray.getComponent(transformComponent.mount);
+      rotation += mountTransformComponent.rotation;
+   }
    for (const hitbox of transformComponent.rootHitboxes) {
-      cleanHitbox(transformComponent, hitbox, transformComponent.position, transformComponent.rotation);
+      cleanHitbox(transformComponent, hitbox, transformComponent.position, rotation);
    }
    // @Incomplete
    // @Hack?
@@ -482,6 +494,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxY: Number.MIN_SAFE_INTEGER,
       carryRoot: transformComponentParams.carryRoot,
+      mount: transformComponentParams.mount,
       carriedEntities: transformComponentParams.carriedEntities
    };
 }
@@ -522,7 +535,7 @@ function padData(reader: PacketReader): void {
       }
    }
 
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
    const numCarriedEntities = reader.readNumber();
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numCarriedEntities);
 }
@@ -638,7 +651,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             hasAddedRectangular = true;
          }
 
-         addHitboxToEntity(transformComponent, hitbox);
+         addHitbox(transformComponent, hitbox);
 
          const isTethered = reader.readBoolean();
          reader.padOffset(3);
@@ -742,6 +755,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 
    transformComponent.carryRoot = reader.readNumber();
+   transformComponent.mount = reader.readNumber();
    // @Speed
    const carriedEntities = new Array<EntityCarryInfo>();
    const numCarriedEntities = reader.readNumber();
@@ -758,6 +772,22 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       };
       carriedEntities.push(carryInfo);
    }
+
+   // Unmount the player when the player is no longer being carried
+   // @Speed
+   const wasCarryingPlayer = transformComponent.carriedEntities.some(carryInfo => carryInfo.carriedEntity === playerInstance);
+   const isCarryingPlayer = carriedEntities.some(carryInfo => carryInfo.carriedEntity === playerInstance);
+   if (wasCarryingPlayer && !isCarryingPlayer) {
+      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+      // @Hack @Hardcoded
+      playerTransformComponent.position.x += rotateXAroundOrigin(48, 0, transformComponent.rotation);
+      playerTransformComponent.position.y += rotateYAroundOrigin(48, 0, transformComponent.rotation);
+
+      playSound("mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+   } else if (!wasCarryingPlayer && isCarryingPlayer) {
+      playSound("dismount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+   }
+   
    transformComponent.carriedEntities = carriedEntities;
 }
 
@@ -798,6 +828,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    // @Copynpaste from updateFromData
    
    transformComponent.carryRoot = reader.readNumber();
+   transformComponent.mount = reader.readNumber();
    // @Speed
    const carriedEntities = new Array<EntityCarryInfo>();
    const numCarriedEntities = reader.readNumber();

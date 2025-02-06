@@ -26,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
 export function createSlurbTorchConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
    const hitboxes = createFireTorchHitboxes();
    
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(hitboxes, null); 
    
    const healthComponent = new HealthComponent(3);

@@ -1,13 +1,18 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
+import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { dismountEntity, mountEntity, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
    readonly offsetX: number;
    readonly offsetY: number;
+   // Offset from the carry slot
+   readonly dismountOffsetX: number;
+   readonly dismountOffsetY: number;
 }
 
 export class RideableComponent {
@@ -16,11 +21,13 @@ export class RideableComponent {
 
 export const RideableComponentArray = new ComponentArray<RideableComponent>(ServerComponentType.rideable, true, getDataLength, addDataToPacket);
 
-export function createCarrySlot(offsetX: number, offsetY: number): CarrySlot {
+export function createCarrySlot(offsetX: number, offsetY: number, dismountOffsetX: number, dismountOffsetY: number): CarrySlot {
    return {
       occupiedEntity: 0,
       offsetX: offsetX,
-      offsetY: offsetY
+      offsetY: offsetY,
+      dismountOffsetX: dismountOffsetX,
+      dismountOffsetY: dismountOffsetY
    };
 }
 
@@ -39,4 +46,23 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       packet.addNumber(carrySlot.offsetX);
       packet.addNumber(carrySlot.offsetY);
    }
+}
+
+export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
+   mountEntity(entity, mount, carrySlot.offsetX, carrySlot.offsetY);
+   carrySlot.occupiedEntity = entity;
+}
+
+export function dismountCarrySlot(entity: Entity, mount: Entity): void {
+   const rideableComponent = RideableComponentArray.getComponent(mount);
+   const carrySlot = rideableComponent.carrySlots[0];
+
+   dismountEntity(entity);
+   carrySlot.occupiedEntity = 0;
+
+   // Set the entity to the dismount position
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const mountTransformComponent = TransformComponentArray.getComponent(mount);
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.rotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.rotation);
 }

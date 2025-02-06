@@ -30,6 +30,7 @@ export const enum PacketType {
    studyTech,
    animalStaffFollowCommand,
    mountCarrySlot,
+   dismountCarrySlot,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

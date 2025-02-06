@@ -16,7 +16,7 @@ type ComponentTypes = ServerComponentType.transform
 const HITBOX_SIZES = [20, 30];
 
 export function createSlimeSpitConfig(size: number): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    const hitboxSize = HITBOX_SIZES[size];
    const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), hitboxSize, hitboxSize, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);

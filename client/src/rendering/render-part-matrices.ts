@@ -1,5 +1,5 @@
 import { EntityRenderInfo } from "../EntityRenderInfo";
-import { createIdentityMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
+import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
@@ -144,6 +144,18 @@ export function translateMatrix(matrix: Matrix3x3, tx: number, ty: number): void
    matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
 }
 
+const overrideMatrix = (sourceMatrix: Readonly<Matrix3x3>, targetMatrix: Matrix3x3): void => {
+   targetMatrix[0] = sourceMatrix[0];
+   targetMatrix[1] = sourceMatrix[1];
+   targetMatrix[2] = sourceMatrix[2];
+   targetMatrix[3] = sourceMatrix[3];
+   targetMatrix[4] = sourceMatrix[4];
+   targetMatrix[5] = sourceMatrix[5];
+   targetMatrix[6] = sourceMatrix[6];
+   targetMatrix[7] = sourceMatrix[7];
+   targetMatrix[8] = sourceMatrix[8];
+}
+
 export function registerDirtyRenderInfo(renderInfo: EntityRenderInfo): void {
    if (!renderInfo.renderPartsAreDirty) {
       renderInfo.renderPartsAreDirty = true;
@@ -277,7 +289,9 @@ export function renderParentIsHitbox(parent: RenderParent): parent is Hitbox {
 
 export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: number, ty: number): void {
    for (const thing of renderInfo.allRenderThings) {
-      translateMatrix(thing.modelMatrix, tx, ty);
+      const matrix = createTranslationMatrix(tx, ty);
+      matrixMultiplyInPlace(thing.modelMatrix, matrix);
+      overrideMatrix(matrix, thing.modelMatrix);
    }
 }
 

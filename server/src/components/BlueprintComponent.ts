@@ -7,7 +7,7 @@ import { calculateEntityPlaceInfo } from "battletribes-shared/structures";
 import { TribeComponentArray } from "./TribeComponent";
 import { BuildingMaterialComponentArray, upgradeMaterial } from "./BuildingMaterialComponent";
 import { HutComponentArray } from "./HutComponent";
-import { Item, ITEM_INFO_RECORD, HammerItemInfo } from "battletribes-shared/items/items";
+import { Item, ITEM_INFO_RECORD, HammerItemInfo, HammerItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./TransformComponent";
 import { createDoorConfig } from "../entities/structures/door";
 import { createEntity } from "../Entity";
@@ -219,10 +219,10 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    }
 }
 
-export function doBlueprintWork(blueprintEntity: Entity, hammerItem: Item): void {
+export function doBlueprintWork(blueprintEntity: Entity, itemType: HammerItemType): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(blueprintEntity);
    
-   const hammerItemInfo = ITEM_INFO_RECORD[hammerItem.type] as HammerItemInfo;
+   const hammerItemInfo = ITEM_INFO_RECORD[itemType];
    blueprintComponent.workProgress += hammerItemInfo.workAmount;
    if (blueprintComponent.workProgress >= STRUCTURE_WORK_REQUIRED[blueprintComponent.blueprintType]) {
       // Construct the building

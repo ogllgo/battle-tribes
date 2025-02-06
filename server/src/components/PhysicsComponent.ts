@@ -401,7 +401,7 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
    physicsComponent.hitboxesAreDirty = true;
 }
 
-const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
+export function fixCarriedEntityPosition(transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void {
    transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
    transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
 }

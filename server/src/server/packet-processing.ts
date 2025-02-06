@@ -7,10 +7,10 @@ import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { carryEntity, getEntityTile, TransformComponentArray } from "../components/TransformComponent";
+import { getEntityTile, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
-import { calculateRadialAttackTargets, getAvailableCraftingStations, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
+import { calculateRadialAttackTargets, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable } from "../components/InventoryComponent";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
@@ -19,7 +19,7 @@ import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
-import { changeEntityLayer, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
+import { changeEntityLayer, destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
@@ -33,7 +33,8 @@ import { attemptToOccupyResearchBench } from "../components/ResearchBenchCompone
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
-import { RideableComponentArray } from "../components/RideableComponent";
+import { dismountCarrySlot, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
+import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -244,7 +245,6 @@ export function processStartItemUsePacket(playerClient: PlayerClient, reader: Pa
       limbInfo.currentActionElapsedTicks = 0;
       limbInfo.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
       limbInfo.currentActionRate = 1;
-      limbInfo.blockBox.hasBlocked = false;
       return;
    }
 
@@ -316,15 +316,17 @@ export function processStopItemUsePacket(playerClient: PlayerClient): void {
       // @Copynpaste
       const heldItem = getHeldItem(limb);
       const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+
+      const blockAttackComponent = BlockAttackComponentArray.getComponent(limb.blockAttack);
+      const hasBlocked = blockAttackComponent.hasBlocked;
       
-      const hasBlocked = limb.blockBox.hasBlocked;
-      
-      limb.blockBox.isActive = false;
       limb.action = LimbAction.returnBlockToRest;
       limb.currentActionElapsedTicks = 0;
       // @Temporary? Perhaps use separate blockReturnTimeTicks.
       limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.blockTimeTicks!;
       limb.currentActionRate = hasBlocked ? 2 : 1;
+
+      destroyEntity(limb.blockAttack);
    } else {
       limb.action = LimbAction.none;
    }
@@ -708,5 +710,17 @@ export function processMountCarrySlotPacket(playerClient: PlayerClient, reader: 
    const rideableComponent = RideableComponentArray.getComponent(mount);
    const carrySlot = rideableComponent.carrySlots[0];
 
-   carryEntity(mount, player, carrySlot.offsetX, carrySlot.offsetY);
+   mountCarrySlot(player, mount, carrySlot);
+}
+
+export function processDismountCarrySlotPacket(playerClient: PlayerClient): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const transformComponent = TransformComponentArray.getComponent(player);
+   if (entityExists(transformComponent.mount)) {
+      dismountCarrySlot(player, transformComponent.mount);
+   }
 }

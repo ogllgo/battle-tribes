@@ -4,8 +4,8 @@ import Particle from "./Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer } from "./rendering/webgl/particle-rendering";
 import Board from "./Board";
 import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { BlockType } from "../../shared/src/boxes/boxes";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
+import { BlockType } from "../../shared/src/components";
 
 // @Cleanup: Standardise all these functions to just take the stuff necessary to create them, then have the places which call them modify the returned particle
 

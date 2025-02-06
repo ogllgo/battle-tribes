@@ -4,7 +4,6 @@ import { EntityType } from "../../../../../shared/src/entities";
 import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
-import { DamageBoxComponent } from "../../../components/DamageBoxComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { InventoryComponent } from "../../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../../components/InventoryUseComponent";
@@ -32,11 +31,10 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.patrolAI
    | ServerComponentType.inventory
    | ServerComponentType.inventoryUse
-   | ServerComponentType.damageBox
    | ServerComponentType.scrappy;
 
 export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createScrappyHitboxes(), null);
    
    const physicsComponent = new PhysicsComponent();
@@ -64,8 +62,6 @@ export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> 
 
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, EntityType.scrappy);
 
-   const damageBoxComponent = new DamageBoxComponent();
-
    const scrappyComponent = new ScrappyComponent();
 
    return {
@@ -83,7 +79,6 @@ export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> 
          [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
-         [ServerComponentType.damageBox]: damageBoxComponent,
          [ServerComponentType.scrappy]: scrappyComponent
       },
       lights: []

@@ -19,7 +19,6 @@ import { CogwalkerComponentArray, CogwalkerComponentParams } from "./server-comp
 import { CookingComponentArray, CookingComponentParams } from "./server-components/CookingComponent";
 import { CowComponentArray, CowComponentParams } from "./server-components/CowComponent";
 import { CraftingStationComponentArray, CraftingStationComponentParams } from "./server-components/CraftingStationComponent";
-import { DamageBoxComponentArray, DamageBoxComponentParams } from "./server-components/DamageBoxComponent";
 import { DecorationComponentArray, DecorationComponentParams } from "./server-components/DecorationComponent";
 import { DoorComponentArray, DoorComponentParams } from "./server-components/DoorComponent";
 import { EscapeAIComponentArray, EscapeAIComponentParams } from "./server-components/EscapeAIComponent";
@@ -91,6 +90,8 @@ import { TribeMemberComponentArray, TribeMemberComponentParams } from "./server-
 import { AutomatonAssemblerComponentArray, AutomatonAssemblerComponentParams } from "./server-components/AutomatonAssemblerComponent";
 import { MithrilAnvilComponentArray, MithrilAnvilComponentParams } from "./server-components/MithrilAnvilComponent";
 import { RideableComponentArray, RideableComponentParams } from "./server-components/RideableComponent";
+import { SwingAttackComponentArray, SwingAttackComponentParams } from "./server-components/SwingAttackComponent";
+import { BlockAttackComponentArray, BlockAttackComponentParams } from "./server-components/BlockAttackComponent";
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -161,7 +162,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.battleaxeProjectile]: BattleaxeProjectileComponentArray,
    [ServerComponentType.spearProjectile]: SpearProjectileComponentArray,
    [ServerComponentType.krumblid]: KrumblidComponentArray,
-   [ServerComponentType.damageBox]: DamageBoxComponentArray,
    [ServerComponentType.guardian]: GuardianComponentArray,
    [ServerComponentType.guardianGemQuake]: GuardianGemQuakeComponentArray,
    [ServerComponentType.guardianGemFragmentProjectile]: GuardianGemFragmentProjectileComponentArray,
@@ -187,6 +187,8 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.automatonAssembler]: AutomatonAssemblerComponentArray,
    [ServerComponentType.mithrilAnvil]: MithrilAnvilComponentArray,
    [ServerComponentType.rideable]: RideableComponentArray,
+   [ServerComponentType.swingAttack]: SwingAttackComponentArray,
+   [ServerComponentType.blockAttack]: BlockAttackComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -256,7 +258,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.battleaxeProjectile]: (): BattleaxeProjectileComponentParams => 0 as any,
    [ServerComponentType.spearProjectile]: (): SpearProjectileComponentParams => 0 as any,
    [ServerComponentType.krumblid]: (): KrumblidComponentParams => 0 as any,
-   [ServerComponentType.damageBox]: (): DamageBoxComponentParams => 0 as any,
    [ServerComponentType.guardian]: (): GuardianComponentParams => 0 as any,
    [ServerComponentType.guardianGemQuake]: (): GuardianGemQuakeComponentParams => 0 as any,
    [ServerComponentType.guardianGemFragmentProjectile]: (): GuardianGemFragmentProjectileComponentParams => 0 as any,
@@ -282,6 +283,8 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.automatonAssembler]: (): AutomatonAssemblerComponentParams => 0 as any,
    [ServerComponentType.mithrilAnvil]: (): MithrilAnvilComponentParams => 0 as any,
    [ServerComponentType.rideable]: (): RideableComponentParams => 0 as any,
+   [ServerComponentType.swingAttack]: (): SwingAttackComponentParams => 0 as any,
+   [ServerComponentType.blockAttack]: (): BlockAttackComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

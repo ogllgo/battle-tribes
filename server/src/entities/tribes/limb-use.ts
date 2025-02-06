@@ -28,80 +28,6 @@ const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
 }
 
-const isBerryBushWithBerries = (entity: Entity): boolean => {
-   switch (getEntityType(entity)) {
-      case EntityType.berryBush: {
-         const berryBushComponent = BerryBushComponentArray.getComponent(entity);
-         return berryBushComponent.numBerries > 0;
-      }
-      case EntityType.berryBushPlanted: {
-         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
-         return berryBushPlantedComponent.numFruit > 0;
-      }
-      default: {
-         return false;
-      }
-   }
-}
-
-const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | null): number => {
-   let amount = 1;
-
-   const entityType = getEntityType(plant);
-   if (hasTitle(tribeman, TribesmanTitle.berrymuncher) && (entityType === EntityType.berryBush || entityType === EntityType.berryBushPlanted)) {
-      if (Math.random() < 0.3) {
-         amount++;
-      }
-   }
-
-   if (hasTitle(tribeman, TribesmanTitle.gardener)) {
-      if (Math.random() < 0.3) {
-         amount++;
-      }
-   }
-
-   if (gloves !== null && gloves.type === ItemType.gardening_gloves) {
-      if (Math.random() < 0.2) {
-         amount++;
-      }
-   }
-
-   return amount;
-}
-
-const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
-   const plantTransformComponent = TransformComponentArray.getComponent(plant);
-   
-   if (isBerryBushWithBerries(plant)) {
-      const gatherMultiplier = getPlantGatherAmount(attacker, plant, gloves);
-
-      // As hitting the bush will drop a berry regardless, only drop extra ones here
-      for (let i = 0; i < gatherMultiplier - 1; i++) {
-         dropBerryOverEntity(plant);
-      }
-   } else {
-      const plantHitbox = plantTransformComponent.hitboxes[0];
-      assertBoxIsCircular(plantHitbox.box);
-      const plantRadius = plantHitbox.box.radius;
-
-      const offsetDirection = 2 * Math.PI * Math.random();
-      const x = plantTransformComponent.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
-      const y = plantTransformComponent.position.y + (plantRadius - 7) * Math.cos(offsetDirection);
-   
-      const config = createItemEntityConfig(ItemType.leaf, 1, null);
-      config.components[ServerComponentType.transform].position.x = x;
-      config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-      createEntity(config, getEntityLayer(plant), 0);
-   }
-
-   // @Hack
-   const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-   const collisionPoint = new Point((plantTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (plantTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
-
-   damageEntity(plant, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
-}
-
 const getBaseItemKnockback = (item: Item | null): number => {
    if (item === null) {
       return Vars.DEFAULT_ATTACK_KNOCKBACK;
@@ -123,62 +49,6 @@ export function calculateItemKnockback(item: Item | null, attackIsBlocked: boole
    }
    
    return knockback;
-}
-
-// @Cleanup: (?) Pass in the item to use directly instead of passing in the item slot and inventory name
-export function attemptAttack(attacker: Entity, victim: Entity, limbInfo: LimbInfo): boolean {
-   // @Cleanup: instead use getHeldItem
-   // Find the selected item
-   let item: Item | undefined | null = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
-   if (typeof item === "undefined" || limbInfo.thrownBattleaxeItemID === item.id) {
-      item = null;
-   }
-
-   const targetEntityType = getEntityType(victim);
-
-   const attackEffectiveness = calculateAttackEffectiveness(item, targetEntityType);
-
-   // Harvest leaves from trees and berries when wearing the gathering or gardening gloves
-   if ((item === null || item.type === ItemType.leaf) && (targetEntityType === EntityType.tree || targetEntityType === EntityType.berryBush || targetEntityType === EntityType.treePlanted || targetEntityType === EntityType.berryBushPlanted)) {
-      const inventoryComponent = InventoryComponentArray.getComponent(attacker);
-      if (hasInventory(inventoryComponent, InventoryName.gloveSlot)) {
-         const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
-         const gloves = gloveInventory.itemSlots[1];
-         if (typeof gloves !== "undefined" && (gloves.type === ItemType.gathering_gloves || gloves.type === ItemType.gardening_gloves)) {
-            gatherPlant(victim, attacker, gloves);
-            return true;
-         }
-      }
-   }
-
-   const attackIsBlocked = limbInfo.limbDamageBox.isBlocked;
-
-   const attackDamage = calculateItemDamage(attacker, item, attackEffectiveness, attackIsBlocked);
-   const attackKnockback = calculateItemKnockback(item, attackIsBlocked);
-
-   const targetEntityTransformComponent = TransformComponentArray.getComponent(victim);
-   const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-
-   const hitDirection = attackerTransformComponent.position.calculateAngleBetween(targetEntityTransformComponent.position);
-
-   // @Hack
-   const collisionPoint = new Point((targetEntityTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (targetEntityTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
-
-   // Register the hit
-   const hitFlags = item !== null && item.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   damageEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, attackKnockback, hitDirection);
-
-   if (item !== null && item.type === ItemType.flesh_sword) {
-      applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
-   }
-
-   // Bloodaxes have a 20% chance to inflict bleeding on hit
-   if (hasTitle(attacker, TribesmanTitle.bloodaxe) && Math.random() < 0.2) {
-      applyStatusEffect(victim, StatusEffect.bleeding, 2 * Settings.TPS);
-   }
-
-   return true;
 }
 
 export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryName: InventoryName): boolean {
@@ -228,10 +98,11 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // @Speed: Garbage collection
    limb.currentActionEndLimbState = copyLimbState(attackPattern.windedBack);
 
-   limb.heldItemDamageBox.wallSubtileDamageGiven = 0;
+   // @Incomplete
+   // limb.heldItemDamageBox.wallSubtileDamageGiven = 0;
    
-   limb.limbDamageBox.isBlockedByWall = false;
-   limb.heldItemDamageBox.isBlockedByWall = false;
+   // limb.limbDamageBox.isBlockedByWall = false;
+   // limb.heldItemDamageBox.isBlockedByWall = false;
 
    const physicsComponent = PhysicsComponentArray.getComponent(attackingEntity);
 

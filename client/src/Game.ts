@@ -13,7 +13,7 @@ import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/D
 import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
 import { GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
-import { createHitboxShaders, renderDamageBoxes, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
+import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
 import { clearServerTicks, updateDebugScreenFPS, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
 import { clearSolidTileRenderingData, createSolidTileShaders, renderSolidTiles } from "./rendering/webgl/solid-tile-rendering";
@@ -253,9 +253,6 @@ const renderLayer = (layer: Layer): void => {
 
    if (OPTIONS.showHitboxes) {
       renderHitboxes(layer);
-   }
-   if (OPTIONS.showDamageBoxes) {
-      renderDamageBoxes();
    }
    if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
       renderLineDebugData(entityDebugData);

@@ -26,7 +26,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.furnace;
 
 export function createFurnaceConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent();
+   const transformComponent = new TransformComponent(0);
    transformComponent.addHitboxes(createFurnaceHitboxes(), null);
    
    const healthComponent = new HealthComponent(25);
