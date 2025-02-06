@@ -787,7 +787,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    } else if (!wasCarryingPlayer && isCarryingPlayer) {
       playSound("dismount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
    }
-   
+
    transformComponent.carriedEntities = carriedEntities;
 }
 

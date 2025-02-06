@@ -3,11 +3,12 @@ import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultipl
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo } from "../world";
+import { getEntityRenderInfo, getEntityType } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
+import { EntityType } from "../../../shared/src/entities";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
@@ -193,7 +194,8 @@ export function updateRenderInfoRenderPosition(renderInfo: EntityRenderInfo, fra
    renderPosition.x = transformComponent.position.x;
    renderPosition.y = transformComponent.position.y;
 
-   if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity)) {
+   // If the entity has velocity and isn't being carried, account for that
+   if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity) && transformComponent.carryRoot === renderInfo.associatedEntity) {
       const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
       
       renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
