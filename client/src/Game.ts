@@ -7,7 +7,7 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getQueuedGameDataPackets } from "./networking/Client";
+import Client, { getLastPacketTime, getQueuedGameDataPackets } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, getMouseTargetEntity, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
@@ -51,16 +51,13 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { cleanRenderPositions, markMovingRenderPositions, updateRenderInfoRenderPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { cleanRenderPositions, markMovingRenderPositions, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
-import { processGameDataPacket } from "./networking/packet-processing";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
-import { updateEntity } from "./entity-components/ComponentArray";
-import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
 import { updatePlayerMovement, updatePlayerItems, playerIsHoldingPlaceableItem } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance } from "./world";
+import { entityExists, getCurrentLayer, getEntityLayer, layers, playerInstance } from "./world";
 import Layer from "./Layer";
 import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darkening-rendering";
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
@@ -121,33 +118,30 @@ const main = (currentTime: number): void => {
          const queuedPackets = getQueuedGameDataPackets();
          if (queuedPackets.length > 0) {
             for (const packet of queuedPackets) {
-               // Done before so that server data can override particles
-               Board.updateParticles();
-   
-               processGameDataPacket(packet);
+               Board.lastServerTickTime = currentTime;
                GameScreen_update();
                
                updateTextNumbers();
                Board.updateTickCallbacks();
                Board.tickEntities();
-               if (playerInstance !== null) {
-                  resolvePlayerCollisions();
-               }
+               // if (playerInstance !== null) {
+               //    updateEntity(playerInstance);
+               // }
             }
             queuedPackets.length = 0;
 
-            if (playerInstance !== null) {
-               updateEntity(playerInstance);
-            }
          } else {
             updateTextNumbers();
             Board.updateTickCallbacks();
             Board.updateParticles();
-            Board.updateEntities();
+            // Board.updateEntities();
+            // if (playerInstance !== null) {
+            //    updateEntity(playerInstance);
+            // }
             Board.tickEntities();
-            for (const layer of layers) {
-               resolveEntityCollisions(layer);
-            }
+            // for (const layer of layers) {
+            //    resolveEntityCollisions(layer);
+            // }
          }
 
          Game.update();
@@ -158,8 +152,10 @@ const main = (currentTime: number): void => {
       }
 
       const renderStartTime = performance.now();
-
-      const frameProgress = Game.lag / 1000 * Settings.TPS;
+      
+      const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TPS;
+      
+      const frameProgress = ticksSinceLastFrame;
       Game.render(frameProgress);
 
       const renderEndTime = performance.now();
@@ -453,8 +449,6 @@ abstract class Game {
       updateSpamFilter();
 
       updatePlayerMovement();
-      // @Temporary
-      // updateAvailableCraftingRecipes();
       
       updatePlayerItems();
       updateActiveResearchBench();
@@ -521,24 +515,21 @@ abstract class Game {
       // @Cleanup: weird. shouldn't be global anyway
       _frameProgress = frameProgress;
 
-      // @Cleanup: move to update function in camera
-      // Update the camera
-      if (playerInstance !== null) {
-         const playerRenderInfo = getEntityRenderInfo(playerInstance);
-         updateRenderInfoRenderPosition(playerRenderInfo, frameProgress);
-
-         Camera.updatePosition();
-         Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
-         Camera.updateVisibleRenderChunkBounds();
-      }
-
       const playerLayer = getCurrentLayer();
 
       updateUBOs();
 
       markMovingRenderPositions();
       cleanRenderPositions(frameProgress);
-      updateRenderPartMatrices();
+      updateRenderPartMatrices(frameProgress);
+
+      // @Cleanup: move to update function in camera
+      // Update the camera
+      if (playerInstance !== null) {
+         Camera.updatePosition();
+         Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
+         Camera.updateVisibleRenderChunkBounds();
+      }
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {

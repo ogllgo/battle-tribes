@@ -3,12 +3,11 @@ import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultipl
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo, getEntityType } from "../world";
+import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
-import { EntityType } from "../../../shared/src/entities";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
@@ -171,6 +170,12 @@ export function registerDirtyRenderPosition(renderInfo: EntityRenderInfo): void 
 
       dirtyEntityRenderPositions.push(renderInfo);
    }
+   // @Hack
+   if (!renderInfo.renderPartsAreDirty) {
+      renderInfo.renderPartsAreDirty = true;
+
+      dirtyEntityRenderInfos.push(renderInfo);
+   }
 }
 
 export function removeEntityFromDirtyArrays(renderInfo: EntityRenderInfo): void {
@@ -195,11 +200,20 @@ export function updateRenderInfoRenderPosition(renderInfo: EntityRenderInfo, fra
    renderPosition.y = transformComponent.position.y;
 
    // If the entity has velocity and isn't being carried, account for that
-   if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity) && transformComponent.carryRoot === renderInfo.associatedEntity) {
-      const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
-      
-      renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
-      renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
+   if (transformComponent.carryRoot === renderInfo.associatedEntity) {
+      if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity)) {
+         const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
+         renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+         renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
+      }
+   } else {
+      // Add the velocity of the carry root
+      // @Copynpaste
+      if (PhysicsComponentArray.hasComponent(transformComponent.carryRoot)) {
+         const physicsComponent = PhysicsComponentArray.getComponent(transformComponent.carryRoot);
+         renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+         renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
+      }
    }
 
    // Shake
@@ -219,7 +233,6 @@ export function markMovingRenderPositions(): void {
       registerDirtyRenderPosition(renderInfo);
    }
 }
-
 
 export function cleanRenderPositions(frameProgress: number): void {
    for (let i = 0; i < dirtyEntityRenderPositions.length; i++) {
@@ -266,7 +279,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
 }
 
 // @Cleanup: unused parameter?
-const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Matrix3x3 => {
+const calculateHitboxMatrix = (renderInfo: EntityRenderInfo, entityModelMatrix: Matrix3x3, hitbox: Hitbox, frameProgress: number): Matrix3x3 => {
    const matrix = createIdentityMatrix();
 
    // Rotation
@@ -276,8 +289,18 @@ const calculateHitboxMatrix = (entityModelMatrix: Matrix3x3, hitbox: Hitbox): Ma
    const scale = hitbox.box.scale;
    scaleMatrix(matrix, scale, scale);
    
-   const tx = hitbox.box.position.x;
-   const ty = hitbox.box.position.y;
+   let tx = hitbox.box.position.x;
+   let ty = hitbox.box.position.y;
+
+   // @Copynpaste @Hack
+   // @Bug: Don't do for hitboxes which don't move statically with the entity position!
+   const transformComponent = TransformComponentArray.getComponent(renderInfo.associatedEntity);
+   if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity) && transformComponent.carryRoot === renderInfo.associatedEntity) {
+      const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
+      
+      tx += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+      ty += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
+   }
    
    // Translation
    translateMatrix(matrix, tx, ty);
@@ -297,32 +320,30 @@ export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: num
    }
 }
 
-export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo): void {
-   const numRenderThings = renderInfo.allRenderThings.length;
-   
+export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgress: number): void {
    calculateAndOverrideEntityModelMatrix(renderInfo);
 
-   for (let j = 0; j < numRenderThings; j++) {
-      const thing = renderInfo.allRenderThings[j];
+   for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
+      const thing = renderInfo.allRenderThings[i];
 
       // Model matrix for the render part
       calculateAndOverrideRenderThingMatrix(thing);
 
       let parentRotation: number;
-      let parentModelMatrix: Matrix3x3;
+      let parentModelMatrix: Readonly<Matrix3x3>;
       if (renderParentIsHitbox(thing.parent)) {
          // @Speed?
-         parentModelMatrix = calculateHitboxMatrix(renderInfo.modelMatrix, thing.parent);
+         parentModelMatrix = calculateHitboxMatrix(renderInfo, renderInfo.modelMatrix, thing.parent, frameProgress);
          parentRotation = thing.parent.box.rotation;
       } else {
          parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
          parentRotation = thing.parent !== null ? thing.parent.rotation : renderInfo.rotation;
       }
 
-      // @Hack Speed: If the thing doesn't inherit its' parents rotation, undo the rotation before the matrix is applied.
+      // @Speed: If the thing doesn't inherit its' parents rotation, undo the rotation before the matrix is applied.
       // But would be faster to branch the whole logic based on the inheritParentRotation flag, instead of cancelling out the rotation step
       if (!thing.inheritParentRotation) {
-         rotateMatrix(thing.modelMatrix, -parentRotation)
+         rotateMatrix(thing.modelMatrix, -parentRotation);
       }
       
       matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
@@ -335,12 +356,12 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo): void {
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function updateRenderPartMatrices(): void {
+export function updateRenderPartMatrices(frameProgress: number): void {
    // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
    // To fix: temporarily set Settings.TPS to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      cleanEntityRenderInfo(renderInfo);
+      cleanEntityRenderInfo(renderInfo, frameProgress);
    }
 
    // Reset dirty entities

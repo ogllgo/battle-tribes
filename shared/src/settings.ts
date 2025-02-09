@@ -1,6 +1,6 @@
 export const enum Settings {
    SERVER_PORT = 8000,
-   TPS = 60,
+   TPS = 40,
    I_TPS = 1 / TPS,
    TILE_SIZE = 64,
    SUBTILE_SIZE = TILE_SIZE / 4,

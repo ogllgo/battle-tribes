@@ -233,31 +233,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.physics,
    }
 }
 
-const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-}
-
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
-   assert(entityExists(carryInfo.carriedEntity));
-   
-   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
-   
-   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
-   // @Incomplete
-   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
-   // (Don't apply physics for carried entities)
-   // @Incomplete
-   // applyHitboxTethers(transformComponent, physicsComponent);
-   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
-
-   // Propagate to children
-   for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(transformComponent, carryInfo);
-   }
-}
-
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -300,13 +275,30 @@ function onTick(entity: Entity): void {
 
       playSoundOnEntity("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, false);
    }
+}
 
-   // If the entity isn't being carried, update its' physics
-   if (transformComponent.carryRoot === entity) {
-      // Propagate to children
-      for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, carryInfo);
-      }
+const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+}
+
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
+   assert(entityExists(carryInfo.carriedEntity));
+   
+   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+   
+   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+   // @Incomplete
+   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   // (Don't apply physics for carried entities)
+   // @Incomplete
+   // applyHitboxTethers(transformComponent, physicsComponent);
+   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
+
+   // Propagate to children
+   for (const carryInfo of transformComponent.carriedEntities) {
+      tickCarriedEntity(transformComponent, carryInfo);
    }
 }
 
@@ -331,6 +323,11 @@ function onUpdate(entity: Entity): void {
       if (hasMoved) {
          updateEntityPosition(transformComponent, entity);
       }
+
+      // Propagate to children
+      for (const carryInfo of transformComponent.carriedEntities) {
+         tickCarriedEntity(transformComponent, carryInfo);
+      }
    }
 
    // @Incomplete: some entities are able to be outside the border!
@@ -351,6 +348,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    physicsComponent.acceleration.x = reader.readNumber();
    physicsComponent.acceleration.y = reader.readNumber();
    physicsComponent.traction = reader.readNumber();
+
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.carryRoot === entity) {
+      // @Copynpaste
+      for (const carryInfo of transformComponent.carriedEntities) {
+         tickCarriedEntity(transformComponent, carryInfo);
+      }
+   }
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {

@@ -205,42 +205,42 @@ export function renderEntitySelection(): void {
    // Right
    translateEntityRenderParts(renderInfo, 4, 0);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Left
    translateEntityRenderParts(renderInfo, -4, 0);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Top
    translateEntityRenderParts(renderInfo, 0, 4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom
    translateEntityRenderParts(renderInfo, 0, -4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Top right
    translateEntityRenderParts(renderInfo, 4, 4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom right
    translateEntityRenderParts(renderInfo, 4, -4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom left
    translateEntityRenderParts(renderInfo, -4, -4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Top left
    translateEntityRenderParts(renderInfo, -4, 4);
    renderEntities([renderInfo]);
-   cleanEntityRenderInfo(renderInfo);
+   cleanEntityRenderInfo(renderInfo, 0);
 
    // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
    // (dfactor) by 1 minus the middle alpha.

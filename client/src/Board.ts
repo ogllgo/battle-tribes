@@ -20,6 +20,7 @@ interface TickCallback {
 
 abstract class Board {
    public static serverTicks: number;
+   public static lastServerTickTime: number;
    public static clientTicks = 0;
    public static time: number;
 

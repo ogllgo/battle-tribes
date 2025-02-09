@@ -25,19 +25,18 @@ import { closeCurrentMenu } from "../menus";
 import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
 import { processTickEvents } from "../entity-tick-events";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
-import { processForcePositionUpdatePacket, processInitialGameDataPacket, processRespawnDataPacket, processSyncDataPacket } from "./packet-processing";
+import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processRespawnDataPacket, processSyncDataPacket } from "./packet-processing";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket } from "./packet-creation";
-import { createHitbox, Hitbox } from "battletribes-shared/boxes/boxes";
-import CircularBox from "battletribes-shared/boxes/CircularBox";
-import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import { entityExists, getEntityLayer, getEntityType, layers, playerInstance, removeEntity, setPlayerInstance } from "../world";
 import { getTileIndexIncludingEdges } from "../Layer";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
-import { getComponentArrays } from "../entity-components/ComponentArray";
+import { getComponentArrays, updateEntity } from "../entity-components/ComponentArray";
 import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
+import Board from "../Board";
+import { resolvePlayerCollisions } from "../collision";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -49,6 +48,7 @@ let visibleWalls: ReadonlyArray<TribeWallData>;
 let buildingPlans: ReadonlyArray<BuildingPlanData>;
 
 let queuedGameDataPackets = new Array<PacketReader>();
+let lastPacketTime = 0;
 
 // @Cleanup: location
 // Use prime numbers / 100 to ensure a decent distribution of different types of particles
@@ -56,6 +56,10 @@ const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
 export function getQueuedGameDataPackets(): Array<PacketReader> {
    return queuedGameDataPackets;
+}
+
+export function getLastPacketTime(): number {
+   return lastPacketTime;
 }
 
 export function getVisibleWalls(): ReadonlyArray<TribeWallData> {
@@ -138,7 +142,7 @@ abstract class Client {
                   break;
                }
                case PacketType.gameData: {
-                  if (this.nextGameDataResolve !== null) {
+                  if (this.nextGameDataResolve !== null) { 
                      this.nextGameDataResolve(reader);
                      this.nextGameDataResolve = null;
                      return;
@@ -148,8 +152,19 @@ abstract class Client {
                   if (!Game.isRunning || !Game.isSynced || document.visibilityState === "hidden") {
                      return;
                   }
-
+                  
                   queuedGameDataPackets.push(reader);
+                  lastPacketTime = performance.now();
+
+                  // Done before so that server data can override particles
+                  Board.updateParticles();
+                  
+                  processGameDataPacket(reader);
+
+                  if (playerInstance !== null) {
+                     updateEntity(playerInstance);
+                     resolvePlayerCollisions();
+                  }
 
                   break;
                }

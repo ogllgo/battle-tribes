@@ -82,7 +82,7 @@ export function createScaleMatrix(sx: number, sy: number): Matrix3x3 {
    ];
 }
 
-export function matrixMultiplyInPlace(matrixA: Matrix3x3, matrixB: Matrix3x3): void {
+export function matrixMultiplyInPlace(matrixA: Readonly<Matrix3x3>, matrixB: Matrix3x3): void {
    var a00 = matrixA[0 * 3 + 0];
    var a01 = matrixA[0 * 3 + 1];
    var a02 = matrixA[0 * 3 + 2];
