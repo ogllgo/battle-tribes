@@ -16,7 +16,7 @@ import { InventoryUseComponentArray } from "../../components/InventoryUseCompone
 import { createBattleaxeProjectileConfig } from "../projectiles/battleaxe-projectile";
 import { createIceArrowConfig } from "../projectiles/ice-arrow";
 import { TribeComponentArray } from "../../components/TribeComponent";
-import { PhysicsComponentArray } from "../../components/PhysicsComponent";
+import { getVelocityX, getVelocityY, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import Tribe from "../../Tribe";
 import { TribesmanAIComponentArray } from "../../components/TribesmanAIComponent";
 import { createItemEntityConfig } from "../item-entity";
@@ -358,6 +358,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
       }
       case "bow": {
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
+         const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
+         console.log(getVelocityX(physicsComponent), getVelocityY(physicsComponent));
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribeMember);
          const limb = inventoryUseComponent.getLimbInfo(inventoryName);
@@ -403,8 +405,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
          config.components[ServerComponentType.transform].position.y = spawnPosition.y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
+         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(physicsComponent) + itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
+         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(physicsComponent) + itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          for (let i = 0; i < 2; i++) {
@@ -483,8 +485,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
          config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = entityPhysicsComponent.selfVelocity.x + entityPhysicsComponent.externalVelocity.x + velocityMagnitude * Math.sin(transformComponent.rotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = entityPhysicsComponent.selfVelocity.y + entityPhysicsComponent.externalVelocity.y + velocityMagnitude * Math.cos(transformComponent.rotation);
+         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(entityPhysicsComponent) + velocityMagnitude * Math.sin(transformComponent.rotation);
+         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(entityPhysicsComponent) + velocityMagnitude * Math.cos(transformComponent.rotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);

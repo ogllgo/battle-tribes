@@ -17,6 +17,6 @@ const OPTIONS: Options = {
    generateCaves: true,
    inBenchmarkMode: false,
    warp: false
-};
+}; 
 
 export default OPTIONS;

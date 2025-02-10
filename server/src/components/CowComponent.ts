@@ -163,7 +163,7 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
 
    const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
-   const acceleration = isRunning ? 950 : 200;
+   const acceleration = isRunning ? 1000 : 200;
    
    const alignmentToTarget = findAngleAlignment(transformComponent.rotation, targetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);

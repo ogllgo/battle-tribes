@@ -406,9 +406,14 @@ export function fixCarriedEntityPosition(transformComponent: TransformComponent,
    transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
 }
 
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, mountPhysicsComponent: PhysicsComponent, carryInfo: EntityCarryInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
    const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+   
+   physicsComponent.selfVelocity.x = 0;
+   physicsComponent.selfVelocity.y = 0;
+   physicsComponent.externalVelocity.x = getVelocityX(mountPhysicsComponent);
+   physicsComponent.externalVelocity.y = getVelocityY(mountPhysicsComponent);
    
    fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
    turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
@@ -418,7 +423,7 @@ const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInf
 
    // Propagate to children
    for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(transformComponent, carryInfo);
+      tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
    }
 }
 
@@ -434,7 +439,7 @@ function onTick(entity: Entity): void {
       updatePosition(entity, transformComponent, physicsComponent);
 
       for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, carryInfo);
+         tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
       }
    }
 }
@@ -493,4 +498,12 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(physicsComponent.acceleration.x);
    packet.addNumber(physicsComponent.acceleration.y);
    packet.addNumber(physicsComponent.traction);
+}
+
+export function getVelocityX(physicsComponent: PhysicsComponent): number {
+   return physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
+}
+
+export function getVelocityY(physicsComponent: PhysicsComponent): number {
+   return physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
 }

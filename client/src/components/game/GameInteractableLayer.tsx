@@ -1354,6 +1354,13 @@ const tickItem = (itemType: ItemType): void => {
                   components[componentType] = {};
                   break;
                }
+               case ServerComponentType.planterBox: {
+                  components[componentType] = {
+                     plantedEntityType: -1,
+                     isFertilised: false
+                  };
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }

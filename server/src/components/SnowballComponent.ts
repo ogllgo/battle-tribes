@@ -1,7 +1,7 @@
 import { Entity, EntityType, DamageSource, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
+import { applyKnockback, getVelocityX, getVelocityY, PhysicsComponentArray } from "./PhysicsComponent";
 import { Point, randFloat, randSign } from "battletribes-shared/utils";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
@@ -77,8 +77,8 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
    
    const physicsComponent = PhysicsComponentArray.getComponent(snowball);
 
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
    const velocity = Math.sqrt(vx * vx + vy * vy);
 
    const ageTicks = getEntityAgeTicks(snowball);

@@ -337,18 +337,20 @@ export function runSpawnAttempt(): void {
 }
 
 export function spawnInitialEntities(): void {
-   // @Temporary
-   for (let i = 0; i < 20; i++) {
-      const tree = createTreeConfig();
-      tree.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 200;
-      tree.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5 + i * 300;
-      createEntity(tree, surfaceLayer, 0);
+   if (1 + 1 === 3) {
+      // @Temporary
+      for (let i = 0; i < 20; i++) {
+         const tree = createTreeConfig();
+         tree.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 200;
+         tree.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5 + i * 300;
+         createEntity(tree, surfaceLayer, 0);
+      }
+   
+      const cow = createCowConfig();
+      cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 - 200;
+      cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+      createEntity(cow, surfaceLayer, 0);
    }
-
-   const cow = createCowConfig();
-   cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 - 200;
-   cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-   createEntity(cow, surfaceLayer, 0);
 
    if (!OPTIONS.spawnEntities) {
       return;

@@ -95,10 +95,14 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    const physicsComponent = PhysicsComponentArray.getComponent(player);
    physicsComponent.hitboxesAreDirty = true;
    
-   physicsComponent.selfVelocity.x = selfVelocityX;
-   physicsComponent.selfVelocity.y = selfVelocityY;
-   physicsComponent.externalVelocity.x = externalVelocityX;
-   physicsComponent.externalVelocity.y = externalVelocityY;
+   // @Hack
+   // Velocity gets overridden for carried entities, so setting here would be pointless (and would mess up stuff which relies on the velocity of carried entities)
+   if (transformComponent.carryRoot === player) {
+      physicsComponent.selfVelocity.x = selfVelocityX;
+      physicsComponent.selfVelocity.y = selfVelocityY;
+      physicsComponent.externalVelocity.x = externalVelocityX;
+      physicsComponent.externalVelocity.y = externalVelocityY;
+   }
    physicsComponent.acceleration.x = accelerationX;
    physicsComponent.acceleration.y = accelerationY;
    physicsComponent.angularVelocity = angularVelocity;

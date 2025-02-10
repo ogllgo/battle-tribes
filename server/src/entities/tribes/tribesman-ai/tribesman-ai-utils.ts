@@ -1,7 +1,7 @@
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import Tribe from "../../../Tribe";
 import { getEntitiesInRange, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
-import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
+import { getVelocityX, getVelocityY, PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, findClosestDropdownTile, findMultiLayerPath, Path } from "../../../pathfinding";
@@ -130,8 +130,8 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    // Recalculate if the tribesman isn't making any progress
    const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
 
-   const vx = physicsComponent.selfVelocity.x;
-   const vy = physicsComponent.selfVelocity.y;
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);

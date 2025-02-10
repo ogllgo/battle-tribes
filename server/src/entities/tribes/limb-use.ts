@@ -9,7 +9,7 @@ import { Point } from "battletribes-shared/utils";
 import { damageEntity, HealthComponentArray } from "../../components/HealthComponent";
 import { InventoryComponentArray, getInventory, hasInventory } from "../../components/InventoryComponent";
 import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
-import { applyKnockback, PhysicsComponentArray } from "../../components/PhysicsComponent";
+import { applyKnockback, getVelocityX, getVelocityY, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { applyStatusEffect } from "../../components/StatusEffectComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { calculateItemDamage } from "./tribe-member";
@@ -107,8 +107,8 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    const physicsComponent = PhysicsComponentArray.getComponent(attackingEntity);
 
    // Add extra range for moving attacks
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
    if (vx !== 0 || vy !== 0) {
       const transformComponent = TransformComponentArray.getComponent(attackingEntity);
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);

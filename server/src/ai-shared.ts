@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges } from "battletribes-shared/utils";
 import Layer from "./Layer";
-import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
+import { getVelocityX, getVelocityY, PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
 import { getEntityPathfindingGroupID } from "./pathfinding";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
@@ -43,8 +43,8 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
 /** Estimates the distance it will take for the entity to stop */
 const estimateStopDistance = (physicsComponent: PhysicsComponent): number => {
    // Get the total velocity length
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
    const totalVelocityMagnitude = Math.sqrt(vx * vx + vy * vy);
    
    // @Incomplete: Hard-coded
