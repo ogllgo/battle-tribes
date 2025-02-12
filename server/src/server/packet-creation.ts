@@ -594,7 +594,7 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(player);
    packet.addNumber(transformComponent.position.x);
    packet.addNumber(transformComponent.position.y);
-   packet.addNumber(transformComponent.rotation);
+   packet.addNumber(transformComponent.relativeRotation);
 
    const physicsComponent = PhysicsComponentArray.getComponent(player);
    packet.addNumber(physicsComponent.selfVelocity.x);

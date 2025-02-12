@@ -33,7 +33,7 @@ function onTick(spear: Entity): void {
       const config = createItemEntityConfig(ItemType.spear, 1, null);
       config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
       config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(spear), 0);
       
       destroyEntity(spear);

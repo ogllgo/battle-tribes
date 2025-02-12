@@ -120,15 +120,15 @@ const updateAngerTarget = (slime: Entity): Entity | null => {
 
 const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(slime);
-   const x = transformComponent.position.x + SLIME_RADII[slimeComponent.size] * Math.sin(transformComponent.rotation);
-   const y = transformComponent.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(transformComponent.rotation);
+   const x = transformComponent.position.x + SLIME_RADII[slimeComponent.size] * Math.sin(transformComponent.relativeRotation);
+   const y = transformComponent.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(transformComponent.relativeRotation);
 
    const config = createSlimeSpitConfig(slimeComponent.size === SlimeSize.large ? 1 : 0);
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.physics].selfVelocity.x = 500 * Math.sin(transformComponent.rotation);
-   config.components[ServerComponentType.physics].selfVelocity.y = 500 * Math.cos(transformComponent.rotation);
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.physics].selfVelocity.x = 500 * Math.sin(transformComponent.relativeRotation);
+   config.components[ServerComponentType.physics].selfVelocity.y = 500 * Math.cos(transformComponent.relativeRotation);
    createEntity(config, getEntityLayer(slime), 0);
 }
 
@@ -266,8 +266,8 @@ function onTick(slime: Entity): void {
 
       // @Hack
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      physicsComponent.acceleration.x = Vars.ACCELERATION * speedMultiplier * Math.sin(transformComponent.rotation);
-      physicsComponent.acceleration.y = Vars.ACCELERATION * speedMultiplier * Math.cos(transformComponent.rotation);
+      physicsComponent.acceleration.x = Vars.ACCELERATION * speedMultiplier * Math.sin(transformComponent.relativeRotation);
+      physicsComponent.acceleration.y = Vars.ACCELERATION * speedMultiplier * Math.cos(transformComponent.relativeRotation);
       return;
    }
 
@@ -287,8 +287,8 @@ function onTick(slime: Entity): void {
       slimeComponent.eyeRotation = turnAngle(slimeComponent.eyeRotation, targetDirection, 5 * Math.PI);
 
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      physicsComponent.acceleration.x = Vars.ACCELERATION * speedMultiplier * Math.sin(transformComponent.rotation);
-      physicsComponent.acceleration.y = Vars.ACCELERATION * speedMultiplier * Math.cos(transformComponent.rotation);
+      physicsComponent.acceleration.x = Vars.ACCELERATION * speedMultiplier * Math.sin(transformComponent.relativeRotation);
+      physicsComponent.acceleration.y = Vars.ACCELERATION * speedMultiplier * Math.cos(transformComponent.relativeRotation);
 
       physicsComponent.targetRotation = targetDirection;
       physicsComponent.turnSpeed = Vars.TURN_SPEED;

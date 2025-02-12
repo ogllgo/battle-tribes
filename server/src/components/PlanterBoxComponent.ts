@@ -91,7 +91,7 @@ export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: Pl
    }
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    const plant = createEntity(config, getEntityLayer(planterBox), 0);
 
    planterBoxComponent.plant = plant;

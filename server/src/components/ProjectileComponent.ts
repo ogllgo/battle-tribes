@@ -33,16 +33,17 @@ ProjectileComponentArray.onHitboxCollision = onHitboxCollision;
 function onTick(projectile: Entity): void {
    // @Hack
    const entityType = getEntityType(projectile);
-   if (entityType !== EntityType.guardianSpikyBall) {
+   if (entityType !== EntityType.guardianSpikyBall && entityType !== EntityType.woodenArrow) {
       const ageTicks = getEntityAgeTicks(projectile);
       if (ageTicks >= 1.5 * Settings.TPS) {
          destroyEntity(projectile);
          return;
       }
    }
-   
+
    // @Hack
    // Destroy the arrow if it reaches the border
+   // @Cleanup: This should instead use the hitbox bounds of each of the hitboxes... and perhaps use an onWorldBorderCollision event??
    const transformComponent = TransformComponentArray.getComponent(projectile);
    if (transformComponent.position.x <= ARROW_DESTROY_DISTANCE || transformComponent.position.x >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE || transformComponent.position.y <= ARROW_DESTROY_DISTANCE || transformComponent.position.y >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE) {
       destroyEntity(projectile);

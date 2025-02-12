@@ -291,3 +291,16 @@ export function sendDismountCarrySlotPacket(): void {
    const packet = new Packet(PacketType.dismountCarrySlot, Float32Array.BYTES_PER_ELEMENT);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendPickUpArrowPacket(arrow: Entity): void {
+   const packet = new Packet(PacketType.pickUpArrow, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(arrow);
+   Client.sendPacket(packet.buffer);
+}
+
+export function setModifyBuildingPacket(structure: Entity, data: number): void {
+   const packet = new Packet(PacketType.modifyBuilding, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(structure);
+   packet.addNumber(data);
+   Client.sendPacket(packet.buffer);
+}

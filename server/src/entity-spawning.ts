@@ -130,7 +130,7 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
       }
       
       const box = hitbox.box;
-      updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+      updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.relativeRotation);
 
       const boundsMinX = box.calculateBoundsMinX();
       const boundsMaxX = box.calculateBoundsMaxX();
@@ -179,7 +179,7 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
    const transformComponent = config.components[ServerComponentType.transform];
    transformComponent.position.x = x;
    transformComponent.position.y = y;
-   transformComponent.rotation = Math.PI * Math.random();
+   transformComponent.relativeRotation = Math.PI * Math.random();
    
    // Make sure the entity wouldn't spawn in a wall
    if (entityWouldSpawnInWall(layer, transformComponent)) {

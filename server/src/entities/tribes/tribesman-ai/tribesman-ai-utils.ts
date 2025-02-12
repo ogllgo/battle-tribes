@@ -167,8 +167,8 @@ const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const layer = getEntityLayer(tribesman);
    
    const offsetMagnitude = getHumanoidRadius(transformComponent) + 20;
-   const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.rotation);
-   const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.rotation);
+   const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.relativeRotation);
+   const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.relativeRotation);
    const entitiesInFront = getEntitiesInRange(layer, checkX, checkY, 40);
    for (let i = 0; i < entitiesInFront.length; i++) {
       const entity = entitiesInFront[i];
@@ -228,8 +228,8 @@ export function continueCurrentPath(tribesman: Entity): boolean {
          stopEntity(physicsComponent);
       } else {
          const acceleration = getTribesmanAcceleration(tribesman);
-         physicsComponent.acceleration.x = acceleration * Math.sin(transformComponent.rotation);
-         physicsComponent.acceleration.y = acceleration * Math.cos(transformComponent.rotation);
+         physicsComponent.acceleration.x = acceleration * Math.sin(transformComponent.relativeRotation);
+         physicsComponent.acceleration.y = acceleration * Math.cos(transformComponent.relativeRotation);
       }
 
       // @Speed: only do this if we know the path has a door in it

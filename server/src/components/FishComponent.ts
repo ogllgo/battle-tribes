@@ -76,8 +76,8 @@ const move = (fish: Entity, direction: number): void => {
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
          physicsComponent.externalVelocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
          physicsComponent.externalVelocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
-         if (direction !== transformComponent.rotation) {
-            transformComponent.rotation = direction;
+         if (direction !== transformComponent.relativeRotation) {
+            transformComponent.relativeRotation = direction;
 
             const physicsComponent = PhysicsComponentArray.getComponent(fish);
             physicsComponent.hitboxesAreDirty = true;
@@ -195,7 +195,7 @@ function onTick(fish: Entity): void {
       fishComponent.flailTimer += Settings.I_TPS;
       if (fishComponent.flailTimer >= 0.75) {
          const flailDirection = 2 * Math.PI * Math.random();
-         transformComponent.rotation = flailDirection + randFloat(-0.5, 0.5);
+         transformComponent.relativeRotation = flailDirection + randFloat(-0.5, 0.5);
          
          physicsComponent.hitboxesAreDirty = true;
          
@@ -228,8 +228,8 @@ function onTick(fish: Entity): void {
    if (herdMembers.length >= 1) {
       runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      physicsComponent.acceleration.x = 100 * Math.sin(transformComponent.rotation);
-      physicsComponent.acceleration.y = 100 * Math.cos(transformComponent.rotation);
+      physicsComponent.acceleration.x = 100 * Math.sin(transformComponent.relativeRotation);
+      physicsComponent.acceleration.y = 100 * Math.cos(transformComponent.relativeRotation);
       return;
    }
 

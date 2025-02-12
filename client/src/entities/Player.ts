@@ -22,6 +22,7 @@ export function updatePlayerRotation(cursorX: number, cursorY: number): void {
    
    const previousRotation = transformComponent.rotation;
    transformComponent.rotation = cursorDirection;
+   transformComponent.relativeRotation = cursorDirection;
 
    // Angular velocity
    physicsComponent.angularVelocity = (transformComponent.rotation - previousRotation) * Settings.TPS;

@@ -144,8 +144,8 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
          minDist = distance;
       }
 
-      totalXVal += Math.sin(herdMemberTransformComponent.rotation);
-      totalYVal += Math.cos(herdMemberTransformComponent.rotation);
+      totalXVal += Math.sin(herdMemberTransformComponent.relativeRotation);
+      totalYVal += Math.cos(herdMemberTransformComponent.relativeRotation);
 
       centerX += herdMemberTransformComponent.position.x;
       centerY += herdMemberTransformComponent.position.y;
@@ -161,7 +161,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
    // @Cleanup: We can probably clean up a lot of this code by using Entity's built in turn functions
    let angularVelocity = 0;
    
-   const headingPrincipalValue = ((transformComponent.rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+   const headingPrincipalValue = ((transformComponent.relativeRotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
    
    // SEPARATION
    // Steer away from herd members who are too close
@@ -175,7 +175,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       // @Speed: Garbage collection
       const distanceVector = herdMemberTransformComponent.position.convertToVector(transformComponent.position);
 
-      const clockwiseDist = (distanceVector.direction - transformComponent.rotation + Math.PI * 2) % (Math.PI * 2);
+      const clockwiseDist = (distanceVector.direction - transformComponent.relativeRotation + Math.PI * 2) % (Math.PI * 2);
       const counterclockwiseDist = (Math.PI * 2) - clockwiseDist;
 
       if (clockwiseDist > counterclockwiseDist) {
@@ -547,7 +547,7 @@ export function angleIsInRange(angle: number, minAngle: number, maxAngle: number
 
 export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: number): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const dotProduct = Math.sin(transformComponent.rotation) * Math.sin(targetDirection) + Math.cos(transformComponent.rotation) * Math.cos(targetDirection);
+   const dotProduct = Math.sin(transformComponent.relativeRotation) * Math.sin(targetDirection) + Math.cos(transformComponent.relativeRotation) * Math.cos(targetDirection);
    if (dotProduct <= 0) {
       // Turn at full speed when facing away from the direction
       return 1;

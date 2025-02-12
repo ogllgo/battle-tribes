@@ -45,11 +45,11 @@ const move = (glurb: Entity, targetEntity: Entity): void => {
 
    const headTargetDirection = angle(targetTransformComponent.position.x - headHitbox.box.position.x, targetTransformComponent.position.y - headHitbox.box.position.y);
 
-   headHitbox.box.relativeRotation = turnAngle(headHitbox.box.relativeRotation, headTargetDirection - transformComponent.rotation, UtilVars.PI);
+   headHitbox.box.relativeRotation = turnAngle(headHitbox.box.relativeRotation, headTargetDirection - transformComponent.relativeRotation, UtilVars.PI);
    
    const acceleration = getAcceleration(glurb) * 0.5 * Settings.I_TPS;
-   const moveX = acceleration * Math.sin(headTargetDirection - transformComponent.rotation);
-   const moveY = acceleration * Math.cos(headTargetDirection - transformComponent.rotation);
+   const moveX = acceleration * Math.sin(headTargetDirection - transformComponent.relativeRotation);
+   const moveY = acceleration * Math.cos(headTargetDirection - transformComponent.relativeRotation);
 
    headHitbox.box.offset.x += moveX;
    headHitbox.box.offset.y += moveY;
@@ -94,7 +94,7 @@ function preRemove(glurb: Entity): void {
       const config = createItemEntityConfig(ItemType.slurb, 1, null);
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, layer, 0);
    }
 }

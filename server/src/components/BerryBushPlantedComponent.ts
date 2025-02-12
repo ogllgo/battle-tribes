@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
+import { registerDirtyEntity } from "../server/player-clients";
 import { dropBerryOverEntity } from "./BerryBushComponent";
 import { ComponentArray } from "./ComponentArray";
 import { getPlantGrowthSpeed, plantIsFertilised } from "./PlanterBoxComponent";
@@ -44,6 +45,9 @@ function onTick(entity: Entity): void {
          }
       }
    }
+
+   // @Speed: only need to send when the growth state changes or it grows a berry
+   registerDirtyEntity(entity);
 }
 
 function getDataLength(): number {
@@ -70,6 +74,8 @@ const dropBerryBushCropBerries = (entity: Entity, multiplier: number): void => {
    }
 
    berryBushPlantedComponent.numFruit--;
+
+   registerDirtyEntity(entity);
 }
 
 function onTakeDamage(entity: Entity): void {

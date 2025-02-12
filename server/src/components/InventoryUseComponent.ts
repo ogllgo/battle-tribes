@@ -189,7 +189,7 @@ const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbD
    box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
    box.relativeRotation = limbRotation * flipMultiplier;
 
-   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.relativeRotation);
 }
 
 export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
@@ -279,7 +279,7 @@ function onTick(entity: Entity): void {
 
                // Push forwards
                const transformComponent = TransformComponentArray.getComponent(entity);
-               applyKnockback(entity, 250, transformComponent.rotation);
+               applyKnockback(entity, 250, transformComponent.relativeRotation);
 
                // const blockAttack = createBlockAttackConfig(entity, limb);
                // createEntity(blockAttack, getEntityLayer(entity), 0);

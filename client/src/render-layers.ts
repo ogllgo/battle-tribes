@@ -8,6 +8,8 @@ export enum RenderLayer {
    grass,
    highDecorations,
    quakes,
+   // Projectiles which need to be rendered below all things which they can be embedded in
+   embeddedProjectiles,
    // @Temporary?
    lowestEntities,
    fish,
@@ -118,8 +120,10 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
       case EntityType.door: {
          return RenderLayer.highEntities;
       }
+      case EntityType.woodenArrow: {
+         return RenderLayer.embeddedProjectiles;
+      }
       // Projectiles
-      case EntityType.woodenArrow:
       case EntityType.ballistaFrostcicle:
       case EntityType.ballistaRock:
       case EntityType.ballistaSlimeball:

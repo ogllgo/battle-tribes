@@ -264,7 +264,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       const treeRoot = createTreeRootBaseConfig();
       treeRoot.components[ServerComponentType.transform].position.x = x;
       treeRoot.components[ServerComponentType.transform].position.y = y;
-      treeRoot.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      treeRoot.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(treeRoot, undergroundLayer, 0);
 
       pushJoinBuffer(false);

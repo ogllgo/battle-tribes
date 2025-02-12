@@ -24,12 +24,13 @@ import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-com
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendMountCarrySlotPacket, sendStructureInteractPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, setModifyBuildingPacket } from "./networking/packet-creation";
 import { AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
 import TexturedRenderPart from "./render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
+import { getVelocityMagnitude, PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -45,7 +46,8 @@ const enum InteractActionType {
    openInventory,
    openCraftingStation,
    openAnimalStaffMenu,
-   mountCarrySlot
+   mountCarrySlot,
+   pickUpArrow
 }
 
 interface BaseInteractAction {
@@ -98,7 +100,11 @@ interface MountCarrySlotAction extends BaseInteractAction {
    readonly type: InteractActionType.mountCarrySlot;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction;
+interface PickUpArrowAction extends BaseInteractAction {
+   readonly type: InteractActionType.pickUpArrow;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -257,6 +263,18 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
       }
    }
 
+   // Pick up arrows
+   if (entityType === EntityType.woodenArrow) {
+      const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      if (getVelocityMagnitude(physicsComponent) < 1) {
+         return {
+            type: InteractActionType.pickUpArrow,
+            interactEntity: entity,
+            interactRange: Vars.DEFAULT_INTERACT_RANGE
+         };
+      }
+   }
+
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
       return {
@@ -280,7 +298,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.toggleDoor:
       case InteractActionType.openInventory:
       case InteractActionType.openCraftingStation:
-      case InteractActionType.openAnimalStaffMenu: {
+      case InteractActionType.openAnimalStaffMenu:
+      case InteractActionType.pickUpArrow: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {
@@ -323,7 +342,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.plantSeed: {
-         Client.sendModifyBuilding(highlightedEntity, action.plantedEntityType);
+         setModifyBuildingPacket(highlightedEntity, action.plantedEntityType);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
@@ -333,7 +352,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.useFertiliser: {
-         Client.sendModifyBuilding(entity, -1);
+         setModifyBuildingPacket(entity, -1);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
@@ -387,7 +406,10 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
       }
       case InteractActionType.mountCarrySlot: {
          sendMountCarrySlotPacket(entity);
-         deselectSelectedEntity();
+         break;
+      }
+      case InteractActionType.pickUpArrow: {
+         sendPickUpArrowPacket(entity);
          break;
       }
       default: {

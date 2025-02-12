@@ -1220,6 +1220,7 @@ const tickItem = (itemType: ItemType): void => {
                   const transformComponentParams = createTransformComponentParams(
                      placeInfo.position.copy(),
                      placeInfo.rotation,
+                     placeInfo.rotation,
                      hitboxes,
                      tethers,
                      staticHitboxes,

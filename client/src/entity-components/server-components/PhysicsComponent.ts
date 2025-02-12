@@ -280,6 +280,7 @@ function onTick(entity: Entity): void {
 const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
    transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
    transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.rotation = transformComponent.relativeRotation + mountTransformComponent.rotation;
 }
 
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
@@ -324,6 +325,9 @@ function onUpdate(entity: Entity): void {
          updateEntityPosition(transformComponent, entity);
       }
 
+      // @hack
+      transformComponent.rotation = transformComponent.relativeRotation;
+
       // Propagate to children
       for (const carryInfo of transformComponent.carriedEntities) {
          tickCarriedEntity(transformComponent, carryInfo);
@@ -364,4 +368,18 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    } else {
       padData(reader);
    }
+}
+
+export function getVelocityX(physicsComponent: PhysicsComponent): number {
+   return physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
+}
+
+export function getVelocityY(physicsComponent: PhysicsComponent): number {
+   return physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+}
+
+export function getVelocityMagnitude(physicsComponent: PhysicsComponent): number {
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
+   return Math.sqrt(vx * vx + vy * vy);
 }

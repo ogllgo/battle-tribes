@@ -151,7 +151,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
       const config = createItemEntityConfig(ItemType.leaf, 1, null);
       config.components[ServerComponentType.transform].position.x = x;
       config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(plant), 0);
    }
 

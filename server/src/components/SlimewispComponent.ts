@@ -59,7 +59,7 @@ function onTick(slimewisp: Entity): void {
                const config = createSlimeConfig(SlimeSize.small);
                config.components[ServerComponentType.transform].position.x = (transformComponent.position.x + mergingSlimewispTransformComponent.position.x) / 2;
                config.components[ServerComponentType.transform].position.y = (transformComponent.position.y + mergingSlimewispTransformComponent.position.y) / 2;
-               config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+               config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
                createEntity(config, layer, 0);
             
                destroyEntity(slimewisp);

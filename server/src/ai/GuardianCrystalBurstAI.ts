@@ -24,7 +24,7 @@ const enum Vars {
 const createFragmentProjectile = (guardian: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
 
-   const offsetDirection = transformComponent.rotation + randFloat(-0.2, 0.2);
+   const offsetDirection = transformComponent.relativeRotation + randFloat(-0.2, 0.2);
    const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS;
    const originX = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
    const originY = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
@@ -37,7 +37,7 @@ const createFragmentProjectile = (guardian: Entity): void => {
    const config = createGuardianGemFragmentProjectileConfig(guardian);
    config.components[ServerComponentType.transform].position.x = originX;
    config.components[ServerComponentType.transform].position.y = originY;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    config.components[ServerComponentType.physics].externalVelocity.x = vx;
    config.components[ServerComponentType.physics].externalVelocity.y = vy;
    config.components[ServerComponentType.physics].angularVelocity = randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign();

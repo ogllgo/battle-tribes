@@ -1,22 +1,22 @@
 import { Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import PlayerClient from "./PlayerClient";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
-import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
+import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, Inventory, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
-import { PhysicsComponentArray } from "../components/PhysicsComponent";
+import { getVelocityMagnitude, PhysicsComponentArray } from "../components/PhysicsComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { getEntityTile, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { startChargingSpear, startChargingBattleaxe, createPlayerConfig } from "../entities/tribes/player";
+import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
 import { calculateRadialAttackTargets, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
-import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable } from "../components/InventoryComponent";
+import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable, addItem } from "../components/InventoryComponent";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
-import { generatePlayerSpawnPosition, registerDirtyEntity } from "./player-clients";
+import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
 import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
 import { changeEntityLayer, destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
@@ -79,12 +79,13 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    const transformComponent = TransformComponentArray.getComponent(player);
    // If the player has moved or rotated, is is dirty
-   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.rotation) {
+   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.relativeRotation) {
       registerDirtyEntity(player);
    }
    transformComponent.position.x = positionX;
    transformComponent.position.y = positionY;
    transformComponent.rotation = rotation;
+   transformComponent.relativeRotation = rotation;
 
    // playerClient.visibleChunkBounds = [minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY];
    playerClient.screenWidth = screenWidth;
@@ -448,7 +449,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
    }
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].rotation = rotation;
+   config.components[ServerComponentType.transform].relativeRotation = rotation;
    createEntity(config, playerClient.lastLayer, 0);
 }
 
@@ -481,7 +482,7 @@ export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: 
 
    // @Cleanup: should not do this logic here.
    const structureTransformComponent = TransformComponentArray.getComponent(structure);
-   const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.rotation);
+   const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.relativeRotation);
    placeBlueprint(playerClient.instance, structure, blueprintType, rotation);
 }
 
@@ -727,4 +728,34 @@ export function processDismountCarrySlotPacket(playerClient: PlayerClient): void
    if (entityExists(transformComponent.mount)) {
       dismountCarrySlot(player, transformComponent.mount);
    }
+}
+
+export function processPickUpArrowPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const arrow = reader.readNumber() as Entity;
+
+   const physicsComponent = PhysicsComponentArray.getComponent(arrow);
+   if (getVelocityMagnitude(physicsComponent) < 1) {
+      destroyEntity(arrow);
+      
+      const inventoryComponent = InventoryComponentArray.getComponent(player);
+      addItem(player, inventoryComponent, ItemType.woodenArrow, 1);
+      // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
+      registerPlayerDroppedItemPickup(player);
+   }
+}
+
+export function processModifyBuildingPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const structure = reader.readNumber() as Entity;
+   const data = reader.readNumber();
+   
+   modifyBuilding(playerClient.instance, structure, data);
 }

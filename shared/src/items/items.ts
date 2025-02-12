@@ -89,7 +89,8 @@ export const enum ItemType {
    mithrilAnvil,
    yuriMinecraft,
    yuriSonichu,
-   animalStaff
+   animalStaff,
+   woodenArrow
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -178,7 +179,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.mithrilAnvil]: "Mithril Anvil",
    [ItemType.yuriMinecraft]: "Yuri Minecraft",
    [ItemType.yuriSonichu]: "Yuri Sonichu",
-   [ItemType.animalStaff]: "Animal Staff"
+   [ItemType.animalStaff]: "Animal Staff",
+   [ItemType.woodenArrow]: "Wooden Arrow"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -525,6 +527,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.yuriMinecraft]: "material",
    [ItemType.yuriSonichu]: "material",
    [ItemType.animalStaff]: "animalStaff",
+   [ItemType.woodenArrow]: "material"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -959,6 +962,9 @@ export const ITEM_INFO_RECORD = {
    [ItemType.animalStaff]: {
       controlRange: 320
    },
+   [ItemType.woodenArrow]: {
+      stackSize: 16
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1075,6 +1081,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.yuriMinecraft]: {},
    [ItemType.yuriSonichu]: {},
    [ItemType.animalStaff]: {},
+   [ItemType.woodenArrow]: {},
 };
 
 // Some typescript wizardry
@@ -1248,8 +1255,8 @@ export function itemIsStackable(itemType: ItemType): boolean {
    return ITEM_INFO_RECORD[itemType].hasOwnProperty("stackSize");
 }
 
-export function getItemStackSize(item: Item): number {
-   return (ITEM_INFO_RECORD[item.type] as StackableItemInfo).stackSize;
+export function getItemStackSize(itemType: ItemType): number {
+   return (ITEM_INFO_RECORD[itemType] as StackableItemInfo).stackSize;
 }
 
 // @Cleanup: combine the two parameters to make calling it easier

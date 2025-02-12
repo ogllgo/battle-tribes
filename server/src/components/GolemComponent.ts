@@ -157,7 +157,7 @@ const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: E
       const config = createPebblumConfig();
       config.components[ServerComponentType.transform].position.x = x;
       config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       config.components[ServerComponentType.pebblum].targetEntityID = target;
       const pebblum = createEntity(config, layer, 0);
       

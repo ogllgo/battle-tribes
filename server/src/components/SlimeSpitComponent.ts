@@ -62,7 +62,7 @@ function preRemove(spit: Entity): void {
       const config = createSpitPoisonAreaConfig();
       config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
       config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(spit), 0);
    }
 }

@@ -61,7 +61,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(256);
+   const aiHelperComponent = new AIHelperComponent(320);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);

@@ -411,8 +411,8 @@ export function tickTribesman(tribesman: Entity): void {
             physicsComponent.acceleration.x = 0;
             physicsComponent.acceleration.y = 0;
          } else {
-            physicsComponent.acceleration.x = getTribesmanAcceleration(tribesman) * Math.sin(transformComponent.rotation);
-            physicsComponent.acceleration.y = getTribesmanAcceleration(tribesman) * Math.cos(transformComponent.rotation);
+            physicsComponent.acceleration.x = getTribesmanAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation);
+            physicsComponent.acceleration.y = getTribesmanAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation);
          }
 
          physicsComponent.targetRotation = transformComponent.position.calculateAngleBetween(entityTransformComponent.position);
@@ -547,8 +547,8 @@ export function tickTribesman(tribesman: Entity): void {
          const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getHumanoidRadius(transformComponent);
          if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
-            physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-            physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+            physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
+            physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
          } else if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
             stopEntity(physicsComponent);
          } else {
@@ -565,7 +565,7 @@ export function tickTribesman(tribesman: Entity): void {
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
          useInfo.selectedItemSlot = hammerItemSlot;
 
-         if (getAbsAngleDiff(transformComponent.rotation, targetDirection) < 0.1) {
+         if (getAbsAngleDiff(transformComponent.relativeRotation, targetDirection) < 0.1) {
             doMeleeAttack(tribesman, hammerItemSlot);
          }
          

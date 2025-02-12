@@ -42,7 +42,7 @@ const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): voi
 
    transformComponent.position.x = doorComponent.originX + xOffset;
    transformComponent.position.y = doorComponent.originY + yOffset;
-   transformComponent.rotation = rotation;
+   transformComponent.relativeRotation = rotation;
 
    const physicsComponent = PhysicsComponentArray.getComponent(door);
    physicsComponent.hitboxesAreDirty = true;
@@ -99,7 +99,7 @@ export function toggleDoor(door: Entity): void {
 function onInitialise(config: EntityConfig<ServerComponentType.transform | ServerComponentType.door>): void {
    config.components[ServerComponentType.door].originX = config.components[ServerComponentType.transform].position.x;
    config.components[ServerComponentType.door].originY = config.components[ServerComponentType.transform].position.y;
-   config.components[ServerComponentType.door].closedRotation = config.components[ServerComponentType.transform].rotation;
+   config.components[ServerComponentType.door].closedRotation = config.components[ServerComponentType.transform].relativeRotation;
 }
 
 function getDataLength(): number {

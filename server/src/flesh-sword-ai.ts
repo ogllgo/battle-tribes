@@ -198,7 +198,7 @@ export function runFleshSwordAI(itemEntity: Entity) {
 
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
-      transformComponent.rotation = moveAngle - Math.PI/4;
+      transformComponent.relativeRotation = moveAngle - Math.PI/4;
       physicsComponent.selfVelocity.x = moveSpeed! * Math.sin(moveAngle);
       physicsComponent.selfVelocity.y = moveSpeed! * Math.cos(moveAngle);
 

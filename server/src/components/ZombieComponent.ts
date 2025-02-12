@@ -313,8 +313,8 @@ function onTick(zombie: Entity): void {
          runHerdAI(zombie, herdMembers, ZombieVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
          const physicsComponent = PhysicsComponentArray.getComponent(zombie);
-         physicsComponent.acceleration.x = Vars.ACCELERATION_SLOW * Math.sin(transformComponent.rotation);
-         physicsComponent.acceleration.y = Vars.ACCELERATION_SLOW * Math.cos(transformComponent.rotation);
+         physicsComponent.acceleration.x = Vars.ACCELERATION_SLOW * Math.sin(transformComponent.relativeRotation);
+         physicsComponent.acceleration.y = Vars.ACCELERATION_SLOW * Math.cos(transformComponent.relativeRotation);
          return;
       }
    }

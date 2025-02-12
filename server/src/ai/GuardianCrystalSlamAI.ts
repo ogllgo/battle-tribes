@@ -42,11 +42,11 @@ export default class GuardianCrystalSlamAI {
    private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      applyAbsoluteKnockback(guardian, 150, transformComponent.rotation + UtilVars.PI);
+      applyAbsoluteKnockback(guardian, 150, transformComponent.relativeRotation + UtilVars.PI);
 
       const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS + Vars.LIMB_EXTEND_AMOUNT;
-      const originX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.rotation);
-      const originY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.rotation);
+      const originX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.relativeRotation);
+      const originY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.relativeRotation);
       
       // Create gem quakes
       const layer = getEntityLayer(guardian);
@@ -59,7 +59,7 @@ export default class GuardianCrystalSlamAI {
          const halfIRange = (numQuakes - 1) / 2;
          for (let i = 0; i < numQuakes; i++) {
             const directionOffsetMultiplier = (i - halfIRange) / halfIRange;
-            const direction = transformComponent.rotation + directionOffsetMultiplier * Vars.QUAKE_ARC_SIZE * 0.5;
+            const direction = transformComponent.relativeRotation + directionOffsetMultiplier * Vars.QUAKE_ARC_SIZE * 0.5;
    
             const spawnDelayTicks = Math.round(offsetIdx * 0.05 * Settings.TPS);
             
@@ -75,7 +75,7 @@ export default class GuardianCrystalSlamAI {
             const config = createGuardianGemQuakeConfig();
             config.components[ServerComponentType.transform].position.x = x;
             config.components[ServerComponentType.transform].position.y = y;
-            config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+            config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
             createEntity(config, layer, spawnDelayTicks);
          }
       }

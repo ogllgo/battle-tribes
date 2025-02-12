@@ -68,7 +68,7 @@ export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount
       const config = createItemEntityConfig(itemType, 1, null);
       config.components[ServerComponentType.transform].position.x = spawnPosition.x;
       config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

@@ -109,6 +109,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.yuriMinecraft]: 1,
    [ItemType.yuriSonichu]: 1,
    [ItemType.animalStaff]: 1,
+   [ItemType.woodenArrow]: 1,
 };
 
 export const enum TribesmanPathType {

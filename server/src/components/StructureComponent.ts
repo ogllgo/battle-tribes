@@ -55,7 +55,7 @@ function onJoin(entity: Entity): void {
       const entityType = getEntityType(entity) as StructureType;
       const buildingLayer = tribeComponent.tribe.buildingLayers[layer.depth];
       
-      structureComponent.virtualBuilding = createVirtualStructureFromHitboxes(buildingLayer, transformComponent.position.copy(), transformComponent.rotation, entityType, transformComponent.hitboxes);
+      structureComponent.virtualBuilding = createVirtualStructureFromHitboxes(buildingLayer, transformComponent.position.copy(), transformComponent.relativeRotation, entityType, transformComponent.hitboxes);
    }
    
    tribeComponent.tribe.addBuilding(entity);

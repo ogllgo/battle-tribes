@@ -82,7 +82,7 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
    const config = createItemEntityConfig(ItemType.poop, 1, null);
    config.components[ServerComponentType.transform].position.x = poopPosition.x;
    config.components[ServerComponentType.transform].position.y = poopPosition.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    createEntity(config, getEntityLayer(cow), 0);
 
    // Let it out
@@ -165,14 +165,14 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
    const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
    const acceleration = isRunning ? 1000 : 200;
    
-   const alignmentToTarget = findAngleAlignment(transformComponent.rotation, targetDirection);
+   const alignmentToTarget = findAngleAlignment(transformComponent.relativeRotation, targetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
    physicsComponent.acceleration.x = acceleration * accelerationMultiplier * Math.sin(targetDirection);
    physicsComponent.acceleration.y = acceleration * accelerationMultiplier * Math.cos(targetDirection);
 
    physicsComponent.targetRotation = targetDirection;
    // Don't turn if it's within neck reach range
-   if (getAbsAngleDiff(transformComponent.rotation, targetDirection) > 0.3) {
+   if (getAbsAngleDiff(transformComponent.relativeRotation, targetDirection) > 0.3) {
       physicsComponent.turnSpeed = 1;
    } else {
       physicsComponent.turnSpeed = 0.15;
@@ -219,7 +219,7 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
       // Force is in the direction which will get head offset direction back towards 0
       const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY * Math.sign(headOffsetDirection));
 
-      transformComponent.rotation += rotationForce;
+      transformComponent.relativeRotation += rotationForce;
 
       const headOffsetX = headHitbox.box.offset.x;
       const headOffsetY = headHitbox.box.offset.y;
@@ -385,8 +385,8 @@ function onTick(cow: Entity): void {
          moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
 
          // If the target entity is directly in front of the cow, start eatin it
-         const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.rotation);
-         const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.rotation);
+         const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.relativeRotation);
+         const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.relativeRotation);
          if (positionIsInWorld(testPositionX, testPositionY)) {
             // @Hack? The only place which uses this weird function
             const testEntities = getEntitiesAtPosition(layer, testPositionX, testPositionY);
@@ -433,8 +433,8 @@ function onTick(cow: Entity): void {
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      physicsComponent.acceleration.x = 200 * Math.sin(transformComponent.rotation);
-      physicsComponent.acceleration.y = 200 * Math.cos(transformComponent.rotation);
+      physicsComponent.acceleration.x = 200 * Math.sin(transformComponent.relativeRotation);
+      physicsComponent.acceleration.y = 200 * Math.cos(transformComponent.relativeRotation);
       return;
    }
 

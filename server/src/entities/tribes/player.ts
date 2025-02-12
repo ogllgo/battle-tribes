@@ -156,7 +156,7 @@ const modifyTunnel = (player: Entity, tunnel: Entity): void => {
          
          // Place the door blueprint on whichever side is closest to the player
          const dirToPlayer = tunnelTransformComponent.position.calculateAngleBetween(playerTransformComponent.position);
-         const dot = Math.sin(tunnelTransformComponent.rotation) * Math.sin(dirToPlayer) + Math.cos(tunnelTransformComponent.rotation) * Math.cos(dirToPlayer);
+         const dot = Math.sin(tunnelTransformComponent.relativeRotation) * Math.sin(dirToPlayer) + Math.cos(tunnelTransformComponent.relativeRotation) * Math.cos(dirToPlayer);
 
          if (dot > 0) {
             // Top door

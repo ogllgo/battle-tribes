@@ -93,7 +93,7 @@ const grow = (iceSpikes: Entity): void => {
       const config = createIceSpikesConfig(iceSpikesComponent.rootIceSpike);
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, layer, 0);
       
       const rootIceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikesComponent.rootIceSpike);
@@ -158,7 +158,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       const config = createIceShardConfig();
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = moveDirection;
+      config.components[ServerComponentType.transform].relativeRotation = moveDirection;
       config.components[ServerComponentType.physics].externalVelocity.x += 700 * Math.sin(moveDirection);
       config.components[ServerComponentType.physics].externalVelocity.y += 700 * Math.cos(moveDirection);
       createEntity(config, layer, 0);

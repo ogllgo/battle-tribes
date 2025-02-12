@@ -110,7 +110,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
          return false;
-      } else if (Math.abs(getAngleDiff(transformComponent.rotation, targetDirection)) < 0.02) {
+      } else if (Math.abs(getAngleDiff(transformComponent.relativeRotation, targetDirection)) < 0.02) {
          // @Cleanup: copy and paste. use the function from item-use.ts
          
          // 
@@ -181,8 +181,8 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
-         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
+         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {
          stopEntity(physicsComponent);
       }
@@ -192,7 +192,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       physicsComponent.targetRotation = targetRotation;
       physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
 
-      if (Math.abs(getAngleDiff(transformComponent.rotation, targetRotation)) < 0.1) {
+      if (Math.abs(getAngleDiff(transformComponent.relativeRotation, targetRotation)) < 0.1) {
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
       }
    } else {
@@ -249,8 +249,8 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
-         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
+         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {
          stopEntity(physicsComponent);
       }
@@ -259,7 +259,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       physicsComponent.targetRotation = targetRotation;
       physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
 
-      if (getAbsAngleDiff(transformComponent.rotation, targetRotation) < 0.1) {
+      if (getAbsAngleDiff(transformComponent.relativeRotation, targetRotation) < 0.1) {
          doMeleeAttack(tribesman, hammerItemSlot);
       }
 

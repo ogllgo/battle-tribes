@@ -59,7 +59,7 @@ export class GuardianComponent {
 
       // @Hack
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      this.limbNormalDirection = transformComponent.rotation;
+      this.limbNormalDirection = transformComponent.relativeRotation;
 
       const physicsComponent = PhysicsComponentArray.getComponent(guardian);
       stopEntity(physicsComponent);
@@ -149,11 +149,11 @@ const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: Guardi
       const box = hitbox.box;
 
       // @Hack
-      const direction = guardianComponent.limbNormalDirection + (i === 0 ? Math.PI * 0.5 : Math.PI * -0.5) - transformComponent.rotation;
+      const direction = guardianComponent.limbNormalDirection + (i === 0 ? Math.PI * 0.5 : Math.PI * -0.5) - transformComponent.relativeRotation;
       box.offset.x = GuardianVars.LIMB_ORBIT_RADIUS * Math.sin(direction);
       box.offset.y = GuardianVars.LIMB_ORBIT_RADIUS * Math.cos(direction);
       // @Hack
-      box.relativeRotation = -transformComponent.rotation;
+      box.relativeRotation = -transformComponent.relativeRotation;
    }
    
    const physicsComponent = PhysicsComponentArray.getComponent(guardian);
@@ -163,8 +163,8 @@ const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: Guardi
 const limbsAreInStagingPosition = (guardian: Entity, guardianComponent: GuardianComponent): boolean => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
    // @Hack
-   const diffFromTarget1 = getAngleDiff(guardianComponent.limbNormalDirection, transformComponent.rotation);
-   const diffFromTarget2 = getAngleDiff(guardianComponent.limbNormalDirection + Math.PI, transformComponent.rotation);
+   const diffFromTarget1 = getAngleDiff(guardianComponent.limbNormalDirection, transformComponent.relativeRotation);
+   const diffFromTarget2 = getAngleDiff(guardianComponent.limbNormalDirection + Math.PI, transformComponent.relativeRotation);
    return (diffFromTarget1 >= -0.05 && diffFromTarget1 <= 0.05) || (diffFromTarget2 >= -0.05 && diffFromTarget2 <= 0.05);
 }
 
@@ -265,7 +265,7 @@ function onTick(guardian: Entity): void {
 
          // @Hack
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         guardianComponent.limbNormalDirection = transformComponent.rotation;
+         guardianComponent.limbNormalDirection = transformComponent.relativeRotation;
    
          // @Copynpaste
          const physicsComponent = PhysicsComponentArray.getComponent(guardian);
@@ -289,7 +289,7 @@ function onTick(guardian: Entity): void {
          guardianComponent.limbMoveProgress = 0;
 
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         guardianComponent.limbNormalDirection = transformComponent.rotation;
+         guardianComponent.limbNormalDirection = transformComponent.relativeRotation;
       }
       updateOrbitingGuardianLimbs(guardian, guardianComponent);
    } else if (!guardianComponent.limbsAreOrbiting && guardianComponent.limbMoveProgress < 1) {

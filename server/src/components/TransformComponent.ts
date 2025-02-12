@@ -48,7 +48,12 @@ export class TransformComponent {
    /** Position of the entity in the world */
    public position = new Point(0, 0);
 
+   // @Hack: this shit sucks!!!!
+   // I need it so that carried entities can accumulate rotation from their parents, but once the 
+   // hitbox-carry rework is done this won't be necessary. So I could probably then just remove the
+   // rotation property entirely from the transform component, that would be neat.
    /** Direction the entity is facing in radians */
+   public relativeRotation = 0;
    public rotation = 0;
 
    // @Cleanup: unused?
@@ -159,7 +164,7 @@ export class TransformComponent {
       // Only update the transform stuff if the entity is created, as if it isn't created then the position of the entity will just be 0,0 (default).
       if (entity !== null) {
          const box = hitbox.box;
-         updateBox(box, this.position.x, this.position.y, this.rotation);
+         updateBox(box, this.position.x, this.position.y, this.relativeRotation);
       
          const boundsMinX = box.calculateBoundsMinX();
          const boundsMaxX = box.calculateBoundsMaxX();
@@ -199,10 +204,10 @@ export class TransformComponent {
       assert(this.hitboxes.length > 0);
 
       // @Hack
-      let rotation = this.rotation;
+      let rotation = this.relativeRotation;
       if (entityExists(this.mount)) {
          const mountTransformComponent = TransformComponentArray.getComponent(this.mount);
-         rotation += mountTransformComponent.rotation;
+         rotation += mountTransformComponent.relativeRotation;
       }
       for (const hitbox of this.rootHitboxes) {
          cleanHitbox(this, hitbox, this.position, rotation);
@@ -495,7 +500,8 @@ function onRemove(entity: Entity): void {
    }
 
    // Unmount any chilren
-   for (const carryInfo of transformComponent.carriedEntities) {
+   while (transformComponent.carriedEntities.length > 0) {
+      const carryInfo = transformComponent.carriedEntities[0];
       dismountEntity(carryInfo.carriedEntity);
    }
    
@@ -582,7 +588,7 @@ export function getRectangularHitboxDataLength(hitbox: Hitbox<BoxType.rectangula
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 7 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -621,6 +627,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(transformComponent.position.x);
    packet.addNumber(transformComponent.position.y);
    packet.addNumber(transformComponent.rotation);
+   packet.addNumber(transformComponent.relativeRotation);
    packet.addNumber(transformComponent.collisionBit);
    packet.addNumber(transformComponent.collisionMask);
    

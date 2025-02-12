@@ -5,7 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { TechID, TechTreeUnlockProgress, Tech, getTechByID, TECHS, TechUnlockProgress } from "battletribes-shared/techs";
 import { TribeType, TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { Point, randItem, clampToBoardDimensions, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
+import { Point, randItem, clampToBoardDimensions, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, assert } from "battletribes-shared/utils";
 import Chunk from "./Chunk";
 import { TotemBannerComponentArray, addBannerToTotem, removeBannerFromTotem } from "./components/TotemBannerComponent";
 import { InventoryComponentArray, getInventory } from "./components/InventoryComponent";
@@ -118,8 +118,6 @@ export default class Tribe {
    /** The layer which the tribe will create their base in. */
    public readonly homeLayer: Layer;
 
-   public isRemoveable = false;
-
    public totem: Entity | null = null;
    
    // /** Stores all tribe huts belonging to the tribe */
@@ -175,6 +173,10 @@ export default class Tribe {
    */
    public startPosition: Point;
    
+   /** If there ever get to be 0 entities of this tribe, the tribe will be destroyed. */
+   public numEntitiesWithTribe = 0;
+   public isRemoveable = false;
+   
    constructor(tribeType: TribeType, isAIControlled: boolean, startPosition: Point) {
       this.name = generateTribeName(tribeType);
       this.tribeType = tribeType;
@@ -208,7 +210,6 @@ export default class Tribe {
       this.buildings.push(structure);
 
       this.buildingsAreDirty = true;
-      this.isRemoveable = true;
 
       switch (entityType) {
          case EntityType.tribeTotem: {
@@ -329,9 +330,8 @@ export default class Tribe {
    }
 
    public tick(): void {
-      // @Incomplete: automatically detect if there are no entities left which have a tribe component with this tribe
       // Destroy tribe if it has no entities left
-      if (this.isRemoveable && this.totem === null && this.tribesmanIDs.length === 0 && this.buildings.length === 0) {
+      if (this.isRemoveable && this.numEntitiesWithTribe === 0) {
          // @Speed
          // Make sure there are no players which can still respawn as this tribe
          let hasPlayers = false;
@@ -401,7 +401,7 @@ export default class Tribe {
       const transformComponent = TransformComponentArray.getComponent(hut);
       
       // Offset the spawn position so the tribesman comes out of the correct side of the hut
-      const position = new Point(transformComponent.position.x + 10 * Math.sin(transformComponent.rotation), transformComponent.position.y + 10 * Math.cos(transformComponent.rotation));
+      const position = new Point(transformComponent.position.x + 10 * Math.sin(transformComponent.relativeRotation), transformComponent.position.y + 10 * Math.cos(transformComponent.relativeRotation));
       
       let config: EntityConfig<ServerComponentType.transform | ServerComponentType.tribesmanAI>;
       switch (getEntityType(hut)) {
@@ -420,15 +420,24 @@ export default class Tribe {
 
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
+      config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
       config.components[ServerComponentType.tribesmanAI].hut = hut;
       createEntity(config, getEntityLayer(hut), 0);
    }
 
+   public registerEntity(): void {
+      this.isRemoveable = true;
+      this.numEntitiesWithTribe++;
+   }
+
+   public deregisterEntity(): void {
+      this.numEntitiesWithTribe--;
+      assert(this.numEntitiesWithTribe >= 0);
+   }
+   
    // @Cleanup
    
    public registerNewTribeMember(tribesman: Entity): void {
-      this.isRemoveable = true;
       // this.friendlyTribesmenIDs.push(tribeMember.id);
       this.tribesmanIDs.push(tribesman);
    }

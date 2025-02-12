@@ -621,6 +621,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Animal Staff",
       description: "Allows you to control animals."
    },
+   [ItemType.woodenArrow]: {
+      entityTextureSource: "items/small/wooden-arrow.png",
+      textureSource: "items/large/wooden-arrow.png",
+      toolTextureSource: "",
+      name: "Wooden Arrow",
+      description: "A primitive projectile able to be used in bows and crossbows."
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

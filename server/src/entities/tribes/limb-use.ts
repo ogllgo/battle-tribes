@@ -112,7 +112,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    if (vx !== 0 || vy !== 0) {
       const transformComponent = TransformComponentArray.getComponent(attackingEntity);
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-      const attackAlignment = (vx * Math.sin(transformComponent.rotation) + vy * Math.cos(transformComponent.rotation)) / velocityMagnitude;
+      const attackAlignment = (vx * Math.sin(transformComponent.relativeRotation) + vy * Math.cos(transformComponent.relativeRotation)) / velocityMagnitude;
       if (attackAlignment > 0) {
          const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
          limb.currentActionEndLimbState.extraOffsetY += extraAmount;

@@ -92,7 +92,7 @@ function onTick(scrappy: Entity): void {
 
          // Drop the item
          const transformComponent = TransformComponentArray.getComponent(scrappy);
-         throwItem(scrappy, InventoryName.hotbar, 1, 99, transformComponent.rotation + randFloat(-0.3, 0.3));
+         throwItem(scrappy, InventoryName.hotbar, 1, 99, transformComponent.relativeRotation + randFloat(-0.3, 0.3));
       } else {
          const physicsComponent = PhysicsComponentArray.getComponent(scrappy);
          const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;

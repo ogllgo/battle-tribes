@@ -74,21 +74,21 @@ function onJoin(entity: Entity): void {
 
 const cleanRotation = (transformComponent: TransformComponent): void => {
    // Clamp rotation to [-PI, PI) range
-   if (transformComponent.rotation < -Math.PI) {
-      transformComponent.rotation += Math.PI * 2;
-   } else if (transformComponent.rotation >= Math.PI) {
-      transformComponent.rotation -= Math.PI * 2;
+   if (transformComponent.relativeRotation < -Math.PI) {
+      transformComponent.relativeRotation += Math.PI * 2;
+   } else if (transformComponent.relativeRotation >= Math.PI) {
+      transformComponent.relativeRotation -= Math.PI * 2;
    }
 }
 
 const turnEntity = (entity: Entity, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
-   const previousRotation = transformComponent.rotation;
+   const previousRotation = transformComponent.relativeRotation;
 
-   transformComponent.rotation += physicsComponent.angularVelocity * Settings.I_TPS;
+   transformComponent.relativeRotation += physicsComponent.angularVelocity * Settings.I_TPS;
    cleanRotation(transformComponent);
    
    if (physicsComponent.turnSpeed !== 0) {
-      let clockwiseDist = physicsComponent.targetRotation - transformComponent.rotation;
+      let clockwiseDist = physicsComponent.targetRotation - transformComponent.relativeRotation;
       if (clockwiseDist < 0) {
          clockwiseDist += 2 * Math.PI;
       } else if (clockwiseDist >= 2 * Math.PI) {
@@ -97,27 +97,27 @@ const turnEntity = (entity: Entity, transformComponent: TransformComponent, phys
 
       // @Temporary?
       if (clockwiseDist < 0 || clockwiseDist > 2 * Math.PI) {
-         console.warn("BAD ROTATION!!!", physicsComponent.targetRotation, transformComponent.rotation, physicsComponent.targetRotation - transformComponent.rotation, clockwiseDist, 2 * Math.PI);
+         console.warn("BAD ROTATION!!!", physicsComponent.targetRotation, transformComponent.relativeRotation, physicsComponent.targetRotation - transformComponent.relativeRotation, clockwiseDist, 2 * Math.PI);
       }
       
       if (clockwiseDist <= Math.PI) {  
-         transformComponent.rotation += physicsComponent.turnSpeed * Settings.I_TPS;
+         transformComponent.relativeRotation += physicsComponent.turnSpeed * Settings.I_TPS;
          // If the entity would turn past the target direction, snap back to the target direction
          if (physicsComponent.turnSpeed * Settings.I_TPS > clockwiseDist) {
-            transformComponent.rotation = physicsComponent.targetRotation;
+            transformComponent.relativeRotation = physicsComponent.targetRotation;
          }
       } else {
          const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
          
-         transformComponent.rotation -= physicsComponent.turnSpeed * Settings.I_TPS
+         transformComponent.relativeRotation -= physicsComponent.turnSpeed * Settings.I_TPS
          // If the entity would turn past the target direction, snap back to the target direction
          if (physicsComponent.turnSpeed * Settings.I_TPS > anticlockwiseDist) {
-            transformComponent.rotation = physicsComponent.targetRotation;
+            transformComponent.relativeRotation = physicsComponent.targetRotation;
          }
       }
    }
 
-   if (transformComponent.rotation !== previousRotation) {
+   if (transformComponent.relativeRotation !== previousRotation) {
       cleanRotation(transformComponent);
 
       physicsComponent.hitboxesAreDirty = true;
@@ -348,7 +348,7 @@ const pushHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, othe
       transformComponent.position.y += springForceY;
 
       // So that it doesn't affect the other hitboxes' position
-      const otherParentRotation = otherHitbox.box.parent !== null ? otherHitbox.box.parent.rotation : transformComponent.rotation;
+      const otherParentRotation = otherHitbox.box.parent !== null ? otherHitbox.box.parent.rotation : transformComponent.relativeRotation;
       const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -otherParentRotation);
       const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -otherParentRotation);
       otherHitbox.box.offset.x -= rotatedSpringForceX;
@@ -402,8 +402,9 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
 }
 
 export function fixCarriedEntityPosition(transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void {
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.relativeRotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.relativeRotation);
+   transformComponent.rotation = transformComponent.relativeRotation + mountTransformComponent.rotation;
 }
 
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, mountPhysicsComponent: PhysicsComponent, carryInfo: EntityCarryInfo): void => {
@@ -437,6 +438,9 @@ function onTick(entity: Entity): void {
       applyPhysics(entity, transformComponent, physicsComponent);
       applyHitboxTethers(transformComponent, physicsComponent);
       updatePosition(entity, transformComponent, physicsComponent);
+
+      // @Hack
+      transformComponent.rotation = transformComponent.relativeRotation;
 
       for (const carryInfo of transformComponent.carriedEntities) {
          tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
@@ -506,4 +510,29 @@ export function getVelocityX(physicsComponent: PhysicsComponent): number {
 
 export function getVelocityY(physicsComponent: PhysicsComponent): number {
    return physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+}
+
+export function getVelocityMagnitude(physicsComponent: PhysicsComponent): number {
+   const vx = getVelocityX(physicsComponent);
+   const vy = getVelocityY(physicsComponent);
+   return Math.sqrt(vx * vx + vy * vy);
+}
+
+export function slowVelocity(physicsComponent: PhysicsComponent, slowUnits: number): void {
+   const selfVelocityMagnitude = physicsComponent.selfVelocity.length();
+   const externalVelocityMagnitude = physicsComponent.externalVelocity.length();
+
+   if (selfVelocityMagnitude > 0) {
+      const ratio = selfVelocityMagnitude / (selfVelocityMagnitude + externalVelocityMagnitude);
+      const reduction = Math.min(slowUnits * ratio, selfVelocityMagnitude);
+      physicsComponent.selfVelocity.x -= reduction * physicsComponent.selfVelocity.x / selfVelocityMagnitude;
+      physicsComponent.selfVelocity.y -= reduction * physicsComponent.selfVelocity.y / selfVelocityMagnitude;
+   }
+
+   if (externalVelocityMagnitude > 0) {
+      const ratio = externalVelocityMagnitude / (externalVelocityMagnitude + selfVelocityMagnitude);
+      const reduction = Math.min(slowUnits * ratio, externalVelocityMagnitude);
+      physicsComponent.externalVelocity.x -= reduction * physicsComponent.externalVelocity.x / externalVelocityMagnitude;
+      physicsComponent.externalVelocity.y -= reduction * physicsComponent.externalVelocity.y / externalVelocityMagnitude;
+   }
 }

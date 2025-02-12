@@ -106,8 +106,8 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
 
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
 
-            const usePointX = entityTransformComponent.position.x - 22 * Math.sin(entityTransformComponent.rotation);
-            const usePointY = entityTransformComponent.position.y - 22 * Math.cos(entityTransformComponent.rotation);
+            const usePointX = entityTransformComponent.position.x - 22 * Math.sin(entityTransformComponent.relativeRotation);
+            const usePointY = entityTransformComponent.position.y - 22 * Math.cos(entityTransformComponent.relativeRotation);
 
             if (distance(transformComponent.position.x, transformComponent.position.y, usePointX, usePointY) <= Vars.EMBRASURE_USE_RADIUS) {
                usePoints.push(new Point(usePointX, usePointY));
@@ -170,7 +170,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
 
          // Rotate to face the target
          const direction = transformComponent.position.calculateAngleBetween(huntedEntityTransformComponent.position);
-         if (direction !== transformComponent.rotation) {
+         if (direction !== transformComponent.relativeRotation) {
             physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
             physicsComponent.targetRotation = direction;
          }
@@ -236,8 +236,8 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
                physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
             } else if (willStopAtDesiredDistance(physicsComponent, Vars.DESIRED_RANGED_ATTACK_DISTANCE - 20, distance)) {
                // If the tribesman will stop too close to the target, move back a bit
-               physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-               physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+               physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
+               physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
             } else {
                stopEntity(physicsComponent);
             }
@@ -361,8 +361,8 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
    if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
-         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.rotation + Math.PI);
-         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.rotation + Math.PI);
+         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
+         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {
          stopEntity(physicsComponent);
       }

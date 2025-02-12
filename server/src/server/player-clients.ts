@@ -137,14 +137,6 @@ const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): voi
    // playerClient.tribe.forceUnlockTech(techID);
 }
 
-const processModifyBuildingPacket = (playerClient: PlayerClient, structure: Entity, data: number): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-   
-   modifyBuilding(playerClient.instance, structure, data);
-}
-
 const processDeconstructPacket = (playerClient: PlayerClient, structure: Entity): void => {
    if (!entityExists(structure)) {
       return;
@@ -298,10 +290,6 @@ export function addPlayerClient(playerClient: PlayerClient, player: Entity, laye
 
    socket.on("force_unlock_tech", (techID: TechID): void => {
       processTechForceUnlock(playerClient, techID);
-   });
-
-   socket.on("modify_building", (structureID: number, data: number): void => {
-      processModifyBuildingPacket(playerClient, structureID, data);
    });
 
    socket.on("deconstruct_building", (structureID: number): void => {

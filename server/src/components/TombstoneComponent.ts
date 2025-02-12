@@ -76,7 +76,7 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    const config = createZombieConfig(isGolden, tombstone);
    config.components[ServerComponentType.transform].position.x = tombstoneComponent.zombieSpawnPositionX;
    config.components[ServerComponentType.transform].position.y = tombstoneComponent.zombieSpawnPositionY;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
@@ -136,7 +136,7 @@ function preRemove(tombstone: Entity): void {
    const config = createZombieConfig(isGolden, tombstone);
    config.components[ServerComponentType.transform].position.x = tombstoneTransformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = tombstoneTransformComponent.position.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 

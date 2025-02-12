@@ -191,8 +191,8 @@ export function calculateRadialAttackTargets(entity: Entity, attackOffset: numbe
    const transformComponent = TransformComponentArray.getComponent(entity);
    const layer = getEntityLayer(entity);
    
-   const attackPositionX = transformComponent.position.x + attackOffset * Math.sin(transformComponent.rotation);
-   const attackPositionY = transformComponent.position.y + attackOffset * Math.cos(transformComponent.rotation);
+   const attackPositionX = transformComponent.position.x + attackOffset * Math.sin(transformComponent.relativeRotation);
+   const attackPositionY = transformComponent.position.y + attackOffset * Math.cos(transformComponent.relativeRotation);
    const attackedEntities = getEntitiesInRange(layer, attackPositionX, attackPositionY, attackRadius);
    
    // Don't attack yourself
@@ -254,7 +254,7 @@ export function placeStructure(tribe: Tribe, layer: Layer, placeInfo: StructureP
    
    config.components[ServerComponentType.transform].position.x = placeInfo.position.x;
    config.components[ServerComponentType.transform].position.y = placeInfo.position.y;
-   config.components[ServerComponentType.transform].rotation = placeInfo.rotation;
+   config.components[ServerComponentType.transform].relativeRotation = placeInfo.rotation;
    createEntity(config, layer, 0);
 }
 
@@ -345,7 +345,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
          
          const structureType = ITEM_INFO_RECORD[item.type as PlaceableItemType].entityType;
-         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
+         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.relativeRotation, structureType, getLayerInfo(getEntityLayer(tribeMember)));
 
          if (placeInfo.isValid) {
             const tribeComponent = TribeComponentArray.getComponent(tribeMember);
@@ -359,7 +359,6 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
       case "bow": {
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
          const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
-         console.log(getVelocityX(physicsComponent), getVelocityY(physicsComponent));
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribeMember);
          const limb = inventoryUseComponent.getLimbInfo(inventoryName);
@@ -404,7 +403,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          }
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
          config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
+         config.components[ServerComponentType.transform].relativeRotation = transformComponent.rotation;
          config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(physicsComponent) + itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
          config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(physicsComponent) + itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
@@ -441,7 +440,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          // Offset the arrow's spawn to be just outside of the tribe member's hitbox
          // @Speed: Garbage collection
          const spawnPosition = transformComponent.position.copy();
-         const offset = Point.fromVectorForm(35, transformComponent.rotation);
+         const offset = Point.fromVectorForm(35, transformComponent.relativeRotation);
          spawnPosition.add(offset);
          
          const itemInfo = ITEM_INFO_RECORD[item.type] as BowItemInfo;
@@ -452,9 +451,9 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const config = createWoodenArrowConfig(tribeComponent.tribe, tribeMember);
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
          config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
+         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         config.components[ServerComponentType.physics].externalVelocity.x = itemInfo.projectileSpeed * Math.sin(transformComponent.relativeRotation);
+         config.components[ServerComponentType.physics].externalVelocity.y = itemInfo.projectileSpeed * Math.cos(transformComponent.relativeRotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          delete useInfo.crossbowLoadProgressRecord[itemSlot];
@@ -474,7 +473,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const inventory = getInventory(inventoryComponent, inventoryName);
          const limbInfo = inventoryUseComponent.getLimbInfo(inventoryName);
 
-         const offsetDirection = transformComponent.rotation + Math.PI / 1.5 - Math.PI / 14;
+         const offsetDirection = transformComponent.relativeRotation + Math.PI / 1.5 - Math.PI / 14;
          const x = transformComponent.position.x + 35 * Math.sin(offsetDirection);
          const y = transformComponent.position.y + 35 * Math.cos(offsetDirection);
 
@@ -484,9 +483,9 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const config = createSpearProjectileConfig(tribeMember, null);
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
-         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(entityPhysicsComponent) + velocityMagnitude * Math.sin(transformComponent.rotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(entityPhysicsComponent) + velocityMagnitude * Math.cos(transformComponent.rotation);
+         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(entityPhysicsComponent) + velocityMagnitude * Math.sin(transformComponent.relativeRotation);
+         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(entityPhysicsComponent) + velocityMagnitude * Math.cos(transformComponent.relativeRotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
@@ -508,7 +507,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          const useInfo = inventoryUseComponent.getLimbInfo(inventoryName);
 
-         const offsetDirection = transformComponent.rotation + Math.PI / 1.5 - Math.PI / 14;
+         const offsetDirection = transformComponent.relativeRotation + Math.PI / 1.5 - Math.PI / 14;
          const x = transformComponent.position.x + 35 * Math.sin(offsetDirection);
          const y = transformComponent.position.y + 35 * Math.cos(offsetDirection);
 
@@ -519,9 +518,9 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const config = createBattleaxeProjectileConfig(tribeComponent.tribe, tribeMember, item.id);
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
-         config.components[ServerComponentType.transform].rotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x + velocityMagnitude * Math.sin(transformComponent.rotation)
-         config.components[ServerComponentType.physics].externalVelocity.y = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y + velocityMagnitude * Math.cos(transformComponent.rotation)
+         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         config.components[ServerComponentType.physics].externalVelocity.x = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x + velocityMagnitude * Math.sin(transformComponent.relativeRotation)
+         config.components[ServerComponentType.physics].externalVelocity.y = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y + velocityMagnitude * Math.cos(transformComponent.relativeRotation)
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          useInfo.lastBattleaxeChargeTicks = getGameTicks();
@@ -543,7 +542,7 @@ export function tribeMemberCanPickUpItem(tribeMember: Entity, itemType: ItemType
    for (let i = 0; i < inventory.items.length; i++) {
       const item = inventory.items[i];
 
-      if (item.type === itemType && itemIsStackable(item.type) && item.count < getItemStackSize(item)) {
+      if (item.type === itemType && itemIsStackable(item.type) && item.count < getItemStackSize(item.type)) {
          return true;
       }
    }
@@ -662,7 +661,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, 0, null);
          config.components[ServerComponentType.transform].position.x = position.x;
          config.components[ServerComponentType.transform].position.y = position.y;
-         config.components[ServerComponentType.transform].rotation = dynamicRotation;
+         config.components[ServerComponentType.transform].relativeRotation = dynamicRotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
          
          destroyEntity(structure);
@@ -690,7 +689,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
-         config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
+         config.components[ServerComponentType.transform].relativeRotation = structureTransformComponent.relativeRotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
          
          consumeItemType(tribeMember, inventoryComponent, upgradeMaterialItemType, 5);
@@ -711,7 +710,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
-         config.components[ServerComponentType.transform].rotation = structureTransformComponent.rotation;
+         config.components[ServerComponentType.transform].relativeRotation = structureTransformComponent.relativeRotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemType(tribeMember, inventoryComponent, ItemType.rock, 25);
@@ -729,7 +728,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
 
          // Make rotation face away from player
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
-         if (dotAngles(rotation, transformComponent.rotation) < 0) {
+         if (dotAngles(rotation, transformComponent.relativeRotation) < 0) {
             rotation = rotation + Math.PI;
          }
          
@@ -738,7 +737,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          const config = createBlueprintEntityConfig(tribeComponent.tribe, blueprintType, structure, null);
          config.components[ServerComponentType.transform].position.x = structureTransformComponent.position.x;
          config.components[ServerComponentType.transform].position.y = structureTransformComponent.position.y;
-         config.components[ServerComponentType.transform].rotation = rotation;
+         config.components[ServerComponentType.transform].relativeRotation = rotation;
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemType(tribeMember, inventoryComponent, ItemType.wood, 5);
@@ -822,7 +821,7 @@ export function throwItem(tribesman: Entity, inventoryName: InventoryName, itemS
    const config = createItemEntityConfig(itemType, amountRemoved, tribesman);
    config.components[ServerComponentType.transform].position.x = dropPosition.x;
    config.components[ServerComponentType.transform].position.y = dropPosition.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    // Throw the dropped item away from the player
    config.components[ServerComponentType.physics].externalVelocity.x = tribesmanPhysicsComponent.selfVelocity.x + tribesmanPhysicsComponent.externalVelocity.x + Vars.ITEM_THROW_FORCE * Math.sin(throwDirection);
    config.components[ServerComponentType.physics].externalVelocity.y = tribesmanPhysicsComponent.selfVelocity.y + tribesmanPhysicsComponent.externalVelocity.y + Vars.ITEM_THROW_FORCE * Math.cos(throwDirection);

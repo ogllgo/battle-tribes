@@ -55,7 +55,7 @@ const dropInventory = (entity: Entity, inventory: Inventory, dropRange: number):
       const config = createItemEntityConfig(item.type, item.count, null);
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(entity), 0);
    }
 }
@@ -414,7 +414,7 @@ export function hasSpaceForRecipe(inventoryComponent: InventoryComponent, recipe
          return true;
       }
 
-      if (item.type === recipe.product && itemIsStackable(recipe.product) && item.count + recipe.yield <= getItemStackSize(item)) {
+      if (item.type === recipe.product && itemIsStackable(recipe.product) && item.count + recipe.yield <= getItemStackSize(item.type)) {
          return true;
       }
    }

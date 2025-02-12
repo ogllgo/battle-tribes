@@ -47,7 +47,7 @@ function onTick(battleaxe: Entity): void {
       
       const ageTicks = getEntityAgeTicks(battleaxe);
       const ticksSinceReturn = ageTicks - Vars.RETURN_TIME_TICKS;
-      transformComponent.rotation -= lerp(6 * Math.PI / Settings.TPS, 0, Math.min(ticksSinceReturn / Settings.TPS * 1.25, 1));
+      transformComponent.relativeRotation -= lerp(6 * Math.PI / Settings.TPS, 0, Math.min(ticksSinceReturn / Settings.TPS * 1.25, 1));
 
       // @Hack: Just set velocity instead of adding to position
       const returnDirection = transformComponent.position.calculateAngleBetween(ownerTransformComponent.position);
@@ -57,7 +57,7 @@ function onTick(battleaxe: Entity): void {
       physicsComponent.positionIsDirty = true;
 
       // Turn to face the owner
-      physicsComponent.targetRotation = ownerTransformComponent.rotation;
+      physicsComponent.targetRotation = ownerTransformComponent.relativeRotation;
       physicsComponent.turnSpeed = ticksSinceReturn / Settings.TPS * Math.PI;
    }
 }
