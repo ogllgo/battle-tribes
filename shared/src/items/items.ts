@@ -1159,6 +1159,12 @@ export interface InventoryData {
    readonly name: InventoryName;
 }
 
+// @Hack: both of these
+/** Time to move limb to quiver */
+export const QUIVER_ACCESS_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
+/** Time to pull arrow from quiver to bow */
+export const QUIVER_PULL_TIME_TICKS = Math.floor(0.6 * Settings.TPS);
+
 export class Item {
    /** Unique identifier for the item */
    public readonly id: number;

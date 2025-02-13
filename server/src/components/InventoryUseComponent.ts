@@ -8,7 +8,7 @@ import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import { lerp, Point } from "battletribes-shared/utils";
 import { Box, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { applyKnockback } from "./PhysicsComponent";

@@ -14,7 +14,7 @@ import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
-import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE } from "battletribes-shared/attack-patterns";
+import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
@@ -227,6 +227,16 @@ const BOW_CHARGE_NON_DOMINANT_LIMB_STATE: LimbState = {
 // @Cleanup: unused?
 type InventoryUseEntityType = EntityType.player | EntityType.tribeWorker | EntityType.tribeWarrior | EntityType.zombie;
 
+export function getCurrentLimbState(limb: LimbInfo): LimbState {
+   let progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+   if (progress > 1) {
+      progress = 1;
+   } else if (progress < 0) {
+      progress = 0;
+   }
+   return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
+}
+
 const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
    return {
       selectedItemSlot: 0,
@@ -384,9 +394,9 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          break;
       }
       case "bow": {
-         offsetX = 8;
-         offsetY = 8;
-         rotation = 0;
+         offsetX = -8;
+         offsetY = 4;
+         rotation = Math.PI * 0.15;
          showLargeTexture = true;
          break;
       }
@@ -870,79 +880,79 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
    const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
 
    switch (limb.action) {
-      case LimbAction.chargeBow: {
-         // @Hack
-         const isDominantHand = limbIdx === 0;
+      // case LimbAction.chargeBow: {
+      //    // @Hack
+      //    const isDominantHand = limbIdx === 0;
 
-         resetThing(attachPoint);
-         if (isDominantHand) {
-            // @Copynpaste
-            const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-            const chargeProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
-            lerpThingBetweenStates(entity, limbRenderPart, BOW_CHARGE_DOMINANT_START_LIMB_STATE, BOW_CHARGE_DOMINANT_END_LIMB_STATE, chargeProgress);
-            updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, 0, 58, Math.PI * -0.25, true);
+      //    resetThing(attachPoint);
+      //    if (isDominantHand) {
+      //       // @Copynpaste
+      //       const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
+      //       const chargeProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+      //       lerpThingBetweenStates(entity, limbRenderPart, BOW_CHARGE_DOMINANT_START_LIMB_STATE, BOW_CHARGE_DOMINANT_END_LIMB_STATE, chargeProgress);
+      //       updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, 0, 58, Math.PI * -0.25, true);
             
-            // @Cleanup @Hack @Robustness
-            let textureSourceArray: ReadonlyArray<string>;
-            let arrowTextureSource: string;
-            switch (heldItemType) {
-               case ItemType.wooden_bow: {
-                  textureSourceArray = BOW_CHARGE_TEXTURE_SOURCES;
-                  arrowTextureSource = "projectiles/wooden-arrow.png";
-                  break;
-               }
-               case ItemType.reinforced_bow: {
-                  textureSourceArray = REINFORCED_BOW_CHARGE_TEXTURE_SOURCES;
-                  arrowTextureSource = "projectiles/wooden-arrow.png";
-                  break;
-               }
-               case ItemType.ice_bow: {
-                  textureSourceArray = ICE_BOW_CHARGE_TEXTURE_SOURCES;
-                  arrowTextureSource = "projectiles/ice-arrow.png";
-                  break;
-               }
-               case ItemType.crossbow: {
-                  textureSourceArray = CROSSBOW_CHARGE_TEXTURE_SOURCES;
-                  arrowTextureSource = "projectiles/wooden-arrow.png";
-                  break;
-               }
-               default: {
-                  const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
-                  console.log(tribesmanComponent.aiType);
-                  console.log(limbIdx);
-                  console.log(heldItemType);
-                  throw new Error("Not bow");
-               }
-            }
+      //       // @Cleanup @Hack @Robustness
+      //       let textureSourceArray: ReadonlyArray<string>;
+      //       let arrowTextureSource: string;
+      //       switch (heldItemType) {
+      //          case ItemType.wooden_bow: {
+      //             textureSourceArray = BOW_CHARGE_TEXTURE_SOURCES;
+      //             arrowTextureSource = "projectiles/wooden-arrow.png";
+      //             break;
+      //          }
+      //          case ItemType.reinforced_bow: {
+      //             textureSourceArray = REINFORCED_BOW_CHARGE_TEXTURE_SOURCES;
+      //             arrowTextureSource = "projectiles/wooden-arrow.png";
+      //             break;
+      //          }
+      //          case ItemType.ice_bow: {
+      //             textureSourceArray = ICE_BOW_CHARGE_TEXTURE_SOURCES;
+      //             arrowTextureSource = "projectiles/ice-arrow.png";
+      //             break;
+      //          }
+      //          case ItemType.crossbow: {
+      //             textureSourceArray = CROSSBOW_CHARGE_TEXTURE_SOURCES;
+      //             arrowTextureSource = "projectiles/wooden-arrow.png";
+      //             break;
+      //          }
+      //          default: {
+      //             const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
+      //             console.log(tribesmanComponent.aiType);
+      //             console.log(limbIdx);
+      //             console.log(heldItemType);
+      //             throw new Error("Not bow");
+      //          }
+      //       }
 
-            if (!inventoryUseComponent.arrowRenderParts.hasOwnProperty(limbIdx)) {
-               inventoryUseComponent.arrowRenderParts[limbIdx] = new TexturedRenderPart(
-                  inventoryUseComponent.activeItemRenderParts[limbIdx],
-                  inventoryUseComponent.activeItemRenderParts[limbIdx].zIndex + 0.1,
-                  Math.PI/4,
-                  getTextureArrayIndex(arrowTextureSource)
-               );
+      //       if (!inventoryUseComponent.arrowRenderParts.hasOwnProperty(limbIdx)) {
+      //          inventoryUseComponent.arrowRenderParts[limbIdx] = new TexturedRenderPart(
+      //             inventoryUseComponent.activeItemRenderParts[limbIdx],
+      //             inventoryUseComponent.activeItemRenderParts[limbIdx].zIndex + 0.1,
+      //             Math.PI/4,
+      //             getTextureArrayIndex(arrowTextureSource)
+      //          );
 
-               const renderInfo = getEntityRenderInfo(entity);
-               renderInfo.attachRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
-            }
+      //          const renderInfo = getEntityRenderInfo(entity);
+      //          renderInfo.attachRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
+      //       }
 
-            const pullbackOffset = lerp(10, -8, Math.min(chargeProgress, 1));
-            inventoryUseComponent.arrowRenderParts[limbIdx].offset.x = pullbackOffset;
-            inventoryUseComponent.arrowRenderParts[limbIdx].offset.y = pullbackOffset;
+      //       const pullbackOffset = lerp(10, -8, Math.min(chargeProgress, 1));
+      //       inventoryUseComponent.arrowRenderParts[limbIdx].offset.x = pullbackOffset;
+      //       inventoryUseComponent.arrowRenderParts[limbIdx].offset.y = pullbackOffset;
 
-            let textureIdx = Math.floor(chargeProgress * textureSourceArray.length);
-            if (textureIdx >= textureSourceArray.length) {
-               textureIdx = textureSourceArray.length - 1;
-            }
-            inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
-         } else {
-            setThingToState(getHumanoidRadius(entity), limbRenderPart, BOW_CHARGE_NON_DOMINANT_LIMB_STATE);
-            removeHeldItemRenderPart(inventoryUseComponent, entity, limbIdx);
-            removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         }
-         break;
-      }
+      //       let textureIdx = Math.floor(chargeProgress * textureSourceArray.length);
+      //       if (textureIdx >= textureSourceArray.length) {
+      //          textureIdx = textureSourceArray.length - 1;
+      //       }
+      //       inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+      //    } else {
+      //       setThingToState(getHumanoidRadius(entity), limbRenderPart, BOW_CHARGE_NON_DOMINANT_LIMB_STATE);
+      //       removeHeldItemRenderPart(inventoryUseComponent, entity, limbIdx);
+      //       removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
+      //    }
+      //    break;
+      // }
       case LimbAction.feignAttack: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
@@ -1076,6 +1086,83 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
 
          attachPoint.shakeAmount = chargeProgress * 1.5;
+         break;
+      }
+      case LimbAction.engageBow:
+      case LimbAction.moveLimbToQuiver:
+      case LimbAction.moveLimbFromQuiver:
+      case LimbAction.chargeBow:
+      case LimbAction.pullBackArrow: {
+         const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
+         const progress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+
+         lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
+         resetThing(limbRenderPart);
+         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
+         
+         // @Hack
+         if (limb.action === LimbAction.engageBow) {
+            removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
+         }
+
+         if (limb.action === LimbAction.moveLimbFromQuiver) {
+            // @Cleanup @Hack @Robustness
+            let arrowTextureSource: string;
+            // @Hack @Incomplete
+            arrowTextureSource = "projectiles/wooden-arrow.png";
+            // switch (heldItemType) {
+            //    case ItemType.wooden_bow: {
+            //       textureSourceArray = BOW_CHARGE_TEXTURE_SOURCES;
+            //       arrowTextureSource = "projectiles/wooden-arrow.png";
+            //       break;
+            //    }
+            //    case ItemType.reinforced_bow: {
+            //       textureSourceArray = REINFORCED_BOW_CHARGE_TEXTURE_SOURCES;
+            //       arrowTextureSource = "projectiles/wooden-arrow.png";
+            //       break;
+            //    }
+            //    case ItemType.ice_bow: {
+            //       textureSourceArray = ICE_BOW_CHARGE_TEXTURE_SOURCES;
+            //       arrowTextureSource = "projectiles/ice-arrow.png";
+            //       break;
+            //    }
+            //    case ItemType.crossbow: {
+            //       textureSourceArray = CROSSBOW_CHARGE_TEXTURE_SOURCES;
+            //       arrowTextureSource = "projectiles/wooden-arrow.png";
+            //       break;
+            //    }
+            //    default: {
+            //       const tribesmanComponent = TribesmanAIComponentArray.getComponent(entity);
+            //       console.log(tribesmanComponent.aiType);
+            //       console.log(limbIdx);
+            //       console.log(heldItemType);
+            //       throw new Error("Not bow");
+            //    }
+            // }
+
+            if (!inventoryUseComponent.arrowRenderParts.hasOwnProperty(limbIdx)) {
+               inventoryUseComponent.arrowRenderParts[limbIdx] = new TexturedRenderPart(
+                  attachPoint,
+                  attachPoint.zIndex + 0.15,
+                  0,
+                  getTextureArrayIndex(arrowTextureSource)
+               );
+
+               const renderInfo = getEntityRenderInfo(entity);
+               renderInfo.attachRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
+            }
+         } else if (limb.action === LimbAction.chargeBow) {
+            // @Cleanup @Hack @Robustness
+            let textureSourceArray: ReadonlyArray<string>;
+            // @Hack @Incomplete
+            textureSourceArray = BOW_CHARGE_TEXTURE_SOURCES;
+
+            let textureIdx = Math.floor(progress * textureSourceArray.length);
+            if (textureIdx >= textureSourceArray.length) {
+               textureIdx = textureSourceArray.length - 1;
+            }
+            inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+         }
          break;
       }
       // @Incomplete
