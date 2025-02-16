@@ -6,7 +6,7 @@ import { TechID } from "battletribes-shared/techs";
 import { STRUCTURE_TYPES } from "battletribes-shared/structures";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game from "../Game";
+import Game, { bag } from "../Game";
 import { Tile } from "../Tile";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { HealthBar_setHasFrostShield } from "../components/game/HealthBar";
@@ -49,6 +49,11 @@ let buildingPlans: ReadonlyArray<BuildingPlanData>;
 
 let queuedGameDataPackets = new Array<PacketReader>();
 let lastPacketTime = 0;
+
+export let LASTP = 0;
+
+let px = 0;
+let py = 0;
 
 // @Cleanup: location
 // Use prime numbers / 100 to ensure a decent distribution of different types of particles
@@ -153,6 +158,14 @@ abstract class Client {
                      return;
                   }
                   
+                  if (bag.bag) console.log("*_*_*_*_*_*_* RECEIVED PACKET *_*_*_*_*_*_*");
+                  
+                  const t = performance.now();
+                  if (bag.bag) console.log("packet t=" + t);
+                  LASTP = t;
+                  const d = t - lastPacketTime;
+                  if (bag.bag) console.log("time since last packet:",d);
+
                   queuedGameDataPackets.push(reader);
                   lastPacketTime = performance.now();
 
@@ -164,6 +177,15 @@ abstract class Client {
                   if (playerInstance !== null) {
                      updateEntity(playerInstance);
                      resolvePlayerCollisions();
+                  }
+
+                  if (bag.bag) {
+                     const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+                     const dx = transformComponent.position.x - px;
+                     const dy = transformComponent.position.y - py;
+                     console.log("confirmed player diff since last packet:",dx,dy);
+                     px = transformComponent.position.x;
+                     py = transformComponent.position.y;
                   }
 
                   break;

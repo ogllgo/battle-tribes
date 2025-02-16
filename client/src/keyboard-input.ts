@@ -1,4 +1,4 @@
-import Game from "./Game";
+import Game, { bag } from "./Game";
 import { focusChatbox } from "./components/game/ChatBox";
 import { toggleCinematicMode } from "./components/game/GameScreen";
 
@@ -77,6 +77,8 @@ const onKeyDown = (e: KeyboardEvent): void => {
          return;
       } else if (key === "o") {
          toggleCinematicMode();
+      } else if (key === "m") {
+         bag.bag = false;
       }
    }
 

@@ -33,6 +33,7 @@ export const enum PacketType {
    dismountCarrySlot,
    pickUpArrow,
    modifyBuilding,
+   setCarryTarget,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

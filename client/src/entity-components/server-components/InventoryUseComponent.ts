@@ -1092,7 +1092,10 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.moveLimbToQuiver:
       case LimbAction.moveLimbFromQuiver:
       case LimbAction.chargeBow:
-      case LimbAction.pullBackArrow: {
+      case LimbAction.pullBackArrow:
+      case LimbAction.arrowReleased:
+      case LimbAction.mainArrowReleased:
+      case LimbAction.returnFromBow: {
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const progress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
 
@@ -1147,6 +1150,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
                   0,
                   getTextureArrayIndex(arrowTextureSource)
                );
+               inventoryUseComponent.arrowRenderParts[limbIdx].offset.y = 6;
 
                const renderInfo = getEntityRenderInfo(entity);
                renderInfo.attachRenderPart(inventoryUseComponent.arrowRenderParts[limbIdx]);
@@ -1162,6 +1166,14 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
                textureIdx = textureSourceArray.length - 1;
             }
             inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+         } else if (limb.action === LimbAction.mainArrowReleased) {
+            // @Cleanup @Hack @Robustness
+            let textureSourceArray: ReadonlyArray<string>;
+            // @Hack @Incomplete
+            textureSourceArray = BOW_CHARGE_TEXTURE_SOURCES;
+            inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[0]);
+         } else if (limb.action === LimbAction.arrowReleased) {
+            removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
          }
          break;
       }

@@ -13,7 +13,7 @@ import { ProjectileComponent, ProjectileComponentArray } from "../../components/
 import { ItemType } from "battletribes-shared/items/items";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { entityExists, getEntityType, validateEntity } from "../../world";
+import { entityExists, getEntityType } from "../../world";
 import Tribe from "../../Tribe";
 import { Settings } from "../../../../shared/src/settings";
 
@@ -24,7 +24,7 @@ type ComponentTypes = ServerComponentType.transform
 
 export function createWoodenArrowConfig(tribe: Tribe, owner: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 64, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 64, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -90,10 +90,17 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    }
 
    const transformComponent = TransformComponentArray.getComponent(arrow);
-   // @Speed: faster to just change its collision root
+   // @Speed: faster to just change its collision group
    if (transformComponent.carryRoot !== arrow) {
       return;
    }
+
+   const physicsComponent = PhysicsComponentArray.getComponent(arrow);
+
+   // Don't damage if the arrow is moving too slow
+   if (getVelocityMagnitude(physicsComponent) < 10) {
+      return;
+   } 
 
    const healthComponent = HealthComponentArray.getComponent(collidingEntity);
    const attackHash = "wooden-arrow-" + arrow;
@@ -102,12 +109,11 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    
       const ammoInfo = AMMO_INFO_RECORD[ItemType.wood];
    
-      const owner = validateEntity(projectileComponent.creator);
       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
       
       const damage = 2 * (projectileComponent.isBlocked ? 0.5 : 1);
       const knockback = 150 * (projectileComponent.isBlocked ? 0.5 : 1);
-      damageEntity(collidingEntity, owner, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, arrow, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, knockback, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, attackHash, 9);
    
@@ -117,7 +123,6 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    }
 
    // Slow down the arrow as it passes through the entity
-   const physicsComponent = PhysicsComponentArray.getComponent(arrow);
    slowVelocity(physicsComponent, 10000 * Settings.I_TPS);
 
    // Lodge the arrow in the entity when it's slow enough
@@ -134,5 +139,15 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
       const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingEntityTransformComponent.relativeRotation);
       
       mountEntity(arrow, collidingEntity, rotatedDiffX, rotatedDiffY);
+
+      // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
+      // This is because this "fix carried entity position" code only runs on physics components, and if
+      // the arrow gets stuck on a tree then it has no physics component and the velocity never gets overridden
+      // with 0.
+      // Need to make the fixing carried entity position code run on the transform component instead.
+      physicsComponent.selfVelocity.x = 0;
+      physicsComponent.selfVelocity.y = 0;
+      physicsComponent.externalVelocity.x = 0;
+      physicsComponent.externalVelocity.y = 0;
    }
 }

@@ -33,7 +33,8 @@ import AnimalStaffOptions from "./AnimalStaffOptions";
 export const enum GameInteractState {
    none,
    summonEntity,
-   spectateEntity
+   spectateEntity,
+   selectCarryTarget
 }
 
 export let openSettingsMenu: () => void;
@@ -221,7 +222,7 @@ const GameScreen = (props: GameScreenProps) => {
 
       <ItemTooltip />
 
-      <AnimalStaffOptions />
+      <AnimalStaffOptions setGameInteractState={setInteractState} />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

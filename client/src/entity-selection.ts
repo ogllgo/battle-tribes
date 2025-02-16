@@ -24,7 +24,7 @@ import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-com
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, setModifyBuildingPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket } from "./networking/packet-creation";
 import { AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
@@ -266,6 +266,7 @@ const getEntityInteractAction = (entity: Entity): InteractAction | null => {
    // Pick up arrows
    if (entityType === EntityType.woodenArrow) {
       const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      console.log(getVelocityMagnitude(physicsComponent));
       if (getVelocityMagnitude(physicsComponent) < 1) {
          return {
             type: InteractActionType.pickUpArrow,
@@ -342,7 +343,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.plantSeed: {
-         setModifyBuildingPacket(highlightedEntity, action.plantedEntityType);
+         sendModifyBuildingPacket(highlightedEntity, action.plantedEntityType);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
@@ -352,7 +353,7 @@ const interactWithEntity = (entity: Entity, action: InteractAction): void => {
          break;
       }
       case InteractActionType.useFertiliser: {
-         setModifyBuildingPacket(entity, -1);
+         sendModifyBuildingPacket(entity, -1);
 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);

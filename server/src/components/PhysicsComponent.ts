@@ -405,26 +405,40 @@ export function fixCarriedEntityPosition(transformComponent: TransformComponent,
    transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.relativeRotation);
    transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.relativeRotation);
    transformComponent.rotation = transformComponent.relativeRotation + mountTransformComponent.rotation;
+
+   // @Speed: what if the position/rotation doesn't change?
+   registerDirtyEntity(carryInfo.carriedEntity);
 }
 
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, mountPhysicsComponent: PhysicsComponent, carryInfo: EntityCarryInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
-   
-   physicsComponent.selfVelocity.x = 0;
-   physicsComponent.selfVelocity.y = 0;
-   physicsComponent.externalVelocity.x = getVelocityX(mountPhysicsComponent);
-   physicsComponent.externalVelocity.y = getVelocityY(mountPhysicsComponent);
-   
-   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
-   turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
-   // (Don't apply physics for carried entities)
-   applyHitboxTethers(transformComponent, physicsComponent);
-   updatePosition(carryInfo.carriedEntity, transformComponent, physicsComponent);
 
-   // Propagate to children
-   for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
+   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+
+   // @Hack
+   if (PhysicsComponentArray.hasComponent(carryInfo.carriedEntity)) {
+      const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
+      
+      physicsComponent.selfVelocity.x = 0;
+      physicsComponent.selfVelocity.y = 0;
+      physicsComponent.externalVelocity.x = getVelocityX(mountPhysicsComponent);
+      physicsComponent.externalVelocity.y = getVelocityY(mountPhysicsComponent);
+      
+      turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+      // (Don't apply physics for carried entities)
+      applyHitboxTethers(transformComponent, physicsComponent);
+      updatePosition(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   
+      // Propagate to children
+      for (const carryInfo of transformComponent.carriedEntities) {
+         tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
+      }
+   } else {
+      // @Hack: done since when the transform component's position is updated, it isn't cleaned.
+      // @Bug: This means the pathfinding nodes will be messed up, along with everything else. Should just
+      // rework the system.ransformComponent.cleanHitboxes(entity);
+      transformComponent.cleanHitboxes(carryInfo.carriedEntity);
+      transformComponent.updateContainingChunks(carryInfo.carriedEntity);
    }
 }
 

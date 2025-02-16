@@ -298,9 +298,16 @@ export function sendPickUpArrowPacket(arrow: Entity): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function setModifyBuildingPacket(structure: Entity, data: number): void {
+export function sendModifyBuildingPacket(structure: Entity, data: number): void {
    const packet = new Packet(PacketType.modifyBuilding, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(structure);
    packet.addNumber(data);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): void {
+   const packet = new Packet(PacketType.setCarryTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(carryTarget);
    Client.sendPacket(packet.buffer);
 }

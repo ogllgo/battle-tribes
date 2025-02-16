@@ -6,11 +6,17 @@ import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-crea
 import { deselectSelectedEntity } from "../../entity-selection";
 import { CowComponentArray } from "../../entity-components/server-components/CowComponent";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
-import { getCurrentLayer, playerInstance } from "../../world";
+import { entityExists, getCurrentLayer, playerInstance } from "../../world";
 import { createAnimalStaffFollowCommandParticle } from "../../particles";
 import { getMatrixPosition } from "../../rendering/render-part-matrices";
 import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/matrices";
 import { playSound } from "../../sound";
+import { GameInteractState } from "./GameScreen";
+import { setShittyCarrier } from "./GameInteractableLayer";
+
+export interface AnimalStaffOptionsProps {
+   setGameInteractState(state: GameInteractState): void;
+}
 
 // @Cleanup: a lot of this is similar to BuildMenu
 
@@ -40,7 +46,7 @@ const createControlCommandParticles = (): void => {
    playSound("animal-staff-command-follow.mp3", 1.3, 1, Camera.position.copy(), getCurrentLayer());
 }
 
-const AnimalStaffOptions = () => {
+const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    const [isVisible, setIsVisible] = useState(false);
    const [entity, setEntity] = useState<Entity | null>(null);
    const [x, setX] = useState(0);
@@ -73,7 +79,11 @@ const AnimalStaffOptions = () => {
    useEffect(() => {
       AnimalStaffOptions_update = (): void => {
          if (entity !== null) {
-            updateFromEntity(entity);
+            if (!entityExists(entity)) {
+               setEntity(null); 
+            } else {
+               updateFromEntity(entity);
+            }
          }
       }
    }, [entity]);
@@ -86,6 +96,13 @@ const AnimalStaffOptions = () => {
       }
       deselectSelectedEntity();
    }, [entity]);
+
+   const pressCarryOption = useCallback((): void => {
+      if (entity !== null) {
+         setShittyCarrier(entity);
+         props.setGameInteractState(GameInteractState.selectCarryTarget);
+      }
+   }, [entity]);
    
    if (!isVisible || entity === null) {
       return null;
@@ -93,7 +110,7 @@ const AnimalStaffOptions = () => {
 
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()}>
       <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={sendFollowCommand}></div>
-      <div className="option carry"></div>
+      <div className="option carry" onClick={pressCarryOption}></div>
    </div>;
 }
 

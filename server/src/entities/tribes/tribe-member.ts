@@ -366,6 +366,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
             return;
          }
 
+         consumeItemType(tribeMember, inventoryComponent, ItemType.woodenArrow, 1);
+
          const event: EntityTickEvent<EntityTickEventType.fireBow> = {
             entityID: tribeMember,
             type: EntityTickEventType.fireBow,

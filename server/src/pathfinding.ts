@@ -783,9 +783,12 @@ export function updateEntityPathfindingNodeOccupance(entity: Entity): void {
 }
 
 export function updateDynamicPathfindingNodes(): void {
-   if (getGameTicks() % 3 !== 0) {
-      return;
-   }
+   // @Hack: This is done to reduce the fluctuation in tick time. However it also kinda bricks performance.
+   // ideally instead we would just rotate between updating 3 groups of entities, doing one group each tick,
+   // for constant performance while still doing a third of the work as usual.
+   // if (getGameTicks() % 3 !== 0) {
+   //    return;
+   // }
 
    // Here I prefer to loop over all the entities instead of using a dirty array, to make
    // the performance more constant thanks to no garbage collection

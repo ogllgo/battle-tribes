@@ -759,3 +759,15 @@ export function processModifyBuildingPacket(playerClient: PlayerClient, reader: 
    
    modifyBuilding(playerClient.instance, structure, data);
 }
+
+export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const carryTarget = reader.readNumber();
+   
+   const cowComponent = CowComponentArray.getComponent(entity);
+   cowComponent.carryTarget = carryTarget;
+}
