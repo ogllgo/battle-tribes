@@ -93,17 +93,18 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerClient.updateVisibleChunkBounds();
    playerClient.gameDataOptions = gameDataOptions;
    
-   const physicsComponent = PhysicsComponentArray.getComponent(player);
-   physicsComponent.hitboxesAreDirty = true;
+   transformComponent.isDirty = true;
    
    // @Hack
    // Velocity gets overridden for carried entities, so setting here would be pointless (and would mess up stuff which relies on the velocity of carried entities)
    if (transformComponent.carryRoot === player) {
-      physicsComponent.selfVelocity.x = selfVelocityX;
-      physicsComponent.selfVelocity.y = selfVelocityY;
-      physicsComponent.externalVelocity.x = externalVelocityX;
-      physicsComponent.externalVelocity.y = externalVelocityY;
+      transformComponent.selfVelocity.x = selfVelocityX;
+      transformComponent.selfVelocity.y = selfVelocityY;
+      transformComponent.externalVelocity.x = externalVelocityX;
+      transformComponent.externalVelocity.y = externalVelocityY;
    }
+   
+   const physicsComponent = PhysicsComponentArray.getComponent(player);
    physicsComponent.acceleration.x = accelerationX;
    physicsComponent.acceleration.y = accelerationY;
    physicsComponent.angularVelocity = angularVelocity;
@@ -738,8 +739,8 @@ export function processPickUpArrowPacket(playerClient: PlayerClient, reader: Pac
 
    const arrow = reader.readNumber() as Entity;
 
-   const physicsComponent = PhysicsComponentArray.getComponent(arrow);
-   if (getVelocityMagnitude(physicsComponent) < 1) {
+   const transformComponent = TransformComponentArray.getComponent(arrow);
+   if (getVelocityMagnitude(transformComponent) < 1) {
       destroyEntity(arrow);
       
       const inventoryComponent = InventoryComponentArray.getComponent(player);

@@ -354,16 +354,16 @@ abstract class Client {
       }
 
       if (playerInstance !== null) {
-         const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
+         const transformComponent = TransformComponentArray.getComponent(playerInstance);
          // Register player knockback
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];
             
-            physicsComponent.selfVelocity.x *= 0.5;
-            physicsComponent.selfVelocity.y *= 0.5;
+            transformComponent.selfVelocity.x *= 0.5;
+            transformComponent.selfVelocity.y *= 0.5;
    
-            physicsComponent.selfVelocity.x += knockbackData.knockback * Math.sin(knockbackData.knockbackDirection);
-            physicsComponent.selfVelocity.y += knockbackData.knockback * Math.cos(knockbackData.knockbackDirection);
+            transformComponent.selfVelocity.x += knockbackData.knockback * Math.sin(knockbackData.knockbackDirection);
+            transformComponent.selfVelocity.y += knockbackData.knockback * Math.cos(knockbackData.knockbackDirection);
          }
       }
 

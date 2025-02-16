@@ -128,10 +128,10 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    
    // @Speed
    // Recalculate if the tribesman isn't making any progress
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
 
-   const vx = getVelocityX(physicsComponent);
-   const vy = getVelocityY(physicsComponent);
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);
@@ -224,7 +224,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
-      if (willStopAtDesiredDistance(physicsComponent, -2, distFromNode)) {
+      if (willStopAtDesiredDistance(transformComponent, -2, distFromNode)) {
          stopEntity(physicsComponent);
       } else {
          const acceleration = getTribesmanAcceleration(tribesman);

@@ -49,7 +49,7 @@ function onDie(entity: Entity): void {
    // Create arrow break particles
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
-      createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
+      createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
    }
 
    for (let i = 0; i < 3; i++) {

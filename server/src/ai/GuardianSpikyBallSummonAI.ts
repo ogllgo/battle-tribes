@@ -47,8 +47,8 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
       config.components[ServerComponentType.transform].position.x = x!;
       config.components[ServerComponentType.transform].position.y = y!;
       config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-      config.components[ServerComponentType.physics].externalVelocity.x = vx;
-      config.components[ServerComponentType.physics].externalVelocity.y = vy;
+      config.components[ServerComponentType.transform].externalVelocity.x = vx;
+      config.components[ServerComponentType.transform].externalVelocity.y = vy;
       config.components[ServerComponentType.physics].angularVelocity = Math.PI;
       createEntity(config, layer, 0);
    }

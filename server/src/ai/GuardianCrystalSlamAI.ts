@@ -92,8 +92,8 @@ export default class GuardianCrystalSlamAI {
       }
 
       // @Copynpaste
-      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-      physicsComponent.hitboxesAreDirty = true;
+      const transformComponent = TransformComponentArray.getComponent(guardian);
+      transformComponent.isDirty = true;
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {

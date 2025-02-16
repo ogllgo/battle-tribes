@@ -31,10 +31,10 @@ export function createPlayerDataPacket(): ArrayBuffer {
    packet.addNumber(transformComponent.rotation);
 
    const physicsComponent = PhysicsComponentArray.getComponent(playerInstance!);
-   packet.addNumber(physicsComponent.selfVelocity.x);
-   packet.addNumber(physicsComponent.selfVelocity.y);
-   packet.addNumber(physicsComponent.externalVelocity.x);
-   packet.addNumber(physicsComponent.externalVelocity.y);
+   packet.addNumber(transformComponent.selfVelocity.x);
+   packet.addNumber(transformComponent.selfVelocity.y);
+   packet.addNumber(transformComponent.externalVelocity.x);
+   packet.addNumber(transformComponent.externalVelocity.y);
    packet.addNumber(physicsComponent.acceleration.x);
    packet.addNumber(physicsComponent.acceleration.y);
    packet.addNumber(physicsComponent.angularVelocity);

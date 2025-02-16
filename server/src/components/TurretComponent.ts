@@ -207,8 +207,8 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
    config.components[ServerComponentType.transform].relativeRotation = rotation;
-   config.components[ServerComponentType.physics].externalVelocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
-   config.components[ServerComponentType.physics].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
+   config.components[ServerComponentType.transform].externalVelocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
+   config.components[ServerComponentType.transform].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
 }
 
 const fire = (turret: Entity, ammoType: TurretAmmoType): void => {

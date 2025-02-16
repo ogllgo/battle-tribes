@@ -156,8 +156,7 @@ const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: Guardi
       box.relativeRotation = -transformComponent.relativeRotation;
    }
    
-   const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-   physicsComponent.hitboxesAreDirty = true;
+   transformComponent.isDirty = true;
 }
 
 const limbsAreInStagingPosition = (guardian: Entity, guardianComponent: GuardianComponent): boolean => {
@@ -268,8 +267,7 @@ function onTick(guardian: Entity): void {
          guardianComponent.limbNormalDirection = transformComponent.relativeRotation;
    
          // @Copynpaste
-         const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-         physicsComponent.hitboxesAreDirty = true;
+         transformComponent.isDirty = true;
       } else {
          // Orbit the limbs around the guardian
          guardianComponent.limbNormalDirection += Vars.LIMB_ORBIT_SPEED * Settings.I_TPS;
@@ -316,8 +314,8 @@ function onTick(guardian: Entity): void {
       }
 
       // @Copynpaste
-      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-      physicsComponent.hitboxesAreDirty = true;
+      const transformComponent = TransformComponentArray.getComponent(guardian);
+      transformComponent.isDirty = true;
    }
       
    // Wander AI

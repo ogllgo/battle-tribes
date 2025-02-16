@@ -54,7 +54,7 @@ function onTick(battleaxe: Entity): void {
       const returnSpeed = lerp(0, 800, Math.min(ticksSinceReturn / Settings.TPS * 1.5, 1));
       transformComponent.position.x += returnSpeed * Settings.I_TPS * Math.sin(returnDirection);
       transformComponent.position.y += returnSpeed * Settings.I_TPS * Math.cos(returnDirection);
-      physicsComponent.positionIsDirty = true;
+      transformComponent.isDirty = true;
 
       // Turn to face the owner
       physicsComponent.targetRotation = ownerTransformComponent.relativeRotation;

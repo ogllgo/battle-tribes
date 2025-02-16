@@ -127,8 +127,7 @@ export function createFootprintParticle(entity: Entity, numFootstepsTaken: numbe
    const footstepAngleOffset = numFootstepsTaken % 2 === 0 ? Math.PI : 0;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   const velocityDirection = angle(physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
+   const velocityDirection = angle(transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
 
    const offsetMagnitude = footstepOffset / 2;
    const offsetDirection = velocityDirection + footstepAngleOffset + Math.PI/2;

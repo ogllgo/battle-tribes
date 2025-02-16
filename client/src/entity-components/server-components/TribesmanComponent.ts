@@ -694,8 +694,8 @@ function onTick(entity: Entity): void {
    }
 
    // Sprinter particles
-   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && physicsComponent.selfVelocity.length() > 100) {
-      const sprintParticleSpawnRate = Math.sqrt(physicsComponent.selfVelocity.length() * 0.8);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && transformComponent.selfVelocity.length() > 100) {
+      const sprintParticleSpawnRate = Math.sqrt(transformComponent.selfVelocity.length() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
          const offsetDirection = 2 * Math.PI * Math.random();
@@ -719,8 +719,8 @@ function onTick(entity: Entity): void {
       
       const velocityMagnitude = randFloat(45, 75);
       const velocityDirection = offsetDirection + Math.PI * 0.5;
-      const vx = physicsComponent.selfVelocity.x + velocityMagnitude * Math.sin(velocityDirection);
-      const vy = physicsComponent.selfVelocity.y + velocityMagnitude * Math.cos(velocityDirection);
+      const vx = transformComponent.selfVelocity.x + velocityMagnitude * Math.sin(velocityDirection);
+      const vy = transformComponent.selfVelocity.y + velocityMagnitude * Math.cos(velocityDirection);
       
       createSprintParticle(x, y, vx, vy);
    }

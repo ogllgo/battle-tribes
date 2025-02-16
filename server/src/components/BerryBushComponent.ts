@@ -75,8 +75,8 @@ export function dropBerryOverEntity(entity: Entity): void {
    config.components[ServerComponentType.transform].position.x = position.x;
    config.components[ServerComponentType.transform].position.y = position.y;
    config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.physics].externalVelocity.x = 40 * Math.sin(spawnDirection + velocityDirectionOffset);
-   config.components[ServerComponentType.physics].externalVelocity.y = 40 * Math.cos(spawnDirection + velocityDirectionOffset);
+   config.components[ServerComponentType.transform].externalVelocity.x = 40 * Math.sin(spawnDirection + velocityDirectionOffset);
+   config.components[ServerComponentType.transform].externalVelocity.y = 40 * Math.cos(spawnDirection + velocityDirectionOffset);
    createEntity(config, getEntityLayer(entity), 0);
 }
 

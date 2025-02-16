@@ -54,6 +54,7 @@ import { GameInteractState } from "./GameScreen";
 import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectCarryTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
+import { Point } from "../../../../shared/src/utils";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -294,11 +295,10 @@ export function updatePlayerItems(): void {
          limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
 
          // Add extra range for moving attacks
-         const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-         const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+         const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+         const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
          if (vx !== 0 || vy !== 0) {
             const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
             const attackAlignment = (vx * Math.sin(transformComponent.rotation) + vy * Math.cos(transformComponent.rotation)) / velocityMagnitude;
@@ -1355,6 +1355,8 @@ const tickItem = (itemType: ItemType): void => {
 
                   const transformComponentParams = createTransformComponentParams(
                      placeInfo.position.copy(),
+                     new Point(0, 0),
+                     new Point(0, 0),
                      placeInfo.rotation,
                      placeInfo.rotation,
                      hitboxes,

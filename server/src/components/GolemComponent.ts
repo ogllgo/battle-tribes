@@ -139,8 +139,8 @@ const shiftRocks = (golem: Entity, golemComponent: GolemComponent): void => {
       rockInfo.hitbox.box.offset.y = lerp(rockInfo.lastOffsetY, rockInfo.targetOffsetY, shiftProgress);
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(golem);
-   physicsComponent.hitboxesAreDirty = true;
+   const transformComponent = TransformComponentArray.getComponent(golem);
+   transformComponent.isDirty = true;
 }
 
 const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: Entity): void => {
@@ -173,8 +173,8 @@ const updateGolemHitboxPositions = (golem: Entity, golemComponent: GolemComponen
       rockInfo.hitbox.box.offset.y = lerp(rockInfo.sleepOffsetY, rockInfo.awakeOffsetY, wakeProgress);
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(golem);
-   physicsComponent.hitboxesAreDirty = true;
+   const transformComponent = TransformComponentArray.getComponent(golem);
+   transformComponent.isDirty = true;
 }
 
 function onTick(golem: Entity): void {

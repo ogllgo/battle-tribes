@@ -43,9 +43,7 @@ const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): voi
    transformComponent.position.x = doorComponent.originX + xOffset;
    transformComponent.position.y = doorComponent.originY + yOffset;
    transformComponent.relativeRotation = rotation;
-
-   const physicsComponent = PhysicsComponentArray.getComponent(door);
-   physicsComponent.hitboxesAreDirty = true;
+   transformComponent.isDirty = true;
 }
 
 function onTick(door: Entity): void {

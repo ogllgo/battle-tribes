@@ -554,13 +554,13 @@ function onTick(entity: Entity): void {
          continue;
       }
 
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity);
 
       switch (limbInfo.heldItemType) {
          case ItemType.deepfrost_heart: {
             // Make the deep frost heart item spew blue blood particles
             const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[limbIdx];
-            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
+            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
             break;
          }
          case ItemType.fireTorch: {
@@ -581,8 +581,8 @@ function onTick(entity: Entity): void {
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
-               const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-               const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+               const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+               const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
                createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), vx, vy);
             }
 
@@ -637,9 +637,9 @@ function onTick(entity: Entity): void {
 
             let velocityMagnitude = randFloat(130, 170);
             const velocityDirection = 2 * Math.PI * Math.random();
-            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + physicsComponent.selfVelocity.x;
-            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + physicsComponent.selfVelocity.y;
-            velocityMagnitude += physicsComponent.selfVelocity.length();
+            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + transformComponent.selfVelocity.x;
+            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + transformComponent.selfVelocity.y;
+            velocityMagnitude += transformComponent.selfVelocity.length();
             
             const lifetime = randFloat(0.3, 0.4);
 

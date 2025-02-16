@@ -15,7 +15,6 @@ import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerab
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
-import { TribeMemberComponentArray } from "./TribeMemberComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { createItemsOverEntity } from "../entities/item-entity";
 import { TribesmanComponentArray } from "./TribesmanComponent";
@@ -74,13 +73,11 @@ const move = (fish: Entity, direction: number): void => {
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         physicsComponent.externalVelocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
-         physicsComponent.externalVelocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
+         transformComponent.externalVelocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
+         transformComponent.externalVelocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
          if (direction !== transformComponent.relativeRotation) {
             transformComponent.relativeRotation = direction;
-
-            const physicsComponent = PhysicsComponentArray.getComponent(fish);
-            physicsComponent.hitboxesAreDirty = true;
+            transformComponent.isDirty = true;
          }
       }
    }
@@ -196,11 +193,10 @@ function onTick(fish: Entity): void {
       if (fishComponent.flailTimer >= 0.75) {
          const flailDirection = 2 * Math.PI * Math.random();
          transformComponent.relativeRotation = flailDirection + randFloat(-0.5, 0.5);
+         transformComponent.isDirty = true;
          
-         physicsComponent.hitboxesAreDirty = true;
-         
-         physicsComponent.externalVelocity.x += 200 * Math.sin(flailDirection);
-         physicsComponent.externalVelocity.y += 200 * Math.cos(flailDirection);
+         transformComponent.externalVelocity.x += 200 * Math.sin(flailDirection);
+         transformComponent.externalVelocity.y += 200 * Math.cos(flailDirection);
    
          fishComponent.flailTimer = 0;
       }

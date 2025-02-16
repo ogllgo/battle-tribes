@@ -104,11 +104,11 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.limbDamageBox.isBlockedByWall = false;
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
-   const physicsComponent = PhysicsComponentArray.getComponent(attackingEntity);
+   const transformComponent = TransformComponentArray.getComponent(attackingEntity);
 
    // Add extra range for moving attacks
-   const vx = getVelocityX(physicsComponent);
-   const vy = getVelocityY(physicsComponent);
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    if (vx !== 0 || vy !== 0) {
       const transformComponent = TransformComponentArray.getComponent(attackingEntity);
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);

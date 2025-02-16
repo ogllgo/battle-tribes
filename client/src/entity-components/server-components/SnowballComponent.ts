@@ -79,7 +79,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.snowball
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if ((physicsComponent.selfVelocity.x !== 0 || physicsComponent.selfVelocity.y !== 0) && physicsComponent.selfVelocity.lengthSquared() > 2500) {
+   if ((transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) && transformComponent.selfVelocity.lengthSquared() > 2500) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(transformComponent.position.x, transformComponent.position.y, randFloat(40, 60));
       }

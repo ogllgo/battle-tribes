@@ -309,8 +309,8 @@ const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const config = createSnowballConfig(frozenYeti, size);
    config.components[ServerComponentType.transform].position.x = position.x;
    config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.physics].externalVelocity.x = velocityMagnitude * Math.sin(angle);
-   config.components[ServerComponentType.physics].externalVelocity.y = velocityMagnitude * Math.cos(angle);
+   config.components[ServerComponentType.transform].externalVelocity.x = velocityMagnitude * Math.sin(angle);
+   config.components[ServerComponentType.transform].externalVelocity.y = velocityMagnitude * Math.cos(angle);
    createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
@@ -327,9 +327,8 @@ const throwSnow = (frozenYeti: Entity): void => {
 
    // Kickback
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const physicsComponent = PhysicsComponentArray.getComponent(frozenYeti);
-   physicsComponent.externalVelocity.x += 50 * Math.sin(transformComponent.relativeRotation + Math.PI);
-   physicsComponent.externalVelocity.y += 50 * Math.cos(transformComponent.relativeRotation + Math.PI);
+   transformComponent.externalVelocity.x += 50 * Math.sin(transformComponent.relativeRotation + Math.PI);
+   transformComponent.externalVelocity.y += 50 * Math.cos(transformComponent.relativeRotation + Math.PI);
 }
 
 const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void => {
@@ -347,9 +346,8 @@ const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void =>
       const angle = transformComponent.position.calculateAngleBetween(entityTransformComponent.position);
       const angleDifference = getAngleDifference(transformComponent.relativeRotation, angle);
       if (Math.abs(angleDifference) <= Vars.ROAR_ARC / 2) {
-         const physicsComponent = PhysicsComponentArray.getComponent(frozenYeti);
-         physicsComponent.externalVelocity.x += 1500 / Settings.TPS * Math.sin(angle);
-         physicsComponent.externalVelocity.y += 1500 / Settings.TPS * Math.cos(angle);
+         transformComponent.externalVelocity.x += 1500 / Settings.TPS * Math.sin(angle);
+         transformComponent.externalVelocity.y += 1500 / Settings.TPS * Math.cos(angle);
 
          if (StatusEffectComponentArray.hasComponent(entity)) {
             applyStatusEffect(entity, StatusEffect.freezing, 5 * Settings.TPS);
@@ -628,8 +626,8 @@ function onTick(frozenYeti: Entity): void {
 
                // Lunge forwards at the beginning of this stage
                if (frozenYetiComponent.stageProgress === 0) {
-                  physicsComponent.externalVelocity.x += 450 * Math.sin(transformComponent.relativeRotation);
-                  physicsComponent.externalVelocity.y += 450 * Math.cos(transformComponent.relativeRotation);
+                  transformComponent.externalVelocity.x += 450 * Math.sin(transformComponent.relativeRotation);
+                  transformComponent.externalVelocity.y += 450 * Math.cos(transformComponent.relativeRotation);
                }
 
                frozenYetiComponent.stageProgress += 2 / Settings.TPS;

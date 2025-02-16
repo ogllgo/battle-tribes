@@ -38,30 +38,26 @@ const resolveHardCollision = (entity: Entity, pushInfo: CollisionPushInfo): void
    transformComponent.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
    transformComponent.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
    // Kill all the velocity going into the hitbox
    const bx = Math.sin(pushInfo.direction + Math.PI/2);
    const by = Math.cos(pushInfo.direction + Math.PI/2);
-   const selfVelocityProjectionCoeff = physicsComponent.selfVelocity.x * bx + physicsComponent.selfVelocity.y * by;
-   physicsComponent.selfVelocity.x = bx * selfVelocityProjectionCoeff;
-   physicsComponent.selfVelocity.y = by * selfVelocityProjectionCoeff;
-   const externalVelocityProjectionCoeff = physicsComponent.externalVelocity.x * bx + physicsComponent.externalVelocity.y * by;
-   physicsComponent.externalVelocity.x = bx * externalVelocityProjectionCoeff;
-   physicsComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
+   const selfVelocityProjectionCoeff = transformComponent.selfVelocity.x * bx + transformComponent.selfVelocity.y * by;
+   transformComponent.selfVelocity.x = bx * selfVelocityProjectionCoeff;
+   transformComponent.selfVelocity.y = by * selfVelocityProjectionCoeff;
+   const externalVelocityProjectionCoeff = transformComponent.externalVelocity.x * bx + transformComponent.externalVelocity.y * by;
+   transformComponent.externalVelocity.x = bx * externalVelocityProjectionCoeff;
+   transformComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
 }
 
 const resolveSoftCollision = (entity: Entity, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      
       // Force gets greater the further into each other the entities are
       const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
       
-      physicsComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
-      physicsComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
+      transformComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
+      transformComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
    }
 }
 

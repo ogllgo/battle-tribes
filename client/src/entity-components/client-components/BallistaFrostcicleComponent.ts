@@ -47,9 +47,8 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create arrow break particles
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
-      createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y);
+      createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
    }
 
    playSoundOnEntity("ice-break.mp3", 0.4, 1, entity, false);

@@ -3,14 +3,13 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, getTileX, getTileY, TileIndex } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
-import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { boxIsCircular, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { getEntityLayer, getEntityType, getGameTicks } from "./world";
+import { getEntityLayer, getEntityType } from "./world";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import Layer from "./Layer";
@@ -712,6 +711,16 @@ export function smoothPath(layer: Layer, path: ReadonlyArray<PathfindingNodeInde
    return smoothedPath;
 }
 
+const clampPathfindingNodeXY = (x: number): number => {
+   if (x < -1) {
+      return -1;
+   }
+   if (x >= PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) {
+      return PathfindingSettings.NODES_IN_WORLD_WIDTH - 2;
+   }
+   return x;
+}
+
 export function getVisiblePathfindingNodeOccupances(playerClient: PlayerClient): ReadonlyArray<PathfindingNodeIndex> {
    // @Copynpaste
    const minVisibleX = playerClient.lastViewedPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
@@ -719,11 +728,10 @@ export function getVisiblePathfindingNodeOccupances(playerClient: PlayerClient):
    const minVisibleY = playerClient.lastViewedPositionY - playerClient.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
    const maxVisibleY = playerClient.lastViewedPositionY + playerClient.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
 
-   // @Hack @Incomplete: Adding 1 to the max vals may cause extra nodes to be sent
-   const minNodeX = Math.ceil(minVisibleX / PathfindingSettings.NODE_SEPARATION);
-   const maxNodeX = Math.floor(maxVisibleX / PathfindingSettings.NODE_SEPARATION);
-   const minNodeY = Math.ceil(minVisibleY / PathfindingSettings.NODE_SEPARATION);
-   const maxNodeY = Math.floor(maxVisibleY / PathfindingSettings.NODE_SEPARATION);
+   const minNodeX = clampPathfindingNodeXY(Math.floor(minVisibleX / PathfindingSettings.NODE_SEPARATION));
+   const maxNodeX = clampPathfindingNodeXY(Math.floor(maxVisibleX / PathfindingSettings.NODE_SEPARATION));
+   const minNodeY = clampPathfindingNodeXY(Math.floor(minVisibleY / PathfindingSettings.NODE_SEPARATION));
+   const maxNodeY = clampPathfindingNodeXY(Math.floor(maxVisibleY / PathfindingSettings.NODE_SEPARATION));
 
    const occupances = new Array<PathfindingNodeIndex>();
    for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
@@ -792,15 +800,15 @@ export function updateDynamicPathfindingNodes(): void {
 
    // Here I prefer to loop over all the entities instead of using a dirty array, to make
    // the performance more constant thanks to no garbage collection
-   const activeEntities = PhysicsComponentArray.activeEntities;
-   const activeComponents = PhysicsComponentArray.activeComponents;
+   const activeEntities = TransformComponentArray.activeEntities;
+   const activeComponents = TransformComponentArray.activeComponents;
    for (let i = 0; i < activeEntities.length; i++) {
-      const physicsComponent = activeComponents[i];
-      if (physicsComponent.pathfindingNodesAreDirty) {
+      const transformComponent = activeComponents[i];
+      if (transformComponent.pathfindingNodesAreDirty) {
          const entity = activeEntities[i];
          updateEntityPathfindingNodeOccupance(entity);
    
-         physicsComponent.pathfindingNodesAreDirty = false;
+         transformComponent.pathfindingNodesAreDirty = false;
       }
    }
 }

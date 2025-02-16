@@ -98,7 +98,7 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    const physicsComponent = PhysicsComponentArray.getComponent(arrow);
 
    // Don't damage if the arrow is moving too slow
-   if (getVelocityMagnitude(physicsComponent) < 10) {
+   if (getVelocityMagnitude(transformComponent) < 10) {
       return;
    } 
 
@@ -123,10 +123,10 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
    }
 
    // Slow down the arrow as it passes through the entity
-   slowVelocity(physicsComponent, 10000 * Settings.I_TPS);
+   slowVelocity(transformComponent, 10000 * Settings.I_TPS);
 
    // Lodge the arrow in the entity when it's slow enough
-   if (getVelocityMagnitude(physicsComponent) < 50) {
+   if (getVelocityMagnitude(transformComponent) < 50) {
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
       // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
@@ -145,9 +145,9 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
       // the arrow gets stuck on a tree then it has no physics component and the velocity never gets overridden
       // with 0.
       // Need to make the fixing carried entity position code run on the transform component instead.
-      physicsComponent.selfVelocity.x = 0;
-      physicsComponent.selfVelocity.y = 0;
-      physicsComponent.externalVelocity.x = 0;
-      physicsComponent.externalVelocity.y = 0;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.selfVelocity.y = 0;
+      transformComponent.externalVelocity.x = 0;
+      transformComponent.externalVelocity.y = 0;
    }
 }

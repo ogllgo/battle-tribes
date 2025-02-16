@@ -234,7 +234,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
                const moveDirection = transformComponent.position.calculateAngleBetween(targetUsePoint);
                physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
                physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-            } else if (willStopAtDesiredDistance(physicsComponent, Vars.DESIRED_RANGED_ATTACK_DISTANCE - 20, distance)) {
+            } else if (willStopAtDesiredDistance(transformComponent, Vars.DESIRED_RANGED_ATTACK_DISTANCE - 20, distance)) {
                // If the tribesman will stop too close to the target, move back a bit
                physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
                physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
@@ -358,9 +358,9 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
 
    const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
+   if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
+      if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
          physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
          physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {

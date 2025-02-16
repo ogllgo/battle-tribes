@@ -19,6 +19,7 @@ import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/coll
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
+import { surfaceLayer } from "../layers";
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -47,6 +48,12 @@ export class TransformComponent {
 
    /** Position of the entity in the world */
    public position = new Point(0, 0);
+
+   // @Hack: I am now storing velocity on the transform component to account for static entities (entities
+   // without physics components) which can be carried on physics entities. So they need to have velocity
+   // to be properly interpolated on the client side.
+   public selfVelocity = new Point(0, 0);
+   public externalVelocity = new Point(0, 0);
 
    // @Hack: this shit sucks!!!!
    // I need it so that carried entities can accumulate rotation from their parents, but once the 
@@ -78,6 +85,13 @@ export class TransformComponent {
    public boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
    public boundingAreaMinY = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
+
+   /** Whether the entities' position/rotation/hitboxes have changed during the current tick or not. */
+   public isDirty = false;
+
+   public pathfindingNodesAreDirty = false;
+   
+   public lastValidLayer = surfaceLayer;
 
    // @Deprecated: Only used by client
    public collisionBit = COLLISION_BITS.default;
@@ -457,6 +471,8 @@ TransformComponentArray.onRemove = onRemove;
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
+   transformComponent.lastValidLayer = getEntityLayer(entity);
+
    if (transformComponent.mount !== 0) {
       mountEntity(entity, transformComponent.mount, 0, 0);
    } else {
@@ -588,7 +604,7 @@ export function getRectangularHitboxDataLength(hitbox: Hitbox<BoxType.rectangula
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 8 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -630,6 +646,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(transformComponent.relativeRotation);
    packet.addNumber(transformComponent.collisionBit);
    packet.addNumber(transformComponent.collisionMask);
+
+   packet.addNumber(transformComponent.selfVelocity.x);
+   packet.addNumber(transformComponent.selfVelocity.y);
+   packet.addNumber(transformComponent.externalVelocity.x);
+   packet.addNumber(transformComponent.externalVelocity.y);
    
    packet.addNumber(transformComponent.hitboxes.length);
    for (const hitbox of transformComponent.hitboxes) {

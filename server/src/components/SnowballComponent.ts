@@ -9,6 +9,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export class SnowballComponent {
    public readonly yeti: Entity;
@@ -75,10 +76,10 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       }
    }
    
-   const physicsComponent = PhysicsComponentArray.getComponent(snowball);
+   const transformComponent = TransformComponentArray.getComponent(snowball);
 
-   const vx = getVelocityX(physicsComponent);
-   const vy = getVelocityY(physicsComponent);
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    const velocity = Math.sqrt(vx * vx + vy * vy);
 
    const ageTicks = getEntityAgeTicks(snowball);

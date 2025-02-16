@@ -38,8 +38,8 @@ const createFragmentProjectile = (guardian: Entity): void => {
    config.components[ServerComponentType.transform].position.x = originX;
    config.components[ServerComponentType.transform].position.y = originY;
    config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.physics].externalVelocity.x = vx;
-   config.components[ServerComponentType.physics].externalVelocity.y = vy;
+   config.components[ServerComponentType.transform].externalVelocity.x = vx;
+   config.components[ServerComponentType.transform].externalVelocity.y = vy;
    config.components[ServerComponentType.physics].angularVelocity = randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign();
    createEntity(config, getEntityLayer(guardian), 0);
 }
@@ -70,8 +70,8 @@ export default class GuardianCrystalBurstAI {
       }
 
       // @Copynpaste
-      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-      physicsComponent.hitboxesAreDirty = true;
+      const transformComponent = TransformComponentArray.getComponent(guardian);
+      transformComponent.isDirty = true;
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {

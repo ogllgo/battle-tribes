@@ -202,8 +202,8 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
    const config = createSnowballConfig(yeti, size);
    config.components[ServerComponentType.transform].position.x = position.x;
    config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.physics].externalVelocity.x += velocityMagnitude * Math.sin(angle);
-   config.components[ServerComponentType.physics].externalVelocity.y += velocityMagnitude * Math.cos(angle);
+   config.components[ServerComponentType.transform].externalVelocity.x += velocityMagnitude * Math.sin(angle);
+   config.components[ServerComponentType.transform].externalVelocity.y += velocityMagnitude * Math.cos(angle);
    createEntity(config, getEntityLayer(yeti), 0);
 }
 
@@ -224,9 +224,8 @@ const throwSnow = (yeti: Entity, target: Entity): void => {
    }
 
    // Kickback
-   const physicsComponent = PhysicsComponentArray.getComponent(yeti);
-   physicsComponent.externalVelocity.x += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.sin(throwAngle * Math.PI);
-   physicsComponent.externalVelocity.y += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.cos(throwAngle * Math.PI);
+   transformComponent.externalVelocity.x += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.sin(throwAngle * Math.PI);
+   transformComponent.externalVelocity.y += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.cos(throwAngle * Math.PI);
 }
 
 // @Speed: hasComponent in here takes up about 1% of CPU time

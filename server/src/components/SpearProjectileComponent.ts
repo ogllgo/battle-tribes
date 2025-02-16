@@ -4,7 +4,6 @@ import { Entity } from "battletribes-shared/entities";
 import { ItemType } from "battletribes-shared/items/items";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer } from "../world";
 
@@ -21,10 +20,9 @@ SpearProjectileComponentArray.onTick = {
 };
 
 function onTick(spear: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(spear);
-
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const transformComponent = TransformComponentArray.getComponent(spear);
+   const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+   const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
    const velocitySquared = vx * vx + vy * vy;
    
    if (velocitySquared <= Vars.DROP_VELOCITY * Vars.DROP_VELOCITY) {

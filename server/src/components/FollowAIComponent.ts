@@ -67,6 +67,7 @@ export function startFollowingEntity(entity: Entity, followedEntity: Entity, acc
 
 export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    const followTargetTransformComponent = TransformComponentArray.getComponent(followTarget);
@@ -74,7 +75,7 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
    const distance = getDistanceFromPointToEntity(followTargetTransformComponent.position, entity) - 32;
-   if (willStopAtDesiredDistance(physicsComponent, followAIComponent.followDistance, distance)) {
+   if (willStopAtDesiredDistance(transformComponent, followAIComponent.followDistance, distance)) {
       stopEntity(physicsComponent);
       turnToPosition(entity, followTargetTransformComponent.position.x, followTargetTransformComponent.position.y, turnSpeed);
    } else {

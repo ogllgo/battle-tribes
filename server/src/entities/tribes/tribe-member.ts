@@ -406,8 +406,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
          config.components[ServerComponentType.transform].position.y = spawnPosition.y;
          config.components[ServerComponentType.transform].relativeRotation = transformComponent.rotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(physicsComponent) + itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(physicsComponent) + itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
+         config.components[ServerComponentType.transform].externalVelocity.x = getVelocityX(transformComponent) + itemInfo.projectileSpeed * Math.sin(transformComponent.rotation);
+         config.components[ServerComponentType.transform].externalVelocity.y = getVelocityY(transformComponent) + itemInfo.projectileSpeed * Math.cos(transformComponent.rotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          for (let i = 0; i < 2; i++) {
@@ -454,8 +454,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = spawnPosition.x;
          config.components[ServerComponentType.transform].position.y = spawnPosition.y;
          config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = itemInfo.projectileSpeed * Math.sin(transformComponent.relativeRotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = itemInfo.projectileSpeed * Math.cos(transformComponent.relativeRotation);
+         config.components[ServerComponentType.transform].externalVelocity.x = itemInfo.projectileSpeed * Math.sin(transformComponent.relativeRotation);
+         config.components[ServerComponentType.transform].externalVelocity.y = itemInfo.projectileSpeed * Math.cos(transformComponent.relativeRotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          delete useInfo.crossbowLoadProgressRecord[itemSlot];
@@ -486,8 +486,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
          config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = getVelocityX(entityPhysicsComponent) + velocityMagnitude * Math.sin(transformComponent.relativeRotation);
-         config.components[ServerComponentType.physics].externalVelocity.y = getVelocityY(entityPhysicsComponent) + velocityMagnitude * Math.cos(transformComponent.relativeRotation);
+         config.components[ServerComponentType.transform].externalVelocity.x = getVelocityX(transformComponent) + velocityMagnitude * Math.sin(transformComponent.relativeRotation);
+         config.components[ServerComponentType.transform].externalVelocity.y = getVelocityY(transformComponent) + velocityMagnitude * Math.cos(transformComponent.relativeRotation);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemFromSlot(tribeMember, inventory, itemSlot, 1);
@@ -521,8 +521,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
          config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
-         config.components[ServerComponentType.physics].externalVelocity.x = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x + velocityMagnitude * Math.sin(transformComponent.relativeRotation)
-         config.components[ServerComponentType.physics].externalVelocity.y = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y + velocityMagnitude * Math.cos(transformComponent.relativeRotation)
+         config.components[ServerComponentType.transform].externalVelocity.x = getVelocityX(transformComponent) + velocityMagnitude * Math.sin(transformComponent.relativeRotation)
+         config.components[ServerComponentType.transform].externalVelocity.y = getVelocityY(transformComponent) + velocityMagnitude * Math.cos(transformComponent.relativeRotation)
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          useInfo.lastBattleaxeChargeTicks = getGameTicks();
@@ -810,7 +810,6 @@ export function throwItem(tribesman: Entity, inventoryName: InventoryName, itemS
    }
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanPhysicsComponent = PhysicsComponentArray.getComponent(tribesman);
    
    const itemType = item.type;
    const amountRemoved = consumeItemFromSlot(tribesman, inventory, itemSlot, dropAmount);
@@ -825,8 +824,8 @@ export function throwItem(tribesman: Entity, inventoryName: InventoryName, itemS
    config.components[ServerComponentType.transform].position.y = dropPosition.y;
    config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    // Throw the dropped item away from the player
-   config.components[ServerComponentType.physics].externalVelocity.x = tribesmanPhysicsComponent.selfVelocity.x + tribesmanPhysicsComponent.externalVelocity.x + Vars.ITEM_THROW_FORCE * Math.sin(throwDirection);
-   config.components[ServerComponentType.physics].externalVelocity.y = tribesmanPhysicsComponent.selfVelocity.y + tribesmanPhysicsComponent.externalVelocity.y + Vars.ITEM_THROW_FORCE * Math.cos(throwDirection);
+   config.components[ServerComponentType.transform].externalVelocity.x = getVelocityX(transformComponent) + Vars.ITEM_THROW_FORCE * Math.sin(throwDirection);
+   config.components[ServerComponentType.transform].externalVelocity.y = getVelocityY(transformComponent) + Vars.ITEM_THROW_FORCE * Math.cos(throwDirection);
    createEntity(config, getEntityLayer(tribesman), 0);
 
    if (TribesmanAIComponentArray.hasComponent(tribesman)) {

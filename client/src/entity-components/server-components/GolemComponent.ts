@@ -176,7 +176,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const golemComponent = GolemComponentArray.getComponent(entity);
 
    if (golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1) {
@@ -187,7 +186,7 @@ function onTick(entity: Entity): void {
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y, ParticleRenderLayer.low);
       }
    } else if (golemComponent.wakeProgress === 1) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -201,7 +200,7 @@ function onTick(entity: Entity): void {
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, physicsComponent.selfVelocity.x, physicsComponent.selfVelocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y, ParticleRenderLayer.low);
       }
    }
 }

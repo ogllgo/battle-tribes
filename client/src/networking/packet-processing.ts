@@ -851,10 +851,10 @@ export function processSyncDataPacket(reader: PacketReader): void {
    transformComponent.rotation = rotation;
 
    const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
-   physicsComponent.selfVelocity.x = selfVelocityX;
-   physicsComponent.selfVelocity.y = selfVelocityY;
-   physicsComponent.externalVelocity.x = externalVelocityX;
-   physicsComponent.externalVelocity.y = externalVelocityY;
+   transformComponent.selfVelocity.x = selfVelocityX;
+   transformComponent.selfVelocity.y = selfVelocityY;
+   transformComponent.externalVelocity.x = externalVelocityX;
+   transformComponent.externalVelocity.y = externalVelocityY;
    physicsComponent.acceleration.x = accelerationX;
    physicsComponent.acceleration.y = accelerationY;
    

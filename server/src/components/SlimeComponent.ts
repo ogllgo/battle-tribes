@@ -127,8 +127,8 @@ const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
    config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.physics].selfVelocity.x = 500 * Math.sin(transformComponent.relativeRotation);
-   config.components[ServerComponentType.physics].selfVelocity.y = 500 * Math.cos(transformComponent.relativeRotation);
+   config.components[ServerComponentType.transform].selfVelocity.x = 500 * Math.sin(transformComponent.relativeRotation);
+   config.components[ServerComponentType.transform].selfVelocity.y = 500 * Math.cos(transformComponent.relativeRotation);
    createEntity(config, getEntityLayer(slime), 0);
 }
 

@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
-import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
+import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { CollisionPushInfo, collisionBitsAreCompatible, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getComponentArrayRecord } from "./components/ComponentArray";
@@ -64,7 +64,7 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
    return CollisionVars.NO_COLLISION;
 }
 
-const resolveHardCollision = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollision = (transformComponent: TransformComponent, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
    transformComponent.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
    transformComponent.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
@@ -72,15 +72,15 @@ const resolveHardCollision = (transformComponent: TransformComponent, physicsCom
    // Kill all the velocity going into the hitbox
    const bx = Math.sin(pushInfo.direction + Math.PI/2);
    const by = Math.cos(pushInfo.direction + Math.PI/2);
-   const selfVelocityProjectionCoeff = physicsComponent.selfVelocity.x * bx + physicsComponent.selfVelocity.y * by;
-   physicsComponent.selfVelocity.x = bx * selfVelocityProjectionCoeff;
-   physicsComponent.selfVelocity.y = by * selfVelocityProjectionCoeff;
-   const externalVelocityProjectionCoeff = physicsComponent.externalVelocity.x * bx + physicsComponent.externalVelocity.y * by;
-   physicsComponent.externalVelocity.x = bx * externalVelocityProjectionCoeff;
-   physicsComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
+   const selfVelocityProjectionCoeff = transformComponent.selfVelocity.x * bx + transformComponent.selfVelocity.y * by;
+   transformComponent.selfVelocity.x = bx * selfVelocityProjectionCoeff;
+   transformComponent.selfVelocity.y = by * selfVelocityProjectionCoeff;
+   const externalVelocityProjectionCoeff = transformComponent.externalVelocity.x * bx + transformComponent.externalVelocity.y * by;
+   transformComponent.externalVelocity.x = bx * externalVelocityProjectionCoeff;
+   transformComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
 }
 
-const resolveHardCollisionAndFlip = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollisionAndFlip = (transformComponent: TransformComponent, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
    transformComponent.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
    transformComponent.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
@@ -92,32 +92,32 @@ const resolveHardCollisionAndFlip = (transformComponent: TransformComponent, phy
    const pushAxisProjX = Math.sin(pushInfo.direction + Math.PI);
    const pushAxisProjY = Math.cos(pushInfo.direction + Math.PI);
 
-   const selfVelocitySeparationCoeff = physicsComponent.selfVelocity.x * separationAxisProjX + physicsComponent.selfVelocity.y * separationAxisProjY;
-   const selfVelocityPushCoeff = physicsComponent.selfVelocity.x * pushAxisProjX + physicsComponent.selfVelocity.y * pushAxisProjY;
+   const selfVelocitySeparationCoeff = transformComponent.selfVelocity.x * separationAxisProjX + transformComponent.selfVelocity.y * separationAxisProjY;
+   const selfVelocityPushCoeff = transformComponent.selfVelocity.x * pushAxisProjX + transformComponent.selfVelocity.y * pushAxisProjY;
    // Keep the velocity in the separation axis
-   physicsComponent.selfVelocity.x = separationAxisProjX * selfVelocitySeparationCoeff;
-   physicsComponent.selfVelocity.y = separationAxisProjY * selfVelocitySeparationCoeff;
+   transformComponent.selfVelocity.x = separationAxisProjX * selfVelocitySeparationCoeff;
+   transformComponent.selfVelocity.y = separationAxisProjY * selfVelocitySeparationCoeff;
    // Reverse the velocity in the push axis
-   physicsComponent.selfVelocity.x -= pushAxisProjX * selfVelocityPushCoeff;
-   physicsComponent.selfVelocity.y -= pushAxisProjY * selfVelocityPushCoeff;
+   transformComponent.selfVelocity.x -= pushAxisProjX * selfVelocityPushCoeff;
+   transformComponent.selfVelocity.y -= pushAxisProjY * selfVelocityPushCoeff;
 
-   const externalVelocitySeparationCoeff = physicsComponent.externalVelocity.x * separationAxisProjX + physicsComponent.externalVelocity.y * separationAxisProjY;
-   const externalVelocityPushCoeff = physicsComponent.externalVelocity.x * pushAxisProjX + physicsComponent.externalVelocity.y * pushAxisProjY;
+   const externalVelocitySeparationCoeff = transformComponent.externalVelocity.x * separationAxisProjX + transformComponent.externalVelocity.y * separationAxisProjY;
+   const externalVelocityPushCoeff = transformComponent.externalVelocity.x * pushAxisProjX + transformComponent.externalVelocity.y * pushAxisProjY;
    // Keep the velocity in the separation axis
-   physicsComponent.externalVelocity.x = separationAxisProjX * externalVelocitySeparationCoeff;
-   physicsComponent.externalVelocity.y = separationAxisProjY * externalVelocitySeparationCoeff;
+   transformComponent.externalVelocity.x = separationAxisProjX * externalVelocitySeparationCoeff;
+   transformComponent.externalVelocity.y = separationAxisProjY * externalVelocitySeparationCoeff;
    // Reverse the velocity in the push axis
-   physicsComponent.externalVelocity.x -= pushAxisProjX * externalVelocityPushCoeff;
-   physicsComponent.externalVelocity.y -= pushAxisProjY * externalVelocityPushCoeff;
+   transformComponent.externalVelocity.x -= pushAxisProjX * externalVelocityPushCoeff;
+   transformComponent.externalVelocity.y -= pushAxisProjY * externalVelocityPushCoeff;
 }
 
-const resolveSoftCollision = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveSoftCollision = (transformComponent: TransformComponent, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    // Force gets greater the further into each other the entities are
    const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
    const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
    
-   physicsComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
-   physicsComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
+   transformComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
+   transformComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
 }
 
 export function collide(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
@@ -146,13 +146,13 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
             const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
 
             if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
-               resolveHardCollision(affectedEntityTransformComponent, physicsComponent, pushInfo);
+               resolveHardCollision(affectedEntityTransformComponent, pushInfo);
             } else {
-               resolveSoftCollision(affectedEntityTransformComponent, physicsComponent, collidingHitbox, pushInfo);
+               resolveSoftCollision(affectedEntityTransformComponent, collidingHitbox, pushInfo);
             }
    
             // @Cleanup: Should we just clean it immediately here?
-            physicsComponent.positionIsDirty = true;
+            affectedEntityTransformComponent.isDirty = true;
          }
       }
 
@@ -211,16 +211,15 @@ export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: n
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const pushInfo = getCollisionPushInfo(hitbox.box, tileBox);
    if (getEntityType(entity) === EntityType.guardianSpikyBall) {
-      resolveHardCollisionAndFlip(transformComponent, physicsComponent, pushInfo);
+      resolveHardCollisionAndFlip(transformComponent, pushInfo);
    } else {
-      resolveHardCollision(transformComponent, physicsComponent, pushInfo);
+      resolveHardCollision(transformComponent, pushInfo);
    }
 
-   physicsComponent.positionIsDirty = true;
+   transformComponent.isDirty = true;
 
    const componentTypes = getEntityComponentTypes(entity);
    const componentArrayRecord = getComponentArrayRecord();

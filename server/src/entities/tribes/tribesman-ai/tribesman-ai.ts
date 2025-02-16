@@ -407,7 +407,7 @@ export function tickTribesman(tribesman: Entity): void {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
 
          const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-         if (willStopAtDesiredDistance(physicsComponent, 80, distance)) {
+         if (willStopAtDesiredDistance(transformComponent, 80, distance)) {
             physicsComponent.acceleration.x = 0;
             physicsComponent.acceleration.y = 0;
          } else {
@@ -545,11 +545,11 @@ export function tickTribesman(tribesman: Entity): void {
          // @Incomplete: use pathfinding
          // @Cleanup: Copy and pasted from huntEntity. Should be combined into its own function
          const distance = getDistanceFromPointToEntity(transformComponent.position, closestBlueprint) - getHumanoidRadius(transformComponent);
-         if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
+         if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
             physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
             physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
-         } else if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
+         } else if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
             stopEntity(physicsComponent);
          } else {
             // Too far away; move closer

@@ -178,9 +178,9 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
 
    const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
+   if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
+      if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
          physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
          physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {
@@ -246,9 +246,9 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
    
    const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange, distance)) {
+   if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(physicsComponent, desiredAttackRange - 20, distance)) {
+      if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
          physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
          physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
       } else {

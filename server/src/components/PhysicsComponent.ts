@@ -9,7 +9,7 @@ import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-c
 import { EntityCarryInfo, getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
-import { surfaceLayer, undergroundLayer } from "../layers";
+import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 
@@ -24,10 +24,7 @@ for (let i = 0; i < 8; i++) {
 
 /** Allows an entity to dynamically move its position around */
 export class PhysicsComponent {
-   // @Cleanup: unbox all of these into x and y and make the component implement its params
-   public selfVelocity = new Point(0, 0);
    public acceleration = new Point(0, 0);
-   public externalVelocity = new Point(0, 0);
 
    public turnSpeed = 0;
    /** Rotation the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI) */
@@ -48,16 +45,6 @@ export class PhysicsComponent {
 
    /** If true, the entity will not be pushed around by collisions, but will still call any relevant events. */
    public isImmovable = false;
-
-   /** Whether the game object's position has changed during the current tick or not. Used during collision detection to avoid unnecessary collision checks */
-   public positionIsDirty = false;
-
-   /** Whether the game object's hitboxes' bounds have changed during the current tick or not. If true, marks the game object to have its hitboxes and containing chunks updated */
-   public hitboxesAreDirty = false;
-
-   public pathfindingNodesAreDirty = false;
-
-   public lastValidLayer = surfaceLayer;
 }
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
@@ -65,12 +52,6 @@ PhysicsComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-PhysicsComponentArray.onJoin = onJoin;
-
-function onJoin(entity: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   physicsComponent.lastValidLayer = getEntityLayer(entity);
-}
 
 const cleanRotation = (transformComponent: TransformComponent): void => {
    // Clamp rotation to [-PI, PI) range
@@ -120,7 +101,7 @@ const turnEntity = (entity: Entity, transformComponent: TransformComponent, phys
    if (transformComponent.relativeRotation !== previousRotation) {
       cleanRotation(transformComponent);
 
-      physicsComponent.hitboxesAreDirty = true;
+      transformComponent.isDirty = true;
       registerDirtyEntity(entity);
    }
 }
@@ -132,10 +113,10 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
    // the corresponding groups
    
    // @Temporary @Hack
-   if (isNaN(physicsComponent.selfVelocity.x) || isNaN(physicsComponent.selfVelocity.y)) {
+   if (isNaN(transformComponent.selfVelocity.x) || isNaN(transformComponent.selfVelocity.y)) {
       console.warn("Entity type " + EntityTypeString[getEntityType(entity)] + " velocity was NaN.");
-      physicsComponent.selfVelocity.x = 0;
-      physicsComponent.selfVelocity.y = 0;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.selfVelocity.y = 0;
    }
 
    const layer = getEntityLayer(entity);
@@ -162,38 +143,38 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
       const desiredVelocityY = physicsComponent.acceleration.y * tileFriction * moveSpeedMultiplier;
 
       // Apply velocity with traction (blend towards desired velocity)
-      physicsComponent.selfVelocity.x += (desiredVelocityX - physicsComponent.selfVelocity.x) * physicsComponent.traction * Settings.I_TPS;
-      physicsComponent.selfVelocity.y += (desiredVelocityY - physicsComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
+      transformComponent.selfVelocity.x += (desiredVelocityX - transformComponent.selfVelocity.x) * physicsComponent.traction * Settings.I_TPS;
+      transformComponent.selfVelocity.y += (desiredVelocityY - transformComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
    }
 
    // If the game object is in a river, push them in the flow direction of the river
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
    if (transformComponent.isInRiver && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
-      physicsComponent.externalVelocity.x += 240 * Settings.I_TPS * a[flowDirectionIdx];
-      physicsComponent.externalVelocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
+      transformComponent.externalVelocity.x += 240 * Settings.I_TPS * a[flowDirectionIdx];
+      transformComponent.externalVelocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
    }
 
    let shouldUpdate = false;
    
    // Apply friction to self-velocity
-   if (physicsComponent.selfVelocity.x !== 0 || physicsComponent.selfVelocity.y !== 0) {
+   if (transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) {
       const friction = TILE_FRICTIONS[tileType];
       
       if (physicsComponent.isAffectedByAirFriction) {
          // Air friction
-         physicsComponent.selfVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-         physicsComponent.selfVelocity.y *= 1 - friction * Settings.I_TPS * 2;
+         transformComponent.selfVelocity.x *= 1 - friction * Settings.I_TPS * 2;
+         transformComponent.selfVelocity.y *= 1 - friction * Settings.I_TPS * 2;
       }
 
       if (physicsComponent.isAffectedByGroundFriction) {
          // @Incomplete @Bug: Doesn't take into account the TPS. Would also be fixed by pre-multiplying the array
          // Ground friction
-         const selfVelocityMagnitude = physicsComponent.selfVelocity.length();
+         const selfVelocityMagnitude = transformComponent.selfVelocity.length();
          if (selfVelocityMagnitude > 0) {
             const groundFriction = Math.min(friction, selfVelocityMagnitude);
-            physicsComponent.selfVelocity.x -= groundFriction * physicsComponent.selfVelocity.x / selfVelocityMagnitude;
-            physicsComponent.selfVelocity.y -= groundFriction * physicsComponent.selfVelocity.y / selfVelocityMagnitude;
+            transformComponent.selfVelocity.x -= groundFriction * transformComponent.selfVelocity.x / selfVelocityMagnitude;
+            transformComponent.selfVelocity.y -= groundFriction * transformComponent.selfVelocity.y / selfVelocityMagnitude;
          }
       }
 
@@ -201,23 +182,23 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
    }
 
    // Apply friction to external velocity
-   if (physicsComponent.externalVelocity.x !== 0 || physicsComponent.externalVelocity.y !== 0) {
+   if (transformComponent.externalVelocity.x !== 0 || transformComponent.externalVelocity.y !== 0) {
       const friction = TILE_FRICTIONS[tileType];
       
       if (physicsComponent.isAffectedByAirFriction) {
          // Air friction
-         physicsComponent.externalVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-         physicsComponent.externalVelocity.y *= 1 - friction * Settings.I_TPS * 2;
+         transformComponent.externalVelocity.x *= 1 - friction * Settings.I_TPS * 2;
+         transformComponent.externalVelocity.y *= 1 - friction * Settings.I_TPS * 2;
       }
 
       if (physicsComponent.isAffectedByGroundFriction) {
          // @Incomplete @Bug: Doesn't take into acount the TPS. Would also be fixed by pre-multiplying the array
          // Ground friction
-         const externalVelocityMagnitude = physicsComponent.externalVelocity.length();
+         const externalVelocityMagnitude = transformComponent.externalVelocity.length();
          if (externalVelocityMagnitude > 0) {
             const groundFriction = Math.min(friction, externalVelocityMagnitude);
-            physicsComponent.externalVelocity.x -= groundFriction * physicsComponent.externalVelocity.x / externalVelocityMagnitude;
-            physicsComponent.externalVelocity.y -= groundFriction * physicsComponent.externalVelocity.y / externalVelocityMagnitude;
+            transformComponent.externalVelocity.x -= groundFriction * transformComponent.externalVelocity.x / externalVelocityMagnitude;
+            transformComponent.externalVelocity.y -= groundFriction * transformComponent.externalVelocity.y / externalVelocityMagnitude;
          }
       }
 
@@ -226,82 +207,74 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
 
    if (shouldUpdate) {
       // Update position based on the sum of self-velocity and external velocity
-      transformComponent.position.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * Settings.I_TPS;
-      transformComponent.position.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * Settings.I_TPS;
+      transformComponent.position.x += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * Settings.I_TPS;
+      transformComponent.position.y += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * Settings.I_TPS;
 
-      physicsComponent.positionIsDirty = true;
+      transformComponent.isDirty = true;
       registerDirtyEntity(entity);
    }
 }
 
-const dirtifyPathfindingNodes = (entity: Entity, physicsComponent: PhysicsComponent): void => {
+const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformComponent): void => {
    if (entityCanBlockPathfinding(entity)) {
-      physicsComponent.pathfindingNodesAreDirty = true;
+      transformComponent.pathfindingNodesAreDirty = true;
    }
 }
    
-const resolveBorderCollisions = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const resolveBorderCollisions = (transformComponent: TransformComponent): void => {
    // Left border
    if (transformComponent.boundingAreaMinX < 0) {
       transformComponent.position.x -= transformComponent.boundingAreaMinX;
-      physicsComponent.selfVelocity.x = 0;
-      physicsComponent.externalVelocity.x = 0;
-      physicsComponent.positionIsDirty = true;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.externalVelocity.x = 0;
+      transformComponent.isDirty = true;
       // Right border
    } else if (transformComponent.boundingAreaMaxX > Settings.BOARD_UNITS) {
       transformComponent.position.x -= transformComponent.boundingAreaMaxX - Settings.BOARD_UNITS;
-      physicsComponent.selfVelocity.x = 0;
-      physicsComponent.externalVelocity.x = 0;
-      physicsComponent.positionIsDirty = true;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.externalVelocity.x = 0;
+      transformComponent.isDirty = true;
    }
 
    // Bottom border
    if (transformComponent.boundingAreaMinY < 0) {
       transformComponent.position.y -= transformComponent.boundingAreaMinY;
-      physicsComponent.selfVelocity.y = 0;
-      physicsComponent.externalVelocity.y = 0;
-      physicsComponent.positionIsDirty = true;
+      transformComponent.selfVelocity.y = 0;
+      transformComponent.externalVelocity.y = 0;
+      transformComponent.isDirty = true;
       // Top border
    } else if (transformComponent.boundingAreaMaxY > Settings.BOARD_UNITS) {
       transformComponent.position.y -= transformComponent.boundingAreaMaxY - Settings.BOARD_UNITS;
-      physicsComponent.selfVelocity.y = 0;
-      physicsComponent.externalVelocity.y = 0;
-      physicsComponent.positionIsDirty = true;
+      transformComponent.selfVelocity.y = 0;
+      transformComponent.externalVelocity.y = 0;
+      transformComponent.isDirty = true;
    }
 }
 
-const updatePosition = (entity: Entity, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
-   // @Cleanup: aren't both these the same?
-   if (physicsComponent.hitboxesAreDirty) {
+const updatePosition = (entity: Entity, transformComponent: TransformComponent): void => {
+   if (transformComponent.isDirty) {
       // @Incomplete: if hitboxes are dirty, should still resolve wall tile collisions, etc.
       transformComponent.cleanHitboxes(entity);
       transformComponent.updateContainingChunks(entity);
-      physicsComponent.hitboxesAreDirty = false;
+      transformComponent.isDirty = false;
       
-      dirtifyPathfindingNodes(entity, physicsComponent);
-      updateEntityLights(entity);
-      registerDirtyEntity(entity);
-   } else if (physicsComponent.positionIsDirty) {
-      transformComponent.cleanHitboxes(entity);
-      transformComponent.updateContainingChunks(entity);
-
-      dirtifyPathfindingNodes(entity, physicsComponent);
+      dirtifyPathfindingNodes(entity, transformComponent);
       updateEntityLights(entity);
       registerDirtyEntity(entity);
    }
 
-   if (physicsComponent.positionIsDirty) {
-      physicsComponent.positionIsDirty = false;
+   if (transformComponent.isDirty) {
+      transformComponent.isDirty = false;
 
       transformComponent.resolveWallCollisions(entity);
 
       // If the object moved due to resolving wall tile collisions, recalculate
-      if (physicsComponent.positionIsDirty) {
+      if (transformComponent.isDirty) {
          transformComponent.cleanHitboxes(entity);
          registerDirtyEntity(entity);
       }
 
-      resolveBorderCollisions(transformComponent, physicsComponent);
+      resolveBorderCollisions(transformComponent);
 
       // If the entity is outside the world border after resolving border collisions, throw an error
       if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
@@ -310,7 +283,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
       }
    
       // If the object moved due to resolving border collisions, recalculate
-      if (physicsComponent.positionIsDirty) {
+      if (transformComponent.isDirty) {
          transformComponent.cleanHitboxes(entity);
          registerDirtyEntity(entity);
       }
@@ -324,9 +297,9 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent, 
          const layer = getEntityLayer(entity);
          const tileIndex = getEntityTile(transformComponent);
          if (layer.getTileType(tileIndex) !== TileType.dropdown) {
-            physicsComponent.lastValidLayer = layer;
+            transformComponent.lastValidLayer = layer;
          // If the layer is valid and the entity is on a dropdown, move down
-         } else if (layer === physicsComponent.lastValidLayer) {
+         } else if (layer === transformComponent.lastValidLayer) {
             // @Temporary
             changeEntityLayer(entity, undergroundLayer);
          }
@@ -356,7 +329,7 @@ const pushHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, othe
    }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    const tethers = transformComponent.tethers;
    
    // Apply the spring physics
@@ -398,7 +371,7 @@ const applyHitboxTethers = (transformComponent: TransformComponent, physicsCompo
    }
 
    // @Speed: Is this necessary every tick?
-   physicsComponent.hitboxesAreDirty = true;
+   transformComponent.isDirty = true;
 }
 
 export function fixCarriedEntityPosition(transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void {
@@ -410,35 +383,26 @@ export function fixCarriedEntityPosition(transformComponent: TransformComponent,
    registerDirtyEntity(carryInfo.carriedEntity);
 }
 
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, mountPhysicsComponent: PhysicsComponent, carryInfo: EntityCarryInfo): void => {
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
 
    fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+      
+   transformComponent.selfVelocity.x = 0;
+   transformComponent.selfVelocity.y = 0;
+   transformComponent.externalVelocity.x = getVelocityX(mountTransformComponent);
+   transformComponent.externalVelocity.y = getVelocityY(mountTransformComponent);
 
-   // @Hack
    if (PhysicsComponentArray.hasComponent(carryInfo.carriedEntity)) {
       const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
-      
-      physicsComponent.selfVelocity.x = 0;
-      physicsComponent.selfVelocity.y = 0;
-      physicsComponent.externalVelocity.x = getVelocityX(mountPhysicsComponent);
-      physicsComponent.externalVelocity.y = getVelocityY(mountPhysicsComponent);
-      
       turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
-      // (Don't apply physics for carried entities)
-      applyHitboxTethers(transformComponent, physicsComponent);
-      updatePosition(carryInfo.carriedEntity, transformComponent, physicsComponent);
+   }
+   applyHitboxTethers(transformComponent);
+   updatePosition(carryInfo.carriedEntity, transformComponent);
    
-      // Propagate to children
-      for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
-      }
-   } else {
-      // @Hack: done since when the transform component's position is updated, it isn't cleaned.
-      // @Bug: This means the pathfinding nodes will be messed up, along with everything else. Should just
-      // rework the system.ransformComponent.cleanHitboxes(entity);
-      transformComponent.cleanHitboxes(carryInfo.carriedEntity);
-      transformComponent.updateContainingChunks(carryInfo.carriedEntity);
+   // Propagate to children
+   for (const carryInfo of transformComponent.carriedEntities) {
+      tickCarriedEntity(transformComponent, carryInfo);
    }
 }
 
@@ -450,14 +414,14 @@ function onTick(entity: Entity): void {
    if (transformComponent.carryRoot === entity) {
       turnEntity(entity, transformComponent, physicsComponent);
       applyPhysics(entity, transformComponent, physicsComponent);
-      applyHitboxTethers(transformComponent, physicsComponent);
-      updatePosition(entity, transformComponent, physicsComponent);
+      applyHitboxTethers(transformComponent);
+      updatePosition(entity, transformComponent);
 
       // @Hack
       transformComponent.rotation = transformComponent.relativeRotation;
 
       for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, physicsComponent, carryInfo);
+         tickCarriedEntity(transformComponent, carryInfo);
       }
    }
 }
@@ -474,8 +438,8 @@ export function applyKnockback(entity: Entity, knockback: number, knockbackDirec
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    const knockbackForce = knockback / transformComponent.totalMass;
-   physicsComponent.externalVelocity.x += knockbackForce * Math.sin(knockbackDirection);
-   physicsComponent.externalVelocity.y += knockbackForce * Math.cos(knockbackDirection);
+   transformComponent.externalVelocity.x += knockbackForce * Math.sin(knockbackDirection);
+   transformComponent.externalVelocity.y += knockbackForce * Math.cos(knockbackDirection);
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -493,8 +457,9 @@ export function applyAbsoluteKnockback(entity: Entity, knockback: number, knockb
       return;
    }
    
-   physicsComponent.externalVelocity.x += knockback * Math.sin(knockbackDirection);
-   physicsComponent.externalVelocity.y += knockback * Math.cos(knockbackDirection);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   transformComponent.externalVelocity.x += knockback * Math.sin(knockbackDirection);
+   transformComponent.externalVelocity.y += knockback * Math.cos(knockbackDirection);
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -503,50 +468,47 @@ export function applyAbsoluteKnockback(entity: Entity, knockback: number, knockb
 }
 
 function getDataLength(): number {
-   return 8 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
-   packet.addNumber(physicsComponent.selfVelocity.x);
-   packet.addNumber(physicsComponent.selfVelocity.y);
-   packet.addNumber(physicsComponent.externalVelocity.x);
-   packet.addNumber(physicsComponent.externalVelocity.y);
    packet.addNumber(physicsComponent.acceleration.x);
    packet.addNumber(physicsComponent.acceleration.y);
    packet.addNumber(physicsComponent.traction);
 }
 
-export function getVelocityX(physicsComponent: PhysicsComponent): number {
-   return physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
+// @Cleanup: should be in transform component cuz thats where the velocity property is
+
+export function getVelocityX(transformComponent: TransformComponent): number {
+   return transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
 }
 
-export function getVelocityY(physicsComponent: PhysicsComponent): number {
-   return physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+export function getVelocityY(transformComponent: TransformComponent): number {
+   return transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
 }
 
-export function getVelocityMagnitude(physicsComponent: PhysicsComponent): number {
-   const vx = getVelocityX(physicsComponent);
-   const vy = getVelocityY(physicsComponent);
+export function getVelocityMagnitude(transformComponent: TransformComponent): number {
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    return Math.sqrt(vx * vx + vy * vy);
 }
 
-export function slowVelocity(physicsComponent: PhysicsComponent, slowUnits: number): void {
-   const selfVelocityMagnitude = physicsComponent.selfVelocity.length();
-   const externalVelocityMagnitude = physicsComponent.externalVelocity.length();
+export function slowVelocity(transformComponent: TransformComponent, slowUnits: number): void {
+   const selfVelocityMagnitude = transformComponent.selfVelocity.length();
+   const externalVelocityMagnitude = transformComponent.externalVelocity.length();
 
    if (selfVelocityMagnitude > 0) {
       const ratio = selfVelocityMagnitude / (selfVelocityMagnitude + externalVelocityMagnitude);
       const reduction = Math.min(slowUnits * ratio, selfVelocityMagnitude);
-      physicsComponent.selfVelocity.x -= reduction * physicsComponent.selfVelocity.x / selfVelocityMagnitude;
-      physicsComponent.selfVelocity.y -= reduction * physicsComponent.selfVelocity.y / selfVelocityMagnitude;
+      transformComponent.selfVelocity.x -= reduction * transformComponent.selfVelocity.x / selfVelocityMagnitude;
+      transformComponent.selfVelocity.y -= reduction * transformComponent.selfVelocity.y / selfVelocityMagnitude;
    }
 
    if (externalVelocityMagnitude > 0) {
       const ratio = externalVelocityMagnitude / (externalVelocityMagnitude + selfVelocityMagnitude);
       const reduction = Math.min(slowUnits * ratio, externalVelocityMagnitude);
-      physicsComponent.externalVelocity.x -= reduction * physicsComponent.externalVelocity.x / externalVelocityMagnitude;
-      physicsComponent.externalVelocity.y -= reduction * physicsComponent.externalVelocity.y / externalVelocityMagnitude;
+      transformComponent.externalVelocity.x -= reduction * transformComponent.externalVelocity.x / externalVelocityMagnitude;
+      transformComponent.externalVelocity.y -= reduction * transformComponent.externalVelocity.y / externalVelocityMagnitude;
    }
 }
