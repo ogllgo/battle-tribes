@@ -359,7 +359,9 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
       cleanEntityRenderInfo(renderInfo, frameProgress);
-      updateEntityRenderInfoRenderData(renderInfo);
+      if (!renderLayerIsChunkRendered(renderInfo.renderLayer)) {
+         updateEntityRenderInfoRenderData(renderInfo);
+      }
    }
 
    // Reset dirty entities
