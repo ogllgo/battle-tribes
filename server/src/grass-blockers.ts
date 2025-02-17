@@ -125,7 +125,7 @@ export function createStructureGrassBlockers(structure: Entity): void {
             blockAmount: 0,
             width: box.width + Vars.BLOCKER_PADDING * 2,
             height: box.height + Vars.BLOCKER_PADDING * 2,
-            rotation: transformComponent.rotation + box.relativeRotation,
+            rotation: transformComponent.relativeRotation + box.relativeRotation,
             maxBlockAmount: 1
          };
          addGrassBlocker(blocker, structure);

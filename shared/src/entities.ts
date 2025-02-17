@@ -281,7 +281,15 @@ export interface DeathInfo {
 // @Refactor: It might be easier to send the animation info instead of whichever action which the client has to infer
 export enum LimbAction {
    none,
+   engageBow,
+   moveLimbToQuiver,
+   moveLimbFromQuiver,
+   pullBackArrow,
+   arrowReleased,
+   mainArrowReleased,
+   returnFromBow,
    chargeBow,
+   disengageBow,
    chargeSpear,
    chargeBattleaxe,
    loadCrossbow,

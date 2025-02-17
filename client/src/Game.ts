@@ -7,12 +7,12 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime, getQueuedGameDataPackets } from "./networking/Client";
+import Client, { getLastPacketTime, getQueuedGameDataPackets, LASTP } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, getMouseTargetEntity, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
-import { GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
+import { GameScreen_getGameInteractState, GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
 import { clearServerTicks, updateDebugScreenFPS, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
@@ -36,7 +36,7 @@ import { playRiverSounds, loadSoundEffects, updateSounds } from "./sound";
 import { createTechTreeGLContext, createTechTreeShaders, renderTechTree } from "./rendering/webgl/tech-tree-rendering";
 import { createResearchOrbShaders, renderResearchOrb } from "./rendering/webgl/research-orb-rendering";
 import { attemptToResearch, updateActiveResearchBench, updateResearchOrb } from "./research";
-import { resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedStructure } from "./entity-selection";
+import { resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedEntity } from "./entity-selection";
 import { createStructureHighlightShaders, renderEntitySelection } from "./rendering/webgl/entity-selection-rendering";
 import { InventorySelector_forceUpdate } from "./components/game/inventories/InventorySelector";
 import { createTurretRangeShaders, renderTurretRange } from "./rendering/webgl/turret-range-rendering";
@@ -107,6 +107,12 @@ const createEventListeners = (): void => {
 }
 
 let lastRenderTime = Math.floor(new Date().getTime() / 1000);
+
+export let bag = {
+   bag: false
+}
+let lastCamX = 0;
+let lastCamY = 0;
 
 const main = (currentTime: number): void => {
    if (Game.isSynced) {
@@ -455,8 +461,10 @@ abstract class Game {
       updateResearchOrb();
       attemptToResearch();
 
-      updateHighlightedAndHoveredEntities();
-      updateSelectedStructure();
+      const gameInteractState = GameScreen_getGameInteractState();
+      // @Cleanup: can probs just combine these 2
+      updateHighlightedAndHoveredEntities(gameInteractState);
+      updateSelectedEntity(gameInteractState);
       BuildMenu_updateBuilding();
       BuildMenu_refreshBuildingID();
       AnimalStaffOptions_update();
@@ -529,6 +537,18 @@ abstract class Game {
          Camera.updatePosition();
          Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
          Camera.updateVisibleRenderChunkBounds();
+
+         if (bag.bag) console.log("____ RENDERING _____")
+         const dt = performance.now() - LASTP;
+         if (bag.bag) console.log("delta last packet:",dt);
+         if (bag.bag) console.log("frame progress:",frameProgress);
+         const dx = Camera.position.x - lastCamX;
+         const dy = Camera.position.y - lastCamY;
+         if (bag.bag)console.log("frame.to.frame cam diff:",dx,dy);
+         lastCamX = Camera.position.x;
+         lastCamY = Camera.position.y;
+
+         
       }
 
       // @Hack

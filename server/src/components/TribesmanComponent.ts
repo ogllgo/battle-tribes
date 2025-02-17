@@ -253,10 +253,8 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-
-   const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
-   if (physicsComponent.selfVelocity.x !== 0 || physicsComponent.selfVelocity.y !== 0) {
-      const selfVelocityMagnitude = Math.sqrt(physicsComponent.selfVelocity.x * physicsComponent.selfVelocity.x + physicsComponent.selfVelocity.y * physicsComponent.selfVelocity.y);
+   if (transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) {
+      const selfVelocityMagnitude = Math.sqrt(transformComponent.selfVelocity.x * transformComponent.selfVelocity.x + transformComponent.selfVelocity.y * transformComponent.selfVelocity.y);
       
       const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * selfVelocityMagnitude;
       if (Math.random() < chance / Settings.TPS) {

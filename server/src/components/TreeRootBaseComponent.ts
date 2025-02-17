@@ -90,7 +90,7 @@ function onJoin(entity: Entity): void {
       const config = createTreeRootSegmentConfig(entity);
       config.components[ServerComponentType.transform].position.x = x;
       config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].rotation = offsetDirection + randFloat(-0.1, 0.1);
+      config.components[ServerComponentType.transform].relativeRotation = offsetDirection + randFloat(-0.1, 0.1);
       createEntity(config, layer, 0);
 
       spawnOffsetDirections.push(offsetDirection);
@@ -108,7 +108,7 @@ function preRemove(entity: Entity): void {
    const config = createTreeRootBaseConfig();
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TPS);
 
    const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(entity);

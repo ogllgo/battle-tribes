@@ -1,10 +1,9 @@
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randInt } from "battletribes-shared/utils";
-import { entityHasReachedPosition, moveEntityToPosition, stopEntity } from "../ai-shared";
+import { entityHasReachedPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
-import { PhysicsComponent, PhysicsComponentArray } from "../components/PhysicsComponent";
-import { TransformComponentArray } from "../components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import Layer from "../Layer";
 import { getEntityLayer } from "../world";
 
@@ -28,18 +27,18 @@ export default class WanderAI {
       this.positionIsValidCallback = positionIsValidCallback;
    }
 
-   private shouldTryAndWander(physicsComponent: PhysicsComponent): boolean {
-      return physicsComponent.selfVelocity.x === 0 && physicsComponent.selfVelocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
+   private shouldTryAndWander(transformComponent: TransformComponent): boolean {
+      return transformComponent.selfVelocity.x === 0 && transformComponent.selfVelocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
    }
 
    public update(entity: Entity): void {
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity);
       
       if (this.targetPositionX !== -1) {
          if (entityHasReachedPosition(entity, this.targetPositionX, this.targetPositionY)) {
             this.targetPositionX = -1;
          }
-      } else if (this.shouldTryAndWander(physicsComponent)) {
+      } else if (this.shouldTryAndWander(transformComponent)) {
          const layer = getEntityLayer(entity);
 
          const transformComponent = TransformComponentArray.getComponent(entity);

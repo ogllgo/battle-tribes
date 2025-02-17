@@ -56,20 +56,19 @@ export function onSpearProjectileCollision(spear: Entity, collidingEntity: Entit
 
    const tribeMember = entityExists(spearComponent.tribeMember) ? spearComponent.tribeMember : null;
 
-   const spearPhysicsComponent = PhysicsComponentArray.getComponent(spear);
+   const spearTransformComponent = TransformComponentArray.getComponent(spear);
 
-   let vx = spearPhysicsComponent.selfVelocity.x + spearPhysicsComponent.externalVelocity.x;
-   let vy = spearPhysicsComponent.selfVelocity.y + spearPhysicsComponent.externalVelocity.y;
+   let vx = spearTransformComponent.selfVelocity.x + spearTransformComponent.externalVelocity.x;
+   let vy = spearTransformComponent.selfVelocity.y + spearTransformComponent.externalVelocity.y;
    if (tribeMember !== null) {
-      const tribeMemberPhysicsComponent = PhysicsComponentArray.getComponent(tribeMember);
-      vx -= tribeMemberPhysicsComponent.selfVelocity.x + tribeMemberPhysicsComponent.externalVelocity.x;
-      vy -= tribeMemberPhysicsComponent.selfVelocity.y + tribeMemberPhysicsComponent.externalVelocity.y;
+      const tribeMemberTransformComponent = TransformComponentArray.getComponent(tribeMember);
+      vx -= tribeMemberTransformComponent.selfVelocity.x + tribeMemberTransformComponent.externalVelocity.x;
+      vy -= tribeMemberTransformComponent.selfVelocity.y + tribeMemberTransformComponent.externalVelocity.y;
    }
    
    const spearVelocityMagnitude = Math.sqrt(vx * vx + vy * vy);
    const damage = Math.floor(spearVelocityMagnitude / 140);
    
-   const spearTransformComponent = TransformComponentArray.getComponent(spear);
    const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
    
    // Damage the entity

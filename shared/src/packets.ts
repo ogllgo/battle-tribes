@@ -31,6 +31,9 @@ export const enum PacketType {
    animalStaffFollowCommand,
    mountCarrySlot,
    dismountCarrySlot,
+   pickUpArrow,
+   modifyBuilding,
+   setCarryTarget,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

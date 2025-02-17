@@ -74,7 +74,7 @@ export function generateSpikyBastards(undergroundLayer: Layer): void {
          const config = createSpikyBastardConfig();
          config.components[ServerComponentType.transform].position.x = x;
          config.components[ServerComponentType.transform].position.y = y;
-         config.components[ServerComponentType.transform].rotation = angle(moveDirX, moveDirY);
+         config.components[ServerComponentType.transform].relativeRotation = angle(moveDirX, moveDirY);
          createEntity(config, undergroundLayer, 0);
          
          pushJoinBuffer(false);

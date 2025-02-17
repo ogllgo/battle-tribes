@@ -194,15 +194,13 @@ export function runFleshSwordAI(itemEntity: Entity) {
 
       const moveAngleOffset = Math.sin(info.internalWiggleTicks / Settings.TPS * 10) * Math.PI * 0.2;
 
-      const physicsComponent = PhysicsComponentArray.getComponent(itemEntity);
-
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
-      transformComponent.rotation = moveAngle - Math.PI/4;
-      physicsComponent.selfVelocity.x = moveSpeed! * Math.sin(moveAngle);
-      physicsComponent.selfVelocity.y = moveSpeed! * Math.cos(moveAngle);
+      transformComponent.relativeRotation = moveAngle - Math.PI/4;
+      transformComponent.selfVelocity.x = moveSpeed! * Math.sin(moveAngle);
+      transformComponent.selfVelocity.y = moveSpeed! * Math.cos(moveAngle);
 
-      physicsComponent.hitboxesAreDirty = true;
+      transformComponent.isDirty = true;
    }
 }
 

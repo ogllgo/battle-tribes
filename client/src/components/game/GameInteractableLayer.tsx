@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
-import { LimbAction } from "../../../../shared/src/entities";
-import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD } from "../../../../shared/src/items/items";
+import { Entity, LimbAction } from "../../../../shared/src/entities";
+import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD, QUIVER_PULL_TIME_TICKS, QUIVER_ACCESS_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { calculateEntityPlaceInfo } from "../../../../shared/src/structures";
@@ -10,10 +10,10 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket } from "../../networking/packet-creation";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetCarryTargetPacket } from "../../networking/packet-creation";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
-import { getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
+import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection, getHoveredEntityID } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
@@ -26,7 +26,7 @@ import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInvent
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
 import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { AttackVars, copyCurrentLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration } from "../../../../shared/src/attack-patterns";
+import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
 import { createEntity, entityExists, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
@@ -52,6 +52,10 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createResearchBenchComponentParams } from "../../entity-components/server-components/ResearchBenchComponent";
 import { GameInteractState } from "./GameScreen";
 import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
+import { countItemTypesInInventory } from "../../inventory-manipulation";
+import SelectCarryTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
+import { Point } from "../../../../shared/src/utils";
+import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -128,6 +132,35 @@ let bufferedInputType = BufferedInputType.attack;
 let bufferedInputInventory = InventoryName.hotbar;
 
 let placeableEntityGhostRenderInfo: EntityRenderInfo | null = null;
+
+// @HACk
+let carrier: Entity = 0;
+export function setShittyCarrier(entity: Entity): void {
+   carrier = entity;
+}
+
+// @Copynpaste
+const BOW_HOLDING_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 36,
+   rotation: -Math.PI * 0.4,
+   extraOffsetX: 4,
+   extraOffsetY: 0
+};
+const BOW_DRAWING_CHARGE_START_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 0,
+   rotation: 0,
+   extraOffsetX: 0,
+   extraOffsetY: 22
+};
+const BOW_DRAWING_CHARGE_END_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 0,
+   rotation: 0,
+   extraOffsetX: 0,
+   extraOffsetY: 8
+};
 
 const createItemRestTimes = (num: number): Array<ItemRestTime> => {
    const restTimes = new Array<ItemRestTime>();
@@ -263,11 +296,10 @@ export function updatePlayerItems(): void {
          limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
 
          // Add extra range for moving attacks
-         const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-         const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+         const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+         const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
          if (vx !== 0 || vy !== 0) {
             const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
             const attackAlignment = (vx * Math.sin(transformComponent.rotation) + vy * Math.cos(transformComponent.rotation)) / velocityMagnitude;
@@ -281,6 +313,63 @@ export function updatePlayerItems(): void {
       // If finished attacking, go to rest
       if (limb.action === LimbAction.attack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
          cancelAttack(limb, getLimbConfiguration(inventoryUseComponent));
+      }
+
+      // If finished moving limb to quiver, move from quiver to charge start limbstate
+      if (limb.action === LimbAction.moveLimbToQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+         const startLimbState = getCurrentLimbState(limb);
+         
+         limb.action = LimbAction.moveLimbFromQuiver;
+         limb.currentActionElapsedTicks = 0;
+         limb.currentActionDurationTicks = QUIVER_PULL_TIME_TICKS;
+         limb.currentActionStartLimbState = startLimbState;
+         limb.currentActionEndLimbState = BOW_DRAWING_CHARGE_START_LIMB_STATE;
+
+         playSound("quiver-pull.mp3", 0.4, 1, Camera.position.copy(), null);
+      }
+
+      // if finished moving limb from quiver, start charging bow
+      if (limb.action === LimbAction.moveLimbFromQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+         const startLimbState = getCurrentLimbState(limb);
+         // @Hack
+         const itemInfo = ITEM_INFO_RECORD[ItemType.wooden_bow] as BowItemInfo;
+         
+         limb.action = LimbAction.pullBackArrow;
+         limb.currentActionElapsedTicks = 0;
+         limb.currentActionDurationTicks = itemInfo.shotChargeTimeTicks;
+         limb.currentActionStartLimbState = startLimbState;
+         limb.currentActionEndLimbState = BOW_DRAWING_CHARGE_END_LIMB_STATE;
+         
+         const otherInventoryName = i === 0 ? InventoryName.offhand : InventoryName.hotbar;
+         const otherLimb = getLimbByInventoryName(inventoryUseComponent, otherInventoryName);
+         const otherLimbStartState = getCurrentLimbState(otherLimb);
+         
+         otherLimb.action = LimbAction.chargeBow;
+         otherLimb.currentActionElapsedTicks = 0;
+         otherLimb.currentActionDurationTicks = itemInfo.shotChargeTimeTicks;
+         // Don't move the limb
+         otherLimb.currentActionStartLimbState = otherLimbStartState;
+         otherLimb.currentActionEndLimbState = otherLimbStartState;
+
+         playSound("bow-charge.mp3", 0.4, 1, Camera.position.copy(), null);
+      }
+
+      // If finished resting after arrow release, return to default state
+      if ((limb.action === LimbAction.arrowReleased || limb.action === LimbAction.mainArrowReleased) && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+         const startingLimbState = getCurrentLimbState(limb);
+         const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+         
+         limb.action = LimbAction.returnFromBow;
+         limb.currentActionElapsedTicks = 0;
+         limb.currentActionDurationTicks = RETURN_FROM_BOW_USE_TIME_TICKS;
+         limb.currentActionStartLimbState = copyLimbState(startingLimbState);
+         limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
+      }
+
+      if (limb.action === LimbAction.returnFromBow && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+         limb.action = LimbAction.none;
+         limb.currentActionElapsedTicks = 0;
+         limb.currentActionDurationTicks = 0;
       }
 
       // If finished going to rest, set to default
@@ -921,7 +1010,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          limb.currentActionElapsedTicks = 0;
          limb.currentActionElapsedTicks = AttackVars.FEIGN_TIME_TICKS;
          limb.currentActionRate = 1;
-         limb.currentActionStartLimbState = copyCurrentLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
+         limb.currentActionStartLimbState = interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
          limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
       // Buffer block
       } else {
@@ -984,16 +1073,35 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "bow": {
-         for (let i = 0; i < 2; i++) {
-            const limb = getLimbByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
-            limb.action = LimbAction.chargeBow;
-            limb.currentActionElapsedTicks = 0;
-            limb.currentActionDurationTicks = (ITEM_INFO_RECORD[itemType] as BowItemInfo).shotChargeTimeTicks;
-            limb.currentActionRate = 1;
+         const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+         const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar)!;
+         if (countItemTypesInInventory(hotbarInventory, ItemType.woodenArrow) > 0) {
+            // The holding limb goes from wherever it is to being in the held position
+            
+            const holdingLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+            const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+            
+            holdingLimb.action = LimbAction.engageBow;
+            holdingLimb.currentActionElapsedTicks = 0;
+            holdingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS + QUIVER_PULL_TIME_TICKS;
+            holdingLimb.currentActionRate = 1;
+            holdingLimb.currentActionStartLimbState = startHoldingLimbState;
+            holdingLimb.currentActionEndLimbState = BOW_HOLDING_LIMB_STATE;
+
+            // Meanwhile the drawing limb pulls an arrow out
+            
+            const drawingLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.offhand);
+            const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+            
+            drawingLimb.action = LimbAction.moveLimbToQuiver;
+            drawingLimb.currentActionElapsedTicks = 0;
+            drawingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS;
+            drawingLimb.currentActionRate = 1;
+            drawingLimb.currentActionStartLimbState = startDrawingLimbState;
+            drawingLimb.currentActionEndLimbState = QUIVER_PULL_LIMB_STATE;
+            
+            sendStartItemUsePacket();
          }
-         
-         sendStartItemUsePacket();
-         playSound("bow-charge.mp3", 0.4, 1, transformComponent.position, null);
 
          break;
       }
@@ -1087,13 +1195,42 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
                Hotbar_updateRightThrownBattleaxeItemID(item.id);
             }
          }
+            
+         const holdingLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
+         const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+         
+         holdingLimb.action = LimbAction.mainArrowReleased;
+         holdingLimb.currentActionElapsedTicks = 0;
+         holdingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+         holdingLimb.currentActionStartLimbState = copyLimbState(startHoldingLimbState);
+         holdingLimb.currentActionEndLimbState = copyLimbState(startHoldingLimbState);
 
-         for (let i = 0; i < 2; i++) {
-            const limb = getLimbByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
-            limb.action = LimbAction.none;
-            limb.currentActionElapsedTicks = 0;
-            limb.currentActionDurationTicks = 0;
-         }
+         const drawingLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.offhand);
+         const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+
+         drawingLimb.action = LimbAction.arrowReleased;
+         drawingLimb.currentActionElapsedTicks = 0;
+         drawingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+         // @Garbage
+         drawingLimb.currentActionStartLimbState = copyLimbState(startDrawingLimbState);
+         // @Garbage
+         drawingLimb.currentActionEndLimbState = copyLimbState(startDrawingLimbState);
+
+         // const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+
+         // const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+         // const restingLimbState = RESTING_LIMB_STATES[limbConfiguration];
+         // for (let i = 0; i < 2; i++) {
+         //    const limb = getLimbByInventoryName(inventoryUseComponent, i === 0 ? InventoryName.hotbar : InventoryName.offhand);
+            
+         //    limb.action = LimbAction.none;
+         //    limb.currentActionElapsedTicks = 0;
+         //    limb.currentActionDurationTicks = 0;
+         //    // @Garbage
+         //    limb.currentActionStartLimbState = copyLimbState(restingLimbState);
+         //    // @Garbage
+         //    limb.currentActionEndLimbState = copyLimbState(restingLimbState);
+         // }
          
          sendItemUsePacket();
          // @Incomplete: Don't play if bow didn't actually fire an arrow
@@ -1219,6 +1356,9 @@ const tickItem = (itemType: ItemType): void => {
 
                   const transformComponentParams = createTransformComponentParams(
                      placeInfo.position.copy(),
+                     new Point(0, 0),
+                     new Point(0, 0),
+                     placeInfo.rotation,
                      placeInfo.rotation,
                      hitboxes,
                      tethers,
@@ -1361,6 +1501,13 @@ const tickItem = (itemType: ItemType): void => {
                   };
                   break;
                }
+               case ServerComponentType.hut: {
+                  components[componentType] = {
+                     doorSwingAmount: 0,
+                     isRecalling: false
+                  };
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }
@@ -1499,13 +1646,15 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          if (props.gameInteractState === GameInteractState.spectateEntity) {
             sendSpectateEntityPacket(getHoveredEntityID());
             props.setGameInteractState(GameInteractState.none);
+         } else if (props.gameInteractState === GameInteractState.selectCarryTarget) {
+            props.setGameInteractState(GameInteractState.none);
          } else {
             attemptAttack();
          }
       } else if (e.button === 2) { // Right click
          rightMouseButtonIsPressed = true;
          
-         const didSelectEntity = attemptEntitySelection();
+         const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
          if (didSelectEntity) {
             e.preventDefault();
          } else {
@@ -1544,6 +1693,10 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       {!props.cinematicModeIsEnabled ? (
          <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
       ) : undefined}
+
+      {props.gameInteractState === GameInteractState.selectCarryTarget ? (
+         <SelectCarryTargetCursorOverlay mouseX={mouseX} mouseY={mouseY} />
+      ) : null}
    </>
 }
 

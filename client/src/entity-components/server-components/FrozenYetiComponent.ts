@@ -318,8 +318,8 @@ function onTick(entity: Entity): void {
                }
                if (Math.abs(angleDifference) <= ROAR_ARC / 2 && distanceToPlayer <= ROAR_REACH) {
                   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-                  physicsComponent.selfVelocity.x += 50 * Math.sin(angleToPlayer);
-                  physicsComponent.selfVelocity.y += 50 * Math.cos(angleToPlayer);
+                  transformComponent.selfVelocity.x += 50 * Math.sin(angleToPlayer);
+                  transformComponent.selfVelocity.y += 50 * Math.cos(angleToPlayer);
                }
                
                break;

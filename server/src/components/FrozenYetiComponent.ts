@@ -115,7 +115,7 @@ const getAttackType = (frozenYeti: Entity, target: Entity, angleToTarget: number
    }
 
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const angleDifference = getAngleDifference(angleToTarget, transformComponent.rotation);
+   const angleDifference = getAngleDifference(angleToTarget, transformComponent.relativeRotation);
    
    // Bite if target is in range and the yeti's mouth is close enough
    if (frozenYetiComponent.biteCooldownTimer === 0 && Math.abs(angleDifference) <= 0.7 && entityIsInVisionRange(transformComponent.position, Vars.BITE_RANGE, target)) {
@@ -289,7 +289,7 @@ const createRockSpikes = (frozenYeti: Entity, frozenYetiComponent: FrozenYetiCom
       const config = createRockSpikeConfig(info.size, frozenYeti);
       config.components[ServerComponentType.transform].position.x = position.x;
       config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(frozenYeti), 0);
    }
    frozenYetiComponent.rockSpikeInfoArray = [];
@@ -298,7 +298,7 @@ const createRockSpikes = (frozenYeti: Entity, frozenYetiComponent: FrozenYetiCom
 const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
    
-   const angle = transformComponent.rotation + randFloat(-1, 1);
+   const angle = transformComponent.relativeRotation + randFloat(-1, 1);
    
    const position = transformComponent.position.copy();
    position.x += Vars.SNOWBALL_THROW_OFFSET * Math.sin(angle);
@@ -309,8 +309,8 @@ const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const config = createSnowballConfig(frozenYeti, size);
    config.components[ServerComponentType.transform].position.x = position.x;
    config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.physics].externalVelocity.x = velocityMagnitude * Math.sin(angle);
-   config.components[ServerComponentType.physics].externalVelocity.y = velocityMagnitude * Math.cos(angle);
+   config.components[ServerComponentType.transform].externalVelocity.x = velocityMagnitude * Math.sin(angle);
+   config.components[ServerComponentType.transform].externalVelocity.y = velocityMagnitude * Math.cos(angle);
    createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
@@ -327,9 +327,8 @@ const throwSnow = (frozenYeti: Entity): void => {
 
    // Kickback
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const physicsComponent = PhysicsComponentArray.getComponent(frozenYeti);
-   physicsComponent.externalVelocity.x += 50 * Math.sin(transformComponent.rotation + Math.PI);
-   physicsComponent.externalVelocity.y += 50 * Math.cos(transformComponent.rotation + Math.PI);
+   transformComponent.externalVelocity.x += 50 * Math.sin(transformComponent.relativeRotation + Math.PI);
+   transformComponent.externalVelocity.y += 50 * Math.cos(transformComponent.relativeRotation + Math.PI);
 }
 
 const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void => {
@@ -345,11 +344,10 @@ const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void =>
       
       // Check if the entity is within the arc range of the attack
       const angle = transformComponent.position.calculateAngleBetween(entityTransformComponent.position);
-      const angleDifference = getAngleDifference(transformComponent.rotation, angle);
+      const angleDifference = getAngleDifference(transformComponent.relativeRotation, angle);
       if (Math.abs(angleDifference) <= Vars.ROAR_ARC / 2) {
-         const physicsComponent = PhysicsComponentArray.getComponent(frozenYeti);
-         physicsComponent.externalVelocity.x += 1500 / Settings.TPS * Math.sin(angle);
-         physicsComponent.externalVelocity.y += 1500 / Settings.TPS * Math.cos(angle);
+         transformComponent.externalVelocity.x += 1500 / Settings.TPS * Math.sin(angle);
+         transformComponent.externalVelocity.y += 1500 / Settings.TPS * Math.cos(angle);
 
          if (StatusEffectComponentArray.hasComponent(entity)) {
             applyStatusEffect(entity, StatusEffect.freezing, 5 * Settings.TPS);
@@ -361,8 +359,8 @@ const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void =>
 const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
    
-   const x = transformComponent.position.x + Vars.BITE_ATTACK_OFFSET * Math.sin(transformComponent.rotation);
-   const y = transformComponent.position.y + Vars.BITE_ATTACK_OFFSET * Math.cos(transformComponent.rotation);
+   const x = transformComponent.position.x + Vars.BITE_ATTACK_OFFSET * Math.sin(transformComponent.relativeRotation);
+   const y = transformComponent.position.y + Vars.BITE_ATTACK_OFFSET * Math.cos(transformComponent.relativeRotation);
    const hitEntities = getEntitiesInRange(getEntityLayer(frozenYeti), x, y, Vars.BITE_ATTACK_RANGE);
 
    for (let i = 0; i < hitEntities.length; i++) {
@@ -628,8 +626,8 @@ function onTick(frozenYeti: Entity): void {
 
                // Lunge forwards at the beginning of this stage
                if (frozenYetiComponent.stageProgress === 0) {
-                  physicsComponent.externalVelocity.x += 450 * Math.sin(transformComponent.rotation);
-                  physicsComponent.externalVelocity.y += 450 * Math.cos(transformComponent.rotation);
+                  transformComponent.externalVelocity.x += 450 * Math.sin(transformComponent.relativeRotation);
+                  transformComponent.externalVelocity.y += 450 * Math.cos(transformComponent.relativeRotation);
                }
 
                frozenYetiComponent.stageProgress += 2 / Settings.TPS;

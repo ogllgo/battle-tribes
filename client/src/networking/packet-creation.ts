@@ -31,10 +31,10 @@ export function createPlayerDataPacket(): ArrayBuffer {
    packet.addNumber(transformComponent.rotation);
 
    const physicsComponent = PhysicsComponentArray.getComponent(playerInstance!);
-   packet.addNumber(physicsComponent.selfVelocity.x);
-   packet.addNumber(physicsComponent.selfVelocity.y);
-   packet.addNumber(physicsComponent.externalVelocity.x);
-   packet.addNumber(physicsComponent.externalVelocity.y);
+   packet.addNumber(transformComponent.selfVelocity.x);
+   packet.addNumber(transformComponent.selfVelocity.y);
+   packet.addNumber(transformComponent.externalVelocity.x);
+   packet.addNumber(transformComponent.externalVelocity.y);
    packet.addNumber(physicsComponent.acceleration.x);
    packet.addNumber(physicsComponent.acceleration.y);
    packet.addNumber(physicsComponent.angularVelocity);
@@ -289,5 +289,25 @@ export function sendMountCarrySlotPacket(mount: Entity): void {
 
 export function sendDismountCarrySlotPacket(): void {
    const packet = new Packet(PacketType.dismountCarrySlot, Float32Array.BYTES_PER_ELEMENT);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendPickUpArrowPacket(arrow: Entity): void {
+   const packet = new Packet(PacketType.pickUpArrow, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(arrow);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendModifyBuildingPacket(structure: Entity, data: number): void {
+   const packet = new Packet(PacketType.modifyBuilding, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(structure);
+   packet.addNumber(data);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): void {
+   const packet = new Packet(PacketType.setCarryTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(carryTarget);
    Client.sendPacket(packet.buffer);
 }

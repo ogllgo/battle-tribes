@@ -1,6 +1,7 @@
 import ItemCatalogue from "./ItemCatalogue";
 import { ItemSlotCallbackInfo } from "../../inventories/ItemSlot";
 import { sendDevGiveItemPacket } from "../../../../networking/packet-creation";
+import { getItemStackSize } from "../../../../../../shared/src/items/items";
 
 const ItemsTab = () => {
    const onSlotClick = (e: MouseEvent, callbackInfo: ItemSlotCallbackInfo): void => {
@@ -8,7 +9,7 @@ const ItemsTab = () => {
          return;
       }
       
-      const amount = e.shiftKey ? 99 : 1;
+      const amount = e.shiftKey ? getItemStackSize(callbackInfo.itemType) : 1;
       sendDevGiveItemPacket(callbackInfo.itemType, amount);
    }
    

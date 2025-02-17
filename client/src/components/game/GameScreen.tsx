@@ -33,7 +33,8 @@ import AnimalStaffOptions from "./AnimalStaffOptions";
 export const enum GameInteractState {
    none,
    summonEntity,
-   spectateEntity
+   spectateEntity,
+   selectCarryTarget
 }
 
 export let openSettingsMenu: () => void;
@@ -45,6 +46,9 @@ export let toggleCinematicMode: () => void;
 export let gameScreenSetIsDead: (isDead: boolean) => void = () => {};
 
 export let GameScreen_update: () => void = () => {};
+
+// @Hack
+export let GameScreen_getGameInteractState: () => GameInteractState = () => GameInteractState.none;
 
 interface GameScreenProps {
    setAppState(appState: AppState): void;
@@ -99,6 +103,10 @@ const GameScreen = (props: GameScreenProps) => {
 
       gameScreenSetIsDead = setIsDead;
    }, []);
+
+   useEffect(() => {
+      GameScreen_getGameInteractState = () => interactState;
+   }, [interactState]);
 
    useEffect(() => {
       GameScreen_update = (): void => {
@@ -221,7 +229,7 @@ const GameScreen = (props: GameScreenProps) => {
 
       <ItemTooltip />
 
-      <AnimalStaffOptions />
+      <AnimalStaffOptions setGameInteractState={setInteractState} />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

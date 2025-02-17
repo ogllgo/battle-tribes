@@ -38,10 +38,7 @@ function onTick(quake: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(quake);
       const hitbox = transformComponent.hitboxes[0];
       hitbox.box.scale = life;
-      
-      // @Hack: Shouldn't need a physics component to do this!
-      const physicsComponent = PhysicsComponentArray.getComponent(quake);
-      physicsComponent.hitboxesAreDirty = true;
+      transformComponent.isDirty = true;
 
       if (age >= Vars.LIFETIME_TICKS) {
          destroyEntity(quake);

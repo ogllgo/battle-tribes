@@ -68,12 +68,10 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
       const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
       hotbarUseInfo.selectedItemSlot = seedItemSlot!;
       
-      const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-
       // @Cleanup: copy and pasted from tribesman-combat-ai
       const desiredDistance = getTribesmanAttackRadius(tribesman);
       const distance = getDistanceFromPointToEntity(transformComponent.position, closestReplantablePlanterBox) - getHumanoidRadius(transformComponent);
-      if (willStopAtDesiredDistance(physicsComponent, desiredDistance, distance)) {
+      if (willStopAtDesiredDistance(transformComponent, desiredDistance, distance)) {
          // @Incomplete: turn to face direction and then place
          
          // @Cleanup: copy and pasted from player replant logic

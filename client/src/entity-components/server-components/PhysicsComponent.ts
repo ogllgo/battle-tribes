@@ -18,18 +18,12 @@ import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
 
 export interface PhysicsComponentParams {
-   readonly selfVelocity: Point;
-   readonly externalVelocity: Point;
    readonly acceleration: Point;
    readonly angularVelocity: number;
    readonly traction: number;
 }
 
 export interface PhysicsComponent {
-   // @Memory @Speed: Unbox external velocity and velocity
-   readonly selfVelocity: Point;
-   readonly externalVelocity: Point;
-
    readonly acceleration: Point;
 
    angularVelocity: number;
@@ -48,13 +42,13 @@ export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsCompon
 }
 
 const applyPhysics = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, entity: Entity): void => {
-   if (isNaN(physicsComponent.selfVelocity.x)) {
+   if (isNaN(transformComponent.selfVelocity.x)) {
       throw new Error("Self velocity was NaN.");
    }
-   if (isNaN(physicsComponent.externalVelocity.x)) {
+   if (isNaN(transformComponent.externalVelocity.x)) {
       throw new Error("External velocity was NaN.");
    }
-   if (!isFinite(physicsComponent.externalVelocity.x)) {
+   if (!isFinite(transformComponent.externalVelocity.x)) {
       throw new Error("External velocity is infinite.");
    }
 
@@ -79,8 +73,8 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
       const desiredVelocityY = physicsComponent.acceleration.y * friction * tileMoveSpeedMultiplier;
 
       // Apply velocity with traction (blend towards desired velocity)
-      physicsComponent.selfVelocity.x += (desiredVelocityX - physicsComponent.selfVelocity.x) * physicsComponent.traction * Settings.I_TPS;
-      physicsComponent.selfVelocity.y += (desiredVelocityY - physicsComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
+      transformComponent.selfVelocity.x += (desiredVelocityX - transformComponent.selfVelocity.x) * physicsComponent.traction * Settings.I_TPS;
+      transformComponent.selfVelocity.y += (desiredVelocityY - transformComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
    }
 
    // @Incomplete: here goes fish suit exception
@@ -88,44 +82,44 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         physicsComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
-         physicsComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
+         transformComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
+         transformComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
       }
    }
 
    let shouldUpdate = false;
    
    // Apply friction to self-velocity
-   if (physicsComponent.selfVelocity.x !== 0 || physicsComponent.selfVelocity.y !== 0) {
+   if (transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) {
       const friction = TILE_FRICTIONS[tile.type];
       
       // Apply air and ground friction to selfVelocity
-      physicsComponent.selfVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-      physicsComponent.selfVelocity.y *= 1 - friction * Settings.I_TPS * 2;
+      transformComponent.selfVelocity.x *= 1 - friction * Settings.I_TPS * 2;
+      transformComponent.selfVelocity.y *= 1 - friction * Settings.I_TPS * 2;
 
-      const selfVelocityMagnitude = physicsComponent.selfVelocity.length();
+      const selfVelocityMagnitude = transformComponent.selfVelocity.length();
       if (selfVelocityMagnitude > 0) {
          const groundFriction = Math.min(friction, selfVelocityMagnitude);
-         physicsComponent.selfVelocity.x -= groundFriction * physicsComponent.selfVelocity.x / selfVelocityMagnitude;
-         physicsComponent.selfVelocity.y -= groundFriction * physicsComponent.selfVelocity.y / selfVelocityMagnitude;
+         transformComponent.selfVelocity.x -= groundFriction * transformComponent.selfVelocity.x / selfVelocityMagnitude;
+         transformComponent.selfVelocity.y -= groundFriction * transformComponent.selfVelocity.y / selfVelocityMagnitude;
       }
 
       shouldUpdate = true;
    }
 
    // Apply friction to external velocity
-   if (physicsComponent.externalVelocity.x !== 0 || physicsComponent.externalVelocity.y !== 0) {
+   if (transformComponent.externalVelocity.x !== 0 || transformComponent.externalVelocity.y !== 0) {
       const friction = TILE_FRICTIONS[tile.type];
       
       // Apply air and ground friction to externalVelocity
-      physicsComponent.externalVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-      physicsComponent.externalVelocity.y *= 1 - friction * Settings.I_TPS * 2;
+      transformComponent.externalVelocity.x *= 1 - friction * Settings.I_TPS * 2;
+      transformComponent.externalVelocity.y *= 1 - friction * Settings.I_TPS * 2;
 
-      const externalVelocityMagnitude = physicsComponent.externalVelocity.length();
+      const externalVelocityMagnitude = transformComponent.externalVelocity.length();
       if (externalVelocityMagnitude > 0) {
          const groundFriction = Math.min(friction, externalVelocityMagnitude);
-         physicsComponent.externalVelocity.x -= groundFriction * physicsComponent.externalVelocity.x / externalVelocityMagnitude;
-         physicsComponent.externalVelocity.y -= groundFriction * physicsComponent.externalVelocity.y / externalVelocityMagnitude;
+         transformComponent.externalVelocity.x -= groundFriction * transformComponent.externalVelocity.x / externalVelocityMagnitude;
+         transformComponent.externalVelocity.y -= groundFriction * transformComponent.externalVelocity.y / externalVelocityMagnitude;
       }
 
       shouldUpdate = true;
@@ -133,8 +127,8 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
 
    if (shouldUpdate) {
       // Update position based on the sum of self-velocity and external velocity
-      transformComponent.position.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * Settings.I_TPS;
-      transformComponent.position.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * Settings.I_TPS;
+      transformComponent.position.x += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * Settings.I_TPS;
+      transformComponent.position.y += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * Settings.I_TPS;
 
       // Mark entity's position as updated
       updateEntityPosition(transformComponent, entity);
@@ -144,7 +138,7 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
    }
 
    if (isNaN(transformComponent.position.x)) {
-      console.log(physicsComponent.selfVelocity.x, physicsComponent.externalVelocity.x);
+      console.log(transformComponent.selfVelocity.x, transformComponent.externalVelocity.x);
       throw new Error("Position was NaN.");
    }
 }
@@ -166,24 +160,24 @@ const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Ent
       // Left wall
       if (minX < 0) {
          transformComponent.position.x -= minX;
-         physicsComponent.selfVelocity.x = 0;
+         transformComponent.selfVelocity.x = 0;
          hasMoved = true;
          // Right wall
       } else if (maxX > Settings.BOARD_UNITS) {
          transformComponent.position.x -= maxX - Settings.BOARD_UNITS;
-         physicsComponent.selfVelocity.x = 0;
+         transformComponent.selfVelocity.x = 0;
          hasMoved = true;
       }
       
       // Bottom wall
       if (minY < 0) {
          transformComponent.position.y -= minY;
-         physicsComponent.selfVelocity.y = 0;
+         transformComponent.selfVelocity.y = 0;
          hasMoved = true;
          // Top wall
       } else if (maxY > Settings.BOARD_UNITS) {
          transformComponent.position.y -= maxY - Settings.BOARD_UNITS;
-         physicsComponent.selfVelocity.y = 0;
+         transformComponent.selfVelocity.y = 0;
          hasMoved = true;
       }
    }
@@ -202,17 +196,11 @@ export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent, 
 });
 
 function createParamsFromData(reader: PacketReader): PhysicsComponentParams {
-   const selfVelocityX = reader.readNumber();
-   const selfVelocityY = reader.readNumber();
-   const externalVelocityX = reader.readNumber();
-   const externalVelocityY = reader.readNumber();
    const accelerationX = reader.readNumber();
    const accelerationY = reader.readNumber();
    const traction = reader.readNumber();
 
    return {
-      selfVelocity: new Point(selfVelocityX, selfVelocityY),
-      externalVelocity: new Point(externalVelocityX, externalVelocityY),
       acceleration: new Point(accelerationX, accelerationY),
       // @Incomplete
       angularVelocity: 0,
@@ -224,8 +212,6 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.physics,
    const physicsComponentParams = entityConfig.serverComponents[ServerComponentType.physics];
    
    return {
-      selfVelocity: physicsComponentParams.selfVelocity,
-      externalVelocity: physicsComponentParams.externalVelocity,
       acceleration: physicsComponentParams.acceleration,
       angularVelocity: physicsComponentParams.angularVelocity,
       traction: physicsComponentParams.traction,
@@ -280,13 +266,13 @@ function onTick(entity: Entity): void {
 const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
    transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
    transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
+   transformComponent.rotation = transformComponent.relativeRotation + mountTransformComponent.rotation;
 }
 
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
    assert(entityExists(carryInfo.carriedEntity));
    
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-   const physicsComponent = PhysicsComponentArray.getComponent(carryInfo.carriedEntity);
    
    fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
    // @Incomplete
@@ -324,6 +310,9 @@ function onUpdate(entity: Entity): void {
          updateEntityPosition(transformComponent, entity);
       }
 
+      // @hack
+      transformComponent.rotation = transformComponent.relativeRotation;
+
       // Propagate to children
       for (const carryInfo of transformComponent.carriedEntities) {
          tickCarriedEntity(transformComponent, carryInfo);
@@ -335,16 +324,12 @@ function onUpdate(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
-   physicsComponent.selfVelocity.x = reader.readNumber();
-   physicsComponent.selfVelocity.y = reader.readNumber();
-   physicsComponent.externalVelocity.x = reader.readNumber();
-   physicsComponent.externalVelocity.y = reader.readNumber();
    physicsComponent.acceleration.x = reader.readNumber();
    physicsComponent.acceleration.y = reader.readNumber();
    physicsComponent.traction = reader.readNumber();
@@ -364,4 +349,20 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    } else {
       padData(reader);
    }
+}
+
+// @Cleanup: location
+
+export function getVelocityX(transformComponent: TransformComponent): number {
+   return transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+}
+
+export function getVelocityY(transformComponent: TransformComponent): number {
+   return transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
+}
+
+export function getVelocityMagnitude(transformComponent: TransformComponent): number {
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
+   return Math.sqrt(vx * vx + vy * vy);
 }

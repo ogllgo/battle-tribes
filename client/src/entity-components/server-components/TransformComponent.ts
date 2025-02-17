@@ -36,7 +36,10 @@ export interface EntityCarryInfo {
 
 export interface TransformComponentParams {
    readonly position: Point;
+   readonly selfVelocity: Point;
+   readonly externalVelocity: Point;
    readonly rotation: number;
+   readonly relativeRotation: number;
    readonly hitboxes: Array<ClientHitbox>;
    readonly rootHitboxes: Array<ClientHitbox>;
    readonly tethers: Array<HitboxTether>;
@@ -52,8 +55,12 @@ export interface TransformComponent {
    
    readonly position: Point;
 
+   readonly selfVelocity: Point;
+   readonly externalVelocity: Point;
+
    /** Angle the object is facing, taken counterclockwise from the positive x axis (radians) */
    rotation: number;
+   relativeRotation: number;
 
    readonly chunks: Set<Chunk>;
 
@@ -182,10 +189,13 @@ const padRectangularHitboxData = (reader: PacketReader): void => {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
-export function createTransformComponentParams(position: Point, rotation: number, hitboxes: Array<ClientHitbox>, tethers: Array<HitboxTether>, rootHitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams {
+export function createTransformComponentParams(position: Point, selfVelocity: Point, externalVelocity: Point, rotation: number, relativeRotation: number, hitboxes: Array<ClientHitbox>, tethers: Array<HitboxTether>, rootHitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams {
    return {
       position: position,
+      selfVelocity: selfVelocity,
+      externalVelocity: externalVelocity,
       rotation: rotation,
+      relativeRotation: relativeRotation,
       hitboxes: hitboxes,
       tethers: tethers,
       rootHitboxes: rootHitboxes,
@@ -203,9 +213,17 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
    const position = new Point(positionX, positionY);
 
    const rotation = reader.readNumber();
+   const relativeRotation = reader.readNumber();
    
    const collisionBit = reader.readNumber();
    const collisionMask = reader.readNumber();
+
+   const selfVelocityX = reader.readNumber();
+   const selfVelocityY = reader.readNumber();
+   const externalVelocityX = reader.readNumber();
+   const externalVelocityY = reader.readNumber();
+   const selfVelocity = new Point(selfVelocityX, selfVelocityY);
+   const externalVelocity = new Point(externalVelocityX, externalVelocityY);
 
    const hitboxes = new Array<ClientHitbox>();
    const tethers = new Array<HitboxTether>();
@@ -263,7 +281,7 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       carriedEntities.push(carryInfo);
    }
 
-   return createTransformComponentParams(position, rotation, hitboxes, tethers, rootHitboxes, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
+   return createTransformComponentParams(position, selfVelocity, externalVelocity, rotation, relativeRotation, hitboxes, tethers, rootHitboxes, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
@@ -481,7 +499,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    return {
       totalMass: totalMass,
       position: transformComponentParams.position,
+      selfVelocity: transformComponentParams.selfVelocity,
+      externalVelocity: transformComponentParams.externalVelocity,
       rotation: transformComponentParams.rotation,
+      relativeRotation: transformComponentParams.relativeRotation,
       chunks: new Set(),
       hitboxes: transformComponentParams.hitboxes,
       hitboxMap: hitboxMap,
@@ -513,7 +534,7 @@ function onRemove(entity: Entity): void {
 
 function padData(reader: PacketReader): void {
    // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
@@ -597,11 +618,13 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
    const rotation = reader.readNumber();
+   const relativeRotation = reader.readNumber();
 
-   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.rotation) {
+   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.rotation || relativeRotation !== transformComponent.relativeRotation) {
       transformComponent.position.x = positionX;
       transformComponent.position.y = positionY;
       transformComponent.rotation = rotation;
+      transformComponent.relativeRotation = relativeRotation;
       
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);
@@ -610,6 +633,11 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    transformComponent.collisionBit = reader.readNumber();
    transformComponent.collisionMask = reader.readNumber();
+
+   transformComponent.selfVelocity.x = reader.readNumber();
+   transformComponent.selfVelocity.y = reader.readNumber();
+   transformComponent.externalVelocity.x = reader.readNumber();
+   transformComponent.externalVelocity.y = reader.readNumber();
 
    // @Speed: would be faster if we split the hitboxes array
    let existingNumCircular = 0;
@@ -801,7 +829,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    // Update carry roots and carrying entities
    // 
    // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {

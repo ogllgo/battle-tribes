@@ -157,7 +157,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
 
                if (plan.recipe.ingredients.getItemCount(item.type) === 0) {
                   const itemSlot = hotbarInventory.getItemSlot(item);
-                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, transformComponent.rotation);
+                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, transformComponent.relativeRotation);
                   hasThrown = true;
                   break;
                }

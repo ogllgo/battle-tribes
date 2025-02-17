@@ -236,6 +236,14 @@ export const RESTING_LIMB_STATES: Record<LimbConfiguration, Readonly<LimbState>>
    }
 };
 
+export const QUIVER_PULL_LIMB_STATE: LimbState = {
+   direction: Math.PI * 0.8,
+   extraOffset: 0,
+   rotation: Math.PI * 0.3,
+   extraOffsetX: 0,
+   extraOffsetY: 0
+};
+
 export const SPEAR_CHARGED_LIMB_STATE: LimbState = {
    direction: Math.PI * 0.6,
    extraOffset: 0,
@@ -338,7 +346,7 @@ export function copyLimbState(limbState: LimbState): LimbState {
    };
 }
 
-export function copyCurrentLimbState(startLimbState: LimbState, endLimbState: LimbState, progress: number): LimbState {
+export function interpolateLimbState(startLimbState: LimbState, endLimbState: LimbState, progress: number): LimbState {
    return {
       direction: lerp(startLimbState.direction, endLimbState.direction, progress),
       extraOffset: lerp(startLimbState.extraOffset, endLimbState.extraOffset, progress),

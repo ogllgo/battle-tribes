@@ -63,6 +63,6 @@ export function dismountCarrySlot(entity: Entity, mount: Entity): void {
    // Set the entity to the dismount position
    const transformComponent = TransformComponentArray.getComponent(entity);
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.rotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.rotation);
+   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
+   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
 }

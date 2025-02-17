@@ -78,9 +78,8 @@ function onTick(tribeMember: Entity): void {
                forceMult = lerp(0.5, 1, forceMult);
 
                const vacuumDirection = itemEntityTransformComponent.position.calculateAngleBetween(transformComponent.position);
-               const physicsComponent = PhysicsComponentArray.getComponent(itemEntity);
-               physicsComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
-               physicsComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
+               transformComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
+               transformComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
             }
          }
       }

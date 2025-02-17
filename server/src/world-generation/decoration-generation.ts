@@ -27,7 +27,7 @@ const createDecoration = (x: number, y: number, decorationType: DecorationType):
    const config = createDecorationConfig(decorationType);
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    config.components[ServerComponentType.decoration].decorationType = decorationType;
    createEntity(config, surfaceLayer, 0);
 

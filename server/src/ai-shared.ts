@@ -3,9 +3,9 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges } from "battletribes-shared/utils";
 import Layer from "./Layer";
-import { PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
+import { getVelocityX, getVelocityY, PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
 import { getEntityPathfindingGroupID } from "./pathfinding";
-import { TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -41,10 +41,10 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
 }
 
 /** Estimates the distance it will take for the entity to stop */
-const estimateStopDistance = (physicsComponent: PhysicsComponent): number => {
+const estimateStopDistance = (transformComponent: TransformComponent): number => {
    // Get the total velocity length
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    const totalVelocityMagnitude = Math.sqrt(vx * vx + vy * vy);
    
    // @Incomplete: Hard-coded
@@ -54,9 +54,9 @@ const estimateStopDistance = (physicsComponent: PhysicsComponent): number => {
    return stopDistance;
 }
 
-export function willStopAtDesiredDistance(physicsComponent: PhysicsComponent, desiredDistance: number, distance: number): boolean {
+export function willStopAtDesiredDistance(transformComponent: TransformComponent, desiredDistance: number, distance: number): boolean {
    // If the entity has a desired distance from its target, try to stop at that desired distance
-   const stopDistance = estimateStopDistance(physicsComponent);
+   const stopDistance = estimateStopDistance(transformComponent);
    return distance - stopDistance <= desiredDistance;
 }
 
@@ -103,13 +103,12 @@ export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceler
 
 export function entityHasReachedPosition(entity: Entity, positionX: number, positionY: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const relativeX = transformComponent.position.x - positionX;
    const relativeY = transformComponent.position.y - positionY;
 
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+   const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
    const dotProduct = vx * relativeX + vy * relativeY;
    
    return dotProduct > 0;
@@ -144,8 +143,8 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
          minDist = distance;
       }
 
-      totalXVal += Math.sin(herdMemberTransformComponent.rotation);
-      totalYVal += Math.cos(herdMemberTransformComponent.rotation);
+      totalXVal += Math.sin(herdMemberTransformComponent.relativeRotation);
+      totalYVal += Math.cos(herdMemberTransformComponent.relativeRotation);
 
       centerX += herdMemberTransformComponent.position.x;
       centerY += herdMemberTransformComponent.position.y;
@@ -161,7 +160,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
    // @Cleanup: We can probably clean up a lot of this code by using Entity's built in turn functions
    let angularVelocity = 0;
    
-   const headingPrincipalValue = ((transformComponent.rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+   const headingPrincipalValue = ((transformComponent.relativeRotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
    
    // SEPARATION
    // Steer away from herd members who are too close
@@ -175,7 +174,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       // @Speed: Garbage collection
       const distanceVector = herdMemberTransformComponent.position.convertToVector(transformComponent.position);
 
-      const clockwiseDist = (distanceVector.direction - transformComponent.rotation + Math.PI * 2) % (Math.PI * 2);
+      const clockwiseDist = (distanceVector.direction - transformComponent.relativeRotation + Math.PI * 2) % (Math.PI * 2);
       const counterclockwiseDist = (Math.PI * 2) - clockwiseDist;
 
       if (clockwiseDist > counterclockwiseDist) {
@@ -547,7 +546,7 @@ export function angleIsInRange(angle: number, minAngle: number, maxAngle: number
 
 export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: number): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const dotProduct = Math.sin(transformComponent.rotation) * Math.sin(targetDirection) + Math.cos(transformComponent.rotation) * Math.cos(targetDirection);
+   const dotProduct = Math.sin(transformComponent.relativeRotation) * Math.sin(targetDirection) + Math.cos(transformComponent.relativeRotation) * Math.cos(targetDirection);
    if (dotProduct <= 0) {
       // Turn at full speed when facing away from the direction
       return 1;

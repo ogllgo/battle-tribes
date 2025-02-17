@@ -1,6 +1,6 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
 import { HealthComponentArray } from "../components/HealthComponent";
@@ -594,13 +594,13 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(player);
    packet.addNumber(transformComponent.position.x);
    packet.addNumber(transformComponent.position.y);
-   packet.addNumber(transformComponent.rotation);
+   packet.addNumber(transformComponent.relativeRotation);
 
    const physicsComponent = PhysicsComponentArray.getComponent(player);
-   packet.addNumber(physicsComponent.selfVelocity.x);
-   packet.addNumber(physicsComponent.selfVelocity.y);
-   packet.addNumber(physicsComponent.externalVelocity.x);
-   packet.addNumber(physicsComponent.externalVelocity.y);
+   packet.addNumber(transformComponent.selfVelocity.x);
+   packet.addNumber(transformComponent.selfVelocity.y);
+   packet.addNumber(transformComponent.externalVelocity.x);
+   packet.addNumber(transformComponent.externalVelocity.y);
    packet.addNumber(physicsComponent.acceleration.x);
    packet.addNumber(physicsComponent.acceleration.y);
 

@@ -1,7 +1,7 @@
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import Tribe from "../../../Tribe";
 import { getEntitiesInRange, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
-import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
+import { getVelocityX, getVelocityY, PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, findClosestDropdownTile, findMultiLayerPath, Path } from "../../../pathfinding";
@@ -128,10 +128,10 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    
    // @Speed
    // Recalculate if the tribesman isn't making any progress
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
 
-   const vx = physicsComponent.selfVelocity.x;
-   const vy = physicsComponent.selfVelocity.y;
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);
@@ -167,8 +167,8 @@ const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const layer = getEntityLayer(tribesman);
    
    const offsetMagnitude = getHumanoidRadius(transformComponent) + 20;
-   const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.rotation);
-   const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.rotation);
+   const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.relativeRotation);
+   const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.relativeRotation);
    const entitiesInFront = getEntitiesInRange(layer, checkX, checkY, 40);
    for (let i = 0; i < entitiesInFront.length; i++) {
       const entity = entitiesInFront[i];
@@ -224,12 +224,12 @@ export function continueCurrentPath(tribesman: Entity): boolean {
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
-      if (willStopAtDesiredDistance(physicsComponent, -2, distFromNode)) {
+      if (willStopAtDesiredDistance(transformComponent, -2, distFromNode)) {
          stopEntity(physicsComponent);
       } else {
          const acceleration = getTribesmanAcceleration(tribesman);
-         physicsComponent.acceleration.x = acceleration * Math.sin(transformComponent.rotation);
-         physicsComponent.acceleration.y = acceleration * Math.cos(transformComponent.rotation);
+         physicsComponent.acceleration.x = acceleration * Math.sin(transformComponent.relativeRotation);
+         physicsComponent.acceleration.y = acceleration * Math.cos(transformComponent.relativeRotation);
       }
 
       // @Speed: only do this if we know the path has a door in it

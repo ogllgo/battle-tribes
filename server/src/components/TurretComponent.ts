@@ -107,8 +107,8 @@ const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
 
    const turretTransformComponent = TransformComponentArray.getComponent(turret);
 
-   const minAngle = turretTransformComponent.rotation - aimArcSize / 2;
-   const maxAngle = turretTransformComponent.rotation + aimArcSize / 2;
+   const minAngle = turretTransformComponent.relativeRotation - aimArcSize / 2;
+   const maxAngle = turretTransformComponent.relativeRotation + aimArcSize / 2;
 
    // Make sure at least 1 of the entities' hitboxes is within the arc
    for (let i = 0; i < entityTransformComponent.hitboxes.length; i++) {
@@ -206,9 +206,9 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
 
    config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
    config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-   config.components[ServerComponentType.transform].rotation = rotation;
-   config.components[ServerComponentType.physics].externalVelocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
-   config.components[ServerComponentType.physics].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
+   config.components[ServerComponentType.transform].relativeRotation = rotation;
+   config.components[ServerComponentType.transform].externalVelocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
+   config.components[ServerComponentType.transform].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
 }
 
 const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
@@ -219,7 +219,7 @@ const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
 
    const projectileCount = ammoType === ItemType.frostcicle ? 2 : 1;
    for (let i = 0; i < ammoInfo.ammoMultiplier; i++) {
-      let fireDirection = turretComponent.aimDirection + transformComponent.rotation;
+      let fireDirection = turretComponent.aimDirection + transformComponent.relativeRotation;
       fireDirection += projectileCount > 1 ? (i / (ammoInfo.ammoMultiplier - 1) - 0.5) * Math.PI * 0.5 : 0;
 
       createProjectile(turret, transformComponent, fireDirection, ammoType);
@@ -262,7 +262,7 @@ function onTick(turret: Entity): void {
          
          const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
 
-         const turretAimDirection = turretComponent.aimDirection + transformComponent.rotation;
+         const turretAimDirection = turretComponent.aimDirection + transformComponent.relativeRotation;
 
          // Turn to face the target
          const clockwiseDist = getClockwiseAngleDistance(turretAimDirection, targetDirection);
@@ -270,20 +270,20 @@ function onTick(turret: Entity): void {
             // Turn counterclockwise
             turretComponent.aimDirection -= Math.PI / 3 * Settings.I_TPS;
             // @Incomplete: Will this sometimes cause snapping?
-            if (turretComponent.aimDirection + transformComponent.rotation < targetDirection) {
-               turretComponent.aimDirection = targetDirection - transformComponent.rotation;
+            if (turretComponent.aimDirection + transformComponent.relativeRotation < targetDirection) {
+               turretComponent.aimDirection = targetDirection - transformComponent.relativeRotation;
             }
          } else {
             // Turn clockwise
             turretComponent.aimDirection += Math.PI / 3 * Settings.I_TPS;
-            if (turretComponent.aimDirection + transformComponent.rotation > targetDirection) {
-               turretComponent.aimDirection = targetDirection - transformComponent.rotation;
+            if (turretComponent.aimDirection + transformComponent.relativeRotation > targetDirection) {
+               turretComponent.aimDirection = targetDirection - transformComponent.relativeRotation;
             }
          }
          if (turretComponent.fireCooldownTicks > 0) {
             turretComponent.fireCooldownTicks--;
          } else {
-            let angleDiff = targetDirection - (turretComponent.aimDirection + transformComponent.rotation);
+            let angleDiff = targetDirection - (turretComponent.aimDirection + transformComponent.relativeRotation);
             while (angleDiff >= Math.PI) {
                angleDiff -= 2 * Math.PI;
             }

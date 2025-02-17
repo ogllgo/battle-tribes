@@ -73,7 +73,7 @@ const spawnMithrilOre = (layer: Layer, x: number, y: number, direction: number, 
    const config = createMithrilOreNodeConfig(size, variant, children, renderHeight);
    config.components[ServerComponentType.transform].position.x = x;
    config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].rotation = direction + randFloat(-0.1, 0.1);
+   config.components[ServerComponentType.transform].relativeRotation = direction + randFloat(-0.1, 0.1);
    const entity = createEntity(config, layer, 0);
    
    pushJoinBuffer(false);

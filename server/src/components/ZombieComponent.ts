@@ -177,8 +177,8 @@ const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const lungeDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
 
    const physicsComponent = PhysicsComponentArray.getComponent(zombie);
-   physicsComponent.externalVelocity.x += 130 * Math.sin(lungeDirection);
-   physicsComponent.externalVelocity.y += 130 * Math.cos(lungeDirection);
+   transformComponent.externalVelocity.x += 130 * Math.sin(lungeDirection);
+   transformComponent.externalVelocity.y += 130 * Math.cos(lungeDirection);
 
    // Reset attack cooldown
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
@@ -313,8 +313,8 @@ function onTick(zombie: Entity): void {
          runHerdAI(zombie, herdMembers, ZombieVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
          const physicsComponent = PhysicsComponentArray.getComponent(zombie);
-         physicsComponent.acceleration.x = Vars.ACCELERATION_SLOW * Math.sin(transformComponent.rotation);
-         physicsComponent.acceleration.y = Vars.ACCELERATION_SLOW * Math.cos(transformComponent.rotation);
+         physicsComponent.acceleration.x = Vars.ACCELERATION_SLOW * Math.sin(transformComponent.relativeRotation);
+         physicsComponent.acceleration.y = Vars.ACCELERATION_SLOW * Math.cos(transformComponent.relativeRotation);
          return;
       }
    }
@@ -364,9 +364,9 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, actingHitbox
 
    // Push the zombie away from the entity
    const flinchDirection = hitDirection + Math.PI;
-   const physicsComponent = PhysicsComponentArray.getComponent(zombie);
-   physicsComponent.externalVelocity.x += 100 * Math.sin(flinchDirection);
-   physicsComponent.externalVelocity.y += 100 * Math.cos(flinchDirection);
+   const transformComponent = TransformComponentArray.getComponent(zombie);
+   transformComponent.externalVelocity.x += 100 * Math.sin(flinchDirection);
+   transformComponent.externalVelocity.y += 100 * Math.cos(flinchDirection);
 }
 
 function preRemove(zombie: Entity): void {

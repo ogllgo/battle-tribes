@@ -30,6 +30,18 @@ export class TribeComponent {
 }
 
 export const TribeComponentArray = new ComponentArray<TribeComponent>(ServerComponentType.tribe, true, getDataLength, addDataToPacket);
+TribeComponentArray.onJoin = onJoin;
+TribeComponentArray.onRemove = onRemove;
+
+function onJoin(entity: Entity): void {
+   const tribeComponent = TribeComponentArray.getComponent(entity);
+   tribeComponent.tribe.registerEntity();
+}
+
+function onRemove(entity: Entity): void {
+   const tribeComponent = TribeComponentArray.getComponent(entity);
+   tribeComponent.tribe.deregisterEntity();
+}
 
 export function getEntityRelationship(entity: Entity, comparingEntity: Entity): EntityRelationship {
    // More complex if the entity is an AI tribesman: take into account the personal relationship between the entities

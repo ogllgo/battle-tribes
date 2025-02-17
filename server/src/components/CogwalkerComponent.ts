@@ -1,17 +1,12 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
-import { InventoryName } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
-import { randFloat } from "../../../shared/src/utils";
-import { throwItem } from "../entities/tribes/tribe-member";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityAgeTicks, getEntityType } from "../world";
-import { runAssignmentAI } from "./AIAssignmentComponent";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { InventoryComponentArray, getInventory } from "./InventoryComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { getVelocityMagnitude } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 
@@ -77,15 +72,11 @@ function onTick(cogwalker: Entity): void {
    if (getEntityAgeTicks(cogwalker) % (Settings.TPS * 4) === 0) {
       let hasAccident = false;
       {
-         const physicsComponent = PhysicsComponentArray.getComponent(cogwalker);
-         const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-         const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
-         const vel = Math.sqrt(vx * vx + vy * vy);
-
-         if (vel > 100) {
+         const transformComponent = TransformComponentArray.getComponent(cogwalker);
+         if (getVelocityMagnitude(transformComponent) > 100) {
             hasAccident = true;
-            physicsComponent.selfVelocity.x = 0;
-            physicsComponent.selfVelocity.y = 0;
+            transformComponent.selfVelocity.x = 0;
+            transformComponent.selfVelocity.y = 0;
          }
       }
       

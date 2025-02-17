@@ -604,7 +604,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       entityTextureSource: "items/small/scrappy.png",
       textureSource: "items/large/minecraft.png",
       toolTextureSource: "",
-      name: "The Evoker's Cold Touch | Alex's Awakening (a Minecraft fanfic)",
+      name: "The Evoker's Cold Touch | Alex's Awakening",
       description: "Alex's thoughts keep drifting back to that encounter in the woodland mansion, as much as she wills herself not to. She can't put the cold shivers out of her mind, the cold shivers which make her feel so warm. Perhaps the Illager's intentions weren't hostile..."
    },
    [ItemType.yuriSonichu]: {
@@ -620,6 +620,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "items/large/animal-staff.png",
       name: "Animal Staff",
       description: "Allows you to control animals."
+   },
+   [ItemType.woodenArrow]: {
+      entityTextureSource: "items/small/wooden-arrow.png",
+      textureSource: "items/large/wooden-arrow.png",
+      toolTextureSource: "",
+      name: "Wooden Arrow",
+      description: "A primitive projectile able to be used in bows and crossbows."
    },
 };
 

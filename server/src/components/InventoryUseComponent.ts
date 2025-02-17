@@ -8,7 +8,7 @@ import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import { lerp, Point } from "battletribes-shared/utils";
 import { Box, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { applyKnockback } from "./PhysicsComponent";
@@ -189,7 +189,7 @@ const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbD
    box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
    box.relativeRotation = limbRotation * flipMultiplier;
 
-   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.relativeRotation);
 }
 
 export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
@@ -279,7 +279,7 @@ function onTick(entity: Entity): void {
 
                // Push forwards
                const transformComponent = TransformComponentArray.getComponent(entity);
-               applyKnockback(entity, 250, transformComponent.rotation);
+               applyKnockback(entity, 250, transformComponent.relativeRotation);
 
                // const blockAttack = createBlockAttackConfig(entity, limb);
                // createEntity(blockAttack, getEntityLayer(entity), 0);

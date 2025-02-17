@@ -9,7 +9,7 @@ import { Point } from "battletribes-shared/utils";
 import { damageEntity, HealthComponentArray } from "../../components/HealthComponent";
 import { InventoryComponentArray, getInventory, hasInventory } from "../../components/InventoryComponent";
 import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
-import { applyKnockback, PhysicsComponentArray } from "../../components/PhysicsComponent";
+import { applyKnockback, getVelocityX, getVelocityY, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { applyStatusEffect } from "../../components/StatusEffectComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { calculateItemDamage } from "./tribe-member";
@@ -104,15 +104,15 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.limbDamageBox.isBlockedByWall = false;
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
-   const physicsComponent = PhysicsComponentArray.getComponent(attackingEntity);
+   const transformComponent = TransformComponentArray.getComponent(attackingEntity);
 
    // Add extra range for moving attacks
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = getVelocityX(transformComponent);
+   const vy = getVelocityY(transformComponent);
    if (vx !== 0 || vy !== 0) {
       const transformComponent = TransformComponentArray.getComponent(attackingEntity);
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-      const attackAlignment = (vx * Math.sin(transformComponent.rotation) + vy * Math.cos(transformComponent.rotation)) / velocityMagnitude;
+      const attackAlignment = (vx * Math.sin(transformComponent.relativeRotation) + vy * Math.cos(transformComponent.relativeRotation)) / velocityMagnitude;
       if (attackAlignment > 0) {
          const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
          limb.currentActionEndLimbState.extraOffsetY += extraAmount;

@@ -21,7 +21,7 @@ import { SpikesComponentArray } from "../../entity-components/server-components/
 import { HutComponentArray } from "../../entity-components/server-components/HutComponent";
 import { PlanterBoxComponentArray } from "../../entity-components/server-components/PlanterBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { sendPlaceBlueprintPacket } from "../../networking/packet-creation";
+import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-creation";
 import { playerTribe } from "../../tribes";
 
 /*
@@ -561,7 +561,7 @@ const BuildMenu = () => {
                break;
             }
             case OptionType.modify: {
-               Client.sendModifyBuilding(selectedStructureID, 0);
+               sendModifyBuildingPacket(selectedStructureID, 0);
                break;
             }
             case OptionType.deconstruct: {

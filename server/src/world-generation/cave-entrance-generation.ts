@@ -227,7 +227,7 @@ export function spawnGuardians(): void {
                const config = createGuardianConfig(tiles);
                config.components[ServerComponentType.transform].position.x = x;
                config.components[ServerComponentType.transform].position.y = y;
-               config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+               config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
                createEntity(config, surfaceLayer, 0);
                break;
             }

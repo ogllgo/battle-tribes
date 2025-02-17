@@ -12,10 +12,10 @@ import { createItemEntityConfig, createItemsOverEntity } from "../entities/item-
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { TileType } from "battletribes-shared/tiles";
-import { cleanAngleNEW, findAngleAlignment, moveEntityToPosition, runHerdAI, stopEntity, turnAngle } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, runHerdAI, stopEntity, turnAngle } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
-import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
+import { getEscapeTarget } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
@@ -26,9 +26,13 @@ import { addGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
-import { RideableComponentArray } from "./RideableComponent";
+import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 
 const enum Vars {
+   SLOW_ACCELERATION = 200,
+   MEDIUM_ACCELERATION = 500,
+   FAST_ACCELERATION = 1000,
+   
    MIN_POOP_PRODUCTION_COOLDOWN = 5 * Settings.TPS,
    MAX_POOP_PRODUCTION_COOLDOWN = 15 * Settings.TPS,
    GRAZE_TIME_TICKS = 5 * Settings.TPS,
@@ -64,6 +68,9 @@ export class CowComponent {
 
    // @Temporary
    public followTarget: Entity = 0;
+
+   // @Temporary
+   public carryTarget: Entity = 0;
 }
 
 export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponentType.cow, true, getDataLength, addDataToPacket);
@@ -82,7 +89,7 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
    const config = createItemEntityConfig(ItemType.poop, 1, null);
    config.components[ServerComponentType.transform].position.x = poopPosition.x;
    config.components[ServerComponentType.transform].position.y = poopPosition.y;
-   config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    createEntity(config, getEntityLayer(cow), 0);
 
    // Let it out
@@ -153,7 +160,7 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
    return herdMembers;
 }
 
-const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boolean): void => {
+const moveCow = (cow: Entity, targetX: number, targetY: number, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
 
    // 
@@ -163,16 +170,15 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
    const physicsComponent = PhysicsComponentArray.getComponent(cow);
 
    const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
-   const acceleration = isRunning ? 950 : 200;
    
-   const alignmentToTarget = findAngleAlignment(transformComponent.rotation, targetDirection);
+   const alignmentToTarget = findAngleAlignment(transformComponent.relativeRotation, targetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
    physicsComponent.acceleration.x = acceleration * accelerationMultiplier * Math.sin(targetDirection);
    physicsComponent.acceleration.y = acceleration * accelerationMultiplier * Math.cos(targetDirection);
 
    physicsComponent.targetRotation = targetDirection;
    // Don't turn if it's within neck reach range
-   if (getAbsAngleDiff(transformComponent.rotation, targetDirection) > 0.3) {
+   if (getAbsAngleDiff(transformComponent.relativeRotation, targetDirection) > 0.3) {
       physicsComponent.turnSpeed = 1;
    } else {
       physicsComponent.turnSpeed = 0.15;
@@ -219,7 +225,7 @@ const moveCow = (cow: Entity, targetX: number, targetY: number, isRunning: boole
       // Force is in the direction which will get head offset direction back towards 0
       const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY * Math.sign(headOffsetDirection));
 
-      transformComponent.rotation += rotationForce;
+      transformComponent.relativeRotation += rotationForce;
 
       const headOffsetX = headHitbox.box.offset.x;
       const headOffsetY = headHitbox.box.offset.y;
@@ -235,7 +241,7 @@ const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEnti
    }
 
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
-   moveCow(cow, berryTransformComponent.position.x, berryTransformComponent.position.y, false);
+   moveCow(cow, berryTransformComponent.position.x, berryTransformComponent.position.y, Vars.MEDIUM_ACCELERATION);
 
    return false;
 }
@@ -287,7 +293,8 @@ function onTick(cow: Entity): void {
    // When something is riding the cow, that entity controls the cow's movement
    const rideableComponent = RideableComponentArray.getComponent(cow);
    const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   if (entityExists(rider)) {
+   // @Hack: the physics component check for the rider
+   if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
       const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
       const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
       if (accelerationMagnitude > 0) {
@@ -296,7 +303,7 @@ function onTick(cow: Entity): void {
 
          const targetX = transformComponent.position.x + 400 * normalisedAccelerationX;
          const targetY = transformComponent.position.y + 400 * normalisedAccelerationY;
-         moveCow(cow, targetX, targetY, true);
+         moveCow(cow, targetX, targetY, Vars.FAST_ACCELERATION);
          return;
       }
    }
@@ -308,14 +315,28 @@ function onTick(cow: Entity): void {
       const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
       const targetX = transformComponent.position.x * 2 - escapeTargetTransformComponent.position.x;
       const targetY = transformComponent.position.y * 2 - escapeTargetTransformComponent.position.y;
-      moveCow(cow, targetX, targetY, true);
+      moveCow(cow, targetX, targetY, Vars.FAST_ACCELERATION);
       return;
    }
 
    // Go to follow target if possible
    if (entityExists(cowComponent.followTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.followTarget);
-      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
+      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION);
+      return;
+   }
+
+   // Pick up carry target
+   if (entityExists(cowComponent.carryTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.carryTarget);
+      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION);
+      // Force carry if colliding
+      if (entitiesAreColliding(cow, cowComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+         const rideableComponent = RideableComponentArray.getComponent(cow);
+         const carrySlot = rideableComponent.carrySlots[0];
+         mountCarrySlot(cowComponent.carryTarget, cow, carrySlot);
+         cowComponent.carryTarget = 0;
+      }
       return;
    }
 
@@ -382,11 +403,11 @@ function onTick(cow: Entity): void {
 
       if (entityExists(cowComponent.targetBushID)) {
          const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
-         moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
+         moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.SLOW_ACCELERATION);
 
          // If the target entity is directly in front of the cow, start eatin it
-         const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.rotation);
-         const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.rotation);
+         const testPositionX = transformComponent.position.x + 60 * Math.sin(transformComponent.relativeRotation);
+         const testPositionY = transformComponent.position.y + 60 * Math.cos(transformComponent.relativeRotation);
          if (positionIsInWorld(testPositionX, testPositionY)) {
             // @Hack? The only place which uses this weird function
             const testEntities = getEntitiesAtPosition(layer, testPositionX, testPositionY);
@@ -414,7 +435,7 @@ function onTick(cow: Entity): void {
 
    if (entityExists(followAIComponent.followTargetID)) {
       const targetTransformComponent = TransformComponentArray.getComponent(followAIComponent.followTargetID);
-      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, false);
+      moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.SLOW_ACCELERATION);
       return;
    } else {
       const [followTarget, isHoldingBerry] = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
@@ -433,8 +454,9 @@ function onTick(cow: Entity): void {
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      physicsComponent.acceleration.x = 200 * Math.sin(transformComponent.rotation);
-      physicsComponent.acceleration.y = 200 * Math.cos(transformComponent.rotation);
+      // @Incomplete: use new move func
+      physicsComponent.acceleration.x = 200 * Math.sin(transformComponent.relativeRotation);
+      physicsComponent.acceleration.y = 200 * Math.cos(transformComponent.relativeRotation);
       return;
    }
 
@@ -442,7 +464,7 @@ function onTick(cow: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(cow);
    if (wanderAI.targetPositionX !== -1) {
-      moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, false);
+      moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, Vars.SLOW_ACCELERATION);
    } else {
       stopEntity(physicsComponent);
    }

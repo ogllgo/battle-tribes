@@ -69,12 +69,10 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const displayX = roundNum(transformComponent.position.x, 0);
    const displayY = roundNum(transformComponent.position.y, 0);
 
-   let displayVelocityMagnitude: number | undefined;
+   let displayVelocityMagnitude = roundNum(transformComponent.selfVelocity.length(), 0);
    let displayAccelerationMagnitude: number | undefined;
    if (PhysicsComponentArray.hasComponent(entity)) {
       const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
-      displayVelocityMagnitude = roundNum(physicsComponent.selfVelocity.length(), 0);
       displayAccelerationMagnitude = roundNum(physicsComponent.acceleration.length(), 0);
    }
 

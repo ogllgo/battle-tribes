@@ -199,22 +199,9 @@ export function updateRenderInfoRenderPosition(renderInfo: EntityRenderInfo, fra
    renderPosition.x = transformComponent.position.x;
    renderPosition.y = transformComponent.position.y;
 
-   // If the entity has velocity and isn't being carried, account for that
-   if (transformComponent.carryRoot === renderInfo.associatedEntity) {
-      if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
-         renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
-         renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
-      }
-   } else {
-      // Add the velocity of the carry root
-      // @Copynpaste
-      if (PhysicsComponentArray.hasComponent(transformComponent.carryRoot)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(transformComponent.carryRoot);
-         renderPosition.x += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
-         renderPosition.y += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
-      }
-   }
+   // Account for velocity
+   renderPosition.x += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+   renderPosition.y += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
 
    // Shake
    if (renderInfo.shakeAmount > 0) {
@@ -298,8 +285,8 @@ const calculateHitboxMatrix = (renderInfo: EntityRenderInfo, entityModelMatrix: 
    if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity) && transformComponent.carryRoot === renderInfo.associatedEntity) {
       const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
       
-      tx += (physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
-      ty += (physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
+      tx += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
+      ty += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
    }
    
    // Translation

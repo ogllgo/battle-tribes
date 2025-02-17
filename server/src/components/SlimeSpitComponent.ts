@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
+import { applyKnockback } from "./PhysicsComponent";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { createSpitPoisonAreaConfig } from "../entities/projectiles/spit-poison-area";
@@ -36,10 +36,10 @@ SlimeSpitComponentArray.onHitboxCollision = onHitboxCollision;
 SlimeSpitComponentArray.preRemove = preRemove;
 
 function onTick(spit: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(spit);
+   const transformComponent = TransformComponentArray.getComponent(spit);
 
-   const vx = physicsComponent.selfVelocity.x + physicsComponent.externalVelocity.x;
-   const vy = physicsComponent.selfVelocity.y + physicsComponent.externalVelocity.y;
+   const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
+   const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
    if (vx * vx + vy * vy <= Vars.BREAK_VELOCITY * Vars.BREAK_VELOCITY) {
       destroyEntity(spit);
    }
@@ -62,7 +62,7 @@ function preRemove(spit: Entity): void {
       const config = createSpitPoisonAreaConfig();
       config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
       config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-      config.components[ServerComponentType.transform].rotation = 2 * Math.PI * Math.random();
+      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
       createEntity(config, getEntityLayer(spit), 0);
    }
 }

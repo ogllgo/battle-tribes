@@ -25,7 +25,7 @@ for (const layer of layers) {
          return {
             type: getEntityType(entity),
             position: transformComponent.position,
-            rotation: transformComponent.rotation,
+            rotation: transformComponent.relativeRotation,
             id: entity,
             hitboxes: transformComponent.hitboxes
          };
