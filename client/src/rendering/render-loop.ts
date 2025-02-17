@@ -1,5 +1,5 @@
 import Particle from "../Particle";
-import { renderEntities } from "./webgl/entity-rendering";
+import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./webgl/entity-rendering";
 import { RenderPartOverlayGroup, renderEntityOverlay } from "./webgl/overlay-rendering";
 import { NUM_RENDER_LAYERS, RenderLayer } from "../render-layers";
 import { renderChunkedEntities, renderLayerIsChunkRendered } from "./webgl/chunked-entity-rendering";
@@ -112,9 +112,13 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
             // @Hack :DarkTransparencyBug
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-            // @Speed @Hack: surely we could just only push the render info to the array in the case of entities...?
-            const renderInfos = (renderables as Array<Entity>).map(entity => getEntityRenderInfo(entity));
-            renderEntities(renderInfos);
+            setupEntityRendering();
+            for (const renderable of renderables) {
+               // @Cleanup: cast
+               const renderInfo = getEntityRenderInfo(renderable as Entity);
+               renderEntity(renderInfo);
+            }
+            cleanupEntityRendering();
 
             gl.disable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ZERO);

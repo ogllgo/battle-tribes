@@ -119,7 +119,7 @@ let hoveredEntityID = -1;
 let highlightedEntity = -1;
 let selectedEntityID = -1;
 /** The render info which an outline will be rendered around. */
-let highlightedRenderInfo: Readonly<EntityRenderInfo> | null = null;
+let highlightedRenderInfo: EntityRenderInfo | null = null;
 
 const SEED_TO_PLANT_RECORD: Partial<Record<ItemType, PlantedEntityType>> = {
    [ItemType.seed]: EntityType.treePlanted,
@@ -127,7 +127,7 @@ const SEED_TO_PLANT_RECORD: Partial<Record<ItemType, PlantedEntityType>> = {
    [ItemType.frostcicle]: EntityType.iceSpikesPlanted
 };
 
-export function getHighlightedRenderInfo(): Readonly<EntityRenderInfo> | null {
+export function getHighlightedRenderInfo(): EntityRenderInfo | null {
    return highlightedRenderInfo;
 }
 
@@ -324,7 +324,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
          
-         const renderInfo = new EntityRenderInfo(0, 0, 0);
+         const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
          renderInfo.renderPosition = new Point(transformComponent.position.x, transformComponent.position.y);
          renderInfo.rotation = transformComponent.rotation;
 

@@ -1,4 +1,4 @@
-import { EntityRenderInfo } from "../EntityRenderInfo";
+import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../EntityRenderInfo";
 import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
@@ -8,6 +8,8 @@ import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
+import { gl } from "../webgl";
+import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
@@ -283,8 +285,6 @@ const calculateHitboxMatrix = (renderInfo: EntityRenderInfo, entityModelMatrix: 
    // @Bug: Don't do for hitboxes which don't move statically with the entity position!
    const transformComponent = TransformComponentArray.getComponent(renderInfo.associatedEntity);
    if (PhysicsComponentArray.hasComponent(renderInfo.associatedEntity) && transformComponent.carryRoot === renderInfo.associatedEntity) {
-      const physicsComponent = PhysicsComponentArray.getComponent(renderInfo.associatedEntity);
-      
       tx += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * frameProgress * Settings.I_TPS;
       ty += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * frameProgress * Settings.I_TPS;
    }
@@ -344,11 +344,22 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
 }
 
 export function updateRenderPartMatrices(frameProgress: number): void {
+   // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
+   gl.bindVertexArray(null);
+
+   // @HACK: to fix the flash bug
+   for (const entity of HealthComponentArray.entities) {
+      const renderInfo = getEntityRenderInfo(entity);
+      registerDirtyRenderInfo(renderInfo);
+      registerDirtyRenderPosition(renderInfo);
+   }
+   
    // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
    // To fix: temporarily set Settings.TPS to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
       cleanEntityRenderInfo(renderInfo, frameProgress);
+      updateEntityRenderInfoRenderData(renderInfo);
    }
 
    // Reset dirty entities
