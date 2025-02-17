@@ -14,6 +14,11 @@ import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
 
+export const enum AnimalStaffCommandType {
+   follow,
+   carry
+}
+
 export interface AnimalStaffOptionsProps {
    setGameInteractState(state: GameInteractState): void;
 }
@@ -21,10 +26,11 @@ export interface AnimalStaffOptionsProps {
 // @Cleanup: a lot of this is similar to BuildMenu
 
 export let AnimalStaffOptions_setIsVisible: (isVisible: boolean) => void = () => {};
+export let AnimalStaffOptions_isHovering: () => boolean = () => false;
 export let AnimalStaffOptions_setEntity: (entity: Entity | null) => void = () => {};
 export let AnimalStaffOptions_update: () => void = () => {};
 
-const createControlCommandParticles = (): void => {
+export function createControlCommandParticles(commandType: AnimalStaffCommandType): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
 
    const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[0];
@@ -33,13 +39,31 @@ const createControlCommandParticles = (): void => {
    matrixMultiplyInPlace(activeItemRenderPart.modelMatrix, originMatrix);
    const origin = getMatrixPosition(originMatrix);
 
+   let r: number;
+   let g: number;
+   let b: number;
+   switch (commandType) {
+      case AnimalStaffCommandType.follow: {
+         r = 165/255;
+         g = 255/255;
+         b = 163/255;
+         break;
+      }
+      case AnimalStaffCommandType.carry: {
+         r = 237/255;
+         g = 172/255;
+         b = 19/255;
+         break;
+      }
+   }
+
    const n = 20;
    for (let i = 0; i < n; i++) {
       const offsetDirection = 2 * Math.PI * i / n;
       const offsetMagnitude = 15;
       const x = origin.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = origin.y + offsetMagnitude * Math.cos(offsetDirection);
-      createAnimalStaffFollowCommandParticle(x, y, offsetDirection);
+      createAnimalStaffFollowCommandParticle(x, y, offsetDirection, r, g, b);
    }
 
    // @Bug: isn't attached to camera
@@ -52,6 +76,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    const [x, setX] = useState(0);
    const [y, setY] = useState(0);
    const [followOptionIsSelected, setFollowOptionIsSelected] = useState(false);
+   const [isHovering, setIsHovering] = useState(false);
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
@@ -77,6 +102,10 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    }, []);
 
    useEffect(() => {
+      AnimalStaffOptions_isHovering = () => isHovering;
+   }, [isHovering]);
+
+   useEffect(() => {
       AnimalStaffOptions_update = (): void => {
          if (entity !== null) {
             if (!entityExists(entity)) {
@@ -88,11 +117,22 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       }
    }, [entity]);
 
+   const onMouseOver = () => {
+      setIsHovering(true);
+   }
+
+   const onMouseMove = () => {
+      setIsHovering(true);
+   }
+
+   const onMouseOut = () => {
+      setIsHovering(false);
+   }
+
    const sendFollowCommand = useCallback((): void => {
       if (entity !== null) {
          sendAnimalStaffFollowCommandPacket(entity);
-
-         createControlCommandParticles();
+         createControlCommandParticles(AnimalStaffCommandType.follow);
       }
       deselectSelectedEntity();
    }, [entity]);
@@ -108,7 +148,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       return null;
    }
 
-   return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()}>
+   return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
       <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={sendFollowCommand}></div>
       <div className="option carry" onClick={pressCarryOption}></div>
    </div>;

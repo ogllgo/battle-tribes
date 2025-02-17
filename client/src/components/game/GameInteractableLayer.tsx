@@ -55,6 +55,7 @@ import { BlockAttackComponentArray } from "../../entity-components/server-compon
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectCarryTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { Point } from "../../../../shared/src/utils";
+import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -1500,6 +1501,13 @@ const tickItem = (itemType: ItemType): void => {
                   };
                   break;
                }
+               case ServerComponentType.hut: {
+                  components[componentType] = {
+                     doorSwingAmount: 0,
+                     isRecalling: false
+                  };
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }
@@ -1639,20 +1647,14 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
             sendSpectateEntityPacket(getHoveredEntityID());
             props.setGameInteractState(GameInteractState.none);
          } else if (props.gameInteractState === GameInteractState.selectCarryTarget) {
-            sendSetCarryTargetPacket(carrier, getHoveredEntityID());
             props.setGameInteractState(GameInteractState.none);
          } else {
             attemptAttack();
          }
       } else if (e.button === 2) { // Right click
          rightMouseButtonIsPressed = true;
-
-         if (props.gameInteractState === GameInteractState.selectCarryTarget) {
-            props.setGameInteractState(GameInteractState.none);
-            return;
-         }
          
-         const didSelectEntity = attemptEntitySelection();
+         const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
          if (didSelectEntity) {
             e.preventDefault();
          } else {

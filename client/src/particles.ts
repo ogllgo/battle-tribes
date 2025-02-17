@@ -1992,7 +1992,7 @@ export function createKrumblidChitinParticle(spawnPositionX: number, spawnPositi
    Board.lowTexturedParticles.push(particle);
 }
 
-export function createAnimalStaffFollowCommandParticle(x: number, y: number, moveDirection: number): void {
+export function createAnimalStaffFollowCommandParticle(x: number, y: number, moveDirection: number, r: number, g: number, b: number): void {
    const lifetime = randFloat(0.8, 0.9);
    const opacityMult = randFloat(0.5, 0.75);
 
@@ -2018,7 +2018,7 @@ export function createAnimalStaffFollowCommandParticle(x: number, y: number, mov
       0,
       0,
       0,
-      165/255, 255/255, 163/255
+      r, g, b
    );
    Board.highMonocolourParticles.push(particle);
 }

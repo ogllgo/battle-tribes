@@ -47,6 +47,9 @@ export let gameScreenSetIsDead: (isDead: boolean) => void = () => {};
 
 export let GameScreen_update: () => void = () => {};
 
+// @Hack
+export let GameScreen_getGameInteractState: () => GameInteractState = () => GameInteractState.none;
+
 interface GameScreenProps {
    setAppState(appState: AppState): void;
 }
@@ -100,6 +103,10 @@ const GameScreen = (props: GameScreenProps) => {
 
       gameScreenSetIsDead = setIsDead;
    }, []);
+
+   useEffect(() => {
+      GameScreen_getGameInteractState = () => interactState;
+   }, [interactState]);
 
    useEffect(() => {
       GameScreen_update = (): void => {

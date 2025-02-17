@@ -12,7 +12,7 @@ import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, 
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
-import { GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
+import { GameScreen_getGameInteractState, GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
 import { clearServerTicks, updateDebugScreenFPS, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
@@ -36,7 +36,7 @@ import { playRiverSounds, loadSoundEffects, updateSounds } from "./sound";
 import { createTechTreeGLContext, createTechTreeShaders, renderTechTree } from "./rendering/webgl/tech-tree-rendering";
 import { createResearchOrbShaders, renderResearchOrb } from "./rendering/webgl/research-orb-rendering";
 import { attemptToResearch, updateActiveResearchBench, updateResearchOrb } from "./research";
-import { resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedStructure } from "./entity-selection";
+import { resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedEntity } from "./entity-selection";
 import { createStructureHighlightShaders, renderEntitySelection } from "./rendering/webgl/entity-selection-rendering";
 import { InventorySelector_forceUpdate } from "./components/game/inventories/InventorySelector";
 import { createTurretRangeShaders, renderTurretRange } from "./rendering/webgl/turret-range-rendering";
@@ -461,8 +461,10 @@ abstract class Game {
       updateResearchOrb();
       attemptToResearch();
 
-      updateHighlightedAndHoveredEntities();
-      updateSelectedStructure();
+      const gameInteractState = GameScreen_getGameInteractState();
+      // @Cleanup: can probs just combine these 2
+      updateHighlightedAndHoveredEntities(gameInteractState);
+      updateSelectedEntity(gameInteractState);
       BuildMenu_updateBuilding();
       BuildMenu_refreshBuildingID();
       AnimalStaffOptions_update();

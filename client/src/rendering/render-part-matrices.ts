@@ -3,12 +3,11 @@ import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultipl
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo, getEntityType } from "../world";
+import { getEntityRenderInfo } from "../world";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { getVelocityMagnitude, PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
+import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point } from "../../../shared/src/utils";
-import { EntityType } from "../../../shared/src/entities";
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
