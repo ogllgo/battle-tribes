@@ -5,9 +5,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart, renderPartIsTextured, thingIsVisualRenderPart } from "../../render-parts/render-parts";
 
 const enum Vars {
-   ATTRIBUTES_PER_VERTEX = 17,
-   /** Maximum number of render parts that the rendering supports */
-   MAX_RENDER_PARTS = 8192
+   ATTRIBUTES_PER_VERTEX = 17
 }
 
 export const enum EntityRenderingVars {
@@ -19,14 +17,6 @@ export interface EntityRenderingOptions {
 }
 
 let program: WebGLProgram;
-let vao: WebGLVertexArrayObject;
-
-let indexBuffer: WebGLBuffer;
-let indicesData: Uint16Array;
-
-let vertexBuffer: WebGLBuffer;
-let vertexData: Float32Array;
-
 let overrideAlphaWithOneUniformLocation: WebGLUniformLocation;
 
 export function getEntityRenderingProgram(): WebGLProgram {
@@ -170,50 +160,6 @@ export function createEntityShaders(): void {
 
    gl.useProgram(program);
    gl.uniform1i(textureUniformLocation, 0);
-
-   vao = gl.createVertexArray()!;
-   gl.bindVertexArray(vao);
-
-   vertexData = new Float32Array(Vars.MAX_RENDER_PARTS * 4 * Vars.ATTRIBUTES_PER_VERTEX);
-
-   indicesData = new Uint16Array(Vars.MAX_RENDER_PARTS * 6);
-   for (let i = 0; i < Vars.MAX_RENDER_PARTS; i++) {
-      const dataOffset = i * 6;
-      
-      indicesData[dataOffset] = i * 4;
-      indicesData[dataOffset + 1] = i * 4 + 1;
-      indicesData[dataOffset + 2] = i * 4 + 2;
-      indicesData[dataOffset + 3] = i * 4 + 2;
-      indicesData[dataOffset + 4] = i * 4 + 1;
-      indicesData[dataOffset + 5] = i * 4 + 3;
-   }
-
-   vertexBuffer = gl.createBuffer()!;
-   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-   gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
-
-   indexBuffer = gl.createBuffer()!;
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indicesData, gl.DYNAMIC_DRAW);
-
-   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 0);
-   gl.vertexAttribPointer(1, 1, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(2, 1, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(3, 3, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(4, 1, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 7 * Float32Array.BYTES_PER_ELEMENT);
-
-   gl.vertexAttribPointer(5, 3, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 8 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(6, 3, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 11 * Float32Array.BYTES_PER_ELEMENT);
-   gl.vertexAttribPointer(7, 3, gl.FLOAT, false, Vars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 14 * Float32Array.BYTES_PER_ELEMENT);
-   
-   gl.enableVertexAttribArray(0);
-   gl.enableVertexAttribArray(1);
-   gl.enableVertexAttribArray(2);
-   gl.enableVertexAttribArray(3);
-   gl.enableVertexAttribArray(4);
-   gl.enableVertexAttribArray(5);
-   gl.enableVertexAttribArray(6);
-   gl.enableVertexAttribArray(7);
 
    overrideAlphaWithOneUniformLocation = gl.getUniformLocation(program, "u_overrideAlphaWithOne")!;
 
@@ -428,39 +374,25 @@ export function clearEntityInVertexData(renderInfo: EntityRenderInfo, vertexData
    }
 }
 
-/** NOTE: Callers must control the blending. */
-export function renderEntities(renderInfos: ReadonlyArray<EntityRenderInfo>, options?: EntityRenderingOptions): void {
-   const textureAtlas = getEntityTextureAtlas();
-
-   // Set data
-   let renderPartIdx = 0;
-   for (const renderInfo of renderInfos) {
-      // @Incomplete: Why don't we use an index buffer here?
-      renderPartIdx = setRenderInfoInVertexData(renderInfo, vertexData, null, renderPartIdx);
-   }
-
-   // renderPartIdx is now the idx of the final render part we want to render + 1. A.k.a the number of render parts we're rendering
-   // kinda weird but whatever
-   const numRenderParts = renderPartIdx;
-   
-   if (numRenderParts > Vars.MAX_RENDER_PARTS) {
-      console.warn("Exceeded maximum buffer size for non-chunked entity rendering.");
-   }
-
+export function setupEntityRendering(): void {
    gl.useProgram(program);
-   gl.bindVertexArray(vao);
 
-   gl.uniform1f(overrideAlphaWithOneUniformLocation, options?.overrideAlphaWithOne ? 1 : 0);
-   
    // Bind texture atlas
+   const textureAtlas = getEntityTextureAtlas();
    gl.activeTexture(gl.TEXTURE0);
    gl.bindTexture(gl.TEXTURE_2D, textureAtlas.texture);
+}
 
-   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-   const length = numRenderParts * EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT;
-   gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertexData, 0, length);
+/** NOTE: Callers must control the blending. */
+export function renderEntity(renderInfo: Readonly<EntityRenderInfo>, options?: EntityRenderingOptions): void {
+   gl.uniform1f(overrideAlphaWithOneUniformLocation, options?.overrideAlphaWithOne ? 1 : 0);
 
+   const numRenderParts = renderInfo.allRenderThings.length;
+   
+   gl.bindVertexArray(renderInfo.vao);
    gl.drawElements(gl.TRIANGLES, numRenderParts * 6, gl.UNSIGNED_SHORT, 0);
+}
 
+export function cleanupEntityRendering(): void {
    gl.bindVertexArray(null);
 }

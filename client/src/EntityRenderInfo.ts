@@ -1,15 +1,17 @@
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Board from "./Board";
 import { removeLightsAttachedToRenderPart } from "./lights";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
-import { VisualRenderPart, RenderPart } from "./render-parts/render-parts";
+import { RenderPart } from "./render-parts/render-parts";
 import { createIdentityMatrix } from "./rendering/matrices";
-import { NUM_RENDER_LAYERS, RenderLayer } from "./render-layers";
+import { RenderLayer } from "./render-layers";
 import { registerDirtyRenderInfo, renderParentIsHitbox } from "./rendering/render-part-matrices";
 import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
+import { gl } from "./webgl";
+import { EntityRenderingVars, setRenderInfoInVertexData } from "./rendering/webgl/entity-rendering";
 
 export interface ComponentTint {
    readonly tintR: number;
@@ -52,17 +54,70 @@ export class EntityRenderInfo {
    public tintG = 0;
    public tintB = 0;
 
-   constructor(associatedEntity: Entity, renderLayer: RenderLayer, renderHeight: number) {
+   private readonly maxRenderParts: number;
+
+   public readonly vao: WebGLVertexArrayObject;
+   public readonly indexBuffer: WebGLBuffer;
+   public readonly indicesData: Uint16Array;
+   public readonly vertexBuffer: WebGLBuffer;
+   public readonly vertexData: Float32Array;
+
+   constructor(associatedEntity: Entity, renderLayer: RenderLayer, renderHeight: number, maxRenderParts: number) {
       this.associatedEntity = associatedEntity;
       this.renderLayer = renderLayer;
       this.renderHeight = renderHeight;
+      this.maxRenderParts = maxRenderParts;
+
+      this.vao = gl.createVertexArray()!;
+      gl.bindVertexArray(this.vao);
+      
+      this.vertexData = new Float32Array(maxRenderParts * 4 * EntityRenderingVars.ATTRIBUTES_PER_VERTEX);
+   
+      this.indicesData = new Uint16Array(maxRenderParts * 6);
+      for (let i = 0; i < maxRenderParts; i++) {
+         const dataOffset = i * 6;
+         
+         this.indicesData[dataOffset] = i * 4;
+         this.indicesData[dataOffset + 1] = i * 4 + 1;
+         this.indicesData[dataOffset + 2] = i * 4 + 2;
+         this.indicesData[dataOffset + 3] = i * 4 + 2;
+         this.indicesData[dataOffset + 4] = i * 4 + 1;
+         this.indicesData[dataOffset + 5] = i * 4 + 3;
+      }
+   
+      this.vertexBuffer = gl.createBuffer()!;
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, this.vertexData, gl.DYNAMIC_DRAW);
+   
+      this.indexBuffer = gl.createBuffer()!;
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicesData, gl.DYNAMIC_DRAW);
+   
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 0);
+      gl.vertexAttribPointer(1, 1, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(2, 1, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(3, 3, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(4, 1, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 7 * Float32Array.BYTES_PER_ELEMENT);
+   
+      gl.vertexAttribPointer(5, 3, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 8 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(6, 3, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 11 * Float32Array.BYTES_PER_ELEMENT);
+      gl.vertexAttribPointer(7, 3, gl.FLOAT, false, EntityRenderingVars.ATTRIBUTES_PER_VERTEX * Float32Array.BYTES_PER_ELEMENT, 14 * Float32Array.BYTES_PER_ELEMENT);
+      
+      gl.enableVertexAttribArray(0);
+      gl.enableVertexAttribArray(1);
+      gl.enableVertexAttribArray(2);
+      gl.enableVertexAttribArray(3);
+      gl.enableVertexAttribArray(4);
+      gl.enableVertexAttribArray(5);
+      gl.enableVertexAttribArray(6);
+      gl.enableVertexAttribArray(7);
+
+      gl.bindVertexArray(null);
    }
 
    public attachRenderPart(renderPart: RenderPart): void {
-      // Don't add if already attached
-      if (this.allRenderThings.indexOf(renderPart) !== -1) {
-         return;
-      }
+      assert(this.allRenderThings.indexOf(renderPart) === -1);
+      assert(this.allRenderThings.length < this.maxRenderParts);
 
       // @Temporary?
       // @Incomplete: Check with the first render part up the chain
@@ -166,4 +221,11 @@ export class EntityRenderInfo {
          }
       }
    }
+}
+
+export function updateEntityRenderInfoRenderData(renderInfo: EntityRenderInfo): void {
+   setRenderInfoInVertexData(renderInfo, renderInfo.vertexData, renderInfo.indicesData, 0);
+
+   gl.bindBuffer(gl.ARRAY_BUFFER, renderInfo.vertexBuffer);
+   gl.bufferSubData(gl.ARRAY_BUFFER, 0, renderInfo.vertexData);
 }

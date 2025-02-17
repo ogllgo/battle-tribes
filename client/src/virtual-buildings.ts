@@ -80,7 +80,6 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
    }
 
    // @Copynpaste @Hack
-   
 
    const components: EntityServerComponentParams = {};
 
@@ -93,12 +92,18 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
          case ServerComponentType.transform: {
             const transformComponentParams = createTransformComponentParams(
                new Point(x, y),
+               new Point(0, 0),
+               new Point(0, 0),
+               rotation,
                rotation,
                hitboxes.slice(),
                [],
                hitboxes.slice(),
                COLLISION_BITS.default,
-               DEFAULT_COLLISION_MASK
+               DEFAULT_COLLISION_MASK,
+               0,
+               0,
+               []
             );
 
             components[componentType] = transformComponentParams;

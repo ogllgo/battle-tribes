@@ -1,6 +1,6 @@
 import { assert, Point } from "battletribes-shared/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { renderEntities } from "./entity-rendering";
+import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./entity-rendering";
 import { gl } from "../../webgl";
 
 // @Cleanup @Robustness: a lot of these are just mirrors of entity textures. Is there some way to utilise the existing render part definitions?
@@ -131,7 +131,11 @@ export function renderGhostEntities(): void {
    // @Hack :DarkTransparencyBug
    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-   renderEntities(renderInfos);
+   setupEntityRendering();
+   for (const renderInfo of renderInfos) {
+      renderEntity(renderInfo);
+   }
+   cleanupEntityRendering();
 
    gl.disable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ZERO);

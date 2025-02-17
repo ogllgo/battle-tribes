@@ -106,11 +106,20 @@ export interface EntityPreCreationInfo {
    readonly serverComponentParams: EntityServerComponentParams;
 }
 
+// @Cleanup: should really be defined in location of the entity...
+const getMaxRenderParts = (entityType: EntityType): number => {
+   // @HACK @SPEED
+   // @HACK @SPEED
+   // @HACK @SPEED
+   // @HACK @SPEED
+   return 30;
+}
+
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
 export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo): EntityCreationInfo {
    const renderLayer = getEntityRenderLayer(entityType, preCreationInfo);
    const renderHeight = calculateRenderDepthFromLayer(renderLayer, preCreationInfo);
-   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight);
+   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, getMaxRenderParts(entityType));
    
    // Create entity config
    const entityConfig: EntityConfig<never, never> = {

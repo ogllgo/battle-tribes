@@ -157,18 +157,19 @@ export const SPAWN_INFOS = [
       minSpawnDistance: 150,
       usesSpawnDistribution: false
    },
-   {
-      entityType: EntityType.slimewisp,
-      layer: surfaceLayer,
-      spawnRate: 0.2,
-      maxDensity: 0.3,
-      spawnableTileTypes: [TileType.slime],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 50,
-      usesSpawnDistribution: false
-   },
+   // @Temporary @Hack: Because slimes having too many orbs causes the client to crash...
+   // {
+   //    entityType: EntityType.slimewisp,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.2,
+   //    maxDensity: 0.3,
+   //    spawnableTileTypes: [TileType.slime],
+   //    minPackSize: 1,
+   //    maxPackSize: 1,
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 50,
+   //    usesSpawnDistribution: false
+   // },
    {
       entityType: EntityType.krumblid,
       layer: surfaceLayer,

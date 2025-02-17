@@ -2,7 +2,7 @@ import { getHighlightedEntityID, getHighlightedRenderInfo, getSelectedEntityID }
 import { createWebGLProgram, gl, windowWidth, windowHeight, createTexture } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Entity } from "../../../../shared/src/entities";
-import { renderEntities } from "./entity-rendering";
+import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./entity-rendering";
 import { cleanEntityRenderInfo, translateEntityRenderParts } from "../render-part-matrices";
 import { gameFramebuffer } from "../../Game";
 
@@ -202,52 +202,56 @@ export function renderEntitySelection(): void {
    gl.enable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ONE);
 
+   setupEntityRendering();
+
    // Right
    translateEntityRenderParts(renderInfo, 4, 0);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Left
    translateEntityRenderParts(renderInfo, -4, 0);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Top
    translateEntityRenderParts(renderInfo, 0, 4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom
    translateEntityRenderParts(renderInfo, 0, -4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Top right
    translateEntityRenderParts(renderInfo, 4, 4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom right
    translateEntityRenderParts(renderInfo, 4, -4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Bottom left
    translateEntityRenderParts(renderInfo, -4, -4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Top left
    translateEntityRenderParts(renderInfo, -4, 4);
-   renderEntities([renderInfo]);
+   renderEntity(renderInfo);
    cleanEntityRenderInfo(renderInfo, 0);
 
    // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
    // (dfactor) by 1 minus the middle alpha.
    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
 
-   renderEntities([renderInfo], { overrideAlphaWithOne: true });
+   renderEntity(renderInfo, { overrideAlphaWithOne: true });
 
+   cleanupEntityRendering();
+   
    // 
    // Render program
    // 
