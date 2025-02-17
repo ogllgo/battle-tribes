@@ -9,7 +9,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "./TransformComponent";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 
@@ -44,6 +44,7 @@ export const BerryBushComponentArray = new ServerComponentArray<BerryBushCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -77,6 +78,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.berryBus
       numBerries: entityConfig.serverComponents[ServerComponentType.berryBush].numBerries,
       renderPart: renderParts.renderPart
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

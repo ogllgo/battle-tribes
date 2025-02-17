@@ -24,6 +24,7 @@ export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksCom
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -60,6 +61,10 @@ function createComponent(): PunjiSticksComponent {
       ticksSinceLastFly: 0,
       ticksSinceLastFlySound: 0
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
    
 function onTick(entity: Entity): void {

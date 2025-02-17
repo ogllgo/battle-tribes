@@ -40,6 +40,7 @@ export const CactusComponentArray = new ServerComponentArray<CactusComponent, Ca
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -120,6 +121,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cactus, 
       flowerData: cactusComponentParams.flowerData,
       limbData: cactusComponentParams.limbData
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

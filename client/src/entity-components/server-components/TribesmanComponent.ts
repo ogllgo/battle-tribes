@@ -232,6 +232,7 @@ export const TribesmanComponentArray = new ServerComponentArray<TribesmanCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -459,6 +460,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
       titles: tribesmanComponentParams.titles,
       deathbringerEyeLights: []
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity: Entity): void => {

@@ -32,6 +32,7 @@ export const TreePlantedComponentArray = new ServerComponentArray<TreePlantedCom
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -72,6 +73,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.treePlan
       growthProgress: growthProgress,
       renderPart: renderParts.renderPart
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

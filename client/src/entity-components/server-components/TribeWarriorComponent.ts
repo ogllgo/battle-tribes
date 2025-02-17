@@ -22,6 +22,7 @@ export const TribeWarriorComponentArray = new ServerComponentArray<TribeWarriorC
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -72,6 +73,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeWar
    return {
       scars: entityConfig.serverComponents[ServerComponentType.tribeWarrior].scars
    };
+}
+
+function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.tribeWarrior, never>): number {
+   const tribeWarriorComponentParams = entityConfig.serverComponents[ServerComponentType.tribeWarrior];
+   return tribeWarriorComponentParams.scars.length;
 }
 
 function padData(reader: PacketReader): void {

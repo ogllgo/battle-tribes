@@ -38,6 +38,7 @@ export interface ComponentArrayFunctions<T extends object, RenderParts extends o
    createRenderParts?(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts;
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
    createComponent(config: EntityConfig<never, never>, renderParts: RenderParts): T;
+   getMaxRenderParts(entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number;
    /** Called once when the entity is being created, just after all the components are created from their params */
    onLoad?(entity: Entity): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
@@ -97,6 +98,7 @@ export abstract class ComponentArray<
    // but is that really the right approach? What would be the benefits? That was my original reason for making the
    // createRenderParts thing.
    public readonly createComponent: (config: EntityConfig<never, never>, renderParts: RenderParts) => T;
+   public readonly getMaxRenderParts: (config: EntityConfig<never, never>, renderInfo: EntityRenderInfo) => number;
    public onLoad?(entity: Entity): void;
    public onSpawn?(entity: Entity): void;
    public onTick?: (entity: Entity) => void;
@@ -111,6 +113,7 @@ export abstract class ComponentArray<
       
       this.createRenderParts = functions.createRenderParts;
       this.createComponent = functions.createComponent;
+      this.getMaxRenderParts = functions.getMaxRenderParts;
       this.onLoad = functions.onLoad;
       this.onSpawn = functions.onSpawn;
       this.onTick = functions.onTick;

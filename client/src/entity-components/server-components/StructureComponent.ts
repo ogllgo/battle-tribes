@@ -20,6 +20,7 @@ export interface StructureComponent {
 export const StructureComponentArray = new ServerComponentArray<StructureComponent, StructureComponentParams, never>(ServerComponentType.structure, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onSpawn: onSpawn,
    padData: padData,
    updateFromData: updateFromData
@@ -55,6 +56,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.structur
       hasActiveBlueprint: structureComponentParams.hasActiveBlueprint,
       connections: structureComponentParams.connections
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onSpawn(entity: Entity): void {

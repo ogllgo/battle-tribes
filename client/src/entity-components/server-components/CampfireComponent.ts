@@ -20,6 +20,7 @@ export const CampfireComponentArray = new ServerComponentArray<CampfireComponent
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
@@ -48,6 +49,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): CampfireComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

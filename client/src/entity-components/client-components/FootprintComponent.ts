@@ -33,6 +33,7 @@ export interface FootprintComponent {
 
 export const FootprintComponentArray = new ClientComponentArray<FootprintComponent>(ClientComponentType.footprint, true, {
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick
 });
 
@@ -58,6 +59,10 @@ function createComponent(entityConfig: EntityConfig<never, ClientComponentType.f
       numFootstepsTaken: 0,
       distanceTracker: 0
    }
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const createFootstepSound = (entity: Entity): void => {

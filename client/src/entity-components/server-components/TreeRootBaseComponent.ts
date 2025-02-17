@@ -19,6 +19,7 @@ export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseC
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -44,6 +45,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): TreeRootBaseComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(): void {}

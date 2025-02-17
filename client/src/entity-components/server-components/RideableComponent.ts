@@ -21,6 +21,7 @@ export interface RideableComponent {
 export const RideableComponentArray = new ServerComponentArray<RideableComponent, RideableComponentParams, never>(ServerComponentType.rideable, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -58,6 +59,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.rideable
    return {
       carrySlots: rideableComponentParams.carrySlots
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

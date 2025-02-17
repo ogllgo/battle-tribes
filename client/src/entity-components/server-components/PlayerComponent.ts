@@ -14,6 +14,7 @@ export interface PlayerComponent {
 export const PlayerComponentArray = new ServerComponentArray<PlayerComponent, PlayerComponentParams, never>(ServerComponentType.player, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -29,6 +30,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.player, 
    return {
       username: entityConfig.serverComponents[ServerComponentType.player].username
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

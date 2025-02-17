@@ -9,6 +9,7 @@ export interface FollowAIComponent {}
 export const FollowAIComponentArray = new ServerComponentArray<FollowAIComponent, FollowAIComponentParams, never>(ServerComponentType.followAI, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -20,6 +21,10 @@ function createParamsFromData(reader: PacketReader): FollowAIComponentParams {
 
 function createComponent(): FollowAIComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

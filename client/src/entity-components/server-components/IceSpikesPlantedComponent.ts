@@ -27,6 +27,7 @@ export const IceSpikesPlantedComponentArray = new ServerComponentArray<IceSpikes
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -66,6 +67,10 @@ function createComponent(_entityConfig: EntityConfig<never, never>, renderParts:
    return {
       renderPart: renderParts.renderPart
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

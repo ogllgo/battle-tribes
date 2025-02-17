@@ -39,6 +39,7 @@ export const TombstoneComponentArray = new ServerComponentArray<TombstoneCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -101,6 +102,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tombston
       zombieSpawnY:tombstoneComponentParams. zombieSpawnY,
       deathInfo:tombstoneComponentParams. deathInfo
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onTick(entity: Entity): void {

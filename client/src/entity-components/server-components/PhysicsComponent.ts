@@ -188,6 +188,7 @@ const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Ent
 export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent, PhysicsComponentParams, never>(ServerComponentType.physics, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onUpdate: onUpdate,
    padData: padData,
@@ -217,6 +218,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.physics,
       traction: physicsComponentParams.traction,
       ignoredTileSpeedMultipliers: EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS
    }
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

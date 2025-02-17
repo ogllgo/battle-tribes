@@ -36,6 +36,7 @@ export const FishComponentArray = new ServerComponentArray<FishComponent, FishCo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -70,6 +71,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.fish, ne
       colour: entityConfig.serverComponents[ServerComponentType.fish].colour,
       waterOpacityMultiplier: randFloat(0.6, 1)
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onTick(entity: Entity): void {

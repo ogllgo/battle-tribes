@@ -35,7 +35,9 @@ const DECORATION_RENDER_INFO: Record<DecorationType, string> = {
 
 export const DecorationComponentArray = new ServerComponentArray<DecorationComponent, DecorationComponentParams, RenderParts>(ServerComponentType.decoration, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -67,6 +69,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.decorati
    return {
       decorationType: entityConfig.serverComponents[ServerComponentType.decoration].decorationType
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
    
 function padData(reader: PacketReader): void {

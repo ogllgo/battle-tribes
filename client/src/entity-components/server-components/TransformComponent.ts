@@ -479,6 +479,7 @@ export function updateEntityPosition(transformComponent: TransformComponent, ent
 export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentParams, never>(ServerComponentType.transform, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onRemove: onRemove,
    padData: padData,
@@ -518,6 +519,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       mount: transformComponentParams.mount,
       carriedEntities: transformComponentParams.carriedEntities
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onLoad(entity: Entity): void {

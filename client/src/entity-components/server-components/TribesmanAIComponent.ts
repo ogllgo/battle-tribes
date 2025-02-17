@@ -3,7 +3,6 @@ import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
 import { randInt, randItem } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
-import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { Entity } from "../../../../shared/src/entities";
 import { playSoundOnEntity } from "../../sound";
@@ -33,6 +32,7 @@ const GOBLIN_AMBIENT_SOUNDS: ReadonlyArray<string> = ["goblin-ambient-1.mp3", "g
 export const TribesmanAIComponentArray = new ServerComponentArray<TribesmanAIComponent, TribesmanAIComponentParams, never>(ServerComponentType.tribesmanAI, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
@@ -61,6 +61,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
       craftingItemType: tribesmanAIComponentParams.craftingItemType,
       craftingProgress: tribesmanAIComponentParams.craftingProgress
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

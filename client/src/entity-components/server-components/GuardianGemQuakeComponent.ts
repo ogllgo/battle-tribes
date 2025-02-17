@@ -22,6 +22,7 @@ const TEXTURE_SOURCES: ReadonlyArray<string> = [
 export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, never>(ServerComponentType.guardianGemQuake, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
@@ -35,6 +36,10 @@ function createParamsFromData(reader: PacketReader): GuardianGemQuakeComponentPa
 
 function createComponent(): GuardianGemQuakeComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onLoad(entity: Entity): void {

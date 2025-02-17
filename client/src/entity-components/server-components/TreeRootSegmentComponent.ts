@@ -25,6 +25,7 @@ export const TreeRootSegmentComponentArray = new ServerComponentArray<TreeRootSe
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onDie: onDie,
@@ -60,6 +61,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.treeRoot
    return {
       variant: entityConfig.serverComponents[ServerComponentType.treeRootSegment].variant
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

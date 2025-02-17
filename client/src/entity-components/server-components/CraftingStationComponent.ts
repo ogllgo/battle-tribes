@@ -15,6 +15,7 @@ export interface CraftingStationComponent {
 export const CraftingStationComponentArray = new ServerComponentArray<CraftingStationComponent>(ServerComponentType.craftingStation, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -30,6 +31,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.crafting
    return {
       craftingStation: entityConfig.serverComponents[ServerComponentType.craftingStation].craftingStation
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

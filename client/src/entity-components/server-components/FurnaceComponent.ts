@@ -23,6 +23,7 @@ export const FurnaceComponentArray = new ServerComponentArray<FurnaceComponent, 
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onTick: onTick,
@@ -53,6 +54,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): FurnaceComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(): void {}

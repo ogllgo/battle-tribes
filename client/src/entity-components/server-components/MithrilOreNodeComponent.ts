@@ -25,6 +25,7 @@ export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreN
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -79,6 +80,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
 function createComponent(): MithrilOreNodeComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

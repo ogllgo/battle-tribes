@@ -14,6 +14,7 @@ export const PebblumComponentArray = new ServerComponentArray<PebblumComponent, 
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -48,6 +49,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): PebblumComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 2;
 }
 
 function padData(): void {}

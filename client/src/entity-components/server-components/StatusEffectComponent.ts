@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { StatusEffectData } from "battletribes-shared/client-server-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, customTickIntervalHasPassed, lerp, randFloat, randItem } from "battletribes-shared/utils";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize } from "../../particles";
@@ -55,6 +55,7 @@ const getStatusEffect = (statusEffectComponent: StatusEffectComponent, type: Sta
 export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectComponent, StatusEffectComponentParams, never>(ServerComponentType.statusEffect, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -90,6 +91,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEf
       statusEffects: entityConfig.serverComponents[ServerComponentType.statusEffect].statusEffects,
       burningLight: null
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

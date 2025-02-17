@@ -5,7 +5,6 @@ import { PacketReader } from "battletribes-shared/packets";
 import { getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
-import { VisualRenderPart } from "../../render-parts/render-parts";
 
 export interface BuildingMaterialComponentParams {
    readonly material: BuildingMaterial;
@@ -40,6 +39,7 @@ const getMaterialTextureSources = (entityType: EntityType): ReadonlyArray<string
 export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingMaterialComponent, BuildingMaterialComponentParams, never>(ServerComponentType.buildingMaterial, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -59,6 +59,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.building
    return {
       material: entityConfig.serverComponents[ServerComponentType.buildingMaterial].material
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

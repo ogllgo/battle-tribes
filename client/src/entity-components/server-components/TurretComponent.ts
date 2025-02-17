@@ -135,6 +135,7 @@ const getProjectileZIndex = (entityType: TurretType): number => {
 export const TurretComponentArray = new ServerComponentArray<TurretComponent, TurretComponentParams, never>(ServerComponentType.turret, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -159,6 +160,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.turret, 
       gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
       projectileRenderPart:  null
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const updateAimDirection = (turretComponent: TurretComponent, aimDirection: number, chargeProgress: number): void => {

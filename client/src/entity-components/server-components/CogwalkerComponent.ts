@@ -17,6 +17,7 @@ export const CogwalkerComponentArray = new ServerComponentArray<CogwalkerCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -68,6 +69,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): CogwalkerComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function padData(): void {}

@@ -16,6 +16,7 @@ export const BarrelComponentArray = new ServerComponentArray<BarrelComponent, Ba
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -45,6 +46,10 @@ function createParamsFromData(): BarrelComponentParams {
 
 function createComponent(): BarrelComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(): void {}

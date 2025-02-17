@@ -75,6 +75,7 @@ export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, Slim
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -141,6 +142,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.slime, n
       orbs: new Array<SlimeOrbInfo>,
       internalTickCounter: 0
    };
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function onTick(entity: Entity): void {

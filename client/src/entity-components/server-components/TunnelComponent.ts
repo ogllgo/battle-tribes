@@ -59,6 +59,7 @@ export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, Tu
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -99,6 +100,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel, 
       bottomDoorOpenProgress: tunnelComponentParams.bottomDoorOpenProgress,
       doorRenderParts: {}
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: number): void => {

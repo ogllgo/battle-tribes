@@ -25,6 +25,7 @@ export const FenceComponentArray = new ServerComponentArray<FenceComponent, Fenc
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
@@ -52,6 +53,10 @@ function createComponent(): FenceComponent {
       railRenderParts: [null, null, null, null],
       connectedSidesBitset: 0
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onLoad(entity: Entity): void {

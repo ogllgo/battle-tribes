@@ -53,6 +53,7 @@ export const RockSpikeComponentArray = new ServerComponentArray<RockSpikeCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
@@ -96,6 +97,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.rockSpik
       lifetime: rockSpikeComponentParams.lifetime,
       renderPart: renderParts.renderPart
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onLoad(entity: Entity): void {

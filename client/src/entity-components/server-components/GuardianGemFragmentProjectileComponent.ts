@@ -35,6 +35,7 @@ export const GuardianGemFragmentProjectileComponentArray = new ServerComponentAr
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie,
    padData: padData,
    updateFromData: updateFromData
@@ -99,6 +100,10 @@ function createComponent(_entityConfig: EntityConfig<never, never>, renderParts:
    return {
       renderPart: renderParts.renderPart
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onDie(entity: Entity): void {

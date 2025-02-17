@@ -1,6 +1,6 @@
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { assertUnreachable, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { createDustCloud, createLightWoodSpeckParticle, createRockParticle, createRockSpeckParticle, createSawdustCloud, createWoodShardParticle } from "../../particles";
 import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -405,6 +405,7 @@ const createStoneBlueprintWorkParticleEffects = (originX: number, originY: numbe
 export const BlueprintComponentArray = new ServerComponentArray<BlueprintComponent, BlueprintComponentParams, never>(ServerComponentType.blueprint, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onSpawn: onSpawn,
    padData: padData,
@@ -433,6 +434,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprin
       lastBlueprintProgress: blueprintComponentParams.lastBlueprintProgress,
       associatedEntityID: blueprintComponentParams.associatedEntityID
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const updatePartialTexture = (entity: Entity): void => {

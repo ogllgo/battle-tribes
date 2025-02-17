@@ -13,6 +13,7 @@ export interface PlantedComponent {}
 export const PlantedComponentArray = new ServerComponentArray<PlantedComponent, PlantedComponentParams, never>(ServerComponentType.planted, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onSpawn: onSpawn
@@ -24,6 +25,10 @@ function createParamsFromData(): PlantedComponentParams {
 
 function createComponent(): PlantedComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(): void {}

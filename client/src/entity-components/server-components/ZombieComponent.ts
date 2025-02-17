@@ -33,6 +33,7 @@ export const ZombieComponentArray = new ServerComponentArray<ZombieComponent, Zo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -82,6 +83,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.zombie, 
    return {
       zombieType: entityConfig.serverComponents[ServerComponentType.zombie].zombieType
    };
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function onTick(entity: Entity): void {

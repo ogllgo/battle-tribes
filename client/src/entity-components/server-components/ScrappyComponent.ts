@@ -19,6 +19,7 @@ export const ScrappyComponentArray = new ServerComponentArray<ScrappyComponent, 
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -65,6 +66,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): ScrappyComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function padData(): void {}

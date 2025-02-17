@@ -18,6 +18,7 @@ export interface SlimeSpitComponent {}
 export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, never>(ServerComponentType.slimeSpit, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
@@ -53,6 +54,10 @@ function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitCom
    entityConfig.renderInfo.attachRenderPart(renderPart2);
 
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 2;
 }
 
 function onLoad(entity: Entity): void {

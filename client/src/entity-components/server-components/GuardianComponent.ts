@@ -3,6 +3,7 @@ import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Light, attachLightToRenderPart, createLight } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -59,6 +60,7 @@ const enum Vars {
 export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentParams, never>(ServerComponentType.guardian, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -386,6 +388,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       attackType: guardianComponentParams.attackType,
       attackStage: guardianComponentParams.attackStage
    };
+}
+
+function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
+   return renderInfo.allRenderThings.length;
 }
    
 function padData(reader: PacketReader): void {

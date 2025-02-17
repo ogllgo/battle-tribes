@@ -50,6 +50,7 @@ export const YetiComponentArray = new ServerComponentArray<YetiComponent, YetiCo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onHit: onHit,
    onDie: onDie,
@@ -101,6 +102,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti, ne
       attackProgress: yetiComponentParams.attackProgress,
       pawRenderParts: renderParts.pawRenderParts
    };
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function onTick(entity: Entity): void {

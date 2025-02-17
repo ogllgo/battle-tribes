@@ -28,6 +28,7 @@ export const SnowballComponentArray = new ServerComponentArray<SnowballComponent
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -76,9 +77,12 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.snowball
    };
 }
 
+function getMaxRenderParts(): number {
+   return 1;
+}
+
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    if ((transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) && transformComponent.selfVelocity.lengthSquared() > 2500) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(transformComponent.position.x, transformComponent.position.y, randFloat(40, 60));

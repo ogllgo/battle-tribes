@@ -19,6 +19,7 @@ export const BallistaComponentArray = new ServerComponentArray<BallistaComponent
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -102,6 +103,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): BallistaComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 7;
 }
 
 function padData(): void {}

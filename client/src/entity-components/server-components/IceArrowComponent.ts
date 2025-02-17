@@ -12,6 +12,7 @@ export interface IceArrowComponent {}
 export const IceArrowComponentArray = new ServerComponentArray<IceArrowComponent, IceArrowComponentParams, never>(ServerComponentType.iceArrow, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onRemove: onRemove,
    padData: padData,
@@ -24,6 +25,10 @@ function createParamsFromData(): IceArrowComponentParams {
 
 function createComponent(): IceArrowComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

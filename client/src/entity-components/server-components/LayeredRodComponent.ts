@@ -128,6 +128,7 @@ const getLayerColour = (entityConfig: EntityConfig<ServerComponentType.transform
 export const LayeredRodComponentArray = new ServerComponentArray<LayeredRodComponent, LayeredRodComponentParams, never>(ServerComponentType.layeredRod, false, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onCollision: onCollision,
    padData: padData,
@@ -184,6 +185,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredR
       bendX: naturalBendX,
       bendY: naturalBendY
    };
+}
+
+function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.layeredRod, never>): number {
+   const layeredRodComponentParams = entityConfig.serverComponents[ServerComponentType.layeredRod];
+   return layeredRodComponentParams.numLayers;
 }
 
 const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: Entity): void => {

@@ -50,6 +50,7 @@ const SNOWBALL_THROW_OFFSET = 150;
 export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiComponent, FrozenYetiComponentParams, never>(ServerComponentType.frozenYeti, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -115,6 +116,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYe
       headRenderPart: headRenderPart,
       pawRenderParts: pawRenderParts
    };
+}
+
+function getMaxRenderParts(): number {
+   return 4;
 }
 
 const setPawRotationAndOffset = (frozenYetiComponent: FrozenYetiComponent, rotation: number, offsetMagnitude: number): void => {

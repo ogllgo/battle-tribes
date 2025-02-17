@@ -9,6 +9,7 @@ export interface AIHelperComponent {}
 export const AIHelperComponentArray = new ServerComponentArray<AIHelperComponent, AIHelperComponentParams, never>(ServerComponentType.aiHelper, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -21,6 +22,10 @@ function createParamsFromData(reader: PacketReader): AIHelperComponentParams {
 
 function createComponent(): AIHelperComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

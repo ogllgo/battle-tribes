@@ -15,6 +15,7 @@ export interface BlockAttackComponent {
 export const BlockAttackComponentArray = new ServerComponentArray<BlockAttackComponent, BlockAttackComponentParams, never>(ServerComponentType.blockAttack, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -34,6 +35,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.blockAtt
    return {
       hasBlocked: blockAttackComponentParams.hasBlocked
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

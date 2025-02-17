@@ -31,6 +31,7 @@ export const TotemBannerComponentArray = new ServerComponentArray<TotemBannerCom
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -129,6 +130,12 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBan
       banners: entityConfig.serverComponents[ServerComponentType.totemBanner].banners,
       bannerRenderParts: renderParts.bannerRenderParts
    };
+}
+
+function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.totemBanner, never>): number {
+   const bannerComponentParams = entityConfig.serverComponents[ServerComponentType.totemBanner];
+   // @Garbage
+   return Object.keys(bannerComponentParams.banners).length;
 }
 
 function padData(reader: PacketReader): void {

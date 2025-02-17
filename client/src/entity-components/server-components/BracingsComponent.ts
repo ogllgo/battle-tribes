@@ -15,6 +15,7 @@ export const BracingsComponentArray = new ServerComponentArray<BracingsComponent
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -58,6 +59,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
 function createComponent(): BracingsComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function padData(): void {}

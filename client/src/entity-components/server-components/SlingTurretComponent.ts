@@ -14,6 +14,7 @@ export const SlingTurretComponentArray = new ServerComponentArray<SlingTurretCom
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -58,6 +59,10 @@ function createParamsFromData(): SlingTurretComponentParams {
 
 function createComponent(): SlingTurretComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function padData(): void {}

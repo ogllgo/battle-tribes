@@ -17,6 +17,7 @@ export interface GuardianSpikyBallComponent {}
 export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentParams, never>(ServerComponentType.guardianSpikyBall, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData,
@@ -29,6 +30,10 @@ function createParamsFromData(): GuardianSpikyBallComponentParams {
 
 function createComponent(): GuardianSpikyBallComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onLoad(entity: Entity): void {

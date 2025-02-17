@@ -15,6 +15,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 enum GolemRockSize {
    massive,
@@ -95,6 +96,7 @@ const getZIndex = (size: GolemRockSize): number => {
 export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentParams, never>(ServerComponentType.golem, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -172,6 +174,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       eyeRenderParts: eyeRenderParts,
       eyeLights: eyeLights
    };
+}
+
+function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
+   return renderInfo.allRenderThings.length;
 }
 
 function onTick(entity: Entity): void {

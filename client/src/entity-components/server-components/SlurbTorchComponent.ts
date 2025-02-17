@@ -32,6 +32,7 @@ export const SlurbTorchComponentArray = new ServerComponentArray<SlurbTorchCompo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onTick: onTick
@@ -72,6 +73,10 @@ function createComponent(_entityConfig: EntityConfig<never, never>, renderParts:
       particleCreationTimer: randFloat(Vars.MIN_PARTICLE_CREATION_INTERVAL_SECONDS, Vars.MAX_PARTICLE_CREATION_INTERVAL_SECONDS),
       light: renderParts.light
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(): void {}

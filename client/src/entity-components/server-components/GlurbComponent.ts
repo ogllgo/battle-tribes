@@ -25,6 +25,7 @@ export const GlurbComponentArray = new ServerComponentArray<GlurbComponent, Glur
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onTick: onTick,
@@ -101,6 +102,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, config: EntityConfig<Se
 
 function createComponent(): GlurbComponent {
    return {};
+}
+
+function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
+   return renderInfo.allRenderThings.length;
 }
 
 function padData(): void {}

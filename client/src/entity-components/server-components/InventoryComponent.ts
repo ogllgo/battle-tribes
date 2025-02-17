@@ -189,6 +189,7 @@ export function getInventory(inventoryComponent: InventoryComponent, inventoryNa
 export const InventoryComponentArray = new ServerComponentArray<InventoryComponent, InventoryComponentParams, never>(ServerComponentType.inventory, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
@@ -218,6 +219,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.inventor
       inventoryRecord: inventoryComponentParams.inventories,
       inventories: Object.values(inventoryComponentParams.inventories)
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function updateInventories(inventoryComponent: InventoryComponent, reader: PacketReader, isPlayer: boolean): void {

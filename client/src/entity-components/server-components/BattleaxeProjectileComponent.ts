@@ -11,6 +11,7 @@ export interface BattleaxeProjectileComponent {}
 export const BattleaxeProjectileComponentArray = new ServerComponentArray<BattleaxeProjectileComponent, BattleaxeProjectileComponentParams, never>(ServerComponentType.battleaxeProjectile, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
@@ -23,6 +24,10 @@ function createParamsFromData(): BattleaxeProjectileComponentParams {
 
 function createComponent(): BattleaxeProjectileComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const playWhoosh = (entity: Entity): void => {

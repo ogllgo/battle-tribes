@@ -55,6 +55,7 @@ export const FenceGateComponentArray = new ServerComponentArray<FenceGateCompone
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -96,6 +97,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.fenceGat
       doorRenderPart: renderParts.doorRenderPart,
       openProgress: entityConfig.serverComponents[ServerComponentType.fenceGate].openProgress
    };
+}
+
+function getMaxRenderParts(): number {
+   return 2;
 }
 
 const updateDoor = (fenceGateComponent: FenceGateComponent): void => {

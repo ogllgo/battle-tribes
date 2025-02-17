@@ -9,6 +9,7 @@ export interface AttackingEntitiesComponent {}
 export const AttackingEntitiesComponentArray = new ServerComponentArray<AttackingEntitiesComponent, AttackingEntitiesComponentParams, never>(ServerComponentType.attackingEntities, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -24,6 +25,10 @@ function createParamsFromData(reader: PacketReader): AttackingEntitiesComponentP
 
 function createComponent(): AttackingEntitiesComponent {
    return createAttackingEntitiesComponentParams();
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

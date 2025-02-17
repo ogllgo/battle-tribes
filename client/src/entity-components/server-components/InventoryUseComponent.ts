@@ -482,6 +482,7 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
 export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent, InventoryUseComponentParams, never>(ServerComponentType.inventoryUse, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
    onUpdate: onUpdate,
@@ -519,6 +520,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.inventor
       customItemRenderPart: null,
       bandageRenderParts: []
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onLoad(entity: Entity): void {

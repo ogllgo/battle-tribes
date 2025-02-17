@@ -81,6 +81,7 @@ export const HutComponentArray = new ServerComponentArray<HutComponent, HutCompo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -124,6 +125,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.hut, nev
       isRecalling: hutComponentParams.isRecalling,
       recallMarker: renderParts.recallMarker
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function updateDoors(hutComponent: HutComponent, entity: Entity): void {

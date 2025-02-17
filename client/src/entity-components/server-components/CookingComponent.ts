@@ -23,6 +23,7 @@ export interface CookingComponent {
 export const CookingComponentArray = new ServerComponentArray<CookingComponent, CookingComponentParams, never>(ServerComponentType.cooking, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
    padData: padData,
@@ -52,6 +53,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking,
       isCooking: cookingComponentParams.isCooking,
       light: null
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const updateLight = (cookingComponent: CookingComponent, entity: Entity): void => {

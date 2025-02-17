@@ -15,6 +15,7 @@ export interface TribeMemberComponent {
 export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberComponent, TribeMemberComponentParams, never>(ServerComponentType.tribeMember, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -31,6 +32,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMem
    return {
       name: tribeMemberComponentParams.name
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

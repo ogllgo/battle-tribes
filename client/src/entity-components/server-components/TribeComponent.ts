@@ -30,6 +30,7 @@ export function getTribeType(tribeID: number): TribeType {
 export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentParams, never>(ServerComponentType.tribe, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
@@ -54,6 +55,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribe, n
       tribeID: tribeComponentParams.tribeID,
       tribeType: tribeComponentParams.tribeType
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function padData(reader: PacketReader): void {

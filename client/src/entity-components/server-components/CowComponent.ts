@@ -43,6 +43,7 @@ export const CowComponentArray = new ServerComponentArray<CowComponent, CowCompo
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
@@ -127,6 +128,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, nev
       headRenderPart: renderParts.headRenderPart,
       followHalo: renderParts.followHalo
    };
+}
+
+function getMaxRenderParts(): number {
+   return 2;
 }
 
 function onTick(entity: Entity): void {

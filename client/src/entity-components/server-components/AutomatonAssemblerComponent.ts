@@ -14,6 +14,7 @@ export const AutomatonAssemblerComponentArray = new ServerComponentArray<Automat
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -79,6 +80,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): AutomatonAssemblerComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 5;
 }
 
 function padData(): void {}

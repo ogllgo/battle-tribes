@@ -23,6 +23,7 @@ export interface SpitPoisonAreaComponent {
 export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentParams, never>(ServerComponentType.spitPoisonArea, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onRemove: onRemove,
    padData: padData,
@@ -50,6 +51,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
       trackSource: trackSource,
       sound: sound
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

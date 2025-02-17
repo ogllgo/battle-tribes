@@ -8,7 +8,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { randFloat, randItem } from "../../../../shared/src/utils";
 import { createRockParticle, createRockSpeckParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound, ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnEntity } from "../../sound";
+import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnEntity } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityConfig } from "../ComponentArray";
 
@@ -33,6 +33,7 @@ export const BoulderComponentArray = new ServerComponentArray<BoulderComponent, 
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -65,6 +66,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.boulder,
    return {
       boulderType: entityConfig.serverComponents[ServerComponentType.boulder].boulderType
    };
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(reader: PacketReader): void {

@@ -31,6 +31,7 @@ const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentParams, never>(ServerComponentType.spikes, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    padData: padData,
    updateFromData: updateFromData
@@ -89,6 +90,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes, 
       isCovered: entityConfig.serverComponents[ServerComponentType.spikes].isCovered,
       leafRenderParts: leafRenderParts
    };
+}
+
+function getMaxRenderParts(): number {
+   return NUM_SMALL_COVER_LEAVES + NUM_LARGE_COVER_LEAVES;
 }
 
 function onLoad(entity: Entity): void {

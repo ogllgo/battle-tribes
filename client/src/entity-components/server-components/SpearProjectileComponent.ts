@@ -16,6 +16,7 @@ export const SpearProjectileComponentArray = new ServerComponentArray<SpearProje
    createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onSpawn: onSpawn,
    padData: padData,
    updateFromData: updateFromData,
@@ -41,6 +42,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): SpearProjectileComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onSpawn(entity: Entity): void {

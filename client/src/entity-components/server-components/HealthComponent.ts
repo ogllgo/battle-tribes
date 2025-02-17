@@ -29,6 +29,7 @@ const MAX_REDNESS = 0.85;
 export const HealthComponentArray = new ServerComponentArray<HealthComponent, HealthComponentParams, never>(ServerComponentType.health, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onHit: onHit,
    padData: padData,
@@ -60,6 +61,10 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.health, 
       // @Hack: ideally should be sent from server
       secondsSinceLastHit: 99999
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 const calculateRedness = (healthComponent: HealthComponent): number => {

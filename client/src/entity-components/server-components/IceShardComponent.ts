@@ -11,6 +11,7 @@ export interface IceShardComponent {}
 export const IceShardComponentArray = new ServerComponentArray<IceShardComponent, IceShardComponentParams, never>(ServerComponentType.iceShard, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -30,6 +31,10 @@ function createComponent(entityConfig: EntityConfig<never, never>): IceShardComp
    );
 
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function padData(): void {}
