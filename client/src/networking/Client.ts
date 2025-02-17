@@ -1,5 +1,5 @@
-import { BuildingPlanData, PotentialBuildingPlanData, TribeWallData } from "battletribes-shared/ai-building-types";
-import { CircularHitboxData, GameDataPacket, HitFlags, RectangularHitboxData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
+import { BuildingPlanData, TribeWallData } from "battletribes-shared/ai-building-types";
+import { GameDataPacket, HitFlags, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { distance, Point, randFloat } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
@@ -31,7 +31,6 @@ import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import { entityExists, getEntityLayer, getEntityType, layers, playerInstance, removeEntity, setPlayerInstance } from "../world";
 import { getTileIndexIncludingEdges } from "../Layer";
-import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { getComponentArrays, updateEntity } from "../entity-components/ComponentArray";
 import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";

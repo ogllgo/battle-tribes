@@ -5,7 +5,9 @@ import { halfWindowHeight, halfWindowWidth } from "./webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, WORLD_RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import Chunk from "./Chunk";
 import Layer from "./Layer";
-import { entityExists, getEntityRenderInfo } from "./world";
+import { entityExists, getEntityRenderInfo, playerInstance } from "./world";
+import { Entity } from "../../shared/src/entities";
+import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 
 export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
 
@@ -123,9 +125,9 @@ abstract class Camera {
       this.maxVisibleRenderChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
    }
 
-   public static setTrackedEntityID(entityID: number): void {
-      this.trackedEntityID = entityID;
-      this.isFree = entityID === 0;
+   public static setTrackedEntityID(trackedEntity: Entity): void {
+      this.trackedEntityID = trackedEntity;
+      this.isFree = trackedEntity === 0;
    }
 
    public static setPosition(x: number, y: number): void {

@@ -1,4 +1,5 @@
 import { Settings } from "../../../../shared/src/settings";
+import { getSubtileX, getSubtileY } from "../../../../shared/src/subtiles";
 import Camera from "../../Camera";
 import Layer, { getSubtileIndex } from "../../Layer";
 import { createWebGLProgram, gl, createTextureArray } from "../../webgl";
@@ -86,21 +87,21 @@ export function renderTileBreakProgress(layer: Layer): void {
 
    // @Speed
    const vertices = new Array<number>();
-   for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
-      for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-         const subtileIndex = getSubtileIndex(subtileX, subtileY);
-         const damageTaken = layer.wallSubtileDamageTakenMap.get(subtileIndex);
-         if (typeof damageTaken === "undefined" || !layer.subtileIsWall(subtileX, subtileY)) {
-            continue;
-         }
+   for (const pair of layer.wallSubtileDamageTakenMap) {
+      const subtileIndex = pair[0];
+      const damageTaken = pair[0];
 
-         const x1 = subtileX * Settings.SUBTILE_SIZE;
-         const x2 = x1 + Settings.SUBTILE_SIZE;
-         const y1 = subtileY * Settings.SUBTILE_SIZE;
-         const y2 = y1 + Settings.SUBTILE_SIZE;
+      const subtileX = getSubtileX(subtileIndex);
+      const subtileY = getSubtileY(subtileIndex);
 
+      const x1 = subtileX * Settings.SUBTILE_SIZE;
+      const x2 = x1 + Settings.SUBTILE_SIZE;
+      const y1 = subtileY * Settings.SUBTILE_SIZE;
+      const y2 = y1 + Settings.SUBTILE_SIZE;
+
+      if (x2 >= Camera.minVisibleX || x1 <= Camera.maxVisibleX || y2 >= Camera.minVisibleY || y1 <= Camera.maxVisibleY) {
          const textureIdx = damageTaken - 1;
-         
+      
          vertices.push(x1);
          vertices.push(y1);
          vertices.push(0);

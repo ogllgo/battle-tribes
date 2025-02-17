@@ -1,7 +1,7 @@
 import { Settings } from "../../../../shared/src/settings";
-import { SubtileType, TileType } from "../../../../shared/src/tiles";
+import { SubtileType } from "../../../../shared/src/tiles";
 import Camera from "../../Camera";
-import Layer, { getSubtileIndex, getTileIndexIncludingEdges } from "../../Layer";
+import Layer, { getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 
@@ -131,7 +131,6 @@ const getWallVertices = (layer: Layer): Array<number> => {
       }
    }
 
-   return vertices;
    return vertices;
 }
 

@@ -74,6 +74,7 @@ import { createLightLevelsBGShaders, renderLightLevelsBG } from "./rendering/web
 import { createMithrilRichTileRenderingShaders, renderMithrilRichTileOverlays } from "./rendering/webgl/mithril-rich-tile-rendering";
 import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/debug-image-rendering";
 import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
+import { updateDebugEntity } from "./entity-debugging";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -485,6 +486,7 @@ abstract class Game {
       updateSlimeTrails();
 
       if (isDev()) refreshDebugInfo();
+      updateDebugEntity();
    }
 
    /**
@@ -558,19 +560,6 @@ abstract class Game {
          renderLayer(layers[0]);
       } else {
          renderLayer(layers[1]);
-      }
-
-      if (isDev()) {
-         let debugEntity: Entity;
-         if (entityExists(Camera.trackedEntityID) && Camera.trackedEntityID !== playerInstance) {
-            debugEntity = Camera.trackedEntityID;
-         } else if (nerdVisionIsVisible()) {
-            const targettedEntity = getMouseTargetEntity();
-            debugEntity = targettedEntity !== null ? targettedEntity : 0;
-         } else {
-            debugEntity = 0;
-         }
-         sendSetDebugEntityPacket(debugEntity);
       }
 
       if (OPTIONS.showSubtileSupports) {

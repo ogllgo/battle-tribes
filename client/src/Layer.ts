@@ -3,7 +3,7 @@ import { GrassTileInfo, RiverFlowDirectionsRecord, RiverSteppingStoneData, Water
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { WorldInfo } from "../../shared/src/structures";
-import { SubtileType } from "../../shared/src/tiles";
+import { SubtileType, TileType } from "../../shared/src/tiles";
 import { Point, randFloat, randInt, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 import Chunk from "./Chunk";
@@ -75,6 +75,9 @@ export default class Layer {
    public readonly riverSteppingStones: Array<RiverSteppingStoneData>;
    public readonly grassInfo: Record<number, Record<number, GrassTileInfo>>;
 
+   /** All dropdown tiles in the layer */
+   public readonly dropdownTiles: ReadonlyArray<TileIndex>;
+
    public readonly buildingBlockingTiles: ReadonlySet<TileIndex>;
 
    public readonly chunks: ReadonlyArray<Chunk>;
@@ -116,9 +119,21 @@ export default class Layer {
       }
       this.chunks = chunks;
 
+      const dropdownTiles = new Array<TileIndex>();
+      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+         for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+            const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+            const tile = this.getTile(tileIndex);
+            if (tile.type === TileType.dropdown) {
+               dropdownTiles.push(tileIndex);
+            }
+         }
+      }
+      this.dropdownTiles = dropdownTiles;
+
       // Create subtile variants
-      for (let subtileX = -Settings.EDGE_GENERATION_DISTANCE * 4; subtileX < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4; subtileX++) {
-         for (let subtileY = -Settings.EDGE_GENERATION_DISTANCE * 4; subtileY < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4; subtileY++) {
+      for (let subtileY = -Settings.EDGE_GENERATION_DISTANCE * 4; subtileY < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4; subtileY++) {
+         for (let subtileX = -Settings.EDGE_GENERATION_DISTANCE * 4; subtileX < (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4; subtileX++) {
             const subtileIndex = getSubtileIndex(subtileX, subtileY);
             const subtileType = wallSubtileTypes[subtileIndex] as SubtileType;
             if (subtileType !== SubtileType.none) {

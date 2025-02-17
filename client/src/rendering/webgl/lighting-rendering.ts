@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp } from "battletribes-shared/utils";
+import { distance, getTileX, getTileY, lerp } from "battletribes-shared/utils";
 import { createWebGLProgram, gl } from "../../webgl";
 import Board from "../../Board";
 import OPTIONS from "../../options";
@@ -327,30 +327,27 @@ const getVisibleRectLights = (layer: Layer): ReadonlyArray<RectLight> => {
       return [];
    }
    
-   const dropdownLightSpreadRange = Math.pow(Vars.DROPDOWN_LIGHT_STRENGTH, 2);
-   const minTileX = Math.max(Math.floor((Camera.minVisibleX - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE);
-   const maxTileX = Math.min(Math.floor((Camera.maxVisibleX + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
-   const minTileY = Math.max(Math.floor((Camera.minVisibleY - dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE);
-   const maxTileY = Math.min(Math.floor((Camera.maxVisibleY + dropdownLightSpreadRange * Settings.TILE_SIZE) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
-
    // Check the surface layer for dropdown tiles
    const rectLights = new Array<RectLight>();
-   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
-      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
-         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         const tile = surfaceLayer.getTile(tileIndex);
+   for (let i = 0; i < surfaceLayer.dropdownTiles.length; i++) {
+      const tileIndex = surfaceLayer.dropdownTiles[i];
+      const tileX = getTileX(tileIndex);
+      const tileY = getTileY(tileIndex);
 
-         if (tile.type === TileType.dropdown) {
-            rectLights.push({
-               x: (tileX + 0.5) * Settings.TILE_SIZE,
-               y: (tileY + 0.5) * Settings.TILE_SIZE,
-               width: Settings.TILE_SIZE,
-               height: Settings.TILE_SIZE
-            });
-         }
+      const x = (tileX + 0.5) * Settings.TILE_SIZE;
+      const y = (tileY + 0.5) * Settings.TILE_SIZE;
+
+      const dist = distance(x, y, Camera.position.x, Camera.position.y);
+      const tileDist = dist / Settings.TILE_SIZE;
+      if (tileDist < Vars.DROPDOWN_LIGHT_STRENGTH * Vars.DROPDOWN_LIGHT_STRENGTH) {
+         rectLights.push({
+            x: (tileX + 0.5) * Settings.TILE_SIZE,
+            y: (tileY + 0.5) * Settings.TILE_SIZE,
+            width: Settings.TILE_SIZE,
+            height: Settings.TILE_SIZE
+         });
       }
    }
-
    return rectLights;
 }
 
