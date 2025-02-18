@@ -121,6 +121,7 @@ const getGloveTextureSource = (gloveType: ItemType): string => {
 
 export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, {
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick
 });
@@ -135,6 +136,11 @@ function createComponent(): EquipmentComponent {
       gloveRenderParts: [],
       hasFrostShield: false
    };
+}
+
+function getMaxRenderParts(): number {
+   // 1 armour, 2 gloves
+   return 3;
 }
 
 function onLoad(entity: Entity): void {

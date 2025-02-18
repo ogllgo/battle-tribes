@@ -280,6 +280,12 @@ const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInf
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
    
    fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
+      
+   transformComponent.selfVelocity.x = 0;
+   transformComponent.selfVelocity.y = 0;
+   transformComponent.externalVelocity.x = getVelocityX(mountTransformComponent);
+   transformComponent.externalVelocity.y = getVelocityY(mountTransformComponent);
+
    // @Incomplete
    // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
    // (Don't apply physics for carried entities)

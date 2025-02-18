@@ -7,7 +7,7 @@ import { deselectSelectedEntity } from "../../entity-selection";
 import { CowComponentArray } from "../../entity-components/server-components/CowComponent";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
 import { entityExists, getCurrentLayer, playerInstance } from "../../world";
-import { createAnimalStaffFollowCommandParticle } from "../../particles";
+import { createAnimalStaffCommandParticle } from "../../particles";
 import { getMatrixPosition } from "../../rendering/render-part-matrices";
 import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/matrices";
 import { playSound } from "../../sound";
@@ -63,11 +63,22 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
       const offsetMagnitude = 15;
       const x = origin.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = origin.y + offsetMagnitude * Math.cos(offsetDirection);
-      createAnimalStaffFollowCommandParticle(x, y, offsetDirection, r, g, b);
+      createAnimalStaffCommandParticle(x, y, offsetDirection, r, g, b);
    }
 
+   let soundFile: string;
+   switch (commandType) {
+      case AnimalStaffCommandType.follow: {
+         soundFile = "animal-staff-command-follow.mp3";
+         break;
+      }
+      case AnimalStaffCommandType.carry: {
+         soundFile = "animal-staff-command-carry.mp3";
+         break;
+      }
+   }
    // @Bug: isn't attached to camera
-   playSound("animal-staff-command-follow.mp3", 1.3, 1, Camera.position.copy(), getCurrentLayer());
+   playSound(soundFile, 1.3, 1, Camera.position.copy(), getCurrentLayer());
 }
 
 const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {

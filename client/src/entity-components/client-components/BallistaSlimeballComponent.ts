@@ -17,6 +17,7 @@ export interface BallistaSlimeballComponent {}
 export const BallistaSlimeballComponentArray = new ClientComponentArray<BallistaSlimeballComponent, RenderParts>(ClientComponentType.ballistaSlimeball, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -41,10 +42,13 @@ function createComponent(): BallistaSlimeballComponent {
    return {};
 }
 
+function getMaxRenderParts(): number {
+   return 1;
+}
+
 function onDie(entity: Entity): void {
    // Create arrow break particles
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
       createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
    }

@@ -81,7 +81,7 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
 
    // @Copynpaste @Hack
 
-   const components: EntityServerComponentParams = {};
+   const components = {} as EntityServerComponentParams;
 
    // @Hack @Cleanup: make the client and server use the some component params system
    const componentTypes = EntityComponents[entityType];
@@ -195,7 +195,7 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
       }
    }
 
-   const preCreationInfo: EntityPreCreationInfo = {
+   const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
       serverComponentTypes: componentTypes,
       serverComponentParams: components
    };

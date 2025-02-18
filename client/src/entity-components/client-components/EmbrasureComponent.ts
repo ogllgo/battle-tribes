@@ -23,6 +23,7 @@ export interface EmbrasureComponent {}
 export const EmbrasureComponentArray = new ClientComponentArray<EmbrasureComponent, RenderParts>(ClientComponentType.embrasure, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
    onDie: onDie
 });
@@ -49,6 +50,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
 function createComponent(): EmbrasureComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onHit(entity: Entity, hitData: HitData): void {

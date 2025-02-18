@@ -12,7 +12,8 @@ export interface WorkbenchComponent {}
 
 export const WorkbenchComponentArray = new ClientComponentArray<WorkbenchComponent, RenderParts>(ClientComponentType.workbench, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts
 });
 
 export function createWorkbenchComponentParams(): WorkbenchComponentParams {
@@ -34,4 +35,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): WorkbenchComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }

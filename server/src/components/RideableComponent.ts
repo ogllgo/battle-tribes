@@ -49,7 +49,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   mountEntity(entity, mount, carrySlot.offsetX, carrySlot.offsetY);
+   mountEntity(entity, mount, carrySlot.offsetX, carrySlot.offsetY, false);
    carrySlot.occupiedEntity = entity;
 }
 

@@ -1,6 +1,6 @@
 import { CircularHitboxData, RectangularHitboxData, StatusEffectData } from "./client-server-types";
 import { CraftingStation } from "./items/crafting-recipes";
-import { CactusBodyFlowerData, CactusLimbData, CowSpecies, DeathInfo, DoorToggleType, FishColour, FrozenYetiAttackType, RockSpikeProjectileSize, SlimeSize, SnowballSize, TreeSize, LimbAction, TribeTotemBanner, EntityType } from "./entities";
+import { CowSpecies, DeathInfo, DoorToggleType, FishColour, FrozenYetiAttackType, RockSpikeProjectileSize, SlimeSize, SnowballSize, TreeSize, LimbAction, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
 import { Settings } from "./settings";
 import { StatusEffect } from "./status-effects";
@@ -360,14 +360,6 @@ export interface BlueprintComponentData extends BaseComponentData {
 export interface BoulderComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.boulder;
    readonly boulderType: number;
-}
-
-/* Cactus Component */
-
-export interface CactusComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.cactus;
-   readonly flowers: ReadonlyArray<CactusBodyFlowerData>;
-   readonly limbs: ReadonlyArray<CactusLimbData>;
 }
 
 /* Cooking Component */

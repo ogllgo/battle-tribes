@@ -1,10 +1,8 @@
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
-import { playSound, playSoundOnEntity } from "../../sound";
-import { getEntityLayer } from "../../world";
+import { playSoundOnEntity } from "../../sound";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface RandomSoundComponentParams {}
 
@@ -39,6 +37,7 @@ export function updateRandomSoundComponentSounds(randomSoundComponent: RandomSou
 
 export const RandomSoundComponentArray = new ClientComponentArray<RandomSoundComponent>(ClientComponentType.randomSound, true, {
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick
 });
 
@@ -54,6 +53,10 @@ function createComponent(): RandomSoundComponent {
       soundTimerTicks: 0,
       sounds: []
    };
+}
+
+function getMaxRenderParts(): number {
+   return 0;
 }
 
 function onTick(entity: Entity): void {

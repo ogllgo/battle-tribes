@@ -12,7 +12,8 @@ export interface StonecarvingTableComponent {}
 
 export const StonecarvingTableComponentArray = new ClientComponentArray<StonecarvingTableComponent, RenderParts>(ClientComponentType.stonecarvingTable, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts
 });
 
 export function createStonecarvingTableComponentParams(): StonecarvingTableComponentParams {
@@ -34,4 +35,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): StonecarvingTableComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }

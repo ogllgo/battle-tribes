@@ -1264,7 +1264,8 @@ export function itemIsStackable(itemType: ItemType): boolean {
 }
 
 export function getItemStackSize(itemType: ItemType): number {
-   return (ITEM_INFO_RECORD[itemType] as StackableItemInfo).stackSize;
+   const stackSize = (ITEM_INFO_RECORD[itemType] as StackableItemInfo).stackSize;
+   return stackSize || 1;
 }
 
 // @Cleanup: combine the two parameters to make calling it easier

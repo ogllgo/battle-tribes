@@ -10,6 +10,7 @@ export enum RenderLayer {
    quakes,
    // Projectiles which need to be rendered below all things which they can be embedded in
    embeddedProjectiles,
+   blueprints,
    // @Temporary?
    lowestEntities,
    fish,
@@ -24,7 +25,6 @@ export enum RenderLayer {
    mithril,
    projectiles,
    highEntities,
-   blueprints,
    treeRootBase,
    /* --------------- */
    WALL_SEPARATOR,

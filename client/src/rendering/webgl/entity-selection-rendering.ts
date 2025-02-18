@@ -5,6 +5,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./entity-rendering";
 import { cleanEntityRenderInfo, translateEntityRenderParts } from "../render-part-matrices";
 import { gameFramebuffer } from "../../Game";
+import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../../EntityRenderInfo";
 
 let renderProgram: WebGLProgram;
 
@@ -171,12 +172,7 @@ export function createStructureHighlightShaders(): void {
    framebufferVertexData[11] = 1;
 }
 
-export function renderEntitySelection(): void {
-   const renderInfo = getHighlightedRenderInfo();
-   if (renderInfo === null) {
-      return;
-   }
-
+export function renderEntitySelection(renderInfo: EntityRenderInfo, frameProgress: number, isSelected: boolean): void {
    // 
    // Framebuffer Program
    // 
@@ -206,48 +202,57 @@ export function renderEntitySelection(): void {
 
    // Right
    translateEntityRenderParts(renderInfo, 4, 0);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Left
    translateEntityRenderParts(renderInfo, -4, 0);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Top
    translateEntityRenderParts(renderInfo, 0, 4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Bottom
    translateEntityRenderParts(renderInfo, 0, -4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Top right
    translateEntityRenderParts(renderInfo, 4, 4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Bottom right
    translateEntityRenderParts(renderInfo, 4, -4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Bottom left
    translateEntityRenderParts(renderInfo, -4, -4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Top left
    translateEntityRenderParts(renderInfo, -4, 4);
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, 0);
+   cleanEntityRenderInfo(renderInfo, frameProgress);
 
    // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
    // (dfactor) by 1 minus the middle alpha.
    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
 
+   updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo, { overrideAlphaWithOne: true });
 
    cleanupEntityRendering();
@@ -271,7 +276,7 @@ export function renderEntitySelection(): void {
 
    gl.enableVertexAttribArray(0);
    
-   gl.uniform1f(isSelectedUniformLocation, getHighlightedEntityID() === getSelectedEntityID() ? 1 : 0);
+   gl.uniform1f(isSelectedUniformLocation, isSelected ? 1 : 0);
    gl.uniform2f(originPositionUniformLocation, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
 
    gl.activeTexture(gl.TEXTURE0);

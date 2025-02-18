@@ -25,7 +25,7 @@ import { closeCurrentMenu } from "../menus";
 import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
 import { processTickEvents } from "../entity-tick-events";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
-import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processRespawnDataPacket, processSyncDataPacket } from "./packet-processing";
+import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket } from "./packet-processing";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket } from "./packet-creation";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
@@ -197,10 +197,10 @@ abstract class Client {
                   Game.sync();
                   break;
                }
-               case PacketType.respawnData: {
-                  processRespawnDataPacket(reader);
-                  break;
-               }
+               // case PacketType.respawnData: {
+               //    processRespawnDataPacket(reader);
+               //    break;
+               // }
                case PacketType.forcePositionUpdate: {
                   processForcePositionUpdatePacket(reader);
                   break;

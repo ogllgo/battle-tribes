@@ -224,6 +224,11 @@ export class EntityRenderInfo {
 }
 
 export function updateEntityRenderInfoRenderData(renderInfo: EntityRenderInfo): void {
+   // @Hack @Speed: only need to override places where there were render parts that no longer exist
+   for (let i = 0; i < renderInfo.vertexData.length; i++) {
+      renderInfo.vertexData[i] = 0;
+   }
+   
    setRenderInfoInVertexData(renderInfo, renderInfo.vertexData, renderInfo.indicesData, 0);
 
    gl.bindBuffer(gl.ARRAY_BUFFER, renderInfo.vertexBuffer);

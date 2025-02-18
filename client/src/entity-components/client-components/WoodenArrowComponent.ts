@@ -5,7 +5,6 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface WoodenArrowComponentParams {}
@@ -17,6 +16,7 @@ export interface WoodenArrowComponent {}
 export const WoodenArrowComponentArray = new ClientComponentArray<WoodenArrowComponent, RenderParts>(ClientComponentType.woodenArrow, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -41,10 +41,13 @@ function createComponent(): WoodenArrowComponent {
    return {};
 }
 
+function getMaxRenderParts(): number {
+   return 1;
+}
+
 function onDie(entity: Entity): void {
    // Create arrow break particles
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
       createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
    }

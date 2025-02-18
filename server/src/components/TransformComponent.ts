@@ -14,7 +14,7 @@ import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPat
 import { resolveWallCollision } from "../collision";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, BoxType, Hitbox, HitboxFlag, hitboxIsCircular, updateBox } from "battletribes-shared/boxes/boxes";
-import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
@@ -38,6 +38,8 @@ export interface EntityCarryInfo {
    readonly carriedEntity: Entity;
    readonly offsetX: number;
    readonly offsetY: number;
+   /** If true, when the carried entities' mount is destroyed, the carried entity will be destroyed instead of being dismounted */
+   readonly destroyWhenMountIsDestroyed: boolean;
 }
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
@@ -217,14 +219,8 @@ export class TransformComponent {
    public cleanHitboxes(entity: Entity): void {
       assert(this.hitboxes.length > 0);
 
-      // @Hack
-      let rotation = this.relativeRotation;
-      if (entityExists(this.mount)) {
-         const mountTransformComponent = TransformComponentArray.getComponent(this.mount);
-         rotation += mountTransformComponent.relativeRotation;
-      }
       for (const hitbox of this.rootHitboxes) {
-         cleanHitbox(this, hitbox, this.position, rotation);
+         cleanHitbox(this, hitbox, this.position, this.rotation);
       }
 
       this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -454,7 +450,7 @@ const getHitboxByBox = (transformComponent: TransformComponent, box: Box): Hitbo
    throw new Error();
 }
 
-// @Cleanup: name is bad, doesn't fully 'clean' the hitbox.
+// @Cleanup: name is bad, doesn't fully 'clean' the hitbox, only the position, rotation, etc.
 const cleanHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, parentPosition: Readonly<Point>, parentRotation: number): void => {
    updateBox(hitbox.box, parentPosition.x, parentPosition.y, parentRotation);
 
@@ -474,9 +470,15 @@ function onJoin(entity: Entity): void {
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
    if (transformComponent.mount !== 0) {
-      mountEntity(entity, transformComponent.mount, 0, 0);
+      mountEntity(entity, transformComponent.mount, 0, 0, true);
    } else {
       transformComponent.carryRoot = entity;
+   }
+
+   transformComponent.rotation = transformComponent.relativeRotation;
+   if (transformComponent.carryRoot !== entity) {
+      const carryRootTransformComponent = TransformComponentArray.getComponent(transformComponent.carryRoot);
+      transformComponent.rotation += carryRootTransformComponent.rotation;
    }
    
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
@@ -518,7 +520,15 @@ function onRemove(entity: Entity): void {
    // Unmount any chilren
    while (transformComponent.carriedEntities.length > 0) {
       const carryInfo = transformComponent.carriedEntities[0];
-      dismountEntity(carryInfo.carriedEntity);
+      if (carryInfo.destroyWhenMountIsDestroyed) {
+         destroyEntity(carryInfo.carriedEntity);
+         
+         const idx = transformComponent.carriedEntities.indexOf(carryInfo);
+         assert(idx !== -1);
+         transformComponent.carriedEntities.splice(idx, 1);
+      } else {
+         dismountEntity(carryInfo.carriedEntity);
+      }
    }
    
    // Remove from chunks
@@ -699,7 +709,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-export function mountEntity(entity: Entity, mount: Entity, offsetX: number, offsetY: number): void {
+export function mountEntity(entity: Entity, mount: Entity, offsetX: number, offsetY: number, destroyWhenMountIsDestroyed: boolean): void {
    assert(mount !== entity);
    
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
@@ -711,7 +721,8 @@ export function mountEntity(entity: Entity, mount: Entity, offsetX: number, offs
    const carryInfo: EntityCarryInfo = {
       carriedEntity: entity,
       offsetX: offsetX,
-      offsetY: offsetY
+      offsetY: offsetY,
+      destroyWhenMountIsDestroyed: destroyWhenMountIsDestroyed
    };
    mountTransformComponent.carriedEntities.push(carryInfo);
 

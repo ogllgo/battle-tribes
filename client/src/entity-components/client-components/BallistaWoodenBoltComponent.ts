@@ -17,6 +17,7 @@ export interface BallistaWoodenBoltComponent {}
 export const BallistaWoodenBoltComponentArray = new ClientComponentArray<BallistaWoodenBoltComponent, RenderParts>(ClientComponentType.ballistaWoodenBolt, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -39,6 +40,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): BallistaWoodenBoltComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onDie(entity: Entity): void {

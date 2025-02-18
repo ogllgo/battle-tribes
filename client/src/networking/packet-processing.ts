@@ -393,7 +393,7 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
    const layerIdx = reader.readNumber();
 
    const entityServerComponentTypes = new Array<ServerComponentType>();
-   const serverComponentParams: EntityServerComponentParams = {};
+   const serverComponentParams = {} as EntityServerComponentParams;
    
    // Create component params
    const numComponents = reader.readNumber();
@@ -410,7 +410,7 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
 
    const layer = layers[layerIdx];
    
-   const preCreationInfo: EntityPreCreationInfo = {
+   const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
       serverComponentTypes: entityServerComponentTypes,
       serverComponentParams: serverComponentParams
    };
@@ -861,24 +861,24 @@ export function processSyncDataPacket(reader: PacketReader): void {
    Game.sync();
 }
 
-export function processRespawnDataPacket(reader: PacketReader): void {
-   // Create the player
-   const playerID = reader.readNumber();
-   // @Hack
-   Game.playerID = playerID;
-   processEntityCreationData(playerID, reader);
+// export function processRespawnDataPacket(reader: PacketReader): void {
+//    // Create the player
+//    const playerID = reader.readNumber();
+//    // @Hack
+//    Game.playerID = playerID;
+//    processEntityCreationData(playerID, reader);
    
-   selectItemSlot(1);
+//    selectItemSlot(1);
    
-   const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
-   updateHealthBar(maxHealth);
+//    const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
+//    updateHealthBar(maxHealth);
 
-   gameScreenSetIsDead(false);
+//    gameScreenSetIsDead(false);
 
-   // Clear any queued packets, as they contain data from when the player wasn't respawned.
-   const queuedPackets = getQueuedGameDataPackets();
-   queuedPackets.length = 0;
-}
+//    // Clear any queued packets, as they contain data from when the player wasn't respawned.
+//    const queuedPackets = getQueuedGameDataPackets();
+//    queuedPackets.length = 0;
+// }
 
 export function processForcePositionUpdatePacket(reader: PacketReader): void {
    if (playerInstance === null) {

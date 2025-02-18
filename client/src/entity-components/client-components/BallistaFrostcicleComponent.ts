@@ -19,6 +19,7 @@ export interface BallistaFrostcicleComponent {}
 export const BallistaFrostcicleComponentArray = new ClientComponentArray<BallistaFrostcicleComponent, RenderParts>(ClientComponentType.ballistaFrostcicle, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -41,6 +42,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): BallistaFrostcicleComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onDie(entity: Entity): void {

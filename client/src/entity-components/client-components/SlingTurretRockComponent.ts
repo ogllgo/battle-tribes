@@ -19,6 +19,7 @@ export interface SlingTurretRockComponent {}
 export const SlingTurretRockComponentArray = new ClientComponentArray<SlingTurretRockComponent, RenderParts>(ClientComponentType.slingTurretRock, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -41,6 +42,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): SlingTurretRockComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onDie(entity: Entity): void {

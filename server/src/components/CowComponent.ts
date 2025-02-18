@@ -330,8 +330,11 @@ function onTick(cow: Entity): void {
    if (entityExists(cowComponent.carryTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.carryTarget);
       moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION);
-      // Force carry if colliding
-      if (entitiesAreColliding(cow, cowComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+
+      // Force carry if colliding and head is looking at the carry target
+      const headHitbox = transformComponent.hitboxes[1];
+      const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+      if (getAbsAngleDiff(headHitbox.box.rotation, targetDirection) < 0.1 && entitiesAreColliding(cow, cowComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
          const rideableComponent = RideableComponentArray.getComponent(cow);
          const carrySlot = rideableComponent.carrySlots[0];
          mountCarrySlot(cowComponent.carryTarget, cow, carrySlot);

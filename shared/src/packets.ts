@@ -46,7 +46,6 @@ export const enum PacketType {
    // @Cleanup: unused?
    syncData,
    sync,
-   respawnData,
    forcePositionUpdate
 }
 

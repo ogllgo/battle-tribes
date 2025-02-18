@@ -92,9 +92,9 @@ export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, 
 }
 
 // @Cleanup: location
-export type EntityServerComponentParams = Partial<{
+export type EntityServerComponentParams = {
    [T in ServerComponentType]: ServerComponentParams<T>;
-}>;
+};
 export type ClientServerComponentParams = Partial<{
    [T in ClientComponentType]: ClientComponentParams<T>;
 }>;
@@ -110,11 +110,17 @@ export interface EntityPreCreationInfo<ServerComponentTypes extends ServerCompon
 
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
 export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): EntityCreationInfo {
+   const clientComponentParams = getEntityClientComponentConfigs(entityType);
+   
    // Calculate the max nbmer of render parts the entity can have
    let maxNumRenderParts = 0;
-   // @Hack @Garbage
    for (const componentType of preCreationInfo.serverComponentTypes) {
       const componentArray = getServerComponentArray(componentType);
+      maxNumRenderParts += componentArray.getMaxRenderParts(preCreationInfo);
+   }
+   // @Hack @Garbage
+   for (const componentType of Object.keys(clientComponentParams).map(Number) as Array<ClientComponentType>) {
+      const componentArray = getClientComponentArray(componentType);
       maxNumRenderParts += componentArray.getMaxRenderParts(preCreationInfo);
    }
    
@@ -130,7 +136,7 @@ export function createEntity(entity: Entity, entityType: EntityType, layer: Laye
       renderInfo: renderInfo,
       serverComponents: preCreationInfo.serverComponentParams,
       // @Cleanup: Should this instead be extracted into pre-creation info?
-      clientComponents: getEntityClientComponentConfigs(entityType)
+      clientComponents: clientComponentParams
    };
 
    // Get whichever client and server components the entity has

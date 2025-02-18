@@ -135,7 +135,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBan
 function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.totemBanner>): number {
    const bannerComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.totemBanner];
    // @Garbage
-   return Object.keys(bannerComponentParams.banners).length;
+   return 1 + Object.keys(bannerComponentParams.banners).length;
 }
 
 function padData(reader: PacketReader): void {

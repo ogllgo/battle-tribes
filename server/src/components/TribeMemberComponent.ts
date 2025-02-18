@@ -3,13 +3,12 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { TribeComponentArray } from "./TribeComponent";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
-import { TransformComponentArray } from "./TransformComponent";
+import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
 import { tribeMemberCanPickUpItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
 import { Settings } from "../../../shared/src/settings";
 import { lerp } from "../../../shared/src/utils";
 import { itemEntityCanBePickedUp, ItemComponentArray } from "./ItemComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
 import { getInventory, hasInventory, InventoryComponentArray, pickupItemEntity } from "./InventoryComponent";
@@ -78,8 +77,8 @@ function onTick(tribeMember: Entity): void {
                forceMult = lerp(0.5, 1, forceMult);
 
                const vacuumDirection = itemEntityTransformComponent.position.calculateAngleBetween(transformComponent.position);
-               transformComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
-               transformComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
+               itemEntityTransformComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
+               itemEntityTransformComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
             }
          }
       }

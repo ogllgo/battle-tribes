@@ -249,23 +249,24 @@ const resolveBorderCollisions = (transformComponent: TransformComponent): void =
       transformComponent.externalVelocity.y = 0;
       transformComponent.isDirty = true;
    }
+
+   // If the entity is outside the world border after resolving border collisions, throw an error
+   if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
+      const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
+      throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
+   }
 }
 
 const updatePosition = (entity: Entity, transformComponent: TransformComponent): void => {
    if (transformComponent.isDirty) {
-      // @Incomplete: if hitboxes are dirty, should still resolve wall tile collisions, etc.
       transformComponent.cleanHitboxes(entity);
-      transformComponent.updateContainingChunks(entity);
       transformComponent.isDirty = false;
-      
+
+      // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
       dirtifyPathfindingNodes(entity, transformComponent);
-      updateEntityLights(entity);
       registerDirtyEntity(entity);
-   }
 
-   if (transformComponent.isDirty) {
-      transformComponent.isDirty = false;
-
+      // (Potentially introduces dirt)
       transformComponent.resolveWallCollisions(entity);
 
       // If the object moved due to resolving wall tile collisions, recalculate
@@ -274,13 +275,8 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
          registerDirtyEntity(entity);
       }
 
+      // (Potentially introduces dirt)
       resolveBorderCollisions(transformComponent);
-
-      // If the entity is outside the world border after resolving border collisions, throw an error
-      if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
-         console.warn(transformComponent.hitboxes);
-         throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
-      }
    
       // If the object moved due to resolving border collisions, recalculate
       if (transformComponent.isDirty) {
@@ -304,6 +300,8 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
             changeEntityLayer(entity, undergroundLayer);
          }
       }
+
+      updateEntityLights(entity);
    }
 }
 

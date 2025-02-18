@@ -391,8 +391,12 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
 }
 
 function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
+   let maxRenderParts = 5;
+   
    const transformComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.transform];
-   return 2 * transformComponentConfig.hitboxes.length;
+   maxRenderParts += 2 * transformComponentConfig.hitboxes.length;
+
+   return maxRenderParts;
 }
    
 function padData(reader: PacketReader): void {

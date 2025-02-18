@@ -36,7 +36,7 @@ import { playRiverSounds, loadSoundEffects, updateSounds } from "./sound";
 import { createTechTreeGLContext, createTechTreeShaders, renderTechTree } from "./rendering/webgl/tech-tree-rendering";
 import { createResearchOrbShaders, renderResearchOrb } from "./rendering/webgl/research-orb-rendering";
 import { attemptToResearch, updateActiveResearchBench, updateResearchOrb } from "./research";
-import { resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedEntity } from "./entity-selection";
+import { getHighlightedEntityID, getHighlightedRenderInfo, getSelectedEntityID, resetInteractableEntityIDs, updateHighlightedAndHoveredEntities, updateSelectedEntity } from "./entity-selection";
 import { createStructureHighlightShaders, renderEntitySelection } from "./rendering/webgl/entity-selection-rendering";
 import { InventorySelector_forceUpdate } from "./components/game/inventories/InventorySelector";
 import { createTurretRangeShaders, renderTurretRange } from "./rendering/webgl/turret-range-rendering";
@@ -57,7 +57,7 @@ import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
 import { updatePlayerMovement, updatePlayerItems, playerIsHoldingPlaceableItem } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
-import { entityExists, getCurrentLayer, getEntityLayer, layers, playerInstance } from "./world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance } from "./world";
 import Layer from "./Layer";
 import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darkening-rendering";
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
@@ -178,7 +178,7 @@ const main = (currentTime: number): void => {
    }
 }
 
-const renderLayer = (layer: Layer): void => {
+const renderLayer = (layer: Layer, frameProgress: number): void => {
    if (layer === getCurrentLayer()) {
       renderText();
    }
@@ -239,7 +239,15 @@ const renderLayer = (layer: Layer): void => {
    renderNextRenderables(layer, MAX_RENDER_LAYER);
 
    // @Cleanup: should this only be for the current layer?
-   renderEntitySelection();
+   // @Cleanup this is so messy
+   if (entityExists(getSelectedEntityID())) {
+      const renderInfo = getEntityRenderInfo(getSelectedEntityID());
+      renderEntitySelection(renderInfo, frameProgress, true);
+   }
+   const renderInfo = getHighlightedRenderInfo();
+   if (renderInfo !== null && getHighlightedEntityID() !== getSelectedEntityID()) {
+      renderEntitySelection(renderInfo, frameProgress, false);
+   }
    
    renderForcefield();
    renderWorldBorder();
@@ -555,11 +563,11 @@ abstract class Game {
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {
-         renderLayer(layers[1]);
+         renderLayer(layers[1], frameProgress);
          renderDarkening();
-         renderLayer(layers[0]);
+         renderLayer(layers[0], frameProgress);
       } else {
-         renderLayer(layers[1]);
+         renderLayer(layers[1], frameProgress);
       }
 
       if (OPTIONS.showSubtileSupports) {

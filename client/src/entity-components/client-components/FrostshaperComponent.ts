@@ -12,7 +12,8 @@ export interface FrostshaperComponent {}
 
 export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, RenderParts>(ClientComponentType.frostshaper, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts
 });
 
 export function createFrostshaperComponentParams(): FrostshaperComponentParams {
@@ -34,4 +35,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): FrostshaperComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }

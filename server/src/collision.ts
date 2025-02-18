@@ -171,7 +171,7 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
       const componentArray = componentArrayRecord[componentType];
 
       if (typeof componentArray.onEntityCollision !== "undefined") {
-         componentArray.onEntityCollision(affectedEntity, collidingEntity);
+         componentArray.onEntityCollision(affectedEntity, collidingEntity, collidingHitboxPairs);
       }
    }
 

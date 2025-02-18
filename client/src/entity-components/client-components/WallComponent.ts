@@ -15,6 +15,8 @@ import { WALL_TEXTURE_SOURCES } from "../server-components/BuildingMaterialCompo
 import { HealthComponentArray } from "../server-components/HealthComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
+// @Speed: Could make damage render part an overlay instead of a whole render part
+
 export interface WallComponentParams {}
 
 interface RenderParts {}
@@ -28,6 +30,7 @@ const NUM_DAMAGE_STAGES = 6;
 export const WallComponentArray = new ClientComponentArray<WallComponent, RenderParts>(ClientComponentType.wall, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    onHit: onHit,
    onDie: onDie
@@ -57,6 +60,11 @@ function createComponent(): WallComponent {
    return {
       damageRenderPart: null
    };
+}
+
+function getMaxRenderParts(): number {
+   // wall material and damage render part
+   return 2;
 }
 
 const updateDamageRenderPart = (entity: Entity, health: number, maxHealth: number): void => {

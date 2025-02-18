@@ -2,12 +2,10 @@ import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playBuildingHitSound, playSound, playSoundOnEntity } from "../../sound";
+import { playBuildingHitSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityLayer } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface WarriorHutComponentParams {}
 
@@ -18,6 +16,7 @@ export interface WarriorHutComponent {}
 export const WarriorHutComponentArray = new ClientComponentArray<WarriorHutComponent, RenderParts>(ClientComponentType.warriorHut, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
    onDie: onDie
 });
@@ -55,6 +54,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): WarriorHutComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 3;
 }
 
 function onHit(entity: Entity): void {

@@ -17,9 +17,7 @@ import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/i
 import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
-import { getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
-import { TribesmanAIComponentArray } from "./TribesmanAIComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -495,6 +493,7 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
    const limbInfos = new Array<LimbInfo>();
 
    const numUseInfos = reader.readNumber();
+   console.log(numUseInfos);
    for (let i = 0; i < numUseInfos; i++) {
       const usedInventoryName = reader.readNumber() as InventoryName;
 
@@ -522,8 +521,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.inventor
    };
 }
 
-function getMaxRenderParts(): number {
-   return 0;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.inventoryUse>): number {
+   // Each limb can hold an active item render part
+   const inventoryUseComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.inventoryUse];
+   // (@Hack: plus one arrow render part)
+   return inventoryUseComponentParams.limbInfos.length + 1;
 }
 
 function onLoad(entity: Entity): void {

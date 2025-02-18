@@ -8,26 +8,23 @@ import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks } from "../world";
 
 const enum Vars {
-   TICKS_TO_DESPAWN = 300 * Settings.TPS
+   TICKS_TO_DESPAWN = 300 * Settings.TPS,
+   THROWING_ENTITY_PICKUP_COOLDOWN_TICKS = Settings.TPS
 }
 
 export class ItemComponent {
    public readonly itemType: ItemType;
    public amount: number;
    
-   /** Stores which entities are on cooldown to pick up the item, and their remaining cooldowns */
-   readonly entityPickupCooldowns: Partial<Record<number, number>> = {};
-
-   public throwingEntity: Entity | null = null;
+   public throwingEntity: Entity | null;
+   /** Number of ticks after throwing for which the throwing entity cannot pick up the item */
+   public throwingEntityPickupCooldownTicks: number;
 
    constructor(itemType: ItemType, amount: number, throwingEntity: Entity | null) {
       this.itemType = itemType;
       this.amount = amount;
-
-      if (throwingEntity !== null) {
-         // Add a pickup cooldown so the item isn't picked up immediately
-         this.entityPickupCooldowns[throwingEntity] = 1;
-      }
+      this.throwingEntity = throwingEntity;
+      this.throwingEntityPickupCooldownTicks = Vars.THROWING_ENTITY_PICKUP_COOLDOWN_TICKS;
    }
 }
 
@@ -48,15 +45,10 @@ function onRemove(entity: Entity): void {
 
 function onTick(itemEntity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
-   
-   // @Speed
-   for (const entityID of Object.keys(itemComponent.entityPickupCooldowns).map(idString => Number(idString))) {
-      itemComponent.entityPickupCooldowns[entityID]! -= Settings.I_TPS;
-      if (itemComponent.entityPickupCooldowns[entityID]! <= 0) {
-         delete itemComponent.entityPickupCooldowns[entityID];
-      }
+   if (itemComponent.throwingEntityPickupCooldownTicks > 0) {
+      itemComponent.throwingEntityPickupCooldownTicks--;
    }
-   
+
    // Despawn old items
    const ageTicks = getEntityAgeTicks(itemEntity);
    if (ageTicks >= Vars.TICKS_TO_DESPAWN) {
@@ -73,13 +65,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(itemComponent.itemType);
 }
 
-// @Cleanup: unused?
-export function addItemEntityPlayerPickupCooldown(itemEntity: Entity, entityID: number, cooldownDuration: number): void {
+export function itemEntityCanBePickedUp(itemEntity: Entity, entity: Entity): boolean {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
-   itemComponent.entityPickupCooldowns[entityID] = cooldownDuration;
-}
-
-export function itemEntityCanBePickedUp(itemEntity: Entity, entityID: Entity): boolean {
-   const itemComponent = ItemComponentArray.getComponent(itemEntity);
-   return typeof itemComponent.entityPickupCooldowns[entityID] === "undefined";
+   return entity !== itemComponent.throwingEntity || itemComponent.throwingEntityPickupCooldownTicks === 0;
 }

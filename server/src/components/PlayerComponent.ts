@@ -3,7 +3,6 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
-import { sendRespawnDataPacket } from "../server/packet-processing";
 import PlayerClient from "../server/PlayerClient";
 import TombstoneDeathManager from "../tombstone-deaths";
 
@@ -30,8 +29,9 @@ function onJoin(player: Entity): void {
    const playerClient = playerComponent.client;
 
    if (playerClient !== null && !playerClient.isAlive) {
-      sendRespawnDataPacket(playerClient);
       playerClient.isAlive = true;
+      // Only once the player has joined the world should the player client's instance property be set.
+      playerClient.instance = player;
    }
 }
 

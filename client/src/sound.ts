@@ -275,6 +275,7 @@ export async function loadSoundEffects(): Promise<void> {
       "animal-staff-command-follow.mp3",
       "animal-staff-command-carry.mp3",
       "mount.mp3",
+      "barrel-mount.mp3",
       "dismount.mp3",
       "quiver-pull.mp3"
    ];

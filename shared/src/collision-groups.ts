@@ -101,7 +101,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.wallSpikes]: CollisionGroup.default,
    [EntityType.floorPunjiSticks]: CollisionGroup.default,
    [EntityType.wallPunjiSticks]: CollisionGroup.default,
-   [EntityType.blueprintEntity]: CollisionGroup.none,
+   [EntityType.blueprintEntity]: CollisionGroup.boring,
    [EntityType.ballista]: CollisionGroup.default,
    [EntityType.slingTurret]: CollisionGroup.default,
    [EntityType.healingTotem]: CollisionGroup.default,

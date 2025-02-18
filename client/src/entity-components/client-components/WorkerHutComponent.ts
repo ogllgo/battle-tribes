@@ -1,7 +1,7 @@
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playBuildingHitSound, playSound, playSoundOnEntity } from "../../sound";
+import { playBuildingHitSound, playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
@@ -15,6 +15,7 @@ export interface WorkerHutComponent {}
 export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutComponent, RenderParts>(ClientComponentType.workerHut, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
    onDie: onDie
 });
@@ -48,6 +49,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): WorkerHutComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 2;
 }
 
 function onHit(entity: Entity): void {

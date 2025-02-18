@@ -338,6 +338,8 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
       updateChunkRenderedEntity(renderInfo, renderInfo.renderLayer);
+   } else {
+      updateEntityRenderInfoRenderData(renderInfo);
    }
 
    renderInfo.renderPartsAreDirty = false;
@@ -359,9 +361,6 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
       cleanEntityRenderInfo(renderInfo, frameProgress);
-      if (!renderLayerIsChunkRendered(renderInfo.renderLayer)) {
-         updateEntityRenderInfoRenderData(renderInfo);
-      }
    }
 
    // Reset dirty entities

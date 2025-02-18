@@ -6,6 +6,7 @@ import { playSoundOnEntity } from "../../sound";
 import { getEntityType } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
+import { addFenceConnection, FenceComponentArray, removeFenceConnection } from "./FenceComponent";
 
 export interface StructureComponentParams {
    readonly hasActiveBlueprint: boolean;
@@ -108,6 +109,23 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numConnections);
 }
 
+function addConnection(entity: Entity, structureComponent: StructureComponent, connection: StructureConnection): void {
+   structureComponent.connections.push(connection);
+
+   if (FenceComponentArray.hasComponent(entity)) {
+      addFenceConnection(entity, connection);
+   }
+}
+
+function removeConnection(entity: Entity, structureComponent: StructureComponent, connection: StructureConnection, connectionIdx: number): void {
+   structureComponent.connections.splice(connectionIdx, 1);
+
+   if (FenceComponentArray.hasComponent(entity)) {
+      removeFenceConnection(entity, connection);
+   }
+}
+
+// @Garbage
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
 
@@ -131,7 +149,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       if (!alreadyExists) {
          const connection = createStructureConnection(connectedEntity);
-         structureComponent.connections.push(connection);
+         addConnection(entity, structureComponent, connection);
       }
    }
 
@@ -147,7 +165,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
 
       if (!isInNewConnections) {
-         structureComponent.connections.splice(i, 1);
+         removeConnection(entity, structureComponent, connection, i);
          i--;
       }
    }

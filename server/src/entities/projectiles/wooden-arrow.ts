@@ -138,7 +138,7 @@ export function onWoodenArrowCollision(arrow: Entity, collidingEntity: Entity, c
       const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingEntityTransformComponent.relativeRotation);
       const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingEntityTransformComponent.relativeRotation);
       
-      mountEntity(arrow, collidingEntity, rotatedDiffX, rotatedDiffY);
+      mountEntity(arrow, collidingEntity, rotatedDiffX, rotatedDiffY, false);
 
       // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
       // This is because this "fix carried entity position" code only runs on physics components, and if

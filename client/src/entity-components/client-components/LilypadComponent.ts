@@ -12,7 +12,8 @@ export interface LilypadComponent {}
 
 export const LilypadComponentArray = new ClientComponentArray<LilypadComponent, RenderParts>(ClientComponentType.lilypad, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts
 });
 
 export function createLilypadComponentParams(): LilypadComponentParams {
@@ -34,4 +35,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): LilypadComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }

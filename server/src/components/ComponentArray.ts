@@ -5,6 +5,7 @@ import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { assert, Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
+import { HitboxCollisionPair } from "../collision-detection";
 
 const enum ComponentArrayPriority {
    low,
@@ -56,7 +57,8 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    };
    /** Called whenever the entity collides with a wall */
    public onWallCollision?(entity: Entity): void;
-   public onEntityCollision?(affectedEntity: Entity, collidingEntity: Entity): void;
+   /** Groups all collision events with any one colliding entity together. */
+   public onEntityCollision?(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void;
    public onHitboxCollision?(affectedEntity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void;
    /** Called immediately after an entity is marked for removal. */
    public preRemove?(entity: Entity): void;
@@ -262,6 +264,24 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
          this.deactivateComponent(entityID);
       }
       this.deactivateBuffer = [];
+   }
+
+   /** VERY slow function. Should only be used for debugging purposes. */
+   public getEntityFromComponent(component: T): Entity {
+      let idx: number | undefined;
+      for (let i = 0; i < this.components.length; i++) {
+         const currentComponent = this.components[i];
+         if (currentComponent === component) {
+            idx = i;
+            break;
+         }
+      }
+      assert(typeof idx !== "undefined");
+
+      const entity = this.indexToEntityMap[idx];
+      assert(typeof entity !== "undefined");
+
+      return entity;
    }
 }
 

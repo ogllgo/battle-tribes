@@ -43,7 +43,7 @@ SwingAttackComponentArray.onTick = {
    func: onTick,
    tickInterval: 1
 };
-SwingAttackComponentArray.onHitboxCollision = onHitboxCollision;
+SwingAttackComponentArray.onEntityCollision = onEntityCollision;
 
 function onTick(swingAttack: Entity): void {
    const swingAttackTransformComponent = TransformComponentArray.getComponent(swingAttack);
@@ -214,7 +214,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity): boolean => 
    return true;
 }
 
-function onHitboxCollision(swingAttack: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onEntityCollision(swingAttack: Entity, collidingEntity: Entity): void {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const owner = swingAttackComponent.owner;
    

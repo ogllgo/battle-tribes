@@ -358,7 +358,6 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
       }
       case "bow": {
          const transformComponent = TransformComponentArray.getComponent(tribeMember);
-         const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribeMember);
          const limb = inventoryUseComponent.getLimbInfo(inventoryName);

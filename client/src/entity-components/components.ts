@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { AIAssignmentComponentArray, AIAssignmentComponentParams } from "./server-components/AIAssignmentComponent";
 import { AIHelperComponentArray, AIHelperComponentParams } from "./server-components/AIHelperComponent";
 import { AmmoBoxComponentArray, AmmoBoxComponentParams } from "./server-components/AmmoBoxComponent";
-import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ArrowComponent";
+import { ProjectileComponentArray, ProjectileComponentParams } from "./server-components/ProjectileComponent";
 import { AttackingEntitiesComponentArray, AttackingEntitiesComponentParams } from "./server-components/AttackingEntitiesComponent";
 import { BallistaComponentArray, BallistaComponentParams } from "./server-components/BallistaComponent";
 import { BarrelComponentArray, BarrelComponentParams } from "./server-components/BarrelComponent";

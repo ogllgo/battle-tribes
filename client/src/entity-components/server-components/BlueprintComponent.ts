@@ -8,7 +8,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { getEntityRenderInfo } from "../../world";
+import { EntityPreCreationInfo, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { BALLISTA_GEAR_X, BALLISTA_GEAR_Y, BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import { WARRIOR_HUT_SIZE } from "./HutComponent";
@@ -436,8 +436,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprin
    };
 }
 
-function getMaxRenderParts(): number {
-   return 0;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.blueprint>): number {
+   const blueprintComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.blueprint];
+   return 2 * BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintComponentParams.blueprintType].length;
 }
 
 const updatePartialTexture = (entity: Entity): void => {

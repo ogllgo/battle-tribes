@@ -12,16 +12,17 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPos
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance, surfaceLayer } from "../../world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance, surfaceLayer } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
-import { Entity } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxCollisionBit } from "../../../../shared/src/collision";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
 import { playSound } from "../../sound";
 import Camera from "../../Camera";
+import { RideableComponentArray } from "./RideableComponent";
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -32,6 +33,7 @@ export interface EntityCarryInfo {
    readonly carriedEntity: Entity;
    readonly offsetX: number;
    readonly offsetY: number;
+   lastUpdateTicks: number;
 }
 
 export interface TransformComponentParams {
@@ -80,8 +82,7 @@ export interface TransformComponent {
 
    carryRoot: Entity;
    mount: Entity;
-   // @Cleanup: should be readonly
-   carriedEntities: Array<EntityCarryInfo>;
+   readonly carriedEntities: Array<EntityCarryInfo>;
 }
 
 const padBaseHitboxData = (reader: PacketReader): void => {
@@ -277,7 +278,8 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       const carryInfo: EntityCarryInfo = {
          carriedEntity: carriedEntity,
          offsetX: offsetX,
-         offsetY: offsetY
+         offsetY: offsetY,
+         lastUpdateTicks: Board.serverTicks
       };
       carriedEntities.push(carryInfo);
    }
@@ -369,13 +371,8 @@ const cleanHitbox = (transformComponent: TransformComponent, hitbox: ClientHitbo
 }
 
 const updateHitboxes = (transformComponent: TransformComponent): void => {
-   let rotation = transformComponent.rotation;
-   if (entityExists(transformComponent.mount)) {
-      const mountTransformComponent = TransformComponentArray.getComponent(transformComponent.mount);
-      rotation += mountTransformComponent.rotation;
-   }
    for (const hitbox of transformComponent.rootHitboxes) {
-      cleanHitbox(transformComponent, hitbox, transformComponent.position, rotation);
+      cleanHitbox(transformComponent, hitbox, transformComponent.position, transformComponent.rotation);
    }
    // @Incomplete
    // @Hack?
@@ -617,6 +614,70 @@ const updateRectangularHitbox = (clientHitbox: ClientHitbox<BoxType.rectangular>
    
    updateVertexPositionsAndSideAxes(clientHitbox.box);
 }
+
+const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transformComponent: TransformComponent): void => {
+   transformComponent.carryRoot = reader.readNumber();
+
+   const mount = reader.readNumber();
+   if (mount !== transformComponent.mount) {
+      // Play mount sound when entity mounts a carry slot
+      if (entityExists(mount) && !entityExists(transformComponent.mount) && RideableComponentArray.hasComponent(mount)) {
+         switch (getEntityType(entity)) {
+            case EntityType.barrel: {
+               playSound("barrel-mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+               break;
+            }
+            default: {
+               playSound("mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+               break;
+            }
+         }
+      // Play a sound when the entity dismounts a carry slot
+      } else if (!entityExists(mount) && entityExists(transformComponent.mount) && RideableComponentArray.hasComponent(transformComponent.mount)) {
+         playSound("dismount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+      }
+   }
+   transformComponent.mount = mount;
+
+   // Update existing and check for new carried entities
+   const numCarriedEntities = reader.readNumber();
+   for (let i = 0; i < numCarriedEntities; i++) {
+      const carriedEntity = reader.readNumber();
+      const offsetX = reader.readNumber();
+      const offsetY = reader.readNumber();
+
+      let existingCarryInfo: EntityCarryInfo | undefined;
+      for (let i = 0; i < transformComponent.carriedEntities.length; i++) {
+         const carryInfo = transformComponent.carriedEntities[i];
+         if (carryInfo.carriedEntity === carriedEntity) {
+            existingCarryInfo = carryInfo;
+            break;
+         }
+      }
+      
+      if (typeof existingCarryInfo !== "undefined") {
+         existingCarryInfo.lastUpdateTicks = Board.serverTicks;
+      } else {
+         // @Copynpaste
+         const carryInfo: EntityCarryInfo = {
+            carriedEntity: carriedEntity,
+            offsetX: offsetX,
+            offsetY: offsetY,
+            lastUpdateTicks: Board.serverTicks
+         };
+         transformComponent.carriedEntities.push(carryInfo);
+      }
+   }
+
+   // Check for removed carried entities
+   for (let i = 0; i < transformComponent.carriedEntities.length; i++) {
+      const carryInfo = transformComponent.carriedEntities[i];
+      if (carryInfo.lastUpdateTicks !== Board.serverTicks) {
+         transformComponent.carriedEntities.splice(i, 1);
+         i--;
+      }
+   }
+}
    
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -788,41 +849,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
 
-   transformComponent.carryRoot = reader.readNumber();
-   transformComponent.mount = reader.readNumber();
-   // @Speed
-   const carriedEntities = new Array<EntityCarryInfo>();
-   const numCarriedEntities = reader.readNumber();
-   for (let i = 0; i < numCarriedEntities; i++) {
-      const carriedEntity = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-
-      // @Copynpaste
-      const carryInfo: EntityCarryInfo = {
-         carriedEntity: carriedEntity,
-         offsetX: offsetX,
-         offsetY: offsetY
-      };
-      carriedEntities.push(carryInfo);
-   }
-
-   // Unmount the player when the player is no longer being carried
-   // @Speed
-   const wasCarryingPlayer = transformComponent.carriedEntities.some(carryInfo => carryInfo.carriedEntity === playerInstance);
-   const isCarryingPlayer = carriedEntities.some(carryInfo => carryInfo.carriedEntity === playerInstance);
-   if (wasCarryingPlayer && !isCarryingPlayer) {
-      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      // @Hack @Hardcoded
-      playerTransformComponent.position.x += rotateXAroundOrigin(48, 0, transformComponent.rotation);
-      playerTransformComponent.position.y += rotateYAroundOrigin(48, 0, transformComponent.rotation);
-
-      playSound("mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
-   } else if (!wasCarryingPlayer && isCarryingPlayer) {
-      playSound("dismount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
-   }
-
-   transformComponent.carriedEntities = carriedEntities;
+   updateCarryInfoFromData(reader, entity, transformComponent);
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
@@ -858,28 +885,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    }
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-
-   // @Copynpaste from updateFromData
-   
-   transformComponent.carryRoot = reader.readNumber();
-   transformComponent.mount = reader.readNumber();
-   // @Speed
-   const carriedEntities = new Array<EntityCarryInfo>();
-   const numCarriedEntities = reader.readNumber();
-   for (let i = 0; i < numCarriedEntities; i++) {
-      const carriedEntity = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-
-      // @Copynpaste
-      const carryInfo: EntityCarryInfo = {
-         carriedEntity: carriedEntity,
-         offsetX: offsetX,
-         offsetY: offsetY
-      };
-      carriedEntities.push(carryInfo);
-   }
-   transformComponent.carriedEntities = carriedEntities;
+   updateCarryInfoFromData(reader, playerInstance!, transformComponent);
 }
 
 export function getRandomPositionInBox(box: Box): Point {

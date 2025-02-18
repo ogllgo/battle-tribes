@@ -2,14 +2,12 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityLayer } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { WALL_SPIKE_TEXTURE_SOURCES, FLOOR_SPIKE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
-import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface RegularSpikesComponentParams {}
 
@@ -20,6 +18,7 @@ export interface RegularSpikesComponent {}
 export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpikesComponent, RenderParts>(ClientComponentType.regularSpikes, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
    onDie: onDie
 });
@@ -54,6 +53,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
 function createComponent(): RegularSpikesComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onHit(entity: Entity): void {

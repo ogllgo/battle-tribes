@@ -12,7 +12,8 @@ export interface ThrownBattleaxeComponent {}
 
 export const ThrownBattleaxeComponentArray = new ClientComponentArray<ThrownBattleaxeComponent, RenderParts>(ClientComponentType.thrownBattleaxe, true, {
    createRenderParts: createRenderParts,
-   createComponent: createComponent
+   createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts
 });
 
 export function createThrownBattleaxeComponentParams(): ThrownBattleaxeComponentParams {
@@ -34,4 +35,8 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): ThrownBattleaxeComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }

@@ -131,7 +131,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, nev
 }
 
 function getMaxRenderParts(): number {
-   return 2;
+   // @Temporary: one extra for the follow halo
+   return 3;
 }
 
 function onTick(entity: Entity): void {

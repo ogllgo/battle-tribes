@@ -17,7 +17,6 @@ import { BlueprintType, ServerComponentType } from "battletribes-shared/componen
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
-import { addEntityDataToPacket, getEntityDataLength } from "./packet-creation";
 import { createItem } from "../items";
 import { changeEntityLayer, destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
@@ -103,7 +102,7 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       transformComponent.externalVelocity.x = externalVelocityX;
       transformComponent.externalVelocity.y = externalVelocityY;
    }
-   
+
    const physicsComponent = PhysicsComponentArray.getComponent(player);
    physicsComponent.acceleration.x = accelerationX;
    physicsComponent.acceleration.y = accelerationY;
@@ -201,24 +200,9 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
    config.components[ServerComponentType.transform].position.x = spawnPosition.x;
    config.components[ServerComponentType.transform].position.y = spawnPosition.y;
    config.components[ServerComponentType.tribe].tribe = playerClient.tribe;
-   const player = createEntity(config, layer, 0);
+   createEntity(config, layer, 0);
 
-   playerClient.instance = player;
-
-   // The PlayerComponent onJoin function will send the packet with all the information
-}
-
-export function sendRespawnDataPacket(playerClient: PlayerClient): void {
-   const player = playerClient.instance;
-   
-   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += getEntityDataLength(player, player);
-   
-   const packet = new Packet(PacketType.respawnData, lengthBytes);
-
-   addEntityDataToPacket(packet, player, player);
-
-   playerClient.socket.send(packet.buffer);
+   // (The PlayerComponent onJoin function will send the packet with all the information)
 }
 
 export function processStartItemUsePacket(playerClient: PlayerClient, reader: PacketReader): void {

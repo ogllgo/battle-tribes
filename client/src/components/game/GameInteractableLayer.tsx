@@ -1334,7 +1334,7 @@ const tickItem = (itemType: ItemType): void => {
          
          const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
 
-         const components: EntityServerComponentParams = {};
+         const components = {} as EntityServerComponentParams;
 
          // @Hack @Cleanup: make the client and server use the some component params system
          const componentTypes = EntityComponents[entityType];
@@ -1505,6 +1505,12 @@ const tickItem = (itemType: ItemType): void => {
                   components[componentType] = {
                      doorSwingAmount: 0,
                      isRecalling: false
+                  };
+                  break;
+               }
+               case ServerComponentType.totemBanner: {
+                  components[componentType] = {
+                     banners: []
                   };
                   break;
                }

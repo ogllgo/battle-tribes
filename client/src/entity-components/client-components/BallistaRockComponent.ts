@@ -17,6 +17,7 @@ export interface BallistaRockComponent {}
 export const BallistaRockComponentArray = new ClientComponentArray<BallistaRockComponent, RenderParts>(ClientComponentType.ballistaRock, true, {
    createRenderParts: createRenderParts,
    createComponent: createComponent,
+   getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
 });
 
@@ -39,6 +40,10 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
 function createComponent(): BallistaRockComponent {
    return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
 }
 
 function onDie(entity: Entity): void {
