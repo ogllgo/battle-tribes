@@ -3,8 +3,9 @@ import Camera from "./Camera";
 import { nerdVisionIsVisible } from "./components/game/dev/NerdVision";
 import { getMouseTargetEntity } from "./mouse";
 import { sendSetDebugEntityPacket } from "./networking/packet-creation";
+import { playerInstance } from "./player";
 import { isDev } from "./utils";
-import { entityExists, playerInstance } from "./world";
+import { entityExists } from "./world";
 
 let previousDebugEntity = 0;
 

@@ -7,11 +7,12 @@ import { windowHeight, windowWidth } from "../webgl";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import Client from "./Client";
 import { getHotbarSelectedItemSlot, getInstancePlayerAction } from "../components/game/GameInteractableLayer";
-import { entityExists, getEntityType, playerInstance } from "../world";
+import { entityExists, getEntityType } from "../world";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { BlueprintType } from "../../../shared/src/components";
 import { TechID } from "../../../shared/src/techs";
+import { playerInstance } from "../player";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;

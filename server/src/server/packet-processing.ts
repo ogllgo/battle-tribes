@@ -532,7 +532,7 @@ export function processSpectateEntityPacket(playerClient: PlayerClient, reader: 
 
    const entity = reader.readNumber() as Entity;
    if (entityExists(entity)) {
-      playerClient.viewedEntity = entity;
+      playerClient.cameraSubject = entity;
    }
 }
 

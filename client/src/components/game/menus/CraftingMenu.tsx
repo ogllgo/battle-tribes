@@ -13,9 +13,9 @@ import InventoryContainer from "../inventories/InventoryContainer";
 import { deselectHighlightedEntity } from "../../../entity-selection";
 import { addMenuCloseFunction } from "../../../menus";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { playerInstance } from "../../../world";
 import { sendCraftItemPacket } from "../../../networking/packet-creation";
 import { playerTribe } from "../../../tribes";
+import { playerInstance } from "../../../player";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;

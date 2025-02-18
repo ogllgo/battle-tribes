@@ -21,27 +21,19 @@ export class PlayerComponent {
 
 export const PlayerComponentArray = new ComponentArray<PlayerComponent>(ServerComponentType.player, true, getDataLength, addDataToPacket);
 PlayerComponentArray.onJoin = onJoin;
-PlayerComponentArray.onRemove = onRemove;
 PlayerComponentArray.onDeath = onDeath;
 
 function onJoin(player: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(player);
    const playerClient = playerComponent.client;
 
-   if (playerClient !== null && !playerClient.isAlive) {
-      playerClient.isAlive = true;
-      // Only once the player has joined the world should the player client's instance property be set.
-      playerClient.instance = player;
-   }
+   // Only once the player has joined the world should the player client's instance property be set.
+   playerClient.instance = player;
+   playerClient.cameraSubject = player;
 }
 
-function onRemove(player: Entity): void {
-   const playerComponent = PlayerComponentArray.getComponent(player);
-   const playerClient = playerComponent.client;
-
-   if (playerClient !== null) {
-      playerClient.isAlive = false;
-   }
+function onDeath(entity: Entity, _attackingEntity: Entity | null, damageSource: DamageSource): void {
+   TombstoneDeathManager.registerNewDeath(entity, damageSource);
 }
 
 function getDataLength(entity: Entity): number {
@@ -52,8 +44,4 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(entity);
    packet.addString(playerComponent.client.username);
-}
-
-function onDeath(entity: Entity, _attackingEntity: Entity | null, damageSource: DamageSource): void {
-   TombstoneDeathManager.registerNewDeath(entity, damageSource);
 }

@@ -4,12 +4,13 @@ import Camera from "../../Camera";
 import { getHoveredEntityID } from "../../entity-selection";
 import { latencyGameState } from "../../game-state/game-states";
 import { BuildMenu_isOpen } from "./BuildMenu";
-import { getEntityRenderInfo, playerInstance } from "../../world";
+import { getEntityRenderInfo } from "../../world";
 import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import { playerTribe } from "../../tribes";
+import { playerInstance } from "../../player";
 
 const Y_OFFSET = -50;
 

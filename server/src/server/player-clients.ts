@@ -272,12 +272,12 @@ const devRemoveTitle = (playerClient: PlayerClient, title: TribesmanTitle): void
    removeTitle(player, title);
 }
 
-export function addPlayerClient(playerClient: PlayerClient, player: Entity, layer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): void {
+export function addPlayerClient(playerClient: PlayerClient, layer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): void {
    playerClients.push(playerClient);
 
    const socket = playerClient.socket;
 
-   const initialGameDataPacket = createInitialGameDataPacket(player, layer, playerConfig);
+   const initialGameDataPacket = createInitialGameDataPacket(layer, playerConfig);
    socket.send(initialGameDataPacket);
 
    socket.on("deactivate", () => {

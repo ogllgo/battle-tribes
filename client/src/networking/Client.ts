@@ -29,13 +29,14 @@ import { processForcePositionUpdatePacket, processGameDataPacket, processInitial
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket } from "./packet-creation";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
-import { entityExists, getEntityLayer, getEntityType, layers, playerInstance, removeEntity, setPlayerInstance } from "../world";
+import { entityExists, getEntityLayer, getEntityType, layers } from "../world";
 import { getTileIndexIncludingEdges } from "../Layer";
 import { getComponentArrays, updateEntity } from "../entity-components/ComponentArray";
 import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
 import Board from "../Board";
 import { resolvePlayerCollisions } from "../collision";
+import { setPlayerInstance, playerInstance } from "../player";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -491,7 +492,6 @@ abstract class Client {
 
    public static killPlayer(): void {
       // Remove the player from the game
-      removeEntity(playerInstance!, true);
       setPlayerInstance(null);
 
       latencyGameState.resetFlags();

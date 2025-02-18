@@ -6,13 +6,14 @@ import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-crea
 import { deselectSelectedEntity } from "../../entity-selection";
 import { CowComponentArray } from "../../entity-components/server-components/CowComponent";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
-import { entityExists, getCurrentLayer, playerInstance } from "../../world";
+import { entityExists, getCurrentLayer } from "../../world";
 import { createAnimalStaffCommandParticle } from "../../particles";
 import { getMatrixPosition } from "../../rendering/render-part-matrices";
 import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/matrices";
 import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
+import { playerInstance } from "../../player";
 
 export const enum AnimalStaffCommandType {
    follow,

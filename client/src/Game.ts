@@ -57,7 +57,7 @@ import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
 import { updatePlayerMovement, updatePlayerItems, playerIsHoldingPlaceableItem } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance } from "./world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers } from "./world";
 import Layer from "./Layer";
 import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darkening-rendering";
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
@@ -75,6 +75,7 @@ import { createMithrilRichTileRenderingShaders, renderMithrilRichTileOverlays } 
 import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/debug-image-rendering";
 import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
 import { updateDebugEntity } from "./entity-debugging";
+import { playerInstance } from "./player";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -307,9 +308,6 @@ abstract class Game {
    public static cursorX: number | null = null;
    public static cursorY: number | null = null;
 
-   // @Hack @Cleanup: remove this!
-   public static playerID: number;
-   
    public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
       entityDebugData = newEntityDebugData;
       setDebugInfoDebugData(entityDebugData);
@@ -590,13 +588,3 @@ abstract class Game {
 }
 
 export default Game;
-
-if (module.hot) {
-   module.hot.dispose(data => {
-      data.playerID = Game.playerID;
-   });
-
-   if (module.hot.data) {
-      Game.playerID = module.hot.data.playerID;
-   }
-}

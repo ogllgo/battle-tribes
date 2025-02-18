@@ -5,7 +5,7 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../components/game/GameInteractableLayer";
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
-import { playerInstance } from "../../world";
+import { playerInstance } from "../../player";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbByInventoryName } from "./InventoryUseComponent";

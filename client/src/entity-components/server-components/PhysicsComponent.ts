@@ -11,11 +11,12 @@ import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
-import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { EntityCarryInfo, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
+import { playerInstance } from "../../player";
 
 export interface PhysicsComponentParams {
    readonly acceleration: Point;

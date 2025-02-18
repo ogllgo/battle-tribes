@@ -6,9 +6,10 @@ import Camera from "../../Camera";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { ItemType, ITEM_INFO_RECORD, PlaceableItemType } from "battletribes-shared/items/items";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
-import { entityExists, getEntityLayer, getEntityType, playerInstance } from "../../world";
+import { entityExists, getEntityLayer, getEntityType } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TurretComponentArray } from "../../entity-components/server-components/TurretComponent";
+import { playerInstance } from "../../player";
 
 const CIRCLE_DETAIL = 300;
 

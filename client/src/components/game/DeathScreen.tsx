@@ -5,6 +5,10 @@ import Game from "../../Game";
 import { AppState } from "../App";
 import { sendRespawnPacket } from "../../networking/packet-creation";
 
+const enum Vars {
+   RESPAWN_TIME_SECONDS = 8
+}
+
 interface DeathScreenProps {
    setAppState(appState: AppState): void;
 }
@@ -17,6 +21,7 @@ const DEATH_TIPS: ReadonlyArray<string> = [
 
 const DeathScreen = (props: DeathScreenProps) => {
    const [tip, setTip] = useState<string>("");
+   const [secondsInScreen, setSecondsInScreen] = useState(0);
 
    // @Speed: Garbage collection
    const randomiseTip = (): void => {
@@ -34,6 +39,14 @@ const DeathScreen = (props: DeathScreenProps) => {
    useEffect(() => {
       randomiseTip();
    }, []);
+
+   useEffect(() => {
+      if (secondsInScreen < Vars.RESPAWN_TIME_SECONDS) {
+         setTimeout(() => {
+            setSecondsInScreen(secondsInScreen + 1);
+         }, 1000);
+      }
+   }, [secondsInScreen]);
    
    return <div id="death-screen">
       <div className="content">
@@ -42,8 +55,12 @@ const DeathScreen = (props: DeathScreenProps) => {
          <p className="tip">Tip: {tip}</p>
 
          <div className="button-container">
+         {secondsInScreen < Vars.RESPAWN_TIME_SECONDS ? (
+            <p className="respawn-countdown">{Vars.RESPAWN_TIME_SECONDS - 1 - secondsInScreen}</p>
+         ) : <>
             <button onClick={sendRespawnPacket}>Respawn</button>
             <button onClick={quitGame}>Quit</button>
+         </>}
          </div>
       </div>
 

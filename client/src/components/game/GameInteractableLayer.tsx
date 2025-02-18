@@ -28,7 +28,7 @@ import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./me
 import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
 import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { createEntity, entityExists, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer, playerInstance } from "../../world";
+import { createEntity, entityExists, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -56,6 +56,7 @@ import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectCarryTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { Point } from "../../../../shared/src/utils";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
+import { playerInstance } from "../../player";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;

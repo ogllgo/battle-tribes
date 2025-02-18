@@ -2,7 +2,7 @@ import { Settings } from "battletribes-shared/settings";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Client from "../../networking/Client";
 import { PlayerComponentArray } from "../../entity-components/server-components/PlayerComponent";
-import { playerInstance } from "../../world";
+import { playerInstance } from "../../player";
 
 interface SpamFilter {
    readonly testDuration: number;

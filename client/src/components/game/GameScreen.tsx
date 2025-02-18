@@ -20,7 +20,7 @@ import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-creation";
 import { copyInventory, Inventory, InventoryName } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
-import { getCurrentLayer, playerInstance, surfaceLayer, undergroundLayer } from "../../world";
+import { getCurrentLayer, surfaceLayer, undergroundLayer } from "../../world";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { inventoriesAreDifferent } from "../../inventory-manipulation";
 import LayerChangeMessage from "./LayerChangeMessage";
@@ -29,6 +29,7 @@ import { TileType } from "../../../../shared/src/tiles";
 import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
 import AnimalStaffOptions from "./AnimalStaffOptions";
+import { playerInstance } from "../../player";
 
 export const enum GameInteractState {
    none,

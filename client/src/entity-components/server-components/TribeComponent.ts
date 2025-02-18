@@ -8,9 +8,9 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { playerInstance } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import { getTribeByID } from "../../tribes";
+import { playerInstance } from "../../player";
 
 export interface TribeComponentParams {
    readonly tribeID: number;

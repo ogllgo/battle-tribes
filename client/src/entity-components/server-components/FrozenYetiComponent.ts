@@ -15,7 +15,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { EntityConfig } from "../ComponentArray";
-import { playerInstance } from "../../world";
+import { playerInstance } from "../../player";
 
 export interface FrozenYetiComponentParams {
    readonly attackType: FrozenYetiAttackType;

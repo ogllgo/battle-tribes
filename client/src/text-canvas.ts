@@ -3,13 +3,13 @@ import { lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
-import { PlayerComponentArray } from "./entity-components/server-components/PlayerComponent";
-import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "./world";
+import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType } from "./world";
 import { getBuildingSafeties } from "./building-safety";
 import { getVisibleBuildingPlan, GhostBuildingPlan, VirtualBuildingSafetySimulation } from "./virtual-buildings";
 import { TribeMemberComponentArray } from "./entity-components/server-components/TribeMemberComponent";
 import { EntityType } from "../../shared/src/entities";
 import { getHumanoidRadius } from "./entity-components/server-components/TribesmanComponent";
+import { playerInstance } from "./player";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 

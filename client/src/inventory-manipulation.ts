@@ -3,7 +3,7 @@ import { InventorySelector_inventoryIsOpen } from "./components/game/inventories
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { getInventory, InventoryComponentArray } from "./entity-components/server-components/InventoryComponent";
 import { sendItemPickupPacket, sendItemReleasePacket } from "./networking/packet-creation";
-import { playerInstance } from "./world";
+import { playerInstance } from "./player";
 
 const canInteractWithItemSlots = (): boolean => {
    return craftingMenuIsOpen() || InventorySelector_inventoryIsOpen();

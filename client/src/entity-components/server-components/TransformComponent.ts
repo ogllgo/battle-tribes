@@ -12,7 +12,7 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPos
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance, surfaceLayer } from "../../world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
@@ -23,6 +23,7 @@ import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rend
 import { playSound } from "../../sound";
 import Camera from "../../Camera";
 import { RideableComponentArray } from "./RideableComponent";
+import { playerInstance } from "../../player";
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;

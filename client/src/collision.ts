@@ -3,13 +3,14 @@ import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } f
 import { Point } from "battletribes-shared/utils";
 import { HitboxCollisionType, Hitbox, updateBox, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
-import { getEntityLayer, getEntityType, playerInstance, surfaceLayer } from "./world";
+import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
+import { playerInstance } from "./player";
 
 interface EntityPairCollisionInfo {
    readonly minEntityInvolvedHitboxes: Array<Hitbox>;

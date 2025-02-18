@@ -10,10 +10,11 @@ import { Entity } from "../../../../../shared/src/entities";
 import { TribesmanAIComponentArray } from "../../../entity-components/server-components/TribesmanAIComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "../../../entity-components/server-components/InventoryUseComponent";
-import { getEntityAgeTicks, playerInstance } from "../../../world";
+import { getEntityAgeTicks } from "../../../world";
 import { getTribeByID, playerTribe } from "../../../tribes";
 import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
 import { TribesmanComponentArray } from "../../../entity-components/server-components/TribesmanComponent";
+import { playerInstance } from "../../../player";
 
 const getTitleByTier = (titles: ReadonlyArray<TitleGenerationInfo>, tier: number): TitleGenerationInfo | null => {
    for (let i = 0; i < titles.length; i++) {

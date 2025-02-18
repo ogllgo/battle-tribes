@@ -12,9 +12,10 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { getEntityRenderInfo, playerInstance } from "../../world";
+import { getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
+import { playerInstance } from "../../player";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;

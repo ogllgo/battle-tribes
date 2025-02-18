@@ -15,7 +15,7 @@ import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName, ITEM_INFO_RECORD } from "battletribes-shared/items/items";
 import { boxIsWithinRange } from "battletribes-shared/boxes/boxes";
 import { getPlayerSelectedItem } from "./components/game/GameInteractableLayer";
-import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "./world";
+import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType } from "./world";
 import { TombstoneComponentArray } from "./entity-components/server-components/TombstoneComponent";
 import { TunnelComponentArray } from "./entity-components/server-components/TunnelComponent";
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
@@ -32,6 +32,7 @@ import TexturedRenderPart from "./render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
 import { getVelocityMagnitude } from "./entity-components/server-components/PhysicsComponent";
 import { GameInteractState } from "./components/game/GameScreen";
+import { playerInstance } from "./player";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150

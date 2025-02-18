@@ -23,9 +23,10 @@ import { EntityRenderInfo } from "./EntityRenderInfo";
 import Game from "./Game";
 import Layer from "./Layer";
 import OPTIONS from "./options";
+import { playerInstance } from "./player";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
-import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers, playerInstance } from "./world";
+import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers } from "./world";
 
 export interface VirtualBuilding {
    readonly entityType: StructureType;

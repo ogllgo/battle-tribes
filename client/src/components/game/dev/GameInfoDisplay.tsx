@@ -5,8 +5,9 @@ import Board from "../../../Board";
 import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-creation";
-import { getCurrentLayer, playerInstance } from "../../../world";
+import { getCurrentLayer } from "../../../world";
 import { GameInteractState } from "../GameScreen";
+import { playerInstance } from "../../../player";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;

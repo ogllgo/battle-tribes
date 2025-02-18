@@ -5,15 +5,15 @@ import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Board from "./Board";
 import Game from "./Game";
-import Client from "./networking/Client";
 import { getSelectedEntityID } from "./entity-selection";
 import { playSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
 import { getRandomPositionInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { entityExists, getEntityType, playerInstance } from "./world";
+import { entityExists, getEntityType } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TribesmanComponentArray, tribesmanHasTitle } from "./entity-components/server-components/TribesmanComponent";
 import { sendStudyTechPacket } from "./networking/packet-creation";
+import { playerInstance } from "./player";
 
 export interface ResearchOrb {
    /* X position of the node in the world */

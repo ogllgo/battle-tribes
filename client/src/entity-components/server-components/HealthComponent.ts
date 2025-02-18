@@ -6,9 +6,10 @@ import { discombobulate } from "../../components/game/GameInteractableLayer";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
-import { getEntityRenderInfo, playerInstance } from "../../world";
+import { getEntityRenderInfo } from "../../world";
 import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
 import { EntityConfig } from "../ComponentArray";
+import { playerInstance } from "../../player";
 
 export interface HealthComponentParams {
    readonly health: number;

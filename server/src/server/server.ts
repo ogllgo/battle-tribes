@@ -212,12 +212,9 @@ class GameServer {
                   const config = createPlayerConfig(tribe, playerClient);
                   config.components[ServerComponentType.transform].position.x = spawnPosition.x;
                   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-                  const player = createEntity(config, layer, 0);
+                  createEntity(config, layer, 0);
                   
-                  // @Hack
-                  playerClient.instance = player;
-                  playerClient.viewedEntity = player;
-                  addPlayerClient(playerClient, player, surfaceLayer, config);
+                  addPlayerClient(playerClient, surfaceLayer, config);
 
                   break;
                }
@@ -418,7 +415,7 @@ class GameServer {
             continue;
          }
 
-         const viewedEntity = playerClient.viewedEntity;
+         const viewedEntity = playerClient.cameraSubject;
 
          // Update player client info
          if (entityExists(viewedEntity)) {

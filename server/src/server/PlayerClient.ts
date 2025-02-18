@@ -22,9 +22,8 @@ class PlayerClient {
    /** The player's entity */
    public instance: Entity;
    /** The entity currently being viewed by the player. Typically the player instance. */
-   public viewedEntity: Entity;
+   public cameraSubject: Entity;
    public clientIsActive = false;
-   public isAlive = true;
 
    // When the player is dead, we need to remember where their final position is so they can receive updates while dead
    public lastViewedPositionX = 0;
@@ -69,7 +68,7 @@ class PlayerClient {
       this.screenWidth = screenWidth;
       this.screenHeight = screenHeight;
       this.instance = instance;
-      this.viewedEntity = instance;
+      this.cameraSubject = instance;
       this.username = username;
       this.isDev = isDev;
 
@@ -89,8 +88,8 @@ class PlayerClient {
    }
 
    public updateVisibleChunkBounds(): void {
-      if (entityExists(this.viewedEntity)) {
-         const transformComponent = TransformComponentArray.getComponent(this.viewedEntity);
+      if (entityExists(this.cameraSubject)) {
+         const transformComponent = TransformComponentArray.getComponent(this.cameraSubject);
          this._updateVisibleChunkBounds(transformComponent.position, this.screenWidth, this.screenHeight);
       }
    }

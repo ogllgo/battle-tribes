@@ -175,10 +175,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // Layer
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   // Viewed entity
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   // Player is alive
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   // Player instance and camera subject
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
 
    // Tribes
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -259,10 +257,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    packet.addNumber(layers.indexOf(layer));
 
-   packet.addNumber(playerClient.viewedEntity);
-
-   packet.addBoolean(player !== null);
-   packet.padOffset(3);
+   packet.addNumber(entityExists(playerClient.instance) ? playerClient.instance : 0);
+   packet.addNumber(entityExists(playerClient.cameraSubject) ? playerClient.cameraSubject : 0);
 
    // Tribes
    packet.addNumber(tribes.length);
@@ -478,9 +474,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    return packet.buffer;
 }
 
-export function createInitialGameDataPacket(player: Entity, spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
+export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT * 5;
-   // Layers
+   // Layer idx
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Per-tile data
    lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 7 * Float32Array.BYTES_PER_ELEMENT;
@@ -495,8 +491,6 @@ export function createInitialGameDataPacket(player: Entity, spawnLayer: Layer, p
    lengthBytes = alignLengthBytes(lengthBytes);
    const packet = new Packet(PacketType.initialGameData, lengthBytes);
    
-   packet.addNumber(player);
-
    // Layer idx
    packet.addNumber(layers.indexOf(spawnLayer));
    

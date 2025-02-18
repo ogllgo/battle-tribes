@@ -1,8 +1,7 @@
 import { ServerComponentType } from "../../shared/src/components";
-import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
-import Chunk from "./Chunk";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { ComponentArray, EntityConfig, getClientComponentArray, getComponentArrays, getServerComponentArray } from "./entity-components/ComponentArray";
 import { ServerComponentParams } from "./entity-components/components";
@@ -19,11 +18,6 @@ export interface EntityCreationInfo {
    readonly renderInfo: EntityRenderInfo;
 }
 
-// Doing it this way by importing the value directly (instead of calling a function to get it) will cause some overhead when accessing it,
-// but this is in the client so these optimisations are less important. The ease-of-use is worth it
-/** The player entity associated with the current player. If null, then the player is dead */
-export let playerInstance: Entity | null = null;
-
 export const layers = new Array<Layer>();
 
 export let surfaceLayer: Layer;
@@ -34,10 +28,6 @@ const entityTypes: Partial<Record<Entity, EntityType>> = {};
 const entitySpawnTicks: Partial<Record<Entity, number>> = {};
 const entityLayers: Partial<Record<Entity, Layer>> = {};
 const entityRenderInfos: Partial<Record<Entity, EntityRenderInfo>> = {};
-
-export function setPlayerInstance(entity: Entity | null): void {
-   playerInstance = entity;
-}
 
 export function addLayer(layer: Layer): void {
    if (layers.length === 0) {

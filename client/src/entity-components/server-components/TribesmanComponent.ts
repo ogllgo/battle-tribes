@@ -12,7 +12,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
-import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
@@ -28,6 +28,7 @@ import { InventoryComponentArray, getInventory } from "./InventoryComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { playerInstance } from "../../player";
 
 export interface TribesmanComponentParams {
    readonly warpaintType: number | null;

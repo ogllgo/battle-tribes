@@ -2,8 +2,8 @@ import { halfWindowHeight, halfWindowWidth } from "../webgl";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Settings } from "battletribes-shared/settings";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { getEntityRenderInfo, playerInstance } from "../world";
-import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
+import { getEntityRenderInfo } from "../world";
+import { playerInstance } from "../player";
 
 // @Cleanup: this is out of place
 

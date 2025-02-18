@@ -17,13 +17,14 @@ import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/i
 import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
-import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
+import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { attachLightToRenderPart, createLight, Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
+import { playerInstance } from "../../player";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -493,7 +494,6 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
    const limbInfos = new Array<LimbInfo>();
 
    const numUseInfos = reader.readNumber();
-   console.log(numUseInfos);
    for (let i = 0; i < numUseInfos; i++) {
       const usedInventoryName = reader.readNumber() as InventoryName;
 

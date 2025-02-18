@@ -5,8 +5,8 @@ import { Inventory } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
 import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
-import { playerInstance } from "../../../world";
 import { playerTribe } from "../../../tribes";
+import { playerInstance } from "../../../player";
 
 export let Hotbar_update: () => void = () => {};
 

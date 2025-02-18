@@ -5,9 +5,8 @@ import { halfWindowHeight, halfWindowWidth } from "./webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, WORLD_RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import Chunk from "./Chunk";
 import Layer from "./Layer";
-import { entityExists, getEntityRenderInfo, playerInstance } from "./world";
+import { entityExists, getEntityRenderInfo } from "./world";
 import { Entity } from "../../shared/src/entities";
-import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 
 export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
 

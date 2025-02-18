@@ -12,7 +12,7 @@ import { InventoryName, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/i
 import { addMenuCloseFunction } from "../../menus";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { getPlayerSelectedItem } from "./GameInteractableLayer";
-import { entityExists, getEntityType, playerInstance } from "../../world";
+import { entityExists, getEntityType } from "../../world";
 import { StructureComponentArray } from "../../entity-components/server-components/StructureComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
 import { BuildingMaterialComponentArray } from "../../entity-components/server-components/BuildingMaterialComponent";
@@ -23,6 +23,7 @@ import { PlanterBoxComponentArray } from "../../entity-components/server-compone
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-creation";
 import { playerTribe } from "../../tribes";
+import { playerInstance } from "../../player";
 
 /*
 // @Incomplete

@@ -1,6 +1,6 @@
 import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
@@ -9,17 +9,13 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import Game from "../Game";
-import Client, { getQueuedGameDataPackets } from "./Client";
+import Client from "./Client";
 import Board from "../Board";
 import Camera from "../Camera";
 import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime, registerServerTick } from "../components/game/dev/GameInfoDisplay";
 import { Tile } from "../Tile";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
-import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
-import { gameScreenSetIsDead } from "../components/game/GameScreen";
-import { updateHealthBar } from "../components/game/HealthBar";
-import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, playerInstance, registerBasicEntityInfo, removeEntity, setCurrentLayer, setPlayerInstance, getEntityAgeTicks, EntityPreCreationInfo, surfaceLayer } from "../world";
+import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, registerBasicEntityInfo, removeEntity, setCurrentLayer, getEntityAgeTicks, EntityPreCreationInfo, surfaceLayer } from "../world";
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
@@ -35,6 +31,11 @@ import { Biome } from "../../../shared/src/biomes";
 import { ExtendedTribeInfo, playerTribe, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
 import { readPacketDevData } from "./dev-packet-processing";
 import { TileIndex } from "../../../shared/src/utils";
+import { playerInstance, setPlayerInstance } from "../player";
+import { gameScreenSetIsDead } from "../components/game/GameScreen";
+import { selectItemSlot } from "../components/game/GameInteractableLayer";
+import { TRIBE_INFO_RECORD } from "../../../shared/src/tribes";
+import { updateHealthBar } from "../components/game/HealthBar";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -76,10 +77,6 @@ const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
 }
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
-   // Player ID
-   // @Hack: Is this really necessary?
-   Game.playerID = reader.readNumber();
-
    const layerIdx = reader.readNumber();
    
    const spawnPositionX = reader.readNumber();
@@ -439,7 +436,7 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
    layer.addEntityToRendering(entity, renderInfo.renderLayer, renderInfo.renderHeight);
 
    // Set the player instance
-   if (entity === Game.playerID) {
+   if (entity === playerInstance) {
       setPlayerInstance(entity);
 
       // @Speed @Copynpaste
@@ -513,11 +510,15 @@ export function processGameDataPacket(reader: PacketReader): void {
       playSound("layer-change.mp3", 0.55, 1, Camera.position.copy(), null);
    }
 
-   const viewedEntity = reader.readNumber() as Entity;
-   Camera.setTrackedEntityID(viewedEntity);
+   const newPlayerInstance = reader.readNumber();
+   if (playerInstance === null && newPlayerInstance !== 0) {
+      setPlayerInstance(newPlayerInstance);
 
-   const playerIsAlive = reader.readBoolean();
-   reader.padOffset(3);
+      selectItemSlot(1);
+      gameScreenSetIsDead(false);
+   }
+   const cameraSubject = reader.readNumber() as Entity;
+   Camera.setTrackedEntityID(cameraSubject);
 
    Board.serverTicks = ticks;
    updateDebugScreenTicks(ticks);
@@ -545,17 +546,16 @@ export function processGameDataPacket(reader: PacketReader): void {
    }
 
    // Process entities
-   const playerInstanceID = Game.playerID;
    const numEntities = reader.readNumber();
    const visibleEntities = [];
    for (let i = 0; i < numEntities; i++) {
       const entityID = reader.readNumber() as Entity;
       visibleEntities.push(entityID);
-      if (entityID === playerInstanceID) {
-         if (playerInstance === null) {
-            processEntityCreationData(entityID, reader);
-         } else {
+      if (entityID === playerInstance) {
+         if (entityExists(playerInstance)) {
             processPlayerUpdateData(reader);
+         } else {
+            processEntityCreationData(entityID, reader);
          }
       } else if (entityExists(entityID)) {
          processEntityUpdateData(entityID, reader);
@@ -611,18 +611,21 @@ export function processGameDataPacket(reader: PacketReader): void {
          const chunk = playerLayer.getChunk(chunkX, chunkY);
          for (let i = 0; i < chunk.entities.length; i++) {
             const entity = chunk.entities[i];
-            entitiesToRemove.add(entity);
+            // @Hack?
+            if (entity !== playerInstance) {
+               entitiesToRemove.add(entity);
+            }
          }
       }
-   }
-
-   if (playerInstance !== null) {
-      entitiesToRemove.delete(playerInstance);
    }
 
    for (const entity of entitiesToRemove) {
       const isDeath = serverRemovedEntityIDs.has(entity);
       removeEntity(entity, isDeath);
+
+      if (entity === playerInstance) {
+         Client.killPlayer();
+      }
    }
 
    const visibleHits = new Array<HitData>();
@@ -719,11 +722,6 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    const playerHealth = reader.readNumber();
 
-   // We call the kill function here as the if the player is dead then they won't be in the update array.
-   if (playerHealth === 0 && playerInstance !== null) {
-      Client.killPlayer();
-   }
-
    const hasDebugData = reader.readBoolean();
    reader.padOffset(3);
    
@@ -744,7 +742,7 @@ export function processGameDataPacket(reader: PacketReader): void {
    reader.padOffset(3);
 
    let hotbarCrossbowLoadProgressRecord: Partial<Record<number, number>> | undefined;
-   if (playerIsAlive) {
+   if (playerInstance !== null) {
       hotbarCrossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
    }
 
@@ -806,6 +804,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       readPacketDevData(reader);
    }
    
+   // @Garbage
    const gameDataPacket: GameDataPacket = {
       tileUpdates: tileUpdates,
       visibleHits: visibleHits,
@@ -860,25 +859,6 @@ export function processSyncDataPacket(reader: PacketReader): void {
    
    Game.sync();
 }
-
-// export function processRespawnDataPacket(reader: PacketReader): void {
-//    // Create the player
-//    const playerID = reader.readNumber();
-//    // @Hack
-//    Game.playerID = playerID;
-//    processEntityCreationData(playerID, reader);
-   
-//    selectItemSlot(1);
-   
-//    const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
-//    updateHealthBar(maxHealth);
-
-//    gameScreenSetIsDead(false);
-
-//    // Clear any queued packets, as they contain data from when the player wasn't respawned.
-//    const queuedPackets = getQueuedGameDataPackets();
-//    queuedPackets.length = 0;
-// }
 
 export function processForcePositionUpdatePacket(reader: PacketReader): void {
    if (playerInstance === null) {
