@@ -19,7 +19,7 @@ import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
 import { doMeleeAttack, huntEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { getBoxesCollidingEntities } from "battletribes-shared/hitbox-collision";
+import { getHitboxesCollidingEntities } from "battletribes-shared/hitbox-collision";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
@@ -40,7 +40,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    const virtualBuilding = plan.virtualBuilding;
    
    const layer = getEntityLayer(tribesman);
-   const blockingEntities = getBoxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
+   const blockingEntities = getHitboxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
    for (let i = 0; i < blockingEntities.length; i++) {
       const blockingEntity = blockingEntities[i];
       if (!HealthComponentArray.hasComponent(blockingEntity)) {

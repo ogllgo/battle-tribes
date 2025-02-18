@@ -1,5 +1,4 @@
 import { circlesDoIntersect, circleAndRectangleDoIntersect, HitboxCollisionBit } from "../collision";
-import { InventoryName } from "../items/items";
 import { Point } from "../utils";
 import { CircularBox } from "./CircularBox";
 import RectangularBox from "./RectangularBox";
@@ -32,12 +31,8 @@ export type BoxFromType = {
    [BoxType.rectangular]: RectangularBox;
 }
 
-export interface BoxWrapper<T extends BoxType = BoxType> {
+export interface Hitbox<T extends BoxType = BoxType> {
    readonly box: BoxFromType[T];
-}
-
-/** Boxes which can collide with each other and get hit */
-export interface Hitbox<T extends BoxType = BoxType> extends BoxWrapper<T> {
    mass: number;
    collisionType: HitboxCollisionType;
    readonly collisionBit: HitboxCollisionBit;
@@ -48,24 +43,6 @@ export interface Hitbox<T extends BoxType = BoxType> extends BoxWrapper<T> {
    boundsMaxX: number;
    boundsMinY: number;
    boundsMaxY: number;
-}
-
-export interface GenericCollisionBoxInfo<T extends BoxType = BoxType> extends BoxWrapper<T> {
-   readonly associatedLimbInventoryName: InventoryName;
-}
-
-// @Cleanup: rename to AttackBox
-/** Boxes which can damage hitboxes they collide with */
-export interface DamageBox<T extends BoxType = BoxType> extends GenericCollisionBoxInfo<T> {
-   isBlockedByWall: boolean;
-   blockingSubtileIndex: number;
-}
-
-export interface BlockBox<T extends BoxType = BoxType> extends GenericCollisionBoxInfo<T> {}
-
-export const enum GenericCollisionBoxType {
-   damage,
-   block
 }
 
 export function createHitbox<T extends BoxType>(box: BoxFromType[T], mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox<T> {
@@ -82,13 +59,6 @@ export function createHitbox<T extends BoxType>(box: BoxFromType[T], mass: numbe
       boundsMaxY: 0
    };
 }
-
-// @Temporary?
-// export function createDamageBox<T extends BoxType>(box: BoxFromType[T]): DamageBox<T> {
-//    return {
-//       box: box
-//    };
-// }
 
 export function boxIsCircular(box: Box): box is CircularBox {
    return typeof (box as CircularBox).radius !== "undefined";

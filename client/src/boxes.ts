@@ -1,28 +1,6 @@
-import { BlockBox, BoxFromType, BoxType, DamageBox, GenericCollisionBoxInfo, Hitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import { InventoryName } from "battletribes-shared/items/items";
+import { BoxFromType, BoxType, Hitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { HitboxCollisionBit } from "../../shared/src/collision";
 import Board from "./Board";
-
-class GenericCollisionBox<T extends BoxType> implements GenericCollisionBoxInfo<T> {
-   public box: BoxFromType[T];
-   public readonly associatedLimbInventoryName: InventoryName;
-   public collidingBox: ClientDamageBox | ClientBlockBox | null = null;
-   public isActive: boolean;
-   
-   constructor(box: BoxFromType[T], associatedLimbInventoryName: InventoryName, isActive: boolean) {
-      this.box = box;
-      this.associatedLimbInventoryName = associatedLimbInventoryName;
-      this.isActive = isActive;
-   }
-}
-
-export class ClientDamageBox<T extends BoxType = BoxType> extends GenericCollisionBox<T> implements DamageBox<T> {
-   public isBlockedByWall = false;
-   public blockingSubtileIndex = 0;
-}
-export class ClientBlockBox<T extends BoxType = BoxType> extends GenericCollisionBox<T> implements BlockBox<T> {
-   public hasBlocked = false;
-}
 
 export class ClientHitbox<T extends BoxType = BoxType> implements Hitbox<T> {
    public readonly box: BoxFromType[T];
@@ -36,6 +14,7 @@ export class ClientHitbox<T extends BoxType = BoxType> implements Hitbox<T> {
 
    public lastUpdateTicks = Board.serverTicks;
 
+   // @Cleanup: unused, all of these?
    public boundsMinX = 0;
    public boundsMaxX = 0;
    public boundsMinY = 0;

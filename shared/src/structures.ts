@@ -1,6 +1,6 @@
 import { Chunks, EntityInfo, getChunk } from "./board-interface";
 import { Entity, EntityType } from "./entities";
-import { getBoxesCollidingEntities } from "./hitbox-collision";
+import { getHitboxesCollidingEntities } from "./hitbox-collision";
 import { createBracingHitboxes, createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
 import { boxIsCircular, Hitbox, updateBox } from "./boxes/boxes";
 import { Settings } from "./settings";
@@ -147,7 +147,7 @@ const structurePlaceIsValid = (entityType: EntityType, x: number, y: number, rot
       }
    }
    
-   const collidingEntities = getBoxesCollidingEntities(worldInfo, testHitboxes, Vars.COLLISION_EPSILON);
+   const collidingEntities = getHitboxesCollidingEntities(worldInfo, testHitboxes, Vars.COLLISION_EPSILON);
 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entityID = collidingEntities[i];
@@ -318,7 +318,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<Struc
             
             // Don't add the position if it would be colliding with the connecting entity
             let isValid = true;
-            const collidingEntities = getBoxesCollidingEntities(worldInfo, hitboxes, Vars.COLLISION_EPSILON);
+            const collidingEntities = getHitboxesCollidingEntities(worldInfo, hitboxes, Vars.COLLISION_EPSILON);
             for (let l = 0; l < collidingEntities.length; l++) {
                const collidingEntityID = collidingEntities[l];
                if (collidingEntityID === connectingEntity.id) {

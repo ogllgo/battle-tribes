@@ -2,7 +2,7 @@ import { getChunk } from "./board-interface";
 import { rectanglesAreColliding } from "./collision";
 import { Entity } from "./entities";
 import { createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
-import { Box, boxIsCircular, assertBoxIsRectangular, updateBox, BoxWrapper, Hitbox } from "./boxes/boxes";
+import { Box, boxIsCircular, assertBoxIsRectangular, updateBox, Hitbox } from "./boxes/boxes";
 import { Settings } from "./settings";
 import { StructureType, WorldInfo } from "./structures";
 import { angle, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
@@ -146,12 +146,12 @@ export function collisionBitsAreCompatible(collisionMask1: number, collisionBit1
    return (collisionMask1 & collisionBit2) !== 0 && (collisionMask2 & collisionBit1) !== 0;
 }
 
-export function getBoxesCollidingEntities(worldInfo: WorldInfo, boxWrappers: ReadonlyArray<BoxWrapper>, epsilon: number = 0): Array<Entity> {
+export function getHitboxesCollidingEntities(worldInfo: WorldInfo, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): Array<Entity> {
    const collidingEntities = new Array<Entity>();
    const seenEntityIDs = new Set<number>();
    
-   for (let i = 0; i < boxWrappers.length; i++) {
-      const hitbox = boxWrappers[i];
+   for (let i = 0; i < hitboxes.length; i++) {
+      const hitbox = hitboxes[i];
       const box = hitbox.box;
 
       let minX = box.calculateBoundsMinX();
@@ -207,5 +207,5 @@ export function estimateCollidingEntities(worldInfo: WorldInfo, entityType: Stru
       updateBox(hitbox.box, x, y, rotation);
    }
    
-   return getBoxesCollidingEntities(worldInfo, testHitboxes, epsilon);
+   return getHitboxesCollidingEntities(worldInfo, testHitboxes, epsilon);
 }
