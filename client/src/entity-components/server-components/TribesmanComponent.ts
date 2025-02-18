@@ -1,8 +1,8 @@
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
-import { Point, angle, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
+import { Point, angle, assert, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
 import { Light, attachLightToEntity, createLight, removeLightsAttachedToEntity } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -12,7 +12,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
-import { getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
+import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, getEntityType, playerInstance } from "../../world";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
@@ -351,10 +351,7 @@ const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): str
 
 function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribe | ServerComponentType.tribesman, never>): RenderParts {
    const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
-   const tribesmanComponentParams = entityConfig.serverComponents[ServerComponentType.tribesman];
    
-   const warPaintType = tribesmanComponentParams.warpaintType;
-
    // @Temporary @Hack
    // const radius = tribesman.type === EntityType.player || tribesman.type === EntityType.tribeWarrior ? 32 : 28;
    const radius = 32;
@@ -372,26 +369,26 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    renderInfo.attachRenderPart(bodyRenderPart);
 
    if (tribeComponentParams.tribeType === TribeType.goblins) {
-      if (warPaintType !== null) {
-         let textureSource: string;
-         if (entityConfig.entityType === EntityType.tribeWarrior) {
-            textureSource = `entities/goblins/warrior-warpaint-${warPaintType}.png`;
-         } else {
-            textureSource = `entities/goblins/goblin-warpaint-${warPaintType}.png`;
-         }
-         
-         // Goblin warpaint
-         const warpaintRenderPart = new TexturedRenderPart(
-            null,
-            4,
-            0,
-            getTextureArrayIndex(textureSource)
-         );
-         warpaintRenderPart.addTag("tribeMemberComponent:warpaint");
-         renderInfo.attachRenderPart(warpaintRenderPart);
+      const tribesmanComponentParams = entityConfig.serverComponents[ServerComponentType.tribesman];
+      const warPaintType = tribesmanComponentParams.warpaintType;
+      assert(warPaintType !== null);
+      
+      let textureSource: string;
+      if (entityConfig.entityType === EntityType.tribeWarrior) {
+         textureSource = `entities/goblins/warrior-warpaint-${warPaintType}.png`;
       } else {
-         console.warn("bad");
+         textureSource = `entities/goblins/goblin-warpaint-${warPaintType}.png`;
       }
+      
+      // Goblin warpaint
+      const warpaintRenderPart = new TexturedRenderPart(
+         null,
+         4,
+         0,
+         getTextureArrayIndex(textureSource)
+      );
+      warpaintRenderPart.addTag("tribeMemberComponent:warpaint");
+      renderInfo.attachRenderPart(warpaintRenderPart);
 
       // Left ear
       const leftEarRenderPart = new TexturedRenderPart(
@@ -462,8 +459,22 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesma
    };
 }
 
-function getMaxRenderParts(): number {
-   return 0;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.tribe>): number {
+   const tribeComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.tribe];
+
+   let maxRenderParts = 0;
+
+   // Body
+   maxRenderParts++;
+
+   if (tribeComponentParams.tribeType === TribeType.goblins) {
+      maxRenderParts += 3;
+   }
+
+   // @Speed: 2 of these are attach points... can they be removed?
+   maxRenderParts += 4;
+
+   return maxRenderParts;
 }
 
 const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity: Entity): void => {

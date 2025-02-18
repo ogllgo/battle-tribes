@@ -209,26 +209,6 @@ export enum CactusFlowerSize {
    large = 1
 }
 
-export interface CactusFlowerData {
-   readonly type: number;
-   readonly height: number;
-   readonly rotation: number;
-}
-
-export interface CactusBodyFlowerData extends CactusFlowerData {
-   readonly size: CactusFlowerSize
-   readonly column: number;
-}
-
-export interface CactusLimbFlowerData extends CactusFlowerData {
-   readonly direction: number;
-}
-
-export interface CactusLimbData {
-   readonly direction: number;
-   readonly flower?: CactusLimbFlowerData;
-}
-
 export enum SlimeSize {
    small = 0,
    medium = 1,

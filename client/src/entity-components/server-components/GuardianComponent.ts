@@ -10,7 +10,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
+import { EntityPreCreationInfo, getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 
@@ -390,8 +390,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
    };
 }
 
-function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
-   return renderInfo.allRenderThings.length;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
+   const transformComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.transform];
+   return 2 * transformComponentConfig.hitboxes.length;
 }
    
 function padData(reader: PacketReader): void {

@@ -7,6 +7,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityPreCreationInfo } from "../../world";
 
 export interface TribeWarriorComponentParams {
    readonly scars: Array<ScarInfo>;
@@ -75,8 +76,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeWar
    };
 }
 
-function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.tribeWarrior, never>): number {
-   const tribeWarriorComponentParams = entityConfig.serverComponents[ServerComponentType.tribeWarrior];
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.tribeWarrior>): number {
+   const tribeWarriorComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.tribeWarrior];
    return tribeWarriorComponentParams.scars.length;
 }
 

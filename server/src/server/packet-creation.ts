@@ -92,7 +92,7 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
 
          // @Speed
          if (packet.currentByteOffset - start !== componentArray.getDataLength(entity, player)) {
-            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'.`)
+            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
          }
       }
    }

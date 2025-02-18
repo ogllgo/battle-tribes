@@ -5,7 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityRenderInfo } from "../../world";
+import { EntityPreCreationInfo, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { playBuildingHitSound, playSoundOnEntity } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -132,8 +132,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.totemBan
    };
 }
 
-function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.totemBanner, never>): number {
-   const bannerComponentParams = entityConfig.serverComponents[ServerComponentType.totemBanner];
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.totemBanner>): number {
+   const bannerComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.totemBanner];
    // @Garbage
    return Object.keys(bannerComponentParams.banners).length;
 }

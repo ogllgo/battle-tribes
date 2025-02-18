@@ -8,8 +8,8 @@ import { EntityConfig } from "../ComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { attachLightToRenderPart, createLight } from "../../lights";
 import { Entity } from "../../../../shared/src/entities";
-import { getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
-import { getEntityLayer } from "../../world";
+import { entityIsVisibleToCamera, getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
+import { EntityPreCreationInfo, getEntityLayer } from "../../world";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { createSlurbParticle } from "../../particles";
@@ -104,8 +104,9 @@ function createComponent(): GlurbComponent {
    return {};
 }
 
-function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
-   return renderInfo.allRenderThings.length;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
+   const transformComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.transform];
+   return transformComponentConfig.hitboxes.length + 2;
 }
 
 function padData(): void {}
@@ -113,10 +114,13 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onTick(glurb: Entity): void {
-   const layer = getEntityLayer(glurb);
-   const transformComponent = TransformComponentArray.getComponent(glurb);
-   for (const hitbox of transformComponent.hitboxes) {
-      coatSlimeTrails(layer, hitbox.box);
+   // @Hack
+   if (entityIsVisibleToCamera(glurb)) {
+      const layer = getEntityLayer(glurb);
+      const transformComponent = TransformComponentArray.getComponent(glurb);
+      for (const hitbox of transformComponent.hitboxes) {
+         coatSlimeTrails(layer, hitbox.box);
+      }
    }
 }
 

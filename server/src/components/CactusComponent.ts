@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { CactusBodyFlowerData, CactusLimbData, Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource, CactusFlowerSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
@@ -11,13 +11,20 @@ import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerab
 import { applyKnockback } from "./PhysicsComponent";
 import { createItemsOverEntity } from "../entities/item-entity";
 
-export class CactusComponent {
-   public readonly flowers: ReadonlyArray<CactusBodyFlowerData>;
-   public readonly limbs: ReadonlyArray<CactusLimbData>;
+export interface CactusFlower {
+   readonly parentHitboxLocalID: number;
+   readonly offsetX: number;
+   readonly offsetY: number;
+   readonly rotation: number;
+   readonly flowerType: number;
+   readonly size: CactusFlowerSize;
+}
 
-   constructor(flowers: ReadonlyArray<CactusBodyFlowerData>, limbs: ReadonlyArray<CactusLimbData>) {
+export class CactusComponent {
+   public readonly flowers: ReadonlyArray<CactusFlower>;
+
+   constructor(flowers: ReadonlyArray<CactusFlower>) {
       this.flowers = flowers;
-      this.limbs = limbs;
    }
 }
 
@@ -27,20 +34,7 @@ CactusComponentArray.preRemove = preRemove;
 
 function getDataLength(entity: Entity): number {
    const cactusComponent = CactusComponentArray.getComponent(entity);
-
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 5 * Float32Array.BYTES_PER_ELEMENT * cactusComponent.flowers.length;
-   
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   for (const limb of cactusComponent.limbs) {
-      if (typeof limb.flower !== "undefined") {
-         lengthBytes += 6 * Float32Array.BYTES_PER_ELEMENT;
-      } else {
-         lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-      }
-   }
-
-   return lengthBytes;
+   return 2 * Float32Array.BYTES_PER_ELEMENT + cactusComponent.flowers.length * 6 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -49,25 +43,12 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(cactusComponent.flowers.length);
    for (let i = 0; i < cactusComponent.flowers.length; i++) {
       const flower = cactusComponent.flowers[i];
-      packet.addNumber(flower.type);
-      packet.addNumber(flower.height);
+      packet.addNumber(flower.parentHitboxLocalID);
+      packet.addNumber(flower.offsetX);
+      packet.addNumber(flower.offsetY);
       packet.addNumber(flower.rotation);
+      packet.addNumber(flower.flowerType);
       packet.addNumber(flower.size);
-      packet.addNumber(flower.column);
-   }
-
-   packet.addNumber(cactusComponent.limbs.length);
-   for (let i = 0; i < cactusComponent.limbs.length; i++) {
-      const limbData = cactusComponent.limbs[i];
-      packet.addNumber(limbData.direction);
-      packet.addBoolean(typeof limbData.flower !== "undefined");
-      packet.padOffset(3);
-      if (typeof limbData.flower !== "undefined") {
-         packet.addNumber(limbData.flower.type);
-         packet.addNumber(limbData.flower.height);
-         packet.addNumber(limbData.flower.rotation);
-         packet.addNumber(limbData.flower.direction);
-      }
    }
 }
 

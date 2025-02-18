@@ -158,6 +158,7 @@ const getNumNeighbouringSlimePixels = (layer: Layer, gamePixelIndex: number): nu
    return numNeighbouring;
 }
 
+// @Speed
 export function updateSlimeTrails(): void {
    for (const layer of layers) {
       for (const pair of layer.slimeTrailPixels) {

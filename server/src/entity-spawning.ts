@@ -377,10 +377,10 @@ export function spawnInitialEntities(): void {
    setTimeout(() => {
       if(1+1===2)return;
       // const cow = createCowConfig();
-      const cow = createGlurbConfig();
-      cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
-      cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-      createEntity(cow, surfaceLayer, 0);
+      const cactus = createCactusConfig();
+      cactus.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
+      cactus.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+      createEntity(cactus, surfaceLayer, 0);
       if(1+1===2)return;
       
       // // const x = Settings.BOARD_UNITS * 0.5 + 700;

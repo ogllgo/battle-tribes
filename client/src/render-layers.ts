@@ -54,7 +54,7 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
        || decorationType === DecorationType.flower4;
 }
 
-export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: EntityPreCreationInfo): RenderLayer {
+export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): RenderLayer {
    // Crafting stations render below tribesmen so they can see the limbs
    if (typeof preCreationInfo.serverComponentParams[ServerComponentType.craftingStation] !== "undefined") {
       return RenderLayer.lowEntities;
@@ -156,7 +156,7 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
    }
 }
 
-export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, preCreationInfo: EntityPreCreationInfo): number {
+export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): number {
    /** Variation between 0 and 1 */
    let variation: number;
    if (renderLayer === RenderLayer.mithril) {

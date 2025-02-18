@@ -5,7 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
-import { getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityPreCreationInfo, getEntityRenderInfo, getEntityType } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
@@ -187,8 +187,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.layeredR
    };
 }
 
-function getMaxRenderParts(entityConfig: EntityConfig<ServerComponentType.layeredRod, never>): number {
-   const layeredRodComponentParams = entityConfig.serverComponents[ServerComponentType.layeredRod];
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.layeredRod>): number {
+   const layeredRodComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.layeredRod];
    return layeredRodComponentParams.numLayers;
 }
 

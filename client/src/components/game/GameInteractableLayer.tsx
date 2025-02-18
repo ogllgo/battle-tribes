@@ -1514,9 +1514,10 @@ const tickItem = (itemType: ItemType): void => {
             }
          }
 
-         const preCreationInfo: EntityPreCreationInfo = {
+         const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
             serverComponentTypes: componentTypes,
-            serverComponentParams: components
+            // @Hack
+            serverComponentParams: components as any
          };
 
          // Create the entity

@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../shared/src/components";
-import { Entity, EntityType } from "../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
 import Chunk from "./Chunk";
@@ -101,25 +101,26 @@ export type ClientServerComponentParams = Partial<{
 
 // @Cleanup: location
 // @Cleanup: perhaps 2 of these properties can be combined into a map? instead of record + array
-export interface EntityPreCreationInfo {
+export interface EntityPreCreationInfo<ServerComponentTypes extends ServerComponentType> {
    readonly serverComponentTypes: ReadonlyArray<ServerComponentType>;
-   readonly serverComponentParams: EntityServerComponentParams;
-}
-
-// @Cleanup: should really be defined in location of the entity...
-const getMaxRenderParts = (entityType: EntityType): number => {
-   // @HACK @SPEED
-   // @HACK @SPEED
-   // @HACK @SPEED
-   // @HACK @SPEED
-   return 30;
+   readonly serverComponentParams: {
+      [T in ServerComponentTypes]: ServerComponentParams<T>;
+   };
 }
 
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
-export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo): EntityCreationInfo {
+export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): EntityCreationInfo {
+   // Calculate the max nbmer of render parts the entity can have
+   let maxNumRenderParts = 0;
+   // @Hack @Garbage
+   for (const componentType of preCreationInfo.serverComponentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+      maxNumRenderParts += componentArray.getMaxRenderParts(preCreationInfo);
+   }
+   
    const renderLayer = getEntityRenderLayer(entityType, preCreationInfo);
    const renderHeight = calculateRenderDepthFromLayer(renderLayer, preCreationInfo);
-   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, getMaxRenderParts(entityType));
+   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, maxNumRenderParts);
    
    // Create entity config
    const entityConfig: EntityConfig<never, never> = {

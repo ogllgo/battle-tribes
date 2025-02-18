@@ -12,7 +12,7 @@ import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPos
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance } from "../../world";
+import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, playerInstance, surfaceLayer } from "../../world";
 import { ClientHitbox } from "../../boxes";
 import Board from "../../Board";
 import { Entity } from "../../../../shared/src/entities";
@@ -94,7 +94,8 @@ const padBaseHitboxData = (reader: PacketReader): void => {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-const getHitboxByLocalID = (hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox | null => {
+// @Hack: shouldn't be exported, and shouldn't even exist in the first place
+export function getHitboxByLocalID(hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox | null {
    if (localID === -1) {
       return null;
    }
@@ -930,4 +931,29 @@ export function getRandomPositionOnBoxEdge(box: Box): Point {
       const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
       return new Point(x, y);
    }
+}
+
+export function entityIsVisibleToCamera(entity: Entity): boolean {
+   if (getEntityLayer(entity) === getCurrentLayer()) {
+      return true;
+   }
+
+   // If on a different layer, the entity must be below a dropdown tile
+   
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   const minTileX = Math.floor(transformComponent.boundingAreaMinX / Settings.TILE_SIZE);
+   const maxTileX = Math.floor(transformComponent.boundingAreaMaxX / Settings.TILE_SIZE);
+   const minTileY = Math.floor(transformComponent.boundingAreaMinY / Settings.TILE_SIZE);
+   const maxTileY = Math.floor(transformComponent.boundingAreaMaxY / Settings.TILE_SIZE);
+   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+         const tile = surfaceLayer.getTileFromCoords(tileX, tileY);
+         if (tile.type === TileType.dropdown) {
+            return true;
+         }
+      }
+   }
+
+   return false;
 }

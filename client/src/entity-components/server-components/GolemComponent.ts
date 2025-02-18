@@ -16,6 +16,7 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { EntityPreCreationInfo } from "../../world";
 
 enum GolemRockSize {
    massive,
@@ -176,8 +177,20 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    };
 }
 
-function getMaxRenderParts(_entityConfig: EntityConfig<never, never>, renderInfo: EntityRenderInfo): number {
-   return renderInfo.allRenderThings.length;
+function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
+   const transformComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.transform];
+   
+   let maxRenderParts = 0;
+   for (const hitbox of transformComponentParams.hitboxes) {
+      maxRenderParts++;
+
+      const size = getHitboxSize(hitbox.box as CircularBox);
+      if (size === GolemRockSize.large) {
+         maxRenderParts += 2;
+      }
+   }
+   
+   return maxRenderParts;
 }
 
 function onTick(entity: Entity): void {
