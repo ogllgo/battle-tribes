@@ -312,3 +312,10 @@ export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): v
    packet.addNumber(carryTarget);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendSetAttackTargetPacket(entity: Entity, attackTarget: Entity): void {
+   const packet = new Packet(PacketType.setAttackTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(attackTarget);
+   Client.sendPacket(packet.buffer);
+}

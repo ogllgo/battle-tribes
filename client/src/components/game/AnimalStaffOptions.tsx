@@ -170,7 +170,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    const pressAttackOption = useCallback((): void => {
       if (entity !== null) {
          setShittyCarrier(entity);
-         props.setGameInteractState(GameInteractState.selectCarryTarget);
+         props.setGameInteractState(GameInteractState.selectAttackTarget);
       }
    }, [entity]);
    
@@ -181,7 +181,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
       <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
       <div className="option carry" onClick={pressCarryOption}></div>
-      <div className="option attack" onClick={pressCarryOption}></div>
+      <div className="option attack" onClick={pressAttackOption}></div>
    </div>;
 }
 

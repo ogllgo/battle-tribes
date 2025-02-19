@@ -17,7 +17,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAnimalStaffFollowCommandPacket, processAscendPacket, processDevGiveItemPacket, processDismountCarrySlotPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAnimalStaffFollowCommandPacket, processAscendPacket, processDevGiveItemPacket, processDismountCarrySlotPacket, processEntitySummonPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -348,6 +348,10 @@ class GameServer {
                }
                case PacketType.setCarryTarget: {
                   processSetCarryTargetPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.setAttackTarget: {
+                  processSetAttackTargetPacket(playerClient, reader);
                   break;
                }
                default: {

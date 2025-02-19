@@ -35,7 +35,8 @@ export const enum GameInteractState {
    none,
    summonEntity,
    spectateEntity,
-   selectCarryTarget
+   selectCarryTarget,
+   selectAttackTarget
 }
 
 export let openSettingsMenu: () => void;

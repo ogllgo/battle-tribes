@@ -24,7 +24,7 @@ import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-com
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
 import { AnimalStaffCommandType, AnimalStaffOptions_isHovering, AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible, createControlCommandParticles } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
@@ -33,6 +33,7 @@ import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
 import { getVelocityMagnitude } from "./entity-components/server-components/PhysicsComponent";
 import { GameInteractState } from "./components/game/GameScreen";
 import { playerInstance } from "./player";
+import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -50,7 +51,8 @@ const enum InteractActionType {
    openAnimalStaffMenu,
    mountCarrySlot,
    pickUpArrow,
-   setCarryTarget
+   setCarryTarget,
+   selectAttackTarget
 }
 
 interface BaseInteractAction {
@@ -111,7 +113,11 @@ interface SetCarryTargetAction extends BaseInteractAction {
    readonly type: InteractActionType.setCarryTarget;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction;
+interface SelectAttackTargetAction extends BaseInteractAction {
+   readonly type: InteractActionType.selectAttackTarget;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -177,6 +183,15 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       if (entityType !== EntityType.tree && entityType !== EntityType.boulder) {
          return {
             type: InteractActionType.setCarryTarget,
+            interactEntity: entity,
+            interactRange: Number.MAX_SAFE_INTEGER
+         };
+      }
+   }
+   if (gameInteractState === GameInteractState.selectAttackTarget) {
+      if (HealthComponentArray.hasComponent(entity)) {
+         return {
+            type: InteractActionType.selectAttackTarget,
             interactEntity: entity,
             interactRange: Number.MAX_SAFE_INTEGER
          };
@@ -319,7 +334,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.openCraftingStation:
       case InteractActionType.openAnimalStaffMenu:
       case InteractActionType.pickUpArrow:
-      case InteractActionType.setCarryTarget: {
+      case InteractActionType.setCarryTarget:
+      case InteractActionType.selectAttackTarget: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {
@@ -436,6 +452,12 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          sendSetCarryTargetPacket(getSelectedEntityID(), getHoveredEntityID());
          setGameInteractState(GameInteractState.none);
          createControlCommandParticles(AnimalStaffCommandType.carry);
+         break;
+      }
+      case InteractActionType.selectAttackTarget: {
+         sendSetAttackTargetPacket(getSelectedEntityID(), getHoveredEntityID());
+         setGameInteractState(GameInteractState.none);
+         createControlCommandParticles(AnimalStaffCommandType.attack);
          break;
       }
       default: {

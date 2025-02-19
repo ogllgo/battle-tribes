@@ -12,7 +12,7 @@ import { createItemEntityConfig, createItemsOverEntity } from "../entities/item-
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { TileType } from "battletribes-shared/tiles";
-import { cleanAngleNEW, findAngleAlignment, runHerdAI, stopEntity, turnAngle } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, stopEntity, turnAngle } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
@@ -50,7 +50,10 @@ const enum Vars {
    COHESION_INFLUENCE = 0.3,
    /** Amount of rotation the head can be offset relative to the body */
    HEAD_DIRECTION_LEEWAY = 0.3,
-   HEAD_TURN_SPEED = 0.75 * UtilVars.PI
+   HEAD_TURN_SPEED = 0.75 * UtilVars.PI,
+
+   RAM_COOLDOWN_TICKS = Settings.TPS * 1.5,
+   RAM_CHARGE_TICKS = Settings.TPS
 }
 
 export class CowComponent {
@@ -71,6 +74,19 @@ export class CowComponent {
 
    // @Temporary
    public carryTarget: Entity = 0;
+
+   // @Temporary
+   public attackTarget: Entity = 0;
+
+   public isRamming = false;
+   /** Remaining amount of ticks for which the cow will nost start a ram attack */
+   public ramCooldownTicks: number;
+   /** Remaining amount of ticks that the cow's ram attack has to charge up */
+   public ramRemainingChargeTicks = 0;
+
+   constructor() {
+      this.ramCooldownTicks = Vars.RAM_COOLDOWN_TICKS;
+   }
 }
 
 export const CowComponentArray = new ComponentArray<CowComponent>(ServerComponentType.cow, true, getDataLength, addDataToPacket);
@@ -341,6 +357,42 @@ function onTick(cow: Entity): void {
          cowComponent.carryTarget = 0;
       }
       return;
+   }
+
+   if (entityExists(cowComponent.attackTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.attackTarget);
+      const dist = getDistanceFromPointToEntity(transformComponent.position, cowComponent.attackTarget);
+
+      // Do the ram attack
+      if (cowComponent.isRamming) {
+         // ust continue charging on straight in the head's current direction
+
+         const headHitbox = transformComponent.hitboxes[1];
+         const targetDirection = headHitbox.box.rotation;
+
+         const targetX = transformComponent.position.x + 100 * Math.sin(targetDirection);
+         const targetY = transformComponent.position.x + 100 * Math.cos(targetDirection);
+         moveCow(cow, targetX, targetY, Vars.FAST_ACCELERATION);
+      } else {
+         if (cowComponent.ramCooldownTicks > 0) {
+            cowComponent.ramCooldownTicks--;
+         }
+         
+         // If the cow isn't close enough, move towards the target
+         if (dist > 100) {
+            moveCow(cow, targetTransformComponent.position.x, transformComponent.position.y, Vars.MEDIUM_ACCELERATION);
+         } else {
+            if (cowComponent.ramCooldownTicks === 0) {
+               // If the ram attack isn't 
+               const headHitbox = transformComponent.hitboxes[1];
+               const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+               if (getAbsAngleDiff(headHitbox.box.rotation, targetDirection) < 0.1) {
+                  // Start the ram attack
+                  cowComponent.isRamming = true;
+               }
+            }
+         }
+      }
    }
 
    // Graze dirt to recover health

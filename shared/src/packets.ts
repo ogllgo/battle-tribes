@@ -34,6 +34,7 @@ export const enum PacketType {
    pickUpArrow,
    modifyBuilding,
    setCarryTarget,
+   setAttackTarget,
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

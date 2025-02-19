@@ -53,9 +53,8 @@ import { createResearchBenchComponentParams } from "../../entity-components/serv
 import { GameInteractState } from "./GameScreen";
 import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
-import SelectCarryTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
+import SelectTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { Point } from "../../../../shared/src/utils";
-import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 import { playerInstance } from "../../player";
 
 export interface ItemRestTime {
@@ -1654,7 +1653,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          if (props.gameInteractState === GameInteractState.spectateEntity) {
             sendSpectateEntityPacket(getHoveredEntityID());
             props.setGameInteractState(GameInteractState.none);
-         } else if (props.gameInteractState === GameInteractState.selectCarryTarget) {
+         } else if (props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget) {
             props.setGameInteractState(GameInteractState.none);
          } else {
             attemptAttack();
@@ -1702,8 +1701,8 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
       ) : undefined}
 
-      {props.gameInteractState === GameInteractState.selectCarryTarget ? (
-         <SelectCarryTargetCursorOverlay mouseX={mouseX} mouseY={mouseY} />
+      {(props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget) ? (
+         <SelectTargetCursorOverlay gameInteractState={props.gameInteractState} mouseX={mouseX} mouseY={mouseY} />
       ) : null}
    </>
 }

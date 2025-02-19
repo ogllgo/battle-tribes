@@ -713,7 +713,7 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
    return true;
 }
 
-export function getDistanceFromPointToEntity(point: Point, entity: Entity): number {
+export function getDistanceFromPointToEntity(point: Readonly<Point>, entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    let minDistance = Math.sqrt(Math.pow(point.x - transformComponent.position.x, 2) + Math.pow(point.y - transformComponent.position.y, 2));

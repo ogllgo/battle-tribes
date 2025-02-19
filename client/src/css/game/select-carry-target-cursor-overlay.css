@@ -9,3 +9,9 @@
    z-index: 2;
    pointer-events: none;
 }
+#select-carry-target-cursor-overlay.carry {
+   background-image: url("../../images/miscellaneous/carry-cursor.png");
+}
+#select-carry-target-cursor-overlay.attack {
+   background-image: url("../../images/miscellaneous/attack-cursor.png");
+}
