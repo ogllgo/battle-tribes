@@ -17,7 +17,8 @@ import { playerInstance } from "../../player";
 
 export const enum AnimalStaffCommandType {
    follow,
-   carry
+   carry,
+   attack
 }
 
 export interface AnimalStaffOptionsProps {
@@ -56,6 +57,12 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
          b = 19/255;
          break;
       }
+      case AnimalStaffCommandType.attack: {
+         r = 237/255;
+         g = 0/255;
+         b = 0/255;
+         break;
+      }
    }
 
    const n = 20;
@@ -75,6 +82,10 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
       }
       case AnimalStaffCommandType.carry: {
          soundFile = "animal-staff-command-carry.mp3";
+         break;
+      }
+      case AnimalStaffCommandType.attack: {
+         soundFile = "animal-staff-command-attack.mp3";
          break;
       }
    }
@@ -141,7 +152,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       setIsHovering(false);
    }
 
-   const sendFollowCommand = useCallback((): void => {
+   const pressFollowOption = useCallback((): void => {
       if (entity !== null) {
          sendAnimalStaffFollowCommandPacket(entity);
          createControlCommandParticles(AnimalStaffCommandType.follow);
@@ -155,14 +166,22 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
          props.setGameInteractState(GameInteractState.selectCarryTarget);
       }
    }, [entity]);
+
+   const pressAttackOption = useCallback((): void => {
+      if (entity !== null) {
+         setShittyCarrier(entity);
+         props.setGameInteractState(GameInteractState.selectCarryTarget);
+      }
+   }, [entity]);
    
    if (!isVisible || entity === null) {
       return null;
    }
 
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
-      <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={sendFollowCommand}></div>
+      <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
       <div className="option carry" onClick={pressCarryOption}></div>
+      <div className="option attack" onClick={pressCarryOption}></div>
    </div>;
 }
 
