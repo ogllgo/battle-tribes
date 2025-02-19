@@ -31,4 +31,8 @@
 }
 #animal-staff-options .carry {
    background-image: url(../../images/menus/animal-staff-options/carry.png);
+   margin-right: 20px;
+}
+#animal-staff-options .attack {
+   background-image: url(../../images/menus/animal-staff-options/attack.png);
 }
