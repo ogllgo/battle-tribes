@@ -57,7 +57,8 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    };
    /** Called whenever the entity collides with a wall */
    public onWallCollision?(entity: Entity): void;
-   /** Groups all collision events with any one colliding entity together. */
+   /** Groups all collision events with any one colliding entity together.
+       Note: Called BEFORE the physics for the collision is applied. */
    public onEntityCollision?(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void;
    public onHitboxCollision?(affectedEntity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void;
    /** Called immediately after an entity is marked for removal. */
@@ -378,6 +379,8 @@ export function sortComponentArrays(): void {
       [ServerComponentType.rideable]: ComponentArrayPriority.medium,
       [ServerComponentType.swingAttack]: ComponentArrayPriority.medium,
       [ServerComponentType.blockAttack]: ComponentArrayPriority.medium,
+      [ServerComponentType.slingTurretRock]: ComponentArrayPriority.medium,
+      [ServerComponentType.taming]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

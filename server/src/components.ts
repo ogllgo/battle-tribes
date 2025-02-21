@@ -95,6 +95,8 @@ import { MithrilAnvilComponent } from "./components/MithrilAnvilComponent";
 import { RideableComponent } from "./components/RideableComponent";
 import { SwingAttackComponent } from "./components/SwingAttackComponent";
 import { BlockAttackComponent } from "./components/BlockAttackComponent";
+import { SlingTurretRockComponent } from "./components/SlingTurretRockComponent";
+import { TamingComponent } from "./components/TamingComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -192,6 +194,8 @@ const ComponentClassRecord = {
    [ServerComponentType.rideable]: () => RideableComponent,
    [ServerComponentType.swingAttack]: () => SwingAttackComponent,
    [ServerComponentType.blockAttack]: () => BlockAttackComponent,
+   [ServerComponentType.slingTurretRock]: () => SlingTurretRockComponent,
+   [ServerComponentType.taming]: () => TamingComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

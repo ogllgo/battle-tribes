@@ -12,6 +12,8 @@ import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityConfig } from "../ComponentArray";
 
+// @Cleanup: can make this a whole lot better by having the projectile not be a render part, but the actual projectile pre-created, and then just un-carried from the turret once fired.
+
 type TurretType = EntityType.slingTurret | EntityType.ballista;
 
 export interface TurretComponentParams {
@@ -163,7 +165,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.turret, 
 }
 
 function getMaxRenderParts(): number {
-   return 0;
+   // 1 for the projectile render part
+   return 1;
 }
 
 const updateAimDirection = (turretComponent: TurretComponent, aimDirection: number, chargeProgress: number): void => {

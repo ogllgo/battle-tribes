@@ -101,6 +101,8 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.rideable]: {},
    [ServerComponentType.swingAttack]: {},
    [ServerComponentType.blockAttack]: {},
+   [ServerComponentType.slingTurretRock]: {},
+   [ServerComponentType.taming]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

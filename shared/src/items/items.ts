@@ -90,7 +90,8 @@ export const enum ItemType {
    yuriMinecraft,
    yuriSonichu,
    animalStaff,
-   woodenArrow
+   woodenArrow,
+   tamingAlmanac
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -180,7 +181,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.yuriMinecraft]: "Yuri Minecraft",
    [ItemType.yuriSonichu]: "Yuri Sonichu",
    [ItemType.animalStaff]: "Animal Staff",
-   [ItemType.woodenArrow]: "Wooden Arrow"
+   [ItemType.woodenArrow]: "Wooden Arrow",
+   [ItemType.tamingAlmanac]: "Taming Almanac",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -297,6 +299,8 @@ export interface AnimalStaffItemInfo extends BaseItemInfo {
    readonly controlRange: number;
 }
 
+export interface TamingAlmanacItemInfo extends BaseItemInfo {}
+
 export interface ItemInfoRecord {
    material: MaterialItemInfo;
    healing: ConsumableItemInfo;
@@ -315,6 +319,7 @@ export interface ItemInfoRecord {
    shield: ShieldItemInfo;
    slingshot: SlingshotItemInfo;
    animalStaff: AnimalStaffItemInfo;
+   tamingAlmanac: TamingAlmanacItemInfo;
 }
 
 interface TorchItemTrait {
@@ -437,6 +442,11 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<At
       attackPatterns: UNARMED_ATTACK_PATTERNS,
       attackTimings: DEFAULT_ATTACK_TIMINGS,
       heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
+   },
+   tamingAlmanac: {
+      attackPatterns: UNARMED_ATTACK_PATTERNS,
+      attackTimings: DEFAULT_ATTACK_TIMINGS,
+      heldItemDamageBoxInfo: DEFAULT_ITEM_DAMAGE_BOX_INFO
    }
 };
 
@@ -527,7 +537,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.yuriMinecraft]: "material",
    [ItemType.yuriSonichu]: "material",
    [ItemType.animalStaff]: "animalStaff",
-   [ItemType.woodenArrow]: "material"
+   [ItemType.woodenArrow]: "material",
+   [ItemType.tamingAlmanac]: "tamingAlmanac"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -965,6 +976,7 @@ export const ITEM_INFO_RECORD = {
    [ItemType.woodenArrow]: {
       stackSize: 16
    },
+   [ItemType.tamingAlmanac]: {},
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
@@ -1082,6 +1094,7 @@ export const ITEM_TRAITS_RECORD: Record<ItemType, ItemTraits> = {
    [ItemType.yuriSonichu]: {},
    [ItemType.animalStaff]: {},
    [ItemType.woodenArrow]: {},
+   [ItemType.tamingAlmanac]: {},
 };
 
 // Some typescript wizardry

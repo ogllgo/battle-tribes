@@ -36,6 +36,13 @@
    margin-bottom: 0;
 }
 
+.menu h1 {
+   color: #ddd;
+   font-size: 1.5rem;
+   margin: 0 0 1rem 0;
+   text-align: center;
+}
+
 .menu h2 {
    color: #ddd;
    font-size: 1.1rem;

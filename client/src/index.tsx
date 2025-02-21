@@ -39,6 +39,7 @@ import "./css/game/layer-change-message.css";
 import "./css/game/tribe-plan-visualiser.css";
 import "./css/game/animal-staff-options.css";
 import "./css/game/select-carry-target-cursor-overlay.css";
+import "./css/game/taming-menu.css";
 
 // We have to manually import this so that the component arrays are all detected
 import "./entity-components/components";

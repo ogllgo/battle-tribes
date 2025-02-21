@@ -96,7 +96,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.planterB
 }
 
 function getMaxRenderParts(): number {
-   return 1;
+   // Planter box, and mound
+   return 2;
 }
 
 const createGrowthParticleInEntity = (transformComponent: TransformComponent): void => {

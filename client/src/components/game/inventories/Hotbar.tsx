@@ -1,6 +1,5 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useReducer, useState } from "react";
-import Game from "../../../Game";
 import { Inventory } from "battletribes-shared/items/items";
 import EmptyItemSlot from "./EmptyItemSlot";
 import InventoryContainer from "./InventoryContainer";

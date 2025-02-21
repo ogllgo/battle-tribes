@@ -1,3 +1,4 @@
+import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -5,10 +6,8 @@ import { createArrowDestroyParticle, createRockParticle, createRockSpeckParticle
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { ClientComponentType } from "../client-component-types";
-import ClientComponentArray from "../ClientComponentArray";
-import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
-import { TransformComponentArray } from "../server-components/TransformComponent";
+import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface SlingTurretRockComponentParams {}
 
@@ -16,15 +15,22 @@ interface RenderParts {}
 
 export interface SlingTurretRockComponent {}
 
-export const SlingTurretRockComponentArray = new ClientComponentArray<SlingTurretRockComponent, RenderParts>(ClientComponentType.slingTurretRock, true, {
+export const SlingTurretRockComponentArray = new ServerComponentArray<SlingTurretRockComponent, SlingTurretRockComponentParams, RenderParts>(ServerComponentType.slingTurretRock, true, {
+   createParamsFromData: createParamsFromData,
    createRenderParts: createRenderParts,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
+   onDie: onDie,
+   padData: padData,
+   updateFromData: updateFromData
 });
 
 export function createSlingTurretRockComponentParams(): SlingTurretRockComponentParams {
    return {};
+}
+
+function createParamsFromData(): SlingTurretRockComponentParams {
+   return createSlingTurretRockComponentParams();
 }
 
 function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
@@ -52,7 +58,6 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Create arrow break particles
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (let i = 0; i < 6; i++) {
       createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
    }
@@ -70,3 +75,7 @@ function onDie(entity: Entity): void {
       createRockSpeckParticle(transformComponent.position.x, transformComponent.position.y, 16, 0, 0, ParticleRenderLayer.low);
    }
 }
+
+function padData(): void {}
+
+function updateFromData(): void {}

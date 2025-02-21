@@ -16,6 +16,5 @@ export enum ClientComponentType {
    ballistaSlimeball,
    ballistaWoodenBolt,
    thrownBattleaxe,
-   slingTurretRock,
    woodenArrow
 }

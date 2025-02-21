@@ -34,6 +34,9 @@ import { getVelocityMagnitude } from "./entity-components/server-components/Phys
 import { GameInteractState } from "./components/game/GameScreen";
 import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
+import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
+import { addMenuCloseFunction } from "./menus";
+import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -52,7 +55,8 @@ const enum InteractActionType {
    mountCarrySlot,
    pickUpArrow,
    setCarryTarget,
-   selectAttackTarget
+   selectAttackTarget,
+   openTamingMenu
 }
 
 interface BaseInteractAction {
@@ -117,7 +121,11 @@ interface SelectAttackTargetAction extends BaseInteractAction {
    readonly type: InteractActionType.selectAttackTarget;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction;
+interface OpenTamingMenuAction extends BaseInteractAction {
+   readonly type: InteractActionType.openTamingMenu;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -284,8 +292,15 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       };
    }
 
+   // Taming almanac
+   if (selectedItem !== null && selectedItem.type === ItemType.tamingAlmanac && TamingComponentArray.hasComponent(entity)) {
+      return {
+         type: InteractActionType.openTamingMenu,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
    // Rideable entities
-   if (RideableComponentArray.hasComponent(entity)) {
+   } else if (RideableComponentArray.hasComponent(entity)) {
       const rideableComponent = RideableComponentArray.getComponent(entity);
       const carrySlot = rideableComponent.carrySlots[0];
       if (!carrySlot.isOccupied) {
@@ -335,7 +350,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.openAnimalStaffMenu:
       case InteractActionType.pickUpArrow:
       case InteractActionType.setCarryTarget:
-      case InteractActionType.selectAttackTarget: {
+      case InteractActionType.selectAttackTarget:
+      case InteractActionType.openTamingMenu: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {
@@ -458,6 +474,18 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          sendSetAttackTargetPacket(getSelectedEntityID(), getHoveredEntityID());
          setGameInteractState(GameInteractState.none);
          createControlCommandParticles(AnimalStaffCommandType.attack);
+         break;
+      }
+      case InteractActionType.openTamingMenu: {
+         selectedEntityID = entity;
+         TamingMenu_setEntity(entity);
+         TamingMenu_setVisibility(true);
+
+         addMenuCloseFunction(() => {
+            deselectSelectedEntity();
+            TamingMenu_setEntity(0);
+            TamingMenu_setVisibility(false);
+         });
          break;
       }
       default: {
@@ -675,7 +703,7 @@ export function updateHighlightedAndHoveredEntities(gameInteractState: GameInter
    const newHighlightedEntityID = getEntityID(gameInteractState, true, true);
    if (newHighlightedEntityID !== highlightedEntity) {
       // Special case: when the game is in the select carry target interact state, we want the selected cow to remain selected even as the player highlights other entities
-      if (gameInteractState !== GameInteractState.selectCarryTarget) {
+      if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget) {
          // @Incomplete
          // setGhostInfo(null);
          deselectHighlightedEntity();
@@ -704,7 +732,7 @@ export function attemptEntitySelection(gameInteractState: GameInteractState, set
 
 export function updateSelectedEntity(gameInteractState: GameInteractState): void {
    // When the game is in select carry target mode, we want the controlled entity to remain selected
-   if (gameInteractState !== GameInteractState.selectCarryTarget && highlightedEntity === -1) {
+   if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget && highlightedEntity === -1) {
       deselectSelectedEntity();
    }
 }

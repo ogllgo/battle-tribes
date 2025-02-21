@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges } from "battletribes-shared/utils";
+import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { getVelocityX, getVelocityY, PhysicsComponent, PhysicsComponentArray } from "./components/PhysicsComponent";
 import { getEntityPathfindingGroupID } from "./pathfinding";
@@ -56,8 +56,8 @@ const estimateStopDistance = (transformComponent: TransformComponent): number =>
 
 export function willStopAtDesiredDistance(transformComponent: TransformComponent, desiredDistance: number, distance: number): boolean {
    // If the entity has a desired distance from its target, try to stop at that desired distance
-   const stopDistance = estimateStopDistance(transformComponent);
-   return distance - stopDistance <= desiredDistance;
+   const distanceToStop = estimateStopDistance(transformComponent);
+   return distance - distanceToStop <= desiredDistance;
 }
 
 export function stopEntity(physicsComponent: PhysicsComponent): void {
@@ -616,7 +616,8 @@ const lineIntersectsRectangularHitbox = (lineX1: number, lineY1: number, lineX2:
 }
 
 const entityAffectsLineOfSight = (entity: Entity): boolean => {
-   return !ProjectileComponentArray.hasComponent(entity);
+   // @Hack
+   return !ProjectileComponentArray.hasComponent(entity) && getEntityType(entity) !== EntityType.grassStrand && getEntityType(entity) !== EntityType.decoration;
 }
 
 const lineIntersectsCircularHitbox = (lineX1: number, lineY1: number, lineX2: number, lineY2: number, box: CircularBox): boolean => {
@@ -694,7 +695,7 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
          for (let i = 0; i < chunk.entities.length; i++) {
             const entity = chunk.entities[i];
             const pathfindingGroupID = getEntityPathfindingGroupID(entity);
-            if (entity === originEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(getEntityType(entity))) {
+            if (entity === originEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(entity)) {
                continue;
             }
 

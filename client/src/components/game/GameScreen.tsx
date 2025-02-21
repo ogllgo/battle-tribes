@@ -30,6 +30,7 @@ import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
 import AnimalStaffOptions from "./AnimalStaffOptions";
 import { playerInstance } from "../../player";
+import TamingMenu from "./TamingMenu";
 
 export const enum GameInteractState {
    none,
@@ -232,6 +233,8 @@ const GameScreen = (props: GameScreenProps) => {
       <ItemTooltip />
 
       <AnimalStaffOptions setGameInteractState={setInteractState} />
+
+      <TamingMenu />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

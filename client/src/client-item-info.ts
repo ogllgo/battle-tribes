@@ -628,6 +628,13 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Wooden Arrow",
       description: "A primitive projectile able to be used in bows and crossbows."
    },
+   [ItemType.tamingAlmanac]: {
+      entityTextureSource: "items/small/taming-almanac.png",
+      textureSource: "items/large/taming-almanac.png",
+      toolTextureSource: "",
+      name: "Taming Almanac",
+      description: "Allows you to see a creature's taming progress."
+   }
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

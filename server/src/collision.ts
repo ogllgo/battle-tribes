@@ -138,6 +138,16 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    
       const affectedHitbox = affectedEntityTransformComponent.hitboxes[affectedHitboxIdx];
       const collidingHitbox = collidingEntityTransformComponent.hitboxes[collidingHitboxIdx];
+
+      // @Hack: this used to be after the collision physics code, but the cow hitbox collision function needs to know the velocity of the entity just before the collision happens.
+      for (let i = 0; i < componentTypes.length; i++) {
+         const componentType = componentTypes[i];
+         const componentArray = componentArrayRecord[componentType];
+
+         if (typeof componentArray.onHitboxCollision !== "undefined") {
+            componentArray.onHitboxCollision(affectedEntity, collidingEntity, affectedHitbox, collidingHitbox, collisionPoint);
+         }
+      }
       
       // @Speed: what if there are many many hitbox pairs? will this be slow:?
       if (PhysicsComponentArray.hasComponent(affectedEntity)) {
@@ -153,15 +163,6 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    
             // @Cleanup: Should we just clean it immediately here?
             affectedEntityTransformComponent.isDirty = true;
-         }
-      }
-
-      for (let i = 0; i < componentTypes.length; i++) {
-         const componentType = componentTypes[i];
-         const componentArray = componentArrayRecord[componentType];
-
-         if (typeof componentArray.onHitboxCollision !== "undefined") {
-            componentArray.onHitboxCollision(affectedEntity, collidingEntity, affectedHitbox, collidingHitbox, collisionPoint);
          }
       }
    }

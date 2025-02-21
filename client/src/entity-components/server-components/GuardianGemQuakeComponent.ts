@@ -2,14 +2,17 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randItem } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGemQuakeProjectile } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
+import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianGemQuakeComponentParams {}
+
+interface RenderParts {}
 
 export interface GuardianGemQuakeComponent {}
 
@@ -19,8 +22,9 @@ const TEXTURE_SOURCES: ReadonlyArray<string> = [
    "entities/guardian-gem-quake/gem-3.png"
 ];
 
-export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, never>(ServerComponentType.guardianGemQuake, true, {
+export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, RenderParts>(ServerComponentType.guardianGemQuake, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -34,17 +38,9 @@ function createParamsFromData(reader: PacketReader): GuardianGemQuakeComponentPa
    return {};
 }
 
-function createComponent(): GuardianGemQuakeComponent {
-   return {};
-}
-
-function getMaxRenderParts(): number {
-   return 0;
-}
-
-function onLoad(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform, never>): RenderParts {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -52,10 +48,21 @@ function onLoad(entity: Entity): void {
       0,
       getTextureArrayIndex(randItem(TEXTURE_SOURCES))
    );
-
-   const renderInfo = getEntityRenderInfo(entity);
    renderInfo.attachRenderPart(renderPart);
 
+   return {};
+}
+
+function createComponent(): GuardianGemQuakeComponent {
+   return {};
+}
+
+function getMaxRenderParts(): number {
+   return 1;
+}
+
+function onLoad(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < 2; i++) {
       createGemQuakeProjectile(transformComponent);
    }

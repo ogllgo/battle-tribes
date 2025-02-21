@@ -1654,12 +1654,20 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
             sendSpectateEntityPacket(getHoveredEntityID());
             props.setGameInteractState(GameInteractState.none);
          } else if (props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget) {
-            props.setGameInteractState(GameInteractState.none);
+            const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
+            if (didSelectEntity) {
+               e.preventDefault();
+            }
          } else {
             attemptAttack();
          }
       } else if (e.button === 2) { // Right click
          rightMouseButtonIsPressed = true;
+
+         if (props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget) {
+            props.setGameInteractState(GameInteractState.none);
+            return;
+         }
          
          const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
          if (didSelectEntity) {

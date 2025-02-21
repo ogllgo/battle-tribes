@@ -1,7 +1,7 @@
 import { BlueprintType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { CRAFTING_STATION_ITEM_TYPE_RECORD, CraftingRecipe, CraftingStation, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
-import { InventoryName, ITEM_INFO_RECORD, ItemType, PlaceableItemInfo, PlaceableItemType, StructureItemType, ToolType } from "../../../shared/src/items/items";
+import { InventoryName, ITEM_INFO_RECORD, ItemType, StructureItemType, ToolType } from "../../../shared/src/items/items";
 import { StructureType } from "../../../shared/src/structures";
 import { getTechRequiredForItem, Tech } from "../../../shared/src/techs";
 import { AIPlanType, assert } from "../../../shared/src/utils";
@@ -184,6 +184,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.yuriSonichu]: null,
    [ItemType.animalStaff]: null,
    [ItemType.woodenArrow]: null,
+   [ItemType.tamingAlmanac]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {

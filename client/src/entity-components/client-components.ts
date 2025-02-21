@@ -12,7 +12,6 @@ import { createFrostshaperComponentParams, FrostshaperComponentParams } from "./
 import { createLilypadComponentParams, LilypadComponentParams } from "./client-components/LilypadComponent";
 import { createRandomSoundComponentParams, RandomSoundComponentParams } from "./client-components/RandomSoundComponent";
 import { createRegularSpikesComponentParams, RegularSpikesComponentParams } from "./client-components/RegularSpikesComponent";
-import { createSlingTurretRockComponentParams, SlingTurretRockComponentParams } from "./client-components/SlingTurretRockComponent";
 import { createStonecarvingTableComponentParams, StonecarvingTableComponentParams } from "./client-components/StonecarvingTableComponent";
 import { createThrownBattleaxeComponentParams, ThrownBattleaxeComponentParams } from "./client-components/ThrownBattleaxeComponent";
 import { createWallComponentParams, WallComponentParams } from "./client-components/WallComponent";
@@ -39,7 +38,6 @@ const ClientComponentParamsRecord = {
    [ClientComponentType.ballistaSlimeball]: (): BallistaSlimeballComponentParams => 0 as any,
    [ClientComponentType.ballistaWoodenBolt]: (): BallistaWoodenBoltComponentParams => 0 as any,
    [ClientComponentType.thrownBattleaxe]: (): ThrownBattleaxeComponentParams => 0 as any,
-   [ClientComponentType.slingTurretRock]: (): SlingTurretRockComponentParams => 0 as any,
    [ClientComponentType.woodenArrow]: (): WoodenArrowComponentParams => 0 as any,
 } satisfies Record<ClientComponentType, () => object>;
 
@@ -155,11 +153,6 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
       case EntityType.battleaxeProjectile: {
          return {
             [ClientComponentType.thrownBattleaxe]: createThrownBattleaxeComponentParams()
-         };
-      }
-      case EntityType.slingTurretRock: {
-         return {
-            [ClientComponentType.slingTurretRock]: createSlingTurretRockComponentParams()
          };
       }
       case EntityType.woodenArrow: {

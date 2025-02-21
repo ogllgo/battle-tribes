@@ -1,25 +1,27 @@
-import { AMMO_INFO_RECORD, ServerComponentType, TURRET_AMMO_TYPES, TurretAmmoType, TurretEntityType } from "battletribes-shared/components";
+import { AMMO_INFO_RECORD, ServerComponentType, TurretAmmoType, TurretEntityType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { SLING_TURRET_RELOAD_TIME_TICKS, SLING_TURRET_SHOT_COOLDOWN_TICKS } from "../entities/structures/sling-turret";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import { Packet } from "battletribes-shared/packets";
-import { InventoryName, ItemType } from "battletribes-shared/items/items";
+import { ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
-import { getMinAngleToCircularBox, getMaxAngleToCircularBox, getMinAngleToRectangularBox, getMaxAngleToRectangularBox, angleIsInRange, getClockwiseAngleDistance } from "../ai-shared";
+import { getMinAngleToCircularBox, getMaxAngleToCircularBox, getMinAngleToRectangularBox, getMaxAngleToRectangularBox, angleIsInRange, getClockwiseAngleDistance, entityIsInLineOfSight } from "../ai-shared";
 import { EntityConfig } from "../components";
 import { createBallistaFrostcicleConfig } from "../entities/projectiles/ballista-frostcicle";
 import { createBallistaRockConfig } from "../entities/projectiles/ballista-rock";
 import { createBallistaSlimeballConfig } from "../entities/projectiles/ballista-slimeball";
 import { createBallistaWoodenBoltConfig } from "../entities/projectiles/ballista-wooden-bolt";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { InventoryComponentArray, getInventory, getFirstOccupiedItemSlotInInventory, consumeItemTypeFromInventory } from "./InventoryComponent";
 import { TransformComponentArray, TransformComponent } from "./TransformComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular, boxIsWithinRange } from "battletribes-shared/boxes/boxes";
-import { getEntityType } from "../world";
-import { TunnelComponentArray } from "./TunnelComponent";
+import { getEntityLayer, getEntityType } from "../world";
+import { registerDirtyEntity } from "../server/player-clients";
+import { createEntity } from "../Entity";
+import { createSlingTurretRockConfig } from "../entities/projectiles/sling-turret-rock";
+import { HealthComponentArray } from "./HealthComponent";
 
 export class TurretComponent {
    public aimDirection = 0;
@@ -32,15 +34,15 @@ export class TurretComponent {
 }
 
 export const TurretComponentArray = new ComponentArray<TurretComponent>(ServerComponentType.turret, true, getDataLength, addDataToPacket);
-TunnelComponentArray.onTick = {
+TurretComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
 
 const getVisionRange = (turretEntityType: TurretEntityType): number => {
    switch (turretEntityType) {
-      case EntityType.slingTurret: 400;
-      case EntityType.ballista: 550;
+      case EntityType.slingTurret: return 400;
+      case EntityType.ballista: return 550;
       default: {
          throw new Error();
       }
@@ -49,36 +51,16 @@ const getVisionRange = (turretEntityType: TurretEntityType): number => {
 
 const getAimArcSize = (turretEntityType: TurretEntityType): number => {
    switch (turretEntityType) {
-      case EntityType.slingTurret: 2 * UtilVars.PI;
-      case EntityType.ballista: UtilVars.PI * 0.5;
+      case EntityType.slingTurret: return 2 * UtilVars.PI;
+      case EntityType.ballista: return UtilVars.PI * 0.5;
       default: {
          throw new Error();
       }
    }
 }
 
-const getAmmoType = (turret: Entity): TurretAmmoType | null => {
-   const inventoryComponent = InventoryComponentArray.getComponent(turret);
-   const ammoBoxInventory = getInventory(inventoryComponent, InventoryName.ammoBoxInventory);
-
-   const firstOccupiedSlot = getFirstOccupiedItemSlotInInventory(ammoBoxInventory);
-   if (firstOccupiedSlot === 0) {
-      return null;
-   }
-
-   const entityType = getEntityType(turret) as TurretEntityType;
-   
-   const item = ammoBoxInventory.itemSlots[firstOccupiedSlot]!;
-   if (!TURRET_AMMO_TYPES[entityType].includes(item.type as TurretAmmoType)) {
-      console.warn("Item type in ammo box isn't ammo");
-      return null;
-   }
-
-   return item.type as TurretAmmoType;
-}
-
 const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
-   if (getEntityType(entity) === EntityType.itemEntity) {
+   if (!HealthComponentArray.hasComponent(entity)) {
       return false;
    }
 
@@ -102,6 +84,11 @@ const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
       }
    }
    if (!hasHitboxInRange) {
+      return false;
+   }
+
+   // @Hack: pathfinding group ID
+   if (!entityIsInLineOfSight(turret, entity, 3429723)) {
       return false;
    }
 
@@ -161,20 +148,6 @@ const getTarget = (turret: Entity, visibleEntities: ReadonlyArray<Entity>): Enti
    return null;
 }
 
-const attemptAmmoLoad = (ballista: Entity): void => {
-   const ballistaComponent = AmmoBoxComponentArray.getComponent(ballista);
-   
-   const ammoType = getAmmoType(ballista);
-   if (ammoType !== null) {
-      // Load the ammo
-      ballistaComponent.ammoType = ammoType;
-      ballistaComponent.ammoRemaining = AMMO_INFO_RECORD[ammoType].ammoMultiplier;
-
-      const inventoryComponent = InventoryComponentArray.getComponent(ballista);
-      consumeItemTypeFromInventory(ballista, inventoryComponent, InventoryName.ammoBoxInventory, ammoType, 1);
-   }
-}
-
 const createProjectile = (turret: Entity, transformComponent: TransformComponent, fireDirection: number, ammoType: TurretAmmoType): void => {
    const tribeComponent = TribeComponentArray.getComponent(turret);
    const tribe = tribeComponent.tribe;
@@ -183,22 +156,27 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
 
    let config: EntityConfig<ServerComponentType.transform | ServerComponentType.physics>;
    
-   switch (ammoType) {
-      case ItemType.wood: {
-         config = createBallistaWoodenBoltConfig(tribe, turret);
-         break;
-      }
-      case ItemType.rock: {
-         config = createBallistaRockConfig(tribe, turret);
-         break;
-      }
-      case ItemType.slimeball: {
-         config = createBallistaSlimeballConfig(tribe, turret);
-         break;
-      }
-      case ItemType.frostcicle: {
-         config = createBallistaFrostcicleConfig(tribe, turret);
-         break;
+   // @Hack
+   if (getEntityType(turret) === EntityType.slingTurret) {
+      config = createSlingTurretRockConfig(turret);
+   } else {
+      switch (ammoType) {
+         case ItemType.wood: {
+            config = createBallistaWoodenBoltConfig(tribe, turret);
+            break;
+         }
+         case ItemType.rock: {
+            config = createBallistaRockConfig(tribe, turret);
+            break;
+         }
+         case ItemType.slimeball: {
+            config = createBallistaSlimeballConfig(tribe, turret);
+            break;
+         }
+         case ItemType.frostcicle: {
+            config = createBallistaFrostcicleConfig(tribe, turret);
+            break;
+         }
       }
    }
 
@@ -209,6 +187,8 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    config.components[ServerComponentType.transform].relativeRotation = rotation;
    config.components[ServerComponentType.transform].externalVelocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
    config.components[ServerComponentType.transform].externalVelocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
+
+   createEntity(config, getEntityLayer(turret), 0)
 }
 
 const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
@@ -226,33 +206,36 @@ const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
    }
 
    // Consume ammo
-   const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
-   ammoBoxComponent.ammoRemaining--;
-
-   if (ammoBoxComponent.ammoRemaining === 0) {
-      attemptAmmoLoad(turret);
+   if (AmmoBoxComponentArray.hasComponent(turret)) {
+      const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
+      ammoBoxComponent.ammoRemaining--;
    }
 }
 
 function onTick(turret: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(turret);
-   const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
    const turretComponent = TurretComponentArray.getComponent(turret);
 
-   // Attempt to load ammo if there is none loaded
-   // @Speed: ideally shouldn't be done every tick, just when the inventory is changed (ammo is added to the inventory)
-   if (ammoBoxComponent.ammoRemaining === 0) {
-      attemptAmmoLoad(turret);
+   // @Hack
+   // @Hack: the ballista rock and the sling turret rock should be different
+   let ammoType: TurretAmmoType | null;
+   if (AmmoBoxComponentArray.hasComponent(turret)) {
+      const ammoBoxComponent = AmmoBoxComponentArray.getComponent(turret);
+      if (ammoBoxComponent.ammoRemaining > 0) {
+         ammoType = ammoBoxComponent.ammoType;
+      } else {
+         ammoType = null;
+      }
+   } else {
+      ammoType = ItemType.rock;
    }
 
-   const turretEntityType = getEntityType(turret) as TurretEntityType;
-
-   if (aiHelperComponent.visibleEntities.length > 0 && ammoBoxComponent.ammoRemaining > 0) {
+   if (aiHelperComponent.visibleEntities.length > 0 && ammoType !== null) {
       const target = getTarget(turret, aiHelperComponent.visibleEntities);
       if (target !== null) {
          // If the turret has just acquired a target, reset the shot cooldown
          if (!turretComponent.hasTarget) {
-            const ammoInfo = AMMO_INFO_RECORD[ammoBoxComponent.ammoType];
+            const ammoInfo = AMMO_INFO_RECORD[ammoType];
             turretComponent.fireCooldownTicks = ammoInfo.shotCooldownTicks;
          }
          turretComponent.hasTarget = true;
@@ -280,6 +263,7 @@ function onTick(turret: Entity): void {
                turretComponent.aimDirection = targetDirection - transformComponent.relativeRotation;
             }
          }
+         registerDirtyEntity(turret);
          if (turretComponent.fireCooldownTicks > 0) {
             turretComponent.fireCooldownTicks--;
          } else {
@@ -288,10 +272,10 @@ function onTick(turret: Entity): void {
                angleDiff -= 2 * Math.PI;
             }
             if (Math.abs(angleDiff) < 0.01) {
-               fire(turret, ammoBoxComponent.ammoType);
+               fire(turret, ammoType);
    
                // Reset firing cooldown
-               const ammoInfo = AMMO_INFO_RECORD[ammoBoxComponent.ammoType];
+               const ammoInfo = AMMO_INFO_RECORD[ammoType];
                turretComponent.fireCooldownTicks = ammoInfo.shotCooldownTicks + ammoInfo.reloadTimeTicks;
             }
          }
@@ -300,10 +284,10 @@ function onTick(turret: Entity): void {
    }
 
    turretComponent.hasTarget = false;
-   if (ammoBoxComponent.ammoType === null) {
+   if (ammoType === null) {
       turretComponent.fireCooldownTicks = 0;
    } else {
-      const ammoInfo = AMMO_INFO_RECORD[ammoBoxComponent.ammoType];
+      const ammoInfo = AMMO_INFO_RECORD[ammoType];
       if (turretComponent.fireCooldownTicks <= ammoInfo.shotCooldownTicks) {
          turretComponent.fireCooldownTicks = ammoInfo.shotCooldownTicks;
       } else {
