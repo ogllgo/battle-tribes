@@ -7,6 +7,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
+import { registerDirtyEntity } from "../server/player-clients";
 
 // @Cleanup: All the door toggling logic is stolen from DoorComponent.ts
 
@@ -46,6 +47,11 @@ const updateDoorOpenProgress = (fenceGate: Entity, fenceGateComponent: FenceGate
    hitbox.offset.x = xOffset;
    hitbox.offset.y = yOffset;
    hitbox.relativeRotation = rotation - Math.PI/2;
+
+   // @Hack: dirtying doesn't work on transform components for now
+   // transformComponent.isDirty = true;
+   transformComponent.cleanHitboxes(fenceGate);
+   registerDirtyEntity(fenceGate);
 }
 
 function onTick(fenceGate: Entity): void {

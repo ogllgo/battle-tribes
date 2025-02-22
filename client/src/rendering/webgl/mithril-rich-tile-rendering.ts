@@ -1,5 +1,6 @@
 import { Settings } from "../../../../shared/src/settings";
 import { SubtileType } from "../../../../shared/src/tiles";
+import { clampToBoardDimensions } from "../../../../shared/src/utils";
 import Camera from "../../Camera";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
@@ -58,10 +59,10 @@ export function createMithrilRichTileRenderingShaders(): void {
 const getFloorVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 
-   const minTileX = Math.floor(Camera.minVisibleX / Settings.TILE_SIZE);
-   const maxTileX = Math.floor(Camera.maxVisibleX / Settings.TILE_SIZE);
-   const minTileY = Math.floor(Camera.minVisibleY / Settings.TILE_SIZE);
-   const maxTileY = Math.floor(Camera.maxVisibleY / Settings.TILE_SIZE);
+   const minTileX = clampToBoardDimensions(Math.floor(Camera.minVisibleX / Settings.TILE_SIZE));
+   const maxTileX = clampToBoardDimensions(Math.floor(Camera.maxVisibleX / Settings.TILE_SIZE));
+   const minTileY = clampToBoardDimensions(Math.floor(Camera.minVisibleY / Settings.TILE_SIZE));
+   const maxTileY = clampToBoardDimensions(Math.floor(Camera.maxVisibleY / Settings.TILE_SIZE));
 
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {

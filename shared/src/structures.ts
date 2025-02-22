@@ -39,6 +39,7 @@ interface SnapCandidate {
 
 export interface StructureConnection {
    readonly entity: Entity;
+   readonly relativeOffsetDirection: number;
 }
 
 export interface StructurePlaceInfo {
@@ -74,9 +75,18 @@ export function entityIsStructure(entityType: EntityType): entityType is Structu
    return STRUCTURE_TYPES.indexOf(entityType as StructureType) !== -1;
 }
 
-export function createStructureConnection(entity: Entity): StructureConnection {
+export function calculateRelativeOffsetDirection(entityPosition: Point, entityRotation: number, connectingEntityPosition: Point): number {
+   // Relative rotation of the offset (relative to the entity)
+   let relativeOffsetDirection = entityPosition.calculateAngleBetween(connectingEntityPosition);
+   // Account for the entity rotaiton
+   relativeOffsetDirection -= entityRotation;
+   return relativeOffsetDirection;
+}
+
+export function createStructureConnection(connectingEntity: Entity, relativeOffsetDirection: number): StructureConnection {
    return {
-      entity: entity
+      entity: connectingEntity,
+      relativeOffsetDirection: relativeOffsetDirection
    };
 }
 
@@ -275,6 +285,13 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<Struc
          placingEntityHitboxHalfWidth = box.width * 0.5;
          placingEntityHitboxHalfHeight = box.height * 0.5;
       }
+
+      // @Hack @Copynpaste
+      // Fences are placed with space between them and the hitbox they're connecting to
+      if (entityType === EntityType.fence) {
+         placingEntityHitboxHalfWidth += 20;
+         placingEntityHitboxHalfHeight += 20;
+      }
       
       for (const hitbox of connectingEntity.hitboxes) {
          const box = hitbox.box;
@@ -287,6 +304,13 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: EntityInfo<Struc
          } else {
             hitboxHalfWidth = box.width * 0.5;
             hitboxHalfHeight = box.height * 0.5;
+         }
+
+         // @Hack @Copynpaste
+         // Fences are placed with space between them and the hitbox they're connecting to
+         if (connectingEntity.type === EntityType.fence) {
+            hitboxHalfWidth += 20;
+            hitboxHalfHeight += 20;
          }
 
          // Add snap positions for each direction off the connecting entity hitbox
@@ -453,7 +477,10 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: E
       
       const connections = new Array<StructureConnection>();
       for (const transform of group) {
-         const connection = createStructureConnection(transform.connectedEntity);
+         const connectingEntityInfo = worldInfo.getEntityCallback(transform.connectedEntity);
+         
+         const relativeOffsetDirection = calculateRelativeOffsetDirection(transform.position, transform.rotation, connectingEntityInfo.position);
+         const connection = createStructureConnection(transform.connectedEntity, relativeOffsetDirection);
          connections.push(connection);
       }
 

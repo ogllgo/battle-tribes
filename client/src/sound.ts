@@ -273,13 +273,15 @@ export async function loadSoundEffects(): Promise<void> {
       "krumblid-hit-flesh-2.mp3",
       "krumblid-hit-shell.mp3",
       "animal-staff-command-follow.mp3",
+      "animal-staff-command-move.mp3",
       "animal-staff-command-carry.mp3",
       "animal-staff-command-attack.mp3",
       "mount.mp3",
       "barrel-mount.mp3",
       "dismount.mp3",
       "quiver-pull.mp3",
-      "cow-angry.mp3"
+      "cow-angry.mp3",
+      "cow-eat.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

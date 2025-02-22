@@ -7,7 +7,24 @@ interface SelectCarryTargetCursorOverlayProps {
 }
 
 const SelectTargetCursorOverlay = (props: SelectCarryTargetCursorOverlayProps) => {
-   const className = props.gameInteractState === GameInteractState.selectCarryTarget ? "carry" : "attack";
+   let className: string;
+   switch (props.gameInteractState) {
+      case GameInteractState.selectCarryTarget: {
+         className = "carry";
+         break;
+      }
+      case GameInteractState.selectMoveTargetPosition: {
+         className = "move";
+         break;
+      }
+      case GameInteractState.selectAttackTarget: {
+         className = "attack";
+         break;
+      }
+      default: {
+         throw new Error();
+      }
+   }
    return <div id="select-carry-target-cursor-overlay" className={className} style={{left: props.mouseX + "px", top: props.mouseY + "px"}}></div>;
 }
 

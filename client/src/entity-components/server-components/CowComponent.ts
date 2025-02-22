@@ -172,10 +172,10 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const cowComponent = CowComponentArray.getComponent(entity);
 
    if (cowComponent.grazeProgress !== -1 && Board.tickIntervalHasPassed(0.1)) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
       const spawnOffsetMagnitude = 30 * Math.random();
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
       const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);

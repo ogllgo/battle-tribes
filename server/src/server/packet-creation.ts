@@ -1,4 +1,3 @@
-import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
@@ -9,7 +8,6 @@ import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLen
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { SERVER } from "./server";
 import { Settings } from "battletribes-shared/settings";
-import { GrassBlocker } from "battletribes-shared/grass-blockers";
 import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
 import PlayerClient from "./PlayerClient";
 import { PlayerComponentArray } from "../components/PlayerComponent";
@@ -23,6 +21,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
 import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
+import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -98,13 +97,13 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
    }
 }
 
-const getVisibleGrassBlockers = (layer: Layer, visibleChunkBounds: VisibleChunkBounds): ReadonlyArray<GrassBlocker> => {
+const getVisibleGrassBlockers = (playerClient: PlayerClient): ReadonlyArray<GrassBlocker> => {
    const visibleGrassBlockers = new Array<GrassBlocker>();
    const seenBlockers = new Set<GrassBlocker>();
    
-   for (let chunkX = visibleChunkBounds[0]; chunkX <= visibleChunkBounds[1]; chunkX++) {
-      for (let chunkY = visibleChunkBounds[2]; chunkY <= visibleChunkBounds[3]; chunkY++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
+   for (let chunkX = playerClient.minVisibleChunkX; chunkX <= playerClient.maxVisibleChunkX; chunkX++) {
+      for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
+         const chunk = playerClient.lastLayer.getChunk(chunkX, chunkY);
          for (const grassBlocker of chunk.grassBlockers) {
             if (seenBlockers.has(grassBlocker)) {
                continue;
@@ -166,6 +165,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    const minedSubtiles = getVisibleMinedSubtiles(playerClient);
    const nearbyCollapses = getPlayerNearbyCollapses(playerClient);
+   const visibleGrassBlockers = getVisibleGrassBlockers(playerClient);
    
    // Packet type
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -241,6 +241,12 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    // Collapses
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * nearbyCollapses.length;
+
+   // Grass blockers
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const blocker of visibleGrassBlockers) {
+      lengthBytes += getGrassBlockerLengthBytes(blocker);
+   }
 
    lengthBytes += getDevPacketDataLength(playerClient);
    
@@ -425,12 +431,20 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       packet.addNumber(collapse.age);
    }
 
+   // Grass blockers
+   packet.addNumber(visibleGrassBlockers.length);
+   for (const blocker of visibleGrassBlockers) {
+      addGrassBlockerToData(packet, blocker);
+   }
+
    // Dev data
    packet.addBoolean(playerClient.isDev);
    packet.padOffset(3);
    if (playerClient.isDev) {
       addDevPacketData(packet, playerClient);
    }
+   
+   // @Cleanup: remove all this shit
    
    // const visibleTribes = getVisibleTribes(extendedVisibleChunkBounds);
 
@@ -468,7 +482,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       // visibleRestrictedBuildingAreas: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisibleRestrictedBuildingAreas) ? getVisibleRestrictedBuildingAreas(visibleTribes, extendedVisibleChunkBounds) : [],
       // visibleWalls: getVisibleWallsData(visibleTribes, extendedVisibleChunkBounds),
       // visibleWallConnections: (playerClient.gameDataOptions & GameDataPacketOptions.sendVisibleWallConnections) ? getVisibleWallConnections(visibleTribes, extendedVisibleChunkBounds) : [],
-      // visibleGrassBlockers: getVisibleGrassBlockers(playerClient.visibleChunkBounds)
    // };
 
    return packet.buffer;

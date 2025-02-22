@@ -185,7 +185,6 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
    const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot)!;
    
-   // @Incomplete: Make a glove for every hand
    const glove = gloveInventory.itemSlots[1];
    if (typeof glove !== "undefined") {
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
@@ -194,7 +193,7 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
          for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
             const gloveRenderPart = new TexturedRenderPart(
                inventoryUseComponent.limbRenderParts[limbIdx],
-               1.1,
+               1.3,
                0,
                getTextureArrayIndex(getGloveTextureSource(glove.type))
             );

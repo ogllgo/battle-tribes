@@ -1,7 +1,7 @@
 import { Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import PlayerClient from "./PlayerClient";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
-import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, Inventory, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
+import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
@@ -34,6 +34,8 @@ import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
 import { dismountCarrySlot, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
+import { getTamingSkillByID, TAMING_TIER_INFO_RECORD, TamingSkill, TamingSkillID } from "../../../shared/src/taming";
+import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -745,6 +747,19 @@ export function processModifyBuildingPacket(playerClient: PlayerClient, reader: 
    modifyBuilding(playerClient.instance, structure, data);
 }
 
+export function processSetMoveTargetPositionPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const targetX = reader.readNumber();
+   const targetY = reader.readNumber();
+   
+   const cowComponent = CowComponentArray.getComponent(entity);
+   cowComponent.targetMovePosition = new Point(targetX, targetY);
+}
+
 export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
@@ -767,4 +782,62 @@ export function processSetAttackTargetPacket(playerClient: PlayerClient, reader:
    
    const cowComponent = CowComponentArray.getComponent(entity);
    cowComponent.attackTarget = attackTarget;
+}
+
+export function processCompleteTamingTierPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+
+   const nextTamingTierInfo = TAMING_TIER_INFO_RECORD[tamingComponent.tamingTier + 1];
+   if (typeof nextTamingTierInfo !== "undefined" && tamingComponent.berriesEatenInTier >= nextTamingTierInfo.costBerries) {
+      // @Cleanup @Copynpaste
+      tamingComponent.tamingTier++;
+      tamingComponent.berriesEatenInTier = 0;
+   }
+}
+
+export function processForceCompleteTamingTierPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   // @Cleanup @Copynpaste
+   tamingComponent.tamingTier++;
+   tamingComponent.berriesEatenInTier = 0;
+}
+
+export function processAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const skillID = reader.readNumber() as TamingSkillID;
+   
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const skillLearning = getTamingSkillLearning(tamingComponent, skillID);
+   if (skillLearning !== null && skillLearningIsComplete(skillLearning)) {
+      const skill = getTamingSkillByID(skillID);
+      tamingComponent.acquiredSkills.push(skill);
+   }
+}
+
+export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const entity = reader.readNumber() as Entity;
+   const skillID = reader.readNumber() as TamingSkillID;
+   
+   const skill = getTamingSkillByID(skillID);
+   
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.acquiredSkills.push(skill);
 }

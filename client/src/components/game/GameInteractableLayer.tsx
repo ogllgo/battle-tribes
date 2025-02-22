@@ -10,11 +10,11 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetCarryTargetPacket } from "../../networking/packet-creation";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetCarryTargetPacket, sendSetMoveTargetPositionPacket } from "../../networking/packet-creation";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
-import { attemptEntitySelection, getHoveredEntityID } from "../../entity-selection";
+import { attemptEntitySelection, getHoveredEntityID, getSelectedEntityID } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
 import { latencyGameState, definiteGameState } from "../../game-state/game-states";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
@@ -56,6 +56,8 @@ import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { Point } from "../../../../shared/src/utils";
 import { playerInstance } from "../../player";
+import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
+import Game from "../../Game";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -1668,6 +1670,13 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
             props.setGameInteractState(GameInteractState.none);
             return;
          }
+
+         if (props.gameInteractState === GameInteractState.selectMoveTargetPosition) {
+            sendSetMoveTargetPositionPacket(getSelectedEntityID(), Game.cursorX!, Game.cursorY!);
+            props.setGameInteractState(GameInteractState.none);
+            createControlCommandParticles(AnimalStaffCommandType.move);
+            return;
+         }
          
          const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
          if (didSelectEntity) {
@@ -1709,7 +1718,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
       ) : undefined}
 
-      {(props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget) ? (
+      {(props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget || props.gameInteractState === GameInteractState.selectMoveTargetPosition) ? (
          <SelectTargetCursorOverlay gameInteractState={props.gameInteractState} mouseX={mouseX} mouseY={mouseY} />
       ) : null}
    </>

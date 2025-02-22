@@ -117,7 +117,6 @@ export interface GameDataPacket {
    readonly visibleWalls: ReadonlyArray<TribeWallData>;
    readonly visibleWallConnections: ReadonlyArray<WallConnectionData>;
    readonly visibleEntityDeathIDs: ReadonlyArray<number>;
-   readonly visibleGrassBlockers: ReadonlyArray<GrassBlocker>;
 }
 
 export enum WaterRockSize {

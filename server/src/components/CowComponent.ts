@@ -1,35 +1,34 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, unitsToChunksClamped, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
 import { ComponentArray } from "./ComponentArray";
 import { ItemType } from "battletribes-shared/items/items";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig, createItemsOverEntity } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { TileType } from "battletribes-shared/tiles";
-import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, stopEntity, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
+import { cleanAngleNEW, entityIsInLineOfSight, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, stopEntity, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { applyKnockback, getVelocityMagnitude, PhysicsComponentArray } from "./PhysicsComponent";
-import { GrassBlockerCircle } from "battletribes-shared/grass-blockers";
+import { applyKnockback, getVelocityMagnitude, PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
 import { entitiesAreColliding, CollisionVars } from "../collision";
-import { addGrassBlocker } from "../grass-blockers";
+import { createCircularGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { TamingComponentArray } from "./TamingComponent";
+import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { TamingSkillID } from "../../../shared/src/taming";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -39,10 +38,10 @@ const enum Vars {
    
    MIN_POOP_PRODUCTION_COOLDOWN = 5 * Settings.TPS,
    MAX_POOP_PRODUCTION_COOLDOWN = 15 * Settings.TPS,
-   GRAZE_TIME_TICKS = 5 * Settings.TPS,
+   GRAZE_TIME_TICKS = 2.5 * Settings.TPS,
    BERRY_FULLNESS_VALUE = 0.15,
    MIN_POOP_PRODUCTION_FULLNESS = 0.4,
-   BOWEL_EMPTY_TIME_TICKS = 55 * Settings.TPS,
+   BOWEL_EMPTY_TIME_TICKS = 15 * Settings.TPS,
    MAX_BERRY_CHASE_FULLNESS = 0.8,
    // @Hack
    TURN_SPEED = 3.14159265358979,
@@ -78,10 +77,16 @@ export class CowComponent {
    public followTarget: Entity = 0;
 
    // @Temporary
+   public targetMovePosition: Point | null = null;
+   
+   // @Temporary
    public carryTarget: Entity = 0;
 
    // @Temporary
    public attackTarget: Entity = 0;
+
+   // @Hack
+   public targetGrass: Entity = 0;
 
    public isRamming = false;
    public ramStartTicks = 0;
@@ -145,31 +150,50 @@ export function updateCowComponent(cow: Entity, cowComponent: CowComponent): voi
    }
 }
 
-const graze = (cow: Entity, cowComponent: CowComponent): void => {
-   const physicsComponent = PhysicsComponentArray.getComponent(cow);
-   stopEntity(physicsComponent);
-
-   if (++cowComponent.grazeProgressTicks >= Vars.GRAZE_TIME_TICKS) {
-      const transformComponent = TransformComponentArray.getComponent(cow);
-
-      // 
-      // Eat grass
-      // 
-
-      for (let i = 0; i < 7; i++) {
-         const blockAmount = randFloat(0.6, 0.9);
-
-         const grassBlocker: GrassBlockerCircle = {
-            radius: randFloat(10, 20),
-            position: transformComponent.position.offset(randFloat(0, 55), 2 * Math.PI * Math.random()),
-            blockAmount: blockAmount,
-            maxBlockAmount: blockAmount
-         };
-         addGrassBlocker(grassBlocker, 0);
+const getTargetGrass = (cow: Entity): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   for (const chunk of transformComponent.chunks) {
+      for (const entity of chunk.entities) {
+         // @Hack: ignored pathfinding group id
+         if (getEntityType(entity) === EntityType.grassStrand && entityIsInLineOfSight(cow, entity, 99999)) {
+            if (entitiesAreColliding(cow, entity) !== CollisionVars.NO_COLLISION) {
+               return entity;
+            }
+         }
       }
+   }
+   return null;
+}
 
-      healEntity(cow, 3, cow);
-      cowComponent.grazeCooldownTicks = randInt(CowVars.MIN_GRAZE_COOLDOWN, CowVars.MAX_GRAZE_COOLDOWN);
+const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): void => {
+   const cowTransformComponent = TransformComponentArray.getComponent(cow);
+   const grassTransformComponent = TransformComponentArray.getComponent(targetGrass);
+   const targetX = grassTransformComponent.position.x;
+   const targetY = grassTransformComponent.position.y;
+   const targetDirection = cowTransformComponent.position.calculateAngleBetween(grassTransformComponent.position);
+   
+   moveCow(cow, targetX, targetY, targetDirection, Vars.SLOW_ACCELERATION);
+
+   const dist = cowTransformComponent.position.calculateDistanceBetween(grassTransformComponent.position);
+   if (dist < 50) {
+      const physicsComponent = PhysicsComponentArray.getComponent(cow);
+      stopEntity(physicsComponent);
+   
+      if (++cowComponent.grazeProgressTicks >= Vars.GRAZE_TIME_TICKS) {
+         // 
+         // Eat grass
+         // 
+   
+         for (let i = 0; i < 3; i++) {
+            const blockAmount = randFloat(0.6, 0.9);
+            const position = grassTransformComponent.position.offset(randFloat(0, 10), 2 * Math.PI * Math.random());
+            createCircularGrassBlocker(position, getEntityLayer(cow), blockAmount, blockAmount, randFloat(10, 15), 0);
+         }
+   
+         healEntity(cow, 3, cow);
+         cowComponent.grazeCooldownTicks = randInt(CowVars.MIN_GRAZE_COOLDOWN, CowVars.MAX_GRAZE_COOLDOWN);
+         cowComponent.bowelFullness += 0.3;
+      }
    }
 }
 
@@ -368,6 +392,19 @@ function onTick(cow: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.followTarget);
       const targetDirection = angle(targetTransformComponent.position.x - transformComponent.position.x, targetTransformComponent.position.y - transformComponent.position.y);
       moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
+      if (getEntityAgeTicks(cow) % Settings.TPS === 0) {
+         const tamingComponent = TamingComponentArray.getComponent(cow);
+         addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
+      }
+      return;
+   }
+
+   // Go to move target
+   if (cowComponent.targetMovePosition !== null) {
+      const targetX = cowComponent.targetMovePosition.x;
+      const targetY = cowComponent.targetMovePosition.y;
+      const targetDirection = angle(targetX - transformComponent.position.x, targetY - transformComponent.position.y);
+      moveCow(cow, targetX, targetY, targetDirection, Vars.MEDIUM_ACCELERATION);
       return;
    }
 
@@ -437,15 +474,23 @@ function onTick(cow: Entity): void {
    }
 
    // Graze dirt to recover health
-   const tileIndex = getEntityTile(transformComponent);
-   const layer = getEntityLayer(cow);
-   const tileType = layer.tileTypes[tileIndex];
-   if (cowComponent.grazeCooldownTicks === 0 && tileType === TileType.grass) {
-      graze(cow, cowComponent);
-      return;
-   } else {
+   if (cowComponent.grazeCooldownTicks === 0) {
+      if (!entityExists(cowComponent.targetGrass)) {
+         const target = getTargetGrass(cow);
+         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
+            cowComponent.targetGrass = target;
+         }
+      }
+
+      if (entityExists(cowComponent.targetGrass)) {
+         graze(cow, cowComponent, cowComponent.targetGrass);
+         return;
+      }
+      // @Incomplete: Why is this here?
       cowComponent.grazeProgressTicks = 0;
    }
+
+   const layer = getEntityLayer(cow);
 
    // Eat berries
    if (wantsToEatBerries(cowComponent)) {
@@ -596,10 +641,19 @@ const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowCompone
    tamingComponent.berriesEatenInTier++;
 
    destroyEntity(berryItemEntity);
+
+   const tickEvent: EntityTickEvent = {
+      entityID: cow,
+      type: EntityTickEventType.cowEat,
+      data: 0
+   };
+   registerEntityTickEvent(cow, tickEvent);
 }
 
 export function wantsToEatBerries(cowComponent: CowComponent): boolean {
-   return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
+   // @Temporary
+   return true;
+   // return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
 }
 
 function preRemove(cow: Entity): void {

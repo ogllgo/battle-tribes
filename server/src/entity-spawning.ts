@@ -175,6 +175,9 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
       case EntityType.glurb: config = createGlurbConfig(); break;
    }
+   if (isNaN(x)) {
+      throw new Error();
+   }
    
    const transformComponent = config.components[ServerComponentType.transform];
    transformComponent.position.x = x;

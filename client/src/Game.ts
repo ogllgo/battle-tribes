@@ -76,6 +76,7 @@ import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/de
 import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
 import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
+import { TamingMenu_forceUpdate } from "./components/game/TamingMenu";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -478,6 +479,8 @@ abstract class Game {
       // @Incomplete?
       // updateInspectHealthBar();
       InventorySelector_forceUpdate();
+      // @Hack @Speed
+      TamingMenu_forceUpdate();
 
       updateTechTreeItems();
       

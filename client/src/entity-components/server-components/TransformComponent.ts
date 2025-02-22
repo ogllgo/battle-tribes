@@ -674,6 +674,18 @@ const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transform
    for (let i = 0; i < transformComponent.carriedEntities.length; i++) {
       const carryInfo = transformComponent.carriedEntities[i];
       if (carryInfo.lastUpdateTicks !== Board.serverTicks) {
+         // @Hack
+         if (carryInfo.carriedEntity === playerInstance) {
+            const rideableComponent = RideableComponentArray.getComponent(entity);
+            const carrySlot = rideableComponent.carrySlots[0];
+
+            // Set the player to the dismount position
+            const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+            const mountTransformComponent = TransformComponentArray.getComponent(entity);
+            transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
+            transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
+         }
+         
          transformComponent.carriedEntities.splice(i, 1);
          i--;
       }

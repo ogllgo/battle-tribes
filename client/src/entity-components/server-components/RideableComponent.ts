@@ -8,6 +8,8 @@ interface CarrySlot {
    isOccupied: boolean;
    readonly offsetX: number;
    readonly offsetY: number;
+   readonly dismountOffsetX: number;
+   readonly dismountOffsetY: number;
 }
 
 export interface RideableComponentParams {
@@ -43,10 +45,15 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
 
+      const dismountOffsetX = reader.readNumber();
+      const dismountOffsetY = reader.readNumber();
+
       const carrySlot: CarrySlot = {
          isOccupied: isOccupied,
          offsetX: offsetX,
-         offsetY: offsetY
+         offsetY: offsetY,
+         dismountOffsetX: dismountOffsetX,
+         dismountOffsetY: dismountOffsetY
       };
       carrySlots.push(carrySlot);
    }
@@ -70,7 +77,7 @@ function padData(reader: PacketReader): void {
    for (let i = 0; i < numCarrySlots; i++) {
       // (so that i find this when i remove the need to pad by 3 for bools)
       // reader.padOffset(3);
-      reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
    }
 }
 
@@ -85,6 +92,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       carrySlot.isOccupied = reader.readBoolean();
       reader.padOffset(3);
 
-      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
    }
 }

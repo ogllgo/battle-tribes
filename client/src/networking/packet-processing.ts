@@ -28,14 +28,14 @@ import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
 import { createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
-import { ExtendedTribeInfo, playerTribe, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
+import { ExtendedTribeInfo, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
 import { readPacketDevData } from "./dev-packet-processing";
 import { TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { TRIBE_INFO_RECORD } from "../../../shared/src/tribes";
-import { updateHealthBar } from "../components/game/HealthBar";
+import { GrassBlocker } from "../../../shared/src/grass-blockers";
+import { updateGrassBlockers } from "../grass-blockers";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -796,6 +796,8 @@ export function processGameDataPacket(reader: PacketReader): void {
       tickCollapse(collapsingSubtileIndex, ageTicks);
    }
 
+   updateGrassBlockers(reader);
+
    // Tribe plans and virtual buildings
    // @Cleanup: remove underscore
    const _isDev = reader.readBoolean();
@@ -821,8 +823,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       visibleRestrictedBuildingAreas: [],
       visibleWalls: [],
       visibleWallConnections: [],
-      visibleEntityDeathIDs: [],
-      visibleGrassBlockers: []
+      visibleEntityDeathIDs: []
    };
 
    // @Cleanup: remove

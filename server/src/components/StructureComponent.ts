@@ -1,4 +1,4 @@
-import { createStructureConnection, StructureConnection, StructureType } from "battletribes-shared/structures";
+import { calculateRelativeOffsetDirection, createStructureConnection, StructureConnection, StructureType } from "battletribes-shared/structures";
 import { createStructureGrassBlockers } from "../grass-blockers";
 import { BlueprintComponentArray } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -8,7 +8,8 @@ import { TribeComponentArray } from "./TribeComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
-import { createVirtualStructure, createVirtualStructureFromHitboxes, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
+import { createVirtualStructureFromHitboxes, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
+import { registerDirtyEntity } from "../server/player-clients";
 
 export class StructureComponent {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -29,9 +30,15 @@ export const StructureComponentArray = new ComponentArray<StructureComponent>(Se
 StructureComponentArray.onJoin = onJoin;
 StructureComponentArray.onRemove = onRemove;
 
-const addConnection = (structureComponent: StructureComponent, connectedEntity: Entity): void => {
-   const connection = createStructureConnection(connectedEntity);
+const addConnection = (entity: Entity, structureComponent: StructureComponent, connectedEntity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
+   
+   const relativeOffsetDirection = calculateRelativeOffsetDirection(transformComponent.position, transformComponent.rotation, connectedEntityTransformComponent.position);
+   const connection = createStructureConnection(connectedEntity, relativeOffsetDirection);
    structureComponent.connections.push(connection)
+
+   registerDirtyEntity(entity);
 }
 
 const removeConnectionWithStructure = (structureComponent: StructureComponent, connectedStructure: Entity): void => {
@@ -65,7 +72,7 @@ function onJoin(entity: Entity): void {
    // Register connections in any connected structures
    for (const connection of structureComponent.connections) {
       const connectedStructureComponent = StructureComponentArray.getComponent(connection.entity);
-      addConnection(connectedStructureComponent, entity);
+      addConnection(connection.entity, connectedStructureComponent, entity);
    }
 }
 
@@ -92,7 +99,7 @@ function getDataLength(entity: Entity): number {
    const structureComponent = StructureComponentArray.getComponent(entity);
    
    let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += structureComponent.connections.length * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * structureComponent.connections.length;
    return lengthBytes;
 }
 
@@ -105,5 +112,6 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(structureComponent.connections.length);
    for (const connection of structureComponent.connections) {
       packet.addNumber(connection.entity);
+      packet.addNumber(connection.relativeOffsetDirection);
    }
 }

@@ -34,7 +34,12 @@ export const enum PacketType {
    pickUpArrow,
    modifyBuilding,
    setCarryTarget,
+   setMoveTargetPosition,
    setAttackTarget,
+   completeTamingTier,
+   forceCompleteTamingTier, // ((DEV))
+   acquireTamingSkill,
+   forceAcquireTamingSkill, // ((DEV))
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))

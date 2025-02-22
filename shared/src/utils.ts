@@ -459,3 +459,13 @@ export function mod(x: number, n: number): number {
 export function alignAngleToClosestAxis(sourceAngle: number, targetAngle: number): number {
    return Math.round((sourceAngle - targetAngle) / (Math.PI * 0.5)) * Math.PI * 0.5 + targetAngle;
 }
+
+export function unitsToChunksClamped(a: number): number {
+   let aChunks = Math.floor(a / Settings.CHUNK_UNITS);
+   if (aChunks < 0) {
+      aChunks = 0;
+   }  else if (aChunks >= Settings.BOARD_SIZE) {
+      aChunks = Settings.BOARD_SIZE - 1;
+   }
+   return aChunks;
+}

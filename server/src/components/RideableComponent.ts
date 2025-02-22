@@ -33,7 +33,7 @@ export function createCarrySlot(offsetX: number, offsetY: number, dismountOffset
 
 function getDataLength(entity: Entity): number {
    const rideableComponent = RideableComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
+   return 2 * Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -45,6 +45,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       packet.padOffset(3);
       packet.addNumber(carrySlot.offsetX);
       packet.addNumber(carrySlot.offsetY);
+      packet.addNumber(carrySlot.dismountOffsetX);
+      packet.addNumber(carrySlot.dismountOffsetY);
    }
 }
 

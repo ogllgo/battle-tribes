@@ -56,15 +56,10 @@ export function countTileTypesForResourceDistributions(): void {
       const spawnableTiles = getSpawnInfoSpawnableTiles(i);
 
       const numSpawnableTilesArray = new Array<number>();
-
-      let idx = 0;
-      for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
-         for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
+      for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
+         for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
             const numSpawnableTiles = countNumSpawnableTiles(sampleX, sampleY, spawnableTiles);
-
             numSpawnableTilesArray.push(numSpawnableTiles);
-            
-            idx++;
          }
       }
 
@@ -84,8 +79,8 @@ export function updateResourceDistributions(): void {
       let totalDensity = 0;
       
       let idx = 0;
-      for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
-         for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
+      for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
+         for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
             const entityCount = samples[idx];
             const numSpawnableTiles = numSpawnableTilesArray[idx];
 

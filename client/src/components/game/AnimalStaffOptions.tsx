@@ -17,6 +17,7 @@ import { playerInstance } from "../../player";
 
 export const enum AnimalStaffCommandType {
    follow,
+   move,
    carry,
    attack
 }
@@ -51,6 +52,12 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
          b = 163/255;
          break;
       }
+      case AnimalStaffCommandType.move: {
+         r = 65/255;
+         g = 238/255;
+         b = 240/255;
+         break;
+      }
       case AnimalStaffCommandType.carry: {
          r = 237/255;
          g = 172/255;
@@ -78,6 +85,10 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
    switch (commandType) {
       case AnimalStaffCommandType.follow: {
          soundFile = "animal-staff-command-follow.mp3";
+         break;
+      }
+      case AnimalStaffCommandType.move: {
+         soundFile = "animal-staff-command-move.mp3";
          break;
       }
       case AnimalStaffCommandType.carry: {
@@ -160,6 +171,13 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       deselectSelectedEntity();
    }, [entity]);
 
+   const pressMoveOption = useCallback((): void => {
+      if (entity !== null) {
+         setShittyCarrier(entity);
+         props.setGameInteractState(GameInteractState.selectMoveTargetPosition);
+      }
+   }, [entity]);
+
    const pressCarryOption = useCallback((): void => {
       if (entity !== null) {
          setShittyCarrier(entity);
@@ -180,6 +198,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
       <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
+      <div className="option move" onClick={pressMoveOption}></div>
       <div className="option carry" onClick={pressCarryOption}></div>
       <div className="option attack" onClick={pressAttackOption}></div>
    </div>;

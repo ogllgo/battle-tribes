@@ -1,6 +1,6 @@
 import { RiverSteppingStoneData } from "battletribes-shared/client-server-types";
-import { GrassBlocker } from "battletribes-shared/grass-blockers";
 import { Entity } from "battletribes-shared/entities";
+import { GrassBlocker } from "./grass-blockers";
 
 // @Cleanup @Memory: A lot of these properties aren't used by collision chunks
 class Chunk {

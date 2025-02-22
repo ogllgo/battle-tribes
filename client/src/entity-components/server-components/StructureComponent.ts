@@ -42,8 +42,9 @@ function createParamsFromData(reader: PacketReader): StructureComponentParams {
    const numConnections = reader.readNumber();
    for (let i = 0; i < numConnections; i++) {
       const entity = reader.readNumber() as Entity;
+      const relativeOffsetDirection = reader.readNumber();
 
-      const connection = createStructureConnection(entity);
+      const connection = createStructureConnection(entity, relativeOffsetDirection);
       connections.push(connection);
    }
 
@@ -106,7 +107,7 @@ function padData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
    const numConnections = reader.readNumber();
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numConnections);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numConnections);
 }
 
 function addConnection(entity: Entity, structureComponent: StructureComponent, connection: StructureConnection): void {
@@ -136,6 +137,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const numConnections = reader.readNumber();
    for (let i = 0; i < numConnections; i++) {
       const connectedEntity = reader.readNumber();
+      const relativeOffsetDirection = reader.readNumber();
 
       newConnectedEntities.push(connectedEntity);
 
@@ -148,7 +150,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
 
       if (!alreadyExists) {
-         const connection = createStructureConnection(connectedEntity);
+         const connection = createStructureConnection(connectedEntity, relativeOffsetDirection);
          addConnection(entity, structureComponent, connection);
       }
    }

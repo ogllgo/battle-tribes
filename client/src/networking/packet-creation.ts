@@ -13,6 +13,7 @@ import { PhysicsComponentArray } from "../entity-components/server-components/Ph
 import { BlueprintType } from "../../../shared/src/components";
 import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
+import { TamingSkillID } from "../../../shared/src/taming";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -306,6 +307,14 @@ export function sendModifyBuildingPacket(structure: Entity, data: number): void 
    Client.sendPacket(packet.buffer);
 }
 
+export function sendSetMoveTargetPositionPacket(entity: Entity, targetX: number, targetY: number): void {
+   const packet = new Packet(PacketType.setMoveTargetPosition, 4 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(targetX);
+   packet.addNumber(targetY);
+   Client.sendPacket(packet.buffer);
+}
+
 export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): void {
    const packet = new Packet(PacketType.setCarryTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entity);
@@ -317,5 +326,31 @@ export function sendSetAttackTargetPacket(entity: Entity, attackTarget: Entity):
    const packet = new Packet(PacketType.setAttackTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entity);
    packet.addNumber(attackTarget);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendCompleteTamingTierPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.completeTamingTier, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendForceCompleteTamingTierPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.forceCompleteTamingTier, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendAcquireTamingSkillPacket(entity: Entity, skillID: TamingSkillID): void {
+   const packet = new Packet(PacketType.acquireTamingSkill, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(skillID);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendForceAcquireTamingSkillPacket(entity: Entity, skillID: TamingSkillID): void {
+   const packet = new Packet(PacketType.forceAcquireTamingSkill, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addNumber(skillID);
    Client.sendPacket(packet.buffer);
 }

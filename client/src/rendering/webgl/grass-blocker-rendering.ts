@@ -1,10 +1,9 @@
-import { GrassBlocker, blockerIsCircluar } from "battletribes-shared/grass-blockers";
-import { getGrassBlockers } from "../../networking/Client";
 import { createTexture, createWebGLProgram, getCirclePoint, gl, windowHeight, windowWidth } from "../../webgl";
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import {  rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { getTexture } from "../../textures";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { gameFramebuffer } from "../../Game";
+import { blockerIsCircluar, getGrassBlockers, GrassBlocker } from "../../grass-blockers";
 
 const NUM_CIRCLE_POINTS = 20;
 
@@ -241,11 +240,11 @@ export function createGrassBlockerShaders(): void {
    framebufferVertexData = new Float32Array(framebufferVertices);
 }
 
-const calculateGrassBlockerVertices = (grassBlockers: ReadonlyArray<GrassBlocker>): ReadonlyArray<number> => {
+const calculateGrassBlockerVertices = (grassBlockers: ReadonlyMap<number, GrassBlocker>): ReadonlyArray<number> => {
    const vertices = new Array<number>();
 
-   for (let i = 0; i < grassBlockers.length; i++) {
-      const blocker = grassBlockers[i];
+   for (const pair of grassBlockers) {
+      const blocker = pair[1];
       const opacity = blocker.blockAmount;
 
       if (!blockerIsCircluar(blocker)) {
@@ -290,7 +289,7 @@ const calculateGrassBlockerVertices = (grassBlockers: ReadonlyArray<GrassBlocker
 
 export function renderGrassBlockers(): void {
    const grassBlockers = getGrassBlockers();
-   if (grassBlockers.length === 0) {
+   if (grassBlockers.size === 0) {
       return;
    }
 

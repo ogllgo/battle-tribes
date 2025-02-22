@@ -1,13 +1,13 @@
 import { Entity, TreeSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
-import { GrassBlockerCircle } from "battletribes-shared/grass-blockers";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TransformComponentArray } from "./TransformComponent";
-import { addGrassBlocker } from "../grass-blockers";
+import { createCircularGrassBlocker, GrassBlockerCircle } from "../grass-blockers";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
 import { randInt } from "battletribes-shared/utils";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { getEntityLayer } from "../world";
 
 export const TREE_RADII: ReadonlyArray<number> = [40, 50];
 
@@ -36,16 +36,9 @@ TreeComponentArray.onJoin = onJoin;
 TreeComponentArray.preRemove = preRemove;
 
 function onJoin(entity: Entity): void {
-   const treeComponent = TreeComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   const blocker: GrassBlockerCircle = {
-      position: transformComponent.position.copy(),
-      blockAmount: 0,
-      radius: TREE_TRUNK_RADII[treeComponent.treeSize],
-      maxBlockAmount: 0.9
-   };
-   addGrassBlocker(blocker, entity);
+   const treeComponent = TreeComponentArray.getComponent(entity);
+   createCircularGrassBlocker(transformComponent.position.copy(), getEntityLayer(entity), 0, 0.9, TREE_TRUNK_RADII[treeComponent.treeSize], entity)
 }
 
 function preRemove(tree: Entity): void {

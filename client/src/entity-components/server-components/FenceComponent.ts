@@ -2,9 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
-import { StructureComponentArray } from "./StructureComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { PacketReader } from "../../../../shared/src/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -37,12 +35,9 @@ function createParamsFromData(): FenceComponentParams {
    return {};
 }
 
-const createConnectingRenderPart = (fencePosition: Readonly<Point>, connection: StructureConnection): RenderPart => {
-   const connectingEntityTransformComponent = TransformComponentArray.getComponent(connection.entity);
-
+const createConnectingRenderPart = (connection: StructureConnection): RenderPart => {
    const offsetMagnitude = 22;
-   const offsetDirection = fencePosition.calculateAngleBetween(connectingEntityTransformComponent.position);
-   
+   const relativeOffsetDirection = connection.relativeOffsetDirection;
    // let textureSource: string;
    // let offsetX: number;
    // let offsetY: number;
@@ -76,11 +71,11 @@ const createConnectingRenderPart = (fencePosition: Readonly<Point>, connection: 
    const renderPart = new TexturedRenderPart(
       null,
       0,
-      0,
+      relativeOffsetDirection,
       getTextureArrayIndex("entities/fence/fence-top-rail.png")
    );
-   renderPart.offset.x = offsetMagnitude * Math.sin(offsetDirection);
-   renderPart.offset.y = offsetMagnitude * Math.cos(offsetDirection);
+   renderPart.offset.x = offsetMagnitude * Math.sin(relativeOffsetDirection);
+   renderPart.offset.y = offsetMagnitude * Math.cos(relativeOffsetDirection);
    
    return renderPart;
 }
@@ -98,10 +93,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    const connectingRenderParts: Record<Entity, RenderPart> = {};
 
    // Create initial connecting render parts
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
    const structureComponentParams = entityConfig.serverComponents[ServerComponentType.structure];
    for (const connection of structureComponentParams.connections) {
-      const renderPart = createConnectingRenderPart(transformComponentParams.position, connection);
+      const renderPart = createConnectingRenderPart(connection);
       renderInfo.attachRenderPart(renderPart);
       connectingRenderParts[connection.entity] = renderPart;
    }
@@ -127,12 +121,11 @@ function padData(): void {}
 function updateFromData(): void {}
 
 export function addFenceConnection(fence: Entity, connection: StructureConnection): void {
-   const transformComponent = TransformComponentArray.getComponent(fence);
    const fenceComponent = FenceComponentArray.getComponent(fence);
 
    const renderInfo = getEntityRenderInfo(fence);
    
-   const renderPart = createConnectingRenderPart(transformComponent.position, connection);
+   const renderPart = createConnectingRenderPart(connection);
    renderInfo.attachRenderPart(renderPart);
    fenceComponent.connectingRenderParts[connection.entity] = renderPart;
 }

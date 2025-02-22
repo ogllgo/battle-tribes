@@ -23,8 +23,8 @@ import { createCarrySlot, RideableComponent } from "../../components/RideableCom
 import { TamingComponent } from "../../components/TamingComponent";
 
 export const enum CowVars {
-   MIN_GRAZE_COOLDOWN = 30 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 60 * Settings.TPS,
+   MIN_GRAZE_COOLDOWN = 5 * Settings.TPS,
+   MAX_GRAZE_COOLDOWN = 10 * Settings.TPS,
    MIN_FOLLOW_COOLDOWN = 15 * Settings.TPS,
    MAX_FOLLOW_COOLDOWN = 30 * Settings.TPS
 }

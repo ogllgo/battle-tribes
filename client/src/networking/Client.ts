@@ -18,7 +18,6 @@ import { playSound } from "../sound";
 import { setVisibleRestrictedBuildingAreas } from "../rendering/webgl/restricted-building-areas-rendering";
 import { setVisibleWallConnections } from "../rendering/webgl/wall-connection-rendering";
 import { Infocards_setTitleOffer } from "../components/game/infocards/Infocards";
-import { GrassBlocker } from "battletribes-shared/grass-blockers";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { windowHeight, windowWidth } from "../webgl";
 import { closeCurrentMenu } from "../menus";
@@ -93,12 +92,6 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    }
 
    return closestPlanToCursor;
-}
-
-// @Cleanup
-let grassBlockers: ReadonlyArray<GrassBlocker>;
-export function getGrassBlockers(): ReadonlyArray<GrassBlocker> {
-   return grassBlockers;
 }
 
 // @Cleanup: De-singleton-ify
@@ -413,7 +406,6 @@ abstract class Client {
 
       buildingPlans = gameDataPacket.visibleBuildingPlans;
       visibleWalls = gameDataPacket.visibleWalls;
-      grassBlockers = gameDataPacket.visibleGrassBlockers;
    }
 
    private static registerTileUpdates(tileUpdates: ReadonlyArray<ServerTileUpdateData>): void {

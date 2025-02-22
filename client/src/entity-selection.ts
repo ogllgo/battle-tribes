@@ -703,7 +703,7 @@ export function updateHighlightedAndHoveredEntities(gameInteractState: GameInter
    const newHighlightedEntityID = getEntityID(gameInteractState, true, true);
    if (newHighlightedEntityID !== highlightedEntity) {
       // Special case: when the game is in the select carry target interact state, we want the selected cow to remain selected even as the player highlights other entities
-      if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget) {
+      if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget && gameInteractState !== GameInteractState.selectMoveTargetPosition) {
          // @Incomplete
          // setGhostInfo(null);
          deselectHighlightedEntity();
@@ -732,7 +732,7 @@ export function attemptEntitySelection(gameInteractState: GameInteractState, set
 
 export function updateSelectedEntity(gameInteractState: GameInteractState): void {
    // When the game is in select carry target mode, we want the controlled entity to remain selected
-   if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget && highlightedEntity === -1) {
+   if (gameInteractState !== GameInteractState.selectCarryTarget && gameInteractState !== GameInteractState.selectAttackTarget && gameInteractState !== GameInteractState.selectMoveTargetPosition && highlightedEntity === -1) {
       deselectSelectedEntity();
    }
 }

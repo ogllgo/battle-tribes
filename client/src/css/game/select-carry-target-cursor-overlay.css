@@ -12,6 +12,9 @@
 #select-carry-target-cursor-overlay.carry {
    background-image: url("../../images/miscellaneous/carry-cursor.png");
 }
+#select-carry-target-cursor-overlay.move {
+   background-image: url("../../images/miscellaneous/move-cursor.png");
+}
 #select-carry-target-cursor-overlay.attack {
    background-image: url("../../images/miscellaneous/attack-cursor.png");
 }
