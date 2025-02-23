@@ -132,7 +132,6 @@ const main = (currentTime: number): void => {
                
                updateTextNumbers();
                Board.updateTickCallbacks();
-               Board.tickEntities();
                // if (playerInstance !== null) {
                //    updateEntity(playerInstance);
                // }
@@ -147,7 +146,6 @@ const main = (currentTime: number): void => {
             // if (playerInstance !== null) {
             //    updateEntity(playerInstance);
             // }
-            Board.tickEntities();
             // for (const layer of layers) {
             //    resolveEntityCollisions(layer);
             // }

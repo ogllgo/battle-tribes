@@ -6,6 +6,7 @@ export type ClientItemInfo = {
    /** Texture source when used as a tool in a tribe members' hand. Empty string if not used as a tool */
    readonly toolTextureSource: string;
    readonly name: string;
+   readonly namePlural: string;
    /** A description of what the item is for. */
    readonly description: string;
    /** Random shit shown in small text at the bottom of the item tooltip */
@@ -18,6 +19,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wood.png",
       toolTextureSource: "",
       name: "Wood",
+      namePlural: "Wood",
       description: "A common material used in crafting many things."
    },
    [ItemType.wooden_sword]: {
@@ -25,6 +27,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-sword.png",
       toolTextureSource: "items/large/wooden-sword.png",
       name: "Wooden Sword",
+      namePlural: "Wooden Swords",
       description: "Basic sword.",
       flavourText: "The splinters hurt you as much as the blade hurts the enemy."
    },
@@ -33,6 +36,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-axe.png",
       toolTextureSource: "items/large/wooden-axe.png",
       name: "Wooden Axe",
+      namePlural: "Wooden Axes",
       description: "Basic axe."
    },
    [ItemType.wooden_pickaxe]: {
@@ -40,6 +44,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-pickaxe.png",
       toolTextureSource: "items/large/wooden-pickaxe.png",
       name: "Wooden Pickaxe",
+      namePlural: "Wooden Pickaxes",
       description: ""
    },
    [ItemType.berry]: {
@@ -47,6 +52,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/berry.png",
       toolTextureSource: "",
       name: "Berry",
+      namePlural: "Berries",
       description: "Provides little sustenance, but can be used in a pinch."
    },
    [ItemType.raw_beef]: {
@@ -54,6 +60,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/raw-beef.png",
       toolTextureSource: "",
       name: "Raw Beef",
+      namePlural: "Raw Beef",
       description: "The raw mutilated flesh of a deceased cow - would not recommend eating."
    },
    [ItemType.cooked_beef]: {
@@ -61,6 +68,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/cooked-beef.png",
       toolTextureSource: "",
       name: "Cooked Beef",
+      namePlural: "Cooked Beef",
       description: "A hearty meal. Could use some seasoning."
    },
    [ItemType.workbench]: {
@@ -68,6 +76,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/workbench.png",
       toolTextureSource: "",
       name: "Workbench",
+      namePlural: "Workbenches",
       description: "The first crafting station available, able to craft many more complex recipes."
    },
    [ItemType.rock]: {
@@ -75,6 +84,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/rock.png",
       toolTextureSource: "",
       name: "Rock",
+      namePlural: "Rocks",
       description: "This Grug rock. No hurt or face wrath of Grug."
    },
    [ItemType.stone_sword]: {
@@ -82,6 +92,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stone-sword.png",
       toolTextureSource: "items/large/stone-sword.png",
       name: "Stone Sword",
+      namePlural: "Stone Swords",
       description: ""
    },
    [ItemType.stone_axe]: {
@@ -89,6 +100,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stone-axe.png",
       toolTextureSource: "items/large/stone-axe.png",
       name: "Stone Axe",
+      namePlural: "Stone Axes",
       description: ""
    },
    [ItemType.stone_pickaxe]: {
@@ -96,6 +108,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stone-pickaxe.png",
       toolTextureSource: "items/large/stone-pickaxe.png",
       name: "Stone Pickaxe",
+      namePlural: "Stone Pickaxes",
       description: ""
    },
    [ItemType.stone_hammer]: {
@@ -103,6 +116,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stone-hammer.png",
       toolTextureSource: "items/large/stone-hammer.png",
       name: "Stone Hammer",
+      namePlural: "Stone Hammers",
       description: ""
    },
    [ItemType.leather]: {
@@ -110,6 +124,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/leather.png",
       toolTextureSource: "",
       name: "Leather",
+      namePlural: "Leather",
       description: ""
    },
    [ItemType.leather_backpack]: {
@@ -117,6 +132,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/leather-backpack.png",
       toolTextureSource: "",
       name: "Leather Backpack",
+      namePlural: "Leather Backpacks",
       description: "Allows you to hold more items."
    },
    [ItemType.cactus_spine]: {
@@ -124,6 +140,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/cactus-spine.png",
       toolTextureSource: "",
       name: "Cactus Spine",
+      namePlural: "Cactus Spines",
       description: "It's tough and spiky and gets everywhere."
    },
    [ItemType.yeti_hide]: {
@@ -131,6 +148,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/yeti-hide.png",
       toolTextureSource: "",
       name: "Yeti Hide",
+      namePlural: "Yeti Hides",
       description: "An extremely tough half-frost half-flesh hide."
    },
    [ItemType.frostcicle]: {
@@ -138,6 +156,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frostcicle.png",
       toolTextureSource: "",
       name: "Frostcicle",
+      namePlural: "Frostcicles",
       description: "A perfectly preserved ice shard."
    },
    [ItemType.slimeball]: {
@@ -145,6 +164,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/slimeball.png",
       toolTextureSource: "",
       name: "Slimeball",
+      namePlural: "Slimeballs",
       description: ""
    },
    [ItemType.eyeball]: {
@@ -152,6 +172,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/eyeball.png",
       toolTextureSource: "",
       name: "Eyeball",
+      namePlural: "Eyeballs",
       description: ""
    },
    [ItemType.flesh_sword]: {
@@ -159,6 +180,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/flesh-sword.png",
       toolTextureSource: "items/large/flesh-sword.png",
       name: "Flesh Sword",
+      namePlural: "Flesh Swords",
       description: ""
    },
    [ItemType.tribe_totem]: {
@@ -166,6 +188,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/tribe-totem.png",
       toolTextureSource: "",
       name: "Totem",
+      namePlural: "Totems",
       description: "Centerpiece of the tribe."
    },
    [ItemType.worker_hut]: {
@@ -173,6 +196,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/worker-hut.png",
       toolTextureSource: "",
       name: "Worker Hut",
+      namePlural: "Worker Huts",
       description: ""
    },
    [ItemType.barrel]: {
@@ -180,6 +204,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/barrel.png",
       toolTextureSource: "",
       name: "Barrel",
+      namePlural: "Barrels",
       description: ""
    },
    [ItemType.frostSword]: {
@@ -187,6 +212,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frost-sword.png",
       toolTextureSource: "items/large/frost-sword.png",
       name: "Frost Sword",
+      namePlural: "Frost Swords",
       description: ""
    },
    [ItemType.frostPickaxe]: {
@@ -194,6 +220,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frost-pickaxe.png",
       toolTextureSource: "items/large/frost-pickaxe.png",
       name: "Frost Pickaxe",
+      namePlural: "Frost Pickaxes",
       description: ""
    },
    [ItemType.frostAxe]: {
@@ -201,6 +228,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frost-axe.png",
       toolTextureSource: "items/large/frost-axe.png",
       name: "Frost Axe",
+      namePlural: "Frost Axes",
       description: ""
    },
    [ItemType.frostArmour]: {
@@ -208,6 +236,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frost-armour.png",
       toolTextureSource: "",
       name: "Frost Armour",
+      namePlural: "Frost Armours",
       description: ""
    },
    [ItemType.campfire]: {
@@ -215,6 +244,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/campfire.png",
       toolTextureSource: "",
       name: "Campfire",
+      namePlural: "Campfires",
       description: ""
    },
    [ItemType.furnace]: {
@@ -222,6 +252,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/furnace.png",
       toolTextureSource: "",
       name: "Furnace",
+      namePlural: "Furnaces",
       description: ""
    },
    [ItemType.wooden_bow]: {
@@ -229,6 +260,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-bow.png",
       toolTextureSource: "items/large/wooden-bow.png",
       name: "Wooden Bow",
+      namePlural: "Wooden Bows",
       description: ""
    },
    [ItemType.reinforced_bow]: {
@@ -236,6 +268,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/reinforced-bow.png",
       toolTextureSource: "items/large/reinforced-bow.png",
       name: "Reinforced Bow",
+      namePlural: "Reinforced Bows",
       description: ""
    },
    [ItemType.ice_bow]: {
@@ -243,6 +276,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/ice-bow.png",
       toolTextureSource: "items/large/ice-bow.png",
       name: "Ice Bow",
+      namePlural: "Ice Bows",
       description: ""
    },
    [ItemType.crossbow]: {
@@ -250,6 +284,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/crossbow.png",
       toolTextureSource: "items/large/crossbow.png",
       name: "Crossbow",
+      namePlural: "Crossbows",
       description: ""
    },
    [ItemType.meat_suit]: {
@@ -257,13 +292,15 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/meat-suit.png",
       toolTextureSource: "",
       name: "Meat Suit",
-      description: "You think you are Cow, but you are not. You are a mere imitation, a foolish attempt to recreate That which is divine. You will never approach Their divinity."
+      namePlural: "Meat Suits",
+      description: "You think you are Cow, but you are not. You are a mere imitation, a foolish attempt to recreate That which is divine."
    },
    [ItemType.deepfrost_heart]: {
       entityTextureSource: "items/small/deepfrost-heart.png",
       textureSource: "items/large/deepfrost-heart.png",
       toolTextureSource: "",
       name: "Deepfrost Heart",
+      namePlural: "Deepfrost Hearts",
       description: ""
    },
    [ItemType.raw_fish]: {
@@ -271,6 +308,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/raw-fish.png",
       toolTextureSource: "",
       name: "Raw Fish",
+      namePlural: "Raw Fishes",
       description: ""
    },
    [ItemType.cooked_fish]: {
@@ -278,6 +316,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/cooked-fish.png",
       toolTextureSource: "",
       name: "Cooked Fish",
+      namePlural: "Cooked Fishes",
       description: ""
    },
    [ItemType.fishlord_suit]: {
@@ -285,6 +324,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/fishlord-suit.png",
       toolTextureSource: "",
       name: "Fish Suit",
+      namePlural: "Fish Suits", 
       description: ""
    },
    [ItemType.gathering_gloves]: {
@@ -292,6 +332,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/gathering-gloves.png",
       toolTextureSource: "",
       name: "Gathering Gloves",
+      namePlural: "Gathering Gloves", 
       description: ""
    },
    // @Incomplete
@@ -300,6 +341,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/fishlord-suit.png",
       toolTextureSource: "items/large/fishlord-suit.png",
       name: "The Throngler",
+      namePlural: "Thronglers", 
       description: ""
    },
    [ItemType.leather_armour]: {
@@ -307,6 +349,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/leather-armour.png",
       toolTextureSource: "",
       name: "Leather Armour",
+      namePlural: "Leather Armours", 
       description: ""
    },
    [ItemType.spear]: {
@@ -314,6 +357,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/spear.png",
       toolTextureSource: "items/misc/spear.png",
       name: "Spear",
+      namePlural: "Spears", 
       description: "Pointy end works best."
    },
    [ItemType.paper]: {
@@ -321,6 +365,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/paper.png",
       toolTextureSource: "",
       name: "Paper",
+      namePlural: "Papers", 
       description: ""
    },
    [ItemType.research_bench]: {
@@ -328,6 +373,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/research-bench.png",
       toolTextureSource: "",
       name: "Research Bench",
+      namePlural: "Research Benches", 
       description: ""
    },
    [ItemType.wooden_wall]: {
@@ -335,6 +381,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-wall.png",
       toolTextureSource: "",
       name: "Wooden Wall",
+      namePlural: "Wooden Walls",
       description: ""
    },
    [ItemType.wooden_hammer]: {
@@ -342,6 +389,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-hammer.png",
       toolTextureSource: "items/large/wooden-hammer.png",
       name: "Wooden Hammer",
+      namePlural: "Wooden Hammers",
       description: ""
    },
    [ItemType.stone_battleaxe]: {
@@ -349,6 +397,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stone-battleaxe.png",
       toolTextureSource: "items/large/stone-battleaxe.png",
       name: "Stone Battleaxe",
+      namePlural: "Stone Battleaxes",
       description: ""
    },
    [ItemType.living_rock]: {
@@ -356,6 +405,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/living-rock.png",
       toolTextureSource: "",
       name: "Living Rock",
+      namePlural: "Living Rocks",
       description: ""
    },
    [ItemType.planter_box]: {
@@ -363,6 +413,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/planter-box.png",
       toolTextureSource: "",
       name: "Planter Box",
+      namePlural: "Planter Boxes",
       description: ""
    },
    [ItemType.poop]: {
@@ -370,6 +421,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/poop.png",
       toolTextureSource: "",
       name: "Poop",
+      namePlural: "Poops",
       description: ""
    },
    [ItemType.wooden_spikes]: {
@@ -377,6 +429,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-spikes.png",
       toolTextureSource: "",
       name: "Wooden Spikes",
+      namePlural: "Wooden Spikes",
       description: ""
    },
    [ItemType.punji_sticks]: {
@@ -384,6 +437,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/punji-sticks.png",
       toolTextureSource: "",
       name: "Punji Sticks",
+      namePlural: "Punji Sticks",
       description: "Slightly weaker than wooden spikes, but inflicts additional poison damage."
    },
    [ItemType.ballista]: {
@@ -391,6 +445,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/ballista.png",
       toolTextureSource: "",
       name: "Ballista",
+      namePlural: "Ballistas",
       description: "An automatic crossbow turret. Requires ammo to function."
    },
    [ItemType.sling_turret]: {
@@ -399,6 +454,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/sling-turret.png",
       toolTextureSource: "",
       name: "Sling Turret",
+      namePlural: "Sling Turrets",
       description: ""
    },
    [ItemType.healing_totem]: {
@@ -407,6 +463,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/healing-totem.png",
       toolTextureSource: "",
       name: "Healing Totem",
+      namePlural: "Healing Totems",
       description: "Concentrates healing beams to heal nearby tribesmen."
    },
    [ItemType.leaf]: {
@@ -414,6 +471,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/leaf.png",
       toolTextureSource: "",
       name: "Leaf",
+      namePlural: "Leaves",
       description: ""
    },
    [ItemType.herbal_medicine]: {
@@ -421,6 +479,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/herbal-medicine.png",
       toolTextureSource: "",
       name: "Herbal Medicine",
+      namePlural: "Herbal Medicines",
       description: ""
    },
    // @Incomplete
@@ -429,6 +488,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/leaf-suit.png",
       toolTextureSource: "",
       name: "Leaf Suit",
+      namePlural: "Leaf Suits",
       description: ""
    },
    [ItemType.seed]: {
@@ -436,6 +496,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/seed.png",
       toolTextureSource: "",
       name: "Seed",
+      namePlural: "Seeds",
       description: ""
    },
    [ItemType.gardening_gloves]: {
@@ -443,6 +504,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/gardening-gloves.png",
       toolTextureSource: "",
       name: "Gardening Gloves",
+      namePlural: "Gardening Gloves",
       description: ""
    },
    [ItemType.wooden_fence]: {
@@ -450,6 +512,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/fence.png",
       toolTextureSource: "",
       name: "Wooden Fence",
+      namePlural: "Wooden Fences",
       description: "Good for keeping cows in, not so good for defending your valuables."
    },
    [ItemType.fertiliser]: {
@@ -457,6 +520,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/fertiliser.png",
       toolTextureSource: "",
       name: "Fertiliser",
+      namePlural: "Fertilisers",
       description: "Speeds up plant growth when used on planter boxes."
    },
    [ItemType.frostshaper]: {
@@ -464,6 +528,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/frostshaper.png",
       toolTextureSource: "",
       name: "Frostshaper",
+      namePlural: "Frostshapers",
       description: "Carves ice into complex shapes."
    },
    [ItemType.stonecarvingTable]: {
@@ -471,6 +536,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/stonecarving-table.png",
       toolTextureSource: "",
       name: "Stonecarving Table",
+      namePlural: "Stonecarving Tables",
       description: "Carves stone into complex shapes."
    },
    [ItemType.woodenShield]: {
@@ -478,6 +544,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-shield.png",
       toolTextureSource: "entities/shield-items/wooden-shield.png",
       name: "Wooden Shield",
+      namePlural: "Wooden Shields",
       description: "Blocks projectiles and melee attacks, poorly."
    },
    [ItemType.slingshot]: {
@@ -486,6 +553,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/slingshot.png",
       toolTextureSource: "entities/shield-items/wooden-shield.png",
       name: "Slingshot",
+      namePlural: "Slingshots",
       description: "Slings rocks at people you don't like."
    },
    [ItemType.woodenBracings]: {
@@ -493,6 +561,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-bracings.png",
       toolTextureSource: "",
       name: "Wooden Bracings",
+      namePlural: "Wooden Bracings",
       description: "Supports the surrounding stone's mental health, preventing them from collapsing."
    },
    [ItemType.fireTorch]: {
@@ -500,6 +569,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/fire-torch.png",
       toolTextureSource: "",
       name: "Fire Torch",
+      namePlural: "Fire Torches",
       description: "Provides a temporary light source."
    },
    [ItemType.slurb]: {
@@ -507,6 +577,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/slurb.png",
       toolTextureSource: "",
       name: "Slurb",
+      namePlural: "Slurb",
       description: "Gooey. Glows a bit."
    },
    [ItemType.slurbTorch]: {
@@ -514,6 +585,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/slurb-torch.png",
       toolTextureSource: "",
       name: "Slurb Torch",
+      namePlural: "Slurb Torches",
       description: "Less powerful than a regular torch, but doesn't burn out."
    },
    [ItemType.rawYetiFlesh]: {
@@ -521,6 +593,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/raw-yeti-flesh.png",
       toolTextureSource: "",
       name: "Raw Yeti Flesh",
+      namePlural: "Raw Yeti Flesh",
       description: "Disgusting."
    },
    [ItemType.cookedYetiFlesh]: {
@@ -528,13 +601,15 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/cooked-yeti-flesh.png",
       toolTextureSource: "",
       name: "Cooked Yeti Flesh",
-      description: "Disgusting, but extremely nutritious"
+      namePlural: "Cooked Yeti Flesh",
+      description: "Disgusting, but nutritious."
    },
    [ItemType.mithrilOre]: {
       entityTextureSource: "items/small/mithril-ore.png",
       textureSource: "items/large/mithril-ore.png",
       toolTextureSource: "",
       name: "Mithril Ore",
+      namePlural: "Mithril Ores",
       description: "Unrefined mithril."
    },
    [ItemType.mithrilBar]: {
@@ -542,6 +617,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-bar.png",
       toolTextureSource: "",
       name: "Mithril Bar",
+      namePlural: "Mithril Bars",
       description: "Refined mithril."
    },
    [ItemType.mithrilSword]: {
@@ -549,6 +625,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-sword.png",
       toolTextureSource: "items/large/mithril-sword.png",
       name: "Mithril Sword",
+      namePlural: "Mithril Swords",
       description: ""
    },
    [ItemType.mithrilPickaxe]: {
@@ -556,6 +633,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-pickaxe.png",
       toolTextureSource: "items/large/mithril-pickaxe.png",
       name: "Mithril Pickaxe",
+      namePlural: "Mithril Pickaxes",
       description: ""
    },
    [ItemType.mithrilAxe]: {
@@ -563,6 +641,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-axe.png",
       toolTextureSource: "items/large/mithril-axe.png",
       name: "Mithril Axe",
+      namePlural: "Mithril Axes",
       description: ""
    },
    [ItemType.mithrilArmour]: {
@@ -570,6 +649,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-armour.png",
       toolTextureSource: "",
       name: "Mithril Armour",
+      namePlural: "Mithril Armours",
       description: ""
    },
    [ItemType.scrappy]: {
@@ -577,6 +657,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/scrappy.png",
       toolTextureSource: "",
       name: "Scrappy",
+      namePlural: "Scrappies",
       description: ""
    },
    [ItemType.cogwalker]: {
@@ -584,6 +665,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/cogwalker.png",
       toolTextureSource: "",
       name: "Cogwalker",
+      namePlural: "Cogwalkers",
       description: ""
    },
    [ItemType.automatonAssembler]: {
@@ -591,6 +673,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/automaton-assembler.png",
       toolTextureSource: "",
       name: "Automaton Assembler",
+      namePlural: "Automaton Assemblers",
       description: ""
    },
    [ItemType.mithrilAnvil]: {
@@ -598,6 +681,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/mithril-anvil.png",
       toolTextureSource: "",
       name: "Mithril Anvil",
+      namePlural: "Mithril Anvils",
       description: ""
    },
    [ItemType.yuriMinecraft]: {
@@ -605,6 +689,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/minecraft.png",
       toolTextureSource: "",
       name: "The Evoker's Cold Touch | Alex's Awakening",
+      namePlural: "The Evoker's Cold Touch | Alex's Awakening",
       description: "Alex's thoughts keep drifting back to that encounter in the woodland mansion, as much as she wills herself not to. She can't put the cold shivers out of her mind, the cold shivers which make her feel so warm. Perhaps the Illager's intentions weren't hostile..."
    },
    [ItemType.yuriSonichu]: {
@@ -612,6 +697,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/sonichu.png",
       toolTextureSource: "",
       name: "Sonichu x FemShrek - Alone in Shrekke's Love Shack (Chapters 1-5)",
+      namePlural: "Sonichu x FemShrek - Alone in Shrekke's Love Shack (Chapters 1-5)",
       description: "Stuck alone and pent up in the woods for a week, Sonichu has an affliction only Shrekke's gentle yet controlling hands can cure."
    },
    [ItemType.animalStaff]: {
@@ -619,6 +705,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/animal-staff.png",
       toolTextureSource: "items/large/animal-staff.png",
       name: "Animal Staff",
+      namePlural: "Animal Staff",
       description: "Allows you to control animals."
    },
    [ItemType.woodenArrow]: {
@@ -626,6 +713,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/wooden-arrow.png",
       toolTextureSource: "",
       name: "Wooden Arrow",
+      namePlural: "Wooden Arrows",
       description: "A primitive projectile able to be used in bows and crossbows."
    },
    [ItemType.tamingAlmanac]: {
@@ -633,6 +721,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/taming-almanac.png",
       toolTextureSource: "",
       name: "Taming Almanac",
+      namePlural: "Taming Almanacs",
       description: "Allows you to see a creature's taming progress."
    }
 };

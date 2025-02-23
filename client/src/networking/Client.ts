@@ -166,6 +166,8 @@ abstract class Client {
                   Board.updateParticles();
                   
                   processGameDataPacket(reader);
+                  
+                  Board.tickEntities();
 
                   if (playerInstance !== null) {
                      updateEntity(playerInstance);

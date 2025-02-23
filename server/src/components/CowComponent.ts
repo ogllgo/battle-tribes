@@ -20,7 +20,7 @@ import { damageEntity, healEntity, HealthComponentArray } from "./HealthComponen
 import { ItemComponentArray } from "./ItemComponent";
 import { applyKnockback, getVelocityMagnitude, PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
 import { entitiesAreColliding, CollisionVars } from "../collision";
-import { createCircularGrassBlocker } from "../grass-blockers";
+import { createCircularGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
@@ -41,7 +41,7 @@ const enum Vars {
    GRAZE_TIME_TICKS = 2.5 * Settings.TPS,
    BERRY_FULLNESS_VALUE = 0.15,
    MIN_POOP_PRODUCTION_FULLNESS = 0.4,
-   BOWEL_EMPTY_TIME_TICKS = 15 * Settings.TPS,
+   BOWEL_EMPTY_TIME_TICKS = 45 * Settings.TPS,
    MAX_BERRY_CHASE_FULLNESS = 0.8,
    // @Hack
    TURN_SPEED = 3.14159265358979,
@@ -70,7 +70,7 @@ export class CowComponent {
    public bushShakeTimer = 0;
 
    /** Used when producing poop. */
-   public bowelFullness = 0;
+   public bowelFullness = 1;
    public poopProductionCooldownTicks = 0;
 
    // @Temporary
@@ -133,29 +133,23 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
    registerEntityTickEvent(cow, event);
 }
 
-export function updateCowComponent(cow: Entity, cowComponent: CowComponent): void {
-   if (cowComponent.poopProductionCooldownTicks > 0) {
-      cowComponent.poopProductionCooldownTicks--;
-   } else if (cowComponent.bowelFullness >= Vars.MIN_POOP_PRODUCTION_FULLNESS) {
-      poop(cow, cowComponent);
-   }
-
-   cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS;
-   if (cowComponent.bowelFullness < 0) {
-      cowComponent.bowelFullness = 0;
-   }
-
-   if (cowComponent.grazeCooldownTicks > 0) {
-      cowComponent.grazeCooldownTicks--;
-   }
-}
-
 const getTargetGrass = (cow: Entity): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(cow);
    for (const chunk of transformComponent.chunks) {
       for (const entity of chunk.entities) {
          // @Hack: ignored pathfinding group id
-         if (getEntityType(entity) === EntityType.grassStrand && entityIsInLineOfSight(cow, entity, 99999)) {
+         if (getEntityType(entity) === EntityType.grassStrand) {
+            const grassTransformComponent = TransformComponentArray.getComponent(entity);
+            const dist = transformComponent.position.calculateDistanceBetween(grassTransformComponent.position);
+            if (dist >= 50) {
+               continue;
+            }
+
+            
+            if (positionHasGrassBlocker(getEntityLayer(cow), grassTransformComponent.position.x, grassTransformComponent.position.y)) {
+               continue;
+            }
+            
             if (entitiesAreColliding(cow, entity) !== CollisionVars.NO_COLLISION) {
                return entity;
             }
@@ -166,16 +160,16 @@ const getTargetGrass = (cow: Entity): Entity | null => {
 }
 
 const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): void => {
-   const cowTransformComponent = TransformComponentArray.getComponent(cow);
+   // const cowTransformComponent = TransformComponentArray.getComponent(cow);
    const grassTransformComponent = TransformComponentArray.getComponent(targetGrass);
-   const targetX = grassTransformComponent.position.x;
-   const targetY = grassTransformComponent.position.y;
-   const targetDirection = cowTransformComponent.position.calculateAngleBetween(grassTransformComponent.position);
+   // const targetX = grassTransformComponent.position.x;
+   // const targetY = grassTransformComponent.position.y;
+   // const targetDirection = cowTransformComponent.position.calculateAngleBetween(grassTransformComponent.position);
    
-   moveCow(cow, targetX, targetY, targetDirection, Vars.SLOW_ACCELERATION);
+   // moveCow(cow, targetX, targetY, targetDirection, Vars.SLOW_ACCELERATION);
 
-   const dist = cowTransformComponent.position.calculateDistanceBetween(grassTransformComponent.position);
-   if (dist < 50) {
+   // const dist = cowTransformComponent.position.calculateDistanceBetween(grassTransformComponent.position);
+   // if (dist < 50) {
       const physicsComponent = PhysicsComponentArray.getComponent(cow);
       stopEntity(physicsComponent);
    
@@ -184,17 +178,18 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
          // Eat grass
          // 
    
-         for (let i = 0; i < 3; i++) {
+         for (let i = 0; i < 4; i++) {
             const blockAmount = randFloat(0.6, 0.9);
-            const position = grassTransformComponent.position.offset(randFloat(0, 10), 2 * Math.PI * Math.random());
-            createCircularGrassBlocker(position, getEntityLayer(cow), blockAmount, blockAmount, randFloat(10, 15), 0);
+            const position = grassTransformComponent.position.offset(randFloat(0, 12), 2 * Math.PI * Math.random());
+            createCircularGrassBlocker(position, getEntityLayer(cow), blockAmount, blockAmount, randFloat(12, 18), 0);
          }
    
          healEntity(cow, 3, cow);
          cowComponent.grazeCooldownTicks = randInt(CowVars.MIN_GRAZE_COOLDOWN, CowVars.MAX_GRAZE_COOLDOWN);
-         cowComponent.bowelFullness += 0.3;
+         cowComponent.bowelFullness = 1;
+         cowComponent.targetGrass = 0;
       }
-   }
+   // }
 }
 
 const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
@@ -345,7 +340,46 @@ const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: 
 function onTick(cow: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowComponent = CowComponentArray.getComponent(cow);
-   updateCowComponent(cow, cowComponent);
+
+   if (cowComponent.poopProductionCooldownTicks > 0) {
+      cowComponent.poopProductionCooldownTicks--;
+   } else if (cowComponent.bowelFullness >= Vars.MIN_POOP_PRODUCTION_FULLNESS) {
+      // @Temporary
+      if(1+1===3) {
+         poop(cow, cowComponent);
+      }
+   }
+
+   cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS;
+   if (cowComponent.bowelFullness < 0) {
+      cowComponent.bowelFullness = 0;
+   }
+
+   if (cowComponent.grazeCooldownTicks > 0) {
+      cowComponent.grazeCooldownTicks--;
+   }
+
+   // @HACK @TEMPORARY
+   // Graze dirt to recover health
+   if (cowComponent.grazeCooldownTicks === 0) {
+      if (!entityExists(cowComponent.targetGrass)) {
+         const target = getTargetGrass(cow);
+         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
+            cowComponent.targetGrass = target;
+         }
+      }
+
+      if (entityExists(cowComponent.targetGrass)) {
+         graze(cow, cowComponent, cowComponent.targetGrass);
+         return;
+      }
+      // @Incomplete: Why is this here?
+      cowComponent.grazeProgressTicks = 0;
+   }
+
+   if (cowComponent.bowelFullness === 0 && getEntityAgeTicks(cow) % (2 * Settings.TPS) === 0) {
+      damageEntity(cow, null, 1, 0, AttackEffectiveness.effective, transformComponent.position.copy(), 0);
+   }
    
    // If the cow is recovering after doing a ram, just stand still and do nothing else
    if (cowComponent.ramRestTicks > 0) {
@@ -473,22 +507,22 @@ function onTick(cow: Entity): void {
       return;
    }
 
-   // Graze dirt to recover health
-   if (cowComponent.grazeCooldownTicks === 0) {
-      if (!entityExists(cowComponent.targetGrass)) {
-         const target = getTargetGrass(cow);
-         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
-            cowComponent.targetGrass = target;
-         }
-      }
+   // // Graze dirt to recover health
+   // if (cowComponent.grazeCooldownTicks === 0) {
+   //    if (!entityExists(cowComponent.targetGrass)) {
+   //       const target = getTargetGrass(cow);
+   //       if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
+   //          cowComponent.targetGrass = target;
+   //       }
+   //    }
 
-      if (entityExists(cowComponent.targetGrass)) {
-         graze(cow, cowComponent, cowComponent.targetGrass);
-         return;
-      }
-      // @Incomplete: Why is this here?
-      cowComponent.grazeProgressTicks = 0;
-   }
+   //    if (entityExists(cowComponent.targetGrass)) {
+   //       graze(cow, cowComponent, cowComponent.targetGrass);
+   //       return;
+   //    }
+   //    // @Incomplete: Why is this here?
+   //    cowComponent.grazeProgressTicks = 0;
+   // }
 
    const layer = getEntityLayer(cow);
 
@@ -637,8 +671,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowComponent): void => {
    cowComponent.bowelFullness += Vars.BERRY_FULLNESS_VALUE;
 
-   const tamingComponent = TamingComponentArray.getComponent(cow);
-   tamingComponent.berriesEatenInTier++;
+   const itemComponent = ItemComponentArray.getComponent(berryItemEntity);
+   if (itemComponent.throwingEntity !== null) {
+      const tamingComponent = TamingComponentArray.getComponent(cow);
+      tamingComponent.foodEatenInTier++;
+   }
 
    destroyEntity(berryItemEntity);
 
@@ -651,9 +688,7 @@ const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowCompone
 }
 
 export function wantsToEatBerries(cowComponent: CowComponent): boolean {
-   // @Temporary
-   return true;
-   // return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
+   return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
 }
 
 function preRemove(cow: Entity): void {

@@ -66,18 +66,28 @@
    right: 0;
    bottom: 0;
    left: 0;
-   box-shadow: 0 0 0 4px #777 inset;
+   box-shadow: 0 0 0 4px #666 inset;
    z-index: -1;
 }
 
 #taming-menu .berry-progress-bar-fill {
    width: var(--width-percentage);
-   background-color: #d12e2e;
    position: absolute;
    top: 0;
    bottom: 0;
    left: 0;
-   box-shadow: 0 0 0 4px red inset;
+}
+#taming-menu .berry-progress-bar-fill.green {
+   background-color: #6def42;
+   box-shadow: 0 0 0 4px #3dcf00 inset;
+}
+#taming-menu .berry-progress-bar-fill.blue {
+   background-color: #27bfed;
+   box-shadow: 0 0 0 4px #218dcb inset;
+}
+#taming-menu .berry-progress-bar-fill.purple {
+   background-color: #6339e1;
+   box-shadow: 0 0 0 4px #5c00ef inset;
 }
 
 #taming-menu .berry-progress-bar .progress-counter {

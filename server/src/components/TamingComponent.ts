@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { getStringLengthBytes, Packet } from "../../../shared/src/packets";
 import { ComponentArray } from "./ComponentArray";
-import { getTamingSkillByID, TamingSkill, TamingSkillID } from "battletribes-shared/taming";
+import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -11,9 +11,9 @@ interface TamingSkillLearning {
 }
 
 export class TamingComponent {
-   public tamingTier = 0;
+   public tamingTier: TamingTier = 0;
    /** Amount of berries eaten in the current tier. */
-   public berriesEatenInTier = 0;
+   public foodEatenInTier = 0;
 
    public name = "";
 
@@ -43,7 +43,7 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tamingComponent = TamingComponentArray.getComponent(entity);
    packet.addNumber(tamingComponent.tamingTier);
-   packet.addNumber(tamingComponent.berriesEatenInTier);
+   packet.addNumber(tamingComponent.foodEatenInTier);
    packet.addString(tamingComponent.name);
 
    // Acquired skills
@@ -84,7 +84,7 @@ export function skillLearningIsComplete(skillLearning: TamingSkillLearning): boo
 }
 
 export function addSkillLearningProgress(tamingComponent: TamingComponent, skillID: TamingSkillID, amount: number): void {
-   const skill = getTamingSkillByID(skillID);
+   const skill = getTamingSkill(skillID);
    if (tamingComponent.acquiredSkills.includes(skill)) {
       return;
    }

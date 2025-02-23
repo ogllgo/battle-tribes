@@ -2,20 +2,22 @@ import { useEffect, useReducer, useState } from "react";
 import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
 import { entityExists, getEntityType } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
-import { getTamingSkillByID, TAMING_SKILLS, TAMING_TIER_INFO_RECORD, TamingSkill, TamingSkillID } from "battletribes-shared/taming";
+import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
 import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import Menu from "./menus/Menu";
 import { keyIsPressed } from "../../keyboard-input";
 import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../networking/packet-creation";
 import { isDev } from "../../utils";
 import TamingSkillTooltip from "./TamingSkillTooltip";
+import { getEntityTamingSpec } from "../../taming-specs";
+import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../client-item-info";
 
 const enum Vars {
    SKILL_TRANSFORM_SCALE_FACTOR = 0.5
 }
 
 interface TierSeparatorProps {
-   readonly tamingTier: number;
+   readonly tamingTier: TamingTier;
 }
 
 interface SkillConnectorProps {
@@ -24,17 +26,33 @@ interface SkillConnectorProps {
    readonly toSkill: TamingSkill;
 }
 
+export const TAMING_TIER_Y_POSITIONS: Record<TamingTier, number> = {
+   0: 0,
+   1: 0,
+   2: 20,
+   3: 40
+};
+
 export let TamingMenu_setVisibility: (isVisible: boolean) => void = () => {};
 export let TamingMenu_setEntity: (entity: Entity) => void = () => {};
 export let TamingMenu_forceUpdate: () => void = () => {};
 
+const SKILL_ICON_NAMES: Record<TamingSkillID, string> = {
+   [TamingSkillID.follow]: "follow-skill.png",
+   [TamingSkillID.riding]: "riding-skill.png",
+   [TamingSkillID.move]: "move-skill.png",
+   [TamingSkillID.carry]: "carry-skill.png",
+   [TamingSkillID.attack]: "attack-skill.png",
+   [TamingSkillID.shatteredWill]: "shattered-will-skill.png"
+};
+
 const TAMING_MENU_ICONS: Record<TamingSkillID, any> = {
-   [TamingSkillID.follow]: require("../../images/menus/taming-almanac/follow-skill.png"),
-   [TamingSkillID.riding]: require("../../images/menus/taming-almanac/riding-skill.png"),
-   [TamingSkillID.move]: require("../../images/menus/taming-almanac/move-skill.png"),
-   [TamingSkillID.carry]: require("../../images/menus/taming-almanac/carry-skill.png"),
-   [TamingSkillID.attack]: require("../../images/menus/taming-almanac/attack-skill.png"),
-   [TamingSkillID.shatteredWill]: require("../../images/menus/taming-almanac/shattered-will-skill.png")
+   [TamingSkillID.follow]: require("../../images/menus/taming-almanac/cow-skills/follow-skill.png"),
+   [TamingSkillID.riding]: require("../../images/menus/taming-almanac/cow-skills/riding-skill.png"),
+   [TamingSkillID.move]: require("../../images/menus/taming-almanac/cow-skills/move-skill.png"),
+   [TamingSkillID.carry]: require("../../images/menus/taming-almanac/cow-skills/carry-skill.png"),
+   [TamingSkillID.attack]: require("../../images/menus/taming-almanac/cow-skills/attack-skill.png"),
+   [TamingSkillID.shatteredWill]: require("../../images/menus/taming-almanac/cow-skills/shattered-will-skill.png")
 };
 
 const UNUSED_NAMETAG_IMG = require("../../images/menus/taming-almanac/nametag-unused.png");
@@ -48,9 +66,9 @@ const TAMING_TIER_ICONS: Record<number, any> = {
 };
 
 const TierSeparator = (props: TierSeparatorProps) => {
-   const tierInfo = TAMING_TIER_INFO_RECORD[props.tamingTier]!;
+   const y = TAMING_TIER_Y_POSITIONS[props.tamingTier];
 
-   return <div className="tier-separator-container" style={{top: tierInfo.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem"}}>
+   return <div className="tier-separator-container" style={{top: y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem"}}>
       <img className="tier-icon" src={TAMING_TIER_ICONS[props.tamingTier]} />
       <div className="tier-separator"></div>
    </div>;
@@ -102,9 +120,10 @@ const TamingMenu = () => {
 
    const tamingComponent = TamingComponentArray.getComponent(entity);
 
-   const nextTamingTierInfo = TAMING_TIER_INFO_RECORD[tamingComponent.tamingTier + 1];
+   const tamingSpec = getEntityTamingSpec(entity);
+   const nextTamingTierFoodCost: number | undefined = tamingSpec.tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
 
-   const berryProgress = typeof nextTamingTierInfo !== "undefined" ? Math.min(tamingComponent.berriesEatenInTier / nextTamingTierInfo.costBerries, 1) : 1;
+   const foodProgress = typeof nextTamingTierFoodCost !== "undefined" ? Math.min(tamingComponent.foodEatenInTier / nextTamingTierFoodCost, 1) : 1;
 
    const onCompleteButtonClick = (): void => {
       if (keyIsPressed("shift") && isDev()) {
@@ -129,10 +148,33 @@ const TamingMenu = () => {
    const onSkillMouseOut = (): void => {
       setHoveredSkill(null);
    }
+
+   let progressBarClassName: string;
+   switch (tamingComponent.tamingTier) {
+      case 0: {
+         progressBarClassName = "green";
+         break;
+      }
+      case 1: {
+         progressBarClassName = "blue";
+         break;
+      }
+      case 2:
+      case 3: {
+         progressBarClassName = "purple";
+         break;
+      }
+      default: throw new Error();
+   }
    
    return <>
       <Menu id="taming-menu" className="menu">
-         <h1>{clientEntityInfo.name} <img src={tamingComponent.name !== "" ? USED_NAMETAG_IMG : UNUSED_NAMETAG_IMG} /></h1>
+         <h1>
+            {clientEntityInfo.name}
+            {tamingComponent.tamingTier > 0 ? (
+               <img src={tamingComponent.name !== "" ? USED_NAMETAG_IMG : UNUSED_NAMETAG_IMG} />
+            ) : null}
+         </h1>
 
          <p className="taming-tier">
             <span>Taming Tier:</span>
@@ -143,11 +185,11 @@ const TamingMenu = () => {
             <div className="row">
                <div className="berry-progress-bar">
                   <div className="berry-progress-bar-bg"></div>
-                  <div className="berry-progress-bar-fill" style={{"--width-percentage": berryProgress * 100 + "%"} as React.CSSProperties}></div>
+                  <div className={"berry-progress-bar-fill " + progressBarClassName} style={{"--width-percentage": foodProgress * 100 + "%"} as React.CSSProperties}></div>
                   <div className="progress-counter">
-                     {typeof nextTamingTierInfo !== "undefined" ? <>
-                        <span>{tamingComponent.berriesEatenInTier}/{nextTamingTierInfo.costBerries} Berries</span>
-                        <img src={require("../../images/items/large/berry.png")} />
+                     {typeof nextTamingTierFoodCost !== "undefined" ? <>
+                        <span>{tamingComponent.foodEatenInTier}/{nextTamingTierFoodCost} {CLIENT_ITEM_INFO_RECORD[tamingSpec.foodItemType].namePlural}</span>
+                        <img src={getItemTypeImage(tamingSpec.foodItemType)} />
                      </> : <>
                         <div className="height-padder">
                            <span>Max!</span>
@@ -155,14 +197,16 @@ const TamingMenu = () => {
                      </>}
                   </div>
                </div>
-               {typeof nextTamingTierInfo !== "undefined" ? (
-                  <button className={tamingComponent.berriesEatenInTier >= nextTamingTierInfo.costBerries ? "clickable" : undefined} onMouseDown={onCompleteButtonClick}>Complete</button>
+               {typeof nextTamingTierFoodCost !== "undefined" ? (
+                  <button className={tamingComponent.foodEatenInTier >= nextTamingTierFoodCost ? "clickable" : undefined} onMouseDown={onCompleteButtonClick}>Complete</button>
                ) : null}
             </div>
          </div>
 
          <div className="skill-map-container">
-            {TAMING_SKILLS.map((skill, i) => {
+            {tamingSpec.skills.map((skillID, i) => {
+               const skill = getTamingSkill(skillID);
+               
                let className = "skill";
                if (skill.requiredTamingTier > tamingComponent.tamingTier) {
                   className += " inaccessible";
@@ -170,19 +214,25 @@ const TamingMenu = () => {
                if (hasTamingSkill(tamingComponent, skill.id)) {
                   className += " acquired";
                }
+
+               const ending = SKILL_ICON_NAMES[skillID];
+               const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].internalName;
+               const iconSrc = require("../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
+
                return <div key={i} className={className} style={{top: skill.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skill.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
                   <div>
                      <div className="skill-icon-wrapper" onMouseDown={() => onSkillClick(skill)} onMouseOver={() => onSkillMouseOver(skill)} onMouseOut={() => onSkillMouseOut()}>
                         <div className="skill-bg" />
-                        <img className="skill-icon" src={TAMING_MENU_ICONS[skill.id]} />
+                        <img className="skill-icon" src={iconSrc} />
                      </div>
                   </div> 
                   <p>{skill.name}</p>
                </div>;
             })}
-            {TAMING_SKILLS.map((skill, i) => {
+            {tamingSpec.skills.map((skillID, i) => {
+               const skill = getTamingSkill(skillID);
                if (skill.parent !== null && tamingComponent.tamingTier >= skill.requiredTamingTier) {
-                  return <SkillConnector key={i} tamingComponent={tamingComponent} fromSkill={getTamingSkillByID(skill.parent)} toSkill={skill} />
+                  return <SkillConnector key={i} tamingComponent={tamingComponent} fromSkill={getTamingSkill(skill.parent)} toSkill={skill} />
                } else {
                   return null;
                }

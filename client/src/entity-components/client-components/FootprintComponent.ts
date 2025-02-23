@@ -98,7 +98,6 @@ const createFootstepSound = (entity: Entity): void => {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const footprintComponent = FootprintComponentArray.getComponent(entity);
 
    if (transformComponent.carryRoot === entity) {

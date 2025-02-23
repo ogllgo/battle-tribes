@@ -379,11 +379,16 @@ export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
       if(1+1===2)return;
-      // const cow = createCowConfig();
-      const cactus = createCactusConfig();
-      cactus.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
-      cactus.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-      createEntity(cactus, surfaceLayer, 0);
+      for (let i = 0; i < 5; i++) {
+
+         const cow = createCowConfig();
+         // const cactus = createCactusConfig();
+         cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
+         cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+         cow.components[ServerComponentType.transform].position.x += randFloat(-100, 100);
+         cow.components[ServerComponentType.transform].position.y += randFloat(-100, 100);
+         createEntity(cow, surfaceLayer, 0);
+      }
       if(1+1===2)return;
       
       // // const x = Settings.BOARD_UNITS * 0.5 + 700;
@@ -407,5 +412,5 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
       // }
-   }, 5000);
+   }, 20000);
 }

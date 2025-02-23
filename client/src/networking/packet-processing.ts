@@ -36,6 +36,7 @@ import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
 import { GrassBlocker } from "../../../shared/src/grass-blockers";
 import { updateGrassBlockers } from "../grass-blockers";
+import { registerTamingSpecsFromData } from "../taming-specs";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -228,6 +229,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
 
    // @Hack @Temporary
    createRiverSteppingStoneData(surfaceLayer.riverSteppingStones);
+
+   registerTamingSpecsFromData(reader);
 }
 
 const readDebugData = (reader: PacketReader): EntityDebugData => {

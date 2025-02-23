@@ -15,12 +15,21 @@ import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { TamingComponent } from "../../components/TamingComponent";
+import { TamingSkillID } from "../../../../shared/src/taming";
+import { ItemType } from "../../../../shared/src/items/items";
+import { registerEntityTamingSpec } from "../../taming-specs";
+import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.aiHelper
+   | ServerComponentType.attackingEntities
+   | ServerComponentType.rideable
+   | ServerComponentType.taming
    | ServerComponentType.yeti;
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
@@ -30,6 +39,18 @@ export enum SnowThrowStage {
    hold,
    return
 }
+
+registerEntityTamingSpec(EntityType.yeti, {
+   maxTamingTier: 3,
+   skills: [TamingSkillID.follow, TamingSkillID.riding, TamingSkillID.move, TamingSkillID.carry, TamingSkillID.attack],
+   foodItemType: ItemType.raw_beef,
+   tierFoodRequirements: {
+      0: 0,
+      1: 10,
+      2: 30,
+      3: 70
+   }
+});
 
 function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
    const tileX = Math.floor(x / Settings.TILE_SIZE);
@@ -54,6 +75,13 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
    const aiHelperComponent = new AIHelperComponent(500);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 0.6, positionIsValidCallback);
    
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   
+   const rideableComponent = new RideableComponent();
+   rideableComponent.carrySlots.push(createCarrySlot(0, 0, 64, 0));
+   
+   const tamingComponent = new TamingComponent();
+   
    // @Incomplete?
    const yetiComponent = new YetiComponent([]);
    
@@ -65,6 +93,9 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.rideable]: rideableComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.yeti]: yetiComponent
       },
       lights: []

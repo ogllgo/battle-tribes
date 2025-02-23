@@ -21,10 +21,13 @@ import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesCo
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { TamingComponent } from "../../components/TamingComponent";
+import { TamingSkillID } from "../../../../shared/src/taming";
+import { ItemType } from "../../../../shared/src/items/items";
+import { registerEntityTamingSpec } from "../../taming-specs";
 
 export const enum CowVars {
-   MIN_GRAZE_COOLDOWN = 5 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 10 * Settings.TPS,
+   MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
+   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS,
    MIN_FOLLOW_COOLDOWN = 15 * Settings.TPS,
    MAX_FOLLOW_COOLDOWN = 30 * Settings.TPS
 }
@@ -40,6 +43,18 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.rideable
    | ServerComponentType.taming
    | ServerComponentType.cow;
+
+registerEntityTamingSpec(EntityType.cow, {
+   maxTamingTier: 3,
+   skills: [TamingSkillID.follow, TamingSkillID.riding, TamingSkillID.move, TamingSkillID.carry, TamingSkillID.attack, TamingSkillID.shatteredWill],
+   foodItemType: ItemType.berry,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5,
+      2: 20,
+      3: 60
+   }
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;

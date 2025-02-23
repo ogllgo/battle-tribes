@@ -4,7 +4,7 @@ import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
-import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, LimbInfo } from "../components/InventoryUseComponent";
+import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { SERVER } from "./server";
 import { Settings } from "battletribes-shared/settings";
@@ -22,6 +22,7 @@ import { layers } from "../layers";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
 import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
+import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -488,6 +489,8 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 }
 
 export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
+   const tamingSpecsMap = getTamingSpecsMap();
+
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT * 5;
    // Layer idx
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -501,6 +504,12 @@ export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: Ent
    }
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + spawnLayer.waterRocks.length * 5 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + spawnLayer.riverSteppingStones.length * 5 * Float32Array.BYTES_PER_ELEMENT;
+   // Taming specs
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const pair of tamingSpecsMap) {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      lengthBytes += getTamingSpecDataLength(pair[1]);
+   }
    lengthBytes = alignLengthBytes(lengthBytes);
    const packet = new Packet(PacketType.initialGameData, lengthBytes);
    
@@ -560,6 +569,13 @@ export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: Ent
       packet.addNumber(steppingStone.rotation);
       packet.addNumber(steppingStone.size);
       packet.addNumber(steppingStone.groupID);
+   }
+
+   // Taming specs
+   packet.addNumber(tamingSpecsMap.size);
+   for (const pair of tamingSpecsMap) {
+      packet.addNumber(pair[0])
+      addTamingSpecToData(packet, pair[1]);
    }
 
    return packet.buffer;

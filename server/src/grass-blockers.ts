@@ -7,7 +7,7 @@ import { boxIsCircular, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { entityExists, getEntityLayer } from "./world";
 import { surfaceLayer } from "./layers";
 import { Packet } from "../../shared/src/packets";
-import { Point } from "../../shared/src/utils";
+import { distance, Point, pointIsInRectangle, unitsToChunksClamped } from "../../shared/src/utils";
 import Layer from "./Layer";
 
 const enum Vars {
@@ -202,4 +202,33 @@ export function addGrassBlockerToData(packet: Packet, blocker: GrassBlocker): vo
       packet.addNumber(blocker.height);
       packet.addNumber(blocker.rotation);
    }
+}
+
+export function positionHasGrassBlocker(layer: Layer, x: number, y: number): boolean {
+   // @HACK
+   const range = 20;
+   
+   const minChunkX = unitsToChunksClamped(x - range);
+   const maxChunkX = unitsToChunksClamped(x + range);
+   const minChunkY = unitsToChunksClamped(y - range);
+   const maxChunkY = unitsToChunksClamped(y + range);
+
+   for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const blocker of chunk.grassBlockers) {
+            if (blockerIsCircluar(blocker)) {
+               const dist = distance(x, y, blocker.position.x, blocker.position.y);
+               if (dist <= blocker.radius) {
+                  return true;
+               }
+            } else {
+               if (pointIsInRectangle(x, y, blocker.position.x, blocker.position.y, blocker.width, blocker.height, blocker.rotation)) {
+                  return true;
+               }
+            }
+         }
+      }
+   }
+   return false;
 }

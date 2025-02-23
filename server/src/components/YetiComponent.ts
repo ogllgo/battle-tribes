@@ -25,6 +25,7 @@ import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -39,15 +40,13 @@ const enum Vars {
    SNOW_THROW_KICKBACK_AMOUNT = 110,
    
    TURN_SPEED = UtilVars.PI * 3/2,
-   SLOW_TURN_SPEED = UtilVars.PI * 1.5/2,
-
-   ATTACK_PURSUE_TIME_TICKS = 5 * Settings.TPS
+   SLOW_TURN_SPEED = UtilVars.PI * 1.5/2
 }
 
 const MIN_TERRITORY_SIZE = 50;
 const MAX_TERRITORY_SIZE = 100;
 
-// /** Stores which tiles belong to which yetis' territories */
+/** Stores which tiles belong to which yetis' territories */
 const yetiTerritoryTiles: Partial<Record<TileIndex, Entity>> = {};
 
 export class YetiComponent {
@@ -389,6 +388,9 @@ function onTick(yeti: Entity): void {
          if (entitiesAreColliding(yeti, closestFoodItem) !== CollisionVars.NO_COLLISION) {
             healEntity(yeti, 3, yeti);
             destroyEntity(closestFoodItem);
+
+            const tamingComponent = TamingComponentArray.getComponent(yeti);
+            tamingComponent.foodEatenInTier++;
          }
          return;
       }

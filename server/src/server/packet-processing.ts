@@ -34,8 +34,9 @@ import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
 import { dismountCarrySlot, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
-import { getTamingSkillByID, TAMING_TIER_INFO_RECORD, TamingSkill, TamingSkillID } from "../../../shared/src/taming";
+import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
+import { getTamingSpec } from "../taming-specs";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -792,11 +793,12 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
    const entity = reader.readNumber() as Entity;
    const tamingComponent = TamingComponentArray.getComponent(entity);
 
-   const nextTamingTierInfo = TAMING_TIER_INFO_RECORD[tamingComponent.tamingTier + 1];
-   if (typeof nextTamingTierInfo !== "undefined" && tamingComponent.berriesEatenInTier >= nextTamingTierInfo.costBerries) {
+   // @Hack
+   const foodRequired: number | undefined = getTamingSpec(entity).tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
+   if (typeof foodRequired !== "undefined" && tamingComponent.foodEatenInTier >= foodRequired) {
       // @Cleanup @Copynpaste
       tamingComponent.tamingTier++;
-      tamingComponent.berriesEatenInTier = 0;
+      tamingComponent.foodEatenInTier = 0;
    }
 }
 
@@ -809,7 +811,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    const tamingComponent = TamingComponentArray.getComponent(entity);
    // @Cleanup @Copynpaste
    tamingComponent.tamingTier++;
-   tamingComponent.berriesEatenInTier = 0;
+   tamingComponent.foodEatenInTier = 0;
 }
 
 export function processAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -823,7 +825,7 @@ export function processAcquireTamingSkillPacket(playerClient: PlayerClient, read
    const tamingComponent = TamingComponentArray.getComponent(entity);
    const skillLearning = getTamingSkillLearning(tamingComponent, skillID);
    if (skillLearning !== null && skillLearningIsComplete(skillLearning)) {
-      const skill = getTamingSkillByID(skillID);
+      const skill = getTamingSkill(skillID);
       tamingComponent.acquiredSkills.push(skill);
    }
 }
@@ -836,7 +838,7 @@ export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient,
    const entity = reader.readNumber() as Entity;
    const skillID = reader.readNumber() as TamingSkillID;
    
-   const skill = getTamingSkillByID(skillID);
+   const skill = getTamingSkill(skillID);
    
    const tamingComponent = TamingComponentArray.getComponent(entity);
    tamingComponent.acquiredSkills.push(skill);

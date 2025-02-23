@@ -2,12 +2,10 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
-import { getTamingSkillByID, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { getTamingSkill, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { playerInstance } from "../../player";
-import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
@@ -35,7 +33,7 @@ interface RenderParts {
 
 export class TamingComponent {
    public tamingTier: number;
-   public berriesEatenInTier: number;
+   public foodEatenInTier: number;
    public name: string;
    public readonly acquiredSkills: Array<TamingSkill>;
    public readonly skillLearningArray: Array<TamingSkillLearning>;
@@ -44,7 +42,7 @@ export class TamingComponent {
 
    constructor(tamingTier: number, berriesEatenInTier: number, name: string, acquiredSkills: Array<TamingSkill>, skillLearningArray: Array<TamingSkillLearning>, tamingTierRenderPart: TexturedRenderPart | null) {
       this.tamingTier = tamingTier;
-      this.berriesEatenInTier = berriesEatenInTier;
+      this.foodEatenInTier = berriesEatenInTier;
       this.name = name;
       this.acquiredSkills = acquiredSkills;
       this.skillLearningArray = skillLearningArray;
@@ -76,7 +74,7 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
    const acquiredSkills = new Array<TamingSkill>();
    for (let i = 0; i < numAcquiredSkills; i++) {
       const skillID = reader.readNumber() as TamingSkillID;
-      const skill = getTamingSkillByID(skillID);
+      const skill = getTamingSkill(skillID);
       acquiredSkills.push(skill);
    }
 
@@ -84,7 +82,7 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
    const skillLearningArray = new Array<TamingSkillLearning>();
    for (let i = 0; i < numSkillLearnings; i++) {
       const skillID = reader.readNumber() as TamingSkillID;
-      const skill = getTamingSkillByID(skillID);
+      const skill = getTamingSkill(skillID);
 
       const requirementProgressArray = new Array<number>();
       for (let i = 0; i < skill.requirements.length; i++) {
@@ -112,7 +110,7 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
 const getTamingTierRenderPartOpacity = (): number => {
    const heldItem = getPlayerSelectedItem();
    if (heldItem !== null && (heldItem.type === ItemType.animalStaff || heldItem.type === ItemType.tamingAlmanac)) {
-      return 1;
+      return 0.55;
    }
    return 0;
 }
@@ -148,7 +146,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.taming, 
    const tamingComponentParams = entityConfig.serverComponents[ServerComponentType.taming];
    return {
       tamingTier: tamingComponentParams.tamingTier,
-      berriesEatenInTier: tamingComponentParams.berriesEatenInTier,
+      foodEatenInTier: tamingComponentParams.berriesEatenInTier,
       name: tamingComponentParams.name,
       acquiredSkills: tamingComponentParams.acquiredSkills,
       skillLearningArray: tamingComponentParams.skillLearningArray,
@@ -212,7 +210,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    tamingComponent.tamingTier = tamingTier;
    
-   tamingComponent.berriesEatenInTier = reader.readNumber();
+   tamingComponent.foodEatenInTier = reader.readNumber();
    tamingComponent.name = reader.readString();
 
    const newNumAcquiredSkills = reader.readNumber();
@@ -221,7 +219,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
       } else {
          const skillID = reader.readNumber() as TamingSkillID;
-         const skill = getTamingSkillByID(skillID);
+         const skill = getTamingSkill(skillID);
          tamingComponent.acquiredSkills.push(skill);
       }
    }
@@ -230,7 +228,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const numSkillLearnings = reader.readNumber();
    for (let i = 0; i < numSkillLearnings; i++) {
       const skillID = reader.readNumber() as TamingSkillID;
-      const skill = getTamingSkillByID(skillID);
+      const skill = getTamingSkill(skillID);
 
       const existingSkillLearning = getTamingSkillLearning(tamingComponent, skillID);
       if (existingSkillLearning !== null) {
