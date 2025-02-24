@@ -1,11 +1,15 @@
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randInt } from "battletribes-shared/utils";
 import { entityHasReachedPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import Layer from "../Layer";
-import { getEntityLayer } from "../world";
+import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+
+const enum Vars {
+   POSITION_RECORD_INTERVAL = Settings.TPS
+}
 
 export type WanderAITileIsValidCallback = (entity: Entity, layer: Layer, x: number, y: number) => boolean;
 
@@ -15,8 +19,11 @@ export default class WanderAI {
    private readonly wanderRate: number;
 
    // If these are set to -1, the wander AI has no current target position
-   targetPositionX = -1;
-   targetPositionY = -1;
+   public targetPositionX = -1;
+   public targetPositionY = -1;
+
+   private lastRecordedPositionX = -1;
+   private lastRecordedPositionY = -1;
    
    private readonly positionIsValidCallback: WanderAITileIsValidCallback;
 
@@ -33,6 +40,21 @@ export default class WanderAI {
 
    public update(entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      
+      if (getEntityAgeTicks(entity) % Vars.POSITION_RECORD_INTERVAL === 0) {
+         // If the entity hasn't moved enough since the last position check-in, clear the target as they are most likely stuck
+         if (this.targetPositionX !== -1) {
+            const dx = transformComponent.position.x - this.lastRecordedPositionX;
+            const dy = transformComponent.position.y - this.lastRecordedPositionY;
+            const positionDelta = Math.sqrt(dx * dx + dy * dy);
+            if (positionDelta < 10) {
+               this.targetPositionX = -1;
+            }
+         }
+         
+         this.lastRecordedPositionX = transformComponent.position.x;
+         this.lastRecordedPositionY = transformComponent.position.y;
+      }
       
       if (this.targetPositionX !== -1) {
          if (entityHasReachedPosition(entity, this.targetPositionX, this.targetPositionY)) {
@@ -52,8 +74,10 @@ export default class WanderAI {
          let attempts = 0;
          let x: number;
          let y: number;
+         let isValid = false;
+
          // @Speed: Worst-case this iterates 2500 (!!) times!!!
-         do {
+         while (attempts++ < 50) {
             let attempts = 0;
             let tileX: number;
             let tileY: number;
@@ -64,10 +88,17 @@ export default class WanderAI {
          
             x = (tileX + Math.random()) * Settings.TILE_SIZE;
             y = (tileY + Math.random()) * Settings.TILE_SIZE;
-         } while (++attempts <= 50 && !this.positionIsValidCallback(entity, layer, x, y));
 
-         this.targetPositionX = x;
-         this.targetPositionY = y;
+            if (this.positionIsValidCallback(entity, layer, x, y)) {
+               isValid = true;
+               break;
+            }
+         }
+
+         if (isValid) {
+            this.targetPositionX = x!;
+            this.targetPositionY = y!;
+         }
       }
    }
 }

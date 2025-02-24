@@ -20,7 +20,6 @@ import { createBoulderConfig } from "./entities/resources/boulder";
 import { createCactusConfig } from "./entities/resources/cactus";
 import { createYetiConfig } from "./entities/mobs/yeti";
 import { createIceSpikesConfig } from "./entities/resources/ice-spikes";
-import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { createKrumblidConfig } from "./entities/mobs/krumblid";
 import { createFrozenYetiConfig } from "./entities/mobs/frozen-yeti";
 import { createFishConfig } from "./entities/mobs/fish";
@@ -37,6 +36,7 @@ import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
+import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -156,7 +156,9 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
 }
 
 const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y: number): void => {
-   let config: EntityConfig<ServerComponentType.transform>;
+   // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
+
+   let config: EntityConfig<ServerComponentType.transform> | null;
    switch (entityType) {
       case EntityType.cow: config = createCowConfig(); break;
       case EntityType.tree: config = createTreeConfig(); break;
@@ -164,7 +166,17 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.tombstone: config = createTombstoneConfig(); break;
       case EntityType.boulder: config = createBoulderConfig(); break;
       case EntityType.cactus: config = createCactusConfig(); break;
-      case EntityType.yeti: config = createYetiConfig(); break;
+      case EntityType.yeti: {
+         const tileX = Math.floor(x / Settings.TILE_SIZE);
+         const tileY = Math.floor(y / Settings.TILE_SIZE);
+         const territory = generateYetiTerritoryTiles(tileX, tileY);
+         if (yetiTerritoryIsValid(territory)) {
+            config = createYetiConfig(territory);
+         } else {
+            config = null;
+         }
+         break;
+      }
       case EntityType.iceSpikes: config = createIceSpikesConfig(0); break;
       // case EntityType.slimewisp: config = createSlimewispConfig(); break;
       case EntityType.krumblid: config = createKrumblidConfig(); break;
@@ -175,8 +187,9 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
       case EntityType.glurb: config = createGlurbConfig(); break;
    }
-   if (isNaN(x)) {
-      throw new Error();
+
+   if (config === null) {
+      return;
    }
    
    const transformComponent = config.components[ServerComponentType.transform];
@@ -285,8 +298,8 @@ export function spawnPositionIsValid(spawnInfo: EntitySpawnInfo, positionX: numb
 const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void => {
    // Pick a random tile to spawn at
    // @Speed: Instead of randomly picking a tile until it matches the spawnable, pick a random tile from the spawnable tiles
-   const tileX = randInt(0, Settings.BOARD_SIZE * Settings.CHUNK_SIZE - 1);
-   const tileY = randInt(0, Settings.BOARD_SIZE * Settings.CHUNK_SIZE - 1);
+   const tileX = randInt(0, Settings.BOARD_DIMENSIONS - 1);
+   const tileY = randInt(0, Settings.BOARD_DIMENSIONS - 1);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
 
    // If the tile is a valid tile for the spawn info, continue with the spawn event

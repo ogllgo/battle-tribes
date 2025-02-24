@@ -6,7 +6,6 @@ import { TileType } from "../../shared/src/tiles";
 import { distance } from "../../shared/src/utils";
 import { getEntitiesInRange } from "./ai-shared";
 import { TransformComponentArray } from "./components/TransformComponent";
-import { yetiSpawnPositionIsValid } from "./components/YetiComponent";
 import { entityIsTribesman } from "./entities/tribes/tribe-member";
 import Layer from "./Layer";
 import { surfaceLayer, undergroundLayer } from "./layers";
@@ -140,10 +139,7 @@ export const SPAWN_INFOS = [
       maxPackSize: 1,
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      usesSpawnDistribution: false,
-      customSpawnIsValidFunc(_spawnInfo, spawnOriginX, spawnOriginY) {
-         return yetiSpawnPositionIsValid(spawnOriginX, spawnOriginY);
-      }
+      usesSpawnDistribution: false
    },
    {
       entityType: EntityType.iceSpikes,

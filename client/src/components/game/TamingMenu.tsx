@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from "react";
 import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
 import { entityExists, getEntityType } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
-import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
+import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battletribes-shared/taming";
 import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import Menu from "./menus/Menu";
 import { keyIsPressed } from "../../keyboard-input";
@@ -11,6 +11,7 @@ import { isDev } from "../../utils";
 import TamingSkillTooltip from "./TamingSkillTooltip";
 import { getEntityTamingSpec } from "../../taming-specs";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../client-item-info";
+import { assert } from "../../../../shared/src/utils";
 
 const enum Vars {
    SKILL_TRANSFORM_SCALE_FACTOR = 0.5
@@ -22,8 +23,8 @@ interface TierSeparatorProps {
 
 interface SkillConnectorProps {
    readonly tamingComponent: TamingComponent;
-   readonly fromSkill: TamingSkill;
-   readonly toSkill: TamingSkill;
+   readonly fromSkillNode: TamingSkillNode;
+   readonly toSkillNode: TamingSkillNode;
 }
 
 export const TAMING_TIER_Y_POSITIONS: Record<TamingTier, number> = {
@@ -76,16 +77,16 @@ const TierSeparator = (props: TierSeparatorProps) => {
 
 const SkillConnector = (props: SkillConnectorProps) => {
    // Position it at the start skill
-   const x = props.fromSkill.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem";
-   const y = props.fromSkill.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem";
+   const x = props.fromSkillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem";
+   const y = props.fromSkillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem";
 
-   const offsetX = props.toSkill.x - props.fromSkill.x;
-   const offsetY = props.toSkill.y - props.fromSkill.y;
+   const offsetX = props.toSkillNode.x - props.fromSkillNode.x;
+   const offsetY = props.toSkillNode.y - props.fromSkillNode.y;
    const offsetDirection = Math.atan2(offsetY, offsetX);
    const offsetMagnitude = Math.sqrt(offsetX * offsetX + offsetY * offsetY) * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem";
    
    let className = "skill-connector";
-   if (hasTamingSkill(props.tamingComponent, props.toSkill.id)) {
+   if (hasTamingSkill(props.tamingComponent, props.toSkillNode.skill.id)) {
       className += " confirmed";
    }
    
@@ -166,6 +167,25 @@ const TamingMenu = () => {
       }
       default: throw new Error();
    }
+
+   let minX = 0;
+   let maxX = 0;
+   let maxY = 0;
+   for (const skillNode of tamingSpec.skillNodes) {
+      if (skillNode.x < minX) {
+         minX = skillNode.x;
+      } else if (skillNode.x > maxX) {
+         maxX = skillNode.x;
+      }
+      if (skillNode.y > maxY) {
+         maxY = skillNode.y;
+      }
+   }
+   let skillMapWidth = maxX - minX;
+   let skillMapHeight = maxY;
+   // Pad it
+   skillMapWidth += 18;
+   skillMapHeight += 8;
    
    return <>
       <Menu id="taming-menu" className="menu">
@@ -203,9 +223,9 @@ const TamingMenu = () => {
             </div>
          </div>
 
-         <div className="skill-map-container">
-            {tamingSpec.skills.map((skillID, i) => {
-               const skill = getTamingSkill(skillID);
+         <div className="skill-map-container" style={{width: skillMapWidth * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", height: skillMapHeight * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem"}}>
+            {tamingSpec.skillNodes.map((skillNode, i) => {
+               const skill = skillNode.skill;
                
                let className = "skill";
                if (skill.requiredTamingTier > tamingComponent.tamingTier) {
@@ -215,11 +235,11 @@ const TamingMenu = () => {
                   className += " acquired";
                }
 
-               const ending = SKILL_ICON_NAMES[skillID];
+               const ending = SKILL_ICON_NAMES[skill.id];
                const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].internalName;
                const iconSrc = require("../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
 
-               return <div key={i} className={className} style={{top: skill.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skill.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
+               return <div key={i} className={className} style={{top: skillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
                   <div>
                      <div className="skill-icon-wrapper" onMouseDown={() => onSkillClick(skill)} onMouseOver={() => onSkillMouseOver(skill)} onMouseOut={() => onSkillMouseOut()}>
                         <div className="skill-bg" />
@@ -229,10 +249,19 @@ const TamingMenu = () => {
                   <p>{skill.name}</p>
                </div>;
             })}
-            {tamingSpec.skills.map((skillID, i) => {
-               const skill = getTamingSkill(skillID);
+            {tamingSpec.skillNodes.map((skillNode, i) => {
+               const skill = skillNode.skill;
                if (skill.parent !== null && tamingComponent.tamingTier >= skill.requiredTamingTier) {
-                  return <SkillConnector key={i} tamingComponent={tamingComponent} fromSkill={getTamingSkill(skill.parent)} toSkill={skill} />
+                  let parentSkillNode: TamingSkillNode | undefined;
+                  for (const currentSkillNode of tamingSpec.skillNodes) {
+                     if (currentSkillNode.skill.id === skill.parent) {
+                        parentSkillNode = currentSkillNode;
+                        break;
+                     }
+                  }
+                  assert(typeof parentSkillNode !== "undefined");
+                  
+                  return <SkillConnector key={i} tamingComponent={tamingComponent} fromSkillNode={parentSkillNode} toSkillNode={skillNode} />
                } else {
                   return null;
                }

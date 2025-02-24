@@ -21,7 +21,7 @@ import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesCo
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { TamingComponent } from "../../components/TamingComponent";
-import { TamingSkillID } from "../../../../shared/src/taming";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 
@@ -46,7 +46,38 @@ type ComponentTypes = ServerComponentType.transform
 
 registerEntityTamingSpec(EntityType.cow, {
    maxTamingTier: 3,
-   skills: [TamingSkillID.follow, TamingSkillID.riding, TamingSkillID.move, TamingSkillID.carry, TamingSkillID.attack, TamingSkillID.shatteredWill],
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.riding),
+         x: -18,
+         y: 30
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.move),
+         x: 18,
+         y: 30
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.carry),
+         x: -30,
+         y: 50
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 6,
+         y: 50
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.shatteredWill),
+         x: 30,
+         y: 50
+      }
+   ],
    foodItemType: ItemType.berry,
    tierFoodRequirements: {
       0: 0,

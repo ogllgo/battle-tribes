@@ -25,7 +25,7 @@ import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
 import { createItemsOverEntity } from "../entities/item-entity";
-import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { TamingComponentArray } from "./TamingComponent";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -91,7 +91,7 @@ const tileIsValid = (territoryTiles: ReadonlyArray<TileIndex>, tileIndex: TileIn
    return biome === Biome.tundra && !tileBelongsToYetiTerritory(tileX, tileY) && !territoryTiles.includes(tileIndex);
 }
 
-const generateYetiTerritoryTiles = (originTileX: number, originTileY: number): ReadonlyArray<TileIndex> => {
+export function generateYetiTerritoryTiles(originTileX: number, originTileY: number): ReadonlyArray<TileIndex> {
    const territoryTiles = new Array<TileIndex>();
    // Tiles to expand the territory from
    const spreadTiles = new Array<TileIndex>();
@@ -153,18 +153,8 @@ const generateYetiTerritoryTiles = (originTileX: number, originTileY: number): R
    return territoryTiles;
 }
 
-const registerYetiTerritory = (yeti: Entity, territory: ReadonlyArray<TileIndex>): void => {
-   for (const tileIndex of territory) {
-      yetiTerritoryTiles[tileIndex] = yeti;
-   }
-}
-
-export function yetiSpawnPositionIsValid(positionX: number, positionY: number): boolean {
-   const originTileX = Math.floor(positionX / Settings.TILE_SIZE);
-   const originTileY = Math.floor(positionY / Settings.TILE_SIZE);
-
-   const territoryTiles = generateYetiTerritoryTiles(originTileX, originTileY);
-   return territoryTiles.length >= MIN_TERRITORY_SIZE;
+export function yetiTerritoryIsValid(territory: ReadonlyArray<TileIndex>): boolean {
+   return territory.length >= MIN_TERRITORY_SIZE;
 }
 
 const removeYetiTerritory = (tileIndex: TileIndex): void => {
@@ -172,14 +162,10 @@ const removeYetiTerritory = (tileIndex: TileIndex): void => {
 }
 
 function onJoin(yeti: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(yeti);
-   
-   const tileIndex = getEntityTile(transformComponent);
-   const tileX = getTileX(tileIndex);
-   const tileY = getTileY(tileIndex);
-   
-   const territory = generateYetiTerritoryTiles(tileX, tileY);
-   registerYetiTerritory(yeti, territory);
+   const yetiComponent = YetiComponentArray.getComponent(yeti);
+   for (const tileIndex of yetiComponent.territory) {
+      yetiTerritoryTiles[tileIndex] = yeti;
+   }
 }
 
 const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): void => {
@@ -355,7 +341,7 @@ function onTick(yeti: Entity): void {
    const chaseTarget = getYetiTarget(yeti, aiHelperComponent.visibleEntities);
    if (chaseTarget !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(chaseTarget);
-      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, 375, Vars.TURN_SPEED);
+      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, 700, Vars.TURN_SPEED);
       return;
    }
 
@@ -383,7 +369,7 @@ function onTick(yeti: Entity): void {
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
          
-         moveEntityToPosition(yeti, foodTransformComponent.position.x, foodTransformComponent.position.y, 100, Vars.TURN_SPEED);
+         moveEntityToPosition(yeti, foodTransformComponent.position.x, foodTransformComponent.position.y, 300, Vars.TURN_SPEED);
 
          if (entitiesAreColliding(yeti, closestFoodItem) !== CollisionVars.NO_COLLISION) {
             healEntity(yeti, 3, yeti);
@@ -400,7 +386,13 @@ function onTick(yeti: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(yeti);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(yeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, 1.5 * Math.PI);
+      const tileX = Math.floor(wanderAI.targetPositionX / Settings.TILE_SIZE);
+      const tileY = Math.floor(wanderAI.targetPositionY / Settings.TILE_SIZE);
+      if (getEntityLayer(yeti).getTileXYBiome(tileX, tileY) !== Biome.tundra) {
+         throw new Error();
+      }
+      
+      moveEntityToPosition(yeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 300, 1.5 * Math.PI);
    } else {
       const physicsComponent = PhysicsComponentArray.getComponent(yeti);
       stopEntity(physicsComponent);

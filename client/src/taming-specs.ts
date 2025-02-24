@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "../../shared/src/entities";
 import { ItemType } from "../../shared/src/items/items";
 import { PacketReader } from "../../shared/src/packets";
-import { EntityTamingSpec, TamingSkillID, TamingTier } from "../../shared/src/taming";
+import { EntityTamingSpec, getTamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "../../shared/src/taming";
 import { assert } from "../../shared/src/utils";
 import { getEntityType } from "./world";
 
@@ -18,10 +18,16 @@ const readTamingSpecFromData = (reader: PacketReader): EntityTamingSpec => {
    const maxTamingTier = reader.readNumber() as TamingTier;
    
    const numSkills = reader.readNumber();
-   const skills = new Array<TamingSkillID>();
+   const skillNodes = new Array<TamingSkillNode>();
    for (let i = 0; i < numSkills; i++) {
       const skillID = reader.readNumber() as TamingSkillID;
-      skills.push(skillID);
+      const x = reader.readNumber();
+      const y = reader.readNumber();
+      skillNodes.push({
+         skill: getTamingSkill(skillID),
+         x: x,
+         y: y
+      });
    }
 
    const foodItemType = reader.readNumber() as ItemType;
@@ -34,7 +40,7 @@ const readTamingSpecFromData = (reader: PacketReader): EntityTamingSpec => {
 
    return {
       maxTamingTier: maxTamingTier,
-      skills: skills,
+      skillNodes: skillNodes,
       foodItemType: foodItemType,
       tierFoodRequirements: tierFoodRequirements
    };

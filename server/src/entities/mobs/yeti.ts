@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType, Entity } from "battletribes-shared/entities";
-import { getTileIndexIncludingEdges, Point } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, Point, TileIndex } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { HealthComponent } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
@@ -17,7 +17,7 @@ import { Biome } from "battletribes-shared/biomes";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { TamingComponent } from "../../components/TamingComponent";
-import { TamingSkillID } from "../../../../shared/src/taming";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
@@ -42,7 +42,33 @@ export enum SnowThrowStage {
 
 registerEntityTamingSpec(EntityType.yeti, {
    maxTamingTier: 3,
-   skills: [TamingSkillID.follow, TamingSkillID.riding, TamingSkillID.move, TamingSkillID.carry, TamingSkillID.attack],
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.riding),
+         x: -18,
+         y: 30
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.move),
+         x: 18,
+         y: 30
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.carry),
+         x: -18,
+         y: 50
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 18,
+         y: 50
+      }
+   ],
    foodItemType: ItemType.raw_beef,
    tierFoodRequirements: {
       0: 0,
@@ -58,10 +84,10 @@ function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: num
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
 
    const yetiComponent = YetiComponentArray.getComponent(entity);
-   return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.tundra && yetiComponent.territory.includes(tileIndex);
+   return !layer.positionHasWall(x, y) && layer.getTileBiome(tileIndex) === Biome.tundra && yetiComponent.territory.includes(tileIndex);
 }
 
-export function createYetiConfig(): EntityConfig<ComponentTypes> {
+export function createYetiConfig(territory: ReadonlyArray<TileIndex>): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
    const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
@@ -83,7 +109,7 @@ export function createYetiConfig(): EntityConfig<ComponentTypes> {
    const tamingComponent = new TamingComponent();
    
    // @Incomplete?
-   const yetiComponent = new YetiComponent([]);
+   const yetiComponent = new YetiComponent(territory);
    
    return {
       entityType: EntityType.yeti,

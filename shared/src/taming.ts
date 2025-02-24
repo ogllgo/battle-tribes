@@ -24,13 +24,17 @@ export interface TamingSkill {
    readonly requirements: ReadonlyArray<TamingSkillRequirement>;
    readonly requiredTamingTier: number;
    readonly parent: TamingSkillID | null;
+}
+
+export interface TamingSkillNode {
+   readonly skill: TamingSkill;
    readonly x: number;
    readonly y: number;
 }
 
 export interface EntityTamingSpec<TamingTiers extends TamingTier = TamingTier> {
    readonly maxTamingTier: TamingTier;
-   readonly skills: ReadonlyArray<TamingSkillID>;
+   readonly skillNodes: ReadonlyArray<TamingSkillNode>;
    readonly foodItemType: ItemType;
    readonly tierFoodRequirements: Record<TamingTiers, number>;
 }
@@ -48,9 +52,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 1,
-      parent: null,
-      x: 0,
-      y: 10
+      parent: null
    },
    [TamingSkillID.riding]: {
       id: TamingSkillID.riding,
@@ -64,9 +66,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 2,
-      parent: TamingSkillID.follow,
-      x: -18,
-      y: 30
+      parent: TamingSkillID.follow
    },
    [TamingSkillID.move]: {
       id: TamingSkillID.move,
@@ -80,9 +80,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 2,
-      parent: TamingSkillID.follow,
-      x: 18,
-      y: 30
+      parent: TamingSkillID.follow
    },
    [TamingSkillID.carry]: {
       id: TamingSkillID.carry,
@@ -96,9 +94,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 3,
-      parent: TamingSkillID.riding,
-      x: -30,
-      y: 50
+      parent: TamingSkillID.riding
    },
    [TamingSkillID.attack]: {
       id: TamingSkillID.attack,
@@ -112,9 +108,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 3,
-      parent: TamingSkillID.move,
-      x: 6,
-      y: 50
+      parent: TamingSkillID.move
    },
    [TamingSkillID.shatteredWill]: {
       id: TamingSkillID.shatteredWill,
@@ -128,9 +122,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
          }
       ],
       requiredTamingTier: 3,
-      parent: TamingSkillID.move,
-      x: 30,
-      y: 50
+      parent: TamingSkillID.move
    }
 };
 

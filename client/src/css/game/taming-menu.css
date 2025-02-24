@@ -1,9 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
 
 #taming-menu {
-   /* @Hack */
-   width: 40rem;
-   height: 41.5rem;
    position: absolute;
    top: 50%;
    left: 50%;

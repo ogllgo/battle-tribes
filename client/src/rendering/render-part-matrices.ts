@@ -1,5 +1,5 @@
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../EntityRenderInfo";
-import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace, overrideWithRotationMatrix } from "./matrices";
+import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
@@ -34,35 +34,21 @@ const rotateMatrix = (matrix: Matrix3x3, rotation: number): void => {
    const sin = Math.sin(rotation);
    const cos = Math.cos(rotation);
 
-   const a00 = cos;
-   const a01 = -sin;
-   const a02 = 0;
-   const a10 = sin;
-   const a11 = cos;
-   const a12 = 0;
-   const a20 = 0;
-   const a21 = 0;
-   const a22 = 1;
+   const negSin = -sin;
 
    const b00 = matrix[0];
    const b01 = matrix[1];
-   const b02 = matrix[2];
    const b10 = matrix[3];
    const b11 = matrix[4];
-   const b12 = matrix[5];
    const b20 = matrix[6];
    const b21 = matrix[7];
-   const b22 = matrix[8];
 
-   matrix[0] = b00 * a00 + b01 * a10 + b02 * a20;
-   matrix[1] = b00 * a01 + b01 * a11 + b02 * a21;
-   matrix[2] = b00 * a02 + b01 * a12 + b02 * a22;
-   matrix[3] = b10 * a00 + b11 * a10 + b12 * a20;
-   matrix[4] = b10 * a01 + b11 * a11 + b12 * a21;
-   matrix[5] = b10 * a02 + b11 * a12 + b12 * a22;
-   matrix[6] = b20 * a00 + b21 * a10 + b22 * a20;
-   matrix[7] = b20 * a01 + b21 * a11 + b22 * a21;
-   matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
+   matrix[0] = b00 * cos + b01 * sin;
+   matrix[1] = b00 * negSin + b01 * cos;
+   matrix[3] = b10 * cos + b11 * sin;
+   matrix[4] = b10 * negSin + b11 * cos;
+   matrix[6] = b20 * cos + b21 * sin;
+   matrix[7] = b20 * negSin + b21 * cos;
 }
 
 // @Cleanup: This should probably be a function stored on the render part
@@ -83,67 +69,25 @@ export function getMatrixPosition(matrix: Matrix3x3): Point {
 }
 
 const scaleMatrix = (matrix: Matrix3x3, sx: number, sy: number): void => {
-   const a00 = sx;
-   const a01 = 0;
-   const a02 = 0;
-   const a10 = 0;
-   const a11 = sy;
-   const a12 = 0;
-   const a20 = 0;
-   const a21 = 0;
-   const a22 = 1;
-
-   const b00 = matrix[0];
-   const b01 = matrix[1];
-   const b02 = matrix[2];
-   const b10 = matrix[3];
-   const b11 = matrix[4];
-   const b12 = matrix[5];
-   const b20 = matrix[6];
-   const b21 = matrix[7];
-   const b22 = matrix[8];
-
-   matrix[0] = b00 * a00 + b01 * a10 + b02 * a20;
-   matrix[1] = b00 * a01 + b01 * a11 + b02 * a21;
-   matrix[2] = b00 * a02 + b01 * a12 + b02 * a22;
-   matrix[3] = b10 * a00 + b11 * a10 + b12 * a20;
-   matrix[4] = b10 * a01 + b11 * a11 + b12 * a21;
-   matrix[5] = b10 * a02 + b11 * a12 + b12 * a22;
-   matrix[6] = b20 * a00 + b21 * a10 + b22 * a20;
-   matrix[7] = b20 * a01 + b21 * a11 + b22 * a21;
-   matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
+   matrix[0] *= sx;
+   matrix[1] *= sy;
+   matrix[3] *= sx;
+   matrix[4] *= sy;
+   matrix[6] *= sx;
+   matrix[7] *= sy;
 }
 
 export function translateMatrix(matrix: Matrix3x3, tx: number, ty: number): void {
-   const a00 = 1;
-   const a01 = 0;
-   const a02 = 0;
-   const a10 = 0;
-   const a11 = 1;
-   const a12 = 0;
-   const a20 = tx;
-   const a21 = ty;
-   const a22 = 1;
-
-   const b00 = matrix[0];
-   const b01 = matrix[1];
    const b02 = matrix[2];
-   const b10 = matrix[3];
-   const b11 = matrix[4];
    const b12 = matrix[5];
-   const b20 = matrix[6];
-   const b21 = matrix[7];
    const b22 = matrix[8];
 
-   matrix[0] = b00 * a00 + b01 * a10 + b02 * a20;
-   matrix[1] = b00 * a01 + b01 * a11 + b02 * a21;
-   matrix[2] = b00 * a02 + b01 * a12 + b02 * a22;
-   matrix[3] = b10 * a00 + b11 * a10 + b12 * a20;
-   matrix[4] = b10 * a01 + b11 * a11 + b12 * a21;
-   matrix[5] = b10 * a02 + b11 * a12 + b12 * a22;
-   matrix[6] = b20 * a00 + b21 * a10 + b22 * a20;
-   matrix[7] = b20 * a01 + b21 * a11 + b22 * a21;
-   matrix[8] = b20 * a02 + b21 * a12 + b22 * a22;
+   matrix[0] += b02 * tx;
+   matrix[1] += b02 * ty;
+   matrix[3] += b12 * tx;
+   matrix[4] += b12 * ty;
+   matrix[6] += b22 * tx;
+   matrix[7] += b22 * ty;
 }
 
 const overrideMatrix = (sourceMatrix: Readonly<Matrix3x3>, targetMatrix: Matrix3x3): void => {
@@ -156,6 +100,21 @@ const overrideMatrix = (sourceMatrix: Readonly<Matrix3x3>, targetMatrix: Matrix3
    targetMatrix[6] = sourceMatrix[6];
    targetMatrix[7] = sourceMatrix[7];
    targetMatrix[8] = sourceMatrix[8];
+}
+
+const overrideWithRotationMatrix = (matrix: Matrix3x3, rotation: number): void => {
+   const sin = Math.sin(rotation);
+   const cos = Math.cos(rotation);
+
+   matrix[0] = cos;
+   matrix[1] = -sin;
+   matrix[2] = 0;
+   matrix[3] = sin;
+   matrix[4] = cos;
+   matrix[5] = 0;
+   matrix[6] = 0;
+   matrix[7] = 0;
+   matrix[8] = 1;
 }
 
 export function registerDirtyRenderInfo(renderInfo: EntityRenderInfo): void {
@@ -334,6 +293,7 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
       }
       
       matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
+      console.log(thing.modelMatrix);
    }
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {

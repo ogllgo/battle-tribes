@@ -24,7 +24,7 @@ export function getTamingSpec(entity: Entity): EntityTamingSpec {
 export function getTamingSpecDataLength(tamingSpec: EntityTamingSpec): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * tamingSpec.skills.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * tamingSpec.skillNodes.length;
 
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
@@ -36,9 +36,11 @@ export function getTamingSpecDataLength(tamingSpec: EntityTamingSpec): number {
 export function addTamingSpecToData(packet: Packet, tamingSpec: EntityTamingSpec): void {
    packet.addNumber(tamingSpec.maxTamingTier);
    
-   packet.addNumber(tamingSpec.skills.length);
-   for (const skillID of tamingSpec.skills) {
-      packet.addNumber(skillID);
+   packet.addNumber(tamingSpec.skillNodes.length);
+   for (const skillNode of tamingSpec.skillNodes) {
+      packet.addNumber(skillNode.skill.id);
+      packet.addNumber(skillNode.x);
+      packet.addNumber(skillNode.y);
    }
 
    packet.addNumber(tamingSpec.foodItemType);
