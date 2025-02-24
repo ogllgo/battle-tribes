@@ -14,6 +14,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
 import { HitData } from "../../../../shared/src/client-server-types";
+import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
@@ -67,15 +68,29 @@ function createParamsFromData(reader: PacketReader): YetiComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
-      new TexturedRenderPart(
-         null,
-         1,
-         0,
-         getTextureArrayIndex("entities/yeti/yeti.png")
-      )
-   );
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform, never>): RenderParts {
+   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+
+   for (const hitbox of transformComponentParams.hitboxes) {
+      if (hitbox.flags.includes(HitboxFlag.YETI_BODY)) {
+         const bodyRenderPart = new TexturedRenderPart(
+            hitbox,
+            1,
+            0,
+            getTextureArrayIndex("entities/yeti/yeti.png")
+         );
+         renderInfo.attachRenderPart(bodyRenderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.YETI_HEAD)) {
+         const headRenderPart = new TexturedRenderPart(
+            hitbox,
+            1,
+            0,
+            getTextureArrayIndex("entities/yeti/yeti-head.png")
+         );
+         headRenderPart.addTag("tamingComponent:head");
+         renderInfo.attachRenderPart(headRenderPart);
+      }
+   }
 
    const pawRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
@@ -105,7 +120,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.yeti, ne
 }
 
 function getMaxRenderParts(): number {
-   return 3;
+   return 4;
 }
 
 function onTick(entity: Entity): void {

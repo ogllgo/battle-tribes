@@ -680,12 +680,12 @@ export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient
       return;
    }
 
-   const cowComponent = CowComponentArray.getComponent(entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    // Toggle the follow target
-   if (!entityExists(cowComponent.followTarget)) {
-      cowComponent.followTarget = playerClient.instance;
+   if (!entityExists(tamingComponent.followTarget)) {
+      tamingComponent.followTarget = playerClient.instance;
    } else {
-      cowComponent.followTarget = 0;
+      tamingComponent.followTarget = 0;
    }
 }
 

@@ -21,14 +21,12 @@ import { RenderPart } from "../../render-parts/render-parts";
 export interface CowComponentParams {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
-   readonly isFollowing: boolean;
    readonly isAttacking: boolean;
    readonly isRamming: boolean;
 }
 
 interface RenderParts {
    readonly headRenderPart: RenderPart;
-   readonly followHalo: RenderPart | null;
    readonly attackHalo: RenderPart | null;
 }
 
@@ -36,12 +34,10 @@ export interface CowComponent {
    readonly species: CowSpecies;
    grazeProgress: number;
 
-   isFollowing: boolean;
    isAttacking: boolean;
    isRamming: boolean;
    
    readonly headRenderPart: RenderPart;
-   followHalo: RenderPart | null;
    attackHalo: RenderPart | null;
 }
 
@@ -60,8 +56,6 @@ export const CowComponentArray = new ServerComponentArray<CowComponent, CowCompo
 function createParamsFromData(reader: PacketReader): CowComponentParams {
    const species = reader.readNumber();
    const grazeProgress = reader.readNumber();
-   const isFollowing = reader.readBoolean();
-   reader.padOffset(3);
    const isAttacking = reader.readBoolean();
    reader.padOffset(3);
    const isRamming = reader.readBoolean();
@@ -70,21 +64,9 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    return {
       species: species,
       grazeProgress: grazeProgress,
-      isFollowing: isFollowing,
       isAttacking: isAttacking,
       isRamming: isRamming
    };
-}
-
-const createFollowHalo = (headRenderPart: RenderPart): RenderPart => {
-   const followHalo = new TexturedRenderPart(
-      headRenderPart,
-      2,
-      0,
-      getTextureArrayIndex("entities/miscellaneous/follow-halo.png")
-   );
-   followHalo.inheritParentRotation = false;
-   return followHalo;
 }
 
 const createAttackHalo = (headRenderPart: RenderPart): RenderPart => {
@@ -122,17 +104,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
             0,
             getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
          );
+         headRenderPart.addTag("tamingComponent:head");
          renderInfo.attachRenderPart(headRenderPart);
       }
-   }
-
-   // Follow halo
-   let followHalo: RenderPart | null;
-   if (cowComponentParams.isFollowing) {
-      followHalo = createFollowHalo(headRenderPart);
-      renderInfo.attachRenderPart(followHalo);
-   } else {
-      followHalo = null;
    }
 
    // Attack halo
@@ -146,7 +120,6 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
    return {
       headRenderPart: headRenderPart,
-      followHalo: followHalo,
       attackHalo: attackHalo
    };
 }
@@ -157,18 +130,15 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, nev
    return {
       species: cowComponentParams.species,
       grazeProgress: cowComponentParams.grazeProgress,
-      isFollowing: cowComponentParams.isFollowing,
       isAttacking: cowComponentParams.isAttacking,
       isRamming: cowComponentParams.isRamming,
       headRenderPart: renderParts.headRenderPart,
-      followHalo: renderParts.followHalo,
       attackHalo: renderParts.attackHalo
    };
 }
 
 function getMaxRenderParts(): number {
-   // @Temporary: one extra for the follow halo
-   return 3;
+   return 2;
 }
 
 function onTick(entity: Entity): void {
@@ -187,10 +157,6 @@ function onTick(entity: Entity): void {
       playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, true);
    }
 
-   // @Bug: Will look jittery for low TPS values.
-   if (cowComponent.followHalo !== null) {
-      cowComponent.followHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
-   }
    // @Copynpaste
    if (cowComponent.attackHalo !== null) {
       cowComponent.attackHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
@@ -198,7 +164,7 @@ function onTick(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -220,21 +186,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
    cowComponent.grazeProgress = grazeProgress;
-
-   cowComponent.isFollowing = reader.readBoolean();
-   reader.padOffset(3);
-
-   if (cowComponent.isFollowing) {
-      if (cowComponent.followHalo === null) {
-         const renderInfo = getEntityRenderInfo(entity);
-         cowComponent.followHalo = createFollowHalo(cowComponent.headRenderPart);
-         renderInfo.attachRenderPart(cowComponent.followHalo);
-      }
-   } else if (cowComponent.followHalo !== null) {
-      const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.removeRenderPart(cowComponent.followHalo);
-      cowComponent.followHalo = null;
-   }
 
    cowComponent.isAttacking = reader.readBoolean();
    reader.padOffset(3);

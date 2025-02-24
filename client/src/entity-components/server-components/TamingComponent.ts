@@ -2,10 +2,13 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
+import { Settings } from "../../../../shared/src/settings";
 import { getTamingSkill, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { UtilVars } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { getEntityRenderInfo } from "../../world";
@@ -25,29 +28,25 @@ export interface TamingComponentParams {
    readonly name: string;
    readonly acquiredSkills: Array<TamingSkill>;
    readonly skillLearningArray: Array<TamingSkillLearning>;
+   readonly isFollowing: boolean;
 }
 
 interface RenderParts {
    readonly tamingTierRenderPart: TexturedRenderPart | null;
+   readonly followHalo: RenderPart | null;
 }
 
-export class TamingComponent {
-   public tamingTier: number;
-   public foodEatenInTier: number;
-   public name: string;
-   public readonly acquiredSkills: Array<TamingSkill>;
-   public readonly skillLearningArray: Array<TamingSkillLearning>;
+export interface TamingComponent {
+   tamingTier: number;
+   foodEatenInTier: number;
+   name: string;
+   readonly acquiredSkills: Array<TamingSkill>;
+   readonly skillLearningArray: Array<TamingSkillLearning>;
 
-   public tamingTierRenderPart: TexturedRenderPart | null;
+   tamingTierRenderPart: TexturedRenderPart | null;
 
-   constructor(tamingTier: number, berriesEatenInTier: number, name: string, acquiredSkills: Array<TamingSkill>, skillLearningArray: Array<TamingSkillLearning>, tamingTierRenderPart: TexturedRenderPart | null) {
-      this.tamingTier = tamingTier;
-      this.foodEatenInTier = berriesEatenInTier;
-      this.name = name;
-      this.acquiredSkills = acquiredSkills;
-      this.skillLearningArray = skillLearningArray;
-      this.tamingTierRenderPart = tamingTierRenderPart;
-   }
+   isFollowing: boolean;
+   followHalo: RenderPart | null;
 }
 const TAMING_TIER_TEXTURE_SOURCES: Record<number, string> = {
    1: "entities/miscellaneous/taming-tier-1.png",
@@ -98,13 +97,28 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
       skillLearningArray.push(skillLearning);
    }
    
+   const isFollowing = reader.readBoolean();
+   reader.padOffset(3);
+   
    return {
       tamingTier: tamingTier,
       berriesEatenInTier: berriesEatenInTier,
       name: name,
       acquiredSkills: acquiredSkills,
-      skillLearningArray: skillLearningArray
+      skillLearningArray: skillLearningArray,
+      isFollowing: isFollowing
    };
+}
+
+const createFollowHalo = (headRenderPart: RenderPart): RenderPart => {
+   const followHalo = new TexturedRenderPart(
+      headRenderPart,
+      2,
+      0,
+      getTextureArrayIndex("entities/miscellaneous/follow-halo.png")
+   );
+   followHalo.inheritParentRotation = false;
+   return followHalo;
 }
 
 const getTamingTierRenderPartOpacity = (): number => {
@@ -137,8 +151,19 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       renderInfo.attachRenderPart(tamingTierRenderPart);
    }
    
+   // Follow halo
+   let followHalo: RenderPart | null;
+   if (tamingComponentParams.isFollowing) {
+      const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
+      followHalo = createFollowHalo(headRenderPart);
+      renderInfo.attachRenderPart(followHalo);
+   } else {
+      followHalo = null;
+   }
+   
    return {
-      tamingTierRenderPart: tamingTierRenderPart
+      tamingTierRenderPart: tamingTierRenderPart,
+      followHalo: followHalo
    }
 }
 
@@ -150,12 +175,14 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.taming, 
       name: tamingComponentParams.name,
       acquiredSkills: tamingComponentParams.acquiredSkills,
       skillLearningArray: tamingComponentParams.skillLearningArray,
-      tamingTierRenderPart: renderParts.tamingTierRenderPart
+      tamingTierRenderPart: renderParts.tamingTierRenderPart,
+      isFollowing: tamingComponentParams.isFollowing,
+      followHalo: renderParts.followHalo
    };
 }
 
 function getMaxRenderParts(): number {
-   return 1;
+   return 2;
 }
 
 function padData(reader: PacketReader): void {
@@ -164,6 +191,8 @@ function padData(reader: PacketReader): void {
 
    const numAcquiredSkills = reader.readNumber();
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numAcquiredSkills);
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
 export function getTamingSkillLearning(tamingComponent: TamingComponent, skillID: TamingSkillID): TamingSkillLearning | null {
@@ -192,6 +221,12 @@ function onTick(entity: Entity): void {
    const tamingComponent = TamingComponentArray.getComponent(entity);
    if (tamingComponent.tamingTierRenderPart !== null) {
       tamingComponent.tamingTierRenderPart.opacity = getTamingTierRenderPartOpacity();
+   }
+
+   // @Speed
+   // @Bug: Will look jittery for low TPS values.
+   if (tamingComponent.followHalo !== null) {
+      tamingComponent.followHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
    }
 }
 
@@ -261,6 +296,23 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          tamingComponent.skillLearningArray.splice(i, 1);
          i--;
       }
+   }
+   
+   tamingComponent.isFollowing = reader.readBoolean();
+   reader.padOffset(3);
+
+   if (tamingComponent.isFollowing) {
+      if (tamingComponent.followHalo === null) {
+         const renderInfo = getEntityRenderInfo(entity);
+         // @Copynpaste
+         const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
+         tamingComponent.followHalo = createFollowHalo(headRenderPart);
+         renderInfo.attachRenderPart(tamingComponent.followHalo);
+      }
+   } else if (tamingComponent.followHalo !== null) {
+      const renderInfo = getEntityRenderInfo(entity);
+      renderInfo.removeRenderPart(tamingComponent.followHalo);
+      tamingComponent.followHalo = null;
    }
 }
 

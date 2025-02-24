@@ -4,7 +4,6 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import Camera from "../../Camera";
 import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-creation";
 import { deselectSelectedEntity } from "../../entity-selection";
-import { CowComponentArray } from "../../entity-components/server-components/CowComponent";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
 import { entityExists, getCurrentLayer } from "../../world";
 import { createAnimalStaffCommandParticle } from "../../particles";
@@ -14,6 +13,7 @@ import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { playerInstance } from "../../player";
+import { TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -120,8 +120,8 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       setX(screenX);
       setY(screenY);
 
-      const cowComponent = CowComponentArray.getComponent(entity);
-      setFollowOptionIsSelected(cowComponent.isFollowing);
+      const tamingComponent = TamingComponentArray.getComponent(entity);
+      setFollowOptionIsSelected(tamingComponent.isFollowing);
    }
    
    useEffect(() => {

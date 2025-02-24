@@ -284,7 +284,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Animal staff options
-   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && entityType === EntityType.cow) {
+   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && TamingComponentArray.hasComponent(entity)) {
       return {
          type: InteractActionType.openAnimalStaffMenu,
          interactEntity: entity,
@@ -686,16 +686,8 @@ export function updateHighlightedAndHoveredEntities(gameInteractState: GameInter
    // @Hack
    // If the player is interacting with an inventory, only consider the distance from the player not the cursor
    if (playerInstance !== null && entityExists(selectedEntityID) && (isHoveringInBlueprintMenu() || InventorySelector_inventoryIsOpen() || AnimalStaffOptions_isHovering())) {
-      const selectedEntity = getSelectedEntity();
-
-      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
-      const entityTransformComponent = TransformComponentArray.getComponent(selectedEntity);
-      
-      const distance = playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-      if (distance <= Vars.DEFAULT_INTERACT_RANGE) {
-         hoveredEntityID = getEntityID(gameInteractState, false, false);
-         return;
-      }
+      hoveredEntityID = getEntityID(gameInteractState, false, false);
+      return;
    }
 
    hoveredEntityID = getEntityID(gameInteractState, false, false);

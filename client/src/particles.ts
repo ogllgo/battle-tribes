@@ -2022,3 +2022,39 @@ export function createAnimalStaffCommandParticle(x: number, y: number, moveDirec
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createHeatParticle(spawnPositionX: number, spawnPositionY: number, moveDirection: number, vx: number, vy: number): void {
+   const lifetime = randFloat(0.8, 1.2);
+   
+   const moveSpeed = randFloat(40, 60);
+   const velocityX = vx + moveSpeed * Math.sin(moveDirection);
+   const velocityY = vy + moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+
+   // const r = lerp(BLOOD_COLOUR_LOW[0], BLOOD_COLOUR_HIGH[0], colourLerp);
+   // const g = lerp(BLOOD_COLOUR_LOW[1], BLOOD_COLOUR_HIGH[1], colourLerp);
+   // const b = lerp(BLOOD_COLOUR_LOW[2], BLOOD_COLOUR_HIGH[2], colourLerp);252, 119, 3
+   const r = 252/255
+   const g = 119/255
+   const b = 3/255
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      6, 6,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}

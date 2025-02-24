@@ -5,7 +5,7 @@ import { Point, customTickIntervalHasPassed, lerp, randFloat, randItem } from "b
 import { playSoundOnEntity } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
-import { createPoisonBubble, createBloodParticle, BloodParticleSize } from "../../particles";
+import { createPoisonBubble, createBloodParticle, BloodParticleSize, createHeatParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolourParticleToBufferContainer, ParticleColour } from "../../rendering/webgl/particle-rendering";
 import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
@@ -16,6 +16,7 @@ import { getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { EntityConfig } from "../ComponentArray";
 import { playerInstance } from "../../player";
+import { getVelocityX, getVelocityY } from "./PhysicsComponent";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;
@@ -263,6 +264,16 @@ function onTick(entity: Entity): void {
          const spawnPositionX = transformComponent.position.x + 32 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = transformComponent.position.y + 32 * Math.cos(spawnOffsetDirection);
          createBloodParticle(Math.random() < 0.5 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(40, 60), true);
+      }
+   }
+
+   const heatSicknessStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.heatSickness);
+   if (heatSicknessStatusEffect !== null) {
+      if (Board.tickIntervalHasPassed(0.15)) {
+         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnPositionX = transformComponent.position.x + 32 * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = transformComponent.position.y + 32 * Math.cos(spawnOffsetDirection);
+         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), getVelocityX(transformComponent), getVelocityY(transformComponent));
       }
    }
 }

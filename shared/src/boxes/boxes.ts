@@ -11,7 +11,9 @@ export const enum HitboxFlag {
    GLURB_HEAD_SEGMENT,
    GLURB_TAIL_SEGMENT,
    COW_BODY,
-   COW_HEAD
+   COW_HEAD,
+   YETI_BODY,
+   YETI_HEAD
 }
 
 export const enum HitboxCollisionType {

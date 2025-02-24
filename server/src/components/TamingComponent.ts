@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { getStringLengthBytes, Packet } from "../../../shared/src/packets";
+import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
 
@@ -19,6 +20,9 @@ export class TamingComponent {
 
    public readonly acquiredSkills = new Array<TamingSkill>();
    public readonly skillLearningArray = new Array<TamingSkillLearning>();
+   
+   // @Temporary
+   public followTarget: Entity = 0;
 }
 
 export const TamingComponentArray = new ComponentArray<TamingComponent>(ServerComponentType.taming, true, getDataLength, addDataToPacket);
@@ -36,6 +40,8 @@ function getDataLength(entity: Entity): number {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * skillLearning.requirementProgressArray.length;
    }
+
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    
    return lengthBytes;
 }
@@ -60,6 +66,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.addNumber(requirementProgress);
       }
    }
+   
+   packet.addBoolean(entityExists(tamingComponent.followTarget));
+   packet.padOffset(3);
 }
 
 export function getTamingSkillLearning(tamingComponent: TamingComponent, skillID: TamingSkillID): TamingSkillLearning | null {

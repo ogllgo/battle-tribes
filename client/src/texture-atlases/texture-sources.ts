@@ -68,6 +68,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/cactus/cactus-flower-large-4.png",
    "entities/cactus/cactus-flower-5.png",
    "entities/yeti/yeti.png",
+   "entities/yeti/yeti-head.png",
    "entities/yeti/yeti-paw.png",
    "entities/ice-spikes/ice-spikes.png",
    "projectiles/ice-shard.png",

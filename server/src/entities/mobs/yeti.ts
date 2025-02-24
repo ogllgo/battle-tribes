@@ -9,7 +9,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -89,8 +89,12 @@ function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: num
 
 export function createYetiConfig(territory: ReadonlyArray<TileIndex>): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+
+   const bodyHitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
+   transformComponent.addHitbox(bodyHitbox, null);
+
+   const headHitbox = createHitbox(new CircularBox(bodyHitbox.box, new Point(0, 36), 0, 28), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
+   transformComponent.addHitbox(headHitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    
@@ -108,7 +112,6 @@ export function createYetiConfig(territory: ReadonlyArray<TileIndex>): EntityCon
    
    const tamingComponent = new TamingComponent();
    
-   // @Incomplete?
    const yetiComponent = new YetiComponent(territory);
    
    return {

@@ -74,9 +74,6 @@ export class CowComponent {
    public poopProductionCooldownTicks = 0;
 
    // @Temporary
-   public followTarget: Entity = 0;
-
-   // @Temporary
    public targetMovePosition: Point | null = null;
    
    // @Temporary
@@ -422,12 +419,13 @@ function onTick(cow: Entity): void {
    }
 
    // Go to follow target if possible
-   if (entityExists(cowComponent.followTarget)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.followTarget);
+   // @Copynpaste
+   const tamingComponent = TamingComponentArray.getComponent(cow);
+   if (entityExists(tamingComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
       const targetDirection = angle(targetTransformComponent.position.x - transformComponent.position.x, targetTransformComponent.position.y - transformComponent.position.y);
       moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
       if (getEntityAgeTicks(cow) % Settings.TPS === 0) {
-         const tamingComponent = TamingComponentArray.getComponent(cow);
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
       }
       return;
@@ -649,7 +647,7 @@ function onTick(cow: Entity): void {
 }
 
 function getDataLength(): number {
-   return 6 * Float32Array.BYTES_PER_ELEMENT;
+   return 5 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -657,9 +655,6 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    packet.addNumber(cowComponent.species);
    packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / Vars.GRAZE_TIME_TICKS : -1);
-
-   packet.addBoolean(entityExists(cowComponent.followTarget));
-   packet.padOffset(3);
 
    packet.addBoolean(entityExists(cowComponent.attackTarget));
    packet.padOffset(3);

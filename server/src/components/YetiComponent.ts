@@ -18,14 +18,17 @@ import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, dam
 import { ItemComponentArray } from "./ItemComponent";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer } from "../layers";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
 import { createItemsOverEntity } from "../entities/item-entity";
-import { TamingComponentArray } from "./TamingComponent";
+import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { applyStatusEffect } from "./StatusEffectComponent";
+import { StatusEffect } from "../../../shared/src/status-effects";
+import { TamingSkillID } from "../../../shared/src/taming";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -40,7 +43,10 @@ const enum Vars {
    SNOW_THROW_KICKBACK_AMOUNT = 110,
    
    TURN_SPEED = UtilVars.PI * 3/2,
-   SLOW_TURN_SPEED = UtilVars.PI * 1.5/2
+   SLOW_TURN_SPEED = UtilVars.PI * 1.5/2,
+
+   MEDIUM_ACCELERATION = 400,
+   FAST_ACCELERATION = 700
 }
 
 const MIN_TERRITORY_SIZE = 50;
@@ -272,6 +278,24 @@ function onTick(yeti: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);
    const yetiComponent = YetiComponentArray.getComponent(yeti);
+
+   const layer = getEntityLayer(yeti);
+   const tileIndex = getEntityTile(transformComponent);
+   if (layer.getTileBiome(tileIndex) !== Biome.tundra) {
+      applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
+   }
+   
+   // Go to follow target if possible
+   // @Copynpaste
+   const tamingComponent = TamingComponentArray.getComponent(yeti);
+   if (entityExists(tamingComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
+      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
+      if (getEntityAgeTicks(yeti) % Settings.TPS === 0) {
+         addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
+      }
+      return;
+   }
 
    if (yetiComponent.isThrowingSnow) {
       // If the target is dead or has run outside the yeti's vision range, cancel the attack

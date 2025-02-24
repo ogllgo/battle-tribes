@@ -251,6 +251,8 @@ export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: num
 }
 
 export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgress: number): void {
+   // @Speed: perhaps just modify the render info's vertex data
+   
    calculateAndOverrideEntityModelMatrix(renderInfo);
 
    for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
