@@ -1,5 +1,5 @@
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../EntityRenderInfo";
-import { createIdentityMatrix, createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace } from "./matrices";
+import { createIdentityMatrix, createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
 import { RenderParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
@@ -18,19 +18,16 @@ let dirtyEntityRenderPositions = new Array<EntityRenderInfo>();
 /* Matrix Utility Functions */
 /* ------------------------ */
 
-const overrideWithScaleMatrix = (matrix: Matrix3x3, sx: number, sy: number): void => {
+const overrideWithScaleMatrix = (matrix: Matrix3x2, sx: number, sy: number): void => {
    matrix[0] = sx;
    matrix[1] = 0;
    matrix[2] = 0;
-   matrix[3] = 0;
-   matrix[4] = sy;
+   matrix[3] = sy;
+   matrix[4] = 0;
    matrix[5] = 0;
-   matrix[6] = 0;
-   matrix[7] = 0;
-   matrix[8] = 1;
 }
 
-const rotateMatrix = (matrix: Matrix3x3, rotation: number): void => {
+const rotateMatrix = (matrix: Matrix3x2, rotation: number): void => {
    const sin = Math.sin(rotation);
    const cos = Math.cos(rotation);
 
@@ -38,83 +35,71 @@ const rotateMatrix = (matrix: Matrix3x3, rotation: number): void => {
 
    const b00 = matrix[0];
    const b01 = matrix[1];
-   const b10 = matrix[3];
-   const b11 = matrix[4];
-   const b20 = matrix[6];
-   const b21 = matrix[7];
+   const b10 = matrix[2];
+   const b11 = matrix[3];
+   const b20 = matrix[4];
+   const b21 = matrix[5];
 
    matrix[0] = b00 * cos + b01 * sin;
    matrix[1] = b00 * negSin + b01 * cos;
-   matrix[3] = b10 * cos + b11 * sin;
-   matrix[4] = b10 * negSin + b11 * cos;
-   matrix[6] = b20 * cos + b21 * sin;
-   matrix[7] = b20 * negSin + b21 * cos;
+   matrix[2] = b10 * cos + b11 * sin;
+   matrix[3] = b10 * negSin + b11 * cos;
+   matrix[4] = b20 * cos + b21 * sin;
+   matrix[5] = b20 * negSin + b21 * cos;
 }
 
 // @Cleanup: This should probably be a function stored on the render part
 export function getRenderPartRenderPosition(renderPart: RenderPart): Point {
    const matrix = renderPart.modelMatrix;
    
-   const x = matrix[6];
-   const y = matrix[7];
+   const x = matrix[4];
+   const y = matrix[5];
 
+   // @Garbage
    return new Point(x, y);
 }
 // @Copynpaste
-export function getMatrixPosition(matrix: Matrix3x3): Point {
-   const x = matrix[6];
-   const y = matrix[7];
+export function getMatrixPosition(matrix: Matrix3x2): Point {
+   const x = matrix[4];
+   const y = matrix[5];
 
+   // @Garbage
    return new Point(x, y);
 }
 
-const scaleMatrix = (matrix: Matrix3x3, sx: number, sy: number): void => {
+const scaleMatrix = (matrix: Matrix3x2, sx: number, sy: number): void => {
    matrix[0] *= sx;
    matrix[1] *= sy;
-   matrix[3] *= sx;
-   matrix[4] *= sy;
-   matrix[6] *= sx;
-   matrix[7] *= sy;
+   matrix[2] *= sx;
+   matrix[3] *= sy;
+   matrix[4] *= sx;
+   matrix[5] *= sy;
 }
 
-export function translateMatrix(matrix: Matrix3x3, tx: number, ty: number): void {
-   const b02 = matrix[2];
-   const b12 = matrix[5];
-   const b22 = matrix[8];
-
-   matrix[0] += b02 * tx;
-   matrix[1] += b02 * ty;
-   matrix[3] += b12 * tx;
-   matrix[4] += b12 * ty;
-   matrix[6] += b22 * tx;
-   matrix[7] += b22 * ty;
+export function translateMatrix(matrix: Matrix3x2, tx: number, ty: number): void {
+   matrix[4] += tx;
+   matrix[5] += ty;
 }
 
-const overrideMatrix = (sourceMatrix: Readonly<Matrix3x3>, targetMatrix: Matrix3x3): void => {
+const overrideMatrix = (sourceMatrix: Readonly<Matrix3x2>, targetMatrix: Matrix3x2): void => {
    targetMatrix[0] = sourceMatrix[0];
    targetMatrix[1] = sourceMatrix[1];
    targetMatrix[2] = sourceMatrix[2];
    targetMatrix[3] = sourceMatrix[3];
    targetMatrix[4] = sourceMatrix[4];
    targetMatrix[5] = sourceMatrix[5];
-   targetMatrix[6] = sourceMatrix[6];
-   targetMatrix[7] = sourceMatrix[7];
-   targetMatrix[8] = sourceMatrix[8];
 }
 
-const overrideWithRotationMatrix = (matrix: Matrix3x3, rotation: number): void => {
+const overrideWithRotationMatrix = (matrix: Matrix3x2, rotation: number): void => {
    const sin = Math.sin(rotation);
    const cos = Math.cos(rotation);
 
    matrix[0] = cos;
    matrix[1] = -sin;
-   matrix[2] = 0;
-   matrix[3] = sin;
-   matrix[4] = cos;
+   matrix[2] = sin;
+   matrix[3] = cos;
+   matrix[4] = 0;
    matrix[5] = 0;
-   matrix[6] = 0;
-   matrix[7] = 0;
-   matrix[8] = 1;
 }
 
 export function registerDirtyRenderInfo(renderInfo: EntityRenderInfo): void {
@@ -226,8 +211,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    translateMatrix(matrix, tx, ty);
 }
 
-// @Cleanup: unused parameter?
-const calculateHitboxMatrix = (renderInfo: EntityRenderInfo, entityModelMatrix: Matrix3x3, hitbox: Hitbox, frameProgress: number): Matrix3x3 => {
+const calculateHitboxMatrix = (renderInfo: EntityRenderInfo, hitbox: Hitbox, frameProgress: number): Matrix3x2 => {
    const matrix = createIdentityMatrix();
 
    // Rotation
@@ -276,10 +260,10 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
       calculateAndOverrideRenderThingMatrix(thing);
 
       let parentRotation: number;
-      let parentModelMatrix: Readonly<Matrix3x3>;
+      let parentModelMatrix: Readonly<Matrix3x2>;
       if (renderParentIsHitbox(thing.parent)) {
-         // @Speed?
-         parentModelMatrix = calculateHitboxMatrix(renderInfo, renderInfo.modelMatrix, thing.parent, frameProgress);
+         // @Speed? @Garbage: Should override
+         parentModelMatrix = calculateHitboxMatrix(renderInfo, thing.parent, frameProgress);
          parentRotation = thing.parent.box.rotation;
       } else {
          parentModelMatrix = thing.parent !== null ? thing.parent.modelMatrix : renderInfo.modelMatrix;
@@ -293,7 +277,6 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
       }
       
       matrixMultiplyInPlace(parentModelMatrix, thing.modelMatrix);
-      console.log(thing.modelMatrix);
    }
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {

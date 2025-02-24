@@ -207,13 +207,13 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
       vertexData[vertexDataOffset + 7] = renderPart.opacity;
       vertexData[vertexDataOffset + 8] = renderPart.modelMatrix[0];
       vertexData[vertexDataOffset + 9] = renderPart.modelMatrix[1];
-      vertexData[vertexDataOffset + 10] = renderPart.modelMatrix[2];
-      vertexData[vertexDataOffset + 11] = renderPart.modelMatrix[3];
-      vertexData[vertexDataOffset + 12] = renderPart.modelMatrix[4];
-      vertexData[vertexDataOffset + 13] = renderPart.modelMatrix[5];
-      vertexData[vertexDataOffset + 14] = renderPart.modelMatrix[6];
-      vertexData[vertexDataOffset + 15] = renderPart.modelMatrix[7];
-      vertexData[vertexDataOffset + 16] = renderPart.modelMatrix[8];
+      vertexData[vertexDataOffset + 10] = 0;
+      vertexData[vertexDataOffset + 11] = renderPart.modelMatrix[2];
+      vertexData[vertexDataOffset + 12] = renderPart.modelMatrix[3];
+      vertexData[vertexDataOffset + 13] = 0;
+      vertexData[vertexDataOffset + 14] = renderPart.modelMatrix[4];
+      vertexData[vertexDataOffset + 15] = renderPart.modelMatrix[5];
+      vertexData[vertexDataOffset + 16] = 1;
 
       vertexData[vertexDataOffset + 17] = 0.5;
       vertexData[vertexDataOffset + 18] = -0.5;
@@ -225,13 +225,13 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
       vertexData[vertexDataOffset + 24] = renderPart.opacity;
       vertexData[vertexDataOffset + 25] = renderPart.modelMatrix[0];
       vertexData[vertexDataOffset + 26] = renderPart.modelMatrix[1];
-      vertexData[vertexDataOffset + 27] = renderPart.modelMatrix[2];
-      vertexData[vertexDataOffset + 28] = renderPart.modelMatrix[3];
-      vertexData[vertexDataOffset + 29] = renderPart.modelMatrix[4];
-      vertexData[vertexDataOffset + 30] = renderPart.modelMatrix[5];
-      vertexData[vertexDataOffset + 31] = renderPart.modelMatrix[6];
-      vertexData[vertexDataOffset + 32] = renderPart.modelMatrix[7];
-      vertexData[vertexDataOffset + 33] = renderPart.modelMatrix[8];
+      vertexData[vertexDataOffset + 27] = 0;
+      vertexData[vertexDataOffset + 28] = renderPart.modelMatrix[2];
+      vertexData[vertexDataOffset + 29] = renderPart.modelMatrix[3];
+      vertexData[vertexDataOffset + 30] = 0;
+      vertexData[vertexDataOffset + 31] = renderPart.modelMatrix[4];
+      vertexData[vertexDataOffset + 32] = renderPart.modelMatrix[5];
+      vertexData[vertexDataOffset + 33] = 1;
 
       vertexData[vertexDataOffset + 34] = -0.5;
       vertexData[vertexDataOffset + 35] = 0.5;
@@ -243,13 +243,13 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
       vertexData[vertexDataOffset + 41] = renderPart.opacity;
       vertexData[vertexDataOffset + 42] = renderPart.modelMatrix[0];
       vertexData[vertexDataOffset + 43] = renderPart.modelMatrix[1];
-      vertexData[vertexDataOffset + 44] = renderPart.modelMatrix[2];
-      vertexData[vertexDataOffset + 45] = renderPart.modelMatrix[3];
-      vertexData[vertexDataOffset + 46] = renderPart.modelMatrix[4];
-      vertexData[vertexDataOffset + 47] = renderPart.modelMatrix[5];
-      vertexData[vertexDataOffset + 48] = renderPart.modelMatrix[6];
-      vertexData[vertexDataOffset + 49] = renderPart.modelMatrix[7];
-      vertexData[vertexDataOffset + 50] = renderPart.modelMatrix[8];
+      vertexData[vertexDataOffset + 44] = 0;
+      vertexData[vertexDataOffset + 45] = renderPart.modelMatrix[2];
+      vertexData[vertexDataOffset + 46] = renderPart.modelMatrix[3];
+      vertexData[vertexDataOffset + 47] = 0;
+      vertexData[vertexDataOffset + 48] = renderPart.modelMatrix[4];
+      vertexData[vertexDataOffset + 49] = renderPart.modelMatrix[5];
+      vertexData[vertexDataOffset + 50] = 1;
 
       vertexData[vertexDataOffset + 51] = 0.5;
       vertexData[vertexDataOffset + 52] = 0.5;
@@ -261,13 +261,13 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
       vertexData[vertexDataOffset + 58] = renderPart.opacity;
       vertexData[vertexDataOffset + 59] = renderPart.modelMatrix[0];
       vertexData[vertexDataOffset + 60] = renderPart.modelMatrix[1];
-      vertexData[vertexDataOffset + 61] = renderPart.modelMatrix[2];
-      vertexData[vertexDataOffset + 62] = renderPart.modelMatrix[3];
-      vertexData[vertexDataOffset + 63] = renderPart.modelMatrix[4];
-      vertexData[vertexDataOffset + 64] = renderPart.modelMatrix[5];
-      vertexData[vertexDataOffset + 65] = renderPart.modelMatrix[6];
-      vertexData[vertexDataOffset + 66] = renderPart.modelMatrix[7];
-      vertexData[vertexDataOffset + 67] = renderPart.modelMatrix[8];
+      vertexData[vertexDataOffset + 61] = 0;
+      vertexData[vertexDataOffset + 62] = renderPart.modelMatrix[2];
+      vertexData[vertexDataOffset + 63] = renderPart.modelMatrix[3];
+      vertexData[vertexDataOffset + 64] = 0;
+      vertexData[vertexDataOffset + 65] = renderPart.modelMatrix[4];
+      vertexData[vertexDataOffset + 66] = renderPart.modelMatrix[5];
+      vertexData[vertexDataOffset + 67] = 1;
 
       if (indicesData !== null) {
          const indicesDataOffset = renderPartIdx * 6;
