@@ -119,20 +119,6 @@ abstract class Board {
       }
    }
 
-   public static updateEntities(): void {
-      const componentArrays = getComponentArrays();
-      
-      for (let i = 0; i < componentArrays.length; i++) {
-         const componentArray = componentArrays[i];
-         if (typeof componentArray.onUpdate !== "undefined") {
-            for (let j = 0; j < componentArray.entities.length; j++) {
-               const entity = componentArray.entities[j];
-               componentArray.onUpdate(entity);
-            }
-         }
-      }
-   }
-
    // @Incomplete
    /** Updates the client's copy of the tiles array to match any tile updates that have occurred */
    // public static loadTileUpdates(tileUpdates: ReadonlyArray<ServerTileUpdateData>): void {

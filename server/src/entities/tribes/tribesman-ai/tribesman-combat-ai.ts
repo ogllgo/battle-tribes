@@ -10,7 +10,7 @@ import { TribesmanAIComponentArray, TribesmanPathType } from "../../../component
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { calculateItemDamage, useItem } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { TribeComponentArray } from "../../../components/TribeComponent";
+import { getEntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
@@ -150,18 +150,16 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
    const mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
-   const hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+   const hotbarLimb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    
    // Select the item slot
-   if (limbHeldItemCanBeSwitched(hotbarUseInfo)) {
-      hotbarUseInfo.selectedItemSlot = mostDamagingItemSlot;
+   if (hotbarLimb.selectedItemSlot !== mostDamagingItemSlot && limbHeldItemCanBeSwitched(hotbarLimb)) {
+      hotbarLimb.selectedItemSlot = mostDamagingItemSlot;
    }
    
-   const inventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   if (inventory.hasItem(mostDamagingItemSlot)) {
-      const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
-      
-      const selectedItem = hotbar.itemSlots[hotbarUseInfo.selectedItemSlot]!;
+   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+   if (hotbar.hasItem(mostDamagingItemSlot) && hotbarLimb.selectedItemSlot === mostDamagingItemSlot) {
+      const selectedItem = hotbar.itemSlots[hotbarLimb.selectedItemSlot]!;
       const weaponCategory = ITEM_TYPE_RECORD[selectedItem.type];
 
       // Throw spears if there is multiple
@@ -189,18 +187,18 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
             physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(backwards);
          }
 
-         if (hotbarUseInfo.action !== LimbAction.chargeSpear) {
-            hotbarUseInfo.lastSpearChargeTicks = getGameTicks();
+         if (hotbarLimb.action !== LimbAction.chargeSpear) {
+            hotbarLimb.lastSpearChargeTicks = getGameTicks();
          }
          
-         const ticksSinceLastAction = getGameTicks() - hotbarUseInfo.lastSpearChargeTicks;
+         const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastSpearChargeTicks;
          if (ticksSinceLastAction >= 3 * Settings.TPS) {
             // Throw spear
-            useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarUseInfo.selectedItemSlot);
+            useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarLimb.selectedItemSlot);
             setLimbActions(inventoryUseComponent, LimbAction.none);
          } else {
             // Charge spear
-            hotbarUseInfo.action = LimbAction.chargeSpear;
+            hotbarLimb.action = LimbAction.chargeSpear;
          }
 
          const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -261,7 +259,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
             //    useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarUseInfo.selectedItemSlot);
             //    tribesmanComponent.extraBowCooldownTicks = EXTRA_BOW_COOLDOWNS[Board.getEntityType(tribesman)]!;
             // }
-            hotbarUseInfo.action = LimbAction.chargeBow;
+            hotbarLimb.action = LimbAction.chargeBow;
 
             clearTribesmanPath(tribesman);
          } else {
@@ -283,9 +281,9 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
       if (isAggressive && weaponCategory === "battleaxe") {
          // Use the battleaxe if the entity is in the use range
          const distance = getDistanceFromPointToEntity(transformComponent.position, huntedEntity) - getHumanoidRadius(transformComponent);
-         if (distance >= Vars.BATTLEAXE_MIN_USE_RANGE && distance <= Vars.BATTLEAXE_MAX_USE_RANGE && selectedItem.id !== hotbarUseInfo.thrownBattleaxeItemID) {
-            if (hotbarUseInfo.action !== LimbAction.chargeBattleaxe) {
-               hotbarUseInfo.lastBattleaxeChargeTicks = getGameTicks();
+         if (distance >= Vars.BATTLEAXE_MIN_USE_RANGE && distance <= Vars.BATTLEAXE_MAX_USE_RANGE && selectedItem.id !== hotbarLimb.thrownBattleaxeItemID) {
+            if (hotbarLimb.action !== LimbAction.chargeBattleaxe) {
+               hotbarLimb.lastBattleaxeChargeTicks = getGameTicks();
             }
 
             const targetDirection = transformComponent.position.calculateAngleBetween(huntedEntityTransformComponent.position);
@@ -310,7 +308,7 @@ export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive
                stopEntity(physicsComponent);
             }
 
-            const ticksSinceLastAction = getGameTicks() - hotbarUseInfo.lastBattleaxeChargeTicks;
+            const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastBattleaxeChargeTicks;
             if (ticksSinceLastAction >= 3 * Settings.TPS) {
                // Throw the battleaxe
                useItem(tribesman, selectedItem, InventoryName.hotbar, mostDamagingItemSlot);

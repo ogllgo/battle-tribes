@@ -64,7 +64,7 @@ function onTick(snowball: Entity): void {
 
 function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHitbox: Hitbox, pushedHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
-   if (collidingEntityType === EntityType.snowball) {
+   if (collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.iceSpikes) {
       return;
    }
 

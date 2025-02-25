@@ -3,7 +3,6 @@ import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Light, attachLightToRenderPart, createLight } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";

@@ -225,6 +225,24 @@ export abstract class ComponentArray<
       }
       this.deactivateBuffer = [];
    }
+
+   /** VERY slow function. Should only be used for debugging purposes. */
+   public getEntityFromComponent(component: T): Entity {
+      let idx: number | undefined;
+      for (let i = 0; i < this.components.length; i++) {
+         const currentComponent = this.components[i];
+         if (currentComponent === component) {
+            idx = i;
+            break;
+         }
+      }
+      assert(typeof idx !== "undefined");
+
+      const entity = this.indexToEntityMap[idx];
+      assert(typeof entity !== "undefined");
+
+      return entity;
+   }
 }
 
 export function getComponentArrays(): ReadonlyArray<ComponentArray> {

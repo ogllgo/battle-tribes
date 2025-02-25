@@ -26,6 +26,7 @@ import OPTIONS from "./options";
 import { playerInstance } from "./player";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
+import { playerTribe } from "./tribes";
 import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers } from "./world";
 
 export interface VirtualBuilding {
@@ -125,10 +126,7 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
             break;
          }
          case ServerComponentType.tribe: {
-            // @Crash: when the player is dead, playerinstance will be null and this will cause a crash
-            const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
-            
-            components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
+            components[componentType] = createTribeComponentParams(playerTribe.id);
             break;
          }
          case ServerComponentType.buildingMaterial: {

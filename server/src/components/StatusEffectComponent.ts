@@ -145,7 +145,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 2)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, null, 15, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
          }
       }

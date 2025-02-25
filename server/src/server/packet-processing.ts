@@ -799,6 +799,7 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
       // @Cleanup @Copynpaste
       tamingComponent.tamingTier++;
       tamingComponent.foodEatenInTier = 0;
+      tamingComponent.tameTribe = playerClient.tribe;
    }
 }
 
@@ -812,6 +813,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    // @Cleanup @Copynpaste
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
+   tamingComponent.tameTribe = playerClient.tribe;
 }
 
 export function processAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {

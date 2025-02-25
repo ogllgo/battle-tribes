@@ -20,8 +20,8 @@ import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer } from "../layers";
-import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { AttackingEntitiesComponent, AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
+import { Hitbox, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
 import { createItemsOverEntity } from "../entities/item-entity";
@@ -219,6 +219,43 @@ const throwSnow = (yeti: Entity, target: Entity): void => {
    transformComponent.externalVelocity.y += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.cos(throwAngle * Math.PI);
 }
 
+const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
+   const entityType = getEntityType(entity);
+
+   // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
+   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntitiesComponent.attackingEntities.has(entity))) {
+      return false;
+   }
+   
+   // Don't chase frostlings which aren't attacking the yeti
+   if ((entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior || entityType === EntityType.player) && !attackingEntitiesComponent.attackingEntities.has(entity)) {
+      const tribeComponent = TribeComponentArray.getComponent(entity);
+      if (tribeComponent.tribe.tribeType === TribeType.frostlings) {
+         return false;
+      }
+   }
+
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+
+   const entityTileIndex = getEntityTile(entityTransformComponent);
+
+   // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
+   if (!attackingEntitiesComponent.attackingEntities.has(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
+      return false;
+   }
+
+   // If tame, don't attack stuff belonging to the tame tribe
+   if (TribeComponentArray.hasComponent(entity)) {
+      const entityTribeComponent = TribeComponentArray.getComponent(entity);
+      const tamingComponent = TamingComponentArray.getComponent(yeti);
+      if (entityTribeComponent.tribe === tamingComponent.tameTribe) {
+         return false;
+      }
+   }
+
+   return true;
+}
+
 // @Speed: hasComponent in here takes up about 1% of CPU time
 const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const yetiComponent = YetiComponentArray.getComponent(yeti);
@@ -230,28 +267,7 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
    let target: Entity | null = null;
    for (let i = 0; i < visibleEntities.length; i++) {
       const entity = visibleEntities[i];
-
-      const entityType = getEntityType(entity);
-
-      // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
-      if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntities.has(entity))) {
-         continue;
-      }
-      
-      // Don't chase frostlings which aren't attacking the yeti
-      if ((entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior || entityType === EntityType.player) && !attackingEntities.has(entity)) {
-         const tribeComponent = TribeComponentArray.getComponent(entity);
-         if (tribeComponent.tribe.tribeType === TribeType.frostlings) {
-            continue;
-         }
-      }
-
-      const entityTransformComponent = TransformComponentArray.getComponent(entity);
-
-      const entityTileIndex = getEntityTile(entityTransformComponent);
-
-      // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
-      if (!attackingEntities.has(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
+      if (!entityIsTargetted(yeti, entity, attackingEntitiesComponent, yetiComponent)) {
          continue;
       }
       
@@ -449,6 +465,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   // Body doesn't damage
+   if (collidingHitbox.flags.includes(HitboxFlag.YETI_BODY)) {
+      return;
+   }
+   
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Don't damage ice spikes
@@ -465,6 +486,11 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
    // Don't damage yetis which haven't damaged it
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(yeti);
    if ((collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti) && !attackingEntitiesComponent.attackingEntities.has(collidingEntity)) {
+      return;
+   }
+
+   const yetiComponent = YetiComponentArray.getComponent(yeti);
+   if (!entityIsTargetted(yeti, collidingEntity, attackingEntitiesComponent, yetiComponent)) {
       return;
    }
    

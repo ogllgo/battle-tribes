@@ -21,8 +21,8 @@ import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
-import TribeBuildingLayer, { createVirtualStructure, createVirtualBuildingsByEntityType, VirtualStructure, VirtualWall } from "./tribesman-ai/building-plans/TribeBuildingLayer";
-import { createGatherItemPlanAssignment, createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
+import TribeBuildingLayer, { createVirtualBuildingsByEntityType, VirtualStructure } from "./tribesman-ai/building-plans/TribeBuildingLayer";
+import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
@@ -187,14 +187,15 @@ export default class Tribe {
       this.tribesmanCap = TRIBE_INFO_RECORD[tribeType].baseTribesmanCap;
       this.pathfindingGroupID = getPathfindingGroupID();
 
-      // @Temporary
-      this.assignment.children.push(createGatherItemPlanAssignment([], ItemType.wood, 99));
-
       addTribe(this);
    }
 
    public getBuildingLayer(layer: Layer): TribeBuildingLayer {
       return this.buildingLayers[layer.depth];
+   }
+
+   public entityIsAttacking(entity: Entity): boolean {
+      return typeof this.attackingEntities[entity] !== "undefined";
    }
 
    public addBuilding(structure: Entity): void {
@@ -544,8 +545,7 @@ export default class Tribe {
       }
    }
 
-   public tileIsInArea(tileX: number, tileY: number): boolean {
-      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   public tileIsInArea(tileIndex: number): boolean {
       return this.area.hasOwnProperty(tileIndex);
    }
 

@@ -9,6 +9,7 @@ import { StructureComponentArray } from "./StructureComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "../world";
 import { PlantedComponentArray } from "./PlantedComponent";
+import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 
 /** Relationships a tribe member can have, in increasing order of threat */
 export const enum EntityRelationship {
@@ -110,15 +111,16 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       // @Temporary
       case EntityType.frozenYeti: return EntityRelationship.hostileMob;
       
-      // Hostile if attacking, neutral otherwise
+      // Hostile if attacking a tribesman or on tribe territory, neutral otherwise
       case EntityType.frozenYeti:
       case EntityType.yeti:
       case EntityType.slime:
-         case EntityType.guardian: {
-         // @Temporary
-         return EntityRelationship.enemy;
+      case EntityType.guardian: {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const tileIndex = getEntityTile(transformComponent);
+         
          const tribeComponent = TribeComponentArray.getComponent(entity);
-         return tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
+         return tribeComponent.tribe.tileIsInArea(tileIndex) || tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }
       // Neutrals
       case EntityType.boulder:

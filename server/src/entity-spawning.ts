@@ -37,6 +37,7 @@ import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
 import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
+import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -94,18 +95,20 @@ const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo)
 }
 
 const getTribeType = (layer: Layer, x: number, y: number): TribeType => {
-   if (Math.random() < 0.2) {
-      return TribeType.goblins;
-   }
-   
    const tileX = Math.floor(x / Settings.TILE_SIZE);
    const tileY = Math.floor(y / Settings.TILE_SIZE);
    const tileType = layer.getTileXYType(tileX, tileY);
    switch (tileType) {
       case TileType.grass: {
+         if (Math.random() < 0.2) {
+            return TribeType.goblins;
+         }
          return TribeType.plainspeople;
       }
       case TileType.sand: {
+         if (Math.random() < 0.2) {
+            return TribeType.goblins;
+         }
          return TribeType.barbarians;
       }
       case TileType.snow:
@@ -178,7 +181,7 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
          break;
       }
       case EntityType.iceSpikes: config = createIceSpikesConfig(0); break;
-      // case EntityType.slimewisp: config = createSlimewispConfig(); break;
+      case EntityType.slimewisp: config = createSlimewispConfig(); break;
       case EntityType.krumblid: config = createKrumblidConfig(); break;
       case EntityType.frozenYeti: config = createFrozenYetiConfig(); break;
       case EntityType.fish: config = createFishConfig(); break;

@@ -22,7 +22,7 @@ import { attemptToRepairBuildings } from "./tribesman-structures";
 import { escapeFromEnemies, tribeMemberShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
 import { InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo } from "battletribes-shared/items/items";
-import { TransformComponentArray } from "../../../components/TransformComponent";
+import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
 import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
@@ -330,7 +330,10 @@ export function tickTribesman(tribesman: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
+
+   const layer = getEntityLayer(tribesman);
 
    // @Cleanup: A nicer way to do this might be to sort the visible entities array based on the 'threat level' of each entity
    // @Cleanup: A perhaps combine the visible enemies and visible hostile mobs arrays?
@@ -373,7 +376,6 @@ export function tickTribesman(tribesman: Entity): void {
       }
    }
 
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
    const ageTicks = getEntityAgeTicks(tribesman);
    
    // Escape from enemies when low on health

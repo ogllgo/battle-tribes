@@ -145,7 +145,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.slime, n
 }
 
 function getMaxRenderParts(): number {
-   return 3;
+   // 3 plus 10 max orbs
+   return 13;
 }
 
 function onTick(entity: Entity): void {

@@ -68,9 +68,20 @@ const ENTITY_HARVESTING_INFO_RECORD: Partial<Record<EntityType, EntityHarvesting
       layer: undergroundLayer,
       biome: Biome.caves,
       localBiomeRequiredTiles: []
+   },
+   [EntityType.slime]: {
+      layer: surfaceLayer,
+      biome: Biome.swamp,
+      localBiomeRequiredTiles: [
+         {
+            tileType: TileType.slime,
+            minAmount: 10
+         }
+      ]
    }
 };
 
+// @Cleanup: unused?
 const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: EntityType): boolean => {
    switch (entityType) {
       case EntityType.tree: {

@@ -32,7 +32,8 @@ const enum Vars {
    HEALING_ON_SLIME_PER_SECOND = 0.5,
    HEALING_PROC_INTERVAL = 0.1,
 
-   MAX_ANGER_PROPAGATION_CHAIN_LENGTH = 5
+   MAX_ANGER_PROPAGATION_CHAIN_LENGTH = 5,
+   MAX_ORBS = 10
 }
 
 interface AngerPropagationInfo {
@@ -374,10 +375,18 @@ const merge = (slime1: Entity, slime2: Entity): void => {
 
       // Add orbs from the 2 existing slimes
       for (const orbSize of slimeComponent1.orbSizes) {
-         orbSizes.push(orbSize);
+         if (orbSizes.length < Vars.MAX_ORBS - 2) {
+            orbSizes.push(orbSize);
+         } else {
+            break;
+         }
       }
       for (const orbSize of slimeComponent2.orbSizes) {
-         orbSizes.push(orbSize);
+         if (orbSizes.length < Vars.MAX_ORBS - 2) {
+            orbSizes.push(orbSize);
+         } else {
+            break;
+         }
       }
 
       // @Incomplete: Why do we do this for both?
@@ -400,7 +409,9 @@ const merge = (slime1: Entity, slime2: Entity): void => {
       // Add the other slime's health
       healEntity(slime1, getEntityHealth(slime2), slime1)
 
-      slimeComponent1.orbSizes.push(slimeComponent2.size);
+      if (slimeComponent1.orbSizes.length < Vars.MAX_ORBS) {
+         slimeComponent1.orbSizes.push(slimeComponent2.size);
+      }
 
       slimeComponent1.lastMergeTicks = getGameTicks();
    }

@@ -345,14 +345,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    physicsComponent.acceleration.x = reader.readNumber();
    physicsComponent.acceleration.y = reader.readNumber();
    physicsComponent.traction = reader.readNumber();
-
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (transformComponent.carryRoot === entity) {
-      // @Copynpaste
-      for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, carryInfo);
-      }
-   }
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {

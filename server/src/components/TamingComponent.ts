@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { getStringLengthBytes, Packet } from "../../../shared/src/packets";
+import Tribe from "../Tribe";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
@@ -13,6 +14,7 @@ interface TamingSkillLearning {
 
 export class TamingComponent {
    public tamingTier: TamingTier = 0;
+   public tameTribe: Tribe | null = null;
    /** Amount of berries eaten in the current tier. */
    public foodEatenInTier = 0;
 
