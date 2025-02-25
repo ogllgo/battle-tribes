@@ -329,6 +329,12 @@ function onUpdate(entity: Entity): void {
       for (const carryInfo of transformComponent.carriedEntities) {
          tickCarriedEntity(transformComponent, carryInfo);
       }
+   } else {
+      // The player is being carried
+      const carryRootTransformComponent = TransformComponentArray.getComponent(transformComponent.carryRoot);
+      for (const carryInfo of carryRootTransformComponent.carriedEntities) {
+         tickCarriedEntity(carryRootTransformComponent, carryInfo);
+      }
    }
 
    // @Incomplete: some entities are able to be outside the border!

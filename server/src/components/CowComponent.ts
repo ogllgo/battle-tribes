@@ -356,24 +356,6 @@ function onTick(cow: Entity): void {
       cowComponent.grazeCooldownTicks--;
    }
 
-   // @HACK @TEMPORARY
-   // Graze dirt to recover health
-   if (cowComponent.grazeCooldownTicks === 0) {
-      if (!entityExists(cowComponent.targetGrass)) {
-         const target = getTargetGrass(cow);
-         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
-            cowComponent.targetGrass = target;
-         }
-      }
-
-      if (entityExists(cowComponent.targetGrass)) {
-         graze(cow, cowComponent, cowComponent.targetGrass);
-         return;
-      }
-      // @Incomplete: Why is this here?
-      cowComponent.grazeProgressTicks = 0;
-   }
-
    if (cowComponent.bowelFullness === 0 && getEntityAgeTicks(cow) % (2 * Settings.TPS) === 0) {
       damageEntity(cow, null, 1, 0, AttackEffectiveness.effective, transformComponent.position.copy(), 0);
    }
@@ -505,22 +487,22 @@ function onTick(cow: Entity): void {
       return;
    }
 
-   // // Graze dirt to recover health
-   // if (cowComponent.grazeCooldownTicks === 0) {
-   //    if (!entityExists(cowComponent.targetGrass)) {
-   //       const target = getTargetGrass(cow);
-   //       if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
-   //          cowComponent.targetGrass = target;
-   //       }
-   //    }
+   // Graze dirt to recover health
+   if (cowComponent.grazeCooldownTicks === 0) {
+      if (!entityExists(cowComponent.targetGrass)) {
+         const target = getTargetGrass(cow);
+         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
+            cowComponent.targetGrass = target;
+         }
+      }
 
-   //    if (entityExists(cowComponent.targetGrass)) {
-   //       graze(cow, cowComponent, cowComponent.targetGrass);
-   //       return;
-   //    }
-   //    // @Incomplete: Why is this here?
-   //    cowComponent.grazeProgressTicks = 0;
-   // }
+      if (entityExists(cowComponent.targetGrass)) {
+         graze(cow, cowComponent, cowComponent.targetGrass);
+         return;
+      }
+      // @Incomplete: Why is this here?
+      cowComponent.grazeProgressTicks = 0;
+   }
 
    const layer = getEntityLayer(cow);
 

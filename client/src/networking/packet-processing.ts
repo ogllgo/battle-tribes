@@ -34,7 +34,6 @@ import { TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { GrassBlocker } from "../../../shared/src/grass-blockers";
 import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
 
@@ -549,16 +548,9 @@ export function processGameDataPacket(reader: PacketReader): void {
    }
 
    // Process entities
-
-   // Some entities' update data relies on entities created this tick. But the creation info could potentially be after the updating entity,
-   // so we process all entity creation data first, and then all entity update data.
-   
    const numEntities = reader.readNumber();
-   // @Garbage
-   const visibleEntities = [];
    for (let i = 0; i < numEntities; i++) {
       const entityID = reader.readNumber() as Entity;
-      visibleEntities.push(entityID);
       if (entityID === playerInstance) {
          if (entityExists(playerInstance)) {
             processPlayerUpdateData(reader);

@@ -13,7 +13,7 @@ import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { huntEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityLayer, getEntityType } from "../../../world";
+import { entityExists, getEntityLayer, getEntityType } from "../../../world";
 import Layer from "../../../Layer";
 import { surfaceLayer, undergroundLayer } from "../../../layers";
 import { Biome } from "../../../../../shared/src/biomes";
@@ -151,6 +151,11 @@ const resourceIsHarvestable = (resource: Entity, resourceEntityType: EntityType)
    }
 }
 
+const gatherTargetIsValid = (targetEntity: Entity, targetEntityTypes: ReadonlyArray<EntityType>): boolean => {
+   const entityType = getEntityType(targetEntity);
+   return (targetEntityTypes as any).includes(entityType) && resourceIsHarvestable(targetEntity, entityType);
+}
+
 const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    
@@ -162,14 +167,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
 
    for (let i = 0; i < visibleEntities.length; i++) {
       const resource = visibleEntities[i];
-      
-      const entityType = getEntityType(resource);
-      // @Cleanup: cast
-      if (!(targetEntityTypes as any).includes(entityType)) {
-         continue;
-      }
-
-      if (!resourceIsHarvestable(resource, entityType)) {
+      if (!gatherTargetIsValid(resource, targetEntityTypes)) {
          continue;
       }
 
@@ -302,10 +300,23 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
       return;
    }
    
-   // See if there are any entities which can be harvested
-   const harvestTarget = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemType);
-   if (harvestTarget !== null) {
-      huntEntity(tribesman, harvestTarget, false);
+   // @Speed: also in getGatherTarget
+   const targetEntityTypes = MATERIAL_DROPPING_ENTITIES_RECORD[gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD];
+   assert(typeof targetEntityTypes !== "undefined");
+
+   // Look for targets to gather
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   if (!entityExists(tribesmanAIComponent.targetEntity) || !gatherTargetIsValid(tribesmanAIComponent.targetEntity, targetEntityTypes)) {
+      const target = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemType);
+      if (target !== null) {
+         tribesmanAIComponent.targetEntity = target;
+      } else {
+         tribesmanAIComponent.targetEntity = 0;
+      }
+   }
+
+   if (entityExists(tribesmanAIComponent.targetEntity) && gatherTargetIsValid(tribesmanAIComponent.targetEntity, targetEntityTypes)) {
+      huntEntity(tribesman, tribesmanAIComponent.targetEntity, false);
       return;
    }
 

@@ -39,23 +39,17 @@ function onJoin(entity: Entity): void {
 }
 
 function onTick(snowball: Entity): void {
-   const snowballComponent = SnowballComponentArray.getComponent(snowball);
-   
-   // @Incomplete. we use physics component angular velocity now, but that doesn't decrease over time!
-   // Angular velocity
-   // if (snowballComponent.angularVelocity !== 0) {
-      //    snowball.rotation += snowballComponent.angularVelocity / Settings.TPS;
-      
-      //    const physicsComponent = PhysicsComponentArray.getComponent(snowball.id);
-      //    physicsComponent.hitboxesAreDirty = true;
-      
-      //    const beforeSign = Math.sign(snowballComponent.angularVelocity);
-      //    snowballComponent.angularVelocity -= Math.PI / Settings.TPS * beforeSign;
-      //    if (beforeSign !== Math.sign(snowballComponent.angularVelocity)) {
-         //       snowballComponent.angularVelocity = 0;
-         //    }
-         // }
+   // Decrease angular velocity over time
+   const physicsComponent = PhysicsComponentArray.getComponent(snowball);
+   if (physicsComponent.angularVelocity !== 0) {
+      const beforeSign = Math.sign(physicsComponent.angularVelocity);
+      physicsComponent.angularVelocity -= Math.PI / Settings.TPS * beforeSign;
+      if (beforeSign !== Math.sign(physicsComponent.angularVelocity)) {
+         physicsComponent.angularVelocity = 0;
+      }
+   }
          
+   const snowballComponent = SnowballComponentArray.getComponent(snowball);
    const ageTicks = getEntityAgeTicks(snowball);
    if (ageTicks >= snowballComponent.lifetimeTicks) {
       destroyEntity(snowball);

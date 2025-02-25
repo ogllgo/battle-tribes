@@ -1,7 +1,7 @@
 import { assert, Point } from "battletribes-shared/utils";
 import Board from "./Board";
 import { entityExists, getEntityLayer, getEntityRenderInfo } from "./world";
-import { createTranslationMatrix, Matrix3x3, matrixMultiplyInPlace } from "./rendering/matrices";
+import { createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./rendering/matrices";
 import Layer from "./Layer";
 import { Entity } from "../../shared/src/entities";
 import { RenderPart } from "./render-parts/render-parts";
@@ -172,7 +172,7 @@ export function removeLightsAttachedToRenderPart(renderPart: RenderPart): void {
    }
 }
 
-export function getLightPositionMatrix(light: Light): Matrix3x3 {
+export function getLightPositionMatrix(light: Light): Matrix3x2 {
    const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
    if (typeof attachedRenderPartInfo !== "undefined") {
       const renderPartID = attachedRenderPartInfo.renderPart.id;

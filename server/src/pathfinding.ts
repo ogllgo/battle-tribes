@@ -191,7 +191,7 @@ const nodeIsAccessibleForEntity = (layer: Layer, node: PathfindingNodeIndex, ign
    return slowAccessibilityCheck(layer, node, ignoredGroupID, pathfindingEntityFootprint);
 }
 
-const addCircularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: Set<PathfindingNodeIndex>, pathfindingGroupID: number, hitbox: Hitbox): void => {
+const addCircularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: Set<PathfindingNodeIndex>, pathfindingGroupID: number, hitbox: Hitbox, entityType: EntityType): void => {
    const box = hitbox.box as CircularBox;
    
    const minX = box.calculateBoundsMinX();
@@ -219,10 +219,13 @@ const addCircularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: 
       maxNodeY = PathfindingSettings.NODES_IN_WORLD_WIDTH - 2;
    }
 
-   // @Incomplete: Also take up more if it's ice spikes
    // Make soft hitboxes take up less node radius so that it easier to pathfind around them
-   const radiusOffset = hitbox.collisionType === HitboxCollisionType.hard ? 0.5 : 0;
-   const hitboxNodeRadius = box.radius / PathfindingSettings.NODE_SEPARATION + radiusOffset;
+   let extraRadius = hitbox.collisionType === HitboxCollisionType.hard ? 8 : 0;
+   if (entityType === EntityType.iceSpikes || entityType === EntityType.cactus) {
+      extraRadius += 16;
+   }
+   
+   const hitboxNodeRadius = (box.radius + extraRadius) / PathfindingSettings.NODE_SEPARATION;
    const hitboxNodeRadiusSquared = hitboxNodeRadius * hitboxNodeRadius;
 
    for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
@@ -294,9 +297,9 @@ const addRectangularHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNode
    }
 }
 
-const addHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: Set<PathfindingNodeIndex>, pathfindingGroupID: number, hitbox: Hitbox): void => {
+const addHitboxOccupiedNodes = (layer: Layer, occupiedPathfindingNodes: Set<PathfindingNodeIndex>, pathfindingGroupID: number, hitbox: Hitbox, entityType: EntityType): void => {
    if (boxIsCircular(hitbox.box)) {
-      addCircularHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox);
+      addCircularHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
    } else {
       addRectangularHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox);
    }
@@ -780,13 +783,14 @@ export function updateEntityPathfindingNodeOccupance(entity: Entity): void {
    transformComponent.occupiedPathfindingNodes = new Set();
 
    const occupiedPathfindingNodes = transformComponent.occupiedPathfindingNodes;
-
+   const entityType = getEntityType(entity);
+   
    const hitboxes = transformComponent.hitboxes;
    for (let i = 0; i < hitboxes.length; i++) {
       const hitbox = hitboxes[i];
    
       // Add to occupied pathfinding nodes
-      addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox);
+      addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
    }
 }
 

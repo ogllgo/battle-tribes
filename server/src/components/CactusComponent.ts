@@ -57,6 +57,10 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox
       destroyEntity(collidingEntity);
       return;
    }
+
+   if (getEntityType(collidingEntity) === EntityType.krumblid) {
+      return;
+   }
    
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;

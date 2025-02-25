@@ -56,6 +56,7 @@ export function createMithrilRichTileRenderingShaders(): void {
    bindUBOToProgram(gl, program, UBOBindingIndex.CAMERA);
 }
 
+// @Garbage
 const getFloorVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 
@@ -93,6 +94,7 @@ const getFloorVertices = (layer: Layer): Array<number> => {
    return vertices;
 }
 
+// @Garbage
 const getWallVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 

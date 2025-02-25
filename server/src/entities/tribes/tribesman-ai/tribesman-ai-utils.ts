@@ -436,7 +436,7 @@ const findClosestBiome = (tribesman: Entity, harvestingInfo: EntityHarvestingInf
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestBiome: LocalBiome | null = null;
    for (const localBiome of harvestingInfo.layer.localBiomes) {
-      if (localBiome.biome !== harvestingInfo.biome) {
+      if (localBiome.biome !== harvestingInfo.biome || localBiome.tilesInBorder.length === 0) {
          continue;
       }
 
@@ -488,7 +488,7 @@ export function moveTribesmanToBiome(tribesman: Entity, harvestingInfo: EntityHa
    let targetY = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
    for (let attempts = 0; attempts < 40; attempts++) {
-      const targetTile = randItem(localBiome.tiles);
+      const targetTile = randItem(localBiome.tilesInBorder);
       const x = (getTileX(targetTile) + Math.random()) * Settings.TILE_SIZE;
       const y = (getTileY(targetTile) + Math.random()) * Settings.TILE_SIZE;
 
