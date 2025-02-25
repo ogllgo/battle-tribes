@@ -338,6 +338,8 @@ const cleanupPathfinding = (targetEntity: Entity | 0, tribe: Tribe, blockingTrib
 }
 
 export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
+   assert(goalX >= 0 && goalX < Settings.BOARD_UNITS && goalY >= 0 && goalY < Settings.BOARD_UNITS);
+   
    // If moving to a new target node, recalculate path
    if (shouldRecalculatePath(tribesman, goalX, goalY, goalLayer, goalRadius)) {
       const transformComponent = TransformComponentArray.getComponent(tribesman); // @Speed
