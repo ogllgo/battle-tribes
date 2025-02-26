@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { InventoryName } from "../../../shared/src/items/items";
 import { AIPlanType, assert } from "../../../shared/src/utils";
-import { throwItem } from "../entities/tribes/tribe-member";
+import { getAvailableCraftingStations, throwItem } from "../entities/tribes/tribe-member";
 import { goCraftItem, craftGoalIsComplete } from "../entities/tribes/tribesman-ai/tribesman-crafting";
 import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "../entities/tribes/tribesman-ai/tribesman-researching";
 import { gatherItemPlanIsComplete, gatherResource } from "../entities/tribes/tribesman-ai/tribesman-resource-gathering";
@@ -10,7 +10,7 @@ import { goPlaceBuilding, goUpgradeBuilding } from "../entities/tribes/tribesman
 import Tribe from "../Tribe";
 import { checkForAvailableAssignment, AIPlanAssignment, createPersonalAssignment, getFirstAvailableAssignment, AIPlan } from "../tribesman-ai/tribesman-ai-planning";
 import { ComponentArray } from "./ComponentArray";
-import { getInventory, hasSpaceForRecipe, InventoryComponentArray } from "./InventoryComponent";
+import { getInventory, hasSpaceForRecipe, InventoryComponentArray, recipeCraftingStationIsAvailable } from "./InventoryComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 
@@ -170,8 +170,8 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
                return false;
             }
          }
-         
-         goCraftItem(entity, plan.recipe, tribeComponent.tribe);
+
+         goCraftItem(entity, plan, tribeComponent.tribe);
          if (craftGoalIsComplete(plan, inventoryComponent)) {
             completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }

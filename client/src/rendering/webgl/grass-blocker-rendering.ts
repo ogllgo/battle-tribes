@@ -240,6 +240,7 @@ export function createGrassBlockerShaders(): void {
    framebufferVertexData = new Float32Array(framebufferVertices);
 }
 
+// @Speed @Garbage
 const calculateGrassBlockerVertices = (grassBlockers: ReadonlyMap<number, GrassBlocker>): ReadonlyArray<number> => {
    const vertices = new Array<number>();
 

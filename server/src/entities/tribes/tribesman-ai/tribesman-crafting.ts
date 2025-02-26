@@ -11,17 +11,20 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { getAvailableCraftingStations } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
-import { CraftingStation, CraftingRecipe, CRAFTING_RECIPES } from "battletribes-shared/items/crafting-recipes";
+import { CraftingStation, CRAFTING_RECIPES, CRAFTING_STATION_ITEM_TYPE_RECORD } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
-import { AICraftRecipePlan } from "../../../tribesman-ai/tribesman-ai-planning";
+import { AICraftRecipePlan, planToPlaceStructure } from "../../../tribesman-ai/tribesman-ai-planning";
+import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
+import { TribeComponentArray } from "../../../components/TribeComponent";
+import { assert } from "../../../../../shared/src/utils";
 
 const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
 }
 
-const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: CraftingStation): Entity => {
+const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: CraftingStation): Entity | null => {
    // @Incomplete: slime
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
@@ -46,37 +49,56 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
    if (typeof closestStation !== "undefined") {
       return closestStation;
    }
-   throw new Error();
+   return null;
 }
 
-export function goCraftItem(tribesman: Entity, recipe: CraftingRecipe, tribe: Tribe): void {
+export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: Tribe): void {
+   const recipe = plan.recipe;
+
+   // If the recipe needs a crafting station but there are none, create a plan to place one
+
+   
    // Move to a crafting station if necessary
    const availableCraftingStations = getAvailableCraftingStations(tribesman);
-   if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
-      const craftingStation = getClosestCraftingStation(tribesman, tribe, recipe.craftingStation!);
+   if (typeof recipe.craftingStation !== "undefined") {
+      const craftingStation = getClosestCraftingStation(tribesman, tribe, recipe.craftingStation);
 
-      const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
-      
-      const isFinished = pathfindTribesman(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
-      if (!isFinished) {
-         const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
-         const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
+      // If there are no crafting stations available, create a plan to do that
+      if (craftingStation === null) {
+         const tribeComponent = TribeComponentArray.getComponent(tribesman);
+         const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation];
+         // @Cleanup: shouldn't need an assert here...
+         assert(typeof craftingStationItemType !== "undefined");
+         const placeAssignment = planToPlaceStructure(tribeComponent.tribe, craftingStationItemType, null);
 
-         setLimbActions(inventoryUseComponent, LimbAction.none);
-         tribesmanComponent.currentAIType = TribesmanAIType.crafting;
+         const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+         addAssignmentPart(aiAssignmentComponent, placeAssignment);
+         
+         // @Bug: The tribesman will do nothing for 1 tick
+         return;
       }
-      return;
+
+      if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
+         const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
+         
+         const isFinished = pathfindTribesman(tribesman, craftingStationTransformComponent.position.x, craftingStationTransformComponent.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+         if (!isFinished) {
+            const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
+            const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
+   
+            setLimbActions(inventoryUseComponent, LimbAction.none);
+            tribesmanComponent.currentAIType = TribesmanAIType.crafting;
+         }
+         return;
+      } else {
+         turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED);
+      }
    }
 
    // Continue crafting the item
 
    const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
    stopEntity(physicsComponent);
-   
-   if (typeof recipe.craftingStation !== "undefined") {
-      const craftingStation = getClosestCraftingStation(tribesman, tribe, recipe.craftingStation);
-      turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED);
-   }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
    const recipeIdx = CRAFTING_RECIPES.indexOf(recipe);

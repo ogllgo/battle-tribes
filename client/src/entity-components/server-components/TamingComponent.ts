@@ -1,9 +1,10 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { Entity } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { getTamingSkill, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { TribeType } from "../../../../shared/src/tribes";
 import { UtilVars } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
@@ -11,7 +12,8 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
+import { playerTribe } from "../../tribes";
+import { getEntityRenderInfo, getEntityType } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 
@@ -323,4 +325,12 @@ export function hasTamingSkill(tamingComponent: TamingComponent, skillID: Taming
       }
    }
    return false;
+}
+
+export function entityIsTameableByPlayer(entity: Entity): boolean {
+   if (getEntityType(entity) === EntityType.yeti && playerTribe.tribeType !== TribeType.frostlings) {
+      return false;
+   }
+
+   return TamingComponentArray.hasComponent(entity);
 }

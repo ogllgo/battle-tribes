@@ -123,6 +123,7 @@ export function renderGhostEntities(): void {
    //    }
    // }
 
+   console.log(renderInfos.length);
    if (renderInfos.length === 0) {
       return;
    }

@@ -17,7 +17,7 @@ import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
 import { placeStructure, placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
-import { doMeleeAttack, huntEntity } from "./tribesman-combat-ai";
+import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { getHitboxesCollidingEntities } from "battletribes-shared/hitbox-collision";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
@@ -68,7 +68,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
             }
          }
          
-         huntEntity(tribesman, blockingEntity, false);
+         goKillEntity(tribesman, blockingEntity, false);
          return false;
       }
    }

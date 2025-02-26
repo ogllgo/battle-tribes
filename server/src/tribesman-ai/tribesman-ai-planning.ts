@@ -375,7 +375,8 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    return createTechCompletePlanAssignment(children, tech);
 }
 
-const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> => {
+// @Cleanup: I feel like this should take in the entity type instead of the item type. That feels more natural
+export function planToPlaceStructure(tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> {
    const children = new Array<AIPlanAssignment>();
    
    let placedVirtualStructure: VirtualStructure;

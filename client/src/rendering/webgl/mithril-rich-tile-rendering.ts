@@ -4,6 +4,7 @@ import { clampToBoardDimensions } from "../../../../shared/src/utils";
 import Camera from "../../Camera";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
+import { getCurrentLayer, surfaceLayer } from "../../world";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 
 let program: WebGLProgram;
@@ -137,7 +138,11 @@ const getWallVertices = (layer: Layer): Array<number> => {
    return vertices;
 }
 
+// @Speed: SO BAD. like 1/33rd of CPU time... but it's about 1/1000th of the gameplay
 export function renderMithrilRichTileOverlays(layer: Layer, isWallTiles: boolean): void {
+   // @Temporary
+   if (getCurrentLayer()===surfaceLayer)return;
+   
    const vertices = isWallTiles ? getWallVertices(layer) : getFloorVertices(layer);
    
    gl.useProgram(program);

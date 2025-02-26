@@ -29,6 +29,7 @@ import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponen
 import { applyStatusEffect } from "./StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
+import { StructureComponentArray } from "./StructureComponent";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -49,8 +50,8 @@ const enum Vars {
    FAST_ACCELERATION = 700
 }
 
-const MIN_TERRITORY_SIZE = 50;
-const MAX_TERRITORY_SIZE = 100;
+const MIN_TERRITORY_SIZE = 200;
+const MAX_TERRITORY_SIZE = 300;
 
 /** Stores which tiles belong to which yetis' territories */
 const yetiTerritoryTiles: Partial<Record<TileIndex, Entity>> = {};
@@ -249,6 +250,15 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
       const entityTribeComponent = TribeComponentArray.getComponent(entity);
       const tamingComponent = TamingComponentArray.getComponent(yeti);
       if (entityTribeComponent.tribe === tamingComponent.tameTribe) {
+         return false;
+      }
+   }
+
+   // @Hack: Don't attack structures place by frostlings. Ideally instead frostlings would just
+   //    tame the yetis which have territory on tile they are going to place structures on.
+   if (StructureComponentArray.hasComponent(entity)) {
+      const tribeComponent = TribeComponentArray.getComponent(entity);
+      if (tribeComponent.tribe.tribeType === TribeType.frostlings) {
          return false;
       }
    }

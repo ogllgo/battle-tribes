@@ -49,7 +49,7 @@ const TribesTab = () => {
                <h2 className="devmode-menu-section-title">{selectedTribe.name}</h2>
                <div className="bar"></div>
 
-               <DevmodeDropdownInput text="Tribe type:" options={tribeTypeOptions} onChange={updateTribeType} />
+               <DevmodeDropdownInput text="Tribe type:" options={tribeTypeOptions} defaultOption={CLIENT_TRIBE_INFO_RECORD[selectedTribe.tribeType].name} onChange={updateTribeType} />
 
                <button onClick={() => setRenderedTribePlanID(selectedTribe.id)}>View Plans</button>
 

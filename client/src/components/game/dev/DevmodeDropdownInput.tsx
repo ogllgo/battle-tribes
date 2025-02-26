@@ -3,6 +3,7 @@ import { useRef } from "react";
 interface DevmodeDropdownInputProps {
    readonly text: string;
    readonly options: ReadonlyArray<string>;
+   readonly defaultOption: string;
    onChange?(optionIdx: number): void;
 }
 
@@ -20,9 +21,9 @@ const DevmodeDropdownInput = (props: DevmodeDropdownInputProps) => {
    
    return <div className="devmode-input">
       <span>{props.text}</span>
-      <select ref={dropdownRef} onChange={onChange}>
+      <select ref={dropdownRef} value={props.defaultOption} onChange={onChange}>
          {props.options.map((option, i) => {
-            return <option value={option} key={i}>{option}</option>
+            return <option key={i} value={option}>{option}</option>
          })}
       </select>
    </div>;

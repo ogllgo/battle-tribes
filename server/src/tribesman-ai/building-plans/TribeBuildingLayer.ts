@@ -345,9 +345,9 @@ const wallSideIsConnected = (buildingLayer: TribeBuildingLayer, wallSideNodes: R
       }
 
       // Only make connections between walls and doors
-      const buildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
-      for (let i = 0; i < buildingIDs.length; i++) {
-         const buildingID = buildingIDs[i];
+      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
+      for (let i = 0; i < virtualBuildingIDs.length; i++) {
+         const buildingID = virtualBuildingIDs[i];
          const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
          if (virtualBuilding.entityType !== EntityType.wall && virtualBuilding.entityType !== EntityType.door) {
             return false;
@@ -484,5 +484,9 @@ export default class TribeBuildingLayer {
       } else {
          throw new Error();
       }
+
+      // @Bug: I don't think occupiedNodeToVirtualBuildingIDRecord is updated???
+      // Can cause a crash in wallSideIsConnected
+      // We should update it here, as it is used for more than calculating optimal building placements - new virtual buildings can connect to them
    }
 }

@@ -36,7 +36,7 @@ import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
+import { entityIsTameableByPlayer, TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -284,7 +284,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Animal staff options
-   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && TamingComponentArray.hasComponent(entity)) {
+   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && entityIsTameableByPlayer(entity)) {
       return {
          type: InteractActionType.openAnimalStaffMenu,
          interactEntity: entity,
@@ -293,7 +293,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Taming almanac
-   if (selectedItem !== null && selectedItem.type === ItemType.tamingAlmanac && TamingComponentArray.hasComponent(entity)) {
+   if (selectedItem !== null && selectedItem.type === ItemType.tamingAlmanac && entityIsTameableByPlayer(entity)) {
       return {
          type: InteractActionType.openTamingMenu,
          interactEntity: entity,

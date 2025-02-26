@@ -137,7 +137,7 @@ const getClosestEmbrasureUsePoint = (tribesman: Entity, usePoints: ReadonlyArray
    return closestPoint;
 }
 
-export function huntEntity(tribesman: Entity, huntedEntity: Entity, isAggressive: boolean): void {
+export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressive: boolean): void {
    // @Cleanup: Refactor to not be so big
    
    // @Incomplete: Only accounts for hotbar

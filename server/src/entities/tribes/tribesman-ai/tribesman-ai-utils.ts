@@ -33,21 +33,12 @@ const enum Vars {
    SLOW_ACCELERATION = 400
 }
 
-/** How far away from the entity the attack is done */
-export function getTribesmanAttackOffset(tribesman: Entity): number {
-   if (getEntityType(tribesman) === EntityType.tribeWorker) {
-      return 40;
-   } else {
-      return 50;
-   }
-}
-
 /** Max distance from the attack position that the attack will be registered from */
 export function getTribesmanAttackRadius(tribesman: Entity): number {
    if (getEntityType(tribesman) === EntityType.tribeWorker) {
-      return 40;
+      return 35;
    } else {
-      return 50;
+      return 45;
    }
 }
 
@@ -56,7 +47,7 @@ export function getTribesmanDesiredAttackRange(tribesman: Entity): number {
    // @Incomplete: these shouldn't be hardcoded, they should be per-swing.
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const radius = getHumanoidRadius(transformComponent);
-   return radius + 4;
+   return radius + 0;
 }
 
 /**

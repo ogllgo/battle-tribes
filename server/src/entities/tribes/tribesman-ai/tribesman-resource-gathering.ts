@@ -11,7 +11,7 @@ import { TribesmanAIComponentArray, TribesmanPathType } from "../../../component
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { huntEntity } from "./tribesman-combat-ai";
+import { goKillEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../../../world";
 import Layer from "../../../Layer";
@@ -316,7 +316,7 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
    }
 
    if (entityExists(tribesmanAIComponent.targetEntity) && gatherTargetIsValid(tribesmanAIComponent.targetEntity, targetEntityTypes)) {
-      huntEntity(tribesman, tribesmanAIComponent.targetEntity, false);
+      goKillEntity(tribesman, tribesmanAIComponent.targetEntity, false);
       return;
    }
 

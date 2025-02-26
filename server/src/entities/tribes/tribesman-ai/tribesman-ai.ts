@@ -13,7 +13,7 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import Tribe from "../../../Tribe";
 import { CollisionVars, entitiesAreColliding } from "../../../collision";
-import { doMeleeAttack, huntEntity } from "./tribesman-combat-ai";
+import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
@@ -456,7 +456,7 @@ export function tickTribesman(tribesman: Entity): void {
    // Attack enemies
    if (visibleEnemies.length > 0) {
       const target = getClosestAccessibleEntity(tribesman, visibleEnemies);
-      huntEntity(tribesman, target, true);
+      goKillEntity(tribesman, target, true);
       
       if (ageTicks % MESSAGE_INTERVAL_TICKS === 0) {
          const communcationTargets = getCommunicationTargets(tribesman);
@@ -468,7 +468,7 @@ export function tickTribesman(tribesman: Entity): void {
    // Attack hostile mobs
    if (visibleHostileMobs.length > 0) {
       const target = getClosestAccessibleEntity(tribesman, visibleHostileMobs);
-      huntEntity(tribesman, target, true);
+      goKillEntity(tribesman, target, true);
 
       // @Cleanup: Copy and paste from hunting enemies section
       if (ageTicks % MESSAGE_INTERVAL_TICKS === 0) {
@@ -493,7 +493,7 @@ export function tickTribesman(tribesman: Entity): void {
    
    // Attack enemy buildings
    if (visibleEnemyBuildings.length > 0) {
-      huntEntity(tribesman, getClosestAccessibleEntity(tribesman, visibleEnemyBuildings), true);
+      goKillEntity(tribesman, getClosestAccessibleEntity(tribesman, visibleEnemyBuildings), true);
       return;
    }
 
