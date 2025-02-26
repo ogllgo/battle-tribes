@@ -146,7 +146,7 @@ export function readCircularHitboxFromData(reader: PacketReader, hitboxes: Reado
    
    return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
 }
-const padCircularHitboxData = (reader: PacketReader): void => {
+export function padCircularHitboxData(reader: PacketReader): void {
    padBaseHitboxData(reader);
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
@@ -187,7 +187,7 @@ export function readRectangularHitboxFromData(reader: PacketReader, hitboxes: Re
 
    return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
 }
-const padRectangularHitboxData = (reader: PacketReader): void => {
+export function padRectangularHitboxData(reader: PacketReader): void {
    padBaseHitboxData(reader);
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }

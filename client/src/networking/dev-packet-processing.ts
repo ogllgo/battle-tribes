@@ -7,7 +7,7 @@ import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-pl
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { SubtileSupportInfo, setVisibleSubtileSupports } from "../rendering/webgl/subtile-support-rendering";
-import { GhostBuildingPlan, readGhostVirtualBuildings, updateVirtualBuildings } from "../virtual-buildings";
+import { GhostBuildingPlan, readGhostVirtualBuildings, pruneGhostBuildingPlans } from "../virtual-buildings";
 
 export function readPacketDevData(reader: PacketReader): void {
    // Subtile supports
@@ -68,7 +68,6 @@ export function readPacketDevData(reader: PacketReader): void {
 
    updateLightLevelsFromData(reader);
    
-   const newVirtualBuildingsMap = new Map<number, GhostBuildingPlan>();
    resetBuildingSafeties();
    
    const numTribes = reader.readNumber();
@@ -79,11 +78,11 @@ export function readPacketDevData(reader: PacketReader): void {
       updateTribePlanData(reader, tribeID);
 
       // Virtual buildings
-      readGhostVirtualBuildings(reader, newVirtualBuildingsMap);
+      readGhostVirtualBuildings(reader);
 
       // Building safeties
       readTribeBuildingSafeties(reader);
    }
 
-   updateVirtualBuildings(newVirtualBuildingsMap);
+   pruneGhostBuildingPlans();
 }

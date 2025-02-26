@@ -1554,7 +1554,7 @@ const tickItem = (itemType: ItemType): void => {
          placeableEntityGhostRenderInfo = renderInfo;
          addGhostRenderInfo(renderInfo);
 
-         // Manually set the render info's position and rotation
+         // @Hack: Manually set the render info's position and rotation
          const transformComponentParams = components[ServerComponentType.transform]!;
          renderInfo.renderPosition.x = transformComponentParams.position.x;
          renderInfo.renderPosition.y = transformComponentParams.position.y;

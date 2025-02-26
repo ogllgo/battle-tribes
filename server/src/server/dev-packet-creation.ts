@@ -11,8 +11,10 @@ import { getTribes } from "../world";
 import PlayerClient from "./PlayerClient";
 
 const getVirtualBuildingGhostEntitiesLength = (assignment: AIPlanAssignment): number => {
-   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 0;
    if (assignment.plan.type === AIPlanType.placeBuilding) {
+      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+      
       lengthBytes += getVirtualBuildingDataLength(assignment.plan.virtualBuilding);
 
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -22,7 +24,6 @@ const getVirtualBuildingGhostEntitiesLength = (assignment: AIPlanAssignment): nu
       }
    }
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const childAssignment of assignment.children) {
       lengthBytes += getVirtualBuildingGhostEntitiesLength(childAssignment);
    }
@@ -44,12 +45,8 @@ const addVirtualBuildingGhostEntities = (packet: Packet, assignment: AIPlanAssig
          addVirtualBuildingData(packet, potentialPlan.virtualBuilding);
          packet.addNumber(potentialPlan.safety);
       }
-   } else {
-      packet.addBoolean(false);
-      packet.padOffset(3);
    }
 
-   packet.addNumber(assignment.children.length);
    for (const childAssignment of assignment.children) {
       addVirtualBuildingGhostEntities(packet, childAssignment);
    }
@@ -103,6 +100,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
 
          // Virtual buildings
          lengthBytes += getVirtualBuildingGhostEntitiesLength(tribe.assignment);
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
          // Building safeties
          lengthBytes += getTribeBuildingSafetyDataLength(tribe);
@@ -178,6 +176,8 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
 
       // Virtual buildings
       addVirtualBuildingGhostEntities(packet, tribe.assignment);
+      packet.addBoolean(false);
+      packet.padOffset(3)
 
       // Building safetys
       addTribeBuildingSafetyData(packet, tribe);

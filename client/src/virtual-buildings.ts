@@ -3,6 +3,7 @@ import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../s
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { distance, Point } from "../../shared/src/utils";
+import Board from "./Board";
 import { ClientHitbox } from "./boxes";
 import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
 import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
@@ -17,13 +18,12 @@ import { createSlurbTorchComponentParams } from "./entity-components/server-comp
 import { createSpikesComponentParams } from "./entity-components/server-components/SpikesComponent";
 import { createStatusEffectComponentParams } from "./entity-components/server-components/StatusEffectComponent";
 import { createStructureComponentParams } from "./entity-components/server-components/StructureComponent";
-import { createTransformComponentParams, readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
-import { TribeComponentArray, createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
-import { EntityRenderInfo } from "./EntityRenderInfo";
+import { createTransformComponentParams, padCircularHitboxData, padRectangularHitboxData, readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
+import { createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
+import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
 import Game from "./Game";
 import Layer from "./Layer";
 import OPTIONS from "./options";
-import { playerInstance } from "./player";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { playerTribe } from "./tribes";
@@ -47,15 +47,31 @@ export interface VirtualBuildingSafetySimulation {
 export interface GhostBuildingPlan {
    readonly virtualBuilding: VirtualBuilding;
    readonly virtualBuildingsMap: Map<number, VirtualBuildingSafetySimulation>;
+   lastUpdateTicks: number;
 }
 
-/** Contains the virtual buildings for tribe building plans */
-let plannedVirtualBuildingsMap = new Map<number, GhostBuildingPlan>();
-let previousVisibleVirtualBuildings = new Set<VirtualBuilding>();
+const ghostBuildingPlans = new Map<number, GhostBuildingPlan>();
 
-const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
+const padVirtualBuildingData = (reader: PacketReader): void => {
+   reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+
+   const numHitboxes = reader.readNumber();
+   for (let i = 0; i < numHitboxes; i++) {
+      const isCircular = reader.readBoolean();
+      reader.padOffset(3);
+
+      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+      
+      if (isCircular) {
+         padCircularHitboxData(reader);
+      } else {
+         padRectangularHitboxData(reader);
+      }
+   }
+}
+
+const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: number): VirtualBuilding => {
    const entityType = reader.readNumber() as StructureType;
-   const virtualBuildingID = reader.readNumber();
    const layerDepth = reader.readNumber();
    const x = reader.readNumber();
    const y = reader.readNumber();
@@ -212,6 +228,13 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
       }
    }
 
+   // @Hack: Manually set the render info's position and rotation
+   const transformComponentParams = components[ServerComponentType.transform]!;
+   renderInfo.renderPosition.x = transformComponentParams.position.x;
+   renderInfo.renderPosition.y = transformComponentParams.position.y;
+   renderInfo.rotation = transformComponentParams.rotation;
+   updateEntityRenderInfoRenderData(renderInfo);
+
    return {
       entityType: entityType,
       id: virtualBuildingID,
@@ -223,37 +246,51 @@ const readVirtualBuildingFromData = (reader: PacketReader): VirtualBuilding => {
    };
 }
 
-export function readGhostVirtualBuildings(reader: PacketReader, virtualBuildings: Map<number, GhostBuildingPlan>): void {
-   const hasVirtualBuilding = reader.readBoolean();
-   reader.padOffset(3);
-   if (hasVirtualBuilding) {
-      const virtualBuilding = readVirtualBuildingFromData(reader);
+export function readGhostVirtualBuildings(reader: PacketReader): void {
+   while (reader.readBoolean()) {
+      reader.padOffset(3);
 
-      const virtualBuildingsMap = new Map<number, VirtualBuildingSafetySimulation>();
-      const numPotentialPlans = reader.readNumber();
-      for (let i = 0; i < numPotentialPlans; i++) {
-         const virtualBuilding = readVirtualBuildingFromData(reader);
-      
-         const safety = reader.readNumber();
+      const virtualBuildingID = reader.readNumber();
 
-         const VirtualBuildingSafetySimulation: VirtualBuildingSafetySimulation = {
+      const existingGhostBuildingPlan = ghostBuildingPlans.get(virtualBuildingID);
+      if (typeof existingGhostBuildingPlan !== "undefined") {
+         padVirtualBuildingData(reader);
+
+         const numPotentialPlans = reader.readNumber();
+         for (let i = 0; i < numPotentialPlans; i++) {
+            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+            padVirtualBuildingData(reader);
+            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         }
+
+         existingGhostBuildingPlan.lastUpdateTicks = Board.serverTicks;
+      } else {
+         const virtualBuilding = readVirtualBuildingFromData(reader, virtualBuildingID);
+   
+         const virtualBuildingSafetySimulationMap = new Map<number, VirtualBuildingSafetySimulation>();
+         const numPotentialPlans = reader.readNumber();
+         for (let i = 0; i < numPotentialPlans; i++) {
+            const virtualBuildingID = reader.readNumber();
+            const virtualBuilding = readVirtualBuildingFromData(reader, virtualBuildingID);
+         
+            const safety = reader.readNumber();
+   
+            const VirtualBuildingSafetySimulation: VirtualBuildingSafetySimulation = {
+               virtualBuilding: virtualBuilding,
+               safety: safety
+            };
+            virtualBuildingSafetySimulationMap.set(virtualBuilding.id, VirtualBuildingSafetySimulation);
+         }
+   
+         const ghostBuildingPlan: GhostBuildingPlan = {
             virtualBuilding: virtualBuilding,
-            safety: safety
+            virtualBuildingsMap: virtualBuildingSafetySimulationMap,
+            lastUpdateTicks: Board.serverTicks
          };
-         virtualBuildingsMap.set(virtualBuilding.id, VirtualBuildingSafetySimulation);
+         ghostBuildingPlans.set(virtualBuilding.id, ghostBuildingPlan);
       }
-
-      const ghostBuildingPlan: GhostBuildingPlan = {
-         virtualBuilding: virtualBuilding,
-         virtualBuildingsMap: virtualBuildingsMap
-      }
-      virtualBuildings.set(virtualBuilding.id, ghostBuildingPlan);
    }
-
-   const numChildren = reader.readNumber();
-   for (let i = 0; i < numChildren; i++) {
-      readGhostVirtualBuildings(reader, virtualBuildings);
-   }
+   reader.padOffset(3);
 }
 
 export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
@@ -263,7 +300,7 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
    
    let closestGhostBuildingPlan: GhostBuildingPlan | undefined;
    let minDist = 64;
-   for (const pair of plannedVirtualBuildingsMap) {
+   for (const pair of ghostBuildingPlans) {
       const ghostBuildingPlan = pair[1];
       const virtualBuilding = ghostBuildingPlan.virtualBuilding;
       
@@ -280,52 +317,12 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
    return null;
 }
 
-export function updateVirtualBuildings(newVirtualBuildingsMap: Map<number, GhostBuildingPlan>): void {
-   // @Speed
-
-   plannedVirtualBuildingsMap = newVirtualBuildingsMap;
-
-   const visibleBuildingPlan = getVisibleBuildingPlan();
-
-   const visibleVirtualBuildings = new Set<VirtualBuilding>();
-   if (OPTIONS.showBuildingPlans) {
-      if (visibleBuildingPlan === null) {
-         for (const pair of plannedVirtualBuildingsMap) {
-            const ghostBuildingPlan = pair[1];
-            visibleVirtualBuildings.add(ghostBuildingPlan.virtualBuilding);
-         }
-      } else {
-         for (const pair of visibleBuildingPlan.virtualBuildingsMap) {
-            const virtualBuildingSafetySimulation = pair[1];
-            visibleVirtualBuildings.add(virtualBuildingSafetySimulation.virtualBuilding);
-         }
+export function pruneGhostBuildingPlans(): void {
+   for (const pair of ghostBuildingPlans) {
+      const ghostBuildingInfo = pair[1];
+      if (ghostBuildingInfo.lastUpdateTicks !== Board.serverTicks) {
+         removeGhostRenderInfo(ghostBuildingInfo.virtualBuilding.renderInfo);
+         ghostBuildingPlans.delete(pair[0]);
       }
    }
-
-   // Check for removed virtual buildings
-   for (const virtualBuilding of previousVisibleVirtualBuildings) {
-      if (visibleVirtualBuildings.has(virtualBuilding)) {
-         continue;
-      }
-
-      removeGhostRenderInfo(virtualBuilding.renderInfo);
-   }
-   
-   // Add new virtual buildings
-   for (const virtualBuilding of visibleVirtualBuildings) {
-      if (previousVisibleVirtualBuildings.has(virtualBuilding)) {
-         continue;
-      }
-
-      // Add render info for new virtual buildings
-      const renderInfo = virtualBuilding.renderInfo;
-      addGhostRenderInfo(renderInfo);
-
-      // Manually set the render info's position and rotation
-      renderInfo.renderPosition.x = virtualBuilding.position.x;
-      renderInfo.renderPosition.y = virtualBuilding.position.y;
-      renderInfo.rotation = virtualBuilding.rotation;
-   }
-
-   previousVisibleVirtualBuildings = visibleVirtualBuildings;
 }

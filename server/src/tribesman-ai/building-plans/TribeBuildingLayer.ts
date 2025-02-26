@@ -202,8 +202,8 @@ export function createVirtualStructure(buildingLayer: TribeBuildingLayer, positi
 }
 
 export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
-   packet.addNumber(virtualBuilding.entityType);
    packet.addNumber(virtualBuilding.id);
+   packet.addNumber(virtualBuilding.entityType);
    packet.addNumber(virtualBuilding.layer.depth);
    packet.addNumber(virtualBuilding.position.x);
    packet.addNumber(virtualBuilding.position.y);

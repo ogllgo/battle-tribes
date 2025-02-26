@@ -10,6 +10,7 @@ import { TribeMemberComponentArray } from "./entity-components/server-components
 import { EntityType } from "../../shared/src/entities";
 import { getHumanoidRadius } from "./entity-components/server-components/TribesmanComponent";
 import { playerInstance } from "./player";
+import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -367,12 +368,23 @@ const calculatePotentialPlanIdealness = (virtualBuildingSafetySimulation: Virtua
    return idealness;
 }
 
+let lastGhostBuildingPlan: GhostBuildingPlan | null = null;
+
 const renderPotentialBuildingPlans = (): void => {
    if (!OPTIONS.showBuildingPlans) {
       return;
    }
    
    const ghostBuildingPlan = getVisibleBuildingPlan();
+
+   // @Speed
+   if (lastGhostBuildingPlan !== null) {
+      removeGhostRenderInfo(lastGhostBuildingPlan.virtualBuilding.renderInfo);
+   }
+   if (ghostBuildingPlan !== null) {
+      addGhostRenderInfo(ghostBuildingPlan.virtualBuilding.renderInfo);
+   }
+   lastGhostBuildingPlan = ghostBuildingPlan;
    if (ghostBuildingPlan === null) {
       return;
    }
