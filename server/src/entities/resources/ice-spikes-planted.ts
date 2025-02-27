@@ -1,7 +1,7 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -10,13 +10,25 @@ import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
-import { IceSpikesPlantedComponent } from "../../components/IceSpikesPlantedComponent";
+import { IceSpikesPlantedComponent, plantedIceSpikesIsFullyGrown } from "../../components/IceSpikesPlantedComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
    
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
    | ServerComponentType.planted
+   | ServerComponentType.loot
    | ServerComponentType.iceSpikesPlanted;
+
+registerEntityLootOnDeath(EntityType.iceSpikesPlanted, [
+   {
+      itemType: ItemType.frostcicle,
+      getAmount: (entity: Entity) => {
+         return plantedIceSpikesIsFullyGrown(entity) ? randInt(1, 2) : 0;
+      }
+   }
+]);
 
 export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
@@ -30,6 +42,8 @@ export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<C
 
    const plantedComponent = new PlantedComponent(planterBox);
 
+   const lootComponent = new LootComponent();
+   
    const iceSpikesPlantedComponent = new IceSpikesPlantedComponent();
    
    return {
@@ -39,6 +53,7 @@ export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<C
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.iceSpikesPlanted]: iceSpikesPlantedComponent
       },
       lights: []

@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, unitsToChunksClamped, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -8,17 +8,17 @@ import { ComponentArray } from "./ComponentArray";
 import { ItemType } from "battletribes-shared/items/items";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { TransformComponentArray } from "./TransformComponent";
-import { createItemEntityConfig, createItemsOverEntity } from "../entities/item-entity";
+import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { cleanAngleNEW, entityIsInLineOfSight, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, stopEntity, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, stopEntity, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray, dropBerry } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { applyKnockback, getVelocityMagnitude, PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
+import { applyKnockback, getVelocityMagnitude, PhysicsComponentArray } from "./PhysicsComponent";
 import { entitiesAreColliding, CollisionVars } from "../collision";
 import { createCircularGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
@@ -106,7 +106,6 @@ CowComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-CowComponentArray.preRemove = preRemove;
 CowComponentArray.onHitboxCollision = onHitboxCollision;
 
 const poop = (cow: Entity, cowComponent: CowComponent): void => {
@@ -666,11 +665,6 @@ const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowCompone
 
 export function wantsToEatBerries(cowComponent: CowComponent): boolean {
    return cowComponent.bowelFullness <= Vars.MAX_BERRY_CHASE_FULLNESS;
-}
-
-function preRemove(cow: Entity): void {
-   createItemsOverEntity(cow, ItemType.raw_beef, randInt(2, 3));
-   createItemsOverEntity(cow, ItemType.leather, randInt(1, 2));
 }
 
 const stopRamming = (cowComponent: CowComponent): void => {

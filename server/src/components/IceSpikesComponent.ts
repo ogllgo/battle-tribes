@@ -8,7 +8,6 @@ import Layer from "../Layer";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
-import { ItemType } from "battletribes-shared/items/items";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { EntityConfig } from "../components";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
@@ -19,7 +18,6 @@ import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerab
 import { applyKnockback } from "./PhysicsComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { getDistanceToClosestEntity } from "../layer-utils";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -112,10 +110,6 @@ function onTick(iceSpikes: Entity): void {
 }
 
 function preRemove(iceSpikes: Entity): void {
-   if (Math.random() < 0.5) {
-      createItemsOverEntity(iceSpikes, ItemType.frostcicle, 1);
-   }
-
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
    
    // Explode into a bunch of ice spikes

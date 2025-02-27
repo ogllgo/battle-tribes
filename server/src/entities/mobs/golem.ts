@@ -2,7 +2,7 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { distance, Point } from "battletribes-shared/utils";
+import { distance, Point, randInt } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { GolemComponent, GolemComponentArray } from "../../components/GolemComponent";
 import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
@@ -13,6 +13,8 @@ import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 export const enum GolemVars {
    PEBBLUM_SUMMON_COOLDOWN_TICKS = 10 * Settings.TPS
@@ -34,6 +36,13 @@ const ROCK_LARGE_MASS = 1.75;
 const ROCK_MASSIVE_MASS = 2.25;
 
 export const GOLEM_WAKE_TIME_TICKS = Math.floor(2.5 * Settings.TPS);
+
+registerEntityLootOnDeath(EntityType.golem, [
+   {
+      itemType: ItemType.living_rock,
+      getAmount: () => randInt(10, 20)
+   }
+]);
 
 const hitboxIsTooClose = (existingHitboxes: ReadonlyArray<Hitbox>, hitboxX: number, hitboxY: number): boolean => {
    for (let j = 0; j < existingHitboxes.length; j++) {

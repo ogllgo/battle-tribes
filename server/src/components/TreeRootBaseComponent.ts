@@ -1,10 +1,8 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getAbsAngleDiff, randFloat, randInt } from "../../../shared/src/utils";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
 import { createEntity } from "../Entity";
@@ -100,8 +98,6 @@ function onJoin(entity: Entity): void {
 }
 
 function preRemove(entity: Entity): void {
-   createItemsOverEntity(entity, ItemType.wood, randInt(2, 3));
-
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    // Respawn the tree root after a while

@@ -4,10 +4,10 @@ import { getEntitiesInRange, stopEntity, willStopAtDesiredDistance } from "../..
 import { getVelocityX, getVelocityY, PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
-import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getClosestPathfindNode, getDistanceToNode, findClosestDropdownTile, findMultiLayerPath, Path } from "../../../pathfinding";
+import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getDistanceToNode, findMultiLayerPath, Path } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { distance, assert, randItem, getTileIndexIncludingEdges, getTileX, getTileY } from "battletribes-shared/utils";
+import { distance, assert } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
@@ -20,9 +20,6 @@ import CircularBox from "../../../../../shared/src/boxes/CircularBox";
 import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
-import { TribesmanAIType } from "../../../../../shared/src/components";
-import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
-import { EntityHarvestingInfo } from "./tribesman-resource-gathering";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
 
 const enum Vars {
@@ -419,80 +416,4 @@ export function getBestToolItemSlot(inventory: Inventory, toolCategory: keyof It
    }
 
    return bestItemSlot;
-}
-
-const findClosestBiome = (tribesman: Entity, harvestingInfo: EntityHarvestingInfo): LocalBiome | null => {
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
-   
-   let minDist = Number.MAX_SAFE_INTEGER;
-   let closestBiome: LocalBiome | null = null;
-   for (const localBiome of harvestingInfo.layer.localBiomes) {
-      if (localBiome.biome !== harvestingInfo.biome || localBiome.tilesInBorder.length === 0) {
-         continue;
-      }
-
-      // Make sure the local biome has the required tiles
-      let hasRequiredTiles = true;
-      for (const tileRequirement of harvestingInfo.localBiomeRequiredTiles) {
-         const amountInBiome = localBiome.tileCensus[tileRequirement.tileType];
-         if (typeof amountInBiome === "undefined" || amountInBiome < tileRequirement.minAmount) {
-            hasRequiredTiles = false;
-            break;
-         }
-      }
-      if (!hasRequiredTiles) {
-         continue;
-      }
-
-      const dist = distance(transformComponent.position.x, transformComponent.position.y, localBiome.centerX, localBiome.centerY);
-      if (dist < minDist) {
-         minDist = dist;
-         closestBiome = localBiome;
-      }
-   }
-
-   return closestBiome;
-}
-
-export function moveTribesmanToBiome(tribesman: Entity, harvestingInfo: EntityHarvestingInfo): void {
-   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-
-   // If the tribesman is already on way to the biome, continue
-   const finalPath = getFinalPath(tribesmanAIComponent);
-   if (finalPath !== null) {
-      const targetTileX = Math.floor(finalPath.goalX / Settings.TILE_SIZE);
-      const targetTileY = Math.floor(finalPath.goalY / Settings.TILE_SIZE);
-      const tileIndex = getTileIndexIncludingEdges(targetTileX, targetTileY);
-      if (finalPath.layer.getTileBiome(tileIndex) === harvestingInfo.biome) {
-         continueCurrentPath(tribesman);
-         return;
-      }
-   }
-   
-   const localBiome = findClosestBiome(tribesman, harvestingInfo);
-   assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
-   
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
-   
-   // Try to find a close tile in the local biome to move to
-   let targetX = 0;
-   let targetY = 0;
-   let minDist = Number.MAX_SAFE_INTEGER;
-   for (let attempts = 0; attempts < 40; attempts++) {
-      const targetTile = randItem(localBiome.tilesInBorder);
-      const x = (getTileX(targetTile) + Math.random()) * Settings.TILE_SIZE;
-      const y = (getTileY(targetTile) + Math.random()) * Settings.TILE_SIZE;
-
-      const dist = distance(x, y, transformComponent.position.x, transformComponent.position.y);
-      if (dist < minDist) {
-         minDist = dist;
-         targetX = x;
-         targetY = y;
-      }
-   }
-   
-   pathfindTribesman(tribesman, targetX, targetY, harvestingInfo.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
-
-   // @Incomplete: also note which layer the tribesman is moving to
-   tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;
 }

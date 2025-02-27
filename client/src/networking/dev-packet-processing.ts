@@ -3,11 +3,12 @@ import { PathfindingNodeIndex } from "../../../shared/src/client-server-types";
 import { PacketReader } from "../../../shared/src/packets";
 import { readTribeBuildingSafeties, resetBuildingSafeties } from "../building-safety";
 import { updateLightLevelsFromData } from "../light-levels";
+import { readLocalBiomes } from "../local-biomes";
 import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { SubtileSupportInfo, setVisibleSubtileSupports } from "../rendering/webgl/subtile-support-rendering";
-import { GhostBuildingPlan, readGhostVirtualBuildings, pruneGhostBuildingPlans } from "../virtual-buildings";
+import { readGhostVirtualBuildings, pruneGhostBuildingPlans } from "../virtual-buildings";
 
 export function readPacketDevData(reader: PacketReader): void {
    // Subtile supports
@@ -85,4 +86,6 @@ export function readPacketDevData(reader: PacketReader): void {
    }
 
    pruneGhostBuildingPlans();
+
+   readLocalBiomes(reader);
 }

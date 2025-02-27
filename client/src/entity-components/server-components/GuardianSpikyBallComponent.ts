@@ -2,12 +2,11 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { attachLightToEntity, attachLightToRenderPart, createLight } from "../../lights";
+import { attachLightToRenderPart, createLight } from "../../lights";
 import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnEntity } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
 import { EntityConfig } from "../ComponentArray";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
@@ -18,8 +17,9 @@ interface RenderParts {}
 
 export interface GuardianSpikyBallComponent {}
 
-export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentParams, never>(ServerComponentType.guardianSpikyBall, true, {
+export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentParams, RenderParts>(ServerComponentType.guardianSpikyBall, true, {
    createParamsFromData: createParamsFromData,
+   createRenderParts: createRenderParts,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -32,7 +32,7 @@ function createParamsFromData(): GuardianSpikyBallComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): void {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts {
    const renderPart = new TexturedRenderPart(
       null,
       0,
@@ -51,6 +51,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0.9
    );
    attachLightToRenderPart(light, renderPart, entityConfig.entity, entityConfig.layer);
+
+   return {};
 }
 
 function createComponent(): GuardianSpikyBallComponent {

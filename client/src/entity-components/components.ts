@@ -94,6 +94,7 @@ import { SwingAttackComponentArray, SwingAttackComponentParams } from "./server-
 import { BlockAttackComponentArray, BlockAttackComponentParams } from "./server-components/BlockAttackComponent";
 import { SlingTurretRockComponentArray, SlingTurretRockComponentParams } from "./server-components/SlingTurretRockComponent";
 import { TamingComponentArray, TamingComponentParams } from "./server-components/TamingComponent";
+import { LootComponentArray, LootComponentParams } from "./server-components/LootComponent";
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -193,6 +194,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.blockAttack]: BlockAttackComponentArray,
    [ServerComponentType.slingTurretRock]: SlingTurretRockComponentArray,
    [ServerComponentType.taming]: TamingComponentArray,
+   [ServerComponentType.loot]: LootComponentArray,
 };
 
 const ServerComponentParamsRecord = {
@@ -291,6 +293,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.blockAttack]: (): BlockAttackComponentParams => 0 as any,
    [ServerComponentType.slingTurretRock]: (): SlingTurretRockComponentParams => 0 as any,
    [ServerComponentType.taming]: (): TamingComponentParams => 0 as any,
+   [ServerComponentType.loot]: (): LootComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

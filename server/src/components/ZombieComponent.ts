@@ -14,7 +14,7 @@ import { ItemComponentArray } from "./ItemComponent";
 import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { calculateRadialAttackTargets, wasTribeMemberKill } from "../entities/tribes/tribe-member";
+import { calculateRadialAttackTargets } from "../entities/tribes/tribe-member";
 import { InventoryComponentArray, getInventory, pickupItemEntity } from "./InventoryComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
@@ -25,7 +25,6 @@ import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { TombstoneComponentArray } from "./TombstoneComponent";
 import { entityIsStructure } from "../../../shared/src/structures";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = 3 * UtilVars.PI,
@@ -374,10 +373,6 @@ function preRemove(zombie: Entity): void {
    if (zombieComponent.tombstone !== 0 && TombstoneComponentArray.hasComponent(zombieComponent.tombstone)) {
       const tombstoneComponent = TombstoneComponentArray.getComponent(zombieComponent.tombstone);
       tombstoneComponent.numZombies--;
-   }
-
-   if (wasTribeMemberKill(zombie) && Math.random() < 0.1) {
-      createItemsOverEntity(zombie, ItemType.eyeball, 1);
    }
 }
 

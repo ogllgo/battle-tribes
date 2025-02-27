@@ -3,9 +3,11 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
+import { ItemType } from "../../../../shared/src/items/items";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { MithrilOreNodeComponent } from "../../components/MithrilOreNodeComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -13,7 +15,15 @@ import { TransformComponent } from "../../components/TransformComponent";
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
+   | ServerComponentType.loot
    | ServerComponentType.mithrilOreNode;
+
+registerEntityLootOnDeath(EntityType.mithrilOreNode, [
+   {
+      itemType: ItemType.mithrilOre,
+      getAmount: () => 1
+   }
+]);
 
 export function createMithrilOreNodeConfig(size: number, variant: number, children: ReadonlyArray<Entity>, renderHeight: number): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
@@ -24,6 +34,8 @@ export function createMithrilOreNodeConfig(size: number, variant: number, childr
 
    const statusEffectComponent = new StatusEffectComponent(0);
    
+   const lootComponent = new LootComponent();
+   
    const mithrilOreNodeComponent = new MithrilOreNodeComponent(size, variant, children, renderHeight);
    
    return {
@@ -32,6 +44,7 @@ export function createMithrilOreNodeConfig(size: number, variant: number, childr
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.mithrilOreNode]: mithrilOreNodeComponent
       },
       lights: []

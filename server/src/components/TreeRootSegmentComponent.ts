@@ -1,9 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { assert, randInt } from "../../../shared/src/utils";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TreeRootBaseComponentArray } from "./TreeRootBaseComponent";
@@ -19,7 +17,6 @@ export class TreeRootSegmentComponent {
 
 export const TreeRootSegmentComponentArray = new ComponentArray<TreeRootSegmentComponent>(ServerComponentType.treeRootSegment, true, getDataLength, addDataToPacket);
 TreeRootSegmentComponentArray.onJoin = onJoin;
-TreeRootSegmentComponentArray.onDeath = onDeath;
 TreeRootSegmentComponentArray.onRemove = onRemove;
 
 function getDataLength(): number {
@@ -36,10 +33,6 @@ function onJoin(entity: Entity): void {
 
    const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(treeRootSegmentComponent.root);
    treeRootBaseComponent.segments.push(entity);
-}
-
-function onDeath(entity: Entity): void {
-   createItemsOverEntity(entity, ItemType.wood, randInt(1, 2));
 }
 
 function onRemove(entity: Entity): void {

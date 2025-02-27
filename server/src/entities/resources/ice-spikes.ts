@@ -10,11 +10,21 @@ import { TransformComponent } from "../../components/TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { IceSpikesComponent } from "../../components/IceSpikesComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
+   | ServerComponentType.loot
    | ServerComponentType.iceSpikes;
+
+registerEntityLootOnDeath(EntityType.iceSpikes, [
+   {
+      itemType: ItemType.frostcicle,
+      getAmount: () => Math.random() < 0.5 ? 1 : 0
+   }
+]);
 
 export function createIceSpikesConfig(rootIceSpikes: Entity): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
@@ -26,6 +36,8 @@ export function createIceSpikesConfig(rootIceSpikes: Entity): EntityConfig<Compo
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.freezing | StatusEffect.bleeding);
    
+   const lootComponent = new LootComponent();
+   
    const iceSpikesComponent = new IceSpikesComponent(rootIceSpikes);
    
    return {
@@ -34,6 +46,7 @@ export function createIceSpikesConfig(rootIceSpikes: Entity): EntityConfig<Compo
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.iceSpikes]: iceSpikesComponent
       },
       lights: []

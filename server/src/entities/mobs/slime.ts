@@ -2,9 +2,9 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { SlimeSize, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
-import { SlimeComponent } from "../../components/SlimeComponent";
+import { SlimeComponent, SlimeComponentArray } from "../../components/SlimeComponent";
 import Layer from "../../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
@@ -18,6 +18,8 @@ import { Biome } from "battletribes-shared/biomes";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
+import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -44,6 +46,24 @@ export const SPIT_CHARGE_TIME_TICKS = SPIT_COOLDOWN_TICKS + Math.floor(0.8 * Set
 const MAX_HEALTH: ReadonlyArray<number> = [10, 20, 35];
 export const SLIME_SPEED_MULTIPLIERS: ReadonlyArray<number> = [2.5, 1.75, 1];
 const VISION_RANGES = [200, 250, 300];
+
+registerEntityLootOnDeath(EntityType.slime, [
+   {
+      itemType: ItemType.slimeball,
+      getAmount: (entity: Entity) => {
+         const slimeComponent = SlimeComponentArray.getComponent(entity);
+         switch (slimeComponent.size) {
+            case SlimeSize.small: return randInt(1, 2);
+            case SlimeSize.medium: return randInt(3, 5);
+            case SlimeSize.large: return randInt(6, 9);
+         }
+      }
+   },
+   {
+      itemType: ItemType.leather,
+      getAmount: () => randInt(1, 2)
+   }
+]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.swamp;

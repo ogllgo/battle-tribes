@@ -1,8 +1,6 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { destroyEntity, entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 
@@ -36,8 +34,6 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 function preRemove(entity: Entity): void {
-   createItemsOverEntity(entity, ItemType.mithrilOre, 1);
-   
    const mithrilOreNodeComponent = MithrilOreNodeComponentArray.getComponent(entity);
    for (const child of mithrilOreNodeComponent.children) {
       if (entityExists(child)) {

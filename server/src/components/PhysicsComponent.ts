@@ -6,7 +6,7 @@ import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
-import { EntityCarryInfo, getEntityTile, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { EntityCarryInfo, getEntityTile, resolveBorderCollisions, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
@@ -218,42 +218,6 @@ const applyPhysics = (entity: Entity, transformComponent: TransformComponent, ph
 const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformComponent): void => {
    if (entityCanBlockPathfinding(entity)) {
       transformComponent.pathfindingNodesAreDirty = true;
-   }
-}
-   
-const resolveBorderCollisions = (transformComponent: TransformComponent): void => {
-   // Left border
-   if (transformComponent.boundingAreaMinX < 0) {
-      transformComponent.position.x -= transformComponent.boundingAreaMinX;
-      transformComponent.selfVelocity.x = 0;
-      transformComponent.externalVelocity.x = 0;
-      transformComponent.isDirty = true;
-      // Right border
-   } else if (transformComponent.boundingAreaMaxX > Settings.BOARD_UNITS) {
-      transformComponent.position.x -= transformComponent.boundingAreaMaxX - Settings.BOARD_UNITS;
-      transformComponent.selfVelocity.x = 0;
-      transformComponent.externalVelocity.x = 0;
-      transformComponent.isDirty = true;
-   }
-
-   // Bottom border
-   if (transformComponent.boundingAreaMinY < 0) {
-      transformComponent.position.y -= transformComponent.boundingAreaMinY;
-      transformComponent.selfVelocity.y = 0;
-      transformComponent.externalVelocity.y = 0;
-      transformComponent.isDirty = true;
-      // Top border
-   } else if (transformComponent.boundingAreaMaxY > Settings.BOARD_UNITS) {
-      transformComponent.position.y -= transformComponent.boundingAreaMaxY - Settings.BOARD_UNITS;
-      transformComponent.selfVelocity.y = 0;
-      transformComponent.externalVelocity.y = 0;
-      transformComponent.isDirty = true;
-   }
-
-   // If the entity is outside the world border after resolving border collisions, throw an error
-   if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
-      const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
-      throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
    }
 }
 

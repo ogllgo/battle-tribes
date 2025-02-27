@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randInt, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
@@ -24,7 +24,6 @@ import { AttackingEntitiesComponent, AttackingEntitiesComponentArray } from "./A
 import { Hitbox, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
@@ -76,7 +75,6 @@ YetiComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 },
-YetiComponentArray.preRemove = preRemove;
 YetiComponentArray.onRemove = onRemove;
 YetiComponentArray.onHitboxCollision = onHitboxCollision;
 
@@ -447,11 +445,6 @@ function onTick(yeti: Entity): void {
       const physicsComponent = PhysicsComponentArray.getComponent(yeti);
       stopEntity(physicsComponent);
    }
-}
-
-export function preRemove(yeti: Entity): void {
-   createItemsOverEntity(yeti, ItemType.raw_beef, randInt(4, 7));
-   createItemsOverEntity(yeti, ItemType.yeti_hide, randInt(2, 3));
 }
 
 function onRemove(yeti: Entity): void {

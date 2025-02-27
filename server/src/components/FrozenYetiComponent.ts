@@ -18,9 +18,7 @@ import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectCom
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
-import { ItemType } from "../../../shared/src/items/items";
 import { Biome } from "../../../shared/src/biomes";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -66,7 +64,6 @@ FrozenYetiComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-FrozenYetiComponentArray.preRemove = preRemove;
 FrozenYetiComponentArray.onTakeDamage = onTakeDamage;
 
 const shouldTargetEntity = (layer: Layer, entity: Entity): boolean => {
@@ -665,13 +662,6 @@ function onTick(frozenYeti: Entity): void {
          break;
       }
    }
-}
-
-function preRemove(frozenYeti: Entity): void {
-   createItemsOverEntity(frozenYeti, ItemType.raw_beef, randInt(13, 18));
-
-   createItemsOverEntity(frozenYeti, ItemType.deepfrost_heart, randInt(2, 3));
-   createItemsOverEntity(frozenYeti, ItemType.yeti_hide, randInt(5, 7));
 }
 
 function getDataLength(entity: Entity): number {

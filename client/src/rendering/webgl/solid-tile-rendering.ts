@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { SubtileType, TileType } from "battletribes-shared/tiles";
+import { NUM_TILE_TYPES, SubtileType, TileType } from "battletribes-shared/tiles";
 import Camera from "../../Camera";
 import { gl, createWebGLProgram, createTextureArray } from "../../webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, RenderChunkSolidTileInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkIndex, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY } from "../render-chunks";
@@ -25,7 +25,7 @@ export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string |
 const FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<TileType, number | null>> = {};
 (() => {
    let i = 0;
-   for (let tileType: TileType = 0; tileType < TileType._LENGTH_; tileType++) {
+   for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
       const textureSource = FLOOR_TILE_TEXTURE_SOURCE_RECORD[tileType];
       if (typeof textureSource !== "undefined") {
          if (textureSource !== null) {
@@ -188,7 +188,7 @@ export function createSolidTileShaders(): void {
 
    // Floors
    const floorTextureSources = new Array<string>();
-   for (let tileType: TileType = 0; tileType < TileType._LENGTH_; tileType++) {
+   for (let tileType: TileType = 0; tileType < NUM_TILE_TYPES; tileType++) {
       const textureSource = FLOOR_TILE_TEXTURE_SOURCE_RECORD[tileType];
       if (typeof textureSource !== "undefined" && textureSource !== null) {
          floorTextureSources.push(textureSource);

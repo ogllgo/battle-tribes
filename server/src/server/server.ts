@@ -407,10 +407,10 @@ class GameServer {
             resolveEntityCollisions(layer);
          }
          
-         if (getGameTicks() % Settings.TPS === 0) {
+         // if (getGameTicks() % Settings.TPS === 0) {
             updateResourceDistributions();
             runSpawnAttempt();
-         }
+         // }
          
          pushJoinBuffer(true);
          destroyFlaggedEntities();

@@ -24,6 +24,7 @@ import { TamingComponent } from "../../components/TamingComponent";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
@@ -41,6 +42,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.escapeAI
    | ServerComponentType.followAI
    | ServerComponentType.rideable
+   | ServerComponentType.loot
    | ServerComponentType.taming
    | ServerComponentType.cow;
 
@@ -87,6 +89,17 @@ registerEntityTamingSpec(EntityType.cow, {
    }
 });
 
+registerEntityLootOnDeath(EntityType.cow, [
+   {
+      itemType: ItemType.raw_beef,
+      getAmount: () => randInt(2, 3)
+   },
+   {
+      itemType: ItemType.leather,
+      getAmount: () => randInt(1, 2)
+   }
+]);
+
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
@@ -121,6 +134,8 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
    const rideableComponent = new RideableComponent();
    rideableComponent.carrySlots.push(createCarrySlot(0, -14, 48, 0));
    
+   const lootComponent = new LootComponent();
+   
    const tamingComponent = new TamingComponent();
    
    const cowComponent = new CowComponent();
@@ -137,6 +152,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.rideable]: rideableComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.cow]: cowComponent
       },

@@ -10,15 +10,25 @@ import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/box
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CactusComponent, CactusFlower } from "../../components/CactusComponent";
+import { ItemType } from "../../../../shared/src/items/items";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
+   | ServerComponentType.loot
    | ServerComponentType.cactus;
 
 const RADIUS = 40;
 /** Amount the hitbox is brought in. */
 const HITBOX_PADDING = 3;
+
+registerEntityLootOnDeath(EntityType.cactus, [
+   {
+      itemType: ItemType.cactus_spine,
+      getAmount: () => randInt(2, 5)
+   }
+]);
 
 export function createCactusConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
@@ -91,6 +101,8 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
+   const lootComponent = new LootComponent();
+   
    const cactusComponent = new CactusComponent(flowers);
 
    return {
@@ -99,6 +111,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.cactus]: cactusComponent
       },
       lights: []

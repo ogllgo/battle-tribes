@@ -111,7 +111,8 @@ export enum ServerComponentType {
    swingAttack,
    blockAttack,
    slingTurretRock,
-   taming
+   taming,
+   loot
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -215,7 +216,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.swingAttack]: "Swing Attack Component",
    [ServerComponentType.blockAttack]: "Block Attack Component",
    [ServerComponentType.slingTurretRock]: "Sling Turret Rock Component",
-   [ServerComponentType.taming]: "Taming Component"
+   [ServerComponentType.taming]: "Taming Component",
+   [ServerComponentType.loot]: "Loot Component"
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;

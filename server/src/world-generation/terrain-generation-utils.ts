@@ -1,11 +1,13 @@
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { Biome } from "../../../shared/src/biomes";
-import { getTileIndexIncludingEdges, getTileX, getTileY, TileIndex, tileIsInWorld } from "../../../shared/src/utils";
+import { assert, getTileIndexIncludingEdges, getTileX, getTileY, TileIndex, tileIsInWorld } from "../../../shared/src/utils";
 import Layer from "../Layer";
 import { Settings } from "../../../shared/src/settings";
+import { EntityType } from "../../../shared/src/entities";
 
 export interface LocalBiome {
+   readonly id: number;
    readonly biome: Biome;
    readonly layer: Layer;
    readonly tiles: ReadonlyArray<TileIndex>;
@@ -13,12 +15,17 @@ export interface LocalBiome {
    readonly tilesInBorder: ReadonlyArray<TileIndex>;
    /** Stores how many tiles of each type there are in the local chunk */
    readonly tileCensus: Partial<Record<TileType, number>>;
+   /** Stores how many entities of each type there are in the local chunk.
+    * IMPORTANT: Only stores entities which can drop loot. */
+   readonly entityCensus: Map<EntityType, number>;
    // @Incomplete: This would be more accurate if we stored the index of the tile in the tiles array with the smallest average distance from the other tiles.
    //   e.g. think about a crescent shaped local biome, if we use the center pos then that won't even be in the biome!
    // The following 2 variables store the average position of the biome
    centerX: number;
    centerY: number;
 }
+
+let idCounter = 0;
 
 // @Cleanup: location? should these be in the layer file as it might be used outside of terrain generation (during the game loop)?
 
@@ -121,7 +128,7 @@ const getConnectedBiomeTiles = (layer: Layer, processedTiles: Set<TileIndex>, ti
    return connectedTiles;
 }
 
-/** Must be called for each layer */
+/** Must be called for each layer. Should be called before any entities in that layer are spawned, as components can rely on knowing the local biome of the entity. */
 export function groupLocalBiomes(layer: Layer): void {
    const tileBiomes = layer.tileBiomes;
    
@@ -158,11 +165,13 @@ export function groupLocalBiomes(layer: Layer): void {
          }
          
          const localBiome: LocalBiome = {
+            id: idCounter++,
             biome: tileBiomes[tileIndex],
             layer: layer,
             tiles: connectedTiles,
             tilesInBorder: connectedTiles.filter(tileIndex => tileIsInWorld(getTileX(tileIndex), getTileY(tileIndex))),
             tileCensus: tileCensus,
+            entityCensus: new Map(),
             centerX: centerX,
             centerY: centerY
          };

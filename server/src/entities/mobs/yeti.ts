@@ -1,6 +1,6 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType, Entity } from "battletribes-shared/entities";
-import { getTileIndexIncludingEdges, Point, TileIndex } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, Point, randInt, TileIndex } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { HealthComponent } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
@@ -21,6 +21,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.physics
@@ -29,6 +30,7 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.aiHelper
    | ServerComponentType.attackingEntities
    | ServerComponentType.rideable
+   | ServerComponentType.loot
    | ServerComponentType.taming
    | ServerComponentType.yeti;
 
@@ -78,6 +80,21 @@ registerEntityTamingSpec(EntityType.yeti, {
    }
 });
 
+registerEntityLootOnDeath(EntityType.yeti, [
+   {
+      itemType: ItemType.rawYetiFlesh,
+      getAmount: () => randInt(4, 7)
+   },
+   {
+      itemType: ItemType.yeti_hide,
+      getAmount: () => randInt(2, 3)
+   },
+   {
+      itemType: ItemType.deepfrost_heart,
+      getAmount: () => Math.random() < 0.5 ? 1 : 0
+   }
+]);
+
 function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
    const tileX = Math.floor(x / Settings.TILE_SIZE);
    const tileY = Math.floor(y / Settings.TILE_SIZE);
@@ -110,6 +127,8 @@ export function createYetiConfig(territory: ReadonlyArray<TileIndex>): EntityCon
    const rideableComponent = new RideableComponent();
    rideableComponent.carrySlots.push(createCarrySlot(0, 0, 64, 0));
    
+   const lootComponent = new LootComponent();
+   
    const tamingComponent = new TamingComponent();
    
    const yetiComponent = new YetiComponent(territory);
@@ -124,6 +143,7 @@ export function createYetiConfig(territory: ReadonlyArray<TileIndex>): EntityCon
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.rideable]: rideableComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.yeti]: yetiComponent
       },

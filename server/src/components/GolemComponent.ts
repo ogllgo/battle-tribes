@@ -14,9 +14,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
-import { ItemType } from "../../../shared/src/items/items";
 import { HealthComponentArray } from "./HealthComponent";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
@@ -89,7 +87,6 @@ GolemComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-GolemComponentArray.preRemove = preRemove;
 GolemComponentArray.onTakeDamage = onTakeDamage;
 
 // @Incomplete?
@@ -276,10 +273,6 @@ function onTick(golem: Entity): void {
 
    physicsComponent.targetRotation = angleToTarget;
    physicsComponent.turnSpeed = Math.PI / 1.5;
-}
-
-function preRemove(golem: Entity): void {
-   createItemsOverEntity(golem, ItemType.living_rock, randInt(10, 20));
 }
 
 function getDataLength(): number {

@@ -11,7 +11,7 @@ import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { isNight, pushJoinBuffer } from "./world";
+import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
 import { createCowConfig } from "./entities/mobs/cow";
 import { createBerryBushConfig } from "./entities/resources/berry-bush";
@@ -38,6 +38,7 @@ import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
 import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
 import { createSlimewispConfig } from "./entities/mobs/slimewisp";
+import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -285,6 +286,14 @@ export function spawnPositionIsValid(spawnInfo: EntitySpawnInfo, positionX: numb
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = spawnInfo.layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
+            // @Hack
+            // @Speed: should be skipped entirely
+            const entityType = getEntityType(entity);
+            const collisionGroup = getEntityCollisionGroup(entityType);
+            if (collisionGroup === CollisionGroup.decoration) {
+               continue;
+            }
+            
             const transformComponent = TransformComponentArray.getComponent(entity);
             
             const distanceSquared = Math.pow(positionX - transformComponent.position.x, 2) + Math.pow(positionY - transformComponent.position.y, 2);
@@ -305,6 +314,7 @@ const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void =
    const tileY = randInt(0, Settings.BOARD_DIMENSIONS - 1);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
 
+   // (This is just to uphold the spawn attempt frequency)
    // If the tile is a valid tile for the spawn info, continue with the spawn event
    const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
    if (spawnableTiles.has(tileIndex)) {

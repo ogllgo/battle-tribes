@@ -16,7 +16,6 @@ import { InventoryComponentArray, hasInventory, getInventory } from "./Inventory
 import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 
 const enum Vars {
@@ -49,7 +48,6 @@ FishComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-FishComponentArray.preRemove = preRemove;
 FishComponentArray.onRemove = onRemove;
 
 const move = (fish: Entity, direction: number): void => {
@@ -237,10 +235,6 @@ function onTick(fish: Entity): void {
    } else {
       stopEntity(physicsComponent);
    }
-}
-
-function preRemove(fish: Entity): void {
-   createItemsOverEntity(fish, ItemType.raw_fish, 1);
 }
 
 function onRemove(entity: Entity): void {

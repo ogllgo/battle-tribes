@@ -1,5 +1,5 @@
 import { EntityDebugData } from "battletribes-shared/client-server-types";
-import { roundNum } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, roundNum } from "battletribes-shared/utils";
 import { TileType, TileTypeString } from "battletribes-shared/tiles";
 import { Settings } from "battletribes-shared/settings";
 import { useEffect, useReducer, useRef, useState } from "react";
@@ -8,7 +8,7 @@ import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
 import { getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
-import { Entity } from "../../../../../shared/src/entities";
+import { Entity, EntityTypeString } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { PhysicsComponentArray } from "../../../entity-components/server-components/PhysicsComponent";
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
@@ -16,6 +16,7 @@ import { InventoryComponentArray } from "../../../entity-components/server-compo
 import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
+import { getTileLocalBiome } from "../../../local-biomes";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -35,6 +36,9 @@ const TileDebugInfo = ({ layer, tile }: TileDebugInfoProps) => {
 
    const renderChunkX = Math.floor(chunkX * Settings.CHUNK_SIZE / RENDER_CHUNK_SIZE);
    const renderChunkY = Math.floor(chunkY * Settings.CHUNK_SIZE / RENDER_CHUNK_SIZE);
+
+   const tileIndex = getTileIndexIncludingEdges(tile.x, tile.y);
+   const localBiome = getTileLocalBiome(tileIndex);
    
    return <>
       <div className="title"><span className="highlight">{TileTypeString[tile.type]}</span> tile</div>
@@ -54,6 +58,14 @@ const TileDebugInfo = ({ layer, tile }: TileDebugInfoProps) => {
          <p>Temperature: <span className="highlight">{layer.grassInfo[tile.x][tile.y].temperature}</span></p>
          <p>Humidity: <span className="highlight">{layer.grassInfo[tile.x][tile.y].humidity}</span></p>
       </> : undefined}
+
+      {localBiome !== null ? (
+         <ul>
+            {[...localBiome.entityCensus].map(([entityType, entityCensusInfo], i) => {
+               return <li key={i}>{EntityTypeString[entityType]}: {entityCensusInfo.count} (density: {entityCensusInfo.density.toFixed(3)}/{entityCensusInfo.maxDensity.toFixed(3)})</li>
+            })}
+         </ul>
+      ) : null}
 
       <br />
    </>;

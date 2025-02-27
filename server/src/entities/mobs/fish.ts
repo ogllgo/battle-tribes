@@ -18,6 +18,8 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
 import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 const enum Vars {
    TILE_VALIDATION_PADDING = 20
@@ -30,10 +32,15 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.aiHelper
    | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
+   | ServerComponentType.loot
    | ServerComponentType.fish;
 
-const FISH_WIDTH = 7 * 4;
-const FISH_HEIGHT = 14 * 4;
+registerEntityLootOnDeath(EntityType.fish, [
+   {
+      itemType: ItemType.raw_fish,
+      getAmount: () => 1
+   }
+]);
 
 const positionIsOnlyNearWater = (layer: Layer, x: number, y: number): boolean => {
    const minTileX = Math.max(Math.floor((x - Vars.TILE_VALIDATION_PADDING) / Settings.TILE_SIZE), 0);
@@ -71,7 +78,7 @@ function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number)
 
 export function createFishConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), FISH_WIDTH, FISH_HEIGHT, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 28, 56, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
@@ -87,6 +94,8 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
    
    const escapeAIComponent = new EscapeAIComponent(200, Math.PI * 2/3);
 
+   const lootComponent = new LootComponent();
+   
    const fishComponent = new FishComponent();
 
    return {
@@ -99,6 +108,7 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.fish]: fishComponent
       },
       lights: []

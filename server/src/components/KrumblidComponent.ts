@@ -9,8 +9,6 @@ import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, s
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
-import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 
 const enum Vars {
@@ -24,7 +22,6 @@ KrumblidComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-KrumblidComponentArray.preRemove = preRemove;
 
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
@@ -72,7 +69,3 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
-
-export function preRemove(krumblid: Entity): void {
-   createItemsOverEntity(krumblid, ItemType.leather, randInt(2, 3));
-}

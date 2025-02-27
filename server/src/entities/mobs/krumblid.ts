@@ -18,9 +18,10 @@ import { FollowAIComponent } from "../../components/FollowAIComponent";
 import { KrumblidComponent } from "../../components/KrumblidComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { Settings } from "../../../../shared/src/settings";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 export const enum KrumblidVars {
-   VISION_RANGE = 224,
    MIN_FOLLOW_COOLDOWN = 7,
    MAX_FOLLOW_COOLDOWN = 9
 }
@@ -33,9 +34,15 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.attackingEntities
    | ServerComponentType.escapeAI
    | ServerComponentType.followAI
+   | ServerComponentType.loot
    | ServerComponentType.krumblid;
 
-const FOLLOW_CHANCE_PER_SECOND = 0.3;
+registerEntityLootOnDeath(EntityType.krumblid, [
+   {
+      itemType: ItemType.leather,
+      getAmount: () => randInt(2, 3)
+   }
+]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.desert;
@@ -52,14 +59,16 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(KrumblidVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(224);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, positionIsValidCallback);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    
    const escapeAIComponent = new EscapeAIComponent(700, 2 * Math.PI);
    
-   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), FOLLOW_CHANCE_PER_SECOND, 50);
+   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), 0.3, 50);
+   
+   const lootComponent = new LootComponent();
    
    const krumblidComponent = new KrumblidComponent();
    
@@ -74,6 +83,7 @@ export function createKrumblidConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       },
       lights: []

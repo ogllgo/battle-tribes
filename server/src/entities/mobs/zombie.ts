@@ -6,7 +6,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { ZombieComponent, ZombieComponentArray } from "../../components/ZombieComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { Inventory, InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -18,6 +18,7 @@ import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 
 export const enum ZombieVars {
    CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
@@ -31,9 +32,15 @@ type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.zombie
    | ServerComponentType.aiHelper
    | ServerComponentType.inventory
-   | ServerComponentType.inventoryUse;
+   | ServerComponentType.inventoryUse
+   | ServerComponentType.loot;
 
-const MAX_HEALTH = 20;
+registerEntityLootOnDeath(EntityType.zombie, [
+   {
+      itemType: ItemType.eyeball,
+      getAmount: () => Math.random() < 0.1 ? 1 : 0
+   }
+]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
@@ -48,7 +55,7 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
 
    const physicsComponent = new PhysicsComponent();
    
-   const healthComponent = new HealthComponent(MAX_HEALTH);
+   const healthComponent = new HealthComponent(20);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
@@ -69,6 +76,8 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
       addInventoryToInventoryComponent(inventoryComponent, offhand, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
       inventoryUseComponent.associatedInventoryNames.push(offhand.name);
    }
+
+   const lootComponent = new LootComponent();
    
    return {
       entityType: EntityType.zombie,
@@ -80,7 +89,8 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
          [ServerComponentType.zombie]: zombieComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.inventory]: inventoryComponent,
-         [ServerComponentType.inventoryUse]: inventoryUseComponent
+         [ServerComponentType.inventoryUse]: inventoryUseComponent,
+         [ServerComponentType.loot]: lootComponent
       },
       lights: []
    };

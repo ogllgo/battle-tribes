@@ -1,7 +1,7 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -10,11 +10,21 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { BoulderComponent } from "../../components/BoulderComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
 
 type ComponentTypes = ServerComponentType.transform
    | ServerComponentType.health
    | ServerComponentType.statusEffect
+   | ServerComponentType.loot
    | ServerComponentType.boulder;
+
+registerEntityLootOnDeath(EntityType.boulder, [
+   {
+      itemType: ItemType.rock,
+      getAmount: () => randInt(5, 7)
+   }
+]);
 
 export function createBoulderConfig(): EntityConfig<ComponentTypes> {
    const transformComponent = new TransformComponent(0);
@@ -25,6 +35,8 @@ export function createBoulderConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
    
+   const lootComponent = new LootComponent();
+   
    const boulderComponent = new BoulderComponent();
    
    return {
@@ -33,6 +45,7 @@ export function createBoulderConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.boulder]: boulderComponent
       },
       lights: []

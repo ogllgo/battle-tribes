@@ -9,8 +9,6 @@ import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
-import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    /** Average number of zombies that are created by the tombstone in a second */
@@ -125,8 +123,6 @@ function preRemove(tombstone: Entity): void {
       return;
    }
    
-   createItemsOverEntity(tombstone, ItemType.rock, randInt(2, 3));
-
    // @Copynpaste
    const tombstoneComponent = TombstoneComponentArray.getComponent(tombstone);
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;

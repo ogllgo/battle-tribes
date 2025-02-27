@@ -204,6 +204,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          }
       }
    }
+   
+   groupLocalBiomes(undergroundLayer);
 
    generateSpikyBastards(undergroundLayer);
 
@@ -269,6 +271,4 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
       pushJoinBuffer(false);
    }
-   
-   groupLocalBiomes(undergroundLayer);
 }

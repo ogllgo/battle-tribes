@@ -4,82 +4,25 @@ import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
 import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType, inventoryIsFull } from "../../../components/InventoryComponent";
 import { TribesmanAIType } from "battletribes-shared/components";
 import { tribeMemberShouldEscape } from "./tribesman-escaping";
-import { getHumanoidRadius, moveTribesmanToBiome, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { continueCurrentPath, getFinalPath, getHumanoidRadius, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
-import { PathfindingSettings } from "battletribes-shared/settings";
+import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { ItemType, InventoryName } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, ItemTypeString } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { goKillEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../../../world";
-import Layer from "../../../Layer";
-import { surfaceLayer, undergroundLayer } from "../../../layers";
-import { Biome } from "../../../../../shared/src/biomes";
-import { TileType } from "../../../../../shared/src/tiles";
 import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
-import { assert } from "../../../../../shared/src/utils";
+import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randItem } from "../../../../../shared/src/utils";
 import { runPatrolAI } from "../../../components/PatrolAIComponent";
-import { plantedTreeIsFullyGrown } from "../../../components/TreePlantedComponent";
-import { BerryBushPlantedComponentArray } from "../../../components/BerryBushPlantedComponent";
-import { plantedIceSpikesIsFullyGrown } from "../../../components/IceSpikesPlantedComponent";
 import { TribeComponentArray } from "../../../components/TribeComponent";
-
-interface BiomeTileRequirement {
-   readonly tileType: TileType;
-   readonly minAmount: number;
-}
-
-export interface EntityHarvestingInfo {
-   readonly layer: Layer;
-   readonly biome: Biome;
-   readonly localBiomeRequiredTiles: ReadonlyArray<BiomeTileRequirement>;
-}
-
-// @Robustness: when a new entity type is registered, this should automatically be populated with the appropriate information
-/** Record of which entities produce which item types */
-const MATERIAL_DROPPING_ENTITIES_RECORD = {
-   [ItemType.wood]: [EntityType.tree, EntityType.treeRootBase, EntityType.treeRootSegment, EntityType.treePlanted],
-   [ItemType.berry]: [EntityType.berryBush, EntityType.berryBushPlanted],
-   [ItemType.slimeball]: [EntityType.slime],
-   [ItemType.leather]: [EntityType.cow, EntityType.krumblid],
-   [ItemType.raw_beef]: [EntityType.cow],
-   [ItemType.rawYetiFlesh]: [EntityType.yeti, EntityType.frozenYeti],
-   [ItemType.rock]: [EntityType.boulder],
-   [ItemType.yeti_hide]: [EntityType.yeti, EntityType.frozenYeti],
-   [ItemType.eyeball]: [EntityType.zombie],
-   [ItemType.frostcicle]: [EntityType.iceSpikes, EntityType.iceSpikesPlanted],
-   [ItemType.seed]: [EntityType.tree, EntityType.treePlanted]
-} satisfies Partial<Record<ItemType, ReadonlyArray<EntityType>>>;
-
-const ENTITY_HARVESTING_INFO_RECORD: Partial<Record<EntityType, EntityHarvestingInfo>> = {
-   [EntityType.tree]: {
-      layer: surfaceLayer,
-      biome: Biome.grasslands,
-      localBiomeRequiredTiles: []
-   },
-   [EntityType.treeRootBase]: {
-      layer: undergroundLayer,
-      biome: Biome.caves,
-      localBiomeRequiredTiles: []
-   },
-   [EntityType.treeRootSegment]: {
-      layer: undergroundLayer,
-      biome: Biome.caves,
-      localBiomeRequiredTiles: []
-   },
-   [EntityType.slime]: {
-      layer: surfaceLayer,
-      biome: Biome.swamp,
-      localBiomeRequiredTiles: [
-         {
-            tileType: TileType.slime,
-            minAmount: 10
-         }
-      ]
-   }
-};
+import { entityDropsItem, getEntityTypesWhichDropItem } from "../../../components/LootComponent";
+import { getSpawnInfoBiome, getSpawnInfoForEntityType } from "../../../entity-spawn-info";
+import { Biome } from "../../../../../shared/src/biomes";
+import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
+import Layer from "../../../Layer";
 
 // @Cleanup: unused?
 const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: EntityType): boolean => {
@@ -133,41 +76,15 @@ const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: E
 //    return true;
 // }
 
-const resourceIsHarvestable = (resource: Entity, resourceEntityType: EntityType): boolean => {
-   switch (resourceEntityType) {
-      case EntityType.treePlanted: {
-         return plantedTreeIsFullyGrown(resource);
-      }
-      case EntityType.berryBushPlanted: {
-         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(resource);
-         return berryBushPlantedComponent.numFruit > 0;
-      }
-      case EntityType.iceSpikesPlanted: {
-         return plantedIceSpikesIsFullyGrown(resource);
-      }
-      default: {
-         return true;
-      }
-   }
-}
-
-const gatherTargetIsValid = (targetEntity: Entity, targetEntityTypes: ReadonlyArray<EntityType>): boolean => {
-   const entityType = getEntityType(targetEntity);
-   return (targetEntityTypes as any).includes(entityType) && resourceIsHarvestable(targetEntity, entityType);
-}
-
 const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   
-   const targetEntityTypes = MATERIAL_DROPPING_ENTITIES_RECORD[gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD];
-   assert(typeof targetEntityTypes !== "undefined");
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestResource: Entity | undefined;
 
    for (let i = 0; i < visibleEntities.length; i++) {
       const resource = visibleEntities[i];
-      if (!gatherTargetIsValid(resource, targetEntityTypes)) {
+      if (!entityDropsItem(resource, gatheredItemType)) {
          continue;
       }
 
@@ -236,44 +153,71 @@ const goPickupItemEntity = (tribesman: Entity, pickupTarget: Entity): void => {
    tribesmanAIComponent.currentAIType = TribesmanAIType.pickingUpDroppedItems;
 }
 
-const getTargettedEntityType = <T extends keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD>(tribesman: Entity, gatheredItemType: T): (typeof MATERIAL_DROPPING_ENTITIES_RECORD[T])[number] => {
-   const layer = getEntityLayer(tribesman);
+const findBiomeForGathering = (tribesman: Entity, layer: Layer, biome: Biome): LocalBiome | null => {
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
    
-   // @Cleanup: why is this cast needed??
-   switch (gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD) {
-      case ItemType.wood: {
-         // If the tribesman is underground and they aren't powerful enough to take on a guardian (to get wood),
-         // go for tree roots instead
-         if (layer === undergroundLayer) {
-            // @Incomplete: this won't make them go get those items yet...
-   
-            const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-            const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
-   
-            if (!inventoryHasItemType(hotbar, ItemType.stone_sword)) {
-               return EntityType.treeRootBase;
-            }
-         }
-         
-         return EntityType.tree;
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestBiome: LocalBiome | null = null;
+   for (const localBiome of layer.localBiomes) {
+      if (localBiome.biome !== biome || localBiome.tilesInBorder.length === 0) {
+         continue;
       }
-      // @Incomplete: EntityType.berryBushPlanted
-      case ItemType.berry: return EntityType.berryBush;
-      case ItemType.slimeball: return EntityType.slime;
-      // @Incomplete: EntityType.krumblid
-      case ItemType.leather: return EntityType.cow;
-      case ItemType.raw_beef: return EntityType.cow;
-      // @Incomplete: EntityType.frozenYeti
-      case ItemType.rawYetiFlesh: return EntityType.yeti;
-      case ItemType.rock: return EntityType.boulder;
-      // @Incomplete: EntityType.frozenYeti
-      case ItemType.yeti_hide: return EntityType.yeti;
-      case ItemType.eyeball: return EntityType.zombie;
-      // @Incomplete: EntityType.iceSpikesPlanted
-      case ItemType.frostcicle: return EntityType.iceSpikes;
-      // @Incomplete: EntityType.treePlanted
-      case ItemType.seed: return EntityType.tree;
+
+      // @Incomplete: do entity density check
+      // Should sum the density of all valid entity types to be utterly correct
+
+      // @Incomplete: calculate distance to closest tile in the biome
+      const dist = distance(transformComponent.position.x, transformComponent.position.y, localBiome.centerX, localBiome.centerY);
+      if (dist < minDist) {
+         minDist = dist;
+         closestBiome = localBiome;
+      }
    }
+
+   return closestBiome;
+}
+
+const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): void => {
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+
+   // If the tribesman is already on way to the biome, continue
+   const finalPath = getFinalPath(tribesmanAIComponent);
+   if (finalPath !== null) {
+      const targetTileX = Math.floor(finalPath.goalX / Settings.TILE_SIZE);
+      const targetTileY = Math.floor(finalPath.goalY / Settings.TILE_SIZE);
+      const tileIndex = getTileIndexIncludingEdges(targetTileX, targetTileY);
+      if (finalPath.layer.getTileBiome(tileIndex) === biome) {
+         continueCurrentPath(tribesman);
+         return;
+      }
+   }
+   
+   const localBiome = findBiomeForGathering(tribesman, layer, biome);
+   assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
+   
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+   
+   // Try to find a close tile in the local biome to move to
+   let targetX = 0;
+   let targetY = 0;
+   let minDist = Number.MAX_SAFE_INTEGER;
+   for (let attempts = 0; attempts < 40; attempts++) {
+      const targetTile = randItem(localBiome.tilesInBorder);
+      const x = (getTileX(targetTile) + Math.random()) * Settings.TILE_SIZE;
+      const y = (getTileY(targetTile) + Math.random()) * Settings.TILE_SIZE;
+
+      const dist = distance(x, y, transformComponent.position.x, transformComponent.position.y);
+      if (dist < minDist) {
+         minDist = dist;
+         targetX = x;
+         targetY = y;
+      }
+   }
+   
+   pathfindTribesman(tribesman, targetX, targetY, localBiome.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+
+   // @Incomplete: also note which layer the tribesman is moving to
+   tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;
 }
 
 /** Controls the tribesman to gather the specified item types. */
@@ -300,13 +244,9 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
       return;
    }
    
-   // @Speed: also in getGatherTarget
-   const targetEntityTypes = MATERIAL_DROPPING_ENTITIES_RECORD[gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD];
-   assert(typeof targetEntityTypes !== "undefined");
-
    // Look for targets to gather
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   if (!entityExists(tribesmanAIComponent.targetEntity) || !gatherTargetIsValid(tribesmanAIComponent.targetEntity, targetEntityTypes)) {
+   if (!entityExists(tribesmanAIComponent.targetEntity) || !entityDropsItem(tribesmanAIComponent.targetEntity, gatheredItemType)) {
       const target = getGatherTarget(tribesman, aiHelperComponent.visibleEntities, gatheredItemType);
       if (target !== null) {
          tribesmanAIComponent.targetEntity = target;
@@ -315,30 +255,38 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
       }
    }
 
-   if (entityExists(tribesmanAIComponent.targetEntity) && gatherTargetIsValid(tribesmanAIComponent.targetEntity, targetEntityTypes)) {
+   if (entityExists(tribesmanAIComponent.targetEntity) && entityDropsItem(tribesmanAIComponent.targetEntity, gatheredItemType)) {
       goKillEntity(tribesman, tribesmanAIComponent.targetEntity, false);
       return;
    }
 
    const layer = getEntityLayer(tribesman);
-   
-   // @Cleanup: cast
-   const targettedEntityType = getTargettedEntityType(tribesman, gatheredItemType as keyof typeof MATERIAL_DROPPING_ENTITIES_RECORD);
-   
-   const harvestingInfo = ENTITY_HARVESTING_INFO_RECORD[targettedEntityType];
-   assert(typeof harvestingInfo !== "undefined");
 
-   // If the entity isn't in the right biome, go to the right biome
-   const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const currentTile = getEntityTile(transformComponent);
-   if (layer.getTileBiome(currentTile) !== harvestingInfo.biome) {
-      moveTribesmanToBiome(tribesman, harvestingInfo);
+   const targetEntityTypes = getEntityTypesWhichDropItem(gatheredItemType);
+   for (const targettedEntityType of targetEntityTypes) {
+      const spawnInfo = getSpawnInfoForEntityType(targettedEntityType);
+      if (spawnInfo === null) {
+         continue;
+      }
+
+      // @Hack
+      const biome = getSpawnInfoBiome(spawnInfo);
+   
+      // If the entity isn't in the right biome, go to the right biome
+      const transformComponent = TransformComponentArray.getComponent(tribesman);
+      const currentTile = getEntityTile(transformComponent);
+      if (layer.getTileBiome(currentTile) !== biome) {
+         moveTribesmanToBiome(tribesman, spawnInfo.layer, biome);
+         return;
+      }
+   
+      // Explore the biome for things to harvest
+      const localBiome = layer.getTileLocalBiome(currentTile);
+      runPatrolAI(tribesman, localBiome.tilesInBorder);
       return;
    }
 
-   // Explore the biome for things to harvest
-   const localBiome = layer.getTileLocalBiome(currentTile);
-   runPatrolAI(tribesman, localBiome.tilesInBorder);
+   throw new Error("There is no way to gather " + ItemTypeString[gatheredItemType] + "!");
 }
 
 export function gatherItemPlanIsComplete(inventoryComponent: InventoryComponent, plan: AIGatherItemPlan): boolean {

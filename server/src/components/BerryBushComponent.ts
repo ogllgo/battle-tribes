@@ -54,6 +54,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function dropBerryOverEntity(entity: Entity): void {
+   // @HACK: This should be obsolete... should be done by instead simulating the onHit effects of the berry bush, so that the LootComponent will drop the berry
+   
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // Generate new spawn positions until we find one inside the board
@@ -94,6 +96,11 @@ export function dropBerry(berryBush: Entity, multiplier: number): void {
    registerDirtyEntity(berryBush);
 }
 
-function onTakeDamage(entity: Entity): void {
-   dropBerry(entity, 1);
+function onTakeDamage(berryBush: Entity): void {
+   // @Hack
+   const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+   if (berryBushComponent.numBerries > 0) {
+      berryBushComponent.numBerries--;
+      registerDirtyEntity(berryBush);
+   }
 }

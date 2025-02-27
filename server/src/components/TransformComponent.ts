@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, getTileIndexIncludingEdges, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -463,6 +463,42 @@ const cleanHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, par
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
 TransformComponentArray.onJoin = onJoin;
 TransformComponentArray.onRemove = onRemove;
+   
+export function resolveBorderCollisions(transformComponent: TransformComponent): void {
+   // Left border
+   if (transformComponent.boundingAreaMinX < 0) {
+      transformComponent.position.x -= transformComponent.boundingAreaMinX;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.externalVelocity.x = 0;
+      transformComponent.isDirty = true;
+      // Right border
+   } else if (transformComponent.boundingAreaMaxX > Settings.BOARD_UNITS) {
+      transformComponent.position.x -= transformComponent.boundingAreaMaxX - Settings.BOARD_UNITS;
+      transformComponent.selfVelocity.x = 0;
+      transformComponent.externalVelocity.x = 0;
+      transformComponent.isDirty = true;
+   }
+
+   // Bottom border
+   if (transformComponent.boundingAreaMinY < 0) {
+      transformComponent.position.y -= transformComponent.boundingAreaMinY;
+      transformComponent.selfVelocity.y = 0;
+      transformComponent.externalVelocity.y = 0;
+      transformComponent.isDirty = true;
+      // Top border
+   } else if (transformComponent.boundingAreaMaxY > Settings.BOARD_UNITS) {
+      transformComponent.position.y -= transformComponent.boundingAreaMaxY - Settings.BOARD_UNITS;
+      transformComponent.selfVelocity.y = 0;
+      transformComponent.externalVelocity.y = 0;
+      transformComponent.isDirty = true;
+   }
+
+   // If the entity is outside the world border after resolving border collisions, throw an error
+   if (transformComponent.position.x < 0 || transformComponent.position.x >= Settings.BOARD_UNITS || transformComponent.position.y < 0 || transformComponent.position.y >= Settings.BOARD_UNITS) {
+      const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
+      throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
+   }
+}
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -481,9 +517,17 @@ function onJoin(entity: Entity): void {
       transformComponent.rotation += carryRootTransformComponent.rotation;
    }
    
+   // @Cleanup: This is so siliar to the updatePosition function
+   
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.cleanHitboxes(entity);
-   
+
+   resolveBorderCollisions(transformComponent);
+
+   if (transformComponent.isDirty) {
+      transformComponent.cleanHitboxes(entity);
+   }
+
    transformComponent.updateIsInRiver(entity);
    
    // Add to chunks

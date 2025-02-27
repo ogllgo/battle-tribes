@@ -18,7 +18,6 @@ import { ItemType } from "../../../shared/src/items/items";
 import { Biome } from "../../../shared/src/biomes";
 import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -64,13 +63,6 @@ export class SlimeComponent {
    }
 }
 
-// @Memory
-const SLIME_DROP_AMOUNTS: ReadonlyArray<[minDropAmount: number, maxDropAmount: number]> = [
-   [1, 2], // small slime
-   [3, 5], // medium slime
-   [6, 9] // large slime
-];
-
 const CONTACT_DAMAGE: ReadonlyArray<number> = [1, 2, 3];
 
 export const SlimeComponentArray = new ComponentArray<SlimeComponent>(ServerComponentType.slime, true,  getDataLength, addDataToPacket);
@@ -78,7 +70,6 @@ SlimeComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-SlimeComponentArray.onDeath = onDeath;
 SlimeComponentArray.onHitboxCollision = onHitboxCollision;
 SlimeComponentArray.onTakeDamage = onTakeDamage;
 
@@ -305,11 +296,6 @@ function onTick(slime: Entity): void {
    } else {
       stopEntity(physicsComponent);
    }
-}
-
-function onDeath(slime: Entity): void {
-   const slimeComponent = SlimeComponentArray.getComponent(slime);
-   createItemsOverEntity(slime, ItemType.slimeball, randInt(...SLIME_DROP_AMOUNTS[slimeComponent.size]));
 }
 
 function getDataLength(entity: Entity): number {

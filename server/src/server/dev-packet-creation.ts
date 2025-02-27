@@ -1,14 +1,102 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
-import { AIPlanType } from "../../../shared/src/utils";
+import { Settings } from "../../../shared/src/settings";
+import { AIPlanType, assert, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
+import { getSpawnInfoForEntityType } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, addTribeBuildingSafetyData, getTribeAssignmentDataLength, getTribeBuildingSafetyDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
 import { getTribes } from "../world";
+import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import PlayerClient from "./PlayerClient";
+
+interface VisibleLocalBiomeInfo {
+   readonly visibleLocalBiomes: ReadonlyArray<LocalBiome>;
+   readonly tileToLocalBiomeMap: Map<TileIndex, LocalBiome>;
+}
+
+const getVisibleLocalBiomeInfo = (playerClient: PlayerClient): VisibleLocalBiomeInfo => {
+   const localBiomes = new Array<LocalBiome>();
+   const tileToLocalBiomeMap = new Map<TileIndex, LocalBiome>();
+   
+   const minTileX = Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE);
+   const maxTileX = Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE);
+   const minTileY = Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE);
+   const maxTileY = Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE);
+   for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         const localBiome = playerClient.lastLayer.getTileLocalBiome(tileIndex);
+
+         if (localBiomes.indexOf(localBiome) === -1) {
+            localBiomes.push(localBiome);
+         }
+         tileToLocalBiomeMap.set(tileIndex, localBiome);
+      }
+   }
+
+   return {
+      visibleLocalBiomes: localBiomes,
+      tileToLocalBiomeMap: tileToLocalBiomeMap
+   };
+}
+
+const getLocalBiomeDataLength = (localBiome: LocalBiome, tileToLocalBiomeMap: Map<TileIndex, LocalBiome>): number => {
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
+   
+   let numTiles = 0;
+   for (const pair of tileToLocalBiomeMap) {
+      if (pair[1] === localBiome) {
+         numTiles++;
+      }
+   }
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * numTiles;
+
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * localBiome.entityCensus.size;
+   return lengthBytes;
+}
+
+const addLocalBiomeDataToPacket = (packet: Packet, localBiome: LocalBiome, tileToLocalBiomeMap: Map<TileIndex, LocalBiome>): void => {
+   packet.addNumber(localBiome.id);
+
+   let numTiles = 0;
+   for (const pair of tileToLocalBiomeMap) {
+      if (pair[1] === localBiome) {
+         numTiles++;
+      }
+   }
+   packet.addNumber(numTiles);
+   for (const pair of tileToLocalBiomeMap) {
+      if (pair[1] === localBiome) {
+         packet.addNumber(pair[0]);
+      }
+   }
+
+   packet.addNumber(localBiome.entityCensus.size);
+   for (const pair of localBiome.entityCensus) {
+      const entityType = pair[0];
+      const count = pair[1];
+
+      packet.addNumber(entityType);
+      packet.addNumber(count);
+
+      const spawnInfo = getSpawnInfoForEntityType(entityType);
+      assert(spawnInfo !== null);
+
+      let numEligibleTiles = 0;
+      for (const tileType of spawnInfo.spawnableTileTypes) {
+         numEligibleTiles += localBiome.tileCensus[tileType] || 0;
+      }
+
+      const density = count / numEligibleTiles;
+      packet.addNumber(density);
+
+      packet.addNumber(spawnInfo.maxDensity);
+   }
+}
 
 const getVirtualBuildingGhostEntitiesLength = (assignment: AIPlanAssignment): number => {
    let lengthBytes = 0;
@@ -107,6 +195,13 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
       }
    }
 
+   // Local biomes
+   const info = getVisibleLocalBiomeInfo(playerClient);
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const localBiome of info.visibleLocalBiomes) {
+      lengthBytes += getLocalBiomeDataLength(localBiome, info.tileToLocalBiomeMap);
+   }
+
    return lengthBytes;
 }
 
@@ -181,5 +276,12 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
 
       // Building safetys
       addTribeBuildingSafetyData(packet, tribe);
+   }
+
+   // Local biomes
+   const info = getVisibleLocalBiomeInfo(playerClient);
+   packet.addNumber(info.visibleLocalBiomes.length);
+   for (const localBiome of info.visibleLocalBiomes) {
+      addLocalBiomeDataToPacket(packet, localBiome, info.tileToLocalBiomeMap);
    }
 }

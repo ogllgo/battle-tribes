@@ -97,6 +97,7 @@ import { SwingAttackComponent } from "./components/SwingAttackComponent";
 import { BlockAttackComponent } from "./components/BlockAttackComponent";
 import { SlingTurretRockComponent } from "./components/SlingTurretRockComponent";
 import { TamingComponent } from "./components/TamingComponent";
+import { LootComponent } from "./components/LootComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -196,6 +197,7 @@ const ComponentClassRecord = {
    [ServerComponentType.blockAttack]: () => BlockAttackComponent,
    [ServerComponentType.slingTurretRock]: () => SlingTurretRockComponent,
    [ServerComponentType.taming]: () => TamingComponent,
+   [ServerComponentType.loot]: () => LootComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
