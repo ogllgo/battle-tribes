@@ -5,7 +5,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { gameFramebuffer } from "../../Game";
 import { blockerIsCircluar, getGrassBlockers, GrassBlocker } from "../../grass-blockers";
 
-const NUM_CIRCLE_POINTS = 20;
+const NUM_CIRCLE_POINTS = 10;
 
 let framebufferProgram: WebGLProgram;
 let renderProgram: WebGLProgram;
@@ -240,52 +240,64 @@ export function createGrassBlockerShaders(): void {
    framebufferVertexData = new Float32Array(framebufferVertices);
 }
 
-// @Speed @Garbage
-const calculateGrassBlockerVertices = (grassBlockers: ReadonlyMap<number, GrassBlocker>): ReadonlyArray<number> => {
-   const vertices = new Array<number>();
+export function calculateGrassBlockerVertexData(grassBlocker: GrassBlocker): Float32Array {
+   const vertexData = new Float32Array(!blockerIsCircluar(grassBlocker) ? 6 * 3 : 3 * 3 * NUM_CIRCLE_POINTS);
 
-   for (const pair of grassBlockers) {
-      const blocker = pair[1];
-      const opacity = blocker.blockAmount;
+   const opacity = grassBlocker.blockAmount;
+   
+   if (!blockerIsCircluar(grassBlocker)) {
+      const halfWidth = grassBlocker.width * 0.5;
+      const halfHeight = grassBlocker.height * 0.5;
+      
+      const topLeftOffsetX = rotateXAroundOrigin(-halfWidth, halfHeight, grassBlocker.rotation);
+      const topLeftOffsetY = rotateYAroundOrigin(-halfWidth, halfHeight, grassBlocker.rotation);
+      const topRightOffsetX = rotateXAroundOrigin(halfWidth, halfHeight, grassBlocker.rotation);
+      const topRightOffsetY = rotateYAroundOrigin(halfWidth, halfHeight, grassBlocker.rotation);
+      const bottomLeftOffsetX = -topRightOffsetX;
+      const bottomLeftOffsetY = -topRightOffsetY;
+      const bottomRightOffsetX = -topLeftOffsetX;
+      const bottomRightOffsetY = -topLeftOffsetY;
 
-      if (!blockerIsCircluar(blocker)) {
-         const halfWidth = blocker.width * 0.5;
-         const halfHeight = blocker.height * 0.5;
+      vertexData[0] = grassBlocker.position.x + bottomLeftOffsetX;
+      vertexData[1] = grassBlocker.position.y + bottomLeftOffsetY;
+      vertexData[2] = opacity;
+      vertexData[3] = grassBlocker.position.x + bottomRightOffsetX;
+      vertexData[4] = grassBlocker.position.y + bottomRightOffsetY;
+      vertexData[5] = opacity;
+      vertexData[6] = grassBlocker.position.x + topLeftOffsetX;
+      vertexData[7] = grassBlocker.position.y + topLeftOffsetY;
+      vertexData[8] = opacity;
+      vertexData[9] = grassBlocker.position.x + topLeftOffsetX;
+      vertexData[10] = grassBlocker.position.y + topLeftOffsetY;
+      vertexData[11] = opacity;
+      vertexData[12] = grassBlocker.position.x + bottomRightOffsetX;
+      vertexData[13] = grassBlocker.position.y + bottomRightOffsetY;
+      vertexData[14] = opacity;
+      vertexData[15] = grassBlocker.position.x + topRightOffsetX;
+      vertexData[16] = grassBlocker.position.y + topRightOffsetY;
+      vertexData[17] = opacity;
+   } else {
+      let lastPos = getCirclePoint(NUM_CIRCLE_POINTS, 0, grassBlocker.position, grassBlocker.radius);
+      for (let i = 1; i <= NUM_CIRCLE_POINTS; i++) {
+         // @Garbage
+         const pos = getCirclePoint(NUM_CIRCLE_POINTS, i, grassBlocker.position, grassBlocker.radius);
+
+         const dataOffset = 3 * 3 * (i - 1);
+         vertexData[dataOffset] = grassBlocker.position.x;
+         vertexData[dataOffset + 1] = grassBlocker.position.y;
+         vertexData[dataOffset + 2] = opacity;
+         vertexData[dataOffset + 3] = pos.x;
+         vertexData[dataOffset + 4] = pos.y;
+         vertexData[dataOffset + 5] = opacity;
+         vertexData[dataOffset + 6] = lastPos.x;
+         vertexData[dataOffset + 7] = lastPos.y;
+         vertexData[dataOffset + 8] = opacity;
          
-         const topLeftOffsetX = rotateXAroundOrigin(-halfWidth, halfHeight, blocker.rotation);
-         const topLeftOffsetY = rotateYAroundOrigin(-halfWidth, halfHeight, blocker.rotation);
-         const topRightOffsetX = rotateXAroundOrigin(halfWidth, halfHeight, blocker.rotation);
-         const topRightOffsetY = rotateYAroundOrigin(halfWidth, halfHeight, blocker.rotation);
-         const bottomLeftOffsetX = -topRightOffsetX;
-         const bottomLeftOffsetY = -topRightOffsetY;
-         const bottomRightOffsetX = -topLeftOffsetX;
-         const bottomRightOffsetY = -topLeftOffsetY;
-
-         vertices.push(
-            blocker.position.x + bottomLeftOffsetX, blocker.position.y + bottomLeftOffsetY, opacity,
-            blocker.position.x + bottomRightOffsetX, blocker.position.y + bottomRightOffsetY, opacity,
-            blocker.position.x + topLeftOffsetX, blocker.position.y + topLeftOffsetY, opacity,
-            blocker.position.x + topLeftOffsetX, blocker.position.y + topLeftOffsetY, opacity,
-            blocker.position.x + bottomRightOffsetX, blocker.position.y + bottomRightOffsetY, opacity,
-            blocker.position.x + topRightOffsetX, blocker.position.y + topRightOffsetY, opacity
-         );
-      } else {
-         let lastPos = getCirclePoint(NUM_CIRCLE_POINTS, 0, blocker.position, blocker.radius);
-         for (let i = 1; i <= NUM_CIRCLE_POINTS; i++) {
-            const pos = getCirclePoint(NUM_CIRCLE_POINTS, i, blocker.position, blocker.radius);
-
-            vertices.push(
-               blocker.position.x, blocker.position.y, opacity,
-               pos.x, pos.y, opacity,
-               lastPos.x, lastPos.y, opacity
-            )
-            
-            lastPos = pos;
-         }
+         lastPos = pos;
       }
    }
 
-   return vertices;
+   return vertexData;
 }
 
 export function renderGrassBlockers(): void {
@@ -293,8 +305,6 @@ export function renderGrassBlockers(): void {
    if (grassBlockers.size === 0) {
       return;
    }
-
-   const vertices = calculateGrassBlockerVertices(grassBlockers);
 
    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
@@ -321,18 +331,14 @@ export function renderGrassBlockers(): void {
    
    gl.enable(gl.BLEND);
    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-   
-   const buffer = gl.createBuffer()!;
-   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
-   gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+   for (const pair of grassBlockers) {
+      const blocker = pair[1];
+      gl.bindVertexArray(blocker.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, blocker.vertexDataLength / 3);
+   }
 
-   gl.enableVertexAttribArray(0);
-   gl.enableVertexAttribArray(1);
-
-   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+   gl.bindVertexArray(null);
 
    gl.disable(gl.BLEND);
    gl.blendFunc(gl.ONE, gl.ZERO);

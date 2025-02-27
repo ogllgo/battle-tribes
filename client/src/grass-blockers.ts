@@ -10,6 +10,8 @@ import { EntityRenderInfo } from "./EntityRenderInfo";
 import Layer from "./Layer";
 import ColouredRenderPart from "./render-parts/ColouredRenderPart";
 import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
+import { calculateGrassBlockerVertexData } from "./rendering/webgl/grass-blocker-rendering";
+import { gl } from "./webgl";
 import { entityExists, getEntityRenderInfo, getEntityType, layers } from "./world";
 
 interface BaseGrassBlocker {
@@ -20,6 +22,10 @@ interface BaseGrassBlocker {
    readonly maxBlockAmount: number;
    lastUpdateTicks: number;
    readonly affectedGrassStrands: Array<Entity>;
+
+   readonly vao: WebGLVertexArrayObject;
+   // @Cleanup: should be readonly
+   vertexDataLength: number;
 }
 
 export interface GrassBlockerRectangle extends BaseGrassBlocker {
@@ -80,6 +86,8 @@ const readGrassBlockerExceptIDFromData = (reader: PacketReader): GrassBlocker =>
 
    const layer = layers[layerIdx];
 
+   const vao = gl.createVertexArray();
+
    let blocker: GrassBlocker;
    let blockerBox: Box;
    if (isCircular) {
@@ -89,13 +97,15 @@ const readGrassBlockerExceptIDFromData = (reader: PacketReader): GrassBlocker =>
       blockerBox = new CircularBox(null, new Point(0, 0), 0, radius);
       updateBox(blockerBox, x, y, 0);
 
-      blocker =  {
+      blocker = {
          position: new Point(x, y),
          blockAmount: blockAmount,
          maxBlockAmount: maxBlockAmount,
          radius: radius,
          lastUpdateTicks: Board.serverTicks,
-         affectedGrassStrands: []
+         affectedGrassStrands: [],
+         vao: vao,
+         vertexDataLength: 0
       };
    } else {
       const width = reader.readNumber();
@@ -114,11 +124,32 @@ const readGrassBlockerExceptIDFromData = (reader: PacketReader): GrassBlocker =>
          height: height,
          rotation: rotation,
          lastUpdateTicks: Board.serverTicks,
-         affectedGrassStrands: []
+         affectedGrassStrands: [],
+         vao: vao,
+         vertexDataLength: 0
       };
    }
 
    addAffectedGrassStrands(layer, blockerBox, blocker);
+
+   gl.bindVertexArray(vao);
+
+   // @Garbage
+   const vertexData = calculateGrassBlockerVertexData(blocker);
+   blocker.vertexDataLength = vertexData.length;
+   
+   const vertexBuffer = gl.createBuffer()!;
+   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+   gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+
+   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+   gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+   gl.enableVertexAttribArray(0);
+   gl.enableVertexAttribArray(1);
+
+   // @Speed
+   gl.bindVertexArray(null);
 
    return blocker;
 }

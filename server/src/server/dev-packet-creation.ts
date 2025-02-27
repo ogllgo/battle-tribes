@@ -84,17 +84,20 @@ const addLocalBiomeDataToPacket = (packet: Packet, localBiome: LocalBiome, tileT
       packet.addNumber(count);
 
       const spawnInfo = getSpawnInfoForEntityType(entityType);
-      assert(spawnInfo !== null);
-
-      let numEligibleTiles = 0;
-      for (const tileType of spawnInfo.spawnableTileTypes) {
-         numEligibleTiles += localBiome.tileCensus[tileType] || 0;
+      if (spawnInfo !== null) {
+         let numEligibleTiles = 0;
+         for (const tileType of spawnInfo.spawnableTileTypes) {
+            numEligibleTiles += localBiome.tileCensus[tileType] || 0;
+         }
+   
+         const density = count / numEligibleTiles;
+         packet.addNumber(density);
+   
+         packet.addNumber(spawnInfo.maxDensity);
+      } else {
+         packet.addNumber(0);
+         packet.addNumber(0);
       }
-
-      const density = count / numEligibleTiles;
-      packet.addNumber(density);
-
-      packet.addNumber(spawnInfo.maxDensity);
    }
 }
 
@@ -191,7 +194,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
          lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
          // Building safeties
-         lengthBytes += getTribeBuildingSafetyDataLength(tribe);
+         lengthBytes += getTribeBuildingSafetyDataLength(playerClient);
       }
    }
 
@@ -275,7 +278,7 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       packet.padOffset(3)
 
       // Building safetys
-      addTribeBuildingSafetyData(packet, tribe);
+      addTribeBuildingSafetyData(packet, playerClient);
    }
 
    // Local biomes

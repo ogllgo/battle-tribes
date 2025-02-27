@@ -1,4 +1,4 @@
-import { EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { randInt, randFloat, TileIndex, Point, getTileIndexIncludingEdges } from "battletribes-shared/utils";
@@ -39,6 +39,7 @@ import { createGlurbConfig } from "./entities/mobs/glurb";
 import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
 import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
+import { createSlimeConfig } from "./entities/mobs/slime";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -183,6 +184,8 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       }
       case EntityType.iceSpikes: config = createIceSpikesConfig(0); break;
       case EntityType.slimewisp: config = createSlimewispConfig(); break;
+      // @TEMPORARY
+      case EntityType.slime: config = createSlimeConfig(SlimeSize.small); break;
       case EntityType.krumblid: config = createKrumblidConfig(); break;
       case EntityType.frozenYeti: config = createFrozenYetiConfig(); break;
       case EntityType.fish: config = createFishConfig(); break;

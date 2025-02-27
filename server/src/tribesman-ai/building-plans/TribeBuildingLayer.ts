@@ -441,9 +441,9 @@ export default class TribeBuildingLayer {
       this.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
 
       // Add to tribe
-      this.tribe.virtualBuildings.push(virtualBuilding);
-      this.tribe.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
-      this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+      this.tribe.virtualStructures.push(virtualBuilding);
+      this.tribe.virtualStructureRecord[virtualBuilding.id] = virtualBuilding;
+      this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
    }
 
    public removeVirtualBuilding(virtualBuilding: VirtualStructure): void {
@@ -468,16 +468,16 @@ export default class TribeBuildingLayer {
 
       // Remove from tribe
       
-      delete this.tribe.virtualBuildingRecord[virtualBuilding.id];
+      delete this.tribe.virtualStructureRecord[virtualBuilding.id];
       
-      idx = this.tribe.virtualBuildings.indexOf(virtualBuilding);
+      idx = this.tribe.virtualStructures.indexOf(virtualBuilding);
       if (idx !== -1) {
-         this.tribe.virtualBuildings.splice(idx, 1);
+         this.tribe.virtualStructures.splice(idx, 1);
       } else {
          throw new Error();
       }
 
-      buildingsOfType = this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType];
+      buildingsOfType = this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType];
       idx = buildingsOfType.indexOf(virtualBuilding);
       if (idx !== -1) {
          buildingsOfType.splice(idx, 1);

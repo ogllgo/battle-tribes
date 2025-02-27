@@ -8,7 +8,7 @@ import Tribe from "../../Tribe";
 import { SafetyNode, getSafetyNode } from "../ai-building";
 import { buildingIsInfrastructure, getBuildingSafety } from "../ai-building-heuristics";
 import { TribeComponentArray } from "../../components/TribeComponent";
-import { VirtualWall } from "./TribeBuildingLayer";
+import { VirtualStructure, VirtualWall } from "./TribeBuildingLayer";
 import { AICraftRecipePlan, AIGatherItemPlan, AIPlaceBuildingPlan, AITechCompletePlan, AITechItemPlan, AITechStudyPlan, AIUpgradeBuildingPlan, AIPlanAssignment } from "../tribesman-ai-planning";
 import { Packet } from "../../../../shared/src/packets";
 import { CRAFTING_RECIPES } from "../../../../shared/src/items/crafting-recipes";
@@ -155,10 +155,41 @@ export function getVisibleSafetyNodesData(playerClient: PlayerClient): ReadonlyA
 //    return buildingPlansData;
 // }
 
-export function getTribeBuildingSafetyDataLength(tribe: Tribe): number {
+const virtualStructureIsSentToPlayer = (playerClient: PlayerClient, virtualBuilding: VirtualStructure): boolean => {
+   // Only send infrastructure buildings
+   if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
+      return false;
+   }
+   
+   // @Speed
+   let minX = Number.MAX_SAFE_INTEGER;
+   let maxX = Number.MIN_SAFE_INTEGER;
+   let minY = Number.MAX_SAFE_INTEGER;
+   let maxY = Number.MIN_SAFE_INTEGER;
+   for (const hitbox of virtualBuilding.hitboxes) {
+      if (hitbox.boundsMinX < minX) {
+         minX = hitbox.boundsMinX;
+      }
+      if (hitbox.boundsMaxX < maxX) {
+         maxX = hitbox.boundsMaxX;
+      }
+      if (hitbox.boundsMinY < minY) {
+         minY = hitbox.boundsMinY;
+      }
+      if (hitbox.boundsMaxY < maxY) {
+         maxY = hitbox.boundsMaxY;
+      }
+   }
+   
+   return maxX >= playerClient.minVisibleX && minX <= playerClient.maxVisibleX && maxY >= playerClient.minVisibleY && minY <= playerClient.maxVisibleY;
+}
+
+export function getTribeBuildingSafetyDataLength(playerClient: PlayerClient): number {
+   const virtualStructures = playerClient.tribe.virtualStructures;
+   
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
-   for (const virtualBuilding of tribe.virtualBuildings) {
-      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
+   for (const virtualStructure of virtualStructures) {
+      if (!virtualStructureIsSentToPlayer(playerClient, virtualStructure)) {
          continue;
       }
 
@@ -167,17 +198,19 @@ export function getTribeBuildingSafetyDataLength(tribe: Tribe): number {
    return lengthBytes;
 }
 
-export function addTribeBuildingSafetyData(packet: Packet, tribe: Tribe): void {
+export function addTribeBuildingSafetyData(packet: Packet, playerClient: PlayerClient): void {
+   const virtualStructures = playerClient.tribe.virtualStructures;
+
    let numRelevantBuildings = 0;
-   for (const virtualBuilding of tribe.virtualBuildings) {
-      if (buildingIsInfrastructure(virtualBuilding.entityType)) {
+   for (const virtualBuilding of virtualStructures) {
+      if (virtualStructureIsSentToPlayer(playerClient, virtualBuilding)) {
          numRelevantBuildings++;
       }
    }
    
    packet.addNumber(numRelevantBuildings);
-   for (const virtualBuilding of tribe.virtualBuildings) {
-      if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
+   for (const virtualBuilding of virtualStructures) {
+      if (!virtualStructureIsSentToPlayer(playerClient, virtualBuilding)) {
          continue;
       }
       // @Incomplete: filter out nodes which aren't in the chunk bounds
@@ -191,7 +224,7 @@ export function addTribeBuildingSafetyData(packet: Packet, tribe: Tribe): void {
          buildingExtendedAverageSafetys: [],
          buildingResultingSafetys: []
       };
-      getBuildingSafety(tribe, virtualBuilding, safetyInfo);
+      getBuildingSafety(playerClient.tribe, virtualBuilding, safetyInfo);
 
       packet.addNumber(virtualBuilding.position.x);
       packet.addNumber(virtualBuilding.position.y);
@@ -207,7 +240,7 @@ export function getVisibleRestrictedBuildingAreas(visibleTribes: ReadonlyArray<T
    for (let i = 0; i < visibleTribes.length; i++) {
       const tribe = visibleTribes[i];
 
-      for (const virtualBuilding of tribe.virtualBuildings) {
+      for (const virtualBuilding of tribe.virtualStructures) {
          for (const restrictedArea of virtualBuilding.restrictedBuildingAreas) {
             // @Incomplete: filter out areas which aren't in the chunk bounds
    

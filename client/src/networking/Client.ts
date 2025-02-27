@@ -119,6 +119,9 @@ abstract class Client {
 
             setPlayerInstance(null);
          }
+         this.socket.onerror = (a) => {
+            console.log(a)
+         }
 
          this.socket.onmessage = (message): void => {
             const reader = new PacketReader(message.data, 0);

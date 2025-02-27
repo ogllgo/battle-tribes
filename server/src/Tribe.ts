@@ -159,9 +159,9 @@ export default class Tribe {
    public virtualEntityIDCounter = 0;
 
    // Whereas each building layer stores these only for that building layer, this stores all virtual buildings in every building layer
-   public virtualBuildings = new Array<VirtualStructure>;
-   public virtualBuildingRecord: Record<number, VirtualStructure> = {};
-   public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
+   public virtualStructures = new Array<VirtualStructure>();
+   public virtualStructureRecord: Record<number, VirtualStructure> = {};
+   public virtualStructuresByEntityType = createVirtualBuildingsByEntityType();
 
    public readonly pathfindingGroupID: number;
 
