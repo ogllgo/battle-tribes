@@ -9,7 +9,7 @@ import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { ItemType, InventoryName, ItemTypeString } from "battletribes-shared/items/items";
+import { ItemType, InventoryName, ItemTypeString, ITEM_INFO_RECORD, itemInfoIsConsumable } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { goKillEntity } from "./tribesman-combat-ai";
 import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
@@ -18,7 +18,7 @@ import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randItem } from "../../../../../shared/src/utils";
 import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { TribeComponentArray } from "../../../components/TribeComponent";
-import { entityDropsItem, getEntityTypesWhichDropItem } from "../../../components/LootComponent";
+import { entityDropsFoodItem, entityDropsItem, getEntityTypesWhichDropItem, LootComponentArray } from "../../../components/LootComponent";
 import { getSpawnInfoBiome, getSpawnInfoForEntityType } from "../../../entity-spawn-info";
 import { Biome } from "../../../../../shared/src/biomes";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
@@ -103,6 +103,27 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
    }
    
    return typeof closestResource !== "undefined" ? closestResource : null;
+}
+
+const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
+
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let target: Entity | undefined;
+   for (const entity of visibleEntities) {
+      if (!entityDropsFoodItem(entity)) {
+         continue;
+      }
+
+      const resourceTransformComponent = TransformComponentArray.getComponent(entity);
+      const dist = transformComponent.position.calculateDistanceBetween(resourceTransformComponent.position);
+      if (dist < minDist) {
+         target = entity;
+         minDist = dist;
+      }
+   }
+   
+   return typeof target !== "undefined" ? target : null;
 }
 
 const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
@@ -220,8 +241,23 @@ const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): vo
    tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;
 }
 
-/** Controls the tribesman to gather the specified item types. */
-export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, visibleItemEntities: ReadonlyArray<Entity>): void {
+const isLowOnFood = (entity: Entity): boolean => {
+   const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   
+   let totalHealing = 0;
+   for (const inventory of inventoryComponent.inventories) {
+      for (const item of inventory.items) {
+         const itemInfo = ITEM_INFO_RECORD[item.type];
+         if (itemInfoIsConsumable(item.type, itemInfo)) {
+            totalHealing += itemInfo.healAmount;
+         }
+      }
+   }
+
+   return totalHealing < 10;
+}
+
+export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan, visibleItemEntities: ReadonlyArray<Entity>): void {
    const gatheredItemType = gatherPlan.itemType;
 
    // If the tribe has autogiveBaseResources enabled, then just give all of the item required
@@ -241,6 +277,18 @@ export function gatherResource(tribesman: Entity, gatherPlan: AIGatherItemPlan, 
    const itemPickupTarget = tribesmanGetItemPickupTarget(tribesman, visibleItemEntities, gatheredItemType);
    if (itemPickupTarget !== null) {
       goPickupItemEntity(tribesman, itemPickupTarget);
+      return;
+   }
+
+   // Passively look for food
+   // @Temporary: This is disabled while the combat swing AI is shit, because the tribesmen will try to attack cows to get raw beef and endlessly miss.
+   if (isLowOnFood(tribesman)) {
+      // @Incomplete: Don't attack cows unless the tribe has a furnace.
+      const target = getFoodTarget(tribesman, aiHelperComponent.visibleEntities);
+      if (target !== null) {
+         goKillEntity(tribesman, target, false);
+         return;
+      }
       return;
    }
    

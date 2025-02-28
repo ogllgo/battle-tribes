@@ -62,6 +62,9 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       }
       return EntityRelationship.enemyBuilding;
    }
+
+   // @Temporary
+   const tempEntityType = getEntityType(entity);
    
    const entityType = getEntityType(comparingEntity);
    switch (entityType) {
@@ -92,6 +95,11 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const comparingEntityTribeComponent = TribeComponentArray.getComponent(comparingEntity);
 
+         // @HACK @TEMPORARY
+         if (typeof tribeComponent === "undefined") {
+            return EntityRelationship.neutral;
+         }
+         
          if (comparingEntityTribeComponent.tribe === tribeComponent.tribe) {
             return EntityRelationship.friendly;
          }
@@ -115,7 +123,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.guardian: {
          const transformComponent = TransformComponentArray.getComponent(entity);
          const tileIndex = getEntityTile(transformComponent);
-         
+
          const tribeComponent = TribeComponentArray.getComponent(entity);
          return tribeComponent.tribe.tileIsInArea(tileIndex) || tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }

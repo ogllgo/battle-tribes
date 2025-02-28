@@ -13,6 +13,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
+import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 
 export interface ZombieComponentParams {
    readonly zombieType: number;
@@ -48,8 +49,9 @@ function createParamsFromData(reader: PacketReader): ZombieComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.zombie, never>): RenderParts {
+function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.zombie | ServerComponentType.inventoryUse, never>): RenderParts {
    const zombieComponentParams = entityConfig.serverComponents[ServerComponentType.zombie];
+   const inventoryUseComponentParams = entityConfig.serverComponents[ServerComponentType.inventoryUse];
 
    // Body render part
    renderInfo.attachRenderPart(
@@ -61,13 +63,26 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       )
    );
 
+   // @Hack @Copynpaste
+
    // Hand render parts
    const handTextureSource = ZOMBIE_HAND_TEXTURE_SOURCES[zombieComponentParams.zombieType];
    const handRenderParts = new Array<VisualRenderPart>();
-   for (let i = 0; i < 2; i++) {
-      const renderPart = new TexturedRenderPart(
+   for (let i = 0; i < inventoryUseComponentParams.limbInfos.length; i++) {
+      const attachPoint = new RenderAttachPoint(
          null,
          1,
+         0
+      );
+      if (i === 1) {
+         attachPoint.setFlipX(true);
+      }
+      attachPoint.addTag("inventoryUseComponent:attachPoint");
+      renderInfo.attachRenderPart(attachPoint);
+      
+      const renderPart = new TexturedRenderPart(
+         attachPoint,
+         1.2,
          0,
          getTextureArrayIndex(handTextureSource)
       );
@@ -86,7 +101,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.zombie, 
 }
 
 function getMaxRenderParts(): number {
-   return 3;
+   // @Speed: 2 of these are attach points... can they be removed?
+   return 5;
 }
 
 function onTick(entity: Entity): void {

@@ -15,6 +15,10 @@ export interface LocalBiome {
    readonly tilesInBorder: ReadonlyArray<TileIndex>;
    /** Stores how many tiles of each type there are in the local chunk */
    readonly tileCensus: Partial<Record<TileType, number>>;
+   readonly minTileX: number;
+   readonly maxTileX: number;
+   readonly minTileY: number;
+   readonly maxTileY: number;
    /** Stores how many entities of each type there are in the local chunk.
     * IMPORTANT: Only stores entities which can drop loot. */
    readonly entityCensus: Map<EntityType, number>;
@@ -153,7 +157,12 @@ export function groupLocalBiomes(layer: Layer): void {
          const centerX = totalTileX * Settings.TILE_SIZE / connectedTiles.length + Settings.TILE_SIZE * 0.5;
          const centerY = totalTileY * Settings.TILE_SIZE / connectedTiles.length + Settings.TILE_SIZE * 0.5;
 
+         let minTileX = Number.MAX_SAFE_INTEGER;
+         let maxTileX = Number.MIN_SAFE_INTEGER;
+         let minTileY = Number.MAX_SAFE_INTEGER;
+         let maxTileY = Number.MIN_SAFE_INTEGER;
          const tileCensus: Partial<Record<TileType, number>> = {};
+
          for (const tile of connectedTiles) {
             const tileType = layer.getTileType(tile);
             if (typeof tileCensus[tileType] === "undefined") {
@@ -161,6 +170,21 @@ export function groupLocalBiomes(layer: Layer): void {
             } else {
                // @Hack: '!'
                tileCensus[tileType]!++;
+            }
+
+            const tileX = getTileX(tile);
+            if (tileX < minTileX) {
+               minTileX = tileX;
+            }
+            if (tileX > maxTileX) {
+               maxTileX = tileX;
+            }
+            const tileY = getTileY(tile);
+            if (tileY < minTileY) {
+               minTileY = tileY;
+            }
+            if (tileY > maxTileY) {
+               maxTileY = tileY;
             }
          }
          
@@ -171,6 +195,10 @@ export function groupLocalBiomes(layer: Layer): void {
             tiles: connectedTiles,
             tilesInBorder: connectedTiles.filter(tileIndex => tileIsInWorld(getTileX(tileIndex), getTileY(tileIndex))),
             tileCensus: tileCensus,
+            minTileX: minTileX,
+            maxTileX: maxTileX,
+            minTileY: minTileY,
+            maxTileY: maxTileY,
             entityCensus: new Map(),
             centerX: centerX,
             centerY: centerY

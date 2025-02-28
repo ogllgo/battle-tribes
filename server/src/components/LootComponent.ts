@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
-import { ItemType } from "../../../shared/src/items/items";
+import { ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert } from "../../../shared/src/utils";
 import { createItemsOverEntity } from "../entities/item-entity";
@@ -12,6 +12,8 @@ import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 export interface LootEntry {
    readonly itemType: ItemType;
    readonly getAmount: (entity: Entity) => number;
+   /** Called every time an item is dropped. */
+   readonly onItemDrop?: (entity: Entity) => void;
 }
 
 const lootOnHitRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
@@ -115,6 +117,10 @@ function onHit(entity: Entity): void {
       for (const entry of entries) {
          const amount = entry.getAmount(entity);
          createItemsOverEntity(entity, entry.itemType, amount);
+
+         if (typeof entry.onItemDrop !== "undefined") {
+            entry.onItemDrop(entity);
+         }
       }
    }
 }
@@ -152,6 +158,31 @@ export function entityDropsItem(entity: Entity, itemType: ItemType): boolean {
    if (typeof onDeathEntries !== "undefined") {
       for (const entry of onDeathEntries) {
          if (entry.itemType === itemType && entry.getAmount(entity) > 0) {
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
+// @Location: should this really be in the LootComponent? Feels like it should be in the place which calls it
+export function entityDropsFoodItem(entity: Entity): boolean {
+   const entityType = getEntityType(entity);
+
+   const onHitEntries = lootOnHitRecord[entityType];
+   if (typeof onHitEntries !== "undefined") {
+      for (const entry of onHitEntries) {
+         if (ITEM_TYPE_RECORD[entry.itemType] === "healing" && entry.getAmount(entity) > 0) {
+            return true;
+         }
+      }
+   }
+
+   const onDeathEntries = lootOnDeathRecord[entityType];
+   if (typeof onDeathEntries !== "undefined") {
+      for (const entry of onDeathEntries) {
+         if (ITEM_TYPE_RECORD[entry.itemType] === "healing" && entry.getAmount(entity) > 0) {
             return true;
          }
       }

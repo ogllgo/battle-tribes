@@ -75,9 +75,6 @@ export class CowComponent {
 
    // @Temporary
    public targetMovePosition: Point | null = null;
-   
-   // @Temporary
-   public carryTarget: Entity = 0;
 
    // @Temporary
    public attackTarget: Entity = 0;
@@ -421,19 +418,20 @@ function onTick(cow: Entity): void {
       return;
    }
 
+   // @Hack @Copynpaste
    // Pick up carry target
-   if (entityExists(cowComponent.carryTarget)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.carryTarget);
+   if (entityExists(tamingComponent.carryTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
       const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
       moveCow(cow, targetTransformComponent.position.x, targetTransformComponent.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
 
       // Force carry if colliding and head is looking at the carry target
       const headHitbox = transformComponent.hitboxes[1];
-      if (getAbsAngleDiff(headHitbox.box.rotation, targetDirection) < 0.1 && entitiesAreColliding(cow, cowComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+      if (getAbsAngleDiff(headHitbox.box.rotation, targetDirection) < 0.1 && entitiesAreColliding(cow, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
          const rideableComponent = RideableComponentArray.getComponent(cow);
          const carrySlot = rideableComponent.carrySlots[0];
-         mountCarrySlot(cowComponent.carryTarget, cow, carrySlot);
-         cowComponent.carryTarget = 0;
+         mountCarrySlot(tamingComponent.carryTarget, cow, carrySlot);
+         tamingComponent.carryTarget = 0;
       }
       return;
    }

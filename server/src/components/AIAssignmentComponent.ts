@@ -5,7 +5,7 @@ import { AIPlanType, assert } from "../../../shared/src/utils";
 import { getAvailableCraftingStations, throwItem } from "../entities/tribes/tribe-member";
 import { goCraftItem, craftGoalIsComplete } from "../entities/tribes/tribesman-ai/tribesman-crafting";
 import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "../entities/tribes/tribesman-ai/tribesman-researching";
-import { gatherItemPlanIsComplete, gatherResource } from "../entities/tribes/tribesman-ai/tribesman-resource-gathering";
+import { gatherItemPlanIsComplete, workOnGatherPlan } from "../entities/tribes/tribesman-ai/tribesman-gathering";
 import { goPlaceBuilding, goUpgradeBuilding } from "../entities/tribes/tribesman-ai/tribesman-structures";
 import Tribe from "../Tribe";
 import { checkForAvailableAssignment, AIPlanAssignment, createPersonalAssignment, getFirstAvailableAssignment, AIPlan } from "../tribesman-ai/tribesman-ai-planning";
@@ -223,7 +223,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
             completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          } else {
-            gatherResource(entity, plan, visibleItemEntities);
+            workOnGatherPlan(entity, plan, visibleItemEntities);
          }
          break;
       }

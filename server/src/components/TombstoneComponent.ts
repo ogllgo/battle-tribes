@@ -36,6 +36,10 @@ export class TombstoneComponent {
 }
 
 export const TombstoneComponentArray = new ComponentArray<TombstoneComponent>(ServerComponentType.tombstone, true, getDataLength, addDataToPacket);
+TombstoneComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
@@ -81,7 +85,7 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    tombstoneComponent.isSpawningZombie = false;
 }
 
-export function tickTombstone(tombstone: Entity): void {
+function onTick(tombstone: Entity): void {
    // If in the daytime, chance to crumble
    if (!isNight()) {
       const dayProgress = (getGameTime() - 6) / 12;

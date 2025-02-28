@@ -12,7 +12,7 @@ import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
 import { calculateItemDamage } from "../entities/tribes/tribe-member";
 import { createEntity } from "../Entity";
-import { destroyEntity, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { BerryBushComponentArray, dropBerryOverEntity } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
@@ -23,7 +23,7 @@ import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, lerpHitb
 import { applyKnockback } from "./PhysicsComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship } from "./TribeComponent";
+import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { hasTitle } from "./TribesmanComponent";
 
 export class SwingAttackComponent {
@@ -217,6 +217,15 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity): boolean => 
 function onEntityCollision(swingAttack: Entity, collidingEntity: Entity): void {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const owner = swingAttackComponent.owner;
+   // @Temporary: remove when bug is fixed
+   if (!entityExists(owner)) {
+      throw new Error();
+   }
+   // @Temporary: remove when bug is fixed
+   if (!TribeComponentArray.hasComponent(owner)) {
+      console.log(getEntityType(owner));
+      throw new Error();
+   }
    
    // Build blueprints and repair buildings
    const swingItemType = getItemType(getHeldItem(swingAttackComponent.limb));

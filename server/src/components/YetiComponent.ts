@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
+import { getAbsAngleDiff, getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
@@ -29,6 +29,7 @@ import { applyStatusEffect } from "./StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
+import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -309,6 +310,25 @@ function onTick(yeti: Entity): void {
       applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
    }
    
+   // @Hack @Copynpaste
+   // When something is riding the cow, that entity controls the cow's movement
+   const rideableComponent = RideableComponentArray.getComponent(yeti);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   // @Hack: the physics component check for the rider
+   if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
+      const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
+      const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
+      if (accelerationMagnitude > 0) {
+         const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
+         const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
+
+         const targetX = transformComponent.position.x + 400 * normalisedAccelerationX;
+         const targetY = transformComponent.position.y + 400 * normalisedAccelerationY;
+         moveEntityToPosition(yeti, targetX, targetY, Vars.FAST_ACCELERATION, Vars.TURN_SPEED);
+         return;
+      }
+   }
+   
    // Go to follow target if possible
    // @Copynpaste
    const tamingComponent = TamingComponentArray.getComponent(yeti);
@@ -317,6 +337,23 @@ function onTick(yeti: Entity): void {
       moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
       if (getEntityAgeTicks(yeti) % Settings.TPS === 0) {
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
+      }
+      return;
+   }
+   
+   // @Hack @Copynpaste
+   // Pick up carry target
+   if (entityExists(tamingComponent.carryTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
+      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
+
+      // Force carry if colliding and head is looking at the carry target
+      const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+      if (getAbsAngleDiff(transformComponent.rotation, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+         const rideableComponent = RideableComponentArray.getComponent(yeti);
+         const carrySlot = rideableComponent.carrySlots[0];
+         mountCarrySlot(tamingComponent.carryTarget, yeti, carrySlot);
+         tamingComponent.carryTarget = 0;
       }
       return;
    }

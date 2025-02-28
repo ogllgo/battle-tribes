@@ -4,7 +4,7 @@ import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entiti
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
-import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { registerDirtyEntity, registerPlayerKnockback } from "../server/player-clients";
 import { EntityCarryInfo, getEntityTile, resolveBorderCollisions, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -400,6 +400,7 @@ export function applyKnockback(entity: Entity, knockback: number, knockbackDirec
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    const knockbackForce = knockback / transformComponent.totalMass;
+   assert(transformComponent.totalMass !== 0);
    transformComponent.externalVelocity.x += knockbackForce * Math.sin(knockbackDirection);
    transformComponent.externalVelocity.y += knockbackForce * Math.cos(knockbackDirection);
 

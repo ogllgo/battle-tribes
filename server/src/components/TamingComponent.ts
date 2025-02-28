@@ -24,6 +24,9 @@ export class TamingComponent {
    public readonly skillLearningArray = new Array<TamingSkillLearning>();
    
    // @Temporary
+   public carryTarget: Entity = 0;
+   
+   // @Temporary
    public followTarget: Entity = 0;
 }
 

@@ -26,7 +26,6 @@ BerryBushComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-BerryBushComponentArray.onTakeDamage = onTakeDamage;
 
 function onTick(entity: Entity): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);
@@ -94,13 +93,4 @@ export function dropBerry(berryBush: Entity, multiplier: number): void {
 
    berryBushComponent.numBerries--;
    registerDirtyEntity(berryBush);
-}
-
-function onTakeDamage(berryBush: Entity): void {
-   // @Hack
-   const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-   if (berryBushComponent.numBerries > 0) {
-      berryBushComponent.numBerries--;
-      registerDirtyEntity(berryBush);
-   }
 }

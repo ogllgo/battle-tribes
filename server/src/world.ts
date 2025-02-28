@@ -5,7 +5,6 @@ import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityRemoval } from "./server/player-clients";
 import Tribe from "./Tribe";
-import Chunk from "./Chunk";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";

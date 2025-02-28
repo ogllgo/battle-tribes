@@ -1,6 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { CollisionPushInfo, collisionBitsAreCompatible, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -112,12 +112,14 @@ const resolveHardCollisionAndFlip = (transformComponent: TransformComponent, pus
 }
 
 const resolveSoftCollision = (transformComponent: TransformComponent, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
-   // Force gets greater the further into each other the entities are
-   const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
-   const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
-   
-   transformComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
-   transformComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
+   if (transformComponent.totalMass !== 0) {
+      // Force gets greater the further into each other the entities are
+      const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
+      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
+      
+      transformComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
+      transformComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
+   }
 }
 
 export function collide(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {

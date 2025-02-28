@@ -407,6 +407,11 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
+      const glurb = createGlurbConfig();
+      glurb.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
+      glurb.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
+      createEntity(glurb, surfaceLayer, 0);
+
       if(1+1===2)return;
       for (let i = 0; i < 5; i++) {
 
@@ -441,5 +446,5 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
       // }
-   }, 20000);
+   }, 2000);
 }

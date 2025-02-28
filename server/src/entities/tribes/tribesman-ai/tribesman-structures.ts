@@ -40,38 +40,6 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    const virtualBuilding = plan.virtualBuilding;
    
    const layer = getEntityLayer(tribesman);
-   const blockingEntities = getHitboxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
-   for (let i = 0; i < blockingEntities.length; i++) {
-      const blockingEntity = blockingEntities[i];
-      if (!HealthComponentArray.hasComponent(blockingEntity)) {
-         continue;
-      }
-      
-      const relationship = getEntityRelationship(tribesman, blockingEntity);
-      if (relationship !== EntityRelationship.friendly) {
-         // @Bug: sometimes the blocking entity is inaccessible, causing the pathfinding to the entity to break. Fix
-         
-         // If the entity is a boulder, ensure that the tribesman has a pickaxe so that it can damage it
-         // @Hack: hardcoded
-         if (getEntityType(blockingEntity) === EntityType.boulder) {
-            const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
-            // @Hack: this is shit, only checks for wooden pickaxe, but it's just a start. improve layer.
-            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-            if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_pickaxe)) {
-               const tribeComponent = TribeComponentArray.getComponent(tribesman);
-               const assignment = planToGetItem(tribeComponent.tribe, ItemType.wooden_pickaxe, 1);
-               
-               const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
-               addAssignmentPart(aiAssignmentComponent, assignment);
-               // @Bug: the entity will do nothing this tick...
-               return false;
-            }
-         }
-         
-         goKillEntity(tribesman, blockingEntity, false);
-         return false;
-      }
-   }
 
    // @Hack?
    const placeableItemType = STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD[virtualBuilding.entityType];
@@ -81,6 +49,43 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
    
    const distance = getDistanceFromPointToEntity(virtualBuilding.position, tribesman);
+
+   // if the entity is close enough to the build location, become concerned about blocking entities
+   if (distance < Vars.BUILDING_PLACE_DISTANCE + 100) {
+      const blockingEntities = getHitboxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
+      for (let i = 0; i < blockingEntities.length; i++) {
+         const blockingEntity = blockingEntities[i];
+         if (!HealthComponentArray.hasComponent(blockingEntity)) {
+            continue;
+         }
+         
+         const relationship = getEntityRelationship(tribesman, blockingEntity);
+         if (relationship !== EntityRelationship.friendly) {
+            // @Bug: sometimes the blocking entity is inaccessible, causing the pathfinding to the entity to break. Fix
+            
+            // If the entity is a boulder, ensure that the tribesman has a pickaxe so that it can damage it
+            // @Hack: hardcoded
+            if (getEntityType(blockingEntity) === EntityType.boulder) {
+               const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+               // @Hack: this is shit, only checks for wooden pickaxe, but it's just a start. improve layer.
+               const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+               if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_pickaxe)) {
+                  const tribeComponent = TribeComponentArray.getComponent(tribesman);
+                  const assignment = planToGetItem(tribeComponent.tribe, ItemType.wooden_pickaxe, 1);
+                  
+                  const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
+                  addAssignmentPart(aiAssignmentComponent, assignment);
+                  // @Bug: the entity will do nothing this tick...
+                  return false;
+               }
+            }
+            
+            goKillEntity(tribesman, blockingEntity, false);
+            return false;
+         }
+      }
+   }
+   
    if (distance < Vars.BUILDING_PLACE_DISTANCE) {
       // Equip the item
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);

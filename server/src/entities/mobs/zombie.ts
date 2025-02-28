@@ -71,7 +71,10 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
    addInventoryToInventoryComponent(inventoryComponent, handSlot, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    inventoryUseComponent.associatedInventoryNames.push(handSlot.name);
 
-   if (Math.random() < 0.7) {
+   // @IncompletE: chance to not have man hand instead of offhand
+   // @HACK @TEMPORARY: Since currently this will put the limb at the front of the zombie, instead of at its side...
+   // if (Math.random() < 0.7) {
+   if (true) {
       const offhand = new Inventory(0, 0, InventoryName.offhand);
       addInventoryToInventoryComponent(inventoryComponent, offhand, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
       inventoryUseComponent.associatedInventoryNames.push(offhand.name);

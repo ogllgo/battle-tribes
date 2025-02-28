@@ -769,8 +769,8 @@ export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    const carryTarget = reader.readNumber();
    
-   const cowComponent = CowComponentArray.getComponent(entity);
-   cowComponent.carryTarget = carryTarget;
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.carryTarget = carryTarget;
 }
 
 export function processSetAttackTargetPacket(playerClient: PlayerClient, reader: PacketReader): void {

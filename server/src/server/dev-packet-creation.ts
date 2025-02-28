@@ -1,7 +1,7 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
-import { AIPlanType, assert, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
+import { AIPlanType, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
 import { getSpawnInfoForEntityType } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
@@ -16,6 +16,37 @@ import PlayerClient from "./PlayerClient";
 interface VisibleLocalBiomeInfo {
    readonly visibleLocalBiomes: ReadonlyArray<LocalBiome>;
    readonly tileToLocalBiomeMap: Map<TileIndex, LocalBiome>;
+}
+
+const createTileToLocalBiomeMap = (playerClient: PlayerClient, localBiome: LocalBiome): Map<TileIndex, LocalBiome> => {
+   const tileToLocalBiomeMap = new Map<TileIndex, LocalBiome>();
+   
+   let minTileX = Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE);
+   if (localBiome.minTileX > minTileX) {
+      minTileX = localBiome.minTileX;
+   }
+   let maxTileX = Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE);
+   if (localBiome.maxTileX < maxTileX) {
+      maxTileX = localBiome.maxTileX;
+   }
+   let minTileY = Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE);
+   if (localBiome.minTileY > minTileY) {
+      minTileY = localBiome.minTileY;
+   }
+   let maxTileY = Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE);
+   if (localBiome.maxTileY < maxTileY) {
+      maxTileY = localBiome.maxTileY;
+   }
+   for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         const localBiome = playerClient.lastLayer.getTileLocalBiome(tileIndex);
+
+         tileToLocalBiomeMap.set(tileIndex, localBiome);
+      }
+   }
+
+   return tileToLocalBiomeMap;
 }
 
 const getVisibleLocalBiomeInfo = (playerClient: PlayerClient): VisibleLocalBiomeInfo => {
@@ -34,7 +65,6 @@ const getVisibleLocalBiomeInfo = (playerClient: PlayerClient): VisibleLocalBiome
          if (localBiomes.indexOf(localBiome) === -1) {
             localBiomes.push(localBiome);
          }
-         tileToLocalBiomeMap.set(tileIndex, localBiome);
       }
    }
 
@@ -44,7 +74,9 @@ const getVisibleLocalBiomeInfo = (playerClient: PlayerClient): VisibleLocalBiome
    };
 }
 
-const getLocalBiomeDataLength = (localBiome: LocalBiome, tileToLocalBiomeMap: Map<TileIndex, LocalBiome>): number => {
+const getLocalBiomeDataLength = (playerClient: PlayerClient, localBiome: LocalBiome): number => {
+   const tileToLocalBiomeMap = createTileToLocalBiomeMap(playerClient, localBiome);
+   
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    
    let numTiles = 0;
@@ -59,7 +91,9 @@ const getLocalBiomeDataLength = (localBiome: LocalBiome, tileToLocalBiomeMap: Ma
    return lengthBytes;
 }
 
-const addLocalBiomeDataToPacket = (packet: Packet, localBiome: LocalBiome, tileToLocalBiomeMap: Map<TileIndex, LocalBiome>): void => {
+const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, localBiome: LocalBiome): void => {
+   const tileToLocalBiomeMap = createTileToLocalBiomeMap(playerClient, localBiome);
+
    packet.addNumber(localBiome.id);
 
    let numTiles = 0;
@@ -202,7 +236,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
    const info = getVisibleLocalBiomeInfo(playerClient);
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const localBiome of info.visibleLocalBiomes) {
-      lengthBytes += getLocalBiomeDataLength(localBiome, info.tileToLocalBiomeMap);
+      lengthBytes += getLocalBiomeDataLength(playerClient, localBiome);
    }
 
    return lengthBytes;
@@ -285,6 +319,6 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
    const info = getVisibleLocalBiomeInfo(playerClient);
    packet.addNumber(info.visibleLocalBiomes.length);
    for (const localBiome of info.visibleLocalBiomes) {
-      addLocalBiomeDataToPacket(packet, localBiome, info.tileToLocalBiomeMap);
+      addLocalBiomeDataToPacket(packet, playerClient, localBiome);
    }
 }
