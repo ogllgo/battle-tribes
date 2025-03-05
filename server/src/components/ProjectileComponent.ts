@@ -1,12 +1,11 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { TransformComponentArray } from "./TransformComponent";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
-import { onWoodenArrowCollision } from "../entities/projectiles/wooden-arrow";
+import { onWoodenArrowHitboxCollision } from "../entities/projectiles/wooden-arrow";
 import { Point } from "../../../shared/src/utils";
+import { Hitbox } from "../hitboxes";
 
 const ARROW_WIDTH = 12;
 const ARROW_HEIGHT = 64;
@@ -44,11 +43,11 @@ function onTick(projectile: Entity): void {
    // @Hack
    // Destroy the arrow if it reaches the border
    // @Cleanup: This should instead use the hitbox bounds of each of the hitboxes... and perhaps use an onWorldBorderCollision event??
-   const transformComponent = TransformComponentArray.getComponent(projectile);
-   if (transformComponent.position.x <= ARROW_DESTROY_DISTANCE || transformComponent.position.x >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE || transformComponent.position.y <= ARROW_DESTROY_DISTANCE || transformComponent.position.y >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE) {
-      destroyEntity(projectile);
-      return;
-   }
+   // const transformComponent = TransformComponentArray.getComponent(projectile);
+   // if (transformComponent.position.x <= ARROW_DESTROY_DISTANCE || transformComponent.position.x >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE || transformComponent.position.y <= ARROW_DESTROY_DISTANCE || transformComponent.position.y >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE) {
+   //    destroyEntity(projectile);
+   //    return;
+   // }
 }
 
 function getDataLength(): number {
@@ -57,11 +56,11 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(entity: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // @Hack
    switch (getEntityType(entity)) {
       case EntityType.woodenArrow: {
-         onWoodenArrowCollision(entity, collidingEntity, collisionPoint);
+         onWoodenArrowHitboxCollision(entity, collidingEntity, affectedHitbox, collidingHitbox, collisionPoint);
          break;
       }
    }

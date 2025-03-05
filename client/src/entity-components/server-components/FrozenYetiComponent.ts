@@ -8,19 +8,23 @@ import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { HitData } from "../../../../shared/src/client-server-types";
-import { EntityConfig } from "../ComponentArray";
 import { playerInstance } from "../../player";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface FrozenYetiComponentParams {
    readonly attackType: FrozenYetiAttackType;
    readonly attackStage: number;
    readonly stageProgress: number;
+}
+
+interface IntermediateInfo {
+   readonly headRenderPart: VisualRenderPart;
+   readonly pawRenderParts: ReadonlyArray<VisualRenderPart>;
 }
 
 export interface FrozenYetiComponent {
@@ -47,8 +51,9 @@ const ROAR_ARC = Math.PI / 6;
 const ROAR_REACH = 450;
 const SNOWBALL_THROW_OFFSET = 150;
 
-export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiComponent, FrozenYetiComponentParams, never>(ServerComponentType.frozenYeti, true, {
+export const FrozenYetiComponentArray = new ServerComponentArray<FrozenYetiComponent, FrozenYetiComponentParams, IntermediateInfo>(ServerComponentType.frozenYeti, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -74,47 +79,56 @@ function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.frozenYeti, never>): FrozenYetiComponent {
-   const frozenYetiComponentParams = entityConfig.serverComponents[ServerComponentType.frozenYeti];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
 
-   entityConfig.renderInfo.attachRenderPart(new TexturedRenderPart(
-      null,
+   entityIntermediateInfo.renderInfo.attachRenderPart(new TexturedRenderPart(
+      hitbox,
       1,
       0,
       getTextureArrayIndex("entities/frozen-yeti/frozen-yeti.png")
    ));
 
    const headRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       2,
       0,
       getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-head.png")
    );
    headRenderPart.addTag("frozenYetiComponent:head");
    headRenderPart.offset.y = FROZEN_YETI_HEAD_DISTANCE;
-   entityConfig.renderInfo.attachRenderPart(headRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(headRenderPart);
 
    // Create paw render parts
    const pawRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const paw = new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/frozen-yeti/frozen-yeti-paw.png")
       );
       paw.addTag("frozenYetiComponent:paw");
 
-      entityConfig.renderInfo.attachRenderPart(paw);
+      entityIntermediateInfo.renderInfo.attachRenderPart(paw);
       pawRenderParts.push(paw);
    }
-   
+
+   return {
+      headRenderPart: headRenderPart,
+      pawRenderParts: pawRenderParts
+   };
+}
+
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): FrozenYetiComponent {
+   const frozenYetiComponentParams = entityParams.serverComponentParams[ServerComponentType.frozenYeti]!;
    return {
       attackType: frozenYetiComponentParams.attackType,
       attackStage: frozenYetiComponentParams.attackStage,
       stageProgress: frozenYetiComponentParams.stageProgress,
-      headRenderPart: headRenderPart,
-      pawRenderParts: pawRenderParts
+      headRenderPart: intermediateInfo.headRenderPart,
+      pawRenderParts: intermediateInfo.pawRenderParts
    };
 }
 
@@ -132,12 +146,14 @@ const setPawRotationAndOffset = (frozenYetiComponent: FrozenYetiComponent, rotat
 }
 
 const createRoarParticles = (transformComponent: TransformComponent): void => {
+   const hitbox = transformComponent.hitboxes[0];
+   
    for (let i = 0; i < 2; i++) {
-      const direction = randFloat(transformComponent.rotation - ROAR_ARC / 2, transformComponent.rotation + ROAR_ARC / 2);
+      const direction = randFloat(hitbox.box.angle - ROAR_ARC / 2, hitbox.box.angle + ROAR_ARC / 2);
 
       const spawnOffsetDirection = direction + randFloat(-0.1, 0.1);
-      const spawnPositionX = transformComponent.position.x + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.sin(spawnOffsetDirection);
-      const spawnPositionY = transformComponent.position.y + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.cos(spawnOffsetDirection);
+      const spawnPositionX = hitbox.box.position.x + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.sin(spawnOffsetDirection);
+      const spawnPositionY = hitbox.box.position.y + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.cos(spawnOffsetDirection);
 
       // const velocityMagnitude = randFloat(200, 300);
       const velocityMagnitude = randFloat(500, 700);
@@ -173,11 +189,11 @@ const createRoarParticles = (transformComponent: TransformComponent): void => {
    }
 
    {
-      const direction = randFloat(transformComponent.rotation - ROAR_ARC / 2, transformComponent.rotation + ROAR_ARC / 2);
+      const direction = randFloat(hitbox.box.angle - ROAR_ARC / 2, hitbox.box.angle + ROAR_ARC / 2);
 
       const spawnOffsetDirection = direction + randFloat(-0.1, 0.1);
-      const spawnPositionX = transformComponent.position.x + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.sin(spawnOffsetDirection);
-      const spawnPositionY = transformComponent.position.y + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.cos(spawnOffsetDirection);
+      const spawnPositionX = hitbox.box.position.x + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.sin(spawnOffsetDirection);
+      const spawnPositionY = hitbox.box.position.y + (FROZEN_YETI_HEAD_DISTANCE + HEAD_SIZE / 2) * Math.cos(spawnOffsetDirection);
 
       // const velocityMagnitude = randFloat(200, 300);
       const velocityMagnitude = randFloat(500, 700);
@@ -220,6 +236,8 @@ function onTick(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
    switch (frozenYetiComponent.attackType) {
@@ -258,9 +276,9 @@ function onTick(entity: Entity): void {
                   paw.offset.y = pawOffsetMagnitude * Math.cos(direction);
 
                   // Create snow particles near the paws
-                  const offsetDirection = (pawOffsetDirection - 0.3) * (i === 0 ? -1 : 1) + transformComponent.rotation;
-                  let spawnPositionX = transformComponent.position.x + pawOffsetMagnitude * Math.sin(offsetDirection);
-                  let spawnPositionY = transformComponent.position.y + pawOffsetMagnitude * Math.cos(offsetDirection);
+                  const offsetDirection = (pawOffsetDirection - 0.3) * (i === 0 ? -1 : 1) + hitbox.box.angle;
+                  let spawnPositionX = hitbox.box.position.x + pawOffsetMagnitude * Math.sin(offsetDirection);
+                  let spawnPositionY = hitbox.box.position.y + pawOffsetMagnitude * Math.cos(offsetDirection);
 
                   createSnowParticle(spawnPositionX, spawnPositionY, randFloat(40, 70));
                }
@@ -310,21 +328,21 @@ function onTick(entity: Entity): void {
                createRoarParticles(transformComponent);
 
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+               const playerHitbox = playerTransformComponent.hitboxes[0];
 
-               const distanceToPlayer = transformComponent.position.calculateDistanceBetween(playerTransformComponent.position);
+               const distanceToPlayer = hitbox.box.position.calculateDistanceBetween(playerHitbox.box.position);
 
                // Check if the player is within the arc range of the attack
-               const angleToPlayer = transformComponent.position.calculateAngleBetween(playerTransformComponent.position);
-               let angleDifference = transformComponent.rotation - angleToPlayer;
+               const angleToPlayer = hitbox.box.position.calculateAngleBetween(playerHitbox.box.position);
+               let angleDifference = hitbox.box.angle - angleToPlayer;
                if (angleDifference >= Math.PI) {
                   angleDifference -= Math.PI * 2;
                } else if (angleDifference < -Math.PI) {
                   angleDifference += Math.PI * 2;
                }
                if (Math.abs(angleDifference) <= ROAR_ARC / 2 && distanceToPlayer <= ROAR_REACH) {
-                  const physicsComponent = PhysicsComponentArray.getComponent(entity);
-                  transformComponent.selfVelocity.x += 50 * Math.sin(angleToPlayer);
-                  transformComponent.selfVelocity.y += 50 * Math.cos(angleToPlayer);
+                  playerHitbox.velocity.x += 50 * Math.sin(angleToPlayer);
+                  playerHitbox.velocity.y += 50 * Math.cos(angleToPlayer);
                }
                
                break;
@@ -460,6 +478,9 @@ function padData(reader: PacketReader): void {
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
    const attackType = reader.readNumber();
@@ -467,12 +488,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const stageProgress = reader.readNumber();
    readRockSpikes(reader);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    // If the yeti did a bite attack, create a bite particle
    if (frozenYetiComponent.attackType === FrozenYetiAttackType.bite && attackStage === 2 && frozenYetiComponent.attackStage === 1) {
-      const spawnPositionX = transformComponent.position.x + 140 * Math.sin(transformComponent.rotation);
-      const spawnPositionY = transformComponent.position.y + 140 * Math.cos(transformComponent.rotation);
+      const spawnPositionX = hitbox.box.position.x + 140 * Math.sin(hitbox.box.angle);
+      const spawnPositionY = hitbox.box.position.y + 140 * Math.cos(hitbox.box.angle);
       
       createBiteParticle(spawnPositionX, spawnPositionY);
    }
@@ -480,8 +499,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // If the yeti did a snow throw attack, create impact particles
    if (frozenYetiComponent.attackType === FrozenYetiAttackType.snowThrow && attackStage === 2 && frozenYetiComponent.attackStage === 1) {
       const offsetMagnitude = SNOWBALL_THROW_OFFSET + 20;
-      const impactPositionX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.rotation);
-      const impactPositionY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.rotation);
+      const impactPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(hitbox.box.angle);
+      const impactPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(hitbox.box.angle);
       
       for (let i = 0; i < 30; i++) {
          const offsetMagnitude = randFloat(0, 20);
@@ -507,25 +526,27 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Blood pool particle
-   createBlueBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, SIZE / 2);
+   createBlueBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, SIZE / 2);
    
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
-      const spawnPositionX = transformComponent.position.x + SIZE / 2 * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + SIZE / 2 * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + SIZE / 2 * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + SIZE / 2 * Math.cos(offsetDirection);
       createBlueBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    
    for (let i = 0; i < 4; i++) {
-      createBlueBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, SIZE / 2);
+      createBlueBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, SIZE / 2);
    }
 
    createBlueBloodParticleFountain(transformComponent, 0.15, 1.4);

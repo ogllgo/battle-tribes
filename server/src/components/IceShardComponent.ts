@@ -4,13 +4,11 @@ import { Point, randFloat } from "battletribes-shared/utils";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { HealthComponentArray, damageEntity, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, hitEntity, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
-import { TransformComponentArray } from "./TransformComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 export class IceShardComponent {
    public readonly lifetime = randFloat(0.1, 0.2);
@@ -39,7 +37,7 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
@@ -50,20 +48,17 @@ function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, _pushedHit
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.iceSpikesPlanted) {
       // Instantly destroy ice spikes
-      damageEntity(collidingEntity, null, 99999, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, null, 99999, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
    } else {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "ice_shards")) {
          return;
       }
 
-      const transformComponent = TransformComponentArray.getComponent(iceShard);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-      damageEntity(collidingEntity, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 150, hitDirection);
+      hitEntity(collidingEntity, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "ice_shards", 0.3);
 
       if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

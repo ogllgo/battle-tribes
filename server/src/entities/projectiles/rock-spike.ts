@@ -5,18 +5,18 @@ import { RockSpikeComponent } from "../../components/RockSpikeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
+import { createHitbox } from "../../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.rockSpike;
-
+// @Memory
 const MASSES = [1, 1.75, 2.5];
 export const ROCK_SPIKE_HITBOX_SIZES = [12 * 2, 16 * 2, 20 * 2];
 
-export function createRockSpikeConfig(size: number, frozenYeti: Entity): EntityConfig<ComponentTypes> {
+export function createRockSpikeConfig(position: Point, rotation: number, size: number, frozenYeti: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, ROCK_SPIKE_HITBOX_SIZES[size]), MASSES[size], HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, ROCK_SPIKE_HITBOX_SIZES[size]), MASSES[size], HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const rockSpikeComponent = new RockSpikeComponent(size, frozenYeti);

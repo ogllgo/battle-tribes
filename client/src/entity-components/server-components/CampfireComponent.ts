@@ -1,6 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
@@ -9,16 +8,17 @@ import Board from "../../Board";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { CookingComponentArray } from "./CookingComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface CampfireComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface CampfireComponent {}
 
-export const CampfireComponentArray = new ServerComponentArray<CampfireComponent, CampfireComponentParams, RenderParts>(ServerComponentType.campfire, true, {
+export const CampfireComponentArray = new ServerComponentArray<CampfireComponent, CampfireComponentParams, IntermediateInfo>(ServerComponentType.campfire, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -26,18 +26,25 @@ export const CampfireComponentArray = new ServerComponentArray<CampfireComponent
    updateFromData: updateFromData
 });
 
-export function createCampfireComponentParams(): CampfireComponentParams {
+const fillParams = (): CampfireComponentParams => {
    return {};
 }
 
-function createParamsFromData(): CampfireComponentParams {
-   return createCampfireComponentParams();
+export function createCampfireComponentParams(): CampfireComponentParams {
+   return fillParams();
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function createParamsFromData(): CampfireComponentParams {
+   return fillParams();
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/campfire/campfire.png")
@@ -59,20 +66,21 @@ function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
    if (cookingComponent.isCooking) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
       if (Board.tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
-         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
          createSmokeParticle(spawnPositionX, spawnPositionY, 48);
       }
 
       // Ember particles
       if (Board.tickIntervalHasPassed(0.05)) {
-         let spawnPositionX = transformComponent.position.x;
-         let spawnPositionY = transformComponent.position.y;
+         let spawnPositionX = hitbox.box.position.x;
+         let spawnPositionY = hitbox.box.position.y;
 
          const spawnOffsetMagnitude = 11 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random();

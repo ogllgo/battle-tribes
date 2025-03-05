@@ -73,7 +73,7 @@ import { CampfireComponent } from "./components/CampfireComponent";
 import { FurnaceComponent } from "./components/FurnaceComponent";
 import { FireTorchComponent } from "./components/FireTorchComponent";
 import { SpikyBastardComponent } from "./components/SpikyBastardComponent";
-import { GlurbComponent } from "./components/GlurbComponent";
+import { GlurbHeadSegmentComponent } from "./components/GlurbHeadSegmentComponent";
 import { SlurbTorchComponent } from "./components/SlurbTorchComponent";
 import { AttackingEntitiesComponent } from "./components/AttackingEntitiesComponent";
 import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
@@ -85,7 +85,6 @@ import { TreePlantedComponent } from "./components/TreePlantedComponent";
 import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
 import { IceSpikesPlantedComponent } from "./components/IceSpikesPlantedComponent";
 import { Light } from "./light-levels";
-import { Hitbox } from "../../shared/src/boxes/boxes";
 import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 import { ScrappyComponent } from "./components/ScrappyComponent";
 import { CogwalkerComponent } from "./components/CogwalkerComponent";
@@ -98,6 +97,10 @@ import { BlockAttackComponent } from "./components/BlockAttackComponent";
 import { SlingTurretRockComponent } from "./components/SlingTurretRockComponent";
 import { TamingComponent } from "./components/TamingComponent";
 import { LootComponent } from "./components/LootComponent";
+import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponent";
+import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
+import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
+import { Hitbox } from "./hitboxes";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -120,6 +123,7 @@ const ComponentClassRecord = {
    [ServerComponentType.zombie]: () => ZombieComponent,
    [ServerComponentType.player]: () => PlayerComponent,
    [ServerComponentType.item]: () => ItemComponent,
+   [ServerComponentType.fleshSwordItem]: () => FleshSwordItemComponent,
    [ServerComponentType.tombstone]: () => TombstoneComponent,
    [ServerComponentType.tree]: () => TreeComponent,
    [ServerComponentType.blueprint]: () => BlueprintComponent,
@@ -180,7 +184,9 @@ const ComponentClassRecord = {
    [ServerComponentType.furnace]: () => FurnaceComponent,
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
-   [ServerComponentType.glurb]: () => GlurbComponent,
+   [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
+   [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
+   [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
    [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
    [ServerComponentType.attackingEntities]: () => AttackingEntitiesComponent,
    [ServerComponentType.patrolAI]: () => PatrolAIComponent,
@@ -204,17 +210,15 @@ const ComponentClassRecord = {
    };
 };
 
-type ComponentConfig<ComponentTypes extends ServerComponentType> = {
-   [T in ComponentTypes]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
-}
-
 export interface LightCreationInfo {
    readonly light: Light;
    readonly attachedHitbox: Hitbox;
 }
 
-export interface EntityConfig<ComponentTypes extends ServerComponentType = never> {
+export interface EntityConfig {
    readonly entityType: EntityType;
-   readonly components: ComponentConfig<ComponentTypes>;
+   readonly components: Partial<{
+      [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
+   }>;
    readonly lights: ReadonlyArray<LightCreationInfo>;
 }

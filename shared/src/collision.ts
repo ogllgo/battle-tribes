@@ -1,5 +1,5 @@
 import { Box, updateBox } from "./boxes/boxes";
-import { RectangularBox } from "./boxes/RectangularBox";
+import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
 import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
@@ -204,8 +204,8 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
 
 export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: number): boolean {
    // @Speed
-   const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
-   updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
+   const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
+   const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
    
    return box.isColliding(tileBox);
 }

@@ -1,20 +1,20 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randInt } from "../../../../shared/src/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface BerryBushPlantedComponentParams {
    readonly growthProgress: number;
    readonly numFruits: number;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly renderPart: TexturedRenderPart;
 }
 
@@ -32,9 +32,9 @@ const FULLY_GROWN_TEXTURE_SOURCES: ReadonlyArray<string> = [
    "entities/plant/berry-bush-plant-5.png"
 ];
 
-export const BerryBushPlantedComponentArray = new ServerComponentArray<BerryBushPlantedComponent, BerryBushPlantedComponentParams, RenderParts>(ServerComponentType.berryBushPlanted, true, {
+export const BerryBushPlantedComponentArray = new ServerComponentArray<BerryBushPlantedComponent, BerryBushPlantedComponentParams, IntermediateInfo>(ServerComponentType.berryBushPlanted, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -66,26 +66,29 @@ function createParamsFromData(reader: PacketReader): BerryBushPlantedComponentPa
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.berryBushPlanted, never>): RenderParts {
-   const berryBushPlantedComponentParams = entityConfig.serverComponents[ServerComponentType.berryBushPlanted];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const berryBushPlantedComponentParams = entityParams.serverComponentParams[ServerComponentType.berryBushPlanted]!;
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       // @Cleanup: why is this 9 instead of 0?
       9,
       0,
       getTextureArrayIndex(getTextureSource(berryBushPlantedComponentParams.growthProgress, berryBushPlantedComponentParams.numFruits))
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
    };
 }
 
-function createComponent(_entityConfig: EntityConfig<never, never>, renderParts: RenderParts): BerryBushPlantedComponent {
+function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): BerryBushPlantedComponent {
    return {
-      renderPart: renderParts.renderPart
+      renderPart: intermediateInfo.renderPart
    };
 }
 
@@ -106,11 +109,15 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: particles?
-   playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: particles?
-   playSoundOnEntity("berry-bush-destroy-1.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("berry-bush-destroy-1.mp3", 0.4, 1, hitbox, false);
 }

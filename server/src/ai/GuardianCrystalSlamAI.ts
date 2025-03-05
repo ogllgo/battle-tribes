@@ -1,14 +1,14 @@
-import { GuardianCrystalSlamStage, ServerComponentType } from "battletribes-shared/components";
+import { GuardianCrystalSlamStage } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition, stopEntity, turnToPosition } from "../ai-shared";
+import { lerp, Point, UtilVars } from "battletribes-shared/utils";
+import { moveEntityToPosition, turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
-import { applyAbsoluteKnockback, PhysicsComponentArray } from "../components/PhysicsComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemQuakeConfig } from "../entities/guardian-gem-quake";
 import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
+import { applyAbsoluteKnockback } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -42,11 +42,13 @@ export default class GuardianCrystalSlamAI {
    private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      applyAbsoluteKnockback(guardian, 150, transformComponent.relativeRotation + UtilVars.PI);
+      const bodyHitbox = transformComponent.rootHitboxes[0];
+      
+      applyAbsoluteKnockback(guardian, bodyHitbox, 150, bodyHitbox.box.angle + UtilVars.PI);
 
       const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS + Vars.LIMB_EXTEND_AMOUNT;
-      const originX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.relativeRotation);
-      const originY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.relativeRotation);
+      const originX = bodyHitbox.box.position.x + offsetMagnitude * Math.sin(bodyHitbox.box.angle);
+      const originY = bodyHitbox.box.position.y + offsetMagnitude * Math.cos(bodyHitbox.box.angle);
       
       // Create gem quakes
       const layer = getEntityLayer(guardian);
@@ -59,7 +61,7 @@ export default class GuardianCrystalSlamAI {
          const halfIRange = (numQuakes - 1) / 2;
          for (let i = 0; i < numQuakes; i++) {
             const directionOffsetMultiplier = (i - halfIRange) / halfIRange;
-            const direction = transformComponent.relativeRotation + directionOffsetMultiplier * Vars.QUAKE_ARC_SIZE * 0.5;
+            const direction = bodyHitbox.box.angle + directionOffsetMultiplier * Vars.QUAKE_ARC_SIZE * 0.5;
    
             const spawnDelayTicks = Math.round(offsetIdx * 0.05 * Settings.TPS);
             
@@ -72,10 +74,7 @@ export default class GuardianCrystalSlamAI {
             x += offsetMagnitude * Math.sin(offsetDirection);
             y += offsetMagnitude * Math.cos(offsetDirection);
             
-            const config = createGuardianGemQuakeConfig();
-            config.components[ServerComponentType.transform].position.x = x;
-            config.components[ServerComponentType.transform].position.y = y;
-            config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+            const config = createGuardianGemQuakeConfig(new Point(x, y), 2 * Math.PI * Math.random());
             createEntity(config, layer, spawnDelayTicks);
          }
       }
@@ -114,10 +113,6 @@ export default class GuardianCrystalSlamAI {
       } else if (this.slamProgressTicks < Vars.SLAM_TIME_TICKS) {
          this.slamProgressTicks++;
          this.stage = GuardianCrystalSlamStage.slam;
-
-         // Stop moving
-         const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-         stopEntity(physicsComponent);
 
          // Slam limbs together
          let progress = this.slamProgressTicks / Vars.SLAM_TIME_TICKS;

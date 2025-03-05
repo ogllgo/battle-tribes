@@ -1,7 +1,7 @@
 import { randFloat } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { LeafParticleSize, createLeafParticle, createLeafSpeckParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -9,10 +9,15 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface SpikesComponentParams {
    readonly isCovered: boolean;
+}
+
+interface IntermediateInfo {
+   leafRenderParts: Array<VisualRenderPart>;
 }
 
 export interface SpikesComponent {
@@ -28,8 +33,9 @@ export const NUM_LARGE_COVER_LEAVES = 3;
 const LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
 const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 
-export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentParams, never>(ServerComponentType.spikes, true, {
+export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentParams, IntermediateInfo>(ServerComponentType.spikes, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -37,20 +43,24 @@ export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, Sp
    updateFromData: updateFromData
 });
 
-export function createSpikesComponentParams(isCovered: boolean): SpikesComponentParams {
+const fillParams = (isCovered: boolean): SpikesComponentParams => {
    return {
       isCovered: isCovered
    };
+}
+
+export function createSpikesComponentParams(): SpikesComponentParams {
+   return fillParams(false);
 }
 
 function createParamsFromData(reader: PacketReader): SpikesComponentParams {
    const isCovered = reader.readBoolean();
    reader.padOffset(3);
 
-   return createSpikesComponentParams(isCovered);
+   return fillParams(isCovered);
 }
 
-const createLeafRenderPart = (isSmall: boolean): VisualRenderPart => {
+const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRenderPart => {
    let textureSource: string;
    if (isSmall) {
       textureSource = "entities/miscellaneous/cover-leaf-small.png";
@@ -59,7 +69,7 @@ const createLeafRenderPart = (isSmall: boolean): VisualRenderPart => {
    }
    
    const renderPart = new TexturedRenderPart(
-      null,
+      parentHitbox,
       1 + Math.random() * 0.5,
       2 * Math.PI * Math.random(),
       getTextureArrayIndex(textureSource)
@@ -73,22 +83,35 @@ const createLeafRenderPart = (isSmall: boolean): VisualRenderPart => {
    return renderPart;
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.spikes, never>): SpikesComponent {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    const leafRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
-      const renderPart = createLeafRenderPart(true);
-      entityConfig.renderInfo.attachRenderPart(renderPart);
+      const renderPart = createLeafRenderPart(true, hitbox);
+      // @TEMPORARY
+      renderPart.opacity = 0;
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
    for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
-      const renderPart = createLeafRenderPart(false);
-      entityConfig.renderInfo.attachRenderPart(renderPart);
+      const renderPart = createLeafRenderPart(false, hitbox);
+      // @TEMPORARY
+      renderPart.opacity = 0;
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
-   
+
    return {
-      isCovered: entityConfig.serverComponents[ServerComponentType.spikes].isCovered,
       leafRenderParts: leafRenderParts
+   };
+}
+
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): SpikesComponent {
+   return {
+      isCovered: entityParams.serverComponentParams[ServerComponentType.spikes]!.isCovered,
+      leafRenderParts: intermediateInfo.leafRenderParts
    };
 }
 
@@ -123,23 +146,24 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    if (isCoveredBefore !== spikesComponent.isCovered) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
       if (spikesComponent.isCovered) {
          // When covering trap
-         playSoundOnEntity("trap-cover.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("trap-cover.mp3", 0.4, 1, hitbox, false);
       } else {
          // When trap is sprung
-         playSoundOnEntity("trap-spring.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("trap-spring.mp3", 0.4, 1, hitbox, false);
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {
-            const position = transformComponent.position.offset(randFloat(0, 22), 2 * Math.PI * Math.random())
+            const position = hitbox.box.position.offset(randFloat(0, 22), 2 * Math.PI * Math.random())
             createLeafParticle(position.x, position.y, 2 * Math.PI * Math.random() + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
          }
          
          // Create leaf specks
          for (let i = 0; i < 7; i++) {
-            createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, randFloat(0, 16), LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
+            createLeafSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(0, 16), LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
          }
       }
       

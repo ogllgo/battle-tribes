@@ -7,7 +7,7 @@ import { CraftingRecipe, CraftingStation } from "battletribes-shared/items/craft
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
-import { TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { addInventoryDataToPacket, getInventoryDataLength } from "../server/packet-creation";
@@ -45,17 +45,14 @@ const dropInventory = (entity: Entity, inventory: Inventory, dropRange: number):
    for (let i = 0; i < inventory.items.length; i++) {
       const item = inventory.items[i];
 
-      const position = transformComponent.position.copy();
+      const position = getRandomPositionInEntity(transformComponent);
 
       const spawnOffsetMagnitude = dropRange * Math.random();
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
       position.x += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       position.y += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
-      const config = createItemEntityConfig(item.type, item.count, null);
-      config.components[ServerComponentType.transform].position.x = position.x;
-      config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+      const config = createItemEntityConfig(position, 2 * Math.PI * Math.random(), item.type, item.count, null);
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

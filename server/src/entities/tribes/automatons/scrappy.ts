@@ -1,6 +1,9 @@
-import { createScrappyHitboxes } from "../../../../../shared/src/boxes/entity-hitbox-creation";
+import { HitboxCollisionType } from "../../../../../shared/src/boxes/boxes";
+import CircularBox from "../../../../../shared/src/boxes/CircularBox";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../../shared/src/components";
 import { EntityType } from "../../../../../shared/src/entities";
+import { Point } from "../../../../../shared/src/utils";
 import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
@@ -15,27 +18,16 @@ import { TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
 import { TribeMemberComponent } from "../../../components/TribeMemberComponent";
 import { TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
+import { createHitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.tribe
-   | ServerComponentType.tribeMember
-   | ServerComponentType.tribesmanAI
-   | ServerComponentType.aiHelper
-   | ServerComponentType.aiAssignment
-   | ServerComponentType.patrolAI
-   | ServerComponentType.inventory
-   | ServerComponentType.inventoryUse
-   | ServerComponentType.scrappy;
-
-export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
+export function createScrappyConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createScrappyHitboxes(), null);
+
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 20), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;
@@ -50,7 +42,7 @@ export function createScrappyConfig(tribe: Tribe): EntityConfig<ComponentTypes> 
 
    const tribesmanAIComponent = new TribesmanAIComponent();
    
-   const aiHelperComponent = new AIHelperComponent(300);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 300);
 
    const aiAssignmentComponent = new AIAssignmentComponent();
 

@@ -1,19 +1,21 @@
+import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playBuildingHitSound, playSoundOnEntity } from "../../sound";
+import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
+import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface WorkerHutComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface WorkerHutComponent {}
 
-export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutComponent, RenderParts>(ClientComponentType.workerHut, true, {
-   createRenderParts: createRenderParts,
+export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutComponent, IntermediateInfo>(ClientComponentType.workerHut, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
@@ -24,25 +26,28 @@ export function createWorkerHutComponentParams(): WorkerHutComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    // Hut
    const hutRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       2,
       0,
       getTextureArrayIndex("entities/worker-hut/worker-hut.png")
    );
-   renderInfo.attachRenderPart(hutRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(hutRenderPart);
 
    // Door
    const doorRenderPart = new TexturedRenderPart(
-      null,
+      hutRenderPart,
       1,
       0,
       getTextureArrayIndex("entities/worker-hut/worker-hut-door.png")
    );
    doorRenderPart.addTag("hutComponent:door");
-   renderInfo.attachRenderPart(doorRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(doorRenderPart);
 
    return {};
 }
@@ -56,9 +61,13 @@ function getMaxRenderParts(): number {
 }
 
 function onHit(entity: Entity): void {
-   playBuildingHitSound(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playBuildingHitSound(hitbox);
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("building-destroy-1.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, hitbox, false);
 }

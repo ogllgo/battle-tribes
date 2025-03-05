@@ -1,16 +1,12 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
+import { Entity } from "battletribes-shared/entities";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
-import { ClientComponentParams } from "./client-components";
 import { HitData } from "../../../shared/src/client-server-types";
-import { EntityRenderInfo } from "../EntityRenderInfo";
-import Layer from "../Layer";
-import { ServerComponentParams } from "./components";
 import { ClientComponentType } from "./client-component-types";
 import { assert } from "../../../shared/src/utils";
-import { EntityPreCreationInfo } from "../world";
+import { EntityIntermediateInfo, EntityParams } from "../world";
+import { Hitbox } from "../hitboxes";
 
 export const enum ComponentArrayType {
    server,
@@ -19,29 +15,15 @@ export const enum ComponentArrayType {
 
 let componentArrayIDCounter = 0;
 
-/** Contains information useful for creating components. */
-export type EntityConfig<ServerComponentTypes extends ServerComponentType, ClientComponentTypes extends ClientComponentType> = {
-   /** Currently this is used to create lights and sometimes attach components in the createComponent function */
-   readonly entity: Entity;
-   readonly entityType: EntityType;
-   readonly layer: Layer;
-   readonly renderInfo: EntityRenderInfo;
-   readonly serverComponents: {
-      [T in ServerComponentTypes]: ServerComponentParams<T>;
-   };
-   readonly clientComponents: {
-      [T in ClientComponentTypes]: ClientComponentParams<T>;
-   }
-};
-
-export interface ComponentArrayFunctions<T extends object, RenderParts extends object | never> {
+export interface ComponentArrayFunctions<T extends object, ComponentIntermediateInfo extends object | never> {
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   createRenderParts?(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts;
+   populateIntermediateInfo?(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): ComponentIntermediateInfo;
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   createComponent(config: EntityConfig<never, never>, renderParts: RenderParts): T;
-   getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<never>): number;
+   createComponent(entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, entityIntermediateInfo: EntityIntermediateInfo): T;
+   getMaxRenderParts(entityParams: EntityParams): number;
    /** Called once when the entity is being created, just after all the components are created from their params */
    onLoad?(entity: Entity): void;
+   onJoin?(entity: Entity): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
    onSpawn?(entity: Entity): void;
    onTick?(entity: Entity): void;
@@ -67,10 +49,10 @@ let serverComponentArrayRecord: Record<ServerComponentType, ServerComponentArray
 
 export abstract class ComponentArray<
    T extends object = object,
-   RenderParts extends object | never = object | never,
+   ComponentIntermediateInfo extends object | never = object | never,
    ArrayType extends ComponentArrayType = ComponentArrayType,
    ComponentType extends ComponentTypeForArray[ArrayType] = ComponentTypeForArray[ArrayType]
-> implements ComponentArrayFunctions<T, RenderParts> {
+> implements ComponentArrayFunctions<T, ComponentIntermediateInfo> {
    public readonly id = componentArrayIDCounter++;
    private readonly isActiveByDefault: boolean;
    
@@ -94,13 +76,11 @@ export abstract class ComponentArray<
 
    // In reality this is just all information beyond its config which the component wishes to expose to other components
    // This is a separate layer so that, for example, components can immediately get render parts without having to wait for onLoad (introducing polymorphism)
-   public createRenderParts?(renderInfo: EntityRenderInfo, config: EntityConfig<never, never>): RenderParts;
-   // @Cleanup: At some point I was going for this to be a pure-ish function where it just returns the component with no side-effects,
-   // but is that really the right approach? What would be the benefits? That was my original reason for making the
-   // createRenderParts thing.
-   public readonly createComponent: (config: EntityConfig<never, never>, renderParts: RenderParts) => T;
-   public readonly getMaxRenderParts: (preCreationInfo: EntityPreCreationInfo<never>) => number;
+   public populateIntermediateInfo?(intermediateInfo: EntityIntermediateInfo, entityParams: Readonly<EntityParams>): ComponentIntermediateInfo;
+   public readonly createComponent: (entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, entityIntermediateInfo: Readonly<EntityIntermediateInfo>) => T;
+   public readonly getMaxRenderParts: (entityParams: EntityParams) => number;
    public onLoad?(entity: Entity): void;
+   public onJoin?(entity: Entity): void;
    public onSpawn?(entity: Entity): void;
    public onTick?: (entity: Entity) => void;
    public onUpdate?: (entity: Entity) => void;
@@ -109,10 +89,10 @@ export abstract class ComponentArray<
    public onDie?(entity: Entity): void;
    public onRemove?(entity: Entity): void;
 
-   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, RenderParts>) {
+   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, ComponentIntermediateInfo>) {
       this.isActiveByDefault = isActiveByDefault;
       
-      this.createRenderParts = functions.createRenderParts;
+      this.populateIntermediateInfo = functions.populateIntermediateInfo;
       this.createComponent = functions.createComponent;
       this.getMaxRenderParts = functions.getMaxRenderParts;
       this.onLoad = functions.onLoad;

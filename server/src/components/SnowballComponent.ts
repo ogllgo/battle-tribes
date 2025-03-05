@@ -1,14 +1,13 @@
 import { Entity, EntityType, DamageSource, SnowballSize } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { applyKnockback, getVelocityX, getVelocityY, PhysicsComponentArray } from "./PhysicsComponent";
-import { Point, randFloat, randSign } from "battletribes-shared/utils";
+import { Point, randFloat } from "battletribes-shared/utils";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class SnowballComponent {
@@ -25,27 +24,21 @@ export class SnowballComponent {
 const DAMAGE_VELOCITY_THRESHOLD = 100;
 
 export const SnowballComponentArray = new ComponentArray<SnowballComponent>(ServerComponentType.snowball, true, getDataLength, addDataToPacket);
-SnowballComponentArray.onJoin = onJoin;
 SnowballComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
 SnowballComponentArray.onHitboxCollision = onHitboxCollision;
 
-function onJoin(entity: Entity): void {
-   /** Set the snowball to spin */
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   physicsComponent.angularVelocity = randFloat(1, 2) * Math.PI * randSign();
-}
-
 function onTick(snowball: Entity): void {
    // Decrease angular velocity over time
-   const physicsComponent = PhysicsComponentArray.getComponent(snowball);
-   if (physicsComponent.angularVelocity !== 0) {
-      const beforeSign = Math.sign(physicsComponent.angularVelocity);
-      physicsComponent.angularVelocity -= Math.PI / Settings.TPS * beforeSign;
-      if (beforeSign !== Math.sign(physicsComponent.angularVelocity)) {
-         physicsComponent.angularVelocity = 0;
+   const transformComponent = TransformComponentArray.getComponent(snowball);
+   const hitbox = transformComponent.hitboxes[0];
+   if (hitbox.angleTurnSpeed !== 0) {
+      const beforeSign = Math.sign(hitbox.angleTurnSpeed);
+      hitbox.angleTurnSpeed -= Math.PI / Settings.TPS * beforeSign;
+      if (beforeSign !== Math.sign(hitbox.angleTurnSpeed)) {
+         hitbox.angleTurnSpeed = 0;
       }
    }
          
@@ -56,7 +49,7 @@ function onTick(snowball: Entity): void {
    }
 }
 
-function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHitbox: Hitbox, pushedHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.iceSpikes) {
       return;
@@ -70,10 +63,8 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       }
    }
    
-   const transformComponent = TransformComponentArray.getComponent(snowball);
-
-   const vx = getVelocityX(transformComponent);
-   const vy = getVelocityY(transformComponent);
+   const vx = snowballHitbox.velocity.x;
+   const vy = snowballHitbox.velocity.y;
    const velocity = Math.sqrt(vx * vx + vy * vy);
 
    const ageTicks = getEntityAgeTicks(snowball);
@@ -84,10 +75,10 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "snowball")) {
-         const hitDirection = snowballHitbox.box.position.calculateAngleBetween(pushedHitbox.box.position);
+         const hitDirection = snowballHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-         damageEntity(collidingEntity, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
-         applyKnockback(collidingEntity, 100, hitDirection);
+         hitEntity(collidingEntity, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
+         applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "snowball", 0.3);
       }
    }

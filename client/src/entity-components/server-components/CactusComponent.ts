@@ -6,11 +6,9 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { getHitboxByLocalID, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { randInt } from "../../../../shared/src/utils";
-import { playSoundOnEntity } from "../../sound";
-import { EntityConfig } from "../ComponentArray";
-import { EntityPreCreationInfo } from "../../world";
+import { assert, randInt } from "../../../../shared/src/utils";
+import { playSoundOnHitbox } from "../../sound";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface CactusFlower {
    readonly parentHitboxLocalID: number;
@@ -25,7 +23,7 @@ export interface CactusComponentParams {
    readonly flowers: Array<CactusFlower>;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface CactusComponent {
    // @Memory: we could just infer these frmo the render parts on the cactus... But first will need to make flowers into client entities (?)
@@ -42,9 +40,9 @@ const getFlowerTextureSource = (type: number, size: CactusFlowerSize): string =>
    }
 }
 
-export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, RenderParts>(ServerComponentType.cactus, true, {
+export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, IntermediateInfo>(ServerComponentType.cactus, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -80,10 +78,10 @@ function createParamsFromData(reader: PacketReader): CactusComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.cactus, never>): RenderParts {
-   const transformComponentConfig = entityConfig.serverComponents[ServerComponentType.transform];
-   for (let i = 0; i < transformComponentConfig.hitboxes.length; i++) {
-      const hitbox = transformComponentConfig.hitboxes[i];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
 
       const baseRenderPart = new TexturedRenderPart(
          hitbox,
@@ -91,14 +89,15 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          0,
          getTextureArrayIndex(i === 0 ? "entities/cactus/cactus.png" : "entities/cactus/cactus-limb.png")
       );
-      renderInfo.attachRenderPart(baseRenderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(baseRenderPart);
    }
 
    // Flowers
-   const cactusComponentConfig = entityConfig.serverComponents[ServerComponentType.cactus];
+   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
    for (const flower of cactusComponentConfig.flowers) {
-      const hitbox = getHitboxByLocalID(transformComponentConfig.hitboxes, flower.parentHitboxLocalID);
-
+      const hitbox = getHitboxByLocalID(transformComponentParams.hitboxes, flower.parentHitboxLocalID);
+      assert(hitbox !== null);
+      
       const renderPart = new TexturedRenderPart(
          hitbox,
          3 + Math.random(),
@@ -107,23 +106,23 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       );
       renderPart.offset.x = flower.offsetX;
       renderPart.offset.y = flower.offsetY;
-      renderInfo.attachRenderPart(renderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
    }
 
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cactus, never>): CactusComponent {
-   const cactusComponentConfig = entityConfig.serverComponents[ServerComponentType.cactus];
+function createComponent(entityParams: EntityParams): CactusComponent {
+   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
    return {
       flowers: cactusComponentConfig.flowers
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform | ServerComponentType.cactus>): number {
-   const transformComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.transform];
-   const cactusComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.cactus];
-   return transformComponentConfig.hitboxes.length + cactusComponentConfig.flowers.length;
+function getMaxRenderParts(entityParams: EntityParams): number {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
+   return transformComponentParams.hitboxes.length + cactusComponentConfig.flowers.length;
 }
 
 function padData(reader: PacketReader): void {
@@ -137,6 +136,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Create cactus spine particles when hurt
    const numSpines = randInt(3, 5);
@@ -144,18 +144,20 @@ function onHit(entity: Entity): void {
       createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
    }
 
-   playSoundOnEntity("cactus-hit.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("cactus-hit.mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
-   playSoundOnEntity("cactus-destroy.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("cactus-destroy.mp3", 0.4, 1, hitbox, false);
    
    for (const flower of cactusComponent.flowers) {
-      const spawnPositionX = transformComponent.position.x + flower.offsetX;
-      const spawnPositionY = transformComponent.position.y + flower.offsetY;
+      const spawnPositionX = hitbox.box.position.x + flower.offsetX;
+      const spawnPositionY = hitbox.box.position.y + flower.offsetY;
 
       createFlowerParticle(spawnPositionX, spawnPositionY, flower.flowerType, flower.size, flower.rotation);
    }

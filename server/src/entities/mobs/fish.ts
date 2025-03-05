@@ -5,7 +5,7 @@ import { HealthComponent, HealthComponentArray } from "../../components/HealthCo
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -20,20 +20,11 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
+import { createHitbox } from "../../hitboxes";
 
 const enum Vars {
    TILE_VALIDATION_PADDING = 20
 }
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.aiHelper
-   | ServerComponentType.attackingEntities
-   | ServerComponentType.escapeAI
-   | ServerComponentType.loot
-   | ServerComponentType.fish;
 
 registerEntityLootOnDeath(EntityType.fish, [
    {
@@ -59,7 +50,7 @@ const positionIsOnlyNearWater = (layer: Layer, x: number, y: number): boolean =>
    return true;
 }
 
-function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
+function tileIsValidCallback(fish: Entity, layer: Layer, x: number, y: number): boolean {
    if (!layer.positionHasWall(x, y) || layer.getBiomeAtPosition(x, y) !== Biome.river) {
       return false;
    }
@@ -68,17 +59,19 @@ function tileIsValidCallback(entity: Entity, layer: Layer, x: number, y: number)
       return false;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (!layer.tileRaytraceMatchesTileTypes(transformComponent.position.x, transformComponent.position.y, x, y, [TileType.water])) {
+   const transformComponent = TransformComponentArray.getComponent(fish);
+   const fishHitbox = transformComponent.hitboxes[0];
+   
+   if (!layer.tileRaytraceMatchesTileTypes(fishHitbox.box.position.x, fishHitbox.box.position.y, x, y, [TileType.water])) {
       return false;
    }
 
    return true;
 }
 
-export function createFishConfig(): EntityConfig<ComponentTypes> {
+export function createFishConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 28, 56, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
@@ -87,7 +80,7 @@ export function createFishConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(200);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 200);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, tileIsValidCallback);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);

@@ -4,17 +4,16 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { randFloat, lerp, randInt } from "battletribes-shared/utils";
-import { stopEntity } from "../ai-shared";
+import { randFloat, lerp, randInt, Point } from "battletribes-shared/utils";
 import { createPebblumConfig } from "../entities/mobs/pebblum";
 import { createEntity } from "../Entity";
 import { PebblumComponentArray } from "./PebblumComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
-import { HealthComponentArray } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, hitEntity, HealthComponentArray } from "./HealthComponent";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
@@ -88,6 +87,7 @@ GolemComponentArray.onTick = {
    func: onTick
 };
 GolemComponentArray.onTakeDamage = onTakeDamage;
+GolemComponentArray.onHitboxCollision = onHitboxCollision;
 
 // @Incomplete?
 // // Set initial hitbox positions (sleeping)
@@ -142,20 +142,19 @@ const shiftRocks = (golem: Entity, golemComponent: GolemComponent): void => {
 
 const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(golem);
+   const golemHitbox = transformComponent.rootHitboxes[0];
+   
    const layer = getEntityLayer(golem);
    
    const numPebblums = randInt(2, 3);
    for (let i = 0; i < numPebblums; i++) {
       const offsetMagnitude = randFloat(200, 350);
       const offsetDirection = 2 * Math.PI * Math.random();
-      const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-      const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+      const x = golemHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+      const y = golemHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       
-      const config = createPebblumConfig();
-      config.components[ServerComponentType.transform].position.x = x;
-      config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-      config.components[ServerComponentType.pebblum].targetEntityID = target;
+      const config = createPebblumConfig(new Point(x, y), 2 * Math.PI * Math.random());
+      config.components[ServerComponentType.pebblum]!.targetEntityID = target;
       const pebblum = createEntity(config, layer, 0);
       
       golemComponent.summonedPebblumIDs.push(pebblum);
@@ -192,9 +191,6 @@ function onTick(golem: Entity): void {
    }
 
    if (Object.keys(golemComponent.attackingEntities).length === 0) {
-      const physicsComponent = PhysicsComponentArray.getComponent(golem);
-      stopEntity(physicsComponent);
-
       // Remove summoned pebblums
       for (let i = 0; i < golemComponent.summonedPebblumIDs.length; i++) {
          const pebblumID = golemComponent.summonedPebblumIDs[i];
@@ -210,9 +206,6 @@ function onTick(golem: Entity): void {
 
    // @Hack @Copynpaste: remove once the above guard works
    if (typeof target === "undefined") {
-      const physicsComponent = PhysicsComponentArray.getComponent(golem);
-      stopEntity(physicsComponent);
-
       // Remove summoned pebblums
       for (let i = 0; i < golemComponent.summonedPebblumIDs.length; i++) {
          const pebblumID = golemComponent.summonedPebblumIDs[i];
@@ -238,9 +231,12 @@ function onTick(golem: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(golem);
+   const golemHitbox = transformComponent.hitboxes[0];
+   
    const targetTransformComponent = TransformComponentArray.getComponent(target);
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
-   const angleToTarget = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+   const angleToTarget = golemHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 
    // Wake up
    if (golemComponent.wakeTimerTicks < GOLEM_WAKE_TIME_TICKS) {
@@ -249,9 +245,7 @@ function onTick(golem: Entity): void {
       
       golemComponent.wakeTimerTicks++;
 
-      const physicsComponent = PhysicsComponentArray.getComponent(golem);
-      physicsComponent.targetRotation = angleToTarget;
-      physicsComponent.turnSpeed = Math.PI / 4;
+      setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 4);
       return;
    }
 
@@ -266,13 +260,11 @@ function onTick(golem: Entity): void {
       }
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(golem);
+   const accelerationX = 350 * Math.sin(angleToTarget);
+   const accelerationY = 350 * Math.cos(angleToTarget);
+   applyAcceleration(golem, golemHitbox, accelerationX, accelerationY);
 
-   physicsComponent.acceleration.x = 350 * Math.sin(angleToTarget);
-   physicsComponent.acceleration.y = 350 * Math.cos(angleToTarget);
-
-   physicsComponent.targetRotation = angleToTarget;
-   physicsComponent.turnSpeed = Math.PI / 1.5;
+   setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 1.5);
 }
 
 function getDataLength(): number {
@@ -311,4 +303,28 @@ function onTakeDamage(golem: Entity, attackingEntity: Entity | null, _damageSour
          timeSinceLastAggro: 0
       };
    }
+}
+
+function onHitboxCollision(golem: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   if (!HealthComponentArray.hasComponent(collidingEntity)) {
+      return;
+   }
+   
+   // Don't hurt entities which aren't attacking the golem
+   const golemComponent = GolemComponentArray.getComponent(golem);
+   if (!golemComponent.attackingEntities.hasOwnProperty(collidingEntity)) {
+      return;
+   }
+   
+   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+   if (!canDamageEntity(healthComponent, "golem")) {
+      return;
+   }
+   
+   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+
+   // @Incomplete: Cause of death
+   hitEntity(collidingEntity, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, collidingHitbox, 300, hitDirection);
+   addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

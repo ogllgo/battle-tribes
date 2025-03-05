@@ -6,10 +6,10 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { entityExists, getEntityLayer } from "../world";
+import { entityExists } from "../world";
+import { AIHelperComponentArray } from "./AIHelperComponent";
 
 const enum Vars {
-   HEALING_RANGE = 270,
    HEALING_PER_SECOND = 1
 }
 
@@ -24,46 +24,28 @@ HealingTotemComponentArray.onTick = {
    func: onTick
 };
 
-const getHealingTargets = (healingTotem: Entity): ReadonlyArray<Entity> => {
-   const transformComponent = TransformComponentArray.getComponent(healingTotem);
-   const layer = getEntityLayer(healingTotem);
-   
-   const minChunkX = Math.max(Math.floor((transformComponent.position.x - Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((transformComponent.position.x + Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((transformComponent.position.y - Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((transformComponent.position.y + Vars.HEALING_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-
+const getHealingTargets = (healingTotem: Entity, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
    const targets = new Array<Entity>();
-   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
-         for (const entity of chunk.entities) {
-            if (targets.indexOf(entity) !== -1) {
-               continue;
-            }
-
-            if (!HealthComponentArray.hasComponent(entity)) {
-               continue;
-            }
-            
-            const healthComponent = HealthComponentArray.getComponent(entity);
-            if (healthComponent.health === healthComponent.maxHealth) {
-               continue;
-            }
-            
-            const relationship = getEntityRelationship(healingTotem, entity);
-            if (relationship !== EntityRelationship.friendly) {
-               continue;
-            }
-
-            const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            
-            const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
-            if (distance <= Vars.HEALING_RANGE) {
-               targets.push(entity);
-            }
-         }
+   for (const entity of visibleEntities) {
+      if (targets.indexOf(entity) !== -1) {
+         continue;
       }
+
+      if (!HealthComponentArray.hasComponent(entity)) {
+         continue;
+      }
+      
+      const healthComponent = HealthComponentArray.getComponent(entity);
+      if (healthComponent.health === healthComponent.maxHealth) {
+         continue;
+      }
+      
+      const relationship = getEntityRelationship(healingTotem, entity);
+      if (relationship !== EntityRelationship.friendly) {
+         continue;
+      }
+
+      targets.push(entity);
    }
 
    return targets;
@@ -90,10 +72,11 @@ const healTargetIsInIDs = (target: Entity, ids: ReadonlyArray<number>): boolean 
 }
 
 function onTick(healingTotem: Entity): void {
+   const aiHelperComponent = AIHelperComponentArray.getComponent(healingTotem);
    const healingTotemComponent = HealingTotemComponentArray.getComponent(healingTotem);
    
    // @Speed: shouldn't call every tick
-   const healingTargets = getHealingTargets(healingTotem);
+   const healingTargets = getHealingTargets(healingTotem, aiHelperComponent.visibleEntities);
 
    const healTargetIDs = healingTotemComponent.healTargetIDs;
    const healTargetsTicksHealed = healingTotemComponent.healTargetsTicksHealed;
@@ -145,10 +128,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       const ticksHealed = healingTotemComponent.healTargetsTicksHealed[i];
 
       const transformComponent = TransformComponentArray.getComponent(healTarget);
+      const hitbox = transformComponent.hitboxes[0];
 
       packet.addNumber(healTarget);
-      packet.addNumber(transformComponent.position.x);
-      packet.addNumber(transformComponent.position.y);
+      packet.addNumber(hitbox.box.position.x);
+      packet.addNumber(hitbox.box.position.y);
       packet.addNumber(ticksHealed);
    }
 }

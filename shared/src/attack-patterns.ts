@@ -26,7 +26,7 @@ export interface LimbState {
    direction: number;
    /** Extra offset out from the entity's resting limb offset */
    extraOffset: number;
-   rotation: number;
+   angle: number;
    extraOffsetX: number;
    extraOffsetY: number;
 }
@@ -63,14 +63,14 @@ export const UNARMED_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInf
       windedBack: {
          direction: 0,
          extraOffset: 0,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: 0,
          extraOffset: 16,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -79,14 +79,14 @@ export const UNARMED_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInf
       windedBack: {
          direction: Math.PI * 0.6,
          extraOffset: 0,
-         rotation: Math.PI * 1/3,
+         angle: Math.PI * 1/3,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: 0,
          extraOffset: 16,
-         rotation: Math.PI * -2/3,
+         angle: Math.PI * -2/3,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -98,14 +98,14 @@ export const PICKAXE_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInf
       windedBack: {
          direction: Math.PI * 0.6,
          extraOffset: 0,
-         rotation: Math.PI * 1/3,
+         angle: Math.PI * 1/3,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: 0,
          extraOffset: 16,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -114,14 +114,14 @@ export const PICKAXE_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInf
       windedBack: {
          direction: Math.PI * 0.6,
          extraOffset: 0,
-         rotation: Math.PI * 1/3,
+         angle: Math.PI * 1/3,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: 0,
          extraOffset: 16,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -133,14 +133,14 @@ export const SPEAR_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo>
       windedBack: {
          direction: Math.PI * 0.6,
          extraOffset: 0,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: Math.PI * 0.13,
          extraOffset: 26,
-         rotation: Math.PI * -1/6,
+         angle: Math.PI * -1/6,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -149,14 +149,14 @@ export const SPEAR_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo>
       windedBack: {
          direction: Math.PI * 0.6,
          extraOffset: 0,
-         rotation: 0,
+         angle: 0,
          extraOffsetX: 0,
          extraOffsetY: 0
       },
       swung: {
          direction: Math.PI * 0.13,
          extraOffset: 26,
-         rotation: Math.PI * -1/6,
+         angle: Math.PI * -1/6,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -223,14 +223,14 @@ export const RESTING_LIMB_STATES: Record<LimbConfiguration, Readonly<LimbState>>
    [LimbConfiguration.singleHanded]: {
       direction: 0,
       extraOffset: 0,
-      rotation: 0,
+      angle: 0,
       extraOffsetX: 0,
       extraOffsetY: 0
    },
    [LimbConfiguration.twoHanded]: {
       direction: Math.PI * 0.4,
       extraOffset: 0,
-      rotation: 0,
+      angle: 0,
       extraOffsetX: 0,
       extraOffsetY: 0
    }
@@ -239,7 +239,7 @@ export const RESTING_LIMB_STATES: Record<LimbConfiguration, Readonly<LimbState>>
 export const QUIVER_PULL_LIMB_STATE: LimbState = {
    direction: Math.PI * 0.8,
    extraOffset: 0,
-   rotation: Math.PI * 0.3,
+   angle: Math.PI * 0.3,
    extraOffsetX: 0,
    extraOffsetY: 0
 };
@@ -247,7 +247,7 @@ export const QUIVER_PULL_LIMB_STATE: LimbState = {
 export const SPEAR_CHARGED_LIMB_STATE: LimbState = {
    direction: Math.PI * 0.6,
    extraOffset: 0,
-   rotation: Math.PI * 0.3,
+   angle: Math.PI * 0.3,
    extraOffsetX: 0,
    extraOffsetY: 0
 };
@@ -255,7 +255,7 @@ export const SPEAR_CHARGED_LIMB_STATE: LimbState = {
 export const BLOCKING_LIMB_STATE: LimbState = {
    direction: Math.PI * 0.3,
    extraOffset: 6,
-   rotation: Math.PI * -0.65,
+   angle: Math.PI * -0.65,
    extraOffsetX: 0,
    extraOffsetY: 0
 };
@@ -263,7 +263,7 @@ export const BLOCKING_LIMB_STATE: LimbState = {
 export const SHIELD_BLOCKING_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: Math.PI * -0.25,
+   angle: Math.PI * -0.25,
    extraOffsetX: 0,
    extraOffsetY: 0
 };
@@ -330,7 +330,7 @@ export function createZeroedLimbState(): LimbState {
    return {
       direction: 0,
       extraOffset: 0,
-      rotation: 0,
+      angle: 0,
       extraOffsetX: 0,
       extraOffsetY: 0
    };
@@ -340,7 +340,7 @@ export function copyLimbState(limbState: LimbState): LimbState {
    return {
       direction: limbState.direction,
       extraOffset: limbState.extraOffset,
-      rotation: limbState.rotation,
+      angle: limbState.angle,
       extraOffsetX: limbState.extraOffsetX,
       extraOffsetY: limbState.extraOffsetY
    };
@@ -350,7 +350,7 @@ export function interpolateLimbState(startLimbState: LimbState, endLimbState: Li
    return {
       direction: lerp(startLimbState.direction, endLimbState.direction, progress),
       extraOffset: lerp(startLimbState.extraOffset, endLimbState.extraOffset, progress),
-      rotation: lerp(startLimbState.rotation, endLimbState.rotation, progress),
+      angle: lerp(startLimbState.angle, endLimbState.angle, progress),
       extraOffsetX: lerp(startLimbState.extraOffsetX, endLimbState.extraOffsetX, progress),
       extraOffsetY: lerp(startLimbState.extraOffsetY, endLimbState.extraOffsetY, progress)
    };

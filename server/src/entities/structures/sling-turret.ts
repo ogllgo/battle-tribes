@@ -2,7 +2,6 @@ import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createSlingTurretHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -14,23 +13,22 @@ import { TurretComponent } from "../../components/TurretComponent";
 import Tribe from "../../Tribe";
 import { SlingTurretComponent } from "../../components/SlingTurretComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.aiHelper
-   | ServerComponentType.turret
-   | ServerComponentType.slingTurret;
+import { Point } from "../../../../shared/src/utils";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
 
-export function createSlingTurretConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createSlingTurretConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createSlingTurretHitboxes(), null);
+   
+   const box = new CircularBox(position, new Point(0, 0), rotation, 40);
+   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(25);
    
@@ -42,7 +40,7 @@ export function createSlingTurretConfig(tribe: Tribe, connections: Array<Structu
 
    const turretComponent = new TurretComponent(SLING_TURRET_SHOT_COOLDOWN_TICKS + SLING_TURRET_RELOAD_TIME_TICKS);
    
-   const aiHelperComponent = new AIHelperComponent(400);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 400);
 
    const slingTurretComponent = new SlingTurretComponent();
    

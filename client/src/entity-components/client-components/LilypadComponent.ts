@@ -1,17 +1,18 @@
-import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { ServerComponentType } from "../../../../shared/src/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
 export interface LilypadComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface LilypadComponent {}
 
-export const LilypadComponentArray = new ClientComponentArray<LilypadComponent, RenderParts>(ClientComponentType.lilypad, true, {
-   createRenderParts: createRenderParts,
+export const LilypadComponentArray = new ClientComponentArray<LilypadComponent, IntermediateInfo>(ClientComponentType.lilypad, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts
 });
@@ -20,10 +21,13 @@ export function createLilypadComponentParams(): LilypadComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/lilypad/lilypad.png")

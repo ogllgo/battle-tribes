@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { TribeComponentArray } from "./TribeComponent";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
 import { tribeMemberCanPickUpItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
 import { Settings } from "../../../shared/src/settings";
@@ -46,15 +46,17 @@ function onJoin(entity: Entity): void {
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
+   
    const layer = getEntityLayer(tribeMember);
    
    // Vacuum nearby items to the tribesman
    // @Incomplete: Don't vacuum items which the player doesn't have the inventory space for
    // @Bug: permits vacuuming the same item entity twice
-   const minChunkX = Math.max(Math.floor((transformComponent.position.x - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((transformComponent.position.x + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((transformComponent.position.y - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((transformComponent.position.y + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkX = Math.max(Math.floor((tribeMemberHitbox.box.position.x - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkY = Math.max(Math.floor((tribeMemberHitbox.box.position.y - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -69,16 +71,17 @@ function onTick(tribeMember: Entity): void {
             }
 
             const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
+            const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
             
-            const distance = transformComponent.position.calculateDistanceBetween(itemEntityTransformComponent.position);
+            const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
             if (distance <= VACUUM_RANGE) {
                // @Temporary
                let forceMult = 1 - distance / VACUUM_RANGE;
                forceMult = lerp(0.5, 1, forceMult);
 
-               const vacuumDirection = itemEntityTransformComponent.position.calculateAngleBetween(transformComponent.position);
-               itemEntityTransformComponent.externalVelocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
-               itemEntityTransformComponent.externalVelocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
+               const vacuumDirection = itemEntityHitbox.box.position.calculateAngleBetween(tribeMemberHitbox.box.position);
+               itemEntityHitbox.velocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
+               itemEntityHitbox.velocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
             }
          }
       }

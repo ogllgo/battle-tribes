@@ -40,7 +40,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.cow,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.004,
+      // maxDensity: 0.004,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.grass],
       minPackSize: 2,
       maxPackSize: 5,
@@ -86,7 +87,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.tombstone,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.003,
+      // maxDensity: 0.003,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.grass],
       minPackSize: 1,
       maxPackSize: 1,
@@ -98,7 +100,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.025,
+      // maxDensity: 0.025,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.rock],
       minPackSize: 1,
       maxPackSize: 1,
@@ -269,6 +272,19 @@ export const SPAWN_INFOS = [
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       usesSpawnDistribution: true
+   },
+   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
+   {
+      entityType: EntityType.mithrilOreNode,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.stone],
+      minPackSize: 1,
+      maxPackSize: 1,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      usesSpawnDistribution: true
    }
 ] satisfies ReadonlyArray<EntitySpawnInfo>;
 
@@ -328,9 +344,12 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
                continue;
             }
 
-            const transformComponent = TransformComponentArray.getComponent(entity);
+            // @HACK
             
-            const distanceSquared = Math.pow(x - transformComponent.position.x, 2) + Math.pow(y - transformComponent.position.y, 2);
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            
+            const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
             if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {
                return false;
             }

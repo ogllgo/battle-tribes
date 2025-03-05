@@ -110,6 +110,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Item Entity",
       internalName: "item-entity"
    },
+   [EntityType.fleshSwordItemEntity]: {
+      name: "Flesh Sword Item Entity",
+      internalName: "flesh-sword-item-entity"
+   },
    [EntityType.woodenArrow]: {
       name: "Wooden Arrow Projectile",
       internalName: "wooden-arrow-projectile"
@@ -301,6 +305,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.spikyBastard]: {
       name: "Spiky Bastard",
       internalName: "spiky-bastard"
+   },
+   [EntityType.glurbBodySegment]: {
+      name: "Glurb Body Segment",
+      internalName: "glurb-body-segment"
+   },
+   [EntityType.glurbHeadSegment]: {
+      name: "Glurb Head Segment",
+      internalName: "glurb-head-segment"
    },
    [EntityType.glurb]: {
       name: "Glurb",

@@ -3,7 +3,6 @@ import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { registerDirtyEntity } from "../server/player-clients";
-import { dropBerryOverEntity } from "./BerryBushComponent";
 import { ComponentArray } from "./ComponentArray";
 import { getPlantGrowthSpeed, plantIsFertilised } from "./PlanterBoxComponent";
 
@@ -23,7 +22,6 @@ BerryBushPlantedComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-BerryBushPlantedComponentArray.onTakeDamage = onTakeDamage;
 
 function onTick(entity: Entity): void {
    const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
@@ -60,30 +58,4 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const growthProgress = berryBushPlantedComponent.plantGrowthTicks / Vars.GROWTH_TIME_TICKS;
    packet.addNumber(growthProgress);
    packet.addNumber(berryBushPlantedComponent.numFruit);
-}
-
-// @Cleanup: can be done in place?
-const dropBerryBushCropBerries = (entity: Entity, multiplier: number): void => {
-   const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
-   if (berryBushPlantedComponent.numFruit === 0) {
-      return;
-   }
-
-   for (let i = 0; i < multiplier; i++) {
-      dropBerryOverEntity(entity);
-   }
-
-   berryBushPlantedComponent.numFruit--;
-
-   registerDirtyEntity(entity);
-}
-
-function onTakeDamage(entity: Entity): void {
-   const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
-
-   berryBushPlantedComponent.fruitRandomGrowthTicks = 0;
-
-   if (berryBushPlantedComponent.numFruit > 0) {
-      dropBerryBushCropBerries(entity, 1);
-   }
 }

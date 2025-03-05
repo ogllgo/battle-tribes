@@ -3,7 +3,6 @@ import { Entity, LimbAction } from "battletribes-shared/entities";
 import { Tech } from "battletribes-shared/techs";
 import { getDistanceFromPointToEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
-import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearchBench, canResearchAtBench, shouldMoveToResearchBench } from "../../../components/ResearchBenchComponent";
 import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
@@ -17,6 +16,7 @@ import { assert } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { PathfindFailureDefault } from "../../../pathfinding";
+import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -31,6 +31,7 @@ const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComp
 
 const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let id = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -42,8 +43,9 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
       }
 
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
-      const dist = transformComponent.position.calculateDistanceBetween(benchTransformComponent.position);
+      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(researchBenchHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          id = bench;
@@ -55,8 +57,11 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
 
 export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
+   
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
-   const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
 
    // Make sure that the tech requires researching
    assert(tribeComponent.tribe.techRequiresResearching(tech));
@@ -65,21 +70,21 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
       
-      const targetDirection = transformComponent.position.calculateAngleBetween(benchTransformComponent.position);
-      const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
+      const targetDirection = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
 
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
-      physicsComponent.acceleration.x = slowAcceleration * Math.sin(targetDirection);
-      physicsComponent.acceleration.y = slowAcceleration * Math.cos(targetDirection);
+      const accelerationX = slowAcceleration * Math.sin(targetDirection);
+      const accelerationY = slowAcceleration * Math.cos(targetDirection);
+      applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-      physicsComponent.targetRotation = targetDirection;
-      physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
       
       continueResearching(occupiedBench, tribesman, tech);
       
-      tribesmanComponent.targetResearchBenchID = occupiedBench;
-      tribesmanComponent.currentAIType = TribesmanAIType.researching;
+      tribesmanAIComponent.targetResearchBenchID = occupiedBench;
+      tribesmanAIComponent.currentAIType = TribesmanAIType.researching;
 
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
       setLimbActions(inventoryUseComponent, LimbAction.researching);
@@ -90,17 +95,19 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
+
       const benchLayer = getEntityLayer(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
-      pathfindTribesman(tribesman, benchTransformComponent.position.x, benchTransformComponent.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, researchBenchHitbox.box.position.x, researchBenchHitbox.box.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       
-      tribesmanComponent.targetResearchBenchID = bench;
-      tribesmanComponent.currentAIType = TribesmanAIType.researching;
+      tribesmanAIComponent.targetResearchBenchID = bench;
+      tribesmanAIComponent.currentAIType = TribesmanAIType.researching;
 
       // If close enough, switch to doing research
       if (benchLayer === getEntityLayer(tribesman)) {
-         const dist = getDistanceFromPointToEntity(transformComponent.position, bench) - getHumanoidRadius(transformComponent);
+         const dist = getDistanceFromPointToEntity(tribesmanHitbox.box.position, bench) - getHumanoidRadius(transformComponent);
          if (dist < 30) {
             attemptToOccupyResearchBench(bench, tribesman);
          }

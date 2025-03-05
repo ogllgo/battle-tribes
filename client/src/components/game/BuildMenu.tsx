@@ -376,11 +376,14 @@ export function entityCanOpenBuildMenu(entity: Entity): boolean {
 }
 
 // @Cleanup: copy paste of shared function
-const snapRotationToPlayer = (structure: Entity, rotation: number): number => {
+const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const playerHitbox = playerTransformComponent.hitboxes[0];
+   
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
+   const entityHitbox = entityTransformComponent.hitboxes[0];
 
-   const playerDirection = playerTransformComponent.position.calculateAngleBetween(entityTransformComponent.position);
+   const playerDirection = playerHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
    let snapRotation = playerDirection - rotation;
 
    // Snap to nearest PI/2 interval
@@ -391,7 +394,10 @@ const snapRotationToPlayer = (structure: Entity, rotation: number): number => {
 }
 
 const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
+   // @HACK
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
+   const buildingHitbox = buildingTransformComponent.hitboxes[0];
+   
    switch (ghostType) {
       case GhostType.tunnelDoor: {
          const tunnelComponent = TunnelComponentArray.getComponent(building);
@@ -400,18 +406,18 @@ const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
                // Show the door closest to the player
-               const dirToPlayer = buildingTransformComponent.position.calculateAngleBetween(playerTransformComponent.position);
-               const dot = Math.sin(buildingTransformComponent.rotation) * Math.sin(dirToPlayer) + Math.cos(buildingTransformComponent.rotation) * Math.cos(dirToPlayer);
+               const dirToPlayer = buildingHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+               const dot = Math.sin(buildingHitbox.box.angle) * Math.sin(dirToPlayer) + Math.cos(buildingHitbox.box.angle) * Math.cos(dirToPlayer);
 
-               return dot > 0 ? buildingTransformComponent.rotation : buildingTransformComponent.rotation + Math.PI;
+               return dot > 0 ? buildingHitbox.box.angle : buildingHitbox.box.angle + Math.PI;
             }
             case 0b01: {
                // Show bottom door
-               return buildingTransformComponent.rotation + Math.PI;
+               return buildingHitbox.box.angle + Math.PI;
             }
             case 0b10: {
                // Show top door
-               return buildingTransformComponent.rotation;
+               return buildingHitbox.box.angle;
             }
             default: {
                throw new Error("Unknown door bitset " + tunnelComponent.doorBitset);
@@ -425,10 +431,10 @@ const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
       case GhostType.stoneWallSpikes:
       case GhostType.coverLeaves:
       case GhostType.warriorHut: {
-         return buildingTransformComponent.rotation;
+         return buildingHitbox.box.angle;
       }
       default: {
-         return snapRotationToPlayer(building, buildingTransformComponent.rotation);
+         return snapAngleToPlayerAngle(building, buildingHitbox.box.angle);
       }
    }
 }
@@ -456,9 +462,10 @@ const BuildMenu = () => {
          }
 
          const transformComponent = TransformComponentArray.getComponent(building);
+         const hitbox = transformComponent.hitboxes[0];
 
-         const screenX = Camera.calculateXScreenPos(transformComponent.position.x);
-         const screenY = Camera.calculateYScreenPos(transformComponent.position.y);
+         const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
+         const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
          setX(screenX);
          setY(screenY);
       }
@@ -500,9 +507,10 @@ const BuildMenu = () => {
       const option = options[hoveredOptionIdx];
 
       const transformComponent = TransformComponentArray.getComponent(buildingID);
+      const buildingHitbox = transformComponent.hitboxes[0];
 
       const ghostInfo: GhostInfo = {
-         position: transformComponent.position.copy(),
+         position: buildingHitbox.box.position.copy(),
          rotation: getGhostRotation(buildingID, option.ghostType),
          ghostType: option.ghostType,
          tint: [1, 1, 1],
@@ -541,7 +549,8 @@ const BuildMenu = () => {
    
             if (count < cost.amount) {
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-               playSound("error.mp3", 0.4, 1, playerTransformComponent.position, null);
+               const playerHitbox = playerTransformComponent.hitboxes[0];
+               playSound("error.mp3", 0.4, 1, playerHitbox.box.position, null);
                return;
             }
          }

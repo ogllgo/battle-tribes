@@ -1,4 +1,4 @@
-import { createHitbox, HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
@@ -11,12 +11,7 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { TreeRootSegmentComponent } from "../../components/TreeRootSegmentComponent";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.loot
-   | ServerComponentType.treeRootSegment;
+import { createHitbox } from "../../hitboxes";
 
 registerEntityLootOnDeath(EntityType.treeRootSegment, [
    {
@@ -25,9 +20,10 @@ registerEntityLootOnDeath(EntityType.treeRootSegment, [
    }
 ]);
    
-export function createTreeRootSegmentConfig(root: Entity): EntityConfig<ComponentTypes> {
+export function createTreeRootSegmentConfig(position: Point, rotation: number, root: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 24, 40, 0), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 24, 40), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(10);

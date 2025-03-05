@@ -1,39 +1,52 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
-import { calculateEntityPlaceInfo, STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD } from "battletribes-shared/structures";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { angle, assert, getAbsAngleDiff, getAngleDiff } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
-import { getDistanceFromPointToEntity, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
+import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
-import { consumeItemFromSlot, InventoryComponentArray, getInventory, getItemTypeSlot, inventoryHasItemType } from "../../../components/InventoryComponent";
+import { consumeItemFromSlot, InventoryComponentArray, getInventory, inventoryHasItemType } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
-import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
-import { placeStructure, placeBlueprint } from "../tribe-member";
+import { placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
 import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { getHitboxesCollidingEntities } from "battletribes-shared/hitbox-collision";
-import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
-import { getLayerInfo } from "../../../layers";
 import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan, planToGetItem } from "../../../tribesman-ai/tribesman-ai-planning";
 import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
 import { awardTitle } from "../../../components/TribesmanComponent";
+import { getBoxesCollidingEntities } from "../../../collision-detection";
+import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
+import { StructureType } from "../../../../../shared/src/structures";
+import { createEntity } from "../../../Entity";
+import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
 }
 
-const getPlaceableItemSlot = (hotbarInventory: Inventory, itemType: ItemType): number | null => {
-   return getItemTypeSlot(hotbarInventory, itemType);
+const getPlaceableItemSlot = (hotbarInventory: Inventory, entityType: StructureType): number | null => {
+   for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
+      const item = hotbarInventory.itemSlots[itemSlot];
+      if (typeof item === "undefined") {
+         continue;
+      }
+      
+      const itemInfo = ITEM_INFO_RECORD[item.type];
+      if (itemInfoIsPlaceable(item.type, itemInfo) && itemInfo.entityType === entityType) {
+         return itemSlot;
+      }
+   }
+   
+   return null;
 }
 
 export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, tribe: Tribe, plan: AIPlaceBuildingPlan): boolean {
@@ -41,9 +54,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    
    const layer = getEntityLayer(tribesman);
 
-   // @Hack?
-   const placeableItemType = STRUCTURE_TYPE_TO_ENTITY_TYPE_RECORD[virtualBuilding.entityType];
-   const placeableItemSlot = getPlaceableItemSlot(hotbarInventory, placeableItemType);
+   const placeableItemSlot = getPlaceableItemSlot(hotbarInventory, virtualBuilding.entityType);
    assert(placeableItemSlot !== null);
    
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -52,7 +63,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
 
    // if the entity is close enough to the build location, become concerned about blocking entities
    if (distance < Vars.BUILDING_PLACE_DISTANCE + 100) {
-      const blockingEntities = getHitboxesCollidingEntities(getLayerInfo(layer), virtualBuilding.hitboxes);
+      const blockingEntities = getBoxesCollidingEntities(layer, virtualBuilding.boxes);
       for (let i = 0; i < blockingEntities.length; i++) {
          const blockingEntity = blockingEntities[i];
          if (!HealthComponentArray.hasComponent(blockingEntity)) {
@@ -93,8 +104,9 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       useInfo.selectedItemSlot = placeableItemSlot;
       
       const transformComponent = TransformComponentArray.getComponent(tribesman);
+      const tribesmanHitbox = transformComponent.hitboxes[0];
       
-      const targetDirection = angle(virtualBuilding.position.x - transformComponent.position.x, virtualBuilding.position.y - transformComponent.position.y);
+      const targetDirection = angle(virtualBuilding.position.x - tribesmanHitbox.box.position.x, virtualBuilding.position.y - tribesmanHitbox.box.position.y);
       if (distance < getTribesmanAttackRadius(tribesman)) {
          // @Incomplete: Shouldn't move backwards from the target position, should instead pathfind to the closest position
          // which is far enough away, as currently it will try to back into buildings and get stuck like this.
@@ -103,27 +115,26 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // If too close to the plan position, move back a bit
          // 
 
-         const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-
          const acceleration = getTribesmanSlowAcceleration(tribesman);
-         physicsComponent.acceleration.x = acceleration * Math.sin(targetDirection + Math.PI);
-         physicsComponent.acceleration.y = acceleration * Math.cos(targetDirection + Math.PI);
+         const accelerationX = acceleration * Math.sin(targetDirection + Math.PI);
+         const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
+         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-         physicsComponent.targetRotation = targetDirection;
-         physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
          return false;
-      } else if (Math.abs(getAngleDiff(transformComponent.relativeRotation, targetDirection)) < 0.02) {
+      } else if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetDirection)) < 0.02) {
          // @Cleanup: copy and paste. use the function from item-use.ts
          
          // 
          // Place the item
          // 
          
-         const placeInfo = calculateEntityPlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, getLayerInfo(layer));
-         placeStructure(tribe, layer, placeInfo);
+         const placeInfo = calculateEntityPlaceInfo(virtualBuilding.position, virtualBuilding.rotation, virtualBuilding.entityType, layer);
+         const entityConfig = createStructureConfig(tribe, virtualBuilding.entityType, placeInfo.position, placeInfo.angle, placeInfo.connections);
+         createEntity(entityConfig, layer, 0);
 
          if (Math.random() < TITLE_REWARD_CHANCES.BUILDER_REWARD_CHANCE) {
             awardTitle(tribesman, TribesmanTitle.builder);
@@ -134,11 +145,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          useInfo.lastAttackTicks = getGameTicks();
          return true;
       } else {
-         const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-         
-         stopEntity(physicsComponent);
-         physicsComponent.targetRotation = targetDirection;
-         physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
 
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -176,32 +183,30 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    useInfo.selectedItemSlot = hammerItemSlot;
 
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
    
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
+   const buildingHitbox = buildingTransformComponent.hitboxes[0];
 
-   const distance = getDistanceFromPointToEntity(transformComponent.position, building) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
+   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, building) - getHumanoidRadius(transformComponent);
+   if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
-         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
-         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
-      } else {
-         stopEntity(physicsComponent);
+      if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
+         const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
+         const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
+         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
-      const targetRotation = transformComponent.position.calculateAngleBetween(buildingTransformComponent.position);
+      const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
 
-      physicsComponent.targetRotation = targetRotation;
-      physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
-
-      if (Math.abs(getAngleDiff(transformComponent.relativeRotation, targetRotation)) < 0.1) {
+      if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetAngle)) < 0.1) {
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
       }
    } else {
-      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -210,6 +215,8 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
 
 export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
+   
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
    let closestDamagedBuilding: Entity | undefined;
@@ -226,10 +233,11 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       // @Incomplete: Skip buildings which there isn't a path to
 
-      const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+      const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (distance < minDistance) {
          closestDamagedBuilding = entity;
          minDistance = distance;
@@ -246,31 +254,29 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    useInfo.selectedItemSlot = hammerItemSlot;
 
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
+   const buildingHitbox = buildingTransformComponent.hitboxes[0];
    
-   const distance = getDistanceFromPointToEntity(transformComponent.position, closestDamagedBuilding) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(transformComponent, desiredAttackRange, distance)) {
+   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, closestDamagedBuilding) - getHumanoidRadius(transformComponent);
+   if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(transformComponent, desiredAttackRange - 20, distance)) {
-         physicsComponent.acceleration.x = getTribesmanSlowAcceleration(tribesman) * Math.sin(transformComponent.relativeRotation + Math.PI);
-         physicsComponent.acceleration.y = getTribesmanSlowAcceleration(tribesman) * Math.cos(transformComponent.relativeRotation + Math.PI);
-      } else {
-         stopEntity(physicsComponent);
+      if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
+         const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
+         const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
+         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
-      const targetRotation = transformComponent.position.calculateAngleBetween(buildingTransformComponent.position);
-      physicsComponent.targetRotation = targetRotation;
-      physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+      const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
 
-      if (getAbsAngleDiff(transformComponent.relativeRotation, targetRotation) < 0.1) {
+      if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetAngle) < 0.1) {
          doMeleeAttack(tribesman, hammerItemSlot);
       }
 
       clearTribesmanPath(tribesman);
    } else {
-      pathfindTribesman(tribesman, buildingTransformComponent.position.x, buildingTransformComponent.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

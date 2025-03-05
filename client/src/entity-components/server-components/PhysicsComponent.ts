@@ -1,34 +1,28 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, lerp, randInt } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
+import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import Board from "../../Board";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
-import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { entityExists, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { EntityCarryInfo, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
-import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
+import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
 
 export interface PhysicsComponentParams {
-   readonly acceleration: Point;
-   readonly angularVelocity: number;
    readonly traction: number;
 }
 
 export interface PhysicsComponent {
-   readonly acceleration: Point;
-
-   angularVelocity: number;
-
    traction: number;
 
    ignoredTileSpeedMultipliers: ReadonlyArray<TileType>;
@@ -42,40 +36,22 @@ export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsCompon
    physicsComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
 }
 
-const applyPhysics = (transformComponent: TransformComponent, physicsComponent: PhysicsComponent, entity: Entity): void => {
-   if (isNaN(transformComponent.selfVelocity.x)) {
+const applyHitboxKinematics = (transformComponent: TransformComponent, entity: Entity, hitbox: Hitbox): void => {
+   if (isNaN(hitbox.velocity.x)) {
       throw new Error("Self velocity was NaN.");
    }
-   if (isNaN(transformComponent.externalVelocity.x)) {
+   if (isNaN(hitbox.velocity.x)) {
       throw new Error("External velocity was NaN.");
    }
-   if (!isFinite(transformComponent.externalVelocity.x)) {
+   if (!isFinite(hitbox.velocity.x)) {
       throw new Error("External velocity is infinite.");
    }
 
    const layer = getEntityLayer(entity);
    const tile = getEntityTile(layer, transformComponent);
-   
-   if (isNaN(transformComponent.position.x)) {
+
+   if (isNaN(hitbox.box.position.x)) {
       throw new Error("Position was NaN.");
-   }
-   
-   // Apply acceleration (to self-velocity)
-   if (physicsComponent.acceleration.x !== 0 || physicsComponent.acceleration.y !== 0) {
-      let tileMoveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tile.type];
-      if (physicsComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
-         tileMoveSpeedMultiplier = 1;
-      }
-
-      const friction = TILE_FRICTIONS[tile.type];
-      
-      // Calculate the desired velocity based on acceleration
-      const desiredVelocityX = physicsComponent.acceleration.x * friction * tileMoveSpeedMultiplier;
-      const desiredVelocityY = physicsComponent.acceleration.y * friction * tileMoveSpeedMultiplier;
-
-      // Apply velocity with traction (blend towards desired velocity)
-      transformComponent.selfVelocity.x += (desiredVelocityX - transformComponent.selfVelocity.x) * physicsComponent.traction * Settings.I_TPS;
-      transformComponent.selfVelocity.y += (desiredVelocityY - transformComponent.selfVelocity.y) * physicsComponent.traction * Settings.I_TPS;
    }
 
    // @Incomplete: here goes fish suit exception
@@ -83,44 +59,26 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         transformComponent.selfVelocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
-         transformComponent.selfVelocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
+         hitbox.velocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
+         hitbox.velocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
       }
    }
 
    let shouldUpdate = false;
    
-   // Apply friction to self-velocity
-   if (transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) {
+   // Apply friction to velocity
+   if (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) {
       const friction = TILE_FRICTIONS[tile.type];
       
-      // Apply air and ground friction to selfVelocity
-      transformComponent.selfVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-      transformComponent.selfVelocity.y *= 1 - friction * Settings.I_TPS * 2;
+      // Apply air and ground friction to velocity
+      hitbox.velocity.x *= 1 - friction * Settings.I_TPS * 2;
+      hitbox.velocity.y *= 1 - friction * Settings.I_TPS * 2;
 
-      const selfVelocityMagnitude = transformComponent.selfVelocity.length();
-      if (selfVelocityMagnitude > 0) {
-         const groundFriction = Math.min(friction, selfVelocityMagnitude);
-         transformComponent.selfVelocity.x -= groundFriction * transformComponent.selfVelocity.x / selfVelocityMagnitude;
-         transformComponent.selfVelocity.y -= groundFriction * transformComponent.selfVelocity.y / selfVelocityMagnitude;
-      }
-
-      shouldUpdate = true;
-   }
-
-   // Apply friction to external velocity
-   if (transformComponent.externalVelocity.x !== 0 || transformComponent.externalVelocity.y !== 0) {
-      const friction = TILE_FRICTIONS[tile.type];
-      
-      // Apply air and ground friction to externalVelocity
-      transformComponent.externalVelocity.x *= 1 - friction * Settings.I_TPS * 2;
-      transformComponent.externalVelocity.y *= 1 - friction * Settings.I_TPS * 2;
-
-      const externalVelocityMagnitude = transformComponent.externalVelocity.length();
-      if (externalVelocityMagnitude > 0) {
-         const groundFriction = Math.min(friction, externalVelocityMagnitude);
-         transformComponent.externalVelocity.x -= groundFriction * transformComponent.externalVelocity.x / externalVelocityMagnitude;
-         transformComponent.externalVelocity.y -= groundFriction * transformComponent.externalVelocity.y / externalVelocityMagnitude;
+      const velocityMagnitude = hitbox.velocity.length();
+      if (velocityMagnitude > 0) {
+         const groundFriction = Math.min(friction, velocityMagnitude);
+         hitbox.velocity.x -= groundFriction * hitbox.velocity.x / velocityMagnitude;
+         hitbox.velocity.y -= groundFriction * hitbox.velocity.y / velocityMagnitude;
       }
 
       shouldUpdate = true;
@@ -128,26 +86,32 @@ const applyPhysics = (transformComponent: TransformComponent, physicsComponent: 
 
    if (shouldUpdate) {
       // Update position based on the sum of self-velocity and external velocity
-      transformComponent.position.x += (transformComponent.selfVelocity.x + transformComponent.externalVelocity.x) * Settings.I_TPS;
-      transformComponent.position.y += (transformComponent.selfVelocity.y + transformComponent.externalVelocity.y) * Settings.I_TPS;
+      hitbox.box.position.x += hitbox.velocity.x * Settings.I_TPS;
+      hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;
 
       // Mark entity's position as updated
       updateEntityPosition(transformComponent, entity);
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);
-      registerDirtyRenderPosition(renderInfo);
    }
 
-   if (isNaN(transformComponent.position.x)) {
-      console.log(transformComponent.selfVelocity.x, transformComponent.externalVelocity.x);
+   if (isNaN(hitbox.box.position.x)) {
+      console.log(hitbox.velocity.x, hitbox.velocity.x);
       throw new Error("Position was NaN.");
    }
 }
 
-const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Entity): boolean => {
+const resolveBorderCollisions = (entity: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
+   const EPSILON = 0.00001;
+   
    let hasMoved = false;
+   
+   // @HACK
+   const baseHitbox = transformComponent.hitboxes[0];
+
+   // @Incomplete: do this using transform component bounds
    
    // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
    for (const hitbox of transformComponent.hitboxes) {
@@ -160,25 +124,25 @@ const resolveBorderCollisions = (physicsComponent: PhysicsComponent, entity: Ent
 
       // Left wall
       if (minX < 0) {
-         transformComponent.position.x -= minX;
-         transformComponent.selfVelocity.x = 0;
+         baseHitbox.box.position.x -= minX - EPSILON;
+         baseHitbox.velocity.x = 0;
          hasMoved = true;
          // Right wall
       } else if (maxX > Settings.BOARD_UNITS) {
-         transformComponent.position.x -= maxX - Settings.BOARD_UNITS;
-         transformComponent.selfVelocity.x = 0;
+         baseHitbox.box.position.x -= maxX - Settings.BOARD_UNITS + EPSILON;
+         baseHitbox.velocity.x = 0;
          hasMoved = true;
       }
       
       // Bottom wall
       if (minY < 0) {
-         transformComponent.position.y -= minY;
-         transformComponent.selfVelocity.y = 0;
+         baseHitbox.box.position.y -= minY - EPSILON;
+         baseHitbox.velocity.y = 0;
          hasMoved = true;
          // Top wall
       } else if (maxY > Settings.BOARD_UNITS) {
-         transformComponent.position.y -= maxY - Settings.BOARD_UNITS;
-         transformComponent.selfVelocity.y = 0;
+         baseHitbox.box.position.y -= maxY - Settings.BOARD_UNITS + EPSILON;
+         baseHitbox.velocity.y = 0;
          hasMoved = true;
       }
    }
@@ -198,24 +162,17 @@ export const PhysicsComponentArray = new ServerComponentArray<PhysicsComponent, 
 });
 
 function createParamsFromData(reader: PacketReader): PhysicsComponentParams {
-   const accelerationX = reader.readNumber();
-   const accelerationY = reader.readNumber();
    const traction = reader.readNumber();
 
    return {
-      acceleration: new Point(accelerationX, accelerationY),
-      // @Incomplete
-      angularVelocity: 0,
       traction: traction
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.physics, never>): PhysicsComponent {
-   const physicsComponentParams = entityConfig.serverComponents[ServerComponentType.physics];
+function createComponent(entityParams: EntityParams): PhysicsComponent {
+   const physicsComponentParams = entityParams.serverComponentParams[ServerComponentType.physics]!;
    
    return {
-      acceleration: physicsComponentParams.acceleration,
-      angularVelocity: physicsComponentParams.angularVelocity,
       traction: physicsComponentParams.traction,
       ignoredTileSpeedMultipliers: EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS
    }
@@ -227,17 +184,17 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
+   const hitbox = transformComponent.hitboxes[0];
+   
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition
    if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.05) && (getEntityType(entity) !== EntityType.fish)) {
-      createWaterSplashParticle(transformComponent.position.x, transformComponent.position.y);
+      createWaterSplashParticle(hitbox.box.position.x, hitbox.box.position.y);
    }
    
    // Water splash particles
    // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && (physicsComponent.acceleration.x !== 0 || physicsComponent.acceleration.y !== 0) && getEntityType(entity) !== EntityType.fish) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) && getEntityType(entity) !== EntityType.fish) {
       const lifetime = 2.5;
 
       const particle = new Particle(lifetime);
@@ -252,7 +209,7 @@ function onTick(entity: Entity): void {
          particle,
          ParticleRenderLayer.low,
          64, 64,
-         transformComponent.position.x, transformComponent.position.y,
+         hitbox.box.position.x, hitbox.box.position.y,
          0, 0, 
          0, 0,
          0,
@@ -265,27 +222,14 @@ function onTick(entity: Entity): void {
       );
       Board.lowTexturedParticles.push(particle);
 
-      playSoundOnEntity("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, false);
+      playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, hitbox, false);
    }
-}
-
-const fixCarriedEntityPosition = (transformComponent: TransformComponent, carryInfo: EntityCarryInfo, mountTransformComponent: TransformComponent): void => {
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carryInfo.offsetX, carryInfo.offsetY, mountTransformComponent.rotation);
-   transformComponent.rotation = transformComponent.relativeRotation + mountTransformComponent.rotation;
 }
 
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
    assert(entityExists(carryInfo.carriedEntity));
    
    const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-   
-   fixCarriedEntityPosition(transformComponent, carryInfo, mountTransformComponent);
-      
-   transformComponent.selfVelocity.x = 0;
-   transformComponent.selfVelocity.y = 0;
-   transformComponent.externalVelocity.x = getVelocityX(mountTransformComponent);
-   transformComponent.externalVelocity.y = getVelocityY(mountTransformComponent);
 
    // @Incomplete
    // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
@@ -302,12 +246,15 @@ const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInf
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    // If the entity isn't being carried, update its' physics
    if (transformComponent.carryRoot === entity) {
-      applyPhysics(transformComponent, physicsComponent, entity);
-
+      for (const hitbox of transformComponent.rootHitboxes) {
+         applyHitboxKinematics(transformComponent, entity, hitbox);
+      }
+      // @Speed: only do if the kinematics moved the entity
+      updateEntityPosition(transformComponent, entity);
+      
       // Don't resolve wall tile collisions in lightspeed mode
       if (entity !== playerInstance || !keyIsPressed("l")) { 
          const hasMoved = resolveWallCollisions(entity);
@@ -317,13 +264,10 @@ function onUpdate(entity: Entity): void {
          }
       }
    
-      const hasMoved = resolveBorderCollisions(physicsComponent, entity);
+      const hasMoved = resolveBorderCollisions(entity);
       if (hasMoved) {
          updateEntityPosition(transformComponent, entity);
       }
-
-      // @hack
-      transformComponent.rotation = transformComponent.relativeRotation;
 
       // Propagate to children
       for (const carryInfo of transformComponent.carriedEntities) {
@@ -336,20 +280,15 @@ function onUpdate(entity: Entity): void {
          tickCarriedEntity(carryRootTransformComponent, carryInfo);
       }
    }
-
-   // @Incomplete: some entities are able to be outside the border!
-   assert(transformComponent.position.x >= 0 && transformComponent.position.x < Settings.BOARD_UNITS && transformComponent.position.y >= 0 && transformComponent.position.y < Settings.BOARD_UNITS, getEntityType(entity).toString());
+   console.assert(transformComponent.boundingAreaMinX >= 0 && transformComponent.boundingAreaMaxX < Settings.BOARD_UNITS && transformComponent.boundingAreaMinY >= 0 && transformComponent.boundingAreaMaxY < Settings.BOARD_UNITS, getEntityType(entity).toString());
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
-   physicsComponent.acceleration.x = reader.readNumber();
-   physicsComponent.acceleration.y = reader.readNumber();
    physicsComponent.traction = reader.readNumber();
 }
 
@@ -359,20 +298,4 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    } else {
       padData(reader);
    }
-}
-
-// @Cleanup: location
-
-export function getVelocityX(transformComponent: TransformComponent): number {
-   return transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
-}
-
-export function getVelocityY(transformComponent: TransformComponent): number {
-   return transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
-}
-
-export function getVelocityMagnitude(transformComponent: TransformComponent): number {
-   const vx = getVelocityX(transformComponent);
-   const vy = getVelocityY(transformComponent);
-   return Math.sqrt(vx * vx + vy * vy);
 }

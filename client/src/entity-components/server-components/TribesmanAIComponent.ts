@@ -5,10 +5,11 @@ import { randInt, randItem } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { TribeComponentArray } from "./TribeComponent";
 import { Entity } from "../../../../shared/src/entities";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface TribesmanAIComponentParams {
    readonly aiType: TribesmanAIType;
@@ -38,12 +39,7 @@ export const TribesmanAIComponentArray = new ServerComponentArray<TribesmanAICom
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams {
-   const aiType = reader.readNumber();
-   const relationsWithPlayer = reader.readNumber();
-   const craftingItemType = reader.readNumber();
-   const craftingProgress = reader.readNumber();
-
+const fillParams = (aiType: TribesmanAIType, relationsWithPlayer: number, craftingItemType: ItemType, craftingProgress: number): TribesmanAIComponentParams => {
    return {
       aiType: aiType,
       relationsWithPlayer: relationsWithPlayer,
@@ -52,8 +48,21 @@ function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams 
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesmanAI, never>): TribesmanAIComponent {
-   const tribesmanAIComponentParams = entityConfig.serverComponents[ServerComponentType.tribesmanAI];
+export function createTribesmanAIComponentParams(): TribesmanAIComponentParams {
+   return fillParams(TribesmanAIType.idle, 0, 0, 0);
+}
+
+function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams {
+   const aiType = reader.readNumber();
+   const relationsWithPlayer = reader.readNumber();
+   const craftingItemType = reader.readNumber();
+   const craftingProgress = reader.readNumber();
+
+   return fillParams(aiType, relationsWithPlayer, craftingItemType, craftingProgress);
+}
+
+function createComponent(entityParams: EntityParams): TribesmanAIComponent {
+   const tribesmanAIComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesmanAI]!;
 
    return {
       aiType: tribesmanAIComponentParams.aiType,
@@ -68,6 +77,9 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const tribeComponent = TribeComponentArray.getComponent(entity);
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
 
@@ -77,11 +89,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnEntity(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, entity, true);
+                  playSoundOnHitbox(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, hitbox, true);
                   break;
                }
                case TribeType.barbarians: {
-                  playSoundOnEntity("barbarian-angry-1.mp3", 0.4, 1, entity, true);
+                  playSoundOnHitbox("barbarian-angry-1.mp3", 0.4, 1, hitbox, true);
                   break;
                }
             }
@@ -92,7 +104,7 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnEntity(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, entity, true);
+                  playSoundOnHitbox(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, hitbox, true);
                   break;
                }
             }
@@ -103,11 +115,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnEntity(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, entity, true);
+                  playSoundOnHitbox(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, hitbox, true);
                   break;
                }
                case TribeType.barbarians: {
-                  playSoundOnEntity("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, entity, true);
+                  playSoundOnHitbox("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, hitbox, true);
                   break;
                }
             }

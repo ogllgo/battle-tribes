@@ -139,7 +139,7 @@ const Terminal = ({ startingIsVisible }: TerminalParams) => {
             if (!Number.isNaN(trackedEntityID)) {
                const id = Number(trackedEntityID);
                if (entityExists(id)) {
-                  Camera.setTrackedEntityID(id);
+                  Camera.trackEntity(id);
                }
             }
          } else if (command.split(" ")[0] === "tpcam") {
@@ -147,7 +147,7 @@ const Terminal = ({ startingIsVisible }: TerminalParams) => {
             const y = command.split(" ")[2];
             if (!Number.isNaN(x) && !Number.isNaN(y)) {
                Camera.setPosition(Number(x), Number(y));
-               Camera.setTrackedEntityID(0);
+               Camera.trackEntity(0);
             }
          } else {
             Client.sendCommand(command);

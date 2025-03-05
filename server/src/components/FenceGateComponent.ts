@@ -33,20 +33,20 @@ const doorHalfDiagonalLength = Math.sqrt(doorHeight * doorHeight + doorWidth * d
 const angleToCenter = angle(doorHeight, doorWidth);
 
 const updateDoorOpenProgress = (fenceGate: Entity, fenceGateComponent: FenceGateComponent): void => {
-   const baseRotation = Math.PI/2;
-   const rotation = baseRotation - lerp(0, Math.PI/2 - 0.1, fenceGateComponent.openProgress);
+   const baseAngle = Math.PI/2;
+   const angle = baseAngle - lerp(0, Math.PI/2 - 0.1, fenceGateComponent.openProgress);
    
    // Rotate around the top left corner of the door
-   const offsetDirection = rotation + angleToCenter;
-   const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(baseRotation + angleToCenter);
-   const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(baseRotation + angleToCenter);
+   const offsetDirection = angle + angleToCenter;
+   const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(baseAngle + angleToCenter);
+   const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(baseAngle + angleToCenter);
 
    const transformComponent = TransformComponentArray.getComponent(fenceGate);
    
    const hitbox = transformComponent.hitboxes[0].box as RectangularBox;
    hitbox.offset.x = xOffset;
    hitbox.offset.y = yOffset;
-   hitbox.relativeRotation = rotation - Math.PI/2;
+   hitbox.relativeAngle = angle - Math.PI/2;
 
    // @Hack: dirtying doesn't work on transform components for now
    // transformComponent.isDirty = true;

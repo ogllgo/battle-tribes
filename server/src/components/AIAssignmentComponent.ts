@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { InventoryName } from "../../../shared/src/items/items";
 import { AIPlanType, assert } from "../../../shared/src/utils";
-import { getAvailableCraftingStations, throwItem } from "../entities/tribes/tribe-member";
+import { throwItem } from "../entities/tribes/tribe-member";
 import { goCraftItem, craftGoalIsComplete } from "../entities/tribes/tribesman-ai/tribesman-crafting";
 import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "../entities/tribes/tribesman-ai/tribesman-researching";
 import { gatherItemPlanIsComplete, workOnGatherPlan } from "../entities/tribes/tribesman-ai/tribesman-gathering";
@@ -10,7 +10,7 @@ import { goPlaceBuilding, goUpgradeBuilding } from "../entities/tribes/tribesman
 import Tribe from "../Tribe";
 import { checkForAvailableAssignment, AIPlanAssignment, createPersonalAssignment, getFirstAvailableAssignment, AIPlan } from "../tribesman-ai/tribesman-ai-planning";
 import { ComponentArray } from "./ComponentArray";
-import { getInventory, hasSpaceForRecipe, InventoryComponentArray, recipeCraftingStationIsAvailable } from "./InventoryComponent";
+import { getInventory, hasSpaceForRecipe, InventoryComponentArray } from "./InventoryComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 
@@ -74,7 +74,7 @@ const completeAssignment = (entity: Entity, aiAssignmentComponent: AIAssignmentC
          buildingLayer.removeVirtualBuilding(plan.virtualBuilding);
 
          // @Hack
-         const parent = findAssignmentWithChildPlan(tribe.assignment, plan);
+         const parent = findAssignmentWithChildPlan(tribe.rootAssignment, plan);
          if (parent !== null) {
             // @Cleanup: messy
             let idx: number | undefined;
@@ -129,7 +129,8 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          assert(aiAssignmentComponent.currentAssignment !== null);
          
          aiAssignmentComponent.currentAssignment.assignedEntity = entity;
-         availableAssignment.assignedEntity = entity;
+         // @TEMPORARY
+         // availableAssignment.assignedEntity = entity;
       }
    }
 
@@ -152,12 +153,14 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
             let hasThrown = false;
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
             const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            
             for (let i = 0; i < hotbarInventory.items.length; i++) {
                const item = hotbarInventory.items[i];
 
                if (plan.recipe.ingredients.getItemCount(item.type) === 0) {
                   const itemSlot = hotbarInventory.getItemSlot(item);
-                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, transformComponent.relativeRotation);
+                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, entityHitbox.box.angle);
                   hasThrown = true;
                   break;
                }

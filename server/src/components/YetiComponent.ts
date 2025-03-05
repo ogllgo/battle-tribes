@@ -9,19 +9,17 @@ import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
-import { stopEntity, moveEntityToPosition } from "../ai-shared";
-import { entitiesAreColliding, CollisionVars } from "../collision";
+import { moveEntityToPosition } from "../ai-shared";
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity } from "./HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity, healEntity } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { applyKnockback, PhysicsComponentArray } from "./PhysicsComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer } from "../layers";
 import { AttackingEntitiesComponent, AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
-import { Hitbox, HitboxFlag } from "../../../shared/src/boxes/boxes";
+import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
 import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
@@ -30,6 +28,8 @@ import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
+import { applyAbsoluteKnockback, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -41,7 +41,6 @@ const enum Vars {
    SNOW_THROW_WINDUP_TIME = 1.25,
    SNOW_THROW_HOLD_TIME = 0.1,
    SNOW_THROW_RETURN_TIME = 0.6,
-   SNOW_THROW_KICKBACK_AMOUNT = 110,
    
    TURN_SPEED = UtilVars.PI * 3/2,
    SLOW_TURN_SPEED = UtilVars.PI * 1.5/2,
@@ -176,10 +175,11 @@ function onJoin(yeti: Entity): void {
 
 const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
+   const yetiHitbox = transformComponent.rootHitboxes[0];
    
    const angle = throwAngle + randFloat(-Vars.SNOW_THROW_ARC, Vars.SNOW_THROW_ARC);
    
-   const position = transformComponent.position.copy();
+   const position = yetiHitbox.box.position.copy();
    position.x += Vars.SNOW_THROW_OFFSET * Math.sin(angle);
    position.y += Vars.SNOW_THROW_OFFSET * Math.cos(angle);
 
@@ -190,19 +190,21 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
       velocityMagnitude = randFloat(Vars.LARGE_SNOWBALL_THROW_SPEED_MIN, Vars.LARGE_SNOWBALL_THROW_SPEED_MAX);
    }
 
-   const config = createSnowballConfig(yeti, size);
-   config.components[ServerComponentType.transform].position.x = position.x;
-   config.components[ServerComponentType.transform].position.y = position.y;
-   config.components[ServerComponentType.transform].externalVelocity.x += velocityMagnitude * Math.sin(angle);
-   config.components[ServerComponentType.transform].externalVelocity.y += velocityMagnitude * Math.cos(angle);
+   const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), yeti, size);
+   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.x += velocityMagnitude * Math.sin(angle);
+   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.y += velocityMagnitude * Math.cos(angle);
    createEntity(config, getEntityLayer(yeti), 0);
 }
 
 const throwSnow = (yeti: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
-   const targetTransformComponent = TransformComponentArray.getComponent(target);
+   const yetiHitbox = transformComponent.rootHitboxes[0];
    
-   const throwAngle = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+   const targetTransformComponent = TransformComponentArray.getComponent(target);
+   // @Bug @Hack: Should instead pick from one of the visible hitboxes. There will be cases where the root hitbox isn't visible, but others are...
+   const targetHitbox = targetTransformComponent.rootHitboxes[0];
+   
+   const throwAngle = yetiHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 
    // Large snowballs
    for (let i = 0; i < 2; i++) {
@@ -215,8 +217,7 @@ const throwSnow = (yeti: Entity, target: Entity): void => {
    }
 
    // Kickback
-   transformComponent.externalVelocity.x += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.sin(throwAngle * Math.PI);
-   transformComponent.externalVelocity.y += Vars.SNOW_THROW_KICKBACK_AMOUNT * Math.cos(throwAngle * Math.PI);
+   applyAbsoluteKnockback(yeti, yetiHitbox, 110, throwAngle + Math.PI);
 }
 
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
@@ -302,6 +303,8 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
 function onTick(yeti: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);
+   const yetiBodyHitbox = transformComponent.rootHitboxes[0];
+
    const yetiComponent = YetiComponentArray.getComponent(yeti);
 
    const layer = getEntityLayer(yeti);
@@ -310,31 +313,36 @@ function onTick(yeti: Entity): void {
       applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
    }
    
-   // @Hack @Copynpaste
-   // When something is riding the cow, that entity controls the cow's movement
-   const rideableComponent = RideableComponentArray.getComponent(yeti);
-   const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   // @Hack: the physics component check for the rider
-   if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
-      const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
-      const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
-      if (accelerationMagnitude > 0) {
-         const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
-         const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
+   // @INCOMPLETE: This used to rely on the acceleration of the carried entity, but that's gone now.
+   // What will need to be done to return this to a functional state is to make all AI components report
+   // what their current movement target is. (Use AIHelperComponent for now but add @Hack comment?)
+   
+   // // @Hack @Copynpaste
+   // // When something is riding the cow, that entity controls the cow's movement
+   // const rideableComponent = RideableComponentArray.getComponent(yeti);
+   // const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   // // @Hack: the physics component check for the rider
+   // if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
+   //    const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
+   //    const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
+   //    if (accelerationMagnitude > 0) {
+   //       const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
+   //       const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
 
-         const targetX = transformComponent.position.x + 400 * normalisedAccelerationX;
-         const targetY = transformComponent.position.y + 400 * normalisedAccelerationY;
-         moveEntityToPosition(yeti, targetX, targetY, Vars.FAST_ACCELERATION, Vars.TURN_SPEED);
-         return;
-      }
-   }
+   //       const targetX = yetiBodyHitbox.box.position.x + 400 * normalisedAccelerationX;
+   //       const targetY = yetiBodyHitbox.box.position.y + 400 * normalisedAccelerationY;
+   //       moveEntityToPosition(yeti, targetX, targetY, Vars.FAST_ACCELERATION, Vars.TURN_SPEED);
+   //       return;
+   //    }
+   // }
    
    // Go to follow target if possible
    // @Copynpaste
    const tamingComponent = TamingComponentArray.getComponent(yeti);
    if (entityExists(tamingComponent.followTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
+      moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
       if (getEntityAgeTicks(yeti) % Settings.TPS === 0) {
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
       }
@@ -345,11 +353,12 @@ function onTick(yeti: Entity): void {
    // Pick up carry target
    if (entityExists(tamingComponent.carryTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
-      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
+      moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED);
 
       // Force carry if colliding and head is looking at the carry target
-      const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
-      if (getAbsAngleDiff(transformComponent.rotation, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+      const targetDirection = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      if (getAbsAngleDiff(yetiBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
          const rideableComponent = RideableComponentArray.getComponent(yeti);
          const carrySlot = rideableComponent.carrySlots[0];
          mountCarrySlot(tamingComponent.carryTarget, yeti, carrySlot);
@@ -366,6 +375,7 @@ function onTick(yeti: Entity): void {
          yetiComponent.isThrowingSnow = false;
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(yetiComponent.attackTarget);
+         const targetHitbox = targetTransformComponent.hitboxes[0];
          
          switch (yetiComponent.snowThrowStage) {
             case SnowThrowStage.windup: {
@@ -378,11 +388,8 @@ function onTick(yeti: Entity): void {
                   yetiComponent.snowThrowHoldTimer = 0;
                }
 
-               const physicsComponent = PhysicsComponentArray.getComponent(yeti);
-               physicsComponent.targetRotation = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
-               physicsComponent.turnSpeed = Vars.SLOW_TURN_SPEED;
-
-               stopEntity(physicsComponent);
+               const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED);
                return;
             }
             case SnowThrowStage.hold: {
@@ -391,11 +398,8 @@ function onTick(yeti: Entity): void {
                   yetiComponent.snowThrowStage = SnowThrowStage.return;
                }
 
-               const physicsComponent = PhysicsComponentArray.getComponent(yeti);
-               physicsComponent.targetRotation = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
-               physicsComponent.turnSpeed = Vars.SLOW_TURN_SPEED;
-
-               stopEntity(physicsComponent);
+               const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED);
                return;
             }
             case SnowThrowStage.return: {
@@ -426,11 +430,12 @@ function onTick(yeti: Entity): void {
    const chaseTarget = getYetiTarget(yeti, aiHelperComponent.visibleEntities);
    if (chaseTarget !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(chaseTarget);
-      moveEntityToPosition(yeti, targetTransformComponent.position.x, targetTransformComponent.position.y, 700, Vars.TURN_SPEED);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
+      moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, 700, Vars.TURN_SPEED);
       return;
    }
 
-   // Eat raw beef and leather
+   // Eat raw beef
    {
       let minDist = Number.MAX_SAFE_INTEGER;
       let closestFoodItem: Entity | null = null;
@@ -443,8 +448,9 @@ function onTick(yeti: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.raw_beef || itemComponent.itemType === ItemType.raw_fish) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+            const distance = yetiBodyHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
             if (distance < minDist) {
                minDist = distance;
                closestFoodItem = entity;
@@ -453,8 +459,9 @@ function onTick(yeti: Entity): void {
       }
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
+         const foodHitbox = foodTransformComponent.hitboxes[0];
          
-         moveEntityToPosition(yeti, foodTransformComponent.position.x, foodTransformComponent.position.y, 300, Vars.TURN_SPEED);
+         moveEntityToPosition(yeti, foodHitbox.box.position.x, foodHitbox.box.position.y, 300, Vars.TURN_SPEED);
 
          if (entitiesAreColliding(yeti, closestFoodItem) !== CollisionVars.NO_COLLISION) {
             healEntity(yeti, 3, yeti);
@@ -478,9 +485,6 @@ function onTick(yeti: Entity): void {
       }
       
       moveEntityToPosition(yeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 300, 1.5 * Math.PI);
-   } else {
-      const physicsComponent = PhysicsComponentArray.getComponent(yeti);
-      stopEntity(physicsComponent);
    }
 }
 
@@ -542,8 +546,8 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
 
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      damageEntity(collidingEntity, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 200, hitDirection);
+      hitEntity(collidingEntity, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "yeti", 0.3);
    }
 }

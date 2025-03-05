@@ -1,22 +1,22 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { EntityConfig } from "../ComponentArray";
 import { WALL_SPIKE_TEXTURE_SOURCES, FLOOR_SPIKE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
+import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface RegularSpikesComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface RegularSpikesComponent {}
 
-export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpikesComponent, RenderParts>(ClientComponentType.regularSpikes, true, {
-   createRenderParts: createRenderParts,
+export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpikesComponent, IntermediateInfo>(ClientComponentType.regularSpikes, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onHit: onHit,
@@ -27,10 +27,13 @@ export function createRegularSpikesComponentParams(): RegularSpikesComponentPara
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): RenderParts {
-   const materialComponentParams = entityConfig.serverComponents[ServerComponentType.buildingMaterial];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
 
-   const isAttachedToWall = entityConfig.entityType === EntityType.wallSpikes;
+   const materialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+
+   const isAttachedToWall = entityParams.entityType === EntityType.wallSpikes;
    let textureArrayIndex: number;
    if (isAttachedToWall) {
       textureArrayIndex = getTextureArrayIndex(WALL_SPIKE_TEXTURE_SOURCES[materialComponentParams.material]);
@@ -39,14 +42,14 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    }
 
    const mainRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       textureArrayIndex
    )
    mainRenderPart.addTag("buildingMaterialComponent:material");
 
-   renderInfo.attachRenderPart(mainRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(mainRenderPart);
 
    return {};
 }
@@ -60,9 +63,13 @@ function getMaxRenderParts(): number {
 }
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-hit.mp3", 0.2, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("wooden-spikes-hit.mp3", 0.2, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("wooden-spikes-destroy.mp3", 0.4, 1, hitbox, false);
 }

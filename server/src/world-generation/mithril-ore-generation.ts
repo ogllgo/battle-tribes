@@ -3,7 +3,7 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex, subtileIsInWorld } from "../../../shared/src/subtiles";
 import { SubtileType } from "../../../shared/src/tiles";
-import { angle, randFloat, randInt, randSign } from "../../../shared/src/utils";
+import { angle, Point, randFloat, randInt, randSign } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createMithrilOreNodeConfig } from "../entities/resources/mithril-ore-node";
 import { createEntity } from "../Entity";
@@ -70,10 +70,7 @@ const spawnMithrilOre = (layer: Layer, x: number, y: number, direction: number, 
    
    const renderHeight = (2 - currentDepth) * 0.5 + Math.random() * 0.1;
 
-   const config = createMithrilOreNodeConfig(size, variant, children, renderHeight);
-   config.components[ServerComponentType.transform].position.x = x;
-   config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].relativeRotation = direction + randFloat(-0.1, 0.1);
+   const config = createMithrilOreNodeConfig(new Point(x, y), direction + randFloat(-0.1, 0.1), size, variant, children, renderHeight);
    const entity = createEntity(config, layer, 0);
    
    pushJoinBuffer(false);

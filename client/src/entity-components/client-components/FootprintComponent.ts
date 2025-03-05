@@ -4,12 +4,10 @@ import { TileType } from "battletribes-shared/tiles";
 import { playSound } from "../../sound";
 import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
-import { getEntityLayer } from "../../world";
+import { EntityParams, getEntityLayer } from "../../world";
 import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
-import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import ClientComponentArray from "../ClientComponentArray";
-import { EntityConfig } from "../ComponentArray";
 import { ClientComponentType } from "../client-component-types";
 
 export interface FootprintComponentParams {
@@ -47,8 +45,8 @@ export function createFootprintComponentParams(footstepParticleIntervalSeconds: 
    };
 }
 
-function createComponent(entityConfig: EntityConfig<never, ClientComponentType.footprint>): FootprintComponent {
-   const footprintComponentParams = entityConfig.clientComponents[ClientComponentType.footprint];
+function createComponent(entityParams: EntityParams): FootprintComponent {
+   const footprintComponentParams = entityParams.clientComponentParams[ClientComponentType.footprint]!;
    
    return {
       footstepParticleIntervalSeconds: footprintComponentParams.footstepParticleIntervalSeconds,
@@ -67,29 +65,30 @@ function getMaxRenderParts(): number {
 
 const createFootstepSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(entity);
    
    const tile = getEntityTile(layer, transformComponent);
    switch (tile.type) {
       case TileType.grass: {
-         playSound("grass-walk-" + randInt(1, 4) + ".mp3", 0.04, 1, transformComponent.position, layer);
+         playSound("grass-walk-" + randInt(1, 4) + ".mp3", 0.04, 1, hitbox.box.position, layer);
          break;
       }
       case TileType.sand: {
-         playSound("sand-walk-" + randInt(1, 4) + ".mp3", 0.02, 1, transformComponent.position, layer);
+         playSound("sand-walk-" + randInt(1, 4) + ".mp3", 0.02, 1, hitbox.box.position, layer);
          break;
       }
       case TileType.snow: {
-         playSound("snow-walk-" + randInt(1, 3) + ".mp3", 0.1, 1, transformComponent.position, layer);
+         playSound("snow-walk-" + randInt(1, 3) + ".mp3", 0.1, 1, hitbox.box.position, layer);
          break;
       }
       case TileType.rock: {
-         playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position, layer);
+         playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, hitbox.box.position, layer);
          break;
       }
       case TileType.water: {
          if (!entityIsInRiver(transformComponent, entity)) {
-            playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, transformComponent.position, layer);
+            playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, hitbox.box.position, layer);
          }
          break;
       }
@@ -101,12 +100,14 @@ function onTick(entity: Entity): void {
    const footprintComponent = FootprintComponentArray.getComponent(entity);
 
    if (transformComponent.carryRoot === entity) {
+      const hitbox = transformComponent.hitboxes[0];
+      
       // Footsteps
-      if (transformComponent.selfVelocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+      if (hitbox.velocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
          createFootprintParticle(entity, footprintComponent.numFootstepsTaken, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
          footprintComponent.numFootstepsTaken++;
       }
-      footprintComponent.distanceTracker += transformComponent.selfVelocity.length() / Settings.TPS;
+      footprintComponent.distanceTracker += hitbox.velocity.length() / Settings.TPS;
       if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
          footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
          createFootstepSound(entity);

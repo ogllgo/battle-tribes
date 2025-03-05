@@ -6,7 +6,7 @@ import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getRandomPositionInEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
@@ -14,14 +14,12 @@ import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getEntityLayer } from "../world";
 import { createEntity } from "../Entity";
+import { createHitbox } from "../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.item;
-
-export function createItemEntityConfig(itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig<ComponentTypes> {
+export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), Settings.ITEM_SIZE, Settings.ITEM_SIZE, 0), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~COLLISION_BITS.planterBox;
    
@@ -40,7 +38,7 @@ export function createItemEntityConfig(itemType: ItemType, amount: number, throw
    };
 }
 
-const getItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {
+const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {
    for (let attempts = 0; attempts < 50; attempts++) {
       const position = getRandomPositionInEntity(transformComponent);
 
@@ -59,16 +57,13 @@ export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < amount; i++) {
-      const spawnPosition = getItemEntitySpawnPosition(layer, transformComponent);
+      const spawnPosition = generateItemEntitySpawnPosition(layer, transformComponent);
       if (spawnPosition === null) {
          continue;
       }
       
       // Create item entity
-      const config = createItemEntityConfig(itemType, 1, null);
-      config.components[ServerComponentType.transform].position.x = spawnPosition.x;
-      config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+      const config = createItemEntityConfig(spawnPosition, 2 * Math.PI * Math.random(), itemType, 1, null);
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

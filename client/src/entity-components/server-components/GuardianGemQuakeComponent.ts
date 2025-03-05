@@ -2,17 +2,16 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randItem } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGemQuakeProjectile } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianGemQuakeComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface GuardianGemQuakeComponent {}
 
@@ -22,9 +21,9 @@ const TEXTURE_SOURCES: ReadonlyArray<string> = [
    "entities/guardian-gem-quake/gem-3.png"
 ];
 
-export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, RenderParts>(ServerComponentType.guardianGemQuake, true, {
+export const GuardianGemQuakeComponentArray = new ServerComponentArray<GuardianGemQuakeComponent, GuardianGemQuakeComponentParams, IntermediateInfo>(ServerComponentType.guardianGemQuake, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -38,8 +37,8 @@ function createParamsFromData(reader: PacketReader): GuardianGemQuakeComponentPa
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform, never>): RenderParts {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
@@ -48,7 +47,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       0,
       getTextureArrayIndex(randItem(TEXTURE_SOURCES))
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

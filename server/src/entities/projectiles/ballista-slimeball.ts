@@ -2,8 +2,8 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
-import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
+import { HealthComponentArray, hitEntity } from "../../components/HealthComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityConfig } from "../../components";
@@ -11,19 +11,16 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ItemType } from "battletribes-shared/items/items";
 import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { destroyEntity, getEntityType, validateEntity } from "../../world";
 import Tribe from "../../Tribe";
+import { createHitbox } from "../../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform 
- | ServerComponentType.physics
- | ServerComponentType.tribe
- | ServerComponentType.projectile;
-
-export function createBallistaSlimeballConfig(tribe: Tribe, creator: Entity): EntityConfig<ComponentTypes> {
+export function createBallistaSlimeballConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 80, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
@@ -47,51 +44,51 @@ export function createBallistaSlimeballConfig(tribe: Tribe, creator: Entity): En
 }
 
 // @Cleanup: Copy and paste
-export function onBallistaSlimeballCollision(arrow: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
-   const relationship = getEntityRelationship(arrow, collidingEntity);
-   if (relationship === EntityRelationship.friendly || relationship === EntityRelationship.friendlyBuilding) {
-      return;
-   }
+// export function onBallistaSlimeballCollision(arrow: Entity, collidingEntity: Entity, collisionPoint: Point): void {
+//    // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
+//    const relationship = getEntityRelationship(arrow, collidingEntity);
+//    if (relationship === EntityRelationship.friendly || relationship === EntityRelationship.friendlyBuilding) {
+//       return;
+//    }
    
-   const tribeComponent = TribeComponentArray.getComponent(arrow);
-   const collidingEntityType = getEntityType(collidingEntity);
+//    const tribeComponent = TribeComponentArray.getComponent(arrow);
+//    const collidingEntityType = getEntityType(collidingEntity);
 
-   // Collisions with embrasures are handled in the embrasures collision function
-   if (collidingEntityType === EntityType.embrasure) {
-      const collidingEntityTribeComponent = TribeComponentArray.getComponent(collidingEntity);
-      if (tribeComponent.tribe === collidingEntityTribeComponent.tribe) {
-         return;
-      }
-   }
+//    // Collisions with embrasures are handled in the embrasures collision function
+//    if (collidingEntityType === EntityType.embrasure) {
+//       const collidingEntityTribeComponent = TribeComponentArray.getComponent(collidingEntity);
+//       if (tribeComponent.tribe === collidingEntityTribeComponent.tribe) {
+//          return;
+//       }
+//    }
 
-   // @Hack: do with collision bits
-   // Pass over friendly spikes
-   if (collidingEntityType === EntityType.floorSpikes || collidingEntityType === EntityType.wallSpikes || collidingEntityType === EntityType.floorPunjiSticks || collidingEntityType === EntityType.wallPunjiSticks) {
-      const collidingEntityTribeComponent = TribeComponentArray.getComponent(collidingEntity);
-      if (tribeComponent.tribe === collidingEntityTribeComponent.tribe) {
-         return;
-      }
-   }
+//    // @Hack: do with collision bits
+//    // Pass over friendly spikes
+//    if (collidingEntityType === EntityType.floorSpikes || collidingEntityType === EntityType.wallSpikes || collidingEntityType === EntityType.floorPunjiSticks || collidingEntityType === EntityType.wallPunjiSticks) {
+//       const collidingEntityTribeComponent = TribeComponentArray.getComponent(collidingEntity);
+//       if (tribeComponent.tribe === collidingEntityTribeComponent.tribe) {
+//          return;
+//       }
+//    }
 
-   if (HealthComponentArray.hasComponent(collidingEntity)) {
-      const transformComponent = TransformComponentArray.getComponent(arrow);
-      const projectileComponent = ProjectileComponentArray.getComponent(arrow);
+//    if (HealthComponentArray.hasComponent(collidingEntity)) {
+//       const transformComponent = TransformComponentArray.getComponent(arrow);
+//       const projectileComponent = ProjectileComponentArray.getComponent(arrow);
 
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+//       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
-      const ammoInfo = AMMO_INFO_RECORD[ItemType.slimeball];
+//       const ammoInfo = AMMO_INFO_RECORD[ItemType.slimeball];
 
-      const owner = validateEntity(projectileComponent.creator);
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+//       const owner = validateEntity(projectileComponent.creator);
+//       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
       
-      damageEntity(collidingEntity, owner, ammoInfo.damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, ammoInfo.knockback, hitDirection);
+//       damageEntity(collidingEntity, owner, ammoInfo.damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+//       applyKnockback(collidingEntity, ammoInfo.knockback, hitDirection);
 
-      if (StatusEffectComponentArray.hasComponent(collidingEntity) && ammoInfo.statusEffect !== null) {
-         applyStatusEffect(collidingEntity, ammoInfo.statusEffect.type, ammoInfo.statusEffect.durationTicks);
-      }
+//       if (StatusEffectComponentArray.hasComponent(collidingEntity) && ammoInfo.statusEffect !== null) {
+//          applyStatusEffect(collidingEntity, ammoInfo.statusEffect.type, ammoInfo.statusEffect.durationTicks);
+//       }
 
-      destroyEntity(arrow);
-   }
-}
+//       destroyEntity(arrow);
+//    }
+// }

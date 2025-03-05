@@ -1,17 +1,18 @@
-import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { ServerComponentType } from "../../../../shared/src/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
 export interface StonecarvingTableComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface StonecarvingTableComponent {}
 
-export const StonecarvingTableComponentArray = new ClientComponentArray<StonecarvingTableComponent, RenderParts>(ClientComponentType.stonecarvingTable, true, {
-   createRenderParts: createRenderParts,
+export const StonecarvingTableComponentArray = new ClientComponentArray<StonecarvingTableComponent, IntermediateInfo>(ClientComponentType.stonecarvingTable, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts
 });
@@ -20,10 +21,13 @@ export function createStonecarvingTableComponentParams(): StonecarvingTableCompo
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          1,
          0,
          getTextureArrayIndex("entities/stonecarving-table/stonecarving-table.png")

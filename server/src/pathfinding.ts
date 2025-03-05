@@ -7,7 +7,7 @@ import { TribeComponentArray } from "./components/TribeComponent";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { boxIsCircular, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
+import { boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityLayer, getEntityType } from "./world";
 import PlayerClient, { PlayerClientVars } from "./server/PlayerClient";
@@ -18,6 +18,7 @@ import { TileType } from "../../shared/src/tiles";
 import { getTilesOfType } from "./census";
 import { surfaceLayer } from "./layers";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
+import { Hitbox } from "./hitboxes";
 
 const enum Vars {
    NODE_ACCESSIBILITY_RESOLUTION = 3
@@ -347,25 +348,34 @@ export function positionIsAccessible(layer: Layer, x: number, y: number, ignored
 }
 
 export function getAngleToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-   return angle(x - transformComponent.position.x, y - transformComponent.position.y);
+   return angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
 }
 
 export function getDistanceToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
 
-   const diffX = transformComponent.position.x - x;
-   const diffY = transformComponent.position.y - y;
+   const diffX = hitbox.box.position.x - x;
+   const diffY = hitbox.box.position.y - y;
    return Math.sqrt(diffX * diffX + diffY * diffY);
 }
 
 export function getDistFromNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
 
-   return Math.sqrt(Math.pow(x - transformComponent.position.x, 2) + Math.pow(y - transformComponent.position.y, 2));
+   return Math.sqrt(Math.pow(x - hitbox.box.position.x, 2) + Math.pow(y - hitbox.box.position.y, 2));
 }
 
 export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: PathfindingNodeIndex): number {
@@ -381,10 +391,13 @@ export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: Pathfind
 }
 
 export function entityHasReachedNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): boolean {
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
 
-   const distSquared = calculateDistanceSquared(transformComponent.position.x, transformComponent.position.y, x, y);
+   const distSquared = calculateDistanceSquared(hitbox.box.position.x, hitbox.box.position.y, x, y);
    return distSquared <= PathfindingSettings.NODE_REACH_DIST * PathfindingSettings.NODE_SEPARATION;
 }
 

@@ -10,7 +10,7 @@ import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/it
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -19,21 +19,12 @@ import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { createHitbox } from "../../hitboxes";
 
 export const enum ZombieVars {
    CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
    VISION_RANGE = 375
 }
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.zombie
-   | ServerComponentType.aiHelper
-   | ServerComponentType.inventory
-   | ServerComponentType.inventoryUse
-   | ServerComponentType.loot;
 
 registerEntityLootOnDeath(EntityType.zombie, [
    {
@@ -46,11 +37,12 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-export function createZombieConfig(isGolden: boolean, tombstone: Entity): EntityConfig<ComponentTypes> {
+export function createZombieConfig(position: Point, rotation: number, isGolden: boolean, tombstone: Entity): EntityConfig {
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
@@ -61,7 +53,7 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
 
    const zombieComponent = new ZombieComponent(zombieType, tombstone);
 
-   const aiHelperComponent = new AIHelperComponent(ZombieVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(150, Math.PI * 3, 0.4, positionIsValidCallback);
    
    const inventoryComponent = new InventoryComponent();

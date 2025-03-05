@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { getAbsAngleDiff, randFloat, randInt } from "../../../shared/src/utils";
+import { getAbsAngleDiff, Point, randFloat, randInt } from "../../../shared/src/utils";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
 import { createEntity } from "../Entity";
@@ -54,6 +54,8 @@ const segmentWillBeInWall = (rootLayer: Layer, rootX: number, rootY: number, off
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const treeRootHitbox = transformComponent.hitboxes[0];
+   
    const layer = getEntityLayer(entity);
 
    const spawnOffsetDirections = new Array<number>();
@@ -74,7 +76,7 @@ function onJoin(entity: Entity): void {
          continue;
       }
 
-      if (segmentWillBeInWall(layer, transformComponent.position.x, transformComponent.position.y, offsetDirection)) {
+      if (segmentWillBeInWall(layer, treeRootHitbox.box.position.x, treeRootHitbox.box.position.y, offsetDirection)) {
          continue;
       }
       
@@ -82,13 +84,10 @@ function onJoin(entity: Entity): void {
       const offsetX = offsetMagnitude * Math.sin(offsetDirection);
       const offsetY = offsetMagnitude * Math.cos(offsetDirection);
 
-      const x = transformComponent.position.x + offsetX;
-      const y = transformComponent.position.y + offsetY;
+      const x = treeRootHitbox.box.position.x + offsetX;
+      const y = treeRootHitbox.box.position.y + offsetY;
 
-      const config = createTreeRootSegmentConfig(entity);
-      config.components[ServerComponentType.transform].position.x = x;
-      config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].relativeRotation = offsetDirection + randFloat(-0.1, 0.1);
+      const config = createTreeRootSegmentConfig(new Point(x, y), offsetDirection + randFloat(-0.1, 0.1), entity);
       createEntity(config, layer, 0);
 
       spawnOffsetDirections.push(offsetDirection);
@@ -99,12 +98,10 @@ function onJoin(entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const treeRootHitbox = transformComponent.hitboxes[0];
 
    // Respawn the tree root after a while
-   const config = createTreeRootBaseConfig();
-   config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-   config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), 2 * Math.PI * Math.random());
    createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TPS);
 
    const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(entity);

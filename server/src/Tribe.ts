@@ -13,7 +13,7 @@ import { getPathfindingGroupID } from "./pathfinding";
 import { getPlayerClients, registerResearchOrbComplete } from "./server/player-clients";
 import { HutComponentArray } from "./components/HutComponent";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
-import { TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { createEntity } from "./Entity";
 import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
 import Layer from "./Layer";
@@ -22,7 +22,7 @@ import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "./entities/tribes/tribe-warrior";
 import { layers, surfaceLayer, undergroundLayer } from "./layers";
 import TribeBuildingLayer, { createVirtualBuildingsByEntityType, VirtualStructure } from "./tribesman-ai/building-plans/TribeBuildingLayer";
-import { createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
+import { createGatherItemPlanAssignment, createRootPlanAssignment, updateTribePlans } from "./tribesman-ai/tribesman-ai-planning";
 import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
@@ -130,7 +130,7 @@ export default class Tribe {
    public readonly buildings = new Array<Entity>();
    public buildingsAreDirty = true;
 
-   public readonly assignment = createRootPlanAssignment([]);
+   public readonly rootAssignment = createRootPlanAssignment([]);
 
    /** Stores all tiles in the tribe's zone of influence */
    private area: Record<number, TileInfluence> = {};
@@ -187,6 +187,10 @@ export default class Tribe {
       this.tribesmanCap = TRIBE_INFO_RECORD[tribeType].baseTribesmanCap;
       this.pathfindingGroupID = getPathfindingGroupID();
 
+      // @TEMPORARY
+      const assignment = createGatherItemPlanAssignment([], ItemType.mithrilOre, 999);
+      this.rootAssignment.children.push(assignment);
+
       addTribe(this);
    }
 
@@ -206,7 +210,7 @@ export default class Tribe {
       
       const buildingLayer = this.buildingLayers[layer.depth];
       const structureComponent = StructureComponentArray.getComponent(structure);
-      buildingLayer.addVirtualBuilding(structureComponent.virtualBuilding!);
+      buildingLayer.addVirtualBuilding(structureComponent.virtualStructure!);
 
       this.buildings.push(structure);
 
@@ -221,7 +225,7 @@ export default class Tribe {
 
             this.totem = structure;
 
-            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.tribeTotem]);
+            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.tribeTotem]);
             break;
          }
          case EntityType.researchBench: {
@@ -237,7 +241,7 @@ export default class Tribe {
 
             this.huts.push(structure);
 
-            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[entityType]);
+            this.createTribeAreaAroundBuilding(getEntityLayer(structure), transformComponent, TRIBE_BUILDING_AREA_INFLUENCES[entityType]);
             
             const bannerComponent = TotemBannerComponentArray.getComponent(this.totem);
             addBannerToTotem(bannerComponent, this.huts.length - 1);
@@ -257,7 +261,7 @@ export default class Tribe {
       const layer = getEntityLayer(building);
       const buildingLayer = this.buildingLayers[layer.depth];
       const structureComponent = StructureComponentArray.getComponent(building);
-      buildingLayer.removeVirtualBuilding(structureComponent.virtualBuilding!);
+      buildingLayer.removeVirtualBuilding(structureComponent.virtualStructure!);
       
       this.buildingsAreDirty = true;
 
@@ -285,7 +289,7 @@ export default class Tribe {
             }
 
             const transformComponent = TransformComponentArray.getComponent(building);
-            this.removeBuildingFromTiles(transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.workerHut]);
+            this.removeBuildingFromTiles(transformComponent, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.workerHut]);
             break;
          }
          case EntityType.warriorHut: {
@@ -300,7 +304,7 @@ export default class Tribe {
             }
 
             const transformComponent = TransformComponentArray.getComponent(building);
-            this.removeBuildingFromTiles(transformComponent.position, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.warriorHut]);
+            this.removeBuildingFromTiles(transformComponent, TRIBE_BUILDING_AREA_INFLUENCES[EntityType.warriorHut]);
             break;
          }
          case EntityType.barrel: {
@@ -400,18 +404,19 @@ export default class Tribe {
       hutComponent.hasTribesman = true;
       
       const transformComponent = TransformComponentArray.getComponent(hut);
+      const hutHitbox = transformComponent.hitboxes[0];
       
       // Offset the spawn position so the tribesman comes out of the correct side of the hut
-      const position = new Point(transformComponent.position.x + 10 * Math.sin(transformComponent.relativeRotation), transformComponent.position.y + 10 * Math.cos(transformComponent.relativeRotation));
+      const position = new Point(hutHitbox.box.position.x + 10 * Math.sin(hutHitbox.box.angle), hutHitbox.box.position.y + 10 * Math.cos(hutHitbox.box.angle));
       
-      let config: EntityConfig<ServerComponentType.transform | ServerComponentType.tribesmanAI>;
+      let config: EntityConfig;
       switch (getEntityType(hut)) {
          case EntityType.workerHut: {
-            config = createTribeWorkerConfig(this);
+            config = createTribeWorkerConfig(position, hutHitbox.box.angle, this);
             break;
          }
          case EntityType.warriorHut: {
-            config = createTribeWarriorConfig(this);
+            config = createTribeWarriorConfig(position, hutHitbox.box.angle, this);
             break;
          }
          default: {
@@ -419,10 +424,7 @@ export default class Tribe {
          }
       }
 
-      config.components[ServerComponentType.transform].position.x = position.x;
-      config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
-      config.components[ServerComponentType.tribesmanAI].hut = hut;
+      config.components[ServerComponentType.tribesmanAI]!.hut = hut;
       createEntity(config, getEntityLayer(hut), 0);
    }
 
@@ -467,24 +469,24 @@ export default class Tribe {
       removeTribe(this);
    }
 
-   private createTribeAreaAroundBuilding(buildingLayer: Layer, buildingPosition: Point, influence: number): void {
-      const minTileX = clampToBoardDimensions(Math.floor((buildingPosition.x - influence) / Settings.TILE_SIZE));
-      const maxTileX = clampToBoardDimensions(Math.floor((buildingPosition.x + influence) / Settings.TILE_SIZE));
-      const minTileY = clampToBoardDimensions(Math.floor((buildingPosition.y - influence) / Settings.TILE_SIZE));
-      const maxTileY = clampToBoardDimensions(Math.floor((buildingPosition.y + influence) / Settings.TILE_SIZE));
+   private createTribeAreaAroundBuilding(layer: Layer, structureTransformComponent: TransformComponent, influence: number): void {
+      const minTileX = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMinX - influence) / Settings.TILE_SIZE));
+      const maxTileX = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMaxX + influence) / Settings.TILE_SIZE));
+      const minTileY = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMinY - influence) / Settings.TILE_SIZE));
+      const maxTileY = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMaxY + influence) / Settings.TILE_SIZE));
 
       for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
          for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
-            this.addTileToArea(buildingLayer, tileX, tileY);
+            this.addTileToArea(layer, tileX, tileY);
          }
       }
    }
 
-   private removeBuildingFromTiles(buildingPosition: Point, influence: number): void {
-      const minTileX = clampToBoardDimensions(Math.floor((buildingPosition.x - influence) / Settings.TILE_SIZE));
-      const maxTileX = clampToBoardDimensions(Math.floor((buildingPosition.x + influence) / Settings.TILE_SIZE));
-      const minTileY = clampToBoardDimensions(Math.floor((buildingPosition.y - influence) / Settings.TILE_SIZE));
-      const maxTileY = clampToBoardDimensions(Math.floor((buildingPosition.y + influence) / Settings.TILE_SIZE));
+   private removeBuildingFromTiles(structureTransformComponent: TransformComponent, influence: number): void {
+      const minTileX = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMinX - influence) / Settings.TILE_SIZE));
+      const maxTileX = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMaxX + influence) / Settings.TILE_SIZE));
+      const minTileY = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMinY - influence) / Settings.TILE_SIZE));
+      const maxTileY = clampToBoardDimensions(Math.floor((structureTransformComponent.boundingAreaMaxY + influence) / Settings.TILE_SIZE));
 
       for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
          for (let tileY = minTileY; tileY <= maxTileY; tileY++) {

@@ -7,8 +7,8 @@ import { ComponentArray, ComponentArrayFunctions, ComponentArrayType } from "./C
 interface ServerComponentArrayFunctions<
    T extends object,
    ComponentParams extends object,
-   RenderParts extends object | never
-> extends ComponentArrayFunctions<T, RenderParts> {
+   ComponentIntermediateInfo extends object | never
+> extends ComponentArrayFunctions<T, ComponentIntermediateInfo> {
    createParamsFromData(reader: PacketReader): ComponentParams;
    padData(reader: PacketReader): void;
    // Note: reader is before entity as every function will need the reader, but not all are guaranteed to need the entity
@@ -24,9 +24,9 @@ export default class ServerComponentArray<
    /** The actual component's type */
    T extends object = object,
    ComponentParams extends object = object,
-   RenderParts extends object | never = object | never,
+   ComponentIntermediateInfo extends object | never = object | never,
    ComponentType extends ServerComponentType = ServerComponentType
-> extends ComponentArray<T, RenderParts, ComponentArrayType.server, ComponentType> implements ServerComponentArrayFunctions<T, ComponentParams, RenderParts> {
+> extends ComponentArray<T, ComponentIntermediateInfo, ComponentArrayType.server, ComponentType> implements ServerComponentArrayFunctions<T, ComponentParams, ComponentIntermediateInfo> {
    public createParamsFromData: (reader: PacketReader) => ComponentParams;
    public padData: (reader: PacketReader) => void;
    public updateFromData: (reader: PacketReader, entity: Entity) => void;
@@ -34,7 +34,7 @@ export default class ServerComponentArray<
    public updatePlayerAfterData?(): void;
    public calculateTint?(entity: Entity): ComponentTint;
 
-   constructor(componentType: ComponentType, isActiveByDefault: boolean, functions: ServerComponentArrayFunctions<T, ComponentParams, RenderParts>) {
+   constructor(componentType: ComponentType, isActiveByDefault: boolean, functions: ServerComponentArrayFunctions<T, ComponentParams, ComponentIntermediateInfo>) {
       super(ComponentArrayType.server, componentType, isActiveByDefault, functions);
 
       this.createParamsFromData = functions.createParamsFromData;

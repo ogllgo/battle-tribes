@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface BlockAttackComponentParams {
@@ -29,8 +29,8 @@ function createParamsFromData(reader: PacketReader): BlockAttackComponentParams 
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.blockAttack, never>): BlockAttackComponent {
-   const blockAttackComponentParams = entityConfig.serverComponents[ServerComponentType.blockAttack];
+function createComponent(entityParams: EntityParams): BlockAttackComponent {
+   const blockAttackComponentParams = entityParams.serverComponentParams[ServerComponentType.blockAttack]!;
    
    return {
       hasBlocked: blockAttackComponentParams.hasBlocked

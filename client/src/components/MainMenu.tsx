@@ -19,6 +19,7 @@ interface MainMenuProps {
    readonly existingUsername: string;
    readonly usernameRef: React.MutableRefObject<string>;
    readonly tribeTypeRef: React.MutableRefObject<TribeType>;
+   readonly isSpectatingRef: React.MutableRefObject<boolean>;
    setAppState(appState: AppState): void;
 }
 const MainMenu = (props: MainMenuProps) => {
@@ -60,7 +61,7 @@ const MainMenu = (props: MainMenuProps) => {
    }
 
    // Handles username input
-   const enterName = () => {
+   const enterName = (isSpectating: boolean) => {
       const username = getUsername();
       if (username === "") {
          return;
@@ -71,13 +72,14 @@ const MainMenu = (props: MainMenuProps) => {
       createAudioContext();
       props.usernameRef.current = username;
       props.tribeTypeRef.current = tribeType;
+      props.isSpectatingRef.current = isSpectating;
       props.setAppState(AppState.loading);
    }
 
    // When the name is entered
    const pressEnter = (e: KeyboardEvent): void => {
       if (e.code === "Enter") {
-         enterName();
+         enterName(false);
          e.preventDefault();
       }
    }
@@ -97,7 +99,8 @@ const MainMenu = (props: MainMenuProps) => {
             <input ref={dwarvesInputRef} type="radio" id="tribe-selection-dwarves" name="tribe-selection"/>
             <label htmlFor="tribe-selection-dwarves">Dwarves</label>
          </form>
-         <button onClick={enterName}>Play</button>
+         <button onClick={() => enterName(false)}>Play</button>
+         <button onClick={() => enterName(true)}>Spectate</button>
       </div>
    </div>;
 }

@@ -464,18 +464,18 @@ export function updateTribePlans(tribe: Tribe): void {
    // @Incomplete: place huts for other tribesman
 
    // Trim invalid plans
-   trimAssignmentRecursively(tribe, tribe.assignment);
+   trimAssignmentRecursively(tribe, tribe.rootAssignment);
 
    // If the tribe doesn't have a totem, place one
    if (tribe.virtualStructuresByEntityType[EntityType.tribeTotem].length === 0) {
-      tribe.assignment.children.push(
+      tribe.rootAssignment.children.push(
          planToPlaceStructure(tribe, ItemType.tribe_totem, null)
       );
    }
 
    // Plan to place a hut so the settler can respawn if it dies
    if (tribe.virtualStructuresByEntityType[EntityType.workerHut].length === 0) {
-      tribe.assignment.children.push(
+      tribe.rootAssignment.children.push(
          planToPlaceStructure(tribe, ItemType.worker_hut, null)
       );
    }
@@ -486,7 +486,7 @@ export function updateTribePlans(tribe: Tribe): void {
          if (!areaHasOutsideDoor(room)) {
             const plan = getOutsideDoorPlacePlan(buildingLayer, room);
             if (plan !== null) {
-               tribe.assignment.children.push(plan);
+               tribe.rootAssignment.children.push(plan);
             }
          }
       }
@@ -495,7 +495,7 @@ export function updateTribePlans(tribe: Tribe): void {
    for (let i = 0; i < tribe.getNumHuts(); i++) {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
       if (tribe.virtualStructuresByEntityType[EntityType.barrel].length < numDesiredBarrels) {
-         tribe.assignment.children.push(
+         tribe.rootAssignment.children.push(
             planToPlaceStructure(tribe, ItemType.barrel, null)
          );
          continue;
@@ -511,7 +511,7 @@ export function updateTribePlans(tribe: Tribe): void {
             const assignment = planToPlaceStructure(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
             assignment.plan.potentialPlans = wallPlaceResult.potentialPlans;
 
-            tribe.assignment.children.push(assignment);
+            tribe.rootAssignment.children.push(assignment);
             continue;
          }
       }
@@ -538,7 +538,7 @@ export function getFirstAvailableAssignment(assignment: AIPlanAssignment): AIPla
 }
 
 export function checkForAvailableAssignment(tribe: Tribe): AIPlanAssignment | null {
-   return getFirstAvailableAssignment(tribe.assignment);
+   return getFirstAvailableAssignment(tribe.rootAssignment);
 }
 
 export function createPersonalAssignment(entity: Entity, assignment: AIPlanAssignment): AIPlanAssignment {

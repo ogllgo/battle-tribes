@@ -4,7 +4,7 @@ import { Entity } from "battletribes-shared/entities";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { applyAcceleration, setHitboxIdealAngle } from "../hitboxes";
 
 export class EscapeAIComponent {
    public readonly acceleration: number;
@@ -25,6 +25,9 @@ export function shouldRunEscapeAI(entity: Entity): boolean {
 
 export function getEscapeTarget(entity: Entity): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   // @Hack
+   const entityHitbox = transformComponent.hitboxes[0];
+   
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    
@@ -39,7 +42,10 @@ export function getEscapeTarget(entity: Entity): Entity | null {
       }
       
       const attackingEntityTransformComponent = TransformComponentArray.getComponent(attackingEntity);
-      const distance = transformComponent.position.calculateDistanceBetween(attackingEntityTransformComponent.position);
+      // @Hack
+      const attackingEntityHitbox = attackingEntityTransformComponent.hitboxes[0];
+      
+      const distance = entityHitbox.box.position.calculateDistanceBetween(attackingEntityHitbox.box.position);
       if (distance < minDistance) {
          minDistance = distance;
          escapeEntity = attackingEntity;
@@ -50,17 +56,21 @@ export function getEscapeTarget(entity: Entity): Entity | null {
 }
 
 export function runEscapeAI(entity: Entity, escapeTarget: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = transformComponent.hitboxes[0];
+
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
+
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
+   const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
 
-   const direction = escapeTargetTransformComponent.position.calculateAngleBetween(transformComponent.position);
+   const direction = escapeTargetHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
 
-   physicsComponent.acceleration.x = escapeAIComponent.acceleration * Math.sin(direction);
-   physicsComponent.acceleration.y = escapeAIComponent.acceleration * Math.cos(direction);
-   physicsComponent.targetRotation = direction;
-   physicsComponent.turnSpeed = escapeAIComponent.turnSpeed;
+   const accelerationX = escapeAIComponent.acceleration * Math.sin(direction);
+   const accelerationY = escapeAIComponent.acceleration * Math.cos(direction);
+   applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+
+   setHitboxIdealAngle(entityHitbox, direction, escapeAIComponent.turnSpeed);
 }
 
 function getDataLength(): number {

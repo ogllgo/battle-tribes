@@ -205,7 +205,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          // if (biome === Biome.mountains || biome === Biome.desert) {
          //    biome = Biome.tundra;
          // }
-         biome = Biome.grasslands;
+         if (biome !== Biome.mountains) {
+            biome = Biome.grasslands;
+         }
          
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          surfaceLayer.tileBiomes[tileIndex] = biome;

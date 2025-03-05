@@ -2,9 +2,8 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { Entity, EntityType } from "battletribes-shared/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
 
 export interface BuildingMaterialComponentParams {
    readonly material: BuildingMaterial;
@@ -44,20 +43,24 @@ export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingM
    updateFromData: updateFromData
 });
 
-export function createBuildingMaterialComponentParams(material: BuildingMaterial): BuildingMaterialComponentParams {
+const fillBuildingMaterialComponentParams = (material: BuildingMaterial): BuildingMaterialComponentParams => {
    return {
       material: material
    };
 }
 
-function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
-   const material = reader.readNumber();
-   return createBuildingMaterialComponentParams(material);
+export function createBuildingMaterialComponentParams(material: BuildingMaterial): BuildingMaterialComponentParams {
+   return fillBuildingMaterialComponentParams(material);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): BuildingMaterialComponent {
+function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
+   const material = reader.readNumber();
+   return fillBuildingMaterialComponentParams(material);
+}
+
+function createComponent(entityParams: EntityParams): BuildingMaterialComponent {
    return {
-      material: entityConfig.serverComponents[ServerComponentType.buildingMaterial].material
+      material: entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!.material
    };
 }
 

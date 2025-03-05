@@ -1,7 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { StructureConnection } from "battletribes-shared/structures";
-import { createCampfireHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../../components";
@@ -15,23 +13,21 @@ import { addInventoryToInventoryComponent, InventoryComponent } from "../../../c
 import { CookingComponent } from "../../../components/CookingComponent";
 import { CampfireComponent } from "../../../components/CampfireComponent";
 import { VirtualStructure } from "../../../tribesman-ai/building-plans/TribeBuildingLayer";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.inventory
-   | ServerComponentType.cooking
-   | ServerComponentType.campfire;
-
-const LIFETIME_SECONDS = 30;
+import { Point } from "../../../../../shared/src/utils";
+import { HitboxCollisionType, HitboxFlag } from "../../../../../shared/src/boxes/boxes";
+import CircularBox from "../../../../../shared/src/boxes/CircularBox";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../../shared/src/collision";
+import { createHitbox } from "../../../hitboxes";
+import { StructureConnection } from "../../../structure-placement";
 
 // @Incomplete: Destroy campfire when remaining heat reaches 0
 
-export function createCampfireConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createCampfireConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createCampfireHitboxes(), null);
+
+   const box = new CircularBox(position, new Point(0, 0), rotation, 52);
+   const hitbox = createHitbox(transformComponent, null, box, 2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(25);
 
@@ -54,7 +50,7 @@ export function createCampfireConfig(tribe: Tribe, connections: Array<StructureC
    const outputInventory = new Inventory(1, 1, InventoryName.outputInventory);
    addInventoryToInventoryComponent(inventoryComponent, outputInventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    
-   const cookingComponent = new CookingComponent(LIFETIME_SECONDS);
+   const cookingComponent = new CookingComponent(30);
 
    const campfireComponent = new CampfireComponent();
    

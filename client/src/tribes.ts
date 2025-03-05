@@ -15,13 +15,13 @@ export interface TribesmanInfo {
    readonly name: string;
 }
 
-export interface ShortTribeInfo {
+export interface ShortTribe {
    readonly name: string;
    readonly id: number;
    readonly tribeType: TribeType;
 }
 
-export interface ExtendedTribeInfo extends ShortTribeInfo {
+export interface ExtendedTribe extends ShortTribe {
    readonly hasTotem: boolean;
    readonly numHuts: number;
    readonly tribesmanCap: number;
@@ -32,16 +32,16 @@ export interface ExtendedTribeInfo extends ShortTribeInfo {
    readonly tribesmen: ReadonlyArray<TribesmanInfo>;
 }
 
-export type TribeData = ExtendedTribeInfo | ShortTribeInfo;
+export type Tribe = ExtendedTribe | ShortTribe;
 
-export let playerTribe: ExtendedTribeInfo;
-export const tribes = new Array<TribeData>();
+export let playerTribe: ExtendedTribe;
+export const tribes = new Array<Tribe>();
 
-export function tribeHasExtendedInfo(tribe: TribeData): tribe is ExtendedTribeInfo {
-   return typeof (tribe as ExtendedTribeInfo).tribesmen !== "undefined";
+export function tribeHasExtendedInfo(tribe: Tribe): tribe is ExtendedTribe {
+   return typeof (tribe as ExtendedTribe).tribesmen !== "undefined";
 }
 
-export function updatePlayerTribe(tribe: ExtendedTribeInfo): void {
+export function updatePlayerTribe(tribe: ExtendedTribe): void {
    // @Hack: the check for undefined
    if (typeof playerTribe !== "undefined" && tribe.unlockedTechs.length > playerTribe.unlockedTechs.length) {
       // @Incomplete: attach to camera so it doesn't decrease in loudness. Or make 'global sounds'
@@ -54,7 +54,7 @@ export function updatePlayerTribe(tribe: ExtendedTribeInfo): void {
    TechInfocard_setSelectedTech(tribe.selectedTech);
 }
 
-export function getTribeByID(tribeID: number): TribeData {
+export function getTribeByID(tribeID: number): Tribe {
    for (const tribe of tribes) {
       if (tribe.id === tribeID) {
          return tribe;
@@ -63,7 +63,7 @@ export function getTribeByID(tribeID: number): TribeData {
    throw new Error("No tribe data for tribe with ID " + tribeID);
 }
 
-export function readShortTribeData(reader: PacketReader): ShortTribeInfo {
+export function readShortTribeData(reader: PacketReader): ShortTribe {
    const tribeName = reader.readString();
    const tribeID = reader.readNumber();
    const tribeType = reader.readNumber();
@@ -75,7 +75,7 @@ export function readShortTribeData(reader: PacketReader): ShortTribeInfo {
    };
 }
 
-export function readExtendedTribeData(reader: PacketReader): ExtendedTribeInfo {
+export function readExtendedTribeData(reader: PacketReader): ExtendedTribe {
    const tribeName = reader.readString();
    const tribeID = reader.readNumber();
    const tribeType = reader.readNumber();

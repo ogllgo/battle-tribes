@@ -1,10 +1,10 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../shared/src/components";
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { distance, Point } from "../../shared/src/utils";
 import Board from "./Board";
-import { ClientHitbox } from "./boxes";
+import { createHitbox } from "./hitboxes";
 import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
 import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentParams } from "./entity-components/server-components/BuildingMaterialComponent";
@@ -18,16 +18,17 @@ import { createSlurbTorchComponentParams } from "./entity-components/server-comp
 import { createSpikesComponentParams } from "./entity-components/server-components/SpikesComponent";
 import { createStatusEffectComponentParams } from "./entity-components/server-components/StatusEffectComponent";
 import { createStructureComponentParams } from "./entity-components/server-components/StructureComponent";
-import { createTransformComponentParams, padCircularHitboxData, padRectangularHitboxData, readCircularHitboxFromData, readRectangularHitboxFromData } from "./entity-components/server-components/TransformComponent";
+import { createTransformComponentParams } from "./entity-components/server-components/TransformComponent";
 import { createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
 import Game from "./Game";
 import Layer from "./Layer";
-import OPTIONS from "./options";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
-import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
+import { removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { playerTribe } from "./tribes";
-import { createEntity, EntityPreCreationInfo, EntityServerComponentParams, layers } from "./world";
+import { createEntity, EntityParams, EntityServerComponentParams, layers } from "./world";
+import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
+import { Box, HitboxCollisionType } from "../../shared/src/boxes/boxes";
 
 export interface VirtualBuilding {
    readonly entityType: StructureType;
@@ -35,7 +36,7 @@ export interface VirtualBuilding {
    readonly layer: Layer;
    readonly position: Readonly<Point>;
    readonly rotation: number;
-   readonly hitboxes: ReadonlyArray<ClientHitbox>;
+   readonly boxes: ReadonlyArray<Box>;
    readonly renderInfo: EntityRenderInfo;
 }
 
@@ -57,16 +58,7 @@ const padVirtualBuildingData = (reader: PacketReader): void => {
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-      
-      if (isCircular) {
-         padCircularHitboxData(reader);
-      } else {
-         padRectangularHitboxData(reader);
-      }
+      padBoxData(reader);
    }
 }
 
@@ -80,21 +72,11 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
    const layer = layers[layerDepth];
 
    // Hitboxes
-   const hitboxes = new Array<ClientHitbox>();
+   const boxes = new Array<Box>();
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
-      const localID = reader.readNumber();
-      
-      let hitbox: ClientHitbox;
-      if (isCircular) {
-         hitbox = readCircularHitboxFromData(reader, [], localID);
-      } else {
-         hitbox = readRectangularHitboxFromData(reader, [], localID);
-      }
-      hitboxes.push(hitbox);
+      const box = readBoxFromData(reader);
+      boxes.push(box);
    }
 
    // @Copynpaste @Hack
@@ -109,40 +91,31 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
       switch (componentType) {
          case ServerComponentType.transform: {
             const transformComponentParams = createTransformComponentParams(
-               new Point(x, y),
-               new Point(0, 0),
-               new Point(0, 0),
-               rotation,
-               rotation,
-               hitboxes.slice(),
-               [],
-               hitboxes.slice(),
-               COLLISION_BITS.default,
-               DEFAULT_COLLISION_MASK,
-               0,
-               0,
-               []
+               // @HACK
+               boxes.map(box => {
+                  return createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, [])
+               }),
             );
 
             components[componentType] = transformComponentParams;
             break;
          }
          case ServerComponentType.health: {
-            const params = createHealthComponentParams(0, 0);
+            const params = createHealthComponentParams();
             components[componentType] = params;
             break;
          }
          case ServerComponentType.statusEffect: {
-            const params = createStatusEffectComponentParams([]);
+            const params = createStatusEffectComponentParams();
             components[componentType] = params;
             break;
          }
          case ServerComponentType.structure: {
-            components[componentType] = createStructureComponentParams(false, []);
+            components[componentType] = createStructureComponentParams();
             break;
          }
          case ServerComponentType.tribe: {
-            components[componentType] = createTribeComponentParams(playerTribe.id);
+            components[componentType] = createTribeComponentParams(playerTribe);
             break;
          }
          case ServerComponentType.buildingMaterial: {
@@ -154,11 +127,11 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             break;
          }
          case ServerComponentType.inventory: {
-            components[componentType] = createInventoryComponentParams({});
+            components[componentType] = createInventoryComponentParams();
             break;
          }
          case ServerComponentType.cooking: {
-            components[componentType] = createCookingComponentParams(0, false);
+            components[componentType] = createCookingComponentParams();
             break;
          }
          case ServerComponentType.campfire: {
@@ -170,7 +143,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             break;
          }
          case ServerComponentType.spikes: {
-            components[componentType] = createSpikesComponentParams(false);
+            components[componentType] = createSpikesComponentParams();
             break;
          }
          case ServerComponentType.fireTorch: {
@@ -210,29 +183,32 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
       }
    }
 
-   const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
-      serverComponentTypes: componentTypes,
-      serverComponentParams: components
+   const entityParams: EntityParams = {
+      entityType: entityType,
+      serverComponentParams: components,
+      // @Incomplete
+      clientComponentParams: {}
    };
 
    // Create the entity
-   const creationInfo = createEntity(0, entityType, layer, preCreationInfo);
+   const creationInfo = createEntity(0, entityParams);
 
-   const renderInfo = creationInfo.renderInfo;
+   const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
 
    // Modify all the render part's opacity
-   for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
-      const renderThing = renderInfo.allRenderThings[i];
+   for (let i = 0; i < renderInfo.renderPartsByZIndex.length; i++) {
+      const renderThing = renderInfo.renderPartsByZIndex[i];
       if (thingIsVisualRenderPart(renderThing)) {
          renderThing.opacity *= 0.5;
       }
    }
 
    // @Hack: Manually set the render info's position and rotation
-   const transformComponentParams = components[ServerComponentType.transform]!;
-   renderInfo.renderPosition.x = transformComponentParams.position.x;
-   renderInfo.renderPosition.y = transformComponentParams.position.y;
-   renderInfo.rotation = transformComponentParams.rotation;
+   // @INCOMPLETE
+   // const transformComponentParams = components[ServerComponentType.transform]!;
+   // renderInfo.renderPosition.x = transformComponentParams.position.x;
+   // renderInfo.renderPosition.y = transformComponentParams.position.y;
+   // renderInfo.rotation = transformComponentParams.rotation;
    updateEntityRenderInfoRenderData(renderInfo);
 
    return {
@@ -241,7 +217,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
       layer: layer,
       position: new Point(x, y),
       rotation: rotation,
-      hitboxes: hitboxes,
+      boxes: boxes,
       renderInfo: renderInfo
    };
 }

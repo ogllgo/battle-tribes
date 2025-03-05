@@ -13,6 +13,7 @@ import GuardianAI from "../ai/GuardianAI";
 import GuardianCrystalSlamAI from "../ai/GuardianCrystalSlamAI";
 import GuardianCrystalBurstAI from "../ai/GuardianCrystalBurstAI";
 import GuardianSpikyBallSummonAI from "../ai/GuardianSpikyBallSummonAI";
+import { Hitbox } from "../hitboxes";
 
 export const enum AIType {
    wander,
@@ -37,6 +38,8 @@ type AIRecord = Partial<{
 }>;
 
 export class AIHelperComponent {
+   public readonly seeingHitbox: Hitbox;
+   
    public visibleChunkBounds = [999, 999, 999, 999];
    public visibleChunks = new Array<Chunk>();
 
@@ -52,7 +55,8 @@ export class AIHelperComponent {
 
    public currentAIType: AIType | null = null;
 
-   constructor(visionRange: number) {
+   constructor(seeingHitbox: Hitbox, visionRange: number) {
+      this.seeingHitbox = seeingHitbox;
       this.visionRange = visionRange;
    }
 
@@ -92,34 +96,21 @@ function onRemove(entity: Entity): void {
    }
 }
 
-const boxIsVisible = (transformComponent: TransformComponent, box: Box, visionRange: number): boolean => {
+const boxIsVisible = (seeingHitbox: Hitbox, box: Box, visionRange: number): boolean => {
    if (boxIsCircular(box)) {
       // Circular hitbox
-      return circlesDoIntersect(transformComponent.position, visionRange, box.position, box.radius);
+      return circlesDoIntersect(seeingHitbox.box.position, visionRange, box.position, box.radius);
    } else {
       // Rectangular hitbox
-      return circleAndRectangleDoIntersect(transformComponent.position, visionRange, box.position, box.width, box.height, box.relativeRotation);
+      return circleAndRectangleDoIntersect(seeingHitbox.box.position, visionRange, box.position, box.width, box.height, box.relativeAngle);
    }
 }
 
-const entityIsVisible = (transformComponent: TransformComponent, checkEntity: Entity, visionRange: number): boolean => {
-   const checkEntityTransformComponent = TransformComponentArray.getComponent(checkEntity);
-
-   // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
-   if (transformComponent.carryRoot === checkEntityTransformComponent.carryRoot) {
-      return false;
-   }
-   
-   const xDiff = transformComponent.position.x - checkEntityTransformComponent.position.x;
-   const yDiff = transformComponent.position.y - checkEntityTransformComponent.position.y;
-   if (xDiff * xDiff + yDiff * yDiff <= visionRange * visionRange) {
-      return true;
-   }
-
+const entityIsVisible = (seeingHitbox: Hitbox, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
    // If the mob can see any of the game object's hitboxes, it is visible
-   for (let j = 0; j < checkEntityTransformComponent.hitboxes.length; j++) {
-      const hitbox = checkEntityTransformComponent.hitboxes[j];
-      if (boxIsVisible(transformComponent, hitbox.box, visionRange)) {
+   for (let i = 0; i < checkEntityTransformComponent.hitboxes.length; i++) {
+      const hitbox = checkEntityTransformComponent.hitboxes[i];
+      if (boxIsVisible(seeingHitbox, hitbox.box, visionRange)) {
          return true;
       }
    }
@@ -138,7 +129,14 @@ const calculateVisibleEntities = (entity: Entity, aiHelperComponent: AIHelperCom
 
    for (let i = 0; i < potentialVisibleEntities.length; i++) {
       const currentEntity = potentialVisibleEntities[i];
-      if (entityIsVisible(transformComponent, currentEntity, visionRange)) {
+      const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
+
+      // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
+      if (transformComponent.carryRoot === currentEntityTransformComponent.carryRoot) {
+         continue;
+      }
+
+      if (entityIsVisible(aiHelperComponent.seeingHitbox, currentEntityTransformComponent, visionRange)) {
          visibleEntities.push(currentEntity);
       }
    }
@@ -159,13 +157,12 @@ function onTick(entity: Entity): void {
    // @Speed: Not all entities with this component need this always.
    // Slimewisp: can pass with once per second
    
-   const transformComponent = TransformComponentArray.getComponent(entity);
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    
-   const minChunkX = Math.max(Math.floor((transformComponent.position.x - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((transformComponent.position.x + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((transformComponent.position.y - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((transformComponent.position.y + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkX = Math.max(Math.floor((aiHelperComponent.seeingHitbox.box.position.x - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkY = Math.max(Math.floor((aiHelperComponent.seeingHitbox.box.position.y - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
    
    // If the entity hasn't changed visible chunk bounds, then the potential visible entities will be the same
    // and only the visible entities need to updated

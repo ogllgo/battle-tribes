@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { DecorationType, ServerComponentType } from "battletribes-shared/components";
-import { EntityPreCreationInfo } from "./world";
+import { EntityParams } from "./world";
 import { assert } from "../../shared/src/utils";
 
 export enum RenderLayer {
@@ -54,9 +54,9 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
        || decorationType === DecorationType.flower4;
 }
 
-export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): RenderLayer {
+export function getEntityRenderLayer(entityType: EntityType, entityParams: EntityParams): RenderLayer {
    // Crafting stations render below tribesmen so they can see the limbs
-   if (typeof preCreationInfo.serverComponentParams[ServerComponentType.craftingStation] !== "undefined") {
+   if (typeof entityParams.serverComponentParams[ServerComponentType.craftingStation] !== "undefined") {
       return RenderLayer.lowEntities;
    }
    
@@ -73,7 +73,7 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
       }
       // Decorations
       case EntityType.decoration: {
-         const decorationComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.decoration];
+         const decorationComponentParams = entityParams.serverComponentParams[ServerComponentType.decoration];
          assert(typeof decorationComponentParams !== "undefined");
          return decorationIsHigh(decorationComponentParams.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
       }
@@ -156,11 +156,11 @@ export function getEntityRenderLayer(entityType: EntityType, preCreationInfo: En
    }
 }
 
-export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): number {
+export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, entityParams: EntityParams): number {
    /** Variation between 0 and 1 */
    let variation: number;
    if (renderLayer === RenderLayer.mithril) {
-      const mithrilOreNodeComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.mithrilOreNode]!;
+      const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
       variation = mithrilOreNodeComponentParams.renderHeight;
    } else {
       variation = Math.random();

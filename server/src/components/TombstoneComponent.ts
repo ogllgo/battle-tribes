@@ -44,6 +44,7 @@ TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
+   const tombstoneHitbox = transformComponent.hitboxes[0];
    
    const seenIs = new Array<number>();
    for (;;) {
@@ -55,8 +56,8 @@ const generateZombieSpawnPosition = (tombstone: Entity): Point => {
       const angleFromTombstone = i * Math.PI / 2;
 
       const offsetMagnitude = Vars.ZOMBIE_SPAWN_DISTANCE + (i % 2 === 0 ? 15 : 0);
-      const x = transformComponent.position.x + offsetMagnitude * Math.sin(angleFromTombstone);
-      const y = transformComponent.position.y + offsetMagnitude * Math.cos(angleFromTombstone);
+      const x = tombstoneHitbox.box.position.x + offsetMagnitude * Math.sin(angleFromTombstone);
+      const y = tombstoneHitbox.box.position.y + offsetMagnitude * Math.cos(angleFromTombstone);
    
       // Make sure the spawn position is valid
       if (x < 0 || x >= Settings.BOARD_UNITS || y < 0 || y >= Settings.BOARD_UNITS) {
@@ -75,10 +76,8 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    // Spawn zombie
-   const config = createZombieConfig(isGolden, tombstone);
-   config.components[ServerComponentType.transform].position.x = tombstoneComponent.zombieSpawnPositionX;
-   config.components[ServerComponentType.transform].position.y = tombstoneComponent.zombieSpawnPositionY;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   const position = new Point(tombstoneComponent.zombieSpawnPositionX, tombstoneComponent.zombieSpawnPositionY);
+   const config = createZombieConfig(position, 2 * Math.PI * Math.random(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
@@ -132,11 +131,9 @@ function preRemove(tombstone: Entity): void {
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
+   const tombstoneHitbox = tombstoneTransformComponent.hitboxes[0];
 
-   const config = createZombieConfig(isGolden, tombstone);
-   config.components[ServerComponentType.transform].position.x = tombstoneTransformComponent.position.x;
-   config.components[ServerComponentType.transform].position.y = tombstoneTransformComponent.position.y;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), 2 * Math.PI * Math.random(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 

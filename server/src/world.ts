@@ -18,7 +18,8 @@ import { EntityConfig } from "./components";
 import { attachLightToHitbox } from "./light-levels";
 
 const enum Vars {
-   START_TIME = 6
+   // START_TIME = 6
+   START_TIME = 20
 }
 
 interface EntityJoinInfo {

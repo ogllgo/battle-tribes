@@ -1,19 +1,19 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { randInt } from "../../../../shared/src/utils";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface SpikyBastardComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface SpikyBastardComponent {}
 
-export const SpikyBastardComponentArray = new ServerComponentArray<SpikyBastardComponent, SpikyBastardComponentParams, RenderParts>(ServerComponentType.spikyBastard, true, {
+export const SpikyBastardComponentArray = new ServerComponentArray<SpikyBastardComponent, SpikyBastardComponentParams, IntermediateInfo>(ServerComponentType.spikyBastard, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -28,9 +28,12 @@ function createParamsFromData(): SpikyBastardComponentParams {
    return createSpikyBastardComponentParams();
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+   
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex("entities/spiky-bastard/spiky-bastard-" + randInt(1, 3) + ".png")
@@ -38,7 +41,7 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    if (Math.random() < 0.5) {
       renderPart.setFlipX(true);
    }
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

@@ -15,8 +15,8 @@ export function updateDebugEntity(): void {
    }
    
    let debugEntity: Entity;
-   if (entityExists(Camera.trackedEntityID) && Camera.trackedEntityID !== playerInstance) {
-      debugEntity = Camera.trackedEntityID;
+   if (entityExists(Camera.trackedEntity) && Camera.trackedEntity !== playerInstance) {
+      debugEntity = Camera.trackedEntity;
    } else if (nerdVisionIsVisible()) {
       const targettedEntity = getMouseTargetEntity();
       debugEntity = targettedEntity !== null ? targettedEntity : 0;

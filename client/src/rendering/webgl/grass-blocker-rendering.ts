@@ -3,7 +3,8 @@ import {  rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/u
 import { getTexture } from "../../textures";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { gameFramebuffer } from "../../Game";
-import { blockerIsCircluar, getGrassBlockers, GrassBlocker } from "../../grass-blockers";
+import { getGrassBlockers, GrassBlocker } from "../../grass-blockers";
+import { boxIsCircular } from "../../../../shared/src/boxes/boxes";
 
 const NUM_CIRCLE_POINTS = 10;
 
@@ -241,50 +242,51 @@ export function createGrassBlockerShaders(): void {
 }
 
 export function calculateGrassBlockerVertexData(grassBlocker: GrassBlocker): Float32Array {
-   const vertexData = new Float32Array(!blockerIsCircluar(grassBlocker) ? 6 * 3 : 3 * 3 * NUM_CIRCLE_POINTS);
+   const vertexData = new Float32Array(!boxIsCircular(grassBlocker.box) ? 6 * 3 : 3 * 3 * NUM_CIRCLE_POINTS);
 
    const opacity = grassBlocker.blockAmount;
    
-   if (!blockerIsCircluar(grassBlocker)) {
-      const halfWidth = grassBlocker.width * 0.5;
-      const halfHeight = grassBlocker.height * 0.5;
+   const box = grassBlocker.box;
+   if (!boxIsCircular(box)) {
+      const halfWidth = box.width * 0.5;
+      const halfHeight = box.height * 0.5;
       
-      const topLeftOffsetX = rotateXAroundOrigin(-halfWidth, halfHeight, grassBlocker.rotation);
-      const topLeftOffsetY = rotateYAroundOrigin(-halfWidth, halfHeight, grassBlocker.rotation);
-      const topRightOffsetX = rotateXAroundOrigin(halfWidth, halfHeight, grassBlocker.rotation);
-      const topRightOffsetY = rotateYAroundOrigin(halfWidth, halfHeight, grassBlocker.rotation);
+      const topLeftOffsetX = rotateXAroundOrigin(-halfWidth, halfHeight, box.angle);
+      const topLeftOffsetY = rotateYAroundOrigin(-halfWidth, halfHeight, box.angle);
+      const topRightOffsetX = rotateXAroundOrigin(halfWidth, halfHeight, box.angle);
+      const topRightOffsetY = rotateYAroundOrigin(halfWidth, halfHeight, box.angle);
       const bottomLeftOffsetX = -topRightOffsetX;
       const bottomLeftOffsetY = -topRightOffsetY;
       const bottomRightOffsetX = -topLeftOffsetX;
       const bottomRightOffsetY = -topLeftOffsetY;
 
-      vertexData[0] = grassBlocker.position.x + bottomLeftOffsetX;
-      vertexData[1] = grassBlocker.position.y + bottomLeftOffsetY;
+      vertexData[0] = box.position.x + bottomLeftOffsetX;
+      vertexData[1] = box.position.y + bottomLeftOffsetY;
       vertexData[2] = opacity;
-      vertexData[3] = grassBlocker.position.x + bottomRightOffsetX;
-      vertexData[4] = grassBlocker.position.y + bottomRightOffsetY;
+      vertexData[3] = box.position.x + bottomRightOffsetX;
+      vertexData[4] = box.position.y + bottomRightOffsetY;
       vertexData[5] = opacity;
-      vertexData[6] = grassBlocker.position.x + topLeftOffsetX;
-      vertexData[7] = grassBlocker.position.y + topLeftOffsetY;
+      vertexData[6] = box.position.x + topLeftOffsetX;
+      vertexData[7] = box.position.y + topLeftOffsetY;
       vertexData[8] = opacity;
-      vertexData[9] = grassBlocker.position.x + topLeftOffsetX;
-      vertexData[10] = grassBlocker.position.y + topLeftOffsetY;
+      vertexData[9] = box.position.x + topLeftOffsetX;
+      vertexData[10] = box.position.y + topLeftOffsetY;
       vertexData[11] = opacity;
-      vertexData[12] = grassBlocker.position.x + bottomRightOffsetX;
-      vertexData[13] = grassBlocker.position.y + bottomRightOffsetY;
+      vertexData[12] = box.position.x + bottomRightOffsetX;
+      vertexData[13] = box.position.y + bottomRightOffsetY;
       vertexData[14] = opacity;
-      vertexData[15] = grassBlocker.position.x + topRightOffsetX;
-      vertexData[16] = grassBlocker.position.y + topRightOffsetY;
+      vertexData[15] = box.position.x + topRightOffsetX;
+      vertexData[16] = box.position.y + topRightOffsetY;
       vertexData[17] = opacity;
    } else {
-      let lastPos = getCirclePoint(NUM_CIRCLE_POINTS, 0, grassBlocker.position, grassBlocker.radius);
+      let lastPos = getCirclePoint(NUM_CIRCLE_POINTS, 0, box.position, box.radius);
       for (let i = 1; i <= NUM_CIRCLE_POINTS; i++) {
          // @Garbage
-         const pos = getCirclePoint(NUM_CIRCLE_POINTS, i, grassBlocker.position, grassBlocker.radius);
+         const pos = getCirclePoint(NUM_CIRCLE_POINTS, i, box.position, box.radius);
 
          const dataOffset = 3 * 3 * (i - 1);
-         vertexData[dataOffset] = grassBlocker.position.x;
-         vertexData[dataOffset + 1] = grassBlocker.position.y;
+         vertexData[dataOffset] = box.position.x;
+         vertexData[dataOffset + 1] = box.position.y;
          vertexData[dataOffset + 2] = opacity;
          vertexData[dataOffset + 3] = pos.x;
          vertexData[dataOffset + 4] = pos.y;

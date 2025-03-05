@@ -51,12 +51,14 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const iceSpikesPlantedComponent = IceSpikesPlantedComponentArray.getComponent(entity);
+
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    if (iceSpikesPlantedComponent.plantGrowthTicks === Vars.GROWTH_TIME_TICKS) {
-      createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(2, 3));
+      createIceShardExplosion(layer, hitbox.box.position.x, hitbox.box.position.y, randInt(2, 3));
    } else if (iceSpikesPlantedComponent.plantGrowthTicks >= Vars.GROWTH_TIME_TICKS * 0.5) {
-      createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(1, 2));
+      createIceShardExplosion(layer, hitbox.box.position.x, hitbox.box.position.y, randInt(1, 2));
    }
 }

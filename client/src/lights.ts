@@ -5,6 +5,7 @@ import { createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./ren
 import Layer from "./Layer";
 import { Entity } from "../../shared/src/entities";
 import { RenderPart } from "./render-parts/render-parts";
+import { EntityRenderInfo } from "./EntityRenderInfo";
 
 export type LightID = number;
 
@@ -26,22 +27,19 @@ interface LightRenderPartInfo {
    readonly entity: Entity;
 }
 
+export interface LightIntermediateInfo {
+   readonly light: Light;
+   readonly attachedRenderPart: RenderPart;
+}
+
 let lightIDCounter = 0;
    
 const lightRecord: Record<LightID, Light> = {};
-
-const lightToEntityRecord: Partial<Record<LightID, number>> = {};
-const entityToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
 
 const lightToRenderPartRecord: Partial<Record<LightID, LightRenderPartInfo>> = {};
 const renderPartToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
 
 const getLightLayer = (light: Light): Layer => {
-   const attachedEntity = lightToEntityRecord[light.id];
-   if (typeof attachedEntity !== "undefined") {
-      return getEntityLayer(attachedEntity);
-   }
-
    const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
    if (typeof attachedRenderPartInfo !== "undefined") {
       return getEntityLayer(attachedRenderPartInfo.entity);
@@ -73,23 +71,9 @@ const addLightToLayer = (light: Light, layer: Layer): void => {
    lightRecord[light.id] = light;
 }
 
-// @Bug: Doesn't work if called in createRenderParts
-export function attachLightToEntity(light: Light, entity: Entity): void {
+// @Cleanup: the 2 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
+export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity): void {
    const layer = getEntityLayer(entity);
-   addLightToLayer(light, layer);
-
-   lightToEntityRecord[light.id] = entity;
-
-   const lightIDs = entityToLightsRecord[entity];
-   if (typeof lightIDs === "undefined") {
-      entityToLightsRecord[entity] = [light.id];
-   } else {
-      lightIDs.push(light.id);
-   }
-}
-
-// @Cleanup: the 3 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
-export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity, layer: Layer): void {
    addLightToLayer(light, layer);
    
    lightToRenderPartRecord[light.id] = {
@@ -115,18 +99,6 @@ export function removeLight(light: Light): void {
    
    layer.lights.splice(idx, 1);
 
-   const entityID = lightToEntityRecord[light.id];
-   delete lightToEntityRecord[light.id];
-   if (typeof entityID !== "undefined") {
-      const idx = entityToLightsRecord[entityID]!.indexOf(light.id);
-      entityToLightsRecord[entityID]!.splice(idx, 1);
-      if (entityToLightsRecord[entityID]!.length === 0) {
-         delete entityToLightsRecord[entityID];
-      }
-
-      return;
-   }
-
    const renderPartInfo = lightToRenderPartRecord[light.id];
    delete lightToRenderPartRecord[light.id];
 
@@ -146,8 +118,8 @@ export function removeLight(light: Light): void {
    throw new Error();
 }
 
-export function removeLightsAttachedToEntity(entity: Entity): void {
-   const lightIDs = entityToLightsRecord[entity];
+export function removeLightsAttachedToRenderPart(renderPart: RenderPart): void {
+   const lightIDs = renderPartToLightsRecord[renderPart.id];
    if (typeof lightIDs === "undefined") {
       return;
    }
@@ -159,16 +131,9 @@ export function removeLightsAttachedToEntity(entity: Entity): void {
    }
 }
 
-export function removeLightsAttachedToRenderPart(renderPart: RenderPart): void {
-   const lightIDs = renderPartToLightsRecord[renderPart.id];
-   if (typeof lightIDs === "undefined") {
-      return;
-   }
-
-   for (let i = lightIDs.length - 1; i >= 0; i--) {
-      const lightID = lightIDs[i];
-      const light = lightRecord[lightID];
-      removeLight(light);
+export function removeAllAttachedLights(renderInfo: EntityRenderInfo): void {
+   for (const renderPart of renderInfo.renderPartsByZIndex) {
+      removeLightsAttachedToRenderPart(renderPart);
    }
 }
 
@@ -184,17 +149,6 @@ export function getLightPositionMatrix(light: Light): Matrix3x2 {
       // const matrix = copyMatrix(renderPart.modelMatrix);
       // // @Hack: why do we need to rotate the offset?
       // translateMatrix(matrix, light.offset.x, light.offset.y);
-
-      return matrix;
-   }
-
-   const attachedEntity = lightToEntityRecord[light.id];
-   if (typeof attachedEntity !== "undefined" && entityExists(attachedEntity)) {
-      // @Speed @Copynpaste
-      const matrix = createTranslationMatrix(light.offset.x, light.offset.y);
-      
-      const renderInfo = getEntityRenderInfo(attachedEntity);
-      matrixMultiplyInPlace(renderInfo.modelMatrix, matrix);
 
       return matrix;
    }

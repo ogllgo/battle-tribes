@@ -1,32 +1,26 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { PebblumComponent, PebblumComponentArray } from "../../components/PebblumComponent";
-import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
+import { HealthComponent } from "../../components/HealthComponent";
+import { PebblumComponent } from "../../components/PebblumComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { TransformComponent } from "../../components/TransformComponent";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { createHitbox } from "../../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.pebblum;
-
-export function createPebblumConfig(): EntityConfig<ComponentTypes> {
+export function createPebblumConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent(0);
    
    // Body
-   const bodyHitbox = createHitbox(new CircularBox(null, new Point(0, -4), 0, 10 * 2), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, -4), rotation, 10 * 2), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(bodyHitbox, null);
    // Nose
-   const noseHitbox = createHitbox(new CircularBox(null, new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const noseHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(noseHitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -49,26 +43,4 @@ export function createPebblumConfig(): EntityConfig<ComponentTypes> {
       },
       lights: []
    };
-}
-
-export function onPebblumCollision(pebblum: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
-   if (collidingEntity !== pebblumComponent.targetEntityID) {
-      return;
-   }
-   
-   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "pebblum")) {
-      return;
-   }
-
-   const transformComponent = TransformComponentArray.getComponent(pebblum);
-   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-   
-   const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-
-   // @Incomplete: Cause of death
-   damageEntity(collidingEntity, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 150, hitDirection);
-   addLocalInvulnerabilityHash(collidingEntity, "pebblum", 0.3);
 }

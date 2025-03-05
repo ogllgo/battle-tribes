@@ -1,16 +1,16 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { randFloat } from "battletribes-shared/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getHumanoidRadius, TribesmanComponentArray } from "./TribesmanComponent";
 import { createConversionParticle } from "../../particles";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityConfig } from "../ComponentArray";
-import { getTribeByID } from "../../tribes";
+import { getTribeByID, Tribe } from "../../tribes";
 import { playerInstance } from "../../player";
+import { EntityParams } from "../../world";
 
 export interface TribeComponentParams {
    readonly tribeID: number;
@@ -36,20 +36,24 @@ export const TribeComponentArray = new ServerComponentArray<TribeComponent, Trib
    updatePlayerFromData: updatePlayerFromData
 });
 
-export function createTribeComponentParams(tribeID: number): TribeComponentParams {
+const fillTribeComponentParams = (tribeID: number): TribeComponentParams => {
    return {
       tribeID: tribeID,
       tribeType: getTribeType(tribeID)
    };
 }
 
-function createParamsFromData(reader: PacketReader): TribeComponentParams {
-   const tribeID = reader.readNumber();
-   return createTribeComponentParams(tribeID);
+export function createTribeComponentParams(tribe: Tribe): TribeComponentParams {
+   return fillTribeComponentParams(tribe.id);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribe, never>): TribeComponent {
-   const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
+function createParamsFromData(reader: PacketReader): TribeComponentParams {
+   const tribeID = reader.readNumber();
+   return fillTribeComponentParams(tribeID);
+}
+
+function createComponent(entityParams: EntityParams): TribeComponent {
+   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
 
    return {
       tribeID: tribeComponentParams.tribeID,
@@ -73,15 +77,16 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
-      playSoundOnEntity("conversion.mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("conversion.mp3", 0.4, 1, hitbox, false);
 
       const radius = getHumanoidRadius(entity);
       for (let i = 0; i < 10; i++) {
          const offsetDirection = 2 * Math.PI * Math.random();
          const offsetMagnitude = radius + randFloat(0, 4);
-         const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-         const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+         const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+         const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
          const velocityDirection = offsetDirection + randFloat(-0.5, 0.5);
          const velocityMagnitude = randFloat(55, 110);

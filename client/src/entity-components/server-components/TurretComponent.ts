@@ -1,16 +1,16 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
 import { lerp } from "battletribes-shared/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ItemType } from "battletribes-shared/items/items";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 // @Cleanup: can make this a whole lot better by having the projectile not be a render part, but the actual projectile pre-created, and then just un-carried from the turret once fired.
 
@@ -102,13 +102,16 @@ const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): nu
 }
 
 const playFireSound = (entity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
-         playSoundOnEntity("sling-turret-fire.mp3", 0.2, 1, entity, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.2, 1, hitbox, false);
          break;
       }
       case EntityType.ballista: {
-         playSoundOnEntity("sling-turret-fire.mp3", 0.25, 0.7, entity, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.25, 0.7, hitbox, false);
          break;
       }
    }
@@ -142,11 +145,7 @@ export const TurretComponentArray = new ServerComponentArray<TurretComponent, Tu
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): TurretComponentParams {
-   const aimDirection = reader.readNumber();
-   const chargeProgress = reader.readNumber();
-   const reloadProgress = reader.readNumber();
-
+const fillParams = (aimDirection: number, chargeProgress: number, reloadProgress: number): TurretComponentParams => {
    return {
       aimDirection: aimDirection,
       chargeProgress: chargeProgress,
@@ -154,12 +153,24 @@ function createParamsFromData(reader: PacketReader): TurretComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.turret, never>): TurretComponent {
+export function createTurretComponentParams(): TurretComponentParams {
+   return fillParams(0, 0, 0);
+}
+
+function createParamsFromData(reader: PacketReader): TurretComponentParams {
+   const aimDirection = reader.readNumber();
+   const chargeProgress = reader.readNumber();
+   const reloadProgress = reader.readNumber();
+
+   return fillParams(aimDirection, chargeProgress, reloadProgress);
+}
+
+function createComponent(entityParams: EntityParams, _: never, entityIntermediateInfo: EntityIntermediateInfo): TurretComponent {
    return {
-      chargeProgress: entityConfig.serverComponents[ServerComponentType.turret].chargeProgress,
-      aimingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
-      pivotingRenderPart: entityConfig.renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
-      gearRenderParts: entityConfig.renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
+      chargeProgress: entityParams.serverComponentParams[ServerComponentType.turret]!.chargeProgress,
+      aimingRenderPart: entityIntermediateInfo.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
+      pivotingRenderPart: entityIntermediateInfo.renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
+      gearRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
       projectileRenderPart:  null
    };
 }

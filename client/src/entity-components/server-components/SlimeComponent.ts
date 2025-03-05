@@ -6,21 +6,19 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
-import { getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import { TileType } from "../../../../shared/src/tiles";
-import { EntityConfig } from "../ComponentArray";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 
 export interface SlimeComponentParams {
    readonly size: SlimeSize;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly bodyRenderPart: VisualRenderPart;
    readonly eyeRenderPart: VisualRenderPart;
 }
@@ -71,9 +69,9 @@ const getBodyShakeAmount = (spitProgress: number): number => {
    return lerp(0, 5, spitProgress);
 }
 
-export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, SlimeComponentParams, RenderParts>(ServerComponentType.slime, true, {
+export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, SlimeComponentParams, IntermediateInfo>(ServerComponentType.slime, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -96,22 +94,25 @@ function createParamsFromData(reader: PacketReader): SlimeComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.slime, never>): RenderParts {
-   const size = entityConfig.serverComponents[ServerComponentType.slime].size;
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
+   const size = entityParams.serverComponentParams[ServerComponentType.slime]!.size;
    const sizeString = SIZE_STRINGS[size];
 
    // Body
    const bodyRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       2,
       0,
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-body.png`)
    );
-   renderInfo.attachRenderPart(bodyRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
 
    // Shading
-   renderInfo.attachRenderPart(new TexturedRenderPart(
-      null,
+   entityIntermediateInfo.renderInfo.attachRenderPart(new TexturedRenderPart(
+      hitbox,
       0,
       0,
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-shading.png`)
@@ -119,13 +120,13 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
 
    // Eye
    const eyeRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       3,
       0,
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-eye.png`)
    );
    eyeRenderPart.inheritParentRotation = false;
-   renderInfo.attachRenderPart(eyeRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(eyeRenderPart);
 
    return {
       bodyRenderPart: bodyRenderPart,
@@ -133,12 +134,12 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.slime, never>, renderParts: RenderParts): SlimeComponent {
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): SlimeComponent {
    return {
-      bodyRenderPart: renderParts.bodyRenderPart,
-      eyeRenderPart: renderParts.eyeRenderPart,
+      bodyRenderPart: intermediateInfo.bodyRenderPart,
+      eyeRenderPart: intermediateInfo.eyeRenderPart,
       orbRenderParts: [],
-      size: entityConfig.serverComponents[ServerComponentType.slime].size,
+      size: entityParams.serverComponentParams[ServerComponentType.slime]!.size,
       orbs: new Array<SlimeOrbInfo>,
       internalTickCounter: 0
    };
@@ -151,6 +152,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
 
@@ -164,7 +166,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.2 / Settings.TPS) {
-      playSoundOnEntity("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, hitbox, false);
    }
 
    const slimeComponent = SlimeComponentArray.getComponent(entity);
@@ -209,8 +211,11 @@ const createOrb = (slimeComponent: SlimeComponent, entity: Entity, size: SlimeSi
    const spriteSize = SLIME_SIZES[slimeComponent.size];
    const offsetMagnitude = spriteSize / 2 * lerp(0.3, 0.7, orbInfo.offset);
 
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       orbInfo.rotation,
       getTextureArrayIndex(`entities/slime/slime-orb-${sizeString}.png`)
@@ -281,34 +286,38 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
    const radius = SLIME_SIZES[slimeComponent.size] / 2;
    
    for (let i = 0; i < NUM_PUDDLE_PARTICLES_ON_HIT[slimeComponent.size]; i++) {
-      createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, radius);
+      createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, radius);
    }
 
    for (let i = 0; i < NUM_SPECK_PARTICLES_ON_HIT[slimeComponent.size]; i++) {
-      createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 
-   playSoundOnEntity("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
    const radius = SLIME_SIZES[slimeComponent.size] / 2;
 
    for (let i = 0; i < NUM_PUDDLE_PARTICLES_ON_DEATH[slimeComponent.size]; i++) {
-      createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, radius);
+      createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, radius);
    }
 
    for (let i = 0; i < NUM_SPECK_PARTICLES_ON_DEATH[slimeComponent.size]; i++) {
-      createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 
-   playSoundOnEntity("slime-death.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("slime-death.mp3", 0.4, 1, hitbox, false);
 }

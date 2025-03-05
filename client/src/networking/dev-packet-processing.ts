@@ -1,6 +1,7 @@
 import { SafetyNodeData } from "../../../shared/src/ai-building-types";
 import { PathfindingNodeIndex } from "../../../shared/src/client-server-types";
 import { PacketReader } from "../../../shared/src/packets";
+import { assert } from "../../../shared/src/utils";
 import { readTribeBuildingSafeties, resetBuildingSafeties } from "../building-safety";
 import { updateLightLevelsFromData } from "../light-levels";
 import { readLocalBiomes } from "../local-biomes";
@@ -72,6 +73,7 @@ export function readPacketDevData(reader: PacketReader): void {
    resetBuildingSafeties();
    
    const numTribes = reader.readNumber();
+   assert(Number.isInteger(numTribes));
    for (let i = 0; i < numTribes; i++) {
       const tribeID = reader.readNumber();
 

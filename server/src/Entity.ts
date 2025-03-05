@@ -11,11 +11,11 @@ import { addEntityToJoinBuffer } from "./world";
 let idCounter = 1;
 
 // @Hack @Cleanup ?@Speed
-const getComponentTypes = <ComponentTypes extends ServerComponentType>(componentConfig: EntityConfig<ComponentTypes>): ReadonlyArray<ComponentTypes> => {
-   return Object.keys(componentConfig.components).map(Number) as Array<ComponentTypes>;
+const getComponentTypes = (componentConfig: EntityConfig): ReadonlyArray<ServerComponentType> => {
+   return Object.keys(componentConfig.components).map(Number) as Array<ServerComponentType>;
 }
 
-export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig<ComponentTypes>, layer: Layer, joinDelayTicks: number): Entity {
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): Entity {
    const id = idCounter++;
    // @Hack
    const componentTypes = getComponentTypes(entityConfig);
@@ -35,7 +35,7 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
    for (let i = 0; i < componentTypes.length; i++) {
       const componentType = componentTypes[i];
       
-      const component = entityConfig.components[componentType];
+      const component = entityConfig.components[componentType]!;
 
       const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
       componentArray.addComponent(id, component, joinDelayTicks);

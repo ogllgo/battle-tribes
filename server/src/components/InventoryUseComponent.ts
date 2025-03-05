@@ -5,20 +5,19 @@ import { ComponentArray } from "./ComponentArray";
 import { getItemAttackInfo, Inventory, InventoryName, Item, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
-import { lerp, Point } from "battletribes-shared/utils";
-import { Box, Hitbox, updateBox } from "battletribes-shared/boxes/boxes";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { Point } from "battletribes-shared/utils";
+import { Box } from "battletribes-shared/boxes/boxes";
+import { TransformComponentArray } from "./TransformComponent";
 import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { applyKnockback } from "./PhysicsComponent";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createBlockAttackConfig } from "../entities/block-attack";
 import { createEntity } from "../Entity";
 import { destroyEntity, entityExists, getEntityLayer } from "../world";
 import { createSwingAttackConfig } from "../entities/swing-attack";
-import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
+import { applyKnockback } from "../hitboxes";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -71,7 +70,7 @@ export function limbHeldItemCanBeSwitched(limb: LimbInfo): boolean {
 const addLimbStateToPacket = (packet: Packet, limbState: LimbState): void => {
    packet.addNumber(limbState.direction);
    packet.addNumber(limbState.extraOffset);
-   packet.addNumber(limbState.rotation);
+   packet.addNumber(limbState.angle);
    packet.addNumber(limbState.extraOffsetX);
    packet.addNumber(limbState.extraOffsetY);
 }
@@ -179,36 +178,10 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
    }
 }
 
-const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbRotation: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
-   const flipMultiplier = isFlipped ? -1 : 1;
-
-   const offset = extraOffset + getHumanoidRadius(transformComponent) + 2;
-
-   const box = hitbox.box;
-   box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
-   box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
-   box.relativeRotation = limbRotation * flipMultiplier;
-
-   updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.relativeRotation);
-}
-
-export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
-   const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
-   const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
-   const rotation = lerp(startingLimbState.rotation, targetLimbState.rotation, progress);
-   const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
-   const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
-   setHitbox(transformComponent, hitbox, direction, extraOffset, rotation, extraOffsetX, extraOffsetY, isFlipped);
-}
-
-export function setHitboxToState(transformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
-   setHitbox(transformComponent, hitbox, state.direction, state.extraOffset, state.rotation, state.extraOffsetX, state.extraOffsetY, isFlipped);
-}
-
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {
    // @Speed
-   const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
-   updateBox(tileBox, (subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE, 0);
+   const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
+   const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
    
    return box.isColliding(tileBox);
 }
@@ -279,7 +252,9 @@ function onTick(entity: Entity): void {
 
                // Push forwards
                const transformComponent = TransformComponentArray.getComponent(entity);
-               applyKnockback(entity, 250, transformComponent.relativeRotation);
+               const entityHitbox = transformComponent.hitboxes[0];
+               
+               applyKnockback(entity, entityHitbox, 250, entityHitbox.box.angle);
 
                // const blockAttack = createBlockAttackConfig(entity, limb);
                // createEntity(blockAttack, getEntityLayer(entity), 0);
@@ -299,7 +274,7 @@ function onTick(entity: Entity): void {
                // limb.heldItemDamageBox.box.offset.y = damageBoxInfo.offsetY;
                // limb.heldItemDamageBox.box.width = damageBoxInfo.width;
                // limb.heldItemDamageBox.box.height = damageBoxInfo.height;
-               // limb.heldItemDamageBox.box.relativeRotation = damageBoxInfo.rotation * (isFlipped ? -1 : 1);
+               // limb.heldItemDamageBox.box.relativeAngle = damageBoxInfo.angle * (isFlipped ? -1 : 1);
                break;
             }
             case LimbAction.pushShieldBash: {
@@ -331,7 +306,7 @@ function onTick(entity: Entity): void {
                // @Speed: Garbage collection
                limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
                
-               const swingAttackConfig = createSwingAttackConfig(entity, limb);
+               const swingAttackConfig = createSwingAttackConfig(new Point(0, 0), 0, entity, limb);
                limb.swingAttack = createEntity(swingAttackConfig, getEntityLayer(entity), 0);
                break;
             }

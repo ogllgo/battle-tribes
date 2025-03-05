@@ -2,12 +2,10 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createPaperParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityAgeTicks } from "../../world";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
@@ -15,15 +13,15 @@ export interface ResearchBenchComponentParams {
    readonly isOccupied: boolean;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface ResearchBenchComponent {
    isOccupied: boolean;
 }
 
-export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, RenderParts>(ServerComponentType.researchBench, true, {
+export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, IntermediateInfo>(ServerComponentType.researchBench, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -31,23 +29,30 @@ export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenc
    updateFromData: updateFromData
 });
 
-export function createResearchBenchComponentParams(isOccupied: boolean): ResearchBenchComponentParams {
+const fillParams = (isOccupied: boolean): ResearchBenchComponentParams => {
    return {
       isOccupied: isOccupied
    };
+}
+
+export function createResearchBenchComponentParams(): ResearchBenchComponentParams {
+   return fillParams(false);
 }
 
 function createParamsFromData(reader: PacketReader): ResearchBenchComponentParams {
    const isOccupied = reader.readBoolean();
    reader.padOffset(3);
 
-   return createResearchBenchComponentParams(isOccupied);
+   return fillParams(isOccupied);
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/research-bench/research-bench.png")
@@ -57,9 +62,9 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.researchBench, never>): ResearchBenchComponent {
+function createComponent(entityParams: EntityParams): ResearchBenchComponent {
    return {
-      isOccupied: entityConfig.serverComponents[ServerComponentType.researchBench].isOccupied
+      isOccupied: entityParams.serverComponentParams[ServerComponentType.researchBench]!.isOccupied
    };
 }
 

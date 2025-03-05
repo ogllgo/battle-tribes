@@ -127,6 +127,9 @@ function onHit(entity: Entity): void {
 
 function onDeath(entity: Entity): void {
    const entityType = getEntityType(entity);
+   if (entityType === EntityType.glurb) {
+      console.log("A")
+   }
 
    const entries = lootOnDeathRecord[entityType];
    if (typeof entries !== "undefined") {

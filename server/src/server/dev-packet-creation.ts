@@ -224,7 +224,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
          lengthBytes += getTribeAssignmentDataLength(tribe);
 
          // Virtual buildings
-         lengthBytes += getVirtualBuildingGhostEntitiesLength(tribe.assignment);
+         lengthBytes += getVirtualBuildingGhostEntitiesLength(tribe.rootAssignment);
          lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
          // Building safeties
@@ -307,7 +307,7 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       addTribeAssignmentData(packet, tribe);
 
       // Virtual buildings
-      addVirtualBuildingGhostEntities(packet, tribe.assignment);
+      addVirtualBuildingGhostEntities(packet, tribe.rootAssignment);
       packet.addBoolean(false);
       packet.padOffset(3)
 

@@ -1,12 +1,11 @@
-import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
+import { applyKnockback, Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
 export class SpikyBastardComponent {}
 
@@ -19,7 +18,7 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(bastard: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (getEntityType(collidingEntity) === EntityType.glurb) {
       return;
    }
@@ -33,9 +32,9 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, actingHitbo
       return;
    }
 
-   const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
+   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 100, hitDirection);
+   hitEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

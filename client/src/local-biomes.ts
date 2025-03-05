@@ -1,6 +1,6 @@
 import { EntityType } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
-import { TileIndex } from "../../shared/src/utils";
+import { assert, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 
 interface LocalEntityCensusInfo {
@@ -89,6 +89,7 @@ const updateLocalBiomeFromData = (reader: PacketReader, localBiome: LocalBiome):
 
 export function readLocalBiomes(reader: PacketReader): void {
    const numLocalBiomes = reader.readNumber();
+   assert(Number.isInteger(numLocalBiomes));
    for (let i = 0; i < numLocalBiomes; i++) {
       const localBiomeID = reader.readNumber();
 

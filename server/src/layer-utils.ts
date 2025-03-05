@@ -22,7 +22,10 @@ export function getDistanceToClosestEntity(layer: Layer, position: Point): numbe
             if (checkedEntities.has(entity)) continue;
             
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const distance = position.calculateDistanceBetween(transformComponent.position);
+            // @HACK
+            const hitbox = transformComponent.hitboxes[0];
+            
+            const distance = position.calculateDistanceBetween(hitbox.box.position);
             if (distance <= minDistance) {
                minDistance = distance;
             }

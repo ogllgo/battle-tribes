@@ -1,29 +1,32 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface SlingTurretComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface SlingTurretComponent {}
 
-export const SlingTurretComponentArray = new ServerComponentArray<SlingTurretComponent, SlingTurretComponentParams, RenderParts>(ServerComponentType.slingTurret, true, {
+export const SlingTurretComponentArray = new ServerComponentArray<SlingTurretComponent, SlingTurretComponentParams, IntermediateInfo>(ServerComponentType.slingTurret, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    // Base
-   renderInfo.attachRenderPart(
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/sling-turret/sling-turret-base.png")
@@ -32,13 +35,13 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
    // Plate
    const plateRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       0,
       getTextureArrayIndex("entities/sling-turret/sling-turret-plate.png")
    );
    plateRenderPart.addTag("turretComponent:pivoting");
-   renderInfo.attachRenderPart(plateRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(plateRenderPart);
 
    // Sling
    const slingRenderPart = new TexturedRenderPart(
@@ -48,13 +51,21 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
       getTextureArrayIndex("entities/sling-turret/sling-turret-sling.png")
    );
    slingRenderPart.addTag("turretComponent:aiming");
-   renderInfo.attachRenderPart(slingRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(slingRenderPart);
 
    return {};
 }
 
-function createParamsFromData(): SlingTurretComponentParams {
+const fillParams = (): SlingTurretComponentParams => {
    return {};
+}
+
+export function createSlingTurretComponentParams(): SlingTurretComponentParams {
+   return fillParams();
+}
+
+function createParamsFromData(): SlingTurretComponentParams {
+   return fillParams();
 }
 
 function createComponent(): SlingTurretComponent {

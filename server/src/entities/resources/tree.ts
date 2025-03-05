@@ -3,20 +3,15 @@ import { Entity, EntityType, TreeSize } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { TREE_RADII, TreeComponent, TreeComponentArray } from "../../components/TreeComponent";
+import { TreeComponent, TreeComponentArray } from "../../components/TreeComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.loot
-   | ServerComponentType.tree;
+import { createHitbox } from "../../hitboxes";
 
 const TREE_MAX_HEALTHS = [10, 15];
 
@@ -47,11 +42,14 @@ registerEntityLootOnDeath(EntityType.tree, [
    }
 ]);
 
-export function createTreeConfig(): EntityConfig<ComponentTypes> {
+const TREE_RADII: ReadonlyArray<number> = [40, 50];
+
+export function createTreeConfig(position: Point, rotation: number): EntityConfig {
    const size: TreeSize = Math.random() > 1/3 ? 1 : 0;
    
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    

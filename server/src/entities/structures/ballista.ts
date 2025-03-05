@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createBallistaHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -16,22 +15,19 @@ import { AmmoBoxComponent } from "../../components/AmmoBoxComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { BallistaComponent } from "../../components/BallistaComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
+import { Point } from "../../../../shared/src/utils";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.turret
-   | ServerComponentType.aiHelper
-   | ServerComponentType.ammoBox
-   | ServerComponentType.inventory
-   | ServerComponentType.ballista;
-
-export function createBallistaConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createBallistaConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createBallistaHitboxes(), null);
+
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 100, 100);
+   const hitbox = createHitbox(transformComponent, null, box, 2, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(100);
    
@@ -43,7 +39,7 @@ export function createBallistaConfig(tribe: Tribe, connections: Array<StructureC
 
    const turretComponent = new TurretComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(550);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 550);
    
    const ammoBoxComponent = new AmmoBoxComponent();
 

@@ -4,7 +4,7 @@ import { Packet } from "../../../shared/src/packets";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { dismountEntity, mountEntity, TransformComponentArray } from "./TransformComponent";
+import { dismountEntity, attachEntityToHost, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -51,7 +51,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   mountEntity(entity, mount, carrySlot.offsetX, carrySlot.offsetY, false);
+   attachEntityToHost(entity, mount, carrySlot.offsetX, carrySlot.offsetY, false);
    carrySlot.occupiedEntity = entity;
 }
 
@@ -63,8 +63,13 @@ export function dismountCarrySlot(entity: Entity, mount: Entity): void {
    carrySlot.occupiedEntity = 0;
 
    // Set the entity to the dismount position
+
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = transformComponent.hitboxes[0];
+   
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
-   transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
+   const mountHitbox = mountTransformComponent.hitboxes[0];
+   
+   entityHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
+   entityHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
 }

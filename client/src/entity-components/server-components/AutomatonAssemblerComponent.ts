@@ -2,40 +2,52 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface AutomatonAssemblerComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface AutomatonAssemblerComponent {}
 
-export const AutomatonAssemblerComponentArray = new ServerComponentArray<AutomatonAssemblerComponent, AutomatonAssemblerComponentParams, RenderParts>(ServerComponentType.automatonAssembler, true, {
+export const AutomatonAssemblerComponentArray = new ServerComponentArray<AutomatonAssemblerComponent, AutomatonAssemblerComponentParams, IntermediateInfo>(ServerComponentType.automatonAssembler, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): AutomatonAssemblerComponentParams {
+const fillParams = (): AutomatonAssemblerComponentParams => {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+export function createAutomatonAssemblerComponentParams(): AutomatonAssemblerComponentParams {
+   return fillParams();
+}
+
+function createParamsFromData(): AutomatonAssemblerComponentParams {
+   return fillParams();
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          2,
          0,
          getTextureArrayIndex("entities/automaton-assembler/automaton-assembler.png")
       )
    );
 
-   renderInfo.attachRenderPart(
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/automaton-assembler/back.png")
@@ -44,36 +56,36 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
 
    // Gear 1
    const gearRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       Math.PI / 4,
       getTextureArrayIndex("entities/automaton-assembler/gear.png")
    );
    gearRenderPart.offset.y = 28;
    gearRenderPart.offset.x = -64;
-   renderInfo.attachRenderPart(gearRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(gearRenderPart);
 
    // Gear 2
    const gear2RenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1.5,
       Math.PI / 8,
       getTextureArrayIndex("entities/automaton-assembler/gear-2.png")
    );
    gear2RenderPart.offset.y = 28;
    gear2RenderPart.offset.x = -24;
-   renderInfo.attachRenderPart(gear2RenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(gear2RenderPart);
 
    // Bottom gear
    const bottomGearRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       -Math.PI / 8,
       getTextureArrayIndex("entities/automaton-assembler/gear.png")
    );
    bottomGearRenderPart.offset.y = -32;
    bottomGearRenderPart.offset.x = 20;
-   renderInfo.attachRenderPart(bottomGearRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(bottomGearRenderPart);
 
    return {};
 }

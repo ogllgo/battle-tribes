@@ -25,7 +25,7 @@ import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
 import { processTickEvents } from "../entity-tick-events";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket } from "./packet-processing";
-import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket } from "./packet-creation";
+import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-creation";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import { entityExists, getEntityLayer, getEntityType, layers } from "../world";
@@ -290,8 +290,9 @@ abstract class Client {
                // Register stopped hit
                         
                const transformComponent = TransformComponentArray.getComponent(hitEntity);
+               const hitbox = transformComponent.hitboxes[0];
                for (let i = 0; i < 6; i++) {
-                  const position = transformComponent.position.offset(randFloat(0, 6), 2 * Math.PI * Math.random());
+                  const position = hitbox.box.position.offset(randFloat(0, 6), 2 * Math.PI * Math.random());
                   createSparkParticle(position.x, position.y);
                }
             } else {
@@ -300,8 +301,9 @@ abstract class Client {
                // If the entity is hit by a flesh sword, create slime puddles
                if (hitData.flags & HitFlags.HIT_BY_FLESH_SWORD) {
                   const transformComponent = TransformComponentArray.getComponent(hitEntity);
+                  const hitbox = transformComponent.hitboxes[0];
                   for (let i = 0; i < 2; i++) {
-                     createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, 32);
+                     createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
                   }
                }
 
@@ -328,15 +330,16 @@ abstract class Client {
 
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const playerHitbox = transformComponent.hitboxes[0];
          // Register player knockback
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];
             
-            transformComponent.selfVelocity.x *= 0.5;
-            transformComponent.selfVelocity.y *= 0.5;
+            playerHitbox.velocity.x *= 0.5;
+            playerHitbox.velocity.y *= 0.5;
    
-            transformComponent.selfVelocity.x += knockbackData.knockback * Math.sin(knockbackData.knockbackDirection);
-            transformComponent.selfVelocity.y += knockbackData.knockback * Math.cos(knockbackData.knockbackDirection);
+            playerHitbox.velocity.x += knockbackData.knockback * Math.sin(knockbackData.knockbackDirection);
+            playerHitbox.velocity.y += knockbackData.knockback * Math.cos(knockbackData.knockbackDirection);
          }
       }
 
@@ -410,23 +413,29 @@ abstract class Client {
       }
    }
 
-   public static sendInitialPlayerData(username: string, tribeType: TribeType): void {
+   public static sendInitialPlayerData(username: string, tribeType: TribeType, isSpectating: boolean): void {
       // Send player data to the server
       if (this.socket !== null) {
-         const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 4 + getStringLengthBytes(username));
+         const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 5 + getStringLengthBytes(username));
          packet.addString(username);
          packet.addNumber(tribeType);
          packet.addNumber(windowWidth);
          packet.addNumber(windowHeight);
+         packet.addBoolean(isSpectating);
+         packet.padOffset(3);
 
          this.socket.send(packet.buffer);
       }
    }
 
    public static sendPlayerDataPacket(): void {
-      if (Game.isRunning && this.socket !== null && playerInstance !== null) {
-         const buffer = createPlayerDataPacket();
-         this.socket.send(buffer);
+      if (Game.isRunning && this.socket !== null) {
+         if (playerInstance !== null) {
+            const buffer = createPlayerDataPacket();
+            this.socket.send(buffer);
+         } else {
+            sendSetSpectatingPositionPacket();
+         }
       }
    }
 

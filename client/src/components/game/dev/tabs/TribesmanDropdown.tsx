@@ -1,9 +1,9 @@
 import { Entity } from "../../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../../client-entity-info";
-import { ExtendedTribeInfo } from "../../../../tribes";
+import { ExtendedTribe } from "../../../../tribes";
 
 interface TribesmanAssignmentDropdownProps {
-   readonly tribe: ExtendedTribeInfo;
+   readonly tribe: ExtendedTribe;
    onSelectEntity(entity: Entity | null): void;
 }
 

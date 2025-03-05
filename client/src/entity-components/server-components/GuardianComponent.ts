@@ -3,15 +3,15 @@ import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp, Point } from "../../../../shared/src/utils";
-import { Light, attachLightToRenderPart, createLight } from "../../lights";
+import { Light, createLight } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityPreCreationInfo, getEntityRenderInfo } from "../../world";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianComponentParams {
    readonly rubyGemActivation: number;
@@ -25,6 +25,18 @@ export interface GuardianComponentParams {
    readonly attackType: number;
    readonly attackStage: number;
    readonly stageProgress: number;
+}
+
+interface IntermediateInfo {
+   rubyRenderParts: Array<VisualRenderPart>,
+   amethystRenderParts: Array<VisualRenderPart>,
+   emeraldRenderParts: Array<VisualRenderPart>,
+   rubyLights: Array<[number, Light]>,
+   emeraldLights: Array<[number, Light]>,
+   amethystLights: Array<[number, Light]>,
+   limbRenderParts: Array<VisualRenderPart>,
+   limbCrackRenderParts: Array<VisualRenderPart>,
+   limbCrackLights: Array<Light>,
 }
 
 export interface GuardianComponent {
@@ -56,8 +68,9 @@ const enum Vars {
    SPIKY_BALL_SUMMON_SHAKE_AMOUNT = 2
 }
 
-export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentParams, never>(ServerComponentType.guardian, true, {
+export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentParams, IntermediateInfo>(ServerComponentType.guardian, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -90,7 +103,10 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian | ServerComponentType.transform, never>): GuardianComponent {
+function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+   
    const rubyRenderParts = new Array<VisualRenderPart>();
    const amethystRenderParts = new Array<VisualRenderPart>();
    const emeraldRenderParts = new Array<VisualRenderPart>();
@@ -99,35 +115,15 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
    const emeraldLights = new Array<[number, Light]>();
    const amethystLights = new Array<[number, Light]>();
 
-   // Head
-   
-   const headRenderPart = new TexturedRenderPart(
-      null,
-      2,
-      0,
-      getTextureArrayIndex("entities/guardian/guardian-head.png")
-   );
-   headRenderPart.offset.y = 28;
-   entityConfig.renderInfo.attachRenderPart(headRenderPart);
-   
-   const headRubies = new TexturedRenderPart(
-      headRenderPart,
-      2.1,
-      0,
-      getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
-   );
-   entityConfig.renderInfo.attachRenderPart(headRubies);
-   rubyRenderParts.push(headRubies);
-
    // Body
 
    const bodyRenderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       0,
       getTextureArrayIndex("entities/guardian/guardian-body.png")
    );
-   entityConfig.renderInfo.attachRenderPart(bodyRenderPart);
+   intermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
 
    const bodyAmethystsRenderPart = new TexturedRenderPart(
       bodyRenderPart,
@@ -135,7 +131,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
    );
-   entityConfig.renderInfo.attachRenderPart(bodyAmethystsRenderPart);
+   intermediateInfo.renderInfo.attachRenderPart(bodyAmethystsRenderPart);
    amethystRenderParts.push(bodyAmethystsRenderPart);
 
    const bodyEmeraldsRenderPart = new TexturedRenderPart(
@@ -144,8 +140,28 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
    );
-   entityConfig.renderInfo.attachRenderPart(bodyEmeraldsRenderPart);
+   intermediateInfo.renderInfo.attachRenderPart(bodyEmeraldsRenderPart);
    emeraldRenderParts.push(bodyEmeraldsRenderPart);
+
+   // Head
+   
+   const headRenderPart = new TexturedRenderPart(
+      bodyRenderPart,
+      2,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-head.png")
+   );
+   headRenderPart.offset.y = 28;
+   intermediateInfo.renderInfo.attachRenderPart(headRenderPart);
+   
+   const headRubies = new TexturedRenderPart(
+      headRenderPart,
+      2.1,
+      0,
+      getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
+   );
+   intermediateInfo.renderInfo.attachRenderPart(headRubies);
+   rubyRenderParts.push(headRubies);
 
    // Red lights
 
@@ -158,8 +174,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       0.1
    );
-   attachLightToRenderPart(light, headRenderPart, entityConfig.entity, entityConfig.layer);
    rubyLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: headRenderPart
+   });
 
    for (let i = 0; i < 2; i++) {
       const light = createLight(
@@ -171,8 +190,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
          0,
          0.1
       );
-      attachLightToRenderPart(light, headRenderPart, entityConfig.entity, entityConfig.layer);
       rubyLights.push([light.intensity, light]);
+      intermediateInfo.lights.push({
+         light: light,
+         attachedRenderPart: headRenderPart
+      });
    }
 
    // Green lights
@@ -186,8 +208,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       1,
       0
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    emeraldLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    // Amethyst lights
    // @Hack @Robustness: Make pixels able to glow!
@@ -214,8 +239,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(6.5 * 4, 3 * 4),
@@ -226,8 +254,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(10 * 4, 0),
@@ -238,8 +269,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(7 * 4, -5 * 4),
@@ -250,8 +284,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(3.5 * 4, -8 * 4),
@@ -262,8 +299,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(-2 * 4, -9 * 4),
@@ -274,8 +314,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(-5 * 4, -5 * 4),
@@ -286,8 +329,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(-8 * 4, -3 * 4),
@@ -298,8 +344,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(-7 * 4, 2.5 * 4),
@@ -310,8 +359,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    light = createLight(
       new Point(-8 * 4, 6 * 4),
@@ -322,15 +374,18 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       0,
       1
    );
-   attachLightToRenderPart(light, bodyRenderPart, entityConfig.entity, entityConfig.layer);
    amethystLights.push([light.intensity, light]);
+   intermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: bodyRenderPart
+   });
 
    const limbRenderParts = new Array<VisualRenderPart>();
    const limbCrackRenderParts = new Array<VisualRenderPart>();
    const limbCrackLights = new Array<Light>();
    
    // Attach limb render parts
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
       const hitbox = transformComponentParams.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
@@ -340,7 +395,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb.png")
          );
-         entityConfig.renderInfo.attachRenderPart(limbRenderPart);
+         intermediateInfo.renderInfo.attachRenderPart(limbRenderPart);
          limbRenderParts.push(limbRenderPart);
 
          const cracksRenderPart = new TexturedRenderPart(
@@ -349,7 +404,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb-gem-cracks.png")
          );
-         entityConfig.renderInfo.attachRenderPart(cracksRenderPart);
+         intermediateInfo.renderInfo.attachRenderPart(cracksRenderPart);
          limbCrackRenderParts.push(cracksRenderPart);
 
          const light = createLight(
@@ -361,12 +416,13 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
             0,
             0
          );
-         attachLightToRenderPart(light, cracksRenderPart, entityConfig.entity, entityConfig.layer);
          limbCrackLights.push(light);
+         intermediateInfo.lights.push({
+            light: light,
+            attachedRenderPart: cracksRenderPart
+         });
       }
    }
-
-   const guardianComponentParams = entityConfig.serverComponents[ServerComponentType.guardian];
 
    return {
       rubyRenderParts: rubyRenderParts,
@@ -375,12 +431,28 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
       rubyLights: rubyLights,
       emeraldLights: emeraldLights,
       amethystLights: amethystLights,
+      limbRenderParts: limbRenderParts,
+      limbCrackRenderParts: limbCrackRenderParts,
+      limbCrackLights: limbCrackLights
+   };
+}
+
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): GuardianComponent {
+   const guardianComponentParams = entityParams.serverComponentParams[ServerComponentType.guardian]!;
+
+   return {
+      rubyRenderParts: intermediateInfo.rubyRenderParts,
+      amethystRenderParts: intermediateInfo.amethystRenderParts,
+      emeraldRenderParts: intermediateInfo.emeraldRenderParts,
+      rubyLights: intermediateInfo.rubyLights,
+      emeraldLights: intermediateInfo.emeraldLights,
+      amethystLights: intermediateInfo.amethystLights,
       rubyGemActivation: guardianComponentParams.rubyGemActivation,
       emeraldGemActivation: guardianComponentParams.emeraldGemActivation,
       amethystGemActivation: guardianComponentParams.amethystGemActivation,
-      limbRenderParts: limbRenderParts,
-      limbCrackRenderParts: limbCrackRenderParts,
-      limbCrackLights: limbCrackLights,
+      limbRenderParts: intermediateInfo.limbRenderParts,
+      limbCrackRenderParts: intermediateInfo.limbCrackRenderParts,
+      limbCrackLights: intermediateInfo.limbCrackLights,
       limbRubyGemActivation: guardianComponentParams.limbRubyGemActivation,
       limbEmeraldGemActivation: guardianComponentParams.limbEmeraldGemActivation,
       limbAmethystGemActivation: guardianComponentParams.limbAmethystGemActivation,
@@ -389,11 +461,11 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.guardian
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
+function getMaxRenderParts(entityParams: EntityParams): number {
    let maxRenderParts = 5;
    
-   const transformComponentConfig = preCreationInfo.serverComponentParams[ServerComponentType.transform];
-   maxRenderParts += 2 * transformComponentConfig.hitboxes.length;
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   maxRenderParts += 2 * transformComponentParams.hitboxes.length;
 
    return maxRenderParts;
 }
@@ -510,40 +582,42 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       renderPart.shakeAmount = 0;
    }
    
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    switch (attackType) {
       case GuardianAttackType.crystalSlam: {
          // If just starting the slam, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalSlam) {
-            playSoundOnEntity("guardian-rock-smash-charge.mp3", 0.4, 1, entity, true);
+            playSoundOnHitbox("guardian-rock-smash-charge.mp3", 0.4, 1, hitbox, true);
          }
 
          // If starting slam, play start sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.windup && attackStage === GuardianCrystalSlamStage.slam) {
-            playSoundOnEntity("guardian-rock-smash-start.mp3", 0.2, 1, entity, false);
+            playSoundOnHitbox("guardian-rock-smash-start.mp3", 0.2, 1, hitbox, false);
          }
          
          // If going from slam to return, then play the slam sound
          if (guardianComponent.attackStage === GuardianCrystalSlamStage.slam && attackStage === GuardianCrystalSlamStage.return) {
-            playSoundOnEntity("guardian-rock-smash-impact.mp3", 0.65, 1, entity, false);
+            playSoundOnHitbox("guardian-rock-smash-impact.mp3", 0.65, 1, hitbox, false);
          }
          break;
       }
       case GuardianAttackType.crystalBurst: {
          // If just starting, play charge sound
          if (guardianComponent.attackType !== GuardianAttackType.crystalBurst) {
-            playSoundOnEntity("guardian-rock-burst-charge.mp3", 0.4, 1, entity, true);
+            playSoundOnHitbox("guardian-rock-burst-charge.mp3", 0.4, 1, hitbox, true);
          }
 
          // If starting burst, play burst sound
          if (guardianComponent.attackStage === GuardianCrystalBurstStage.windup && attackStage === GuardianCrystalBurstStage.burst) {
-            playSoundOnEntity("guardian-rock-burst.mp3", 0.7, 1, entity, false);
+            playSoundOnHitbox("guardian-rock-burst.mp3", 0.7, 1, hitbox, false);
          }
          break;
       }
       case GuardianAttackType.summonSpikyBalls: {
          // If just starting, play focus sound
          if (attackStage === GuardianSpikyBallSummonStage.focus && guardianComponent.attackStage === GuardianSpikyBallSummonStage.windup) {
-            playSoundOnEntity("guardian-summon-focus.mp3", 0.55, 1, entity, true);
+            playSoundOnHitbox("guardian-summon-focus.mp3", 0.55, 1, hitbox, true);
          }
 
          for (let i = 0; i < guardianComponent.limbRenderParts.length; i++) {

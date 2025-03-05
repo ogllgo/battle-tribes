@@ -4,8 +4,8 @@ import Particle from "./Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer } from "./rendering/webgl/particle-rendering";
 import Board from "./Board";
 import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 import { BlockType } from "../../shared/src/components";
+import { Hitbox } from "./hitboxes";
 
 // @Cleanup: Standardise all these functions to just take the stuff necessary to create them, then have the places which call them modify the returned particle
 
@@ -68,6 +68,7 @@ const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 export function createBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
    const offset = 2 * Math.PI * Math.random();
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 4; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
@@ -75,7 +76,7 @@ export function createBloodParticleFountain(entity: Entity, interval: number, sp
             let moveDirection = 2 * Math.PI / BLOOD_FOUNTAIN_RAY_COUNT * j + offset;
             moveDirection += randFloat(-0.3, 0.3);
 
-            createBloodParticle(BloodParticleSize.large, transformComponent.position.x, transformComponent.position.y, moveDirection, randFloat(100, 200) * speedMultiplier, false);
+            createBloodParticle(BloodParticleSize.large, hitbox.box.position.x, hitbox.box.position.y, moveDirection, randFloat(100, 200) * speedMultiplier, false);
          }
       });
    }
@@ -127,12 +128,14 @@ export function createFootprintParticle(entity: Entity, numFootstepsTaken: numbe
    const footstepAngleOffset = numFootstepsTaken % 2 === 0 ? Math.PI : 0;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const velocityDirection = angle(transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
+   const hitbox = transformComponent.hitboxes[0];
+   
+   const velocityDirection = angle(hitbox.velocity.x, hitbox.velocity.y);
 
    const offsetMagnitude = footstepOffset / 2;
    const offsetDirection = velocityDirection + footstepAngleOffset + Math.PI/2;
-   const spawnPositionX = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-   const spawnPositionY = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+   const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+   const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
    const particle = new Particle(lifetime);
    particle.getOpacity = (): number => {
@@ -993,9 +996,11 @@ export function createFlowerParticle(spawnPositionX: number, spawnPositionY: num
 }
 
 export function createCactusSpineParticle(transformComponent: TransformComponent, offset: number, flyDirection: number): void {
+   const hitbox = transformComponent.hitboxes[0];
+   
    // @Speed: Garbage collection
    const spawnPosition = Point.fromVectorForm(offset, flyDirection);
-   spawnPosition.add(transformComponent.position);
+   spawnPosition.add(hitbox.box.position);
    
    const lifetime = randFloat(0.2, 0.3);
 
@@ -1293,6 +1298,7 @@ export function createBlueBloodParticle(size: BloodParticleSize, spawnPositionX:
 const BLUE_BLOOD_FOUNTAIN_RAY_COUNT = 7;
 
 export function createBlueBloodParticleFountain(transformComponent: TransformComponent, interval: number, speedMultiplier: number): void {
+   const hitbox = transformComponent.hitboxes[0];
    const offset = 2 * Math.PI * Math.random();
 
    for (let i = 0; i < 6; i++) {
@@ -1301,7 +1307,7 @@ export function createBlueBloodParticleFountain(transformComponent: TransformCom
             let moveDirection = 2 * Math.PI / BLOOD_FOUNTAIN_RAY_COUNT * j + offset;
             moveDirection += randFloat(-0.3, 0.3);
 
-            createBlueBloodParticle(BloodParticleSize.large, transformComponent.position.x, transformComponent.position.y, moveDirection, randFloat(100, 200) * speedMultiplier, false);
+            createBlueBloodParticle(BloodParticleSize.large, hitbox.box.position.x, hitbox.box.position.y, moveDirection, randFloat(100, 200) * speedMultiplier, false);
          }
       });
    }
@@ -1678,12 +1684,13 @@ const POISON_COLOUR_HIGH = [77/255, 173/255, 38/255];
 
 export function createPoisonParticle(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Calculate spawn position
    const offsetMagnitude = 20 * Math.random();
    const moveDirection = 2 * Math.PI * Math.random();
-   const spawnPositionX = transformComponent.position.x + offsetMagnitude * Math.sin(moveDirection);
-   const spawnPositionY = transformComponent.position.y + offsetMagnitude * Math.cos(moveDirection);
+   const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(moveDirection);
+   const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(moveDirection);
 
    const lifetime = randFloat(0.2, 0.3);
    
@@ -1721,9 +1728,11 @@ export function createPoisonParticle(entity: Entity): void {
 }
 
 export function createIceSpeckProjectile(transformComponent: TransformComponent): void {
+   const hitbox = transformComponent.hitboxes[0];
+
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
-   const spawnPositionX = transformComponent.position.x + 4 * Math.sin(spawnOffsetDirection);
-   const spawnPositionY = transformComponent.position.y + 4 * Math.cos(spawnOffsetDirection);
+   const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);
+   const spawnPositionY = hitbox.box.position.y + 4 * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(150, 300);
    const velocityDirection = spawnOffsetDirection + randFloat(-0.8, 0.8);
@@ -1794,9 +1803,11 @@ export function createBlockParticle(x: number, y: number, blockType: BlockType):
 }
 
 export function createGemQuakeProjectile(transformComponent: TransformComponent): void {
+   const hitbox = transformComponent.hitboxes[0];
+   
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
-   const spawnPositionX = transformComponent.position.x + 4 * Math.sin(spawnOffsetDirection);
-   const spawnPositionY = transformComponent.position.y + 4 * Math.cos(spawnOffsetDirection);
+   const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);
+   const spawnPositionY = hitbox.box.position.y + 4 * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(30, 60);
    const velocityDirection = 2 * Math.PI * Math.random();
@@ -1830,10 +1841,10 @@ export function createGemQuakeProjectile(transformComponent: TransformComponent)
    Board.lowMonocolourParticles.push(particle);
 }
 
-export function createGenericGemParticle(transformComponent: TransformComponent, spawnOffsetRange: number, r: number, g: number, b: number): void {
+export function createGenericGemParticle(hitbox: Hitbox, spawnOffsetRange: number, r: number, g: number, b: number): void {
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
-   const spawnPositionX = transformComponent.position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
-   const spawnPositionY = transformComponent.position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
+   const spawnPositionX = hitbox.box.position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
+   const spawnPositionY = hitbox.box.position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(30, 60);
    const velocityDirection = 2 * Math.PI * Math.random();

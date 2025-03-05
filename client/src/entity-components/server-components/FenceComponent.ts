@@ -1,19 +1,18 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { EntityConfig } from "../ComponentArray";
-import { StructureConnection } from "../../../../shared/src/structures";
+import { assert } from "../../../../shared/src/utils";
+import { StructureConnection } from "../../structure-placement";
+import { Hitbox } from "../../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
-import { assert, Point } from "../../../../shared/src/utils";
 
 export interface FenceComponentParams {}
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly connectingRenderParts: Partial<Record<Entity, RenderPart>>;
 }
 
@@ -22,20 +21,28 @@ export interface FenceComponent {
    readonly connectingRenderParts: Partial<Record<Entity, RenderPart>>;
 }
 
-export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, RenderParts>(ServerComponentType.fence, true, {
+export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, IntermediateInfo>(ServerComponentType.fence, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): FenceComponentParams {
+const fillParams = (): FenceComponentParams => {
    return {};
 }
 
-const createConnectingRenderPart = (connection: StructureConnection): RenderPart => {
+export function createFenceComponentParams(): FenceComponentParams {
+   return fillParams();
+}
+
+function createParamsFromData(): FenceComponentParams {
+   return fillParams();
+}
+
+const createConnectingRenderPart = (connection: StructureConnection, parentHitbox: Hitbox): RenderPart => {
    const offsetMagnitude = 22;
    const relativeOffsetDirection = connection.relativeOffsetDirection;
    // let textureSource: string;
@@ -69,7 +76,7 @@ const createConnectingRenderPart = (connection: StructureConnection): RenderPart
    // }
    
    const renderPart = new TexturedRenderPart(
-      null,
+      parentHitbox,
       0,
       relativeOffsetDirection,
       getTextureArrayIndex("entities/fence/fence-top-rail.png")
@@ -80,10 +87,13 @@ const createConnectingRenderPart = (connection: StructureConnection): RenderPart
    return renderPart;
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.structure, never>): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          1,
          0,
          getTextureArrayIndex("entities/fence/fence-node.png")
@@ -93,10 +103,10 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    const connectingRenderParts: Record<Entity, RenderPart> = {};
 
    // Create initial connecting render parts
-   const structureComponentParams = entityConfig.serverComponents[ServerComponentType.structure];
+   const structureComponentParams = entityParams.serverComponentParams[ServerComponentType.structure]!;
    for (const connection of structureComponentParams.connections) {
-      const renderPart = createConnectingRenderPart(connection);
-      renderInfo.attachRenderPart(renderPart);
+      const renderPart = createConnectingRenderPart(connection, hitbox);
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
       connectingRenderParts[connection.entity] = renderPart;
    }
 
@@ -105,9 +115,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(_entityConfig: EntityConfig<never, never>, renderParts: RenderParts): FenceComponent {
+function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): FenceComponent {
    return {
-      connectingRenderParts: renderParts.connectingRenderParts
+      connectingRenderParts: intermediateInfo.connectingRenderParts
    };
 }
 
@@ -121,11 +131,14 @@ function padData(): void {}
 function updateFromData(): void {}
 
 export function addFenceConnection(fence: Entity, connection: StructureConnection): void {
+   const transformComponent = TransformComponentArray.getComponent(fence);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const fenceComponent = FenceComponentArray.getComponent(fence);
 
    const renderInfo = getEntityRenderInfo(fence);
    
-   const renderPart = createConnectingRenderPart(connection);
+   const renderPart = createConnectingRenderPart(connection, hitbox);
    renderInfo.attachRenderPart(renderPart);
    fenceComponent.connectingRenderParts[connection.entity] = renderPart;
 }

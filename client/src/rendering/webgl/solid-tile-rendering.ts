@@ -4,7 +4,7 @@ import Camera from "../../Camera";
 import { gl, createWebGLProgram, createTextureArray } from "../../webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, RenderChunkSolidTileInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkIndex, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY } from "../render-chunks";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
-import Layer, { getTileIndexIncludingEdges } from "../../Layer";
+import Layer, { getSubtileIndex, getTileIndexIncludingEdges } from "../../Layer";
 import { layers } from "../../world";
 
 export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string | null>> = {
@@ -319,7 +319,8 @@ const updateWallVertexData = (data: Float32Array, layer: Layer, renderChunkX: nu
    let i = 0;
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-         const subtileType = layer.getWallSubtileType(subtileX, subtileY);
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         const subtileType = layer.getSubtileType(subtileIndex);
          if (subtileType === SubtileType.none) {
             continue;
          }

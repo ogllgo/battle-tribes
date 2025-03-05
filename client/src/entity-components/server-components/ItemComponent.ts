@@ -5,27 +5,26 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
 import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { attachLightToRenderPart, createLight } from "../../lights";
+import { createLight } from "../../lights";
 import { Point } from "../../../../shared/src/utils";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface ItemComponentParams {
    readonly itemType: ItemType;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface ItemComponent {
    readonly itemType: ItemType;
 }
 
-export const ItemComponentArray = new ServerComponentArray<ItemComponent, ItemComponentParams, RenderParts>(ServerComponentType.item, true, {
+export const ItemComponentArray = new ServerComponentArray<ItemComponent, ItemComponentParams, IntermediateInfo>(ServerComponentType.item, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -40,29 +39,35 @@ function createParamsFromData(reader: PacketReader): ItemComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.item, never>): RenderParts {
-   const itemComponentParams = entityConfig.serverComponents[ServerComponentType.item];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const itemComponentParams = entityParams.serverComponentParams[ServerComponentType.item]!;
       
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(CLIENT_ITEM_INFO_RECORD[itemComponentParams.itemType].entityTextureSource)
    )
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    if (itemComponentParams.itemType === ItemType.slurb) {
       const torch = ITEM_TRAITS_RECORD[ItemType.slurb].torch!;
       const light = createLight(new Point(0, 0), torch.lightIntensity, torch.lightStrength, torch.lightRadius, torch.lightR, torch.lightG, torch.lightB);
-      attachLightToRenderPart(light, renderPart, entityConfig.entity, entityConfig.layer);
+      entityIntermediateInfo.lights.push({
+         light: light,
+         attachedRenderPart: renderPart
+      });
    }
 
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.item, never>): ItemComponent {
+function createComponent(entityParams: EntityParams): ItemComponent {
    return {
-      itemType: entityConfig.serverComponents[ServerComponentType.item].itemType
+      itemType: entityParams.serverComponentParams[ServerComponentType.item]!.itemType
    };
 }
 
@@ -76,7 +81,8 @@ function onTick(entity: Entity): void {
    // Make the deep frost heart item spew blue blood particles
    if (itemComponent.itemType === ItemType.deepfrost_heart) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      createDeepFrostHeartBloodParticles(transformComponent.position.x, transformComponent.position.y, 0, 0);
+      const hitbox = transformComponent.hitboxes[0];
+      createDeepFrostHeartBloodParticles(hitbox.box.position.x, hitbox.box.position.y, 0, 0);
    }
 }
    

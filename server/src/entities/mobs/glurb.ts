@@ -1,114 +1,66 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { assert, Point, randInt } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { createHitbox, Hitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { GlurbComponent } from "../../components/GlurbComponent";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { EntityConfig, LightCreationInfo } from "../../components";
-import { HealthComponent } from "../../components/HealthComponent";
+import { EntityConfig } from "../../components";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
-import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { AIHelperComponent } from "../../components/AIHelperComponent";
-import { createLight } from "../../light-levels";
+import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
+import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
+import { Hitbox } from "../../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.aiHelper
-   | ServerComponentType.glurb;
+export function createGlurbConfig(x: number, y: number, rotation: number): ReadonlyArray<EntityConfig> {
+   const configs = new Array<EntityConfig>();
    
-export function createGlurbConfig(): EntityConfig<ComponentTypes> {
-   const transformComponent = new TransformComponent(0);
-
-   const lights = new Array<LightCreationInfo>();
-   
-   let lastHitbox: Hitbox | undefined;
-   const numSegments = randInt(3, 5);
-   for (let i = 0; i < numSegments; i++) {
-      let radius: number;
-      let flags: Array<HitboxFlag>;
-      let mass: number;
-      if (i === 0) {
-         // Head segment
-         radius = 24;
-         flags = [HitboxFlag.GLURB_HEAD_SEGMENT];
-         mass = 0.6;
-      } else if (i < numSegments - 1) {
-         // Middle segment
-         radius = 28;
-         flags = [];
-         mass = 0.8;
-      } else {
-         // Tail segment
-         radius = 20;
-         flags = [HitboxFlag.GLURB_TAIL_SEGMENT];
-         mass = 0.4;
-      }
-      
-      const offsetY = i * -30;
-      
-      const hitbox = createHitbox(new CircularBox(null, new Point(0, offsetY), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
-
-      transformComponent.addHitbox(hitbox, null);
-      if (i > 0) {
-         assert(typeof lastHitbox !== "undefined");
-         transformComponent.addHitboxTether(hitbox, lastHitbox, 30, 15, 0.5);
-      }
-
-      let lightIntensity: number;
-      let lightRadius: number;
-      if (i === 0) {
-         // Head segment
-         lightIntensity = 0.35;
-         lightRadius = 6;
-      } else if (i < numSegments - 1) {
-         // Middle segment
-         lightIntensity = 0.4;
-         lightRadius = 8;
-      } else {
-         // Tail segment
-         lightIntensity = 0.3;
-         lightRadius = 4;
-      }
-      
-      const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
-      lights.push({
-         light: light,
-         attachedHitbox: hitbox
-      });
-
-      lastHitbox = hitbox;
-   }
-
-   const physicsComponent = new PhysicsComponent();
-   
-   const healthComponent = new HealthComponent(10);
-
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
-   const aiHelperComponent = new AIHelperComponent(280);
-
-   const glurbComponent = new GlurbComponent();
-   
-   return {
+   const config: EntityConfig = {
       entityType: EntityType.glurb,
       components: {
-         [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
-         [ServerComponentType.health]: healthComponent,
-         [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.aiHelper]: aiHelperComponent,
-         [ServerComponentType.glurb]: glurbComponent
+         [ServerComponentType.statusEffect]: statusEffectComponent
       },
-      lights: lights
+      lights: []
    };
+   configs.push(config);
+
+   // @Incomplete: Will always have same offset shape! Straight, going upwards!
+   
+   let currentX = x;
+   let currentY = y;
+   
+   let lastHitbox: Hitbox | undefined;
+   // @Temporary
+   // const numSegments = randInt(3, 5);
+   const numSegments = 5;
+   for (let i = 0; i < numSegments; i++) {
+      currentY -= 30;
+      
+      let config: EntityConfig;
+      if (i === 0) {
+         config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
+      } else {
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, i < numSegments - 1);
+      }
+      configs.push(config);
+
+      lastHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+   }
+
+   return configs;
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+// @TEMPORARY: REMOVE THESE RAMBLINGS!
 
 
 
@@ -169,6 +121,8 @@ anything else better?
 
       what if we instead just let hitboxes have the events on them??
       - but they need data per
+
+- multies can have components too
 
 
 */

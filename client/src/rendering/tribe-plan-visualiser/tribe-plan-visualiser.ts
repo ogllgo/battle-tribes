@@ -8,7 +8,7 @@ import { getTechByID, TechID, Tech } from "../../../../shared/src/techs";
 import { AIPlanType } from "../../../../shared/src/utils";
 import { TribePlanVisualiser_setPlan } from "../../components/game/tribe-plan-visualiser/TribePlanVisualiser";
 import { addMenuCloseFunction } from "../../menus";
-import { ExtendedTribeInfo, getTribeByID } from "../../tribes";
+import { ExtendedTribe, getTribeByID } from "../../tribes";
 
 const enum Vars {
    NODE_DISPLAY_SIZE = 100
@@ -334,5 +334,5 @@ export function renderTribePlans(): void {
    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
    
    const tribeAssignmentInfo = tribePlanDataRecord[renderedTribeID];
-   TribePlanVisualiser_setPlan(tribeAssignmentInfo, getTribeByID(renderedTribeID) as ExtendedTribeInfo);
+   TribePlanVisualiser_setPlan(tribeAssignmentInfo, getTribeByID(renderedTribeID) as ExtendedTribe);
 }

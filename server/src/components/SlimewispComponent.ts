@@ -3,15 +3,15 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition, stopEntity } from "../ai-shared";
-import { entitiesAreColliding, CollisionVars } from "../collision";
+import { Point, UtilVars } from "battletribes-shared/utils";
+import { moveEntityToPosition } from "../ai-shared";
 import { createSlimeConfig } from "../entities/mobs/slime";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 
 const enum Vars {
    ACCELERATION = 100,
@@ -48,18 +48,21 @@ function onTick(slimewisp: Entity): void {
       const mergingSlimewisp = aiHelperComponent.visibleEntities[i];
       if (getEntityType(mergingSlimewisp) === EntityType.slimewisp) {
          const mergingSlimewispTransformComponent = TransformComponentArray.getComponent(mergingSlimewisp);
+         const mergingSlimewispHitbox = mergingSlimewispTransformComponent.hitboxes[0];
          
-         moveEntityToPosition(slimewisp, mergingSlimewispTransformComponent.position.x, mergingSlimewispTransformComponent.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
+         moveEntityToPosition(slimewisp, mergingSlimewispHitbox.box.position.x, mergingSlimewispHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
    
          // Continue merge
          if (entitiesAreColliding(slimewisp, mergingSlimewisp) !== CollisionVars.NO_COLLISION) {
             slimewispComponent.mergeTimer -= Settings.I_TPS;
             if (slimewispComponent.mergeTimer <= 0 && !entityIsFlaggedForDestruction(mergingSlimewisp)) {
+               const slimewispHitbox = transformComponent.hitboxes[0];
+               
+               const x = (slimewispHitbox.box.position.x + mergingSlimewispHitbox.box.position.x) / 2;
+               const y = (slimewispHitbox.box.position.y + mergingSlimewispHitbox.box.position.y) / 2;
+               
                // Create a slime between the two wisps
-               const config = createSlimeConfig(SlimeSize.small);
-               config.components[ServerComponentType.transform].position.x = (transformComponent.position.x + mergingSlimewispTransformComponent.position.x) / 2;
-               config.components[ServerComponentType.transform].position.y = (transformComponent.position.y + mergingSlimewispTransformComponent.position.y) / 2;
-               config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+               const config = createSlimeConfig(new Point(x, y), 2 * Math.PI * Math.random(), SlimeSize.small);
                createEntity(config, layer, 0);
             
                destroyEntity(slimewisp);
@@ -75,8 +78,6 @@ function onTick(slimewisp: Entity): void {
    wanderAI.update(slimewisp);
    if (wanderAI.targetPositionX !== -1) {
       moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI);
-   } else {
-      stopEntity(physicsComponent);
    }
 }
 

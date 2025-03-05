@@ -1,24 +1,27 @@
-import { Point } from "battletribes-shared/utils";
+import { assert, Point } from "battletribes-shared/utils";
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { halfWindowHeight, halfWindowWidth } from "./webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, WORLD_RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
 import Chunk from "./Chunk";
 import Layer from "./Layer";
-import { entityExists, getEntityRenderInfo } from "./world";
+import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
+import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
+import { Hitbox } from "./hitboxes";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
 
 // @Incomplete?
-const registerVisibleChunk = (chunk: Chunk): void => {
-   // createEntityRenderedChunkData(chunk.x, chunk.y);
-}
+// const registerVisibleChunk = (chunk: Chunk): void => {
+//    // createEntityRenderedChunkData(chunk.x, chunk.y);
+// }
 
-// @Incomplete?
-const deregisterVisibleChunk = (chunk: Chunk): void => {
-   // removeEntityRenderedChunkData(chunk.x, chunk.y);
-}
+// // @Incomplete?
+// const deregisterVisibleChunk = (chunk: Chunk): void => {
+//    // removeEntityRenderedChunkData(chunk.x, chunk.y);
+// }
 
 const getChunksFromRange = (layer: Layer, minChunkX: number, maxChunkX: number, minChunkY: number, maxChunkY: number): ReadonlyArray<Chunk> => {
    const chunks = new Array<Chunk>();
@@ -45,13 +48,16 @@ const getMissingChunks = (chunksA: ReadonlyArray<Chunk>, chunksB: ReadonlyArray<
 }
 
 abstract class Camera {
+   public static isSpectating = false;
+   
    /** Larger = zoomed in, smaller = zoomed out */
    // @Temporary
    public static zoom: number = 1.4;
    // public static zoom: number = 0.8;
    // public static zoom: number = 1;
 
-   public static trackedEntityID = 0;
+   public static trackedEntity: Entity = 0;
+   public static trackedHitbox: Hitbox | null = null;
 
    public static position = new Point(0, 0);
    
@@ -80,13 +86,13 @@ abstract class Camera {
 
       const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
 
-      for (const chunk of newChunks) {
-         registerVisibleChunk(chunk);
-      }
+      // for (const chunk of newChunks) {
+      //    registerVisibleChunk(chunk);
+      // }
    }
 
-   public static updateVisibleChunkBounds(layer: Layer): void {
-      const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+   public static updateVisibleChunkBounds(): void {
+      // const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
       
       this.minVisibleX = this.position.x - halfWindowWidth / this.zoom;
       this.maxVisibleX = this.position.x + halfWindowWidth / this.zoom;
@@ -98,17 +104,17 @@ abstract class Camera {
       this.minVisibleChunkY = Math.max(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), 0);
       this.maxVisibleChunkY = Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
-      const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+      // const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
 
-      const removedChunks = getMissingChunks(newChunks, previousChunks);
-      for (const chunk of removedChunks) {
-         deregisterVisibleChunk(chunk);
-      }
+      // const removedChunks = getMissingChunks(newChunks, previousChunks);
+      // for (const chunk of removedChunks) {
+      //    deregisterVisibleChunk(chunk);
+      // }
 
-      const addedChunks = getMissingChunks(previousChunks, newChunks);
-      for (const chunk of addedChunks) {
-         registerVisibleChunk(chunk);
-      }
+      // const addedChunks = getMissingChunks(previousChunks, newChunks);
+      // for (const chunk of addedChunks) {
+      //    registerVisibleChunk(chunk);
+      // }
    }
 
    public static getVisibleChunkBounds(): VisibleChunkBounds {
@@ -124,8 +130,17 @@ abstract class Camera {
       this.maxVisibleRenderChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
    }
 
-   public static setTrackedEntityID(trackedEntity: Entity): void {
-      this.trackedEntityID = trackedEntity;
+   public static trackEntity(trackedEntity: Entity): void {
+      // @Hack
+      if (entityExists(trackedEntity)) {
+         const transformComponent = TransformComponentArray.getComponent(trackedEntity);
+         const hitbox = transformComponent.hitboxes[0];
+         this.trackedHitbox = hitbox;
+      } else {
+         this.trackedHitbox = null;
+      }
+      
+      this.trackedEntity = trackedEntity;
       this.isFree = trackedEntity === 0;
    }
 
@@ -134,15 +149,20 @@ abstract class Camera {
       this.position.y = y;
    }
 
-   public static updatePosition(): void {
+   public static updatePosition(frameProgress: number): void {
       if (this.isFree) {
          return;
       }
       
-      if (entityExists(this.trackedEntityID)) {
-         const renderInfo = getEntityRenderInfo(this.trackedEntityID);
-         this.position.x = renderInfo.renderPosition.x;
-         this.position.y = renderInfo.renderPosition.y;
+      if (entityExists(this.trackedEntity)) {
+         assert(this.trackedHitbox !== null);
+
+         const pos = calculateHitboxRenderPosition(this.trackedHitbox, frameProgress);
+         this.position.x = pos.x;
+         this.position.y = pos.y;
+      } else {
+         this.trackedEntity = 0;
+         this.trackedHitbox = null;
       }
    }
 

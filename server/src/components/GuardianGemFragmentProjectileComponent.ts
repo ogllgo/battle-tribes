@@ -1,16 +1,13 @@
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, DamageSource } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randFloat, randInt } from "battletribes-shared/utils";
-import { getEntityAgeTicks, destroyEntity, entityExists } from "../world";
+import { angle, Point, randFloat, randInt } from "battletribes-shared/utils";
+import { getEntityAgeTicks, destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
-import { ProjectileComponentArray } from "./ProjectileComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 export class GuardianGemFragmentProjectileComponent {
    public readonly fragmentShape = randInt(0, 2);
@@ -37,7 +34,7 @@ function onWallCollision(fragment: Entity): void {
    destroyEntity(fragment);
 }
 
-function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
@@ -49,22 +46,15 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, _pushedHit
    if (!canDamageEntity(healthComponent, "gemFragmentProjectile")) {
       return;
    }
-
-   const transformComponent = TransformComponentArray.getComponent(fragment);
-   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
    
-   const fragmentHitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+   const fragmentHitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   applyKnockback(collidingEntity, collidingHitbox, 50, fragmentHitDirection);
 
-   damageEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 50, fragmentHitDirection);
-
-   const projectileComponent = ProjectileComponentArray.getComponent(fragment);
-   if (entityExists(projectileComponent.creator)) {
-      const guardianTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
-
-      const directionFromGuardian = guardianTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-      applyKnockback(collidingEntity, 100, directionFromGuardian);
-   }
+   hitEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   
+   const knockbackMagnitude = affectedHitbox.velocity.length();
+   const knockbackDirection = angle(affectedHitbox.velocity.x, affectedHitbox.velocity.y);
+   applyKnockback(collidingEntity, collidingHitbox, knockbackMagnitude, knockbackDirection);
    
    addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
 }

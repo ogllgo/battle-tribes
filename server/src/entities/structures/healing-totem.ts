@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createHealingTotemHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -11,18 +10,20 @@ import Tribe from "../../Tribe";
 import { TribeComponent } from "../../components/TribeComponent";
 import { HealingTotemComponent } from "../../components/HealingTotemComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
+import { Point } from "../../../../shared/src/utils";
+import { AIHelperComponent } from "../../components/AIHelperComponent";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.healingTotem;
-
-export function createHealingTotemConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createHealingTotemConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createHealingTotemHitboxes(), null);
+
+   const box = new CircularBox(position, new Point(0, 0), rotation, 48);
+   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(50);
    
@@ -31,6 +32,8 @@ export function createHealingTotemConfig(tribe: Tribe, connections: Array<Struct
    const structureComponent = new StructureComponent(connections, virtualStructure);
 
    const tribeComponent = new TribeComponent(tribe);
+
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 270);
    
    const healingTotemComponent = new HealingTotemComponent();
    
@@ -42,6 +45,7 @@ export function createHealingTotemConfig(tribe: Tribe, connections: Array<Struct
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
+         [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.healingTotem]: healingTotemComponent
       },
       lights: []

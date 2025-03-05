@@ -166,18 +166,23 @@ const virtualStructureIsSentToPlayer = (playerClient: PlayerClient, virtualBuild
    let maxX = Number.MIN_SAFE_INTEGER;
    let minY = Number.MAX_SAFE_INTEGER;
    let maxY = Number.MIN_SAFE_INTEGER;
-   for (const hitbox of virtualBuilding.hitboxes) {
-      if (hitbox.boundsMinX < minX) {
-         minX = hitbox.boundsMinX;
+   for (const box of virtualBuilding.boxes) {
+      const boxMinX = box.calculateBoundsMinX();
+      const boxMaxX = box.calculateBoundsMaxX();
+      const boxMinY = box.calculateBoundsMinY();
+      const boxMaxY = box.calculateBoundsMaxY();
+      
+      if (boxMinX < minX) {
+         minX = boxMinX;
       }
-      if (hitbox.boundsMaxX < maxX) {
-         maxX = hitbox.boundsMaxX;
+      if (boxMaxX < maxX) {
+         maxX = boxMaxX;
       }
-      if (hitbox.boundsMinY < minY) {
-         minY = hitbox.boundsMinY;
+      if (boxMinY < minY) {
+         minY = boxMinY;
       }
-      if (hitbox.boundsMaxY < maxY) {
-         maxY = hitbox.boundsMaxY;
+      if (boxMaxY < maxY) {
+         maxY = boxMaxY;
       }
    }
    
@@ -442,7 +447,7 @@ const getAssignmentDataLength = (assignment: AIPlanAssignment): number => {
 
 export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
    // Tribe assignment
-   addAssignmentData(packet, tribe.assignment);
+   addAssignmentData(packet, tribe.rootAssignment);
 
    // @Speed @Hack
    let numEntitiesWithAIAssignmentComponent = 0;
@@ -473,7 +478,7 @@ export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
 
 export function getTribeAssignmentDataLength(tribe: Tribe): number {
    // Tribe assignment
-   let lengthBytes = getAssignmentDataLength(tribe.assignment);
+   let lengthBytes = getAssignmentDataLength(tribe.rootAssignment);
 
    // Tribesman assignments
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;

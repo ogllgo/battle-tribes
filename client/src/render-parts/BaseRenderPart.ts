@@ -1,6 +1,6 @@
 import { Point } from "battletribes-shared/utils";
 import { createIdentityMatrix } from "../rendering/matrices";
-import { RenderParent, RenderPart } from "./render-parts";
+import { RenderPartParent, RenderPart } from "./render-parts";
 import Board from "../Board";
 
 let idCounter = 0;
@@ -31,7 +31,7 @@ export default abstract class BaseRenderPart {
    public readonly zIndex: number;
 
    public readonly children = new Array<RenderPart>();
-   public readonly parent: RenderParent;
+   public readonly parent: RenderPartParent;
 
    // Needed for the tree-like update system regardless of whether the thing will be rendered to the screen
    public readonly modelMatrix = createIdentityMatrix();
@@ -39,7 +39,7 @@ export default abstract class BaseRenderPart {
 
    public readonly tags = new Array<string>();
 
-   constructor(parent: RenderParent, zIndex: number, rotation: number) {
+   constructor(parent: RenderPartParent, zIndex: number, rotation: number) {
       this.parent = parent;
       this.zIndex = zIndex;
       this.rotation = rotation;

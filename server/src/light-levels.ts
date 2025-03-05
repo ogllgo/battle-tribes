@@ -1,9 +1,9 @@
-import { Hitbox } from "../../shared/src/boxes/boxes";
 import { Entity } from "../../shared/src/entities";
 import { LightLevelNode, LightLevelVars } from "../../shared/src/light-levels";
 import { Packet } from "../../shared/src/packets";
 import { Settings } from "../../shared/src/settings";
 import { assert, distance, lerp, Point } from "../../shared/src/utils";
+import { Hitbox } from "./hitboxes";
 import Layer from "./Layer";
 import PlayerClient from "./server/PlayerClient";
 import { getEntityLayer, getGameTime } from "./world";

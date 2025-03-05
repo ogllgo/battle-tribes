@@ -1,13 +1,10 @@
-import { EntityInfo } from "../../shared/src/board-interface";
 import { GrassTileInfo, RiverFlowDirectionsRecord, RiverSteppingStoneData, WaterRockData } from "../../shared/src/client-server-types";
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import { WorldInfo } from "../../shared/src/structures";
 import { SubtileType, TileType } from "../../shared/src/tiles";
 import { Point, randFloat, randInt, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 import Chunk from "./Chunk";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Light } from "./lights";
 import Particle from "./Particle";
 import { RenderLayer } from "./render-layers";
@@ -20,7 +17,6 @@ import { recalculateTileShadows, TileShadowType } from "./rendering/webgl/tile-s
 import { recalculateWallBorders } from "./rendering/webgl/wall-border-rendering";
 import { playSound } from "./sound";
 import { Tile } from "./Tile";
-import { getEntityType } from "./world";
 
 // @Cleanup: location, @Copynpaste from server
 
@@ -84,8 +80,6 @@ export default class Layer {
 
    public readonly wallSubtileVariants: Partial<Record<TileIndex, number>> = {};
    
-   private readonly worldInfo: WorldInfo;
-
    public readonly lights = new Array<Light>();
 
    // For chunked entity rendering
@@ -149,24 +143,10 @@ export default class Layer {
             }
          }
       }
+   }
 
-      this.worldInfo = {
-         chunks: this.chunks,
-         wallSubtileTypes: this.wallSubtileTypes,
-         getEntityCallback: (entity: Entity): EntityInfo => {
-            const transformComponent = TransformComponentArray.getComponent(entity);
-
-            return {
-               type: getEntityType(entity),
-               position: transformComponent.position,
-               rotation: transformComponent.rotation,
-               id: entity,
-               hitboxes: transformComponent.hitboxes
-            };
-         },
-         subtileIsMined: subtileIndex => this.subtileIsMined(subtileIndex),
-         tileIsBuildingBlocking: tileIndex => this.buildingBlockingTiles.has(tileIndex)
-      };
+   public tileIsBuildingBlocking(tileIndex: TileIndex): boolean {
+      return this.buildingBlockingTiles.has(tileIndex);
    }
 
    private recalculateRenderChunkWalls(renderChunkX: number, renderChunkY: number): void {
@@ -318,8 +298,7 @@ export default class Layer {
       return this.wallSubtileTypes[subtileIndex] === SubtileType.none && this.wallSubtileDamageTakenMap.has(subtileIndex);
    }
 
-   public getWallSubtileType(subtileX: number, subtileY: number): SubtileType {
-      const subtileIndex = getSubtileIndex(subtileX, subtileY);
+   public getSubtileType(subtileIndex: number): SubtileType {
       return this.wallSubtileTypes[subtileIndex];
    }
 
@@ -356,9 +335,5 @@ export default class Layer {
       } else {
          removeRenderable(this, entity, renderLayer);
       }
-   }
-
-   public getWorldInfo(): WorldInfo {
-      return this.worldInfo;
    }
 }

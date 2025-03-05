@@ -2,15 +2,14 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo } from "../../world";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TUNNEL_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface TunnelComponentParams {
    readonly doorBitset: number;
@@ -18,7 +17,7 @@ export interface TunnelComponentParams {
    readonly bottomDoorOpenProgress: number;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface TunnelComponent {
    doorBitset: number;
@@ -55,20 +54,16 @@ const getTunnelDoorInfo = (doorBit: number, openProgress: number): TunnelDoorInf
    };
 }
 
-export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, RenderParts>(ServerComponentType.tunnel, true, {
+export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, IntermediateInfo>(ServerComponentType.tunnel, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): TunnelComponentParams {
-   const doorBitset = reader.readNumber();
-   const topDoorOpenProgress = reader.readNumber();
-   const bottomDoorOpenProgress = reader.readNumber();
-
+const fillParams = (doorBitset: number, topDoorOpenProgress: number, bottomDoorOpenProgress: number): TunnelComponentParams => {
    return {
       doorBitset: doorBitset,
       topDoorOpenProgress: topDoorOpenProgress,
@@ -76,23 +71,38 @@ function createParamsFromData(reader: PacketReader): TunnelComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): RenderParts {
-   const buildingMaterialComponentParams = entityConfig.serverComponents[ServerComponentType.buildingMaterial];
+export function createTunnelComponentParams(): TunnelComponentParams {
+   return fillParams(0, 0, 0);
+}
+
+function createParamsFromData(reader: PacketReader): TunnelComponentParams {
+   const doorBitset = reader.readNumber();
+   const topDoorOpenProgress = reader.readNumber();
+   const bottomDoorOpenProgress = reader.readNumber();
+
+   return fillParams(doorBitset, topDoorOpenProgress, bottomDoorOpenProgress);
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
+   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       0,
       getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
    );
 
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tunnel, never>): TunnelComponent {
-   const tunnelComponentParams = entityConfig.serverComponents[ServerComponentType.tunnel];
+function createComponent(entityParams: EntityParams): TunnelComponent {
+   const tunnelComponentParams = entityParams.serverComponentParams[ServerComponentType.tunnel]!;
    
    return {
       doorBitset: tunnelComponentParams.doorBitset,
@@ -107,8 +117,11 @@ function getMaxRenderParts(): number {
 }
 
 const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       doorBit === 0b10 ? Math.PI : 0,
       getTextureArrayIndex("entities/tunnel/tunnel-door.png")
@@ -121,7 +134,7 @@ const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: numb
    renderInfo.attachRenderPart(renderPart);
 
    // @Temporary
-   playSoundOnEntity("spike-place.mp3", 0.5, 1, entity, false);
+   playSoundOnHitbox("spike-place.mp3", 0.5, 1, hitbox, false);
 }
 
 const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgress: number): void => {
@@ -151,12 +164,15 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       addDoor(tunnelComponent, entity, 0b10);
    }
 
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {
-      playSoundOnEntity("door-open.mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
    }
    if ((topDoorOpenProgress < 1 && tunnelComponent.topDoorOpenProgress === 1) || (bottomDoorOpenProgress < 1 && tunnelComponent.bottomDoorOpenProgress === 1)) {
-      playSoundOnEntity("door-close.mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("door-close.mp3", 0.4, 1, hitbox, false);
    }
    
    tunnelComponent.doorBitset = doorBitset;

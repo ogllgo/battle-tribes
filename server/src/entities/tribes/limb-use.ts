@@ -1,28 +1,8 @@
-import { HitFlags } from "battletribes-shared/client-server-types";
-import { Entity, LimbAction, EntityType, DamageSource } from "battletribes-shared/entities";
-import { AttackEffectiveness, calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsTool, ItemType } from "battletribes-shared/items/items";
-import { Settings } from "battletribes-shared/settings";
-import { StatusEffect } from "battletribes-shared/status-effects";
-import { TribesmanTitle } from "battletribes-shared/titles";
-import { Point } from "battletribes-shared/utils";
-import { damageEntity, HealthComponentArray } from "../../components/HealthComponent";
-import { InventoryComponentArray, getInventory, hasInventory } from "../../components/InventoryComponent";
-import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../components/InventoryUseComponent";
-import { applyKnockback, getVelocityX, getVelocityY, PhysicsComponentArray } from "../../components/PhysicsComponent";
-import { applyStatusEffect } from "../../components/StatusEffectComponent";
+import { Entity, LimbAction } from "battletribes-shared/entities";
+import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsTool } from "battletribes-shared/items/items";
+import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
-import { calculateItemDamage } from "./tribe-member";
-import { ServerComponentType } from "battletribes-shared/components";
-import { BerryBushComponentArray, dropBerryOverEntity } from "../../components/BerryBushComponent";
-import { createEntity } from "../../Entity";
-import { createItemEntityConfig } from "../item-entity";
-import { getEntityRelationship, EntityRelationship } from "../../components/TribeComponent";
-import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, HAMMER_ATTACK_TIMINGS } from "battletribes-shared/attack-patterns";
-import { getEntityLayer, getEntityType } from "../../world";
-import { assertBoxIsCircular } from "../../../../shared/src/boxes/boxes";
-import { BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
-import { hasTitle } from "../../components/TribesmanComponent";
+import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
@@ -105,14 +85,14 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
    const transformComponent = TransformComponentArray.getComponent(attackingEntity);
+   const attackingEntityHitbox = transformComponent.hitboxes[0];
 
    // Add extra range for moving attacks
-   const vx = getVelocityX(transformComponent);
-   const vy = getVelocityY(transformComponent);
+   const vx = attackingEntityHitbox.velocity.x;
+   const vy = attackingEntityHitbox.velocity.y;
    if (vx !== 0 || vy !== 0) {
-      const transformComponent = TransformComponentArray.getComponent(attackingEntity);
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-      const attackAlignment = (vx * Math.sin(transformComponent.relativeRotation) + vy * Math.cos(transformComponent.relativeRotation)) / velocityMagnitude;
+      const attackAlignment = (vx * Math.sin(attackingEntityHitbox.box.angle) + vy * Math.cos(attackingEntityHitbox.box.angle)) / velocityMagnitude;
       if (attackAlignment > 0) {
          const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
          limb.currentActionEndLimbState.extraOffsetY += extraAmount;
@@ -123,69 +103,45 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    return true;
 }
 
-export function calculateRepairTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
-   const transformComponent = TransformComponentArray.getComponent(tribeMember);
+// @Incomplete
+// export function calculateRepairTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
+//    const transformComponent = TransformComponentArray.getComponent(tribeMember);
 
-   let closestEntity: Entity | null = null;
-   let minDistance = Number.MAX_SAFE_INTEGER;
-   for (const targetEntity of targetEntities) {
-      // Don't attack entities without health components
-      if (!HealthComponentArray.hasComponent(targetEntity)) {
-         continue;
-      }
+//    let closestEntity: Entity | null = null;
+//    let minDistance = Number.MAX_SAFE_INTEGER;
+//    for (const targetEntity of targetEntities) {
+//       // Don't attack entities without health components
+//       if (!HealthComponentArray.hasComponent(targetEntity)) {
+//          continue;
+//       }
 
-      // Only repair damaged buildings
-      const healthComponent = HealthComponentArray.getComponent(targetEntity);
-      if (healthComponent.health === healthComponent.maxHealth) {
-         continue;
-      }
+//       // Only repair damaged buildings
+//       const healthComponent = HealthComponentArray.getComponent(targetEntity);
+//       if (healthComponent.health === healthComponent.maxHealth) {
+//          continue;
+//       }
 
-      const relationship = getEntityRelationship(tribeMember, targetEntity);
-      if (relationship !== EntityRelationship.friendlyBuilding) {
-         continue;
-      }
+//       const relationship = getEntityRelationship(tribeMember, targetEntity);
+//       if (relationship !== EntityRelationship.friendlyBuilding) {
+//          continue;
+//       }
 
-      const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
+//       const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
 
-      const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
-      if (dist < minDistance) {
-         closestEntity = targetEntity;
-         minDistance = dist;
-      }
-   }
+//       const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
+//       if (dist < minDistance) {
+//          closestEntity = targetEntity;
+//          minDistance = dist;
+//       }
+//    }
    
-   if (closestEntity === null) return null;
+//    if (closestEntity === null) return null;
 
-   return closestEntity;
-}
-
-
-export function calculateBlueprintWorkTarget(tribeMember: Entity, targetEntities: ReadonlyArray<Entity>): Entity | null {
-   const transformComponent = TransformComponentArray.getComponent(tribeMember);
-
-   let closestEntity: Entity | null = null;
-   let minDistance = Number.MAX_SAFE_INTEGER;
-   for (const targetEntity of targetEntities) {
-      // Don't attack entities without health components
-      if (getEntityType(targetEntity) !== EntityType.blueprintEntity) {
-         continue;
-      }
-
-      const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
-
-      const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
-      if (dist < minDistance) {
-         closestEntity = targetEntity;
-         minDistance = dist;
-      }
-   }
-   
-   if (closestEntity === null) return null;
-
-   return closestEntity;
-}
+//    return closestEntity;
+// }
 
 // @Incomplete
+
 // const item = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
 // if (typeof item !== "undefined" && ITEM_TYPE_RECORD[item.type] === "hammer") {
 //    // First look for friendly buildings to repair

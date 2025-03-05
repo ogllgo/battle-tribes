@@ -1,8 +1,6 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, LimbAction } from "battletribes-shared/entities";
-import { stopEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
-import { PhysicsComponentArray } from "../../../components/PhysicsComponent";
 import { TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
 import { InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
 import { Inventory, InventoryName, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory } from "battletribes-shared/items/items";
@@ -56,9 +54,6 @@ export function continueTribesmanHealing(tribesmanID: Entity, healingItemUseInfo
    if (limbInfo.action !== action) {
       limbInfo.foodEatingTimer = itemInfo.consumeTime;
    }
-   
-   const physicsComponent = PhysicsComponentArray.getComponent(tribesmanID);
-   stopEntity(physicsComponent);
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesmanID);
    tribesmanAIComponent.currentAIType = TribesmanAIType.eating;

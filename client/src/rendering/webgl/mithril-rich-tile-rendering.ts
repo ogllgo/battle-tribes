@@ -2,7 +2,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { SubtileType } from "../../../../shared/src/tiles";
 import { clampToBoardDimensions } from "../../../../shared/src/utils";
 import Camera from "../../Camera";
-import Layer, { getTileIndexIncludingEdges } from "../../Layer";
+import Layer, { getSubtileIndex, getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getCurrentLayer, surfaceLayer } from "../../world";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
@@ -99,14 +99,15 @@ const getFloorVertices = (layer: Layer): Array<number> => {
 const getWallVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 
-   const minSubtileX = Math.floor(Camera.minVisibleX / Settings.SUBTILE_SIZE);
-   const maxSubtileX = Math.floor(Camera.maxVisibleX / Settings.SUBTILE_SIZE);
-   const minSubtileY = Math.floor(Camera.minVisibleY / Settings.SUBTILE_SIZE);
-   const maxSubtileY = Math.floor(Camera.maxVisibleY / Settings.SUBTILE_SIZE);
+   const minSubtileX = clampToBoardDimensions(Math.floor(Camera.minVisibleX / Settings.SUBTILE_SIZE));
+   const maxSubtileX = clampToBoardDimensions(Math.floor(Camera.maxVisibleX / Settings.SUBTILE_SIZE));
+   const minSubtileY = clampToBoardDimensions(Math.floor(Camera.minVisibleY / Settings.SUBTILE_SIZE));
+   const maxSubtileY = clampToBoardDimensions(Math.floor(Camera.maxVisibleY / Settings.SUBTILE_SIZE));
 
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-         if (layer.getWallSubtileType(subtileX, subtileY) === SubtileType.none) {
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (layer.getSubtileType(subtileIndex) === SubtileType.none) {
             continue;
          }
          

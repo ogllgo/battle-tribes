@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { getTileIndexIncludingEdges, getTileX, getTileY, lerp, randItem, TileIndex } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randItem, TileIndex } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createGuardianConfig } from "../entities/mobs/guardian";
 import { createEntity } from "../Entity";
@@ -224,10 +224,7 @@ export function spawnGuardians(): void {
             }
 
             if (isValid) {
-               const config = createGuardianConfig(tiles);
-               config.components[ServerComponentType.transform].position.x = x;
-               config.components[ServerComponentType.transform].position.y = y;
-               config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+               const config = createGuardianConfig(new Point(x, y), 2 * Math.PI * Math.random(), tiles);
                createEntity(config, surfaceLayer, 0);
                break;
             }

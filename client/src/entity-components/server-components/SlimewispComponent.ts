@@ -1,18 +1,17 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
-import { getEntityLayer } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 
 export interface SlimewispComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface SlimewispComponent {}
 
@@ -21,9 +20,9 @@ const RADIUS = 16;
 // @Cleanup @Memory: Same as slime's
 const IGNORED_TILE_SPEED_MULTIPLIERS = [TileType.slime];
 
-export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentParams, RenderParts>(ServerComponentType.slimewisp, true, {
+export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentParams, IntermediateInfo>(ServerComponentType.slimewisp, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -37,15 +36,18 @@ function createParamsFromData(): SlimewispComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(`entities/slimewisp/slimewisp.png`)
    );
    renderPart.opacity = 0.8;
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -79,20 +81,22 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, RADIUS);
+   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 
    for (let i = 0; i < 2; i++) {
-      createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS * Math.random());
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   createSlimePoolParticle(transformComponent.position.x, transformComponent.position.y, RADIUS);
+   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 
    for (let i = 0; i < 3; i++) {
-      createSlimeSpeckParticle(transformComponent.position.x, transformComponent.position.y, RADIUS * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS * Math.random());
    }
 }

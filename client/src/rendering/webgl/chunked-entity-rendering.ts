@@ -151,9 +151,10 @@ const getChunkIndex = (chunkX: number, chunkY: number): number => {
 
 const getEntityChunkIndex = (entity: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   const chunkX = Math.floor(transformComponent.position.x / Settings.CHUNK_UNITS);
-   const chunkY = Math.floor(transformComponent.position.y / Settings.CHUNK_UNITS);
+   const chunkX = Math.floor(hitbox.box.position.x / Settings.CHUNK_UNITS);
+   const chunkY = Math.floor(hitbox.box.position.y / Settings.CHUNK_UNITS);
 
    return getChunkIndex(chunkX, chunkY);
 }
@@ -204,7 +205,7 @@ export function registerChunkRenderedEntity(entity: Entity, layer: Layer, render
    const bufferIndex = getFreeSpaceInChunk(chunkData, renderLayer);
    const renderLayerInfo = CHUNKED_LAYER_INFO_RECORD[renderLayer];
 
-   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.allRenderThings.length - 1);
+   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.renderPartsByZIndex.length - 1);
 
    chunkData.bufferIndexToEntityIDRecord[bufferIndex] = entity;
    chunkData.entityIDToBufferIndexRecord[entity] = bufferIndex;
@@ -231,7 +232,7 @@ export function removeChunkRenderedEntity(entity: Entity, layer: Layer, renderLa
 
    const renderLayerInfo = CHUNKED_LAYER_INFO_RECORD[renderLayer];
 
-   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.allRenderThings.length - 1);
+   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.renderPartsByZIndex.length - 1);
 
    // Clear data
    const renderPartIdx = bufferIndex * renderLayerInfo.maxRenderPartsPerEntity;
@@ -261,7 +262,7 @@ export function updateChunkRenderedEntity(renderInfo: EntityRenderInfo, renderLa
 
    const renderLayerInfo = CHUNKED_LAYER_INFO_RECORD[renderLayer];
 
-   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.allRenderThings.length - 1);
+   registerBufferChange(layer, renderLayer, chunkIdx, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity, bufferIndex * renderLayerInfo.maxRenderPartsPerEntity + renderInfo.renderPartsByZIndex.length - 1);
 
    const renderPartIdx = bufferIndex * renderLayerInfo.maxRenderPartsPerEntity;
    setRenderInfoInVertexData(renderInfo, chunkData.vertexData, chunkData.indexData, renderPartIdx);

@@ -2,27 +2,26 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { randFloat } from "battletribes-shared/utils";
 import { createFlyParticle } from "../../particles";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface PunjiSticksComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface PunjiSticksComponent {
    ticksSinceLastFly: number;
    ticksSinceLastFlySound: number;
 }
 
-export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, RenderParts>(ServerComponentType.punjiSticks, true, {
+export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, IntermediateInfo>(ServerComponentType.punjiSticks, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -32,12 +31,20 @@ export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksCom
    onDie: onDie
 });
 
-function createParamsFromData(): PunjiSticksComponentParams {
+const fillParams = (): PunjiSticksComponentParams => {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<never, never>): RenderParts {
-   const isAttachedToWall = entityConfig.entityType === EntityType.wallPunjiSticks;
+export function createPunjiSticksComponentParams(): PunjiSticksComponentParams {
+   return fillParams();
+}
+
+function createParamsFromData(): PunjiSticksComponentParams {
+   return fillParams();
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const isAttachedToWall = entityParams.entityType === EntityType.wallPunjiSticks;
    let textureArrayIndex: number;
    if (isAttachedToWall) {
       textureArrayIndex = getTextureArrayIndex("entities/wall-punji-sticks/wall-punji-sticks.png");
@@ -45,13 +52,16 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       textureArrayIndex = getTextureArrayIndex("entities/floor-punji-sticks/floor-punji-sticks.png");
    }
 
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       textureArrayIndex
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -74,10 +84,12 @@ function onTick(entity: Entity): void {
    punjiSticksComponent.ticksSinceLastFly++;
    const flyChance = ((punjiSticksComponent.ticksSinceLastFly / Settings.TPS) - 0.25) * 0.2;
    if (Math.random() / Settings.TPS < flyChance) {
+      const hitbox = transformComponent.hitboxes[0];
+      
       const offsetMagnitude = 32 * Math.random();
       const offsetDirection = 2 * Math.PI * Math.random();
-      const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-      const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+      const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+      const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       createFlyParticle(x, y);
       punjiSticksComponent.ticksSinceLastFly = 0;
    }
@@ -85,7 +97,8 @@ function onTick(entity: Entity): void {
    punjiSticksComponent.ticksSinceLastFlySound++;
    const soundChance = ((punjiSticksComponent.ticksSinceLastFlySound / Settings.TPS) - 0.3) * 2;
    if (Math.random() < soundChance / Settings.TPS) {
-      playSoundOnEntity("flies.mp3", 0.15, randFloat(0.9, 1.1), entity, false);
+      const hitbox = transformComponent.hitboxes[0];
+      playSoundOnHitbox("flies.mp3", 0.15, randFloat(0.9, 1.1), hitbox, false);
       punjiSticksComponent.ticksSinceLastFlySound = 0;
    }
 }
@@ -95,9 +108,13 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-hit.mp3", 0.3, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("wooden-spikes-hit.mp3", 0.3, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("wooden-spikes-destroy.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("wooden-spikes-destroy.mp3", 0.4, 1, hitbox, false);
 }

@@ -12,7 +12,7 @@ import { SpikesComponentArray } from "../../components/SpikesComponent";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { entityExists, getEntityType, getGameTicks } from "../../world";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -24,17 +24,7 @@ import { PlayerComponent } from "../../components/PlayerComponent";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import PlayerClient from "../../server/PlayerClient";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.tribe
-   | ServerComponentType.tribeMember
-   | ServerComponentType.tribesman
-   | ServerComponentType.player
-   | ServerComponentType.inventory
-   | ServerComponentType.inventoryUse;
+import { createHitbox } from "../../hitboxes";
 
 const getHitboxRadius = (tribeType: TribeType): number => {
    switch (tribeType) {
@@ -50,9 +40,10 @@ const getHitboxRadius = (tribeType: TribeType): number => {
    }
 }
 
-export function createPlayerConfig(tribe: Tribe, playerClient: PlayerClient): EntityConfig<ComponentTypes> {
+export function createPlayerConfig(position: Point, rotation: number, tribe: Tribe, playerClient: PlayerClient): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -152,11 +143,14 @@ const modifyTunnel = (player: Entity, tunnel: Entity): void => {
    switch (tunnelComponent.doorBitset) {
       case 0b00: {
          const playerTransformComponent = TransformComponentArray.getComponent(player);
+         const playerHitbox = playerTransformComponent.hitboxes[0];
+         
          const tunnelTransformComponent = TransformComponentArray.getComponent(tunnel);
+         const tunnelHitbox = tunnelTransformComponent.hitboxes[0];
          
          // Place the door blueprint on whichever side is closest to the player
-         const dirToPlayer = tunnelTransformComponent.position.calculateAngleBetween(playerTransformComponent.position);
-         const dot = Math.sin(tunnelTransformComponent.relativeRotation) * Math.sin(dirToPlayer) + Math.cos(tunnelTransformComponent.relativeRotation) * Math.cos(dirToPlayer);
+         const dirToPlayer = tunnelHitbox.box.position.calculateAngleBetween(playerHitbox.box.position);
+         const dot = Math.sin(tunnelHitbox.box.angle) * Math.sin(dirToPlayer) + Math.cos(tunnelHitbox.box.relativeAngle) * Math.cos(dirToPlayer);
 
          if (dot > 0) {
             // Top door

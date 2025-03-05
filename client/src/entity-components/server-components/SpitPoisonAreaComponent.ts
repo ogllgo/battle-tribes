@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { playSound, Sound } from "../../sound";
+import { playSoundOnHitbox, SoundInfo } from "../../sound";
 import { Settings } from "battletribes-shared/settings";
 import { lerp } from "battletribes-shared/utils";
 import { createAcidParticle, createPoisonBubble } from "../../particles";
@@ -7,7 +7,6 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
 
 const enum Vars {
    MAX_RANGE = 55
@@ -16,16 +15,15 @@ const enum Vars {
 export interface SpitPoisonAreaComponentParams {}
 
 export interface SpitPoisonAreaComponent {
-   readonly trackSource: AudioBufferSourceNode;
-   readonly sound: Sound;
+   soundInfo: SoundInfo | null;
 }
 
 export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentParams, never>(ServerComponentType.spitPoisonArea, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
+   onJoin: onJoin,
    onTick: onTick,
-   onRemove: onRemove,
    padData: padData,
    updateFromData: updateFromData
 });
@@ -34,27 +32,30 @@ function createParamsFromData(): SpitPoisonAreaComponentParams {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform, never>): SpitPoisonAreaComponent {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
-
-   const audioInfo = playSound("acid-burn.mp3", 0.25, 1, transformComponentParams.position, entityConfig.layer);
-   // @Temporary @Bug @Hack: FIX
-   if (audioInfo === null) {
-      throw new Error();
-   }
-   const trackSource = audioInfo.trackSource;
-   const sound = audioInfo.sound;
-
-   trackSource.loop = true;
-
+function createComponent(): SpitPoisonAreaComponent {
    return {
-      trackSource: trackSource,
-      sound: sound
+      soundInfo: null
    };
 }
 
 function getMaxRenderParts(): number {
    return 0;
+}
+
+// @INCOMPLETE: Won't play when you walk into discovering a previously-offscreen spit poison!
+function onJoin(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
+   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
+   
+   spitPoisonAreaComponent.soundInfo = playSoundOnHitbox("acid-burn.mp3", 0.25, 1, hitbox, true);
+   // @Temporary @Bug @Hack: FIX
+   if (spitPoisonAreaComponent.soundInfo === null) {
+      throw new Error();
+   }
+
+   spitPoisonAreaComponent.soundInfo.trackSource.loop = true;
 }
 
 function onTick(entity: Entity): void {
@@ -65,14 +66,16 @@ function onTick(entity: Entity): void {
    const box = hitbox.box as CircularBox;
    const range = box.radius;
 
-   spitPoisonAreaComponent.sound.volume = lerp(0.25, 0, 1 - range / Vars.MAX_RANGE);
+   if (spitPoisonAreaComponent.soundInfo !== null) {
+      spitPoisonAreaComponent.soundInfo.sound.volume = lerp(0.25, 0, 1 - range / Vars.MAX_RANGE);
+   }
 
    if (Vars.MAX_RANGE * Math.random() < range) {
       // Calculate spawn position
       const offsetMagnitude = range * Math.random();
       const moveDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = transformComponent.position.x + offsetMagnitude * Math.sin(moveDirection);
-      const spawnPositionY = transformComponent.position.y + offsetMagnitude * Math.cos(moveDirection);
+      const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(moveDirection);
+      const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(moveDirection);
 
       createPoisonBubble(spawnPositionX, spawnPositionY, 1);
    }
@@ -83,15 +86,10 @@ function onTick(entity: Entity): void {
 
    const offsetMagnitude = range * Math.random();
    const offsetDirection = 2 * Math.PI * Math.random();
-   const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-   const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+   const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+   const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
    createAcidParticle(x, y);
-}
-
-function onRemove(entity: Entity): void {
-   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
-   spitPoisonAreaComponent.trackSource.disconnect();
 }
 
 function padData(): void {}

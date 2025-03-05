@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -25,6 +25,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { createHitbox } from "../../hitboxes";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
@@ -32,19 +33,6 @@ export const enum CowVars {
    MIN_FOLLOW_COOLDOWN = 15 * Settings.TPS,
    MAX_FOLLOW_COOLDOWN = 30 * Settings.TPS
 }
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.aiHelper
-   | ServerComponentType.attackingEntities
-   | ServerComponentType.escapeAI
-   | ServerComponentType.followAI
-   | ServerComponentType.rideable
-   | ServerComponentType.loot
-   | ServerComponentType.taming
-   | ServerComponentType.cow;
 
 registerEntityTamingSpec(EntityType.cow, {
    maxTamingTier: 3,
@@ -104,15 +92,15 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-export function createCowConfig(): EntityConfig<ComponentTypes> {
+export function createCowConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent(0);
 
    // Body hitbox
-   const bodyHitbox = createHitbox(new RectangularBox(null, new Point(0, -20), 50, 80, 0), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), rotation, 50, 80), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    transformComponent.addHitbox(bodyHitbox, null);
    
    // Head hitbox
-   const headHitbox = createHitbox(new CircularBox(bodyHitbox.box, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    transformComponent.addHitbox(headHitbox, null);
    transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4);
 
@@ -122,7 +110,7 @@ export function createCowConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(320);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 320);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);

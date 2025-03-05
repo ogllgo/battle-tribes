@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
 import { Point, angle, assert, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
-import { Light, attachLightToEntity, createLight, removeLightsAttachedToEntity } from "../../lights";
+import { Light, attachLightToRenderPart, createLight, removeAllAttachedLights } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createLeafParticle, createSprintParticle, createTitleObtainParticle, LeafParticleSize } from "../../particles";
@@ -12,18 +12,16 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
-import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { TribeType } from "../../../../shared/src/tribes";
-import { EntityRenderInfo } from "../../EntityRenderInfo";  
-import { EntityConfig } from "../ComponentArray";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { InventoryName, ItemType } from "../../../../shared/src/items/items";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { InventoryComponentArray, getInventory } from "./InventoryComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { TileType } from "../../../../shared/src/tiles";
@@ -35,7 +33,7 @@ export interface TribesmanComponentParams {
    readonly titles: ReadonlyArray<TitleGenerationInfo>;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly bodyRenderPart: VisualRenderPart;
    readonly limbRenderParts: ReadonlyArray<VisualRenderPart>;
 }
@@ -229,9 +227,9 @@ export function tribesmanHasTitle(tribesmanComponent: TribesmanComponent, title:
    return false;
 }
 
-export const TribesmanComponentArray = new ServerComponentArray<TribesmanComponent, TribesmanComponentParams, RenderParts>(ServerComponentType.tribesman, true, {
+export const TribesmanComponentArray = new ServerComponentArray<TribesmanComponent, TribesmanComponentParams, IntermediateInfo>(ServerComponentType.tribesman, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -350,8 +348,9 @@ const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): str
    }
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribe | ServerComponentType.tribesman, never>): RenderParts {
-   const tribeComponentParams = entityConfig.serverComponents[ServerComponentType.tribe];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
    
    // @Temporary @Hack
    // const radius = tribesman.type === EntityType.player || tribesman.type === EntityType.tribeWarrior ? 32 : 28;
@@ -362,20 +361,20 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    // 
    
    const bodyRenderPart = new TexturedRenderPart(
-      null,
+      transformComponentParams.hitboxes[0],
       2,
       0,
-      getTextureArrayIndex(getBodyTextureSource(entityConfig.entityType, tribeComponentParams.tribeType))
+      getTextureArrayIndex(getBodyTextureSource(entityParams.entityType, tribeComponentParams.tribeType))
    );
-   renderInfo.attachRenderPart(bodyRenderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
 
    if (tribeComponentParams.tribeType === TribeType.goblins) {
-      const tribesmanComponentParams = entityConfig.serverComponents[ServerComponentType.tribesman];
+      const tribesmanComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesman]!;
       const warPaintType = tribesmanComponentParams.warpaintType;
       assert(warPaintType !== null);
       
       let textureSource: string;
-      if (entityConfig.entityType === EntityType.tribeWarrior) {
+      if (entityParams.entityType === EntityType.tribeWarrior) {
          textureSource = `entities/goblins/warrior-warpaint-${warPaintType}.png`;
       } else {
          textureSource = `entities/goblins/goblin-warpaint-${warPaintType}.png`;
@@ -383,17 +382,17 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       
       // Goblin warpaint
       const warpaintRenderPart = new TexturedRenderPart(
-         null,
+         bodyRenderPart,
          4,
          0,
          getTextureArrayIndex(textureSource)
       );
       warpaintRenderPart.addTag("tribeMemberComponent:warpaint");
-      renderInfo.attachRenderPart(warpaintRenderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(warpaintRenderPart);
 
       // Left ear
       const leftEarRenderPart = new TexturedRenderPart(
-         null,
+         bodyRenderPart,
          3,
          -Math.PI/2 + GOBLIN_EAR_ANGLE,
          getTextureArrayIndex("entities/goblins/goblin-ear.png")
@@ -402,11 +401,11 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       leftEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
       leftEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
       leftEarRenderPart.setFlipX(true);
-      renderInfo.attachRenderPart(leftEarRenderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(leftEarRenderPart);
 
       // Right ear
       const rightEarRenderPart = new TexturedRenderPart(
-         null,
+         bodyRenderPart,
          3,
          -Math.PI/2 + GOBLIN_EAR_ANGLE,
          getTextureArrayIndex("entities/goblins/goblin-ear.png")
@@ -414,14 +413,14 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       rightEarRenderPart.addTag("tribeMemberComponent:ear");
       rightEarRenderPart.offset.x = (radius + GOBLIN_EAR_OFFSET) * Math.sin(GOBLIN_EAR_ANGLE);
       rightEarRenderPart.offset.y = (radius + GOBLIN_EAR_OFFSET) * Math.cos(GOBLIN_EAR_ANGLE);
-      renderInfo.attachRenderPart(rightEarRenderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(rightEarRenderPart);
    }
 
    // Hands
    const limbRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < 2; i++) {
       const attachPoint = new RenderAttachPoint(
-         null,
+         bodyRenderPart,
          1,
          0
       );
@@ -429,17 +428,17 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          attachPoint.setFlipX(true);
       }
       attachPoint.addTag("inventoryUseComponent:attachPoint");
-      renderInfo.attachRenderPart(attachPoint);
+      entityIntermediateInfo.renderInfo.attachRenderPart(attachPoint);
       
       const handRenderPart = new TexturedRenderPart(
          attachPoint,
          1.2,
          0,
-         getTextureArrayIndex(getFistTextureSource(entityConfig.entityType, tribeComponentParams.tribeType))
+         getTextureArrayIndex(getFistTextureSource(entityParams.entityType, tribeComponentParams.tribeType))
       );
       limbRenderParts.push(handRenderPart);
       handRenderPart.addTag("inventoryUseComponent:hand");
-      renderInfo.attachRenderPart(handRenderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(handRenderPart);
    }
 
    return {
@@ -448,20 +447,20 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribesman, never>, renderParts: RenderParts): TribesmanComponent {
-   const tribesmanComponentParams = entityConfig.serverComponents[ServerComponentType.tribesman];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): TribesmanComponent {
+   const tribesmanComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesman]!;
    
    return {
-      bodyRenderPart: renderParts.bodyRenderPart,
-      handRenderParts: renderParts.limbRenderParts,
+      bodyRenderPart: intermediateInfo.bodyRenderPart,
+      handRenderParts: intermediateInfo.limbRenderParts,
       warpaintType: tribesmanComponentParams.warpaintType,
       titles: tribesmanComponentParams.titles,
       deathbringerEyeLights: []
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.tribe>): number {
-   const tribeComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.tribe];
+function getMaxRenderParts(entityParams: EntityParams): number {
+   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
 
    let maxRenderParts = 0;
 
@@ -491,7 +490,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
       renderInfo.removeOverlayGroup(overlayGroup);
    }
    // @Hack @Incomplete: only remove lights added by titles
-   removeLightsAttachedToEntity(entity);
+   removeAllAttachedLights(renderInfo);
    
    // Add for all titles
    for (let i = 0; i < tribeMemberComponent.titles.length; i++) {
@@ -515,7 +514,10 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
                   0
                );
                tribeMemberComponent.deathbringerEyeLights.push(light);
-               attachLightToEntity(light, entity);
+
+               // @Hack
+               const renderInfo = getEntityRenderInfo(entity);
+               attachLightToRenderPart(light, renderInfo.renderPartsByZIndex[0], entity);
             }
             
             break;
@@ -528,8 +530,11 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
             const offsetX = (20 - 5 * 4 / 2) * (isFlipped ? 1 : -1);
             const offsetY = 24 - 6 * 4 / 2;
 
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const hitbox = transformComponent.hitboxes[0];
+
             const renderPart = new TexturedRenderPart(
-               null,
+               hitbox,
                2.2,
                0,
                getTextureArrayIndex("entities/miscellaneous/eye-scar.png")
@@ -546,8 +551,11 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
          // Create shrewd eyes
          case TribesmanTitle.shrewd: {
             for (let i = 0; i < 2; i++) {
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               const hitbox = transformComponent.hitboxes[0];
+
                const renderPart = new TexturedRenderPart(
-                  null,
+                  hitbox,
                   2.1,
                   0,
                   // @Incomplete
@@ -584,9 +592,12 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
             const numLeaves = title === TribesmanTitle.berrymuncher ? 3 : 5;
             for (let i = 0; i < numLeaves; i++) {
                const angle = ((i - (numLeaves - 1) / 2) * Math.PI * 0.2) + Math.PI;
+
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               const hitbox = transformComponent.hitboxes[0];
                
                const renderPart = new TexturedRenderPart(
-                  null,
+                  hitbox,
                   0,
                   angle + Math.PI/2 + randFloat(-0.5, 0.5),
                   getTextureArrayIndex("entities/miscellaneous/tribesman-leaf.png")
@@ -604,8 +615,11 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
             break;
          }
          case TribesmanTitle.yetisbane: {
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const hitbox = transformComponent.hitboxes[0];
+
             const renderPart = new TexturedRenderPart(
-               null,
+               hitbox,
                0,
                0,
                getTextureArrayIndex("entities/miscellaneous/tribesman-fangs.png")
@@ -637,8 +651,11 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
             break;
          }
          case TribesmanTitle.wellful: {
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const hitbox = transformComponent.hitboxes[0];
+
             const renderPart = new TexturedRenderPart(
-               null,
+               hitbox,
                2.1,
                0,
                getTextureArrayIndex("entities/miscellaneous/tribesman-health-patch.png")
@@ -656,11 +673,12 @@ const updateTitles = (tribeMemberComponent: TribesmanComponent, entity: Entity, 
       // If at least 1 title is added, do particle effects
       if (titlesArrayHasExtra(newTitles, tribeMemberComponent.titles)) {
          const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
          for (let i = 0; i < 25; i++) {
             const offsetMagnitude = randFloat(12, 34);
             const offsetDirection = 2 * Math.PI * Math.random();
-            const spawnPositionX = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-            const spawnPositionY = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+            const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+            const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
             const velocityMagnitude = randFloat(80, 120);
             const vx = velocityMagnitude * Math.sin(offsetDirection);
@@ -689,6 +707,8 @@ function onTick(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = transformComponent.hitboxes[0];
+   
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
@@ -711,13 +731,13 @@ function onTick(entity: Entity): void {
    }
 
    // Sprinter particles
-   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && transformComponent.selfVelocity.length() > 100) {
-      const sprintParticleSpawnRate = Math.sqrt(transformComponent.selfVelocity.length() * 0.8);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && entityHitbox.velocity.length() > 100) {
+      const sprintParticleSpawnRate = Math.sqrt(entityHitbox.velocity.length() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
          const offsetDirection = 2 * Math.PI * Math.random();
-         const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-         const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+         const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+         const y = entityHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
          
          const velocityMagnitude = 32 * Math.random();
          const velocityDirection = 2 * Math.PI * Math.random();
@@ -731,13 +751,13 @@ function onTick(entity: Entity): void {
    if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.I_TPS) {
       const offsetMagnitude = randFloat(36, 50);
       const offsetDirection = 2 * Math.PI * Math.random();
-      const x = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-      const y = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+      const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+      const y = entityHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       
       const velocityMagnitude = randFloat(45, 75);
       const velocityDirection = offsetDirection + Math.PI * 0.5;
-      const vx = transformComponent.selfVelocity.x + velocityMagnitude * Math.sin(velocityDirection);
-      const vy = transformComponent.selfVelocity.y + velocityMagnitude * Math.cos(velocityDirection);
+      const vx = entityHitbox.velocity.x + velocityMagnitude * Math.sin(velocityDirection);
+      const vy = entityHitbox.velocity.y + velocityMagnitude * Math.cos(velocityDirection);
       
       createSprintParticle(x, y, vx, vy);
    }
@@ -788,36 +808,37 @@ function updatePlayerFromData(reader: PacketReader): void {
    
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Blood pool particle
-   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+   createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
-      const spawnPositionX = transformComponent.position.x + 32 * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnEntity(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, entity, true);
+         playSoundOnHitbox(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, hitbox, true);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnEntity("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, true);
+         playSoundOnHitbox("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, true);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnEntity("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, true);
+         playSoundOnHitbox("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, true);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnEntity("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, true);
+         playSoundOnHitbox("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, hitbox, true);
          break;
       }
    }
@@ -831,8 +852,8 @@ function onHit(entity: Entity, hitData: HitData): void {
          const moveDirection = 2 * Math.PI * Math.random();
 
          const radius = getHumanoidRadius(entity);
-         const spawnPositionX = transformComponent.position.x + radius * Math.sin(moveDirection);
-         const spawnPositionY = transformComponent.position.y + radius * Math.cos(moveDirection);
+         const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
+         const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
 
          createLeafParticle(spawnPositionX, spawnPositionY, moveDirection + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
       }
@@ -841,26 +862,27 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+   createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);
 
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnEntity(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, entity, false);
+         playSoundOnHitbox(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, hitbox, false);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnEntity("plainsperson-die-1.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("plainsperson-die-1.mp3", 0.4, 1, hitbox, false);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnEntity("barbarian-die-1.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("barbarian-die-1.mp3", 0.4, 1, hitbox, false);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnEntity("frostling-die.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("frostling-die.mp3", 0.4, 1, hitbox, false);
          break;
       }
    }

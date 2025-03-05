@@ -1,23 +1,22 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
 import { randFloat, angle, randItem, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface TreePlantedComponentParams {
    readonly growthProgress: number;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly renderPart: TexturedRenderPart;
 }
 
@@ -28,9 +27,9 @@ export interface TreePlantedComponent {
 
 const TEXTURE_SOURCES = ["entities/plant/tree-sapling-1.png", "entities/plant/tree-sapling-2.png", "entities/plant/tree-sapling-3.png", "entities/plant/tree-sapling-4.png", "entities/plant/tree-sapling-5.png", "entities/plant/tree-sapling-6.png", "entities/plant/tree-sapling-7.png", "entities/plant/tree-sapling-8.png", "entities/plant/tree-sapling-9.png", "entities/plant/tree-sapling-10.png", "entities/plant/tree-sapling-11.png"];
 
-export const TreePlantedComponentArray = new ServerComponentArray<TreePlantedComponent, TreePlantedComponentParams, RenderParts>(ServerComponentType.treePlanted, true, {
+export const TreePlantedComponentArray = new ServerComponentArray<TreePlantedComponent, TreePlantedComponentParams, IntermediateInfo>(ServerComponentType.treePlanted, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -51,27 +50,30 @@ function createParamsFromData(reader: PacketReader): TreePlantedComponentParams 
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.treePlanted, never>): RenderParts {
-   const growthProgress = entityConfig.serverComponents[ServerComponentType.treePlanted].growthProgress;
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+
+   const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       9,
       0,
       getTextureArrayIndex(getTextureSource(growthProgress))
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.treePlanted, never>, renderParts: RenderParts): TreePlantedComponent {
-   const growthProgress = entityConfig.serverComponents[ServerComponentType.treePlanted].growthProgress;
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): TreePlantedComponent {
+   const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
    return {
       growthProgress: growthProgress,
-      renderPart: renderParts.renderPart
+      renderPart: intermediateInfo.renderPart
    };
 }
 
@@ -92,6 +94,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const treePlantedComponent = TreePlantedComponentArray.getComponent(entity);
    
    const radius = Math.floor(treePlantedComponent.growthProgress * 10);
@@ -103,8 +107,8 @@ function onHit(entity: Entity, hitData: HitData): void {
    {
       const moveDirection = 2 * Math.PI * Math.random();
 
-      const spawnPositionX = transformComponent.position.x + radius * Math.sin(moveDirection);
-      const spawnPositionY = transformComponent.position.y + radius * Math.cos(moveDirection);
+      const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
+      const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
 
       createLeafParticle(spawnPositionX, spawnPositionY, moveDirection + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
    }
@@ -112,28 +116,30 @@ function onHit(entity: Entity, hitData: HitData): void {
    // Create leaf specks
    const numSpecks = Math.floor(treePlantedComponent.growthProgress * 7) + 2;
    for (let i = 0; i < numSpecks; i++) {
-      createLeafSpeckParticle(transformComponent.position.x, transformComponent.position.y, radius, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
+      createLeafSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
    }
 
    if (isDamagingHit) {
       // Create wood specks at the point of hit
 
-      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
-      const spawnPositionX = transformComponent.position.x + (radius + 2) * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + (radius + 2) * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + (radius + 2) * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + (radius + 2) * Math.cos(offsetDirection);
       for (let i = 0; i < 4; i++) {
          createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
       }
       
-      playSoundOnEntity(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity, false);
+      playSoundOnHitbox(randItem(TREE_HIT_SOUNDS), 0.4, 1, hitbox, false);
    } else {
       // @Temporary
-      playSoundOnEntity("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
    }
 }
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, hitbox, false);
 }

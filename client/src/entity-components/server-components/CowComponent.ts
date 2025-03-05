@@ -3,18 +3,16 @@ import { Settings } from "battletribes-shared/settings";
 import { angle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitData } from "../../../../shared/src/client-server-types";
-import { EntityConfig } from "../ComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
 
@@ -25,7 +23,7 @@ export interface CowComponentParams {
    readonly isRamming: boolean;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly headRenderPart: RenderPart;
    readonly attackHalo: RenderPart | null;
 }
@@ -41,9 +39,9 @@ export interface CowComponent {
    attackHalo: RenderPart | null;
 }
 
-export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, RenderParts>(ServerComponentType.cow, true, {
+export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, IntermediateInfo>(ServerComponentType.cow, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -80,10 +78,10 @@ const createAttackHalo = (headRenderPart: RenderPart): RenderPart => {
    return attackHalo;
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.cow, never>): RenderParts {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
-   const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
+   const cowComponentParams = entityParams.serverComponentParams[ServerComponentType.cow]!;
    const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
 
    let headRenderPart!: RenderPart;
@@ -95,7 +93,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
             0,
             getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
          );
-         renderInfo.attachRenderPart(bodyRenderPart);
+         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
          // Head
          headRenderPart = new TexturedRenderPart(
@@ -105,7 +103,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
             getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
          );
          headRenderPart.addTag("tamingComponent:head");
-         renderInfo.attachRenderPart(headRenderPart);
+         entityIntermediateInfo.renderInfo.attachRenderPart(headRenderPart);
       }
    }
 
@@ -113,7 +111,7 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    let attackHalo: RenderPart | null;
    if (cowComponentParams.isAttacking) {
       attackHalo = createAttackHalo(headRenderPart);
-      renderInfo.attachRenderPart(attackHalo);
+      entityIntermediateInfo.renderInfo.attachRenderPart(attackHalo);
    } else {
       attackHalo = null;
    }
@@ -124,16 +122,16 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cow, never>, renderParts: RenderParts): CowComponent {
-   const cowComponentParams = entityConfig.serverComponents[ServerComponentType.cow];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): CowComponent {
+   const cowComponentParams = entityParams.serverComponentParams[ServerComponentType.cow]!;
    
    return {
       species: cowComponentParams.species,
       grazeProgress: cowComponentParams.grazeProgress,
       isAttacking: cowComponentParams.isAttacking,
       isRamming: cowComponentParams.isRamming,
-      headRenderPart: renderParts.headRenderPart,
-      attackHalo: renderParts.attackHalo
+      headRenderPart: intermediateInfo.headRenderPart,
+      attackHalo: intermediateInfo.attackHalo
    };
 }
 
@@ -146,15 +144,19 @@ function onTick(entity: Entity): void {
 
    if (cowComponent.grazeProgress !== -1 && Board.tickIntervalHasPassed(0.1)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      
       const spawnOffsetMagnitude = 30 * Math.random();
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-      const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+      const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+      const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       createDirtParticle(spawnPositionX, spawnPositionY, ParticleRenderLayer.low);
    }
 
    if (Math.random() < 0.1 / Settings.TPS) {
-      playSoundOnEntity("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, true);
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, hitbox, true);
    }
 
    // @Copynpaste
@@ -205,39 +207,44 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const isRamming = reader.readBoolean();
    reader.padOffset(3);
    if (isRamming && !cowComponent.isRamming) {
-      playSoundOnEntity("cow-angry.mp3", 0.4, 1, entity, true);
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      playSoundOnHitbox("cow-angry.mp3", 0.4, 1, hitbox, true);
    }
    cowComponent.isRamming = isRamming;
 }
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
          
    // Blood pool particles
    for (let i = 0; i < 2; i++) {
-      createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 20);
+      createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    }
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
-      const spawnPositionX = transformComponent.position.x + 32 * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnEntity("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    for (let i = 0; i < 3; i++) {
-      createBloodPoolParticle(transformComponent.position.x, transformComponent.position.y, 35);
+      createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);
    }
 
    createBloodParticleFountain(entity, 0.1, 1.1);
 
-   playSoundOnEntity("cow-die-1.mp3", 0.2, 1, entity, false);
+   playSoundOnHitbox("cow-die-1.mp3", 0.2, 1, hitbox, false);
 }

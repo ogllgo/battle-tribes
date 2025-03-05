@@ -1,24 +1,21 @@
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import Board from "../../Board";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { VisualRenderPart } from "../../render-parts/render-parts";
-import { EntityConfig } from "../ComponentArray";
+import { Hitbox } from "../../hitboxes";
 
 export interface AmmoBoxComponentParams {
    readonly ammoType: TurretAmmoType | null;
    readonly ammoRemaining: number;
 }
 
-export interface RenderParts {
+interface IntermediateInfo {
    readonly ammoWarningRenderPart: VisualRenderPart | null;
 }
 
@@ -29,9 +26,9 @@ export interface AmmoBoxComponent {
    ammoWarningRenderPart: VisualRenderPart | null;
 }
 
-const createAmmoWarningRenderPart = (): VisualRenderPart => {
+const createAmmoWarningRenderPart = (parentHitbox: Hitbox): VisualRenderPart => {
    const renderPart = new TexturedRenderPart(
-      null,
+      parentHitbox,
       999,
       0,
       getTextureArrayIndex("entities/ballista/ammo-warning.png")
@@ -45,30 +42,40 @@ const createAmmoWarningRenderPart = (): VisualRenderPart => {
    return renderPart;
 }
 
-export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent, AmmoBoxComponentParams, RenderParts>(ServerComponentType.ammoBox, true, {
+export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent, AmmoBoxComponentParams, IntermediateInfo>(ServerComponentType.ammoBox, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: createIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
-   const ammoType = reader.readNumber();
-   const ammoRemaining = reader.readNumber();
-
+const fillParams = (ammoType: TurretAmmoType | null, ammoRemaining: number): AmmoBoxComponentParams => {
    return {
       ammoType: ammoType,
       ammoRemaining: ammoRemaining
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.ammoBox, never>): RenderParts {
+export function createAmmoBoxComponentParams(): AmmoBoxComponentParams {
+   return fillParams(null, 0);
+}
+
+function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
+   const ammoType = reader.readNumber();
+   const ammoRemaining = reader.readNumber();
+   return fillParams(ammoType, ammoRemaining);
+}
+
+function createIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    let ammoWarningRenderPart: VisualRenderPart | null;
-   if (entityConfig.serverComponents[ServerComponentType.ammoBox].ammoType === null) {
-      ammoWarningRenderPart = createAmmoWarningRenderPart();
-      renderInfo.attachRenderPart(ammoWarningRenderPart);
+   if (entityParams.serverComponentParams[ServerComponentType.ammoBox]!.ammoType === null) {
+      const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+      const hitbox = transformComponentParams.hitboxes[0];
+      
+      ammoWarningRenderPart = createAmmoWarningRenderPart(hitbox);
+      intermediateInfo.renderInfo.attachRenderPart(ammoWarningRenderPart);
    } else {
       ammoWarningRenderPart = null;
    }
@@ -78,13 +85,13 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.ammoBox, never>, renderParts: RenderParts): AmmoBoxComponent {
-   const ammoBoxComponentParams = entityConfig.serverComponents[ServerComponentType.ammoBox];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): AmmoBoxComponent {
+   const ammoBoxComponentParams = entityParams.serverComponentParams[ServerComponentType.ammoBox]!;
    
    return {
       ammoType: ammoBoxComponentParams.ammoType,
       ammoRemaining: ammoBoxComponentParams.ammoRemaining,
-      ammoWarningRenderPart: renderParts.ammoWarningRenderPart
+      ammoWarningRenderPart: intermediateInfo.ammoWarningRenderPart
    };
 }
 
@@ -98,15 +105,17 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammo
 
       if (ammoBoxComponent.ammoWarningRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
          
          ammoBoxComponent.ammoWarningRenderPart = new TexturedRenderPart(
-            null,
+            hitbox,
             999,
             0,
             getTextureArrayIndex("entities/ballista/ammo-warning.png")
          );
-         ammoBoxComponent.ammoWarningRenderPart.offset.x = rotateXAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
-         ammoBoxComponent.ammoWarningRenderPart.offset.y = rotateYAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
+         // @Temporary @Incomplete
+         // ammoBoxComponent.ammoWarningRenderPart.offset.x = rotateXAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
+         // ammoBoxComponent.ammoWarningRenderPart.offset.y = rotateYAroundOrigin(BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y, transformComponent.rotation);
          ammoBoxComponent.ammoWarningRenderPart.inheritParentRotation = false;
 
          const renderInfo = getEntityRenderInfo(entity);

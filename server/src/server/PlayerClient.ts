@@ -6,8 +6,6 @@ import WebSocket from "ws";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
-import { TransformComponentArray } from "../components/TransformComponent";
-import { entityExists } from "../world";
 
 export const enum PlayerClientVars {
    VIEW_PADDING = 128
@@ -26,8 +24,8 @@ class PlayerClient {
    public clientIsActive = false;
 
    // When the player is dead, we need to remember where their final position is so they can receive updates while dead
-   public lastViewedPositionX = 0;
-   public lastViewedPositionY = 0;
+   public lastViewedPositionX: number;
+   public lastViewedPositionY: number;
    /** The last layer that the player was viewing. */
    public lastLayer: Layer;
    public screenWidth: number;
@@ -65,6 +63,8 @@ class PlayerClient {
       this.socket = socket;
       this.tribe = tribe;
       this.lastLayer = layer;
+      this.lastViewedPositionX = playerPosition.x;
+      this.lastViewedPositionY = playerPosition.y;
       this.screenWidth = screenWidth;
       this.screenHeight = screenHeight;
       this.instance = instance;
@@ -72,14 +72,14 @@ class PlayerClient {
       this.username = username;
       this.isDev = isDev;
 
-      this._updateVisibleChunkBounds(playerPosition, screenWidth, screenHeight);
+      this.updateVisibleChunkBounds();
    }
 
-   private _updateVisibleChunkBounds(playerPosition: Point, screenWidth: number, screenHeight: number): void {
-      this.minVisibleX = playerPosition.x - screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
-      this.maxVisibleX = playerPosition.x + screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
-      this.minVisibleY = playerPosition.y - screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
-      this.maxVisibleY = playerPosition.y + screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
+   private updateVisibleChunkBounds(): void {
+      this.minVisibleX = this.lastViewedPositionX - this.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
+      this.maxVisibleX = this.lastViewedPositionX + this.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
+      this.minVisibleY = this.lastViewedPositionY - this.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
+      this.maxVisibleY = this.lastViewedPositionY + this.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
       
       this.minVisibleChunkX = Math.max(Math.min(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
       this.maxVisibleChunkX = Math.max(Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -87,11 +87,10 @@ class PlayerClient {
       this.maxVisibleChunkY = Math.max(Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    }
 
-   public updateVisibleChunkBounds(): void {
-      if (entityExists(this.cameraSubject)) {
-         const transformComponent = TransformComponentArray.getComponent(this.cameraSubject);
-         this._updateVisibleChunkBounds(transformComponent.position, this.screenWidth, this.screenHeight);
-      }
+   public updatePosition(x: number, y: number): void {
+      this.lastViewedPositionX = x;
+      this.lastViewedPositionY = y;
+      this.updateVisibleChunkBounds();
    }
 
    public hasPacketOption(packetOption: GameDataPacketOptions): boolean {

@@ -2,18 +2,17 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, DamageSource, CactusFlowerSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
-import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
 import { getEntityType, destroyEntity } from "../world";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 export interface CactusFlower {
    readonly parentHitboxLocalID: number;
    readonly offsetX: number;
    readonly offsetY: number;
-   readonly rotation: number;
+   readonly angle: number;
    readonly flowerType: number;
    readonly size: CactusFlowerSize;
 }
@@ -43,13 +42,13 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       packet.addNumber(flower.parentHitboxLocalID);
       packet.addNumber(flower.offsetX);
       packet.addNumber(flower.offsetY);
-      packet.addNumber(flower.rotation);
+      packet.addNumber(flower.angle);
       packet.addNumber(flower.flowerType);
       packet.addNumber(flower.size);
    }
 }
 
-function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       destroyEntity(collidingEntity);
       return;
@@ -68,9 +67,9 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, actingHitbox
       return;
    }
 
-   const hitDirection = actingHitbox.box.position.calculateAngleBetween(receivingHitbox.box.position);
+   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 200, hitDirection);
+   hitEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

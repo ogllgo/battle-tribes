@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 interface CarrySlot {
@@ -61,8 +61,8 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
    return createRideableComponentParams(carrySlots);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.rideable, never>): RideableComponent {
-   const rideableComponentParams = entityConfig.serverComponents[ServerComponentType.rideable];
+function createComponent(entityParams: EntityParams): RideableComponent {
+   const rideableComponentParams = entityParams.serverComponentParams[ServerComponentType.rideable]!;
    return {
       carrySlots: rideableComponentParams.carrySlots
    };

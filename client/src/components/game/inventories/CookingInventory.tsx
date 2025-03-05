@@ -6,6 +6,7 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { getEntityType } from "../../../world";
 import { CookingComponentArray } from "../../../entity-components/server-components/CookingComponent";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import Menu from "../menus/Menu";
 
 const CookingInventory = () => {
    const cookingEntity = getSelectedEntity();
@@ -19,7 +20,7 @@ const CookingInventory = () => {
    const heatingBarProgress = cookingComponent.heatingProgress !== -1 ? cookingComponent.heatingProgress : 0;
 
    const entityType = getEntityType(cookingEntity);
-   return <div id="cooking-inventory" className={`heating-inventory inventory${entityType !== EntityType.campfire ? " with-fuel" : ""}`}>
+   return <Menu id="cooking-inventory" className={`heating-inventory inventory${entityType !== EntityType.campfire ? " with-fuel" : ""}`}>
       <ItemSlot validItemSpecifier={(COOKING_INGREDIENT_ITEM_TYPES as unknown as Array<ItemType>).includes} className="ingredient-inventory" entityID={cookingEntity} inventory={ingredientInventory} itemSlot={1} />
       {entityType !== EntityType.campfire ? (
          <ItemSlot validItemSpecifier={(FUEL_SOURCE_ITEM_TYPES as unknown as Array<ItemType>).includes} className="fuel-inventory" entityID={cookingEntity} inventory={fuelInventory} itemSlot={1} />
@@ -30,7 +31,7 @@ const CookingInventory = () => {
          {/* @Cleanup: Hardcoded */}
          <div className="heating-progress-bar-heat" style={{width: heatingBarProgress * 4.5 * 20 + "px"}}></div>
       </div>
-   </div>;
+   </Menu>;
 }
 
 export default CookingInventory;

@@ -4,21 +4,21 @@ import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { EntityConfig } from "../ComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface HutComponentParams {
    readonly doorSwingAmount: number;
    readonly isRecalling: boolean;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly doorRenderParts: ReadonlyArray<VisualRenderPart>;
    readonly recallMarker: VisualRenderPart | null;
 }
@@ -77,29 +77,37 @@ const getDoorXOffset = (hutType: HutType, i: number): number => {
    }
 }
 
-export const HutComponentArray = new ServerComponentArray<HutComponent, HutComponentParams, RenderParts>(ServerComponentType.hut, true, {
+export const HutComponentArray = new ServerComponentArray<HutComponent, HutComponentParams, IntermediateInfo>(ServerComponentType.hut, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): HutComponentParams {
-   const lastDoorSwingTicks = reader.readNumber();
-   const isRecalling = reader.readBoolean();
-   reader.padOffset(3);
-
+const fillParams = (lastDoorSwingTicks: number, isRecalling: boolean): HutComponentParams => {
    return {
       doorSwingAmount: lastDoorSwingTicks,
       isRecalling: isRecalling
    };
 }
 
-const createRecallMarker = (): TexturedRenderPart => {
+export function createHutComponentParams(): HutComponentParams {
+   return fillParams(0, false);
+}
+
+function createParamsFromData(reader: PacketReader): HutComponentParams {
+   const lastDoorSwingTicks = reader.readNumber();
+   const isRecalling = reader.readBoolean();
+   reader.padOffset(3);
+
+   return fillParams(lastDoorSwingTicks, isRecalling);
+}
+
+const createRecallMarker = (parentHitbox: Hitbox): TexturedRenderPart => {
    const recallMarker = new TexturedRenderPart(
-      null,
+      parentHitbox,
       9,
       0,
       getTextureArrayIndex("entities/recall-marker.png")
@@ -109,21 +117,24 @@ const createRecallMarker = (): TexturedRenderPart => {
    return recallMarker;
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.hut, never>): RenderParts {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    return {
-      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
-      recallMarker: entityConfig.serverComponents[ServerComponentType.hut].isRecalling ? createRecallMarker() : null
+      doorRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
+      recallMarker: entityParams.serverComponentParams[ServerComponentType.hut]!.isRecalling ? createRecallMarker(hitbox) : null
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.hut, never>, renderParts: RenderParts): HutComponent {
-   const hutComponentParams = entityConfig.serverComponents[ServerComponentType.hut];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): HutComponent {
+   const hutComponentParams = entityParams.serverComponentParams[ServerComponentType.hut]!;
    
    return {
-      doorRenderParts: renderParts.doorRenderParts,
+      doorRenderParts: intermediateInfo.doorRenderParts,
       doorSwingAmount: hutComponentParams.doorSwingAmount,
       isRecalling: hutComponentParams.isRecalling,
-      recallMarker: renderParts.recallMarker
+      recallMarker: intermediateInfo.recallMarker
    };
 }
 
@@ -169,7 +180,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // @Incomplete: What if this packet is skipped?
    if (lastDoorSwingTicks === Board.serverTicks) {
-      playSoundOnEntity("door-open.mp3", 0.4, 1, entity, false);
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
    }
    
    hutComponent.isRecalling = isRecalling;
@@ -178,7 +191,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    if (hutComponent.isRecalling) {
       if (hutComponent.recallMarker === null) {
-         hutComponent.recallMarker = createRecallMarker();
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
+         
+         hutComponent.recallMarker = createRecallMarker(hitbox);
          const renderInfo = getEntityRenderInfo(entity);
          renderInfo.attachRenderPart(hutComponent.recallMarker);
       }

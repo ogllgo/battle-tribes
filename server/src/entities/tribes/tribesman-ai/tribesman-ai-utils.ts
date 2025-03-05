@@ -1,7 +1,6 @@
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import Tribe from "../../../Tribe";
-import { getEntitiesInRange, stopEntity, willStopAtDesiredDistance } from "../../../ai-shared";
-import { getVelocityX, getVelocityY, PhysicsComponentArray } from "../../../components/PhysicsComponent";
+import { getEntitiesInRange, willStopAtDesiredDistance } from "../../../ai-shared";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getDistanceToNode, findMultiLayerPath, Path } from "../../../pathfinding";
@@ -21,6 +20,7 @@ import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
+import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -117,9 +117,10 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    // @Speed
    // Recalculate if the tribesman isn't making any progress
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
-   const vx = getVelocityX(transformComponent);
-   const vy = getVelocityY(transformComponent);
+   const vx = tribesmanHitbox.velocity.x;
+   const vy = tribesmanHitbox.velocity.y;
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);
@@ -152,11 +153,13 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
 
 const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
+   
    const layer = getEntityLayer(tribesman);
    
    const offsetMagnitude = getHumanoidRadius(transformComponent) + 20;
-   const checkX = transformComponent.position.x + offsetMagnitude * Math.sin(transformComponent.relativeRotation);
-   const checkY = transformComponent.position.y + offsetMagnitude * Math.cos(transformComponent.relativeRotation);
+   const checkX = tribesmanHitbox.box.position.x + offsetMagnitude * Math.sin(tribesmanHitbox.box.angle);
+   const checkY = tribesmanHitbox.box.position.y + offsetMagnitude * Math.cos(tribesmanHitbox.box.angle);
    const entitiesInFront = getEntitiesInRange(layer, checkX, checkY, 40);
    for (let i = 0; i < entitiesInFront.length; i++) {
       const entity = entitiesInFront[i];
@@ -206,18 +209,17 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       const nextNode = nodes[0];
       const targetDirection = getAngleToNode(transformComponent, nextNode);
 
-      const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-      physicsComponent.targetRotation = targetDirection;
-      physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
+      const tribesmanHitbox = transformComponent.hitboxes[0];
+
+      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
-      if (willStopAtDesiredDistance(transformComponent, -2, distFromNode)) {
-         stopEntity(physicsComponent);
-      } else {
-         const acceleration = getTribesmanAcceleration(tribesman);
-         physicsComponent.acceleration.x = acceleration * Math.sin(transformComponent.relativeRotation);
-         physicsComponent.acceleration.y = acceleration * Math.cos(transformComponent.relativeRotation);
+      if (!willStopAtDesiredDistance(tribesmanHitbox, -2, distFromNode)) {
+         const accelerationMagnitude = getTribesmanAcceleration(tribesman);
+         const accelerationX = accelerationMagnitude * Math.sin(tribesmanHitbox.box.angle);
+         const accelerationY = accelerationMagnitude * Math.cos(tribesmanHitbox.box.angle);
+         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       // @Speed: only do this if we know the path has a door in it
@@ -231,11 +233,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       return false;
    } else {
       // Reached path!
-      const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-      stopEntity(physicsComponent);
-
       tribesmanAIComponent.paths.shift();
-
       return true;
    }
 }
@@ -254,12 +252,14 @@ export function getFinalPath(tribesmanAIComponent: TribesmanAIComponent): Path |
 
 const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
+   
    const layer = getEntityLayer(tribesman);
    
-   const minChunkX = Math.max(Math.min(Math.floor((transformComponent.position.x - Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((transformComponent.position.x + Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y - Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((transformComponent.position.y + Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor((tribesmanHitbox.box.position.x - Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((tribesmanHitbox.box.position.x + Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((tribesmanHitbox.box.position.y - Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((tribesmanHitbox.box.position.y + Vars.BLOCKING_TRIBESMAN_DISTANCE/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    
    const blockingTribesmen = new Array<Entity>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
@@ -331,6 +331,8 @@ export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: numbe
    // If moving to a new target node, recalculate path
    if (shouldRecalculatePath(tribesman, goalX, goalY, goalLayer, goalRadius)) {
       const transformComponent = TransformComponentArray.getComponent(tribesman); // @Speed
+      const tribesmanHitbox = transformComponent.hitboxes[0];
+      
       const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
       const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
       
@@ -345,14 +347,11 @@ export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: numbe
          goalRadius: goalRadius,
          failureDefault: failureDefault
       };
-      tribesmanAIComponent.paths = findMultiLayerPath(layer, goalLayer, transformComponent.position.x, transformComponent.position.y, goalX, goalY, tribe.pathfindingGroupID, footprint, options);
+      tribesmanAIComponent.paths = findMultiLayerPath(layer, goalLayer, tribesmanHitbox.box.position.x, tribesmanHitbox.box.position.y, goalX, goalY, tribe.pathfindingGroupID, footprint, options);
 
       cleanupPathfinding(targetEntityID, tribe, blockingTribesmen);
 
-      // If the pathfinding failed, halt the entity
       if (tribesmanAIComponent.paths[0].isFailed) {
-         const physicsComponent = PhysicsComponentArray.getComponent(tribesman);
-         stopEntity(physicsComponent);
          return false;
       }
    }
@@ -367,8 +366,10 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
    preparePathfinding(entity, tribe, blockingTribesmen);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = transformComponent.hitboxes[0];
+   
    const layer = getEntityLayer(entity);
-   const isAccessible = positionIsAccessible(layer, transformComponent.position.x, transformComponent.position.y, tribe.pathfindingGroupID, getEntityFootprint(goalRadius));
+   const isAccessible = positionIsAccessible(layer, entityHitbox.box.position.x, entityHitbox.box.position.y, tribe.pathfindingGroupID, getEntityFootprint(goalRadius));
 
    cleanupPathfinding(entity, tribe, blockingTribesmen);
 
@@ -377,9 +378,12 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
 
 export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goalRadius: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
+   const tribesmanHitbox = transformComponent.hitboxes[0];
+   
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
 
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
+   const targetHitbox = huntedEntityTransformComponent.hitboxes[0];
    
    const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
    preparePathfinding(huntedEntity, tribeComponent.tribe, blockingTribesmen);
@@ -388,7 +392,7 @@ export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goal
       goalRadius: Math.floor(goalRadius / PathfindingSettings.NODE_SEPARATION),
       failureDefault: PathfindFailureDefault.none
    };
-   const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), transformComponent.position.x, transformComponent.position.y, huntedEntityTransformComponent.position.x, huntedEntityTransformComponent.position.y, tribeComponent.tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), options);
+   const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), tribesmanHitbox.box.position.x, tribesmanHitbox.box.position.y, targetHitbox.box.position.x, targetHitbox.box.position.y, tribeComponent.tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), options);
 
    cleanupPathfinding(huntedEntity, tribeComponent.tribe, blockingTribesmen);
 

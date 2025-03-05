@@ -1,17 +1,18 @@
-import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { ServerComponentType } from "../../../../shared/src/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
 export interface FrostshaperComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface FrostshaperComponent {}
 
-export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, RenderParts>(ClientComponentType.frostshaper, true, {
-   createRenderParts: createRenderParts,
+export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, IntermediateInfo>(ClientComponentType.frostshaper, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts
 });
@@ -20,10 +21,13 @@ export function createFrostshaperComponentParams(): FrostshaperComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/frostshaper/frostshaper.png")

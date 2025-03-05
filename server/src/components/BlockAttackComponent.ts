@@ -1,18 +1,16 @@
-import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { BlockType, ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { Point } from "../../../shared/src/utils";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
+import { applyKnockback, Hitbox } from "../hitboxes";
 import { registerDirtyEntity } from "../server/player-clients";
 import { destroyEntity, getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { getHeldItem } from "./InventoryUseComponent";
-import { applyKnockback } from "./PhysicsComponent";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { SwingAttackComponentArray } from "./SwingAttackComponent";
-import { TransformComponentArray } from "./TransformComponent";
 
 export class BlockAttackComponent {
    public readonly owner: Entity;
@@ -40,12 +38,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.padOffset(3);
 }
 
-const blockSwing = (blockAttack: Entity, swingAttack: Entity): void => {
+const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hitbox, swingHitbox: Hitbox): void => {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(blockAttack);
    const blocker = blockAttackComponent.owner;
 
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
-   const attacker = swingAttackComponent.owner;
    const attackerLimb = swingAttackComponent.limb;
 
    // Pause the attacker's attack for a brief period
@@ -58,14 +55,11 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity): void => {
    if (blockAttackComponent.blockType === BlockType.shieldBlock) {
       destroyEntity(swingAttack);
 
-      const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-      const blockerTransformComponent = TransformComponentArray.getComponent(blocker);
-
       // Push back
-      const pushDirection = attackerTransformComponent.position.calculateAngleBetween(blockerTransformComponent.position);
+      const pushDirection = swingHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
       const attackingItem = getHeldItem(attackerLimb);
       const knockbackAmount = calculateItemKnockback(attackingItem, true);
-      applyKnockback(blocker, knockbackAmount, pushDirection);
+      applyKnockback(blocker, blockingHitbox, knockbackAmount, pushDirection);
    }
 
    blockAttackComponent.hasBlocked = true;
@@ -77,7 +71,7 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity): void => {
    // blockBoxLimb.blockType = blockBox.blockType;
 }
 
-const blockProjectile = (blockAttack: Entity, projectile: Entity): void => {
+const blockProjectile = (blockAttack: Entity, projectile: Entity, blockingHitbox: Hitbox, projectileHitbox: Hitbox): void => {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(blockAttack);
    const blocker = blockAttackComponent.owner;
 
@@ -89,13 +83,10 @@ const blockProjectile = (blockAttack: Entity, projectile: Entity): void => {
    // blockBoxLimb.blockType = blockBox.blockType;
 
    if (blockAttackComponent.blockType === BlockType.shieldBlock) {
-      const blockerTransformComponent = TransformComponentArray.getComponent(blocker);
-      const projectileTransformComponent = TransformComponentArray.getComponent(projectile);
-      
       // Push back
-      const pushDirection = projectileTransformComponent.position.calculateAngleBetween(blockerTransformComponent.position);
+      const pushDirection = projectileHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
       // @Hack @Hardcoded: knockback amount
-      applyKnockback(blocker, 75, pushDirection);
+      applyKnockback(blocker, blockingHitbox, 75, pushDirection);
       
       destroyEntity(projectile);
    } else {
@@ -104,15 +95,15 @@ const blockProjectile = (blockAttack: Entity, projectile: Entity): void => {
    }
 }
 
-function onHitboxCollision(blockAttack: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(blockAttack: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Block swings
    if (getEntityType(collidingEntity) === EntityType.swingAttack) {
-      blockSwing(blockAttack, collidingEntity);
+      blockSwing(blockAttack, collidingEntity, affectedHitbox, collidingHitbox);
       return;
    }
 
    // Block projectiles
    if (ProjectileComponentArray.hasComponent(collidingEntity)) {
-      blockProjectile(blockAttack, collidingEntity);
+      blockProjectile(blockAttack, collidingEntity, affectedHitbox, collidingHitbox);
    }
 }

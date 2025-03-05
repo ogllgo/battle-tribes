@@ -3,7 +3,7 @@ import { lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
-import { getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType } from "./world";
+import { getCurrentLayer, getEntityLayer, getEntityType } from "./world";
 import { getBuildingSafeties } from "./building-safety";
 import { getVisibleBuildingPlan, GhostBuildingPlan, VirtualBuildingSafetySimulation } from "./virtual-buildings";
 import { TribeMemberComponentArray } from "./entity-components/server-components/TribeMemberComponent";
@@ -11,6 +11,8 @@ import { EntityType } from "../../shared/src/entities";
 import { getHumanoidRadius } from "./entity-components/server-components/TribesmanComponent";
 import { playerInstance } from "./player";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -295,7 +297,7 @@ const renderHealNumbers = (): void => {
 // @Speed
 // @Speed
 // @Speed
-const renderNames = (): void => {
+const renderNames = (frameProgress: number): void => {
    ctx.fillStyle = "#000";
    ctx.font = "400 20px Helvetica";
    ctx.lineJoin = "round";
@@ -308,12 +310,15 @@ const renderNames = (): void => {
          continue;
       }
 
-      const renderInfo = getEntityRenderInfo(entity);
       const tribeMemberComponent = TribeMemberComponentArray.components[i];
+
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
       
       // Calculate position in camera
-      const cameraX = getXPosInTextCanvas(renderInfo.renderPosition.x);
-      const cameraY = getYPosInTextCanvas(renderInfo.renderPosition.y + getHumanoidRadius(entity) + 4);
+      const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+      const cameraX = getXPosInTextCanvas(hitboxRenderPosition.x);
+      const cameraY = getYPosInTextCanvas(hitboxRenderPosition.y + getHumanoidRadius(entity) + 4);
       
       const name = tribeMemberComponent.name;
 
@@ -593,9 +598,9 @@ const renderBuildingSafetys = (): void => {
    }
 }
 
-export function renderText(): void {
+export function renderText(frameProgress: number): void {
    clearTextCanvas();
-   renderNames();
+   renderNames(frameProgress);
    renderDamageNumbers();
    renderResearchNumbers();
    renderHealNumbers();

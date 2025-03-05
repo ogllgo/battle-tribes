@@ -5,7 +5,6 @@ import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackI
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
-import { getVelocityMagnitude, PhysicsComponentArray } from "../components/PhysicsComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { getEntityTile, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -13,7 +12,7 @@ import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyB
 import { calculateRadialAttackTargets, placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable, addItem } from "../components/InventoryComponent";
-import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
+import { BlueprintType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
@@ -37,6 +36,9 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
+import { setHitboxAngularVelocity } from "../hitboxes";
+import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
+import Tribe from "../Tribe";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -52,14 +54,11 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
-   const rotation = reader.readNumber();
+   const angle = reader.readNumber();
 
-   const selfVelocityX = reader.readNumber();
-   const selfVelocityY = reader.readNumber();
-   const externalVelocityX = reader.readNumber();
-   const externalVelocityY = reader.readNumber();
-   const accelerationX = reader.readNumber();
-   const accelerationY = reader.readNumber();
+   const velocityX = reader.readNumber();
+   const velocityY = reader.readNumber();
+
    const angularVelocity = reader.readNumber();
 
    const screenWidth = reader.readNumber();
@@ -80,19 +79,21 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    const hotbarLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
 
    const transformComponent = TransformComponentArray.getComponent(player);
+   const playerHitbox = transformComponent.hitboxes[0];
+   
    // If the player has moved or rotated, is is dirty
-   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.relativeRotation) {
+   if (positionX !== playerHitbox.box.position.x || positionY !== playerHitbox.box.position.y || angle !== playerHitbox.box.angle) {
       registerDirtyEntity(player);
    }
-   transformComponent.position.x = positionX;
-   transformComponent.position.y = positionY;
-   transformComponent.rotation = rotation;
-   transformComponent.relativeRotation = rotation;
+   playerHitbox.box.position.x = positionX;
+   playerHitbox.box.position.y = positionY;
+   playerHitbox.box.angle = angle;
+   playerHitbox.box.relativeAngle = angle;
 
    // playerClient.visibleChunkBounds = [minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY];
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
-   playerClient.updateVisibleChunkBounds();
+   playerClient.updatePosition(playerHitbox.box.position.x, playerHitbox.box.position.y);
    playerClient.gameDataOptions = gameDataOptions;
    
    transformComponent.isDirty = true;
@@ -100,16 +101,11 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    // @Hack
    // Velocity gets overridden for carried entities, so setting here would be pointless (and would mess up stuff which relies on the velocity of carried entities)
    if (transformComponent.carryRoot === player) {
-      transformComponent.selfVelocity.x = selfVelocityX;
-      transformComponent.selfVelocity.y = selfVelocityY;
-      transformComponent.externalVelocity.x = externalVelocityX;
-      transformComponent.externalVelocity.y = externalVelocityY;
+      playerHitbox.velocity.x = velocityX;
+      playerHitbox.velocity.y = velocityY;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(player);
-   physicsComponent.acceleration.x = accelerationX;
-   physicsComponent.acceleration.y = accelerationY;
-   physicsComponent.angularVelocity = angularVelocity;
+   setHitboxAngularVelocity(playerHitbox, angularVelocity);
    
    if (selectedHotbarItemSlot !== hotbarLimbInfo.selectedItemSlot) {
       hotbarLimbInfo.selectedItemSlot = selectedHotbarItemSlot;
@@ -189,7 +185,9 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
    let layer: Layer;
    if (playerClient.tribe.totem !== null) {
       const totemTransformComponent = TransformComponentArray.getComponent(playerClient.tribe.totem);
-      spawnPosition = totemTransformComponent.position.copy();
+      const totemHitbox = totemTransformComponent.hitboxes[0];
+      
+      spawnPosition = totemHitbox.box.position.copy();
       const offsetDirection = 2 * Math.PI * Math.random();
       spawnPosition.x += 100 * Math.sin(offsetDirection);
       spawnPosition.y += 100 * Math.cos(offsetDirection);
@@ -199,10 +197,7 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
       layer = surfaceLayer;
    }
 
-   const config = createPlayerConfig(playerClient.tribe, playerClient);
-   config.components[ServerComponentType.transform].position.x = spawnPosition.x;
-   config.components[ServerComponentType.transform].position.y = spawnPosition.y;
-   config.components[ServerComponentType.tribe].tribe = playerClient.tribe;
+   const config = createPlayerConfig(spawnPosition, 0, playerClient.tribe, playerClient);
    createEntity(config, layer, 0);
 
    // (The PlayerComponent onJoin function will send the packet with all the information)
@@ -327,9 +322,21 @@ export function processStopItemUsePacket(playerClient: PlayerClient): void {
    registerDirtyEntity(player);
 }
 
+// @TEMPORARY
+const dwarfTribe = new Tribe(TribeType.dwarves, true, new Point(0, 0));
+
 export function processItemDropPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
+   }
+
+   // @TEMPORARY
+   if (playerClient.username.includes("Dragon")) {
+      const playerTransformComponent = TransformComponentArray.getComponent(playerClient.instance);
+      const playerHitbox = playerTransformComponent.hitboxes[0];
+      
+      const config = createTribeWorkerConfig(playerHitbox.box.position.copy(), 0, dwarfTribe);
+      createEntity(config, undergroundLayer, 0);
    }
 
    const isOffhand = reader.readBoolean();
@@ -420,14 +427,14 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
    const rotation = reader.readNumber();
 
    // @Hack
-   let config: EntityConfig<ServerComponentType.transform>;
+   let config: EntityConfig;
    switch (entityType) {
       case EntityType.cow: {
-         config = createCowConfig();
+         config = createCowConfig(new Point(x, y), rotation);
          break;
       }
       case EntityType.krumblid: {
-         config = createKrumblidConfig();
+         config = createKrumblidConfig(new Point(x, y), rotation);
          break;
       }
       default: {
@@ -435,9 +442,6 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
          return;
       }
    }
-   config.components[ServerComponentType.transform].position.x = x;
-   config.components[ServerComponentType.transform].position.y = y;
-   config.components[ServerComponentType.transform].relativeRotation = rotation;
    createEntity(config, playerClient.lastLayer, 0);
 }
 
@@ -450,7 +454,9 @@ export function processToggleSimulationPacket(playerClient: PlayerClient, reader
 // @Cleanup: name, and there is already a shared definition
 const snapRotationToPlayer = (player: Entity, placePosition: Point, rotation: number): number => {
    const transformComponent = TransformComponentArray.getComponent(player);
-   const playerDirection = transformComponent.position.calculateAngleBetween(placePosition);
+   const playerHitbox = transformComponent.hitboxes[0];
+   
+   const playerDirection = playerHitbox.box.position.calculateAngleBetween(placePosition);
    let snapRotation = playerDirection - rotation;
 
    // Snap to nearest PI/2 interval
@@ -470,7 +476,8 @@ export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: 
 
    // @Cleanup: should not do this logic here.
    const structureTransformComponent = TransformComponentArray.getComponent(structure);
-   const rotation = snapRotationToPlayer(playerClient.instance, structureTransformComponent.position, structureTransformComponent.relativeRotation);
+   const structureHitbox = structureTransformComponent.hitboxes[0];
+   const rotation = snapRotationToPlayer(playerClient.instance, structureHitbox.box.position, structureHitbox.box.angle);
    placeBlueprint(playerClient.instance, structure, blueprintType, rotation);
 }
 
@@ -520,10 +527,11 @@ export function processTPToEntityPacket(playerClient: PlayerClient, reader: Pack
    const targetEntity = reader.readNumber() as Entity;
 
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
    const packet = new Packet(PacketType.forcePositionUpdate, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(targetTransformComponent.position.x);
-   packet.addNumber(targetTransformComponent.position.y);
+   packet.addNumber(targetHitbox.box.position.x);
+   packet.addNumber(targetHitbox.box.position.y);
    playerClient.socket.send(packet.buffer);
 }
 
@@ -665,8 +673,10 @@ export function processTechStudyPacket(playerClient: PlayerClient, reader: Packe
    
    if (tribeComponent.tribe.selectedTechID !== null) {
       const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
+      const playerHitbox = transformComponent.hitboxes[0];
+
       const selectedTech = getTechByID(tribeComponent.tribe.selectedTechID);
-      playerClient.tribe.studyTech(selectedTech, transformComponent.position.x, transformComponent.position.y, studyAmount);
+      playerClient.tribe.studyTech(selectedTech, playerHitbox.box.position.x, playerHitbox.box.position.y, studyAmount);
    }
 }
 
@@ -727,7 +737,8 @@ export function processPickUpArrowPacket(playerClient: PlayerClient, reader: Pac
    const arrow = reader.readNumber() as Entity;
 
    const transformComponent = TransformComponentArray.getComponent(arrow);
-   if (getVelocityMagnitude(transformComponent) < 1) {
+   const hitbox = transformComponent.hitboxes[0];
+   if (hitbox.velocity.length() < 1) {
       destroyEntity(arrow);
       
       const inventoryComponent = InventoryComponentArray.getComponent(player);
@@ -844,4 +855,10 @@ export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient,
    
    const tamingComponent = TamingComponentArray.getComponent(entity);
    tamingComponent.acquiredSkills.push(skill);
+}
+
+export function processSetSpectatingPositionPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const x = reader.readNumber() as Entity;
+   const y = reader.readNumber() as TamingSkillID;
+   playerClient.updatePosition(x, y);
 }

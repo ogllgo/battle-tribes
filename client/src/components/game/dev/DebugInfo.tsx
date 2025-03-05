@@ -10,7 +10,6 @@ import { getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { Entity, EntityTypeString } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { PhysicsComponentArray } from "../../../entity-components/server-components/PhysicsComponent";
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
 import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "../inventories/InventoryContainer";
@@ -77,16 +76,12 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   const displayX = roundNum(transformComponent.position.x, 0);
-   const displayY = roundNum(transformComponent.position.y, 0);
+   const displayX = roundNum(hitbox.box.position.x, 0);
+   const displayY = roundNum(hitbox.box.position.y, 0);
 
-   let displayVelocityMagnitude = roundNum(transformComponent.selfVelocity.length(), 0);
-   let displayAccelerationMagnitude: number | undefined;
-   if (PhysicsComponentArray.hasComponent(entity)) {
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      displayAccelerationMagnitude = roundNum(physicsComponent.acceleration.length(), 0);
-   }
+   let displayVelocityMagnitude = roundNum(hitbox.velocity.length(), 0);
 
    const chunks = Array.from(transformComponent.chunks).map(chunk => `${chunk.x}-${chunk.y}`);
    const chunkDisplayText = chunks.reduce((previousValue, chunk, idx) => {
@@ -112,13 +107,12 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
       { typeof displayVelocityMagnitude !== "undefined" ? (
          <p>Velocity: <span className="highlight">{displayVelocityMagnitude}</span></p>
       ) : null }
-      { typeof displayAccelerationMagnitude !== "undefined" ? (
-         <p>Acceleration: <span className="highlight">{displayAccelerationMagnitude}</span></p>
-      ) : null }
       
-      <p>Rotation: <span className="highlight">{transformComponent.rotation.toFixed(2)}</span></p>
+      <p>Rotation: <span className="highlight">{hitbox.box.angle.toFixed(2)}</span></p>
 
       <p>Chunks: {chunkDisplayText}</p>
+
+      <p>Bounds: {transformComponent.boundingAreaMinX.toFixed(0)}, {transformComponent.boundingAreaMaxX.toFixed(0)}, {transformComponent.boundingAreaMinY.toFixed(0)}, {transformComponent.boundingAreaMaxY.toFixed(0)}</p>
 
       {HealthComponentArray.hasComponent(entity) ? (() => {
          const healthComponent = HealthComponentArray.getComponent(entity);

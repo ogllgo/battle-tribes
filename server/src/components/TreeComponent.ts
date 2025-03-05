@@ -2,11 +2,11 @@ import { Entity, TreeSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TransformComponentArray } from "./TransformComponent";
-import { createCircularGrassBlocker } from "../grass-blockers";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer } from "../world";
-
-export const TREE_RADII: ReadonlyArray<number> = [40, 50];
+import { createGrassBlocker } from "../grass-blockers";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
+import { Point } from "../../../shared/src/utils";
 
 const TREE_TRUNK_RADII: Record<TreeSize, number> = {
    [TreeSize.small]: 15,
@@ -26,8 +26,12 @@ TreeComponentArray.onJoin = onJoin;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const treeHitbox = transformComponent.hitboxes[0];
+   
    const treeComponent = TreeComponentArray.getComponent(entity);
-   createCircularGrassBlocker(transformComponent.position.copy(), getEntityLayer(entity), 0, 0.9, TREE_TRUNK_RADII[treeComponent.treeSize], entity)
+
+   const blockerBox = new CircularBox(treeHitbox.box.position.copy(), new Point(0, 0), 0, TREE_TRUNK_RADII[treeComponent.treeSize]);
+   createGrassBlocker(blockerBox, getEntityLayer(entity), 0, 0.9, entity)
 }
 
 function getDataLength(): number {

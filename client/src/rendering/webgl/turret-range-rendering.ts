@@ -1,7 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getHoveredEntityID } from "../../entity-selection";
-import { calculateEntityPlaceInfo } from "battletribes-shared/structures";
 import Camera from "../../Camera";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { ItemType, ITEM_INFO_RECORD, PlaceableItemType } from "battletribes-shared/items/items";
@@ -10,6 +9,7 @@ import { entityExists, getEntityLayer, getEntityType } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TurretComponentArray } from "../../entity-components/server-components/TurretComponent";
 import { playerInstance } from "../../player";
+import { calculateEntityPlaceInfo } from "../../structure-placement";
 
 const CIRCLE_DETAIL = 300;
 
@@ -144,10 +144,11 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    const playerSelectedItem = getPlayerSelectedItem();
    if (playerSelectedItem !== null && (playerSelectedItem.type === ItemType.ballista || playerSelectedItem.type === ItemType.sling_turret)) {
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+      const playerHitbox = playerTransformComponent.hitboxes[0];
 
       const layer = getEntityLayer(playerInstance!);
       const structureType = ITEM_INFO_RECORD[playerSelectedItem.type as PlaceableItemType].entityType;
-      const placeInfo = calculateEntityPlaceInfo(Camera.position, playerTransformComponent.rotation, structureType, layer.getWorldInfo());
+      const placeInfo = calculateEntityPlaceInfo(Camera.position, playerHitbox.box.angle, structureType, layer);
 
       return {
          x: placeInfo.position.x,
@@ -161,12 +162,14 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    const hoveredEntity = getHoveredEntityID();
    if (entityExists(hoveredEntity) && TurretComponentArray.hasComponent(hoveredEntity)) {
       const hoveredEntityTransformComponent = TransformComponentArray.getComponent(hoveredEntity);
+      // @Hack
+      const hoveredEntityHitbox = hoveredEntityTransformComponent.hitboxes[0];
       
       const itemType = getTurretItemType(hoveredEntity);
       return {
-         x: hoveredEntityTransformComponent.position.x,
-         y: hoveredEntityTransformComponent.position.y,
-         rotation: hoveredEntityTransformComponent.rotation,
+         x: hoveredEntityHitbox.box.position.x,
+         y: hoveredEntityHitbox.box.position.y,
+         rotation: hoveredEntityHitbox.box.angle,
          itemType: itemType,
          rangeInfo: TURRET_RANGE_INFO_RECORD[itemType]!
       }

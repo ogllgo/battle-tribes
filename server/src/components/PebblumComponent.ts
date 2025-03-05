@@ -1,11 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Entity } from "battletribes-shared/entities";
-import { moveEntityToPosition, stopEntity } from "../ai-shared";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { DamageSource, Entity } from "battletribes-shared/entities";
+import { moveEntityToPosition } from "../ai-shared";
 import { TransformComponentArray } from "./TransformComponent";
-import { UtilVars } from "battletribes-shared/utils";
+import { Point, UtilVars } from "battletribes-shared/utils";
 import { entityExists } from "../world";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -24,6 +26,7 @@ PebblumComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
+PebblumComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(pebblum: Entity): void {
    const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
@@ -31,11 +34,9 @@ function onTick(pebblum: Entity): void {
    const target = pebblumComponent.targetEntityID;
    if (entityExists(target)) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
 
-      moveEntityToPosition(pebblum, targetTransformComponent.position.x, targetTransformComponent.position.y, 850, Vars.TURN_SPEED);
-   } else {
-      const physicsComponent = PhysicsComponentArray.getComponent(pebblum);
-      stopEntity(physicsComponent);
+      moveEntityToPosition(pebblum, targetHitbox.box.position.x, targetHitbox.box.position.y, 850, Vars.TURN_SPEED);
    }
 }
 
@@ -44,3 +45,22 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
+
+function onHitboxCollision(pebblum: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
+   if (collidingEntity !== pebblumComponent.targetEntityID) {
+      return;
+   }
+   
+   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+   if (!canDamageEntity(healthComponent, "pebblum")) {
+      return;
+   }
+
+   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+
+   // @Incomplete: Cause of death
+   hitEntity(collidingEntity, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   addLocalInvulnerabilityHash(collidingEntity, "pebblum", 0.3);
+}

@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { getDistanceFromPointToEntity, moveEntityToPosition, stopEntity, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
 import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
@@ -62,24 +61,26 @@ export function startFollowingEntity(entity: Entity, followedEntity: Entity, acc
    followAIComponent.currentTargetIsForgettable = isForgettable;
 
    const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-   moveEntityToPosition(entity, followedEntityTransformComponent.position.x, followedEntityTransformComponent.position.y, acceleration, turnSpeed);
+   const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
+   moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
 export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
+   const entityHitbox = transformComponent.hitboxes[0];
+   
    const followTargetTransformComponent = TransformComponentArray.getComponent(followTarget);
+   const followTargetHitbox = followTargetTransformComponent.hitboxes[0];
    
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
-   const distance = getDistanceFromPointToEntity(followTargetTransformComponent.position, entity) - 32;
-   if (willStopAtDesiredDistance(transformComponent, followAIComponent.followDistance, distance)) {
-      stopEntity(physicsComponent);
-      turnToPosition(entity, followTargetTransformComponent.position.x, followTargetTransformComponent.position.y, turnSpeed);
+   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, entity) - 32;
+   if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance)) {
+      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {
-      moveEntityToPosition(entity, followTargetTransformComponent.position.x, followTargetTransformComponent.position.y, acceleration, turnSpeed);
+      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed);
    }
 }
 
