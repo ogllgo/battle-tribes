@@ -6,7 +6,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { PlantedComponent } from "../../components/PlantedComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -49,15 +49,15 @@ export function createBerryBushPlantedConfig(position: Point, rotation: number, 
 
    const berryBushPlantedComponent = new BerryBushPlantedComponent();
    
-   return {
-      entityType: EntityType.berryBushPlanted,
-      components: {
+   return createEntityConfig(
+      EntityType.berryBushPlanted,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,
          [ServerComponentType.berryBushPlanted]: berryBushPlantedComponent
       },
-      lights: []
-   };
+      []
+   );
 }

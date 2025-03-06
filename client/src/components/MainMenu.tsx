@@ -4,7 +4,7 @@ import { createAudioContext } from "../sound";
 import { AppState } from "./App";
 
 const enum Vars {
-   MAX_USERNAME_CHARS = 100
+   MAX_USERNAME_CHARS = 48
 }
 
 /** Checks whether a given username is valid or not */

@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -128,9 +128,9 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
    
    const cowComponent = new CowComponent();
    
-   return {
-      entityType: EntityType.cow,
-      components: {
+   return createEntityConfig(
+      EntityType.cow,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -144,6 +144,6 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.cow]: cowComponent
       },
-      lights: []
-   };
+      []
+   );
 }

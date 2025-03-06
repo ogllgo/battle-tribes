@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point, randInt } from "../../../../shared/src/utils";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -34,15 +34,15 @@ export function createTreeRootSegmentConfig(position: Point, rotation: number, r
    
    const treeRootSegmentComponent = new TreeRootSegmentComponent(root);
    
-   return {
-      entityType: EntityType.treeRootSegment,
-      components: {
+   return createEntityConfig(
+      EntityType.treeRootSegment,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.treeRootSegment]: treeRootSegmentComponent
       },
-      lights: []
-   };
+      []
+   );
 }

@@ -6,7 +6,7 @@ import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from ".
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, getEntityRelationship } from "../../components/TribeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -28,16 +28,16 @@ export function createSpearProjectileConfig(position: Point, rotation: number, t
    
    const spearProjectileComponent = new SpearProjectileComponent();
    
-   return {
-      entityType: EntityType.spearProjectile,
-      components: {
+   return createEntityConfig(
+      EntityType.spearProjectile,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.spearProjectile]: spearProjectileComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 // export function onSpearProjectileCollision(spear: Entity, collidingEntity: Entity, collisionPoint: Point): void {

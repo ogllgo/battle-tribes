@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -34,9 +34,9 @@ export function createWarriorHutConfig(position: Point, rotation: number, tribe:
 
    const hutComponent = new HutComponent();
    
-   return {
-      entityType: EntityType.warriorHut,
-      components: {
+   return createEntityConfig(
+      EntityType.warriorHut,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createWarriorHutConfig(position: Point, rotation: number, tribe:
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.hut]: hutComponent
       },
-      lights: []
-   };
+      []
+   );
 }

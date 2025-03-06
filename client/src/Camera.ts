@@ -60,6 +60,10 @@ abstract class Camera {
    public static trackedHitbox: Hitbox | null = null;
 
    public static position = new Point(0, 0);
+
+   // this garbage is used in spectator mode
+   public static lastTickPosition = new Point(0, 0);
+   public static velocity = new Point(0, 0);
    
    public static isFree = false;
 
@@ -77,6 +81,11 @@ abstract class Camera {
    public static maxVisibleRenderChunkX = -1;
    public static minVisibleRenderChunkY = -1;
    public static maxVisibleRenderChunkY = -1;
+
+   public static applyCameraKinematics(): void {
+      this.lastTickPosition.x += this.velocity.x * Settings.I_TPS;
+      this.lastTickPosition.y += this.velocity.y * Settings.I_TPS;
+   }
 
    public static setInitialVisibleChunkBounds(layer: Layer): void {
       this.minVisibleChunkX = Math.max(Math.floor((this.position.x - halfWindowWidth / this.zoom) / Settings.CHUNK_UNITS), 0);
@@ -147,9 +156,19 @@ abstract class Camera {
    public static setPosition(x: number, y: number): void {
       this.position.x = x;
       this.position.y = y;
+      this.lastTickPosition.x = x;
+      this.lastTickPosition.y = y;
    }
 
    public static updatePosition(frameProgress: number): void {
+      if (this.isSpectating) {
+         // this.position.x = this.lastTickPosition.x + this.velocity.x / Settings.TPS * frameProgress;
+         // this.position.y = this.lastTickPosition.y + this.velocity.y / Settings.TPS * frameProgress;
+         this.position.x = this.lastTickPosition.x;
+         this.position.y = this.lastTickPosition.y;
+         return;
+      }
+
       if (this.isFree) {
          return;
       }

@@ -64,7 +64,7 @@ import { GuardianComponent } from "./components/GuardianComponent";
 import { GuardianGemQuakeComponent } from "./components/GuardianGemQuakeComponent";
 import { GuardianGemFragmentProjectileComponent } from "./components/GuardianGemFragmentProjectileComponent";
 import { GuardianSpikyBallComponent } from "./components/GuardianSpikyBallComponent";
-import { EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { BracingsComponent } from "./components/BracingsComponent";
 import { BallistaComponent } from "./components/BallistaComponent";
 import { SlingTurretComponent } from "./components/SlingTurretComponent";
@@ -215,10 +215,25 @@ export interface LightCreationInfo {
    readonly attachedHitbox: Hitbox;
 }
 
+type EntityComponents = Partial<{
+   [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
+}>;
+
 export interface EntityConfig {
+   readonly entity: Entity;
    readonly entityType: EntityType;
-   readonly components: Partial<{
-      [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
-   }>;
+   readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
+}
+
+// We skip 0 as that is reserved for there being no entity
+let idCounter = 1;
+
+export function createEntityConfig(entityType: EntityType, components: EntityComponents, lights: ReadonlyArray<LightCreationInfo>): EntityConfig {
+   return {
+      entity: idCounter++,
+      entityType: entityType,
+      components: components,
+      lights: lights
+   };
 }

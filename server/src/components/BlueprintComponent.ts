@@ -166,7 +166,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          // Transfer the worker to the warrior hut
          const hutComponent = HutComponentArray.getComponent(blueprintComponent.associatedEntityID);
          if (hutComponent.hasTribesman) {
-            tribeComponent.tribe.instantRespawnTribesman(hut);
+            tribeComponent.tribe.instantRespawnTribesman(config.entity);
          }
 
          return;

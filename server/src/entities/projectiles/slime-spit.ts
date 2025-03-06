@@ -3,7 +3,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { SlimeSpitComponent } from "../../components/SlimeSpitComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -21,13 +21,13 @@ export function createSlimeSpitConfig(position: Point, rotation: number, size: n
    
    const slimeSpitComponent = new SlimeSpitComponent(size);
    
-   return {
-      entityType: EntityType.slimeSpit,
-      components: {
+   return createEntityConfig(
+      EntityType.slimeSpit,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.slimeSpit]: slimeSpitComponent
       },
-      lights: []
-   };
+      []
+   );
 }

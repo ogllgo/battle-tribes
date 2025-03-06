@@ -25,7 +25,7 @@ import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } f
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { entityTreeHasComponent, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { hasTitle } from "./TribesmanComponent";
 
@@ -227,9 +227,9 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    hitDirection /= collidingHitboxPairs.length;
 
    // @Hack
-   // const collisionPoint = new Point((targetEntityTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (targetEntityTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
-   // @HACK
-   const collisionPoint = new Point(0, 0);
+   const victimTransformComponent = TransformComponentArray.getComponent(victim);
+   const victimHitbox = victimTransformComponent.hitboxes[0];
+   const collisionPoint = new Point((victimHitbox.box.position.x + victimHitbox.box.position.x) / 2, (victimHitbox.box.position.y + victimHitbox.box.position.y) / 2);
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
@@ -278,7 +278,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       }
    }
 
-   if (!HealthComponentArray.hasComponent(collidingEntity)) {
+   if (!entityTreeHasComponent(HealthComponentArray, collidingEntity)) {
       return;
    }
 
@@ -287,7 +287,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
    if (relationship === EntityRelationship.friendly) {
       return;
    }
-   
+
    damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs);
 
    destroyEntity(swingAttack);

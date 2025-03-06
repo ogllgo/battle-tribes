@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -50,9 +50,9 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
 
    const ballistaComponent = new BallistaComponent();
    
-   return {
-      entityType: EntityType.ballista,
-      components: {
+   return createEntityConfig(
+      EntityType.ballista,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -64,6 +64,6 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.ballista]: ballistaComponent
       },
-      lights: []
-   };
+      []
+   );
 }

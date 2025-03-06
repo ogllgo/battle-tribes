@@ -1,7 +1,7 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -36,9 +36,9 @@ export function createWallConfig(position: Point, rotation: number, tribe: Tribe
    
    const buildingMaterialComponent = new BuildingMaterialComponent(material, HEALTHS);
    
-   return {
-      entityType: EntityType.wall,
-      components: {
+   return createEntityConfig(
+      EntityType.wall,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -46,6 +46,6 @@ export function createWallConfig(position: Point, rotation: number, tribe: Tribe
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent
       },
-      lights: []
-   };
+      []
+   );
 }

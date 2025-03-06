@@ -4,7 +4,7 @@ import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TribeComponent } from "../../components/TribeComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -26,16 +26,16 @@ export function createBallistaFrostcicleConfig(position: Point, rotation: number
 
    const projectileComponent = new ProjectileComponent(creator);
    
-   return {
-      entityType: EntityType.ballistaFrostcicle,
-      components: {
+   return createEntityConfig(
+      EntityType.ballistaFrostcicle,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 // @Cleanup: Copy and paste

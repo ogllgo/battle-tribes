@@ -6,7 +6,8 @@ export const enum TamingSkillID {
    move,
    carry,
    attack,
-   shatteredWill
+   shatteredWill,
+   dulledPainReceptors
 }
 
 export type TamingTier = 0 | 1 | 2 | 3;
@@ -36,7 +37,7 @@ export interface EntityTamingSpec<TamingTiers extends TamingTier = TamingTier> {
    readonly maxTamingTier: TamingTier;
    readonly skillNodes: ReadonlyArray<TamingSkillNode>;
    readonly foodItemType: ItemType;
-   readonly tierFoodRequirements: Record<TamingTiers, number>;
+   readonly tierFoodRequirements: Partial<Record<TamingTiers, number>>;
 }
 
 export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
@@ -123,6 +124,20 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
       ],
       requiredTamingTier: 3,
       parent: TamingSkillID.move
+   },
+   [TamingSkillID.dulledPainReceptors]: {
+      id: TamingSkillID.dulledPainReceptors,
+      name: "Dulled Pain Receptors",
+      description: "The glurb no longer reacts when hit.",
+      requirements: [
+         {
+            description: "Damage taken",
+            amountRequired: 15,
+            suffix: " damage"
+         }
+      ],
+      requiredTamingTier: 1,
+      parent: null
    }
 };
 

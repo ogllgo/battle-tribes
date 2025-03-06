@@ -4,7 +4,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { TransformComponent } from "../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../components";
+import { createEntityConfig, EntityConfig } from "../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { HealthComponent } from "../components/HealthComponent";
@@ -24,14 +24,14 @@ export function createTombstoneConfig(position: Point, rotation: number): Entity
    
    const tombstoneComponent = new TombstoneComponent();
    
-   return {
-      entityType: EntityType.tombstone,
-      components: {
+   return createEntityConfig(
+      EntityType.tombstone,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tombstone]: tombstoneComponent
       },
-      lights: []
-   };
+      []
+   );
 }

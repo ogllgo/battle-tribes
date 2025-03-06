@@ -7,7 +7,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { getFirstComponent, getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
 
@@ -58,13 +58,41 @@ export function canDamageEntity(healthComponent: HealthComponent, attackHash: st
    return true;
 }
 
+const callOnTakeDamageCallbacks = (entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource, damage: number): void => {
+   const componentArrayRecord = getComponentArrayRecord();
+   const entityComponentTypes = getEntityComponentTypes(entity);
+   for (const componentType of entityComponentTypes) {
+      const componentArray = componentArrayRecord[componentType];
+      if (typeof componentArray.onTakeDamage !== "undefined") {
+         componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
+      }
+   }
+}
+
+const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource): void => {
+   const componentArrayRecord = getComponentArrayRecord();
+   const entityComponentTypes = getEntityComponentTypes(entity);
+   
+   for (const componentType of entityComponentTypes) {
+      const componentArray = componentArrayRecord[componentType];
+      if (typeof componentArray.onDeath !== "undefined") {
+         componentArray.onDeath(entity, attackingEntity, damageSource);
+      }
+   }
+}
+
 /**
  * Attempts to apply damage to an entity
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
 export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
-   const healthComponent = HealthComponentArray.getComponent(entity);
+   const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
+   if (damagedEntity === null) {
+      throw new Error();
+   }
+
+   const healthComponent = HealthComponentArray.getComponent(damagedEntity);
 
    if (damage !== 0) {
       const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
@@ -72,22 +100,33 @@ export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage
       
       healthComponent.health -= actualDamage;
       
-      registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
-      registerDirtyEntity(entity);
+      if (entity === damagedEntity) {
+         registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
+         registerDirtyEntity(entity);
+      } else {
+         // @HACK
+         const damagedEntityTransformComponent = TransformComponentArray.getComponent(damagedEntity);
+         for (const childEntity of damagedEntityTransformComponent.childEntities) {
+            registerEntityHit(childEntity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
+            registerDirtyEntity(childEntity);
+         }
+      }
    }
 
    const componentArrayRecord = getComponentArrayRecord();
-   const entityComponentTypes = getEntityComponentTypes(entity);
 
    // If the entity was killed by the attack, destroy the entity
    if (healthComponent.health <= 0) {
-      destroyEntity(entity);
+      destroyEntity(damagedEntity);
 
       // Call onDeath events for the dead entity
-      for (const componentType of entityComponentTypes) {
-         const componentArray = componentArrayRecord[componentType];
-         if (typeof componentArray.onDeath !== "undefined") {
-            componentArray.onDeath(entity, attackingEntity, damageSource);
+      if (entity === damagedEntity) {
+         callOnDeathCallbacks(entity, attackingEntity, damageSource);
+      } else {
+         // @HACk
+         const damagedEntityTransformComponent = TransformComponentArray.getComponent(damagedEntity);
+         for (const childEntity of damagedEntityTransformComponent.childEntities) {
+            callOnDeathCallbacks(childEntity, attackingEntity, damageSource);
          }
       }
 
@@ -104,10 +143,13 @@ export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage
    }
 
    // Call onTakeDamage events for the attacked entity
-   for (const componentType of entityComponentTypes) {
-      const componentArray = componentArrayRecord[componentType];
-      if (typeof componentArray.onTakeDamage !== "undefined") {
-         componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
+   if (entity === damagedEntity) {
+      callOnTakeDamageCallbacks(entity, attackingEntity, damageSource, damage);
+   } else {
+      // @HACk
+      const damagedEntityTransformComponent = TransformComponentArray.getComponent(damagedEntity);
+      for (const childEntity of damagedEntityTransformComponent.childEntities) {
+         callOnTakeDamageCallbacks(childEntity, attackingEntity, damageSource, damage);
       }
    }
 

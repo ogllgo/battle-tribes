@@ -5,7 +5,7 @@ import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { randInt, Point } from "battletribes-shared/utils";
 import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
 import { TribeComponent } from "../../components/TribeComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -92,9 +92,9 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
 
    const tribeWarriorComponent = new TribeWarriorComponent(generateScars());
 
-   return {
-      entityType: EntityType.tribeWarrior,
-      components: {
+   return createEntityConfig(
+      EntityType.tribeWarrior,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -110,6 +110,6 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.tribeWarrior]: tribeWarriorComponent
       },
-      lights: []
-   };
+      []
+   );
 }

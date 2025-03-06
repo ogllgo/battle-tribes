@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -35,9 +35,9 @@ export function createStonecarvingTableConfig(position: Point, rotation: number,
    
    const craftingStationComponent = new CraftingStationComponent(CraftingStation.stonecarvingTable);
    
-   return {
-      entityType: EntityType.stonecarvingTable,
-      components: {
+   return createEntityConfig(
+      EntityType.stonecarvingTable,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -45,6 +45,6 @@ export function createStonecarvingTableConfig(position: Point, rotation: number,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
       },
-      lights: []
-   };
+      []
+   );
 }

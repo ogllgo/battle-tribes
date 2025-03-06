@@ -23,7 +23,6 @@ const enum Vars {
 }
 
 interface EntityJoinInfo {
-   readonly entity: Entity;
    readonly entityConfig: EntityConfig;
    readonly layer: Layer;
    readonly entityComponentTypes: ReadonlyArray<ServerComponentType>;
@@ -177,14 +176,14 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
       if (joinInfo.ticksRemaining === 0) {
-         entityTypes[joinInfo.entity] = joinInfo.entityConfig.entityType;
-         entityLayers[joinInfo.entity] = joinInfo.layer;
-         entityComponentTypes[joinInfo.entity] = joinInfo.entityComponentTypes;
-         entitySpawnTicks[joinInfo.entity] = ticks;
+         entityTypes[joinInfo.entityConfig.entity] = joinInfo.entityConfig.entityType;
+         entityLayers[joinInfo.entityConfig.entity] = joinInfo.layer;
+         entityComponentTypes[joinInfo.entityConfig.entity] = joinInfo.entityComponentTypes;
+         entitySpawnTicks[joinInfo.entityConfig.entity] = ticks;
 
          // Add lights
          for (const lightCreationInfo of joinInfo.entityConfig.lights) {
-            attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, joinInfo.entity)
+            attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, joinInfo.entityConfig.entity)
          }
 
          finalPushedIdx = i;
@@ -293,7 +292,7 @@ export function destroyEntity(entity: Entity): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
 
-      if (joinInfo.entity === entity) {
+      if (joinInfo.entityConfig.entity === entity) {
          entityJoinBuffer.splice(i, 1);
          break;
       }
@@ -310,11 +309,10 @@ export function destroyEntity(entity: Entity): void {
    }
 }
 
-export function addEntityToJoinBuffer(entity: Entity, entityConfig: EntityConfig, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
+export function addEntityToJoinBuffer(entityConfig: EntityConfig, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
    // Find a spot for the entity
    
    const joinInfo: EntityJoinInfo = {
-      entity: entity,
       entityConfig: entityConfig,
       layer: layer,
       entityComponentTypes: entityComponentTypes,

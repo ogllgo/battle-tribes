@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import Tribe from "../../Tribe";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -34,9 +34,9 @@ export function createPlanterBoxConfig(position: Point, rotation: number, tribe:
    
    const planterBoxComponent = new PlanterBoxComponent();
    
-   return {
-      entityType: EntityType.planterBox,
-      components: {
+   return createEntityConfig(
+      EntityType.planterBox,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createPlanterBoxConfig(position: Point, rotation: number, tribe:
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.planterBox]: planterBoxComponent
       },
-      lights: []
-   };
+      []
+   );
 }

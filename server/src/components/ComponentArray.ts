@@ -6,6 +6,7 @@ import { assert, Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { HitboxCollisionPair } from "../collision-detection";
 import { Hitbox } from "../hitboxes";
+import { TransformComponentArray } from "./TransformComponent";
 
 const enum ComponentArrayPriority {
    low,

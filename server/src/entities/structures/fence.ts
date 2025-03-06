@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { FenceComponent } from "../../components/FenceComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -34,9 +34,9 @@ export function createFenceConfig(position: Point, rotation: number, tribe: Trib
 
    const fenceComponent = new FenceComponent();
    
-   return {
-      entityType: EntityType.fence,
-      components: {
+   return createEntityConfig(
+      EntityType.fence,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createFenceConfig(position: Point, rotation: number, tribe: Trib
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.fence]: fenceComponent
       },
-      lights: []
-   };
+      []
+   );
 }

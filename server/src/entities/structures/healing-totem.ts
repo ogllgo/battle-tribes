@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -37,9 +37,9 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
    
    const healingTotemComponent = new HealingTotemComponent();
    
-   return {
-      entityType: EntityType.healingTotem,
-      components: {
+   return createEntityConfig(
+      EntityType.healingTotem,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -48,6 +48,6 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.healingTotem]: healingTotemComponent
       },
-      lights: []
-   };
+      []
+   );
 }

@@ -480,6 +480,7 @@ abstract class Game {
       updateSpamFilter();
 
       updatePlayerMovement();
+      Camera.applyCameraKinematics();
       
       updatePlayerItems();
       updateActiveResearchBench();
@@ -560,10 +561,7 @@ abstract class Game {
 
       // @Cleanup: move to update function in camera
       // Update the camera
-      if (playerInstance !== null) {
-         Camera.updatePosition(frameProgress);
-      }
-      console.log(Camera.position.x,Camera.position.y);
+      Camera.updatePosition(frameProgress);
       Camera.updateVisibleChunkBounds();
       Camera.updateVisibleRenderChunkBounds();
 

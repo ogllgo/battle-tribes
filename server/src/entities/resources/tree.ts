@@ -2,7 +2,7 @@ import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } fro
 import { Entity, EntityType, TreeSize } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -61,15 +61,15 @@ export function createTreeConfig(position: Point, rotation: number): EntityConfi
    
    const treeComponent = new TreeComponent(size);
    
-   return {
-      entityType: EntityType.tree,
-      components: {
+   return createEntityConfig(
+      EntityType.tree,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.tree]: treeComponent
       },
-      lights: []
-   };
+      []
+   );
 }

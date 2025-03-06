@@ -2,7 +2,7 @@ import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -63,9 +63,9 @@ export function createKrumblidConfig(position: Point, rotation: number): EntityC
    
    const krumblidComponent = new KrumblidComponent();
    
-   return {
-      entityType: EntityType.krumblid,
-      components: {
+   return createEntityConfig(
+      EntityType.krumblid,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -77,6 +77,6 @@ export function createKrumblidConfig(position: Point, rotation: number): EntityC
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       },
-      lights: []
-   };
+      []
+   );
 }

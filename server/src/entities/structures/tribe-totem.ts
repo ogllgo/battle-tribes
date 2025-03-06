@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { TotemBannerComponent } from "../../components/TotemBannerComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import Tribe from "../../Tribe";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -34,9 +34,9 @@ export function createTribeTotemConfig(position: Point, rotation: number, tribe:
    
    const totemBannerComponent = new TotemBannerComponent();
    
-   return {
-      entityType: EntityType.tribeTotem,
-      components: {
+   return createEntityConfig(
+      EntityType.tribeTotem,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createTribeTotemConfig(position: Point, rotation: number, tribe:
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.totemBanner]: totemBannerComponent
       },
-      lights: []
-   };
+      []
+   );
 }

@@ -882,6 +882,9 @@ export function updatePlayerMovement(): void {
       case 15: moveDirection = null;          break;
    }
 
+   Camera.velocity.x = 0;
+   Camera.velocity.y = 0;
+
    if (moveDirection !== null) {
       if (playerInstance !== null) {
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
@@ -915,10 +918,8 @@ export function updatePlayerMovement(): void {
          applyAcceleration(playerInstance, playerHitbox, accelerationX, accelerationY);
       } else {
          const MOVE_SPEED = 700;
-         const velocityX = MOVE_SPEED * Math.sin(moveDirection);
-         const velocityY = MOVE_SPEED * Math.cos(moveDirection);
-         Camera.position.x += velocityX * Settings.I_TPS;
-         Camera.position.y += velocityY * Settings.I_TPS;
+         Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);
+         Camera.velocity.y = MOVE_SPEED * Math.cos(moveDirection);
       }
    }
 }

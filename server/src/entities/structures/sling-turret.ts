@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -44,9 +44,9 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
 
    const slingTurretComponent = new SlingTurretComponent();
    
-   return {
-      entityType: EntityType.slingTurret,
-      components: {
+   return createEntityConfig(
+      EntityType.slingTurret,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -56,6 +56,6 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.slingTurret]: slingTurretComponent
       },
-      lights: []
-   };
+      []
+   );
 }

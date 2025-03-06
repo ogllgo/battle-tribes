@@ -52,6 +52,7 @@ function onTick(glurb: Entity): void {
 }
 
 function onHit(entity: Entity, hitData: HitData): void {
+   console.log("activate");
    for (let i = 0; i < 10; i++) {
       const spawnPositionX = hitData.hitPosition[0];
       const spawnPositionY = hitData.hitPosition[1];

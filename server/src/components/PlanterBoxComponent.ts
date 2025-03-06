@@ -90,9 +90,9 @@ export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: Pl
          break;
       }
    }
-   const plant = createEntity(config, getEntityLayer(planterBox), 0);
+   createEntity(config, getEntityLayer(planterBox), 0);
 
-   planterBoxComponent.plant = plant;
+   planterBoxComponent.plant = config.entity;
    planterBoxComponent.replantEntityType = plantedEntityType;
 }
 
