@@ -83,8 +83,8 @@ abstract class Camera {
    public static maxVisibleRenderChunkY = -1;
 
    public static applyCameraKinematics(): void {
-      this.lastTickPosition.x += this.velocity.x * Settings.I_TPS;
-      this.lastTickPosition.y += this.velocity.y * Settings.I_TPS;
+      // this.lastTickPosition.x += this.velocity.x * Settings.I_TPS;
+      // this.lastTickPosition.y += this.velocity.y * Settings.I_TPS;
    }
 
    public static setInitialVisibleChunkBounds(layer: Layer): void {
@@ -158,6 +158,11 @@ abstract class Camera {
       this.position.y = y;
       this.lastTickPosition.x = x;
       this.lastTickPosition.y = y;
+   }
+
+   public static updateSpectatorPosition(deltaTime: number): void {
+      this.position.x += this.velocity.x * deltaTime;
+      this.position.y += this.velocity.y * deltaTime;
    }
 
    public static updatePosition(frameProgress: number): void {

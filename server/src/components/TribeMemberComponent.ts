@@ -107,23 +107,6 @@ function onTick(tribeMember: Entity): void {
          }
       } else {
          removeDefence(healthComponent, "armour");
-   
-         // Automatically equip armour from the hotbar
-         // @Speed: only do when inventory changes
-         if (typeof armourSlotInventory.itemSlots[1] === "undefined") {
-            const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-            for (let i = 0; i < hotbarInventory.items.length; i++) {
-               const item = hotbarInventory.items[i];
-               if (ITEM_TYPE_RECORD[item.type] === "armour") {
-                  armourSlotInventory.addItem(item, 1);
-      
-                  // Remove from hotbar
-                  const itemSlot = hotbarInventory.getItemSlot(item);
-                  hotbarInventory.removeItem(itemSlot);
-                  break;
-               }
-            }
-         }
       }
    }
 }

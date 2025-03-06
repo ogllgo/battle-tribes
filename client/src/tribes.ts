@@ -63,6 +63,15 @@ export function getTribeByID(tribeID: number): Tribe {
    throw new Error("No tribe data for tribe with ID " + tribeID);
 }
 
+export function tribeExists(tribeID: number): boolean {
+   for (const tribe of tribes) {
+      if (tribe.id === tribeID) {
+         return true;
+      }
+   }
+   return false;
+}
+
 export function readShortTribeData(reader: PacketReader): ShortTribe {
    const tribeName = reader.readString();
    const tribeID = reader.readNumber();

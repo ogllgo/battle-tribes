@@ -917,7 +917,7 @@ export function updatePlayerMovement(): void {
          const accelerationY = acceleration * Math.cos(moveDirection);
          applyAcceleration(playerInstance, playerHitbox, accelerationX, accelerationY);
       } else {
-         const MOVE_SPEED = 700;
+         const MOVE_SPEED = 500;
          Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);
          Camera.velocity.y = MOVE_SPEED * Math.cos(moveDirection);
       }

@@ -526,10 +526,11 @@ abstract class Game {
          updatePlayerRotation(cursorX, cursorY);
       }
       
-      const currentRenderTime = Math.floor(new Date().getTime() / 1000);
-      if (currentRenderTime !== lastRenderTime) {
+      const currentRenderTime = performance.now(); // @Speed
+      if (Math.floor(currentRenderTime / 1000) !== Math.floor(lastRenderTime / 1000)) {
          clearServerTicks();
       }
+      const deltaTime = (currentRenderTime - lastRenderTime) / 1000;
       lastRenderTime = currentRenderTime;
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
@@ -561,7 +562,11 @@ abstract class Game {
 
       // @Cleanup: move to update function in camera
       // Update the camera
-      Camera.updatePosition(frameProgress);
+      if (!Camera.isSpectating) {
+         Camera.updatePosition(frameProgress);
+      } else {
+         Camera.updateSpectatorPosition(deltaTime);
+      }
       Camera.updateVisibleChunkBounds();
       Camera.updateVisibleRenderChunkBounds();
 

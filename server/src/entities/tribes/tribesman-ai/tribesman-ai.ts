@@ -4,7 +4,7 @@ import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { getTechByID } from "battletribes-shared/techs";
 import { willStopAtDesiredDistance, getDistanceFromPointToEntity, getClosestAccessibleEntity } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
-import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, InventoryComponentArray } from "../../../components/InventoryComponent";
+import { getInventory, addItemToInventory, consumeItemFromSlot, inventoryIsFull, InventoryComponentArray, hasInventory } from "../../../components/InventoryComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
@@ -335,6 +335,26 @@ export function tickTribesman(tribesman: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
 
+   // Automatically equip armour from the hotbar
+   // @Speed: only do when inventory changes
+   if (hasInventory(inventoryComponent, InventoryName.armourSlot)) {
+      const armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
+      const armour = armourSlotInventory.itemSlots[1];
+      if (typeof armour === "undefined") {
+         for (let i = 0; i < hotbarInventory.items.length; i++) {
+            const item = hotbarInventory.items[i];
+            if (ITEM_TYPE_RECORD[item.type] === "armour") {
+               armourSlotInventory.addItem(item, 1);
+   
+               // Remove from hotbar
+               const itemSlot = hotbarInventory.getItemSlot(item);
+               hotbarInventory.removeItem(itemSlot);
+               break;
+            }
+         }
+      }
+   }
+
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.hitboxes[0];
    
@@ -495,10 +515,11 @@ export function tickTribesman(tribesman: Entity): void {
    }
    
    // Attack enemy buildings
-   if (visibleEnemyBuildings.length > 0) {
-      goKillEntity(tribesman, getClosestAccessibleEntity(tribesman, visibleEnemyBuildings), true);
-      return;
-   }
+   // @TEMPORARY
+   // if (visibleEnemyBuildings.length > 0) {
+   //    goKillEntity(tribesman, getClosestAccessibleEntity(tribesman, visibleEnemyBuildings), true);
+   //    return;
+   // }
 
    // Heal when missing health
    if (healthComponent.health < healthComponent.maxHealth) {

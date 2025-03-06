@@ -8,7 +8,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { getTribeByID, Tribe } from "../../tribes";
+import { Tribe, tribeExists } from "../../tribes";
 import { playerInstance } from "../../player";
 import { EntityParams } from "../../world";
 
@@ -22,11 +22,6 @@ export interface TribeComponent {
    tribeType: TribeType;
 }
 
-// @Hack
-export function getTribeType(tribeID: number): TribeType {
-   return getTribeByID(tribeID).tribeType;
-}
-
 export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentParams, never>(ServerComponentType.tribe, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
@@ -36,20 +31,25 @@ export const TribeComponentArray = new ServerComponentArray<TribeComponent, Trib
    updatePlayerFromData: updatePlayerFromData
 });
 
-const fillTribeComponentParams = (tribeID: number): TribeComponentParams => {
+const fillTribeComponentParams = (tribeID: number, tribeType: TribeType): TribeComponentParams => {
    return {
       tribeID: tribeID,
-      tribeType: getTribeType(tribeID)
+      tribeType: tribeType
    };
 }
 
 export function createTribeComponentParams(tribe: Tribe): TribeComponentParams {
-   return fillTribeComponentParams(tribe.id);
+   return fillTribeComponentParams(tribe.id, tribe.tribeType);
 }
 
 function createParamsFromData(reader: PacketReader): TribeComponentParams {
    const tribeID = reader.readNumber();
-   return fillTribeComponentParams(tribeID);
+   if (!tribeExists(tribeID)) {
+      console.warn("In creating tribe component from data, no tribe with id '" + tribeID + "' exists!");
+   }
+   const tribeType = reader.readNumber() as TribeType;
+   
+   return fillTribeComponentParams(tribeID, tribeType);
 }
 
 function createComponent(entityParams: EntityParams): TribeComponent {
@@ -73,6 +73,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    
    const tribeID = reader.readNumber();
+   const tribeType = reader.readNumber();
    
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
@@ -98,11 +99,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    
    tribeComponent.tribeID = tribeID;
-   tribeComponent.tribeType = getTribeType(tribeID);
+   tribeComponent.tribeType = tribeType;
 }
 
 function updatePlayerFromData(reader: PacketReader): void {
-   const tribeComponent = TribeComponentArray.getComponent(playerInstance!);
-   tribeComponent.tribeID = reader.readNumber();
-   tribeComponent.tribeType = getTribeType(tribeComponent.tribeID);
+   updateFromData(reader, playerInstance!);
 }
