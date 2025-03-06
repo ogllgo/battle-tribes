@@ -7,20 +7,48 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
 import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
 import { Hitbox } from "../../hitboxes";
+import { TamingComponent } from "../../components/TamingComponent";
+import { registerEntityTamingSpec } from "../../taming-specs";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { ItemType } from "../../../../shared/src/items/items";
+
+registerEntityTamingSpec(EntityType.glurb, {
+   maxTamingTier: 1,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: -18,
+         y: 10
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.dulledPainReceptors),
+         x: 18,
+         y: 10
+      }
+   ],
+   foodItemType: ItemType.berry,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5
+   }
+});
 
 export function createGlurbConfig(x: number, y: number, rotation: number): ReadonlyArray<EntityConfig> {
    const configs = new Array<EntityConfig>();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
-   const config: EntityConfig = {
+   const tamingComponent = new TamingComponent()
+   
+   const rootEntityConfig: EntityConfig = {
       entityType: EntityType.glurb,
       components: {
-         [ServerComponentType.statusEffect]: statusEffectComponent
+         [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.taming]: tamingComponent,
       },
       lights: []
    };
-   configs.push(config);
+   configs.push(rootEntityConfig);
 
    // @Incomplete: Will always have same offset shape! Straight, going upwards!
    

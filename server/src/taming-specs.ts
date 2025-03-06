@@ -46,6 +46,8 @@ export function addTamingSpecToData(packet: Packet, tamingSpec: EntityTamingSpec
    packet.addNumber(tamingSpec.foodItemType);
 
    for (let tamingTier = 0; tamingTier <= tamingSpec.maxTamingTier; tamingTier++) {
-      packet.addNumber(tamingSpec.tierFoodRequirements[tamingTier as TamingTier]);
+      const foodRequirements = tamingSpec.tierFoodRequirements[tamingTier as TamingTier];
+      assert(typeof foodRequirements !== "undefined");
+      packet.addNumber(foodRequirements);
    }
 }

@@ -112,7 +112,12 @@ export function getCollisionPushInfo(pushedHitbox: Box, pushingHitbox: Box): Col
       // @Cleanup: copy and paste
       const collisionData = rectanglesAreColliding(pushedHitbox, pushingHitbox);
       if (!collisionData.isColliding) {
-         throw new Error();
+         // @HACK @INCOMPLETE
+         console.warn("BAD.");
+         return {
+            amountIn: 0,
+            direction: 0
+         };
       }
       
       return {
