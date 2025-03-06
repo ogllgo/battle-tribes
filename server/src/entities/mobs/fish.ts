@@ -4,7 +4,7 @@ import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -91,9 +91,9 @@ export function createFishConfig(position: Point, rotation: number): EntityConfi
    
    const fishComponent = new FishComponent();
 
-   return {
-      entityType: EntityType.fish,
-      components: {
+   return createEntityConfig(
+      EntityType.fish,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -104,8 +104,8 @@ export function createFishConfig(position: Point, rotation: number): EntityConfi
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.fish]: fishComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 export function onFishLeaderHurt(fish: Entity, attackingEntity: Entity): void {

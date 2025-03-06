@@ -213,8 +213,8 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
 
    for (const config of configs) {
       // Create the entity
-      const entity = createEntity(config, layer, 0);
-      addEntityToCensus(entity, entityType);
+      createEntity(config, layer, 0);
+      addEntityToCensus(config.entity, entityType);
       if (!SERVER.isRunning) {
          pushJoinBuffer(false);
       }
@@ -397,11 +397,11 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      // const config = createGlur(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0, false, 0);
+      // const config = createGlurb(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0, false, 0);
       // createEntity(config, surfaceLayer, 0);
       // if(1+1===2)return;
       // const configs = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
-      // // @Hack
+      // // // @Hack
       // for (const config of configs) {
       //    createEntity(config, surfaceLayer, 0);
       // }

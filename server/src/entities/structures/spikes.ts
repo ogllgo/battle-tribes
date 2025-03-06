@@ -6,7 +6,7 @@ import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, can
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { getEntityType } from "../../world";
 import { TransformComponent } from "../../components/TransformComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -41,9 +41,9 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
    
    const spikesComponent = new SpikesComponent();
    
-   return {
-      entityType: EntityType.floorSpikes,
-      components: {
+   return createEntityConfig(
+      EntityType.floorSpikes,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -52,8 +52,8 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.spikes]: spikesComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 export function createWallSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
@@ -75,9 +75,9 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
    
    const spikesComponent = new SpikesComponent();
    
-   return {
-      entityType: EntityType.wallSpikes,
-      components: {
+   return createEntityConfig(
+      EntityType.wallSpikes,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -86,8 +86,8 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.spikes]: spikesComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 // @Cleanup: Copy and paste

@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Point } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
 import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
@@ -11,6 +11,8 @@ import { TamingComponent } from "../../components/TamingComponent";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
+import { TransformComponent } from "../../components/TransformComponent";
+import { HealthComponent } from "../../components/HealthComponent";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -34,27 +36,36 @@ registerEntityTamingSpec(EntityType.glurb, {
 });
 
 export function createGlurbConfig(x: number, y: number, rotation: number): ReadonlyArray<EntityConfig> {
+   // @Incomplete: Will always have same offset shape! Straight, going upwards!
+
    const configs = new Array<EntityConfig>();
+   
+   // just so that the glurb can have the childEntities propperty
+   const transformComponent = new TransformComponent(0);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
+   // @TEMPORARY
+   const healthComponent = new HealthComponent(10);
+
    const tamingComponent = new TamingComponent()
    
-   const rootEntityConfig: EntityConfig = {
-      entityType: EntityType.glurb,
-      components: {
+   const rootEntityConfig = createEntityConfig(
+      EntityType.glurb,
+      {
+         [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.health]: healthComponent,
          [ServerComponentType.taming]: tamingComponent,
       },
-      lights: []
-   };
+      []
+   );
    configs.push(rootEntityConfig);
 
-   // @Incomplete: Will always have same offset shape! Straight, going upwards!
-   
    let currentX = x;
    let currentY = y;
    
+   let headConfig!: EntityConfig;
    let lastHitbox: Hitbox | undefined;
    // @Temporary
    // const numSegments = randInt(3, 5);
@@ -65,12 +76,19 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
       let config: EntityConfig;
       if (i === 0) {
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
+         headConfig = config;
       } else {
          config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, i < numSegments - 1);
       }
+      
+      const transformComponent = config.components[ServerComponentType.transform]!;
+      transformComponent.rootEntity = rootEntityConfig.entity;
+      lastHitbox = transformComponent.hitboxes[0];
+
       configs.push(config);
 
-      lastHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+      const headSegmentComponent = headConfig.components[ServerComponentType.glurbHeadSegment]!;
+      headSegmentComponent.allSegments.push(config.entity);
    }
 
    return configs;

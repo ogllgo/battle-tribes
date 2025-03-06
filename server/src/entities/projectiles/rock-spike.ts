@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { RockSpikeComponent } from "../../components/RockSpikeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -21,12 +21,12 @@ export function createRockSpikeConfig(position: Point, rotation: number, size: n
    
    const rockSpikeComponent = new RockSpikeComponent(size, frozenYeti);
    
-   return {
-      entityType: EntityType.rockSpikeProjectile,
-      components: {
+   return createEntityConfig(
+      EntityType.rockSpikeProjectile,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.rockSpike]: rockSpikeComponent
       },
-      lights: []
-   };
+      []
+   );
 }

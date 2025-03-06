@@ -6,7 +6,7 @@ import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hit
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
@@ -32,16 +32,16 @@ export function createWoodenArrowConfig(position: Point, rotation: number, tribe
 
    const projectileComponent = new ProjectileComponent(owner);
    
-   return {
-      entityType: EntityType.woodenArrow,
-      components: {
+   return createEntityConfig(
+      EntityType.woodenArrow,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 // @Cleanup: Copy and paste

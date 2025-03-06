@@ -14,7 +14,10 @@ import { ComponentArray } from "./ComponentArray";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
 
-export class GlurbHeadSegmentComponent {}
+export class GlurbHeadSegmentComponent {
+   // @Hack
+   public readonly allSegments = new Array<Entity>();
+}
 
 export const GlurbHeadSegmentComponentArray = new ComponentArray<GlurbHeadSegmentComponent>(ServerComponentType.glurbHeadSegment, true, getDataLength, addDataToPacket);
 GlurbHeadSegmentComponentArray.onTick = {
@@ -37,31 +40,28 @@ const getAcceleration = (glurb: Entity): number => {
 }
 
 const move = (glurb: Entity, targetPosition: Point): void => {
+   const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurb);
    const acceleration = getAcceleration(glurb);
 
-   // @HACK @TEMPORARY
-   for (const entity of GlurbSegmentComponentArray.activeEntities) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const glurbSegment of glurbHeadSegmentComponent.allSegments) {
+      const transformComponent = TransformComponentArray.getComponent(glurbSegment);
       const hitbox = transformComponent.hitboxes[0];
    
       let targetDirection: number;
       
-      if (GlurbHeadSegmentComponentArray.hasComponent(entity)) {
+      if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
          targetDirection = angle(targetPosition.x - hitbox.box.position.x, targetPosition.y - hitbox.box.position.y);
          setHitboxIdealAngle(hitbox, targetDirection, Math.PI);
       } else {
          // Move to next hitbox in chain
-         const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(entity);
+         const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(glurbSegment);
          targetDirection = hitbox.box.position.calculateAngleBetween(glurbSegmentComponent.nextHitbox.box.position);
       }
       
-      
       const accelerationX = acceleration * Math.sin(targetDirection);
       const accelerationY = acceleration * Math.cos(targetDirection);
-      applyAcceleration(entity, hitbox, accelerationX, accelerationY);
-   
+      applyAcceleration(glurbSegment, hitbox, accelerationX, accelerationY);
    }
-
 }
 
 const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {

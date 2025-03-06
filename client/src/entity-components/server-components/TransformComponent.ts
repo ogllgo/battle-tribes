@@ -22,6 +22,7 @@ import { RideableComponentArray } from "./RideableComponent";
 import { playerInstance } from "../../player";
 import { createHitboxReference, Hitbox, HitboxReference } from "../../hitboxes";
 import { padHitboxData, readHitboxFromData, updateHitboxFromData } from "../../networking/packet-hitboxes";
+import { ComponentArray } from "../ComponentArray";
 
 export interface HitboxTetherParams {
    readonly hitboxLocalID: number;
@@ -48,6 +49,7 @@ export interface TransformComponentParams {
    readonly carryRoot: Entity;
    readonly mount: Entity;
    readonly carriedEntities: Array<EntityCarryInfo>;
+   readonly rootEntity: Entity;
 }
 
 export interface TransformComponent {
@@ -72,9 +74,11 @@ export interface TransformComponent {
    carryRoot: Entity;
    mount: Entity;
    readonly carriedEntities: Array<EntityCarryInfo>;
+
+   rootEntity: Entity;
 }
 
-const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTetherParams>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams => {
+const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTetherParams>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>, rootEntity: Entity): TransformComponentParams => {
    return {
       hitboxes: hitboxes,
       tethers: tethers,
@@ -82,7 +86,8 @@ const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<Hi
       collisionMask: collisionMask,
       carryRoot: carryRoot,
       mount: mount,
-      carriedEntities: carriedEntities
+      carriedEntities: carriedEntities,
+      rootEntity: rootEntity
    };
 }
 
@@ -94,11 +99,14 @@ export function createTransformComponentParams(hitboxes: Array<Hitbox>): Transfo
       collisionMask: DEFAULT_COLLISION_MASK,
       carryRoot: 0,
       mount: 0,
-      carriedEntities: []
+      carriedEntities: [],
+      rootEntity: 0
    };
 }
 
 function createParamsFromData(reader: PacketReader): TransformComponentParams {
+   const rootEntity = reader.readNumber();
+   
    const collisionBit = reader.readNumber();
    const collisionMask = reader.readNumber();
 
@@ -129,8 +137,6 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
       }
    }
 
-   assert(hitboxes.length > 0);
-
    const carryRoot = reader.readNumber() as Entity;
    const mount = reader.readNumber() as Entity;
    const carriedEntities = new Array<EntityCarryInfo>();
@@ -150,7 +156,7 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
       carriedEntities.push(carryInfo);
    }
 
-   return fillTransformComponentParams(hitboxes, tethers, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
+   return fillTransformComponentParams(hitboxes, tethers, collisionBit, collisionMask, carryRoot, mount, carriedEntities, rootEntity);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
@@ -385,8 +391,6 @@ function createComponent(entityParams: EntityParams): TransformComponent {
       });
    }
 
-   assert(transformComponentParams.hitboxes.length > 0);
-   
    return {
       totalMass: totalMass,
       chunks: new Set(),
@@ -402,7 +406,8 @@ function createComponent(entityParams: EntityParams): TransformComponent {
       boundingAreaMaxY: Number.MIN_SAFE_INTEGER,
       carryRoot: transformComponentParams.carryRoot,
       mount: transformComponentParams.mount,
-      carriedEntities: transformComponentParams.carriedEntities
+      carriedEntities: transformComponentParams.carriedEntities,
+      rootEntity: transformComponentParams.rootEntity
    };
 }
 
@@ -424,7 +429,7 @@ function onRemove(entity: Entity): void {
 
 function padData(reader: PacketReader): void {
    // @Bug: I think this is off.... Length of entity data is wrong then?
-   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
@@ -531,6 +536,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // @HACK @SPEED? (actually this might be ok just if we do the optimisation which only sends components which were updated, not all of em at once)
    const renderInfo = getEntityRenderInfo(entity);
    registerDirtyRenderInfo(renderInfo);
+   
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
    
    transformComponent.collisionBit = reader.readNumber();
    transformComponent.collisionMask = reader.readNumber();
@@ -678,7 +685,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    // Update carry roots and carrying entities
    // 
    // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
@@ -768,6 +775,21 @@ export function entityIsVisibleToCamera(entity: Entity): boolean {
             return true;
          }
       }
+   }
+
+   return false;
+}
+
+export function entityTreeHasComponent(componentArray: ComponentArray, entity: Entity): boolean {
+   if (componentArray.hasComponent(entity)) {
+      return true;
+   }
+   
+   // Check root entity
+   // @Hack?
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity !== entity && componentArray.hasComponent(transformComponent.rootEntity)) {
+      return true;
    }
 
    return false;

@@ -4,7 +4,7 @@ import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../.
 import { ServerComponentType } from "../../../../../shared/src/components";
 import { EntityType } from "../../../../../shared/src/entities";
 import { Point } from "../../../../../shared/src/utils";
-import { EntityConfig } from "../../../components";
+import { createEntityConfig, EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
 import { CogwalkerComponent } from "../../../components/CogwalkerComponent";
@@ -57,9 +57,9 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
 
    const cogwalkerComponent = new CogwalkerComponent();
 
-   return {
-      entityType: EntityType.cogwalker,
-      components: {
+   return createEntityConfig(
+      EntityType.cogwalker,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -74,6 +74,6 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.cogwalker]: cogwalkerComponent
       },
-      lights: []
-   };
+      []
+   );
 }

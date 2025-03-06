@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../components";
+import { createEntityConfig, EntityConfig } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -27,15 +27,15 @@ export function createItemEntityConfig(position: Point, rotation: number, itemTy
 
    const itemComponent = new ItemComponent(itemType, amount, throwingEntity);
    
-   return {
-      entityType: EntityType.itemEntity,
-      components: {
+   return createEntityConfig(
+      EntityType.itemEntity,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {

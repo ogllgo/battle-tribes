@@ -7,16 +7,14 @@ import { addEntityToJoinBuffer } from "./world";
 
 // @Cleanup: Rename this file
 
-// We skip 0 as that is reserved for there being no entity
-let idCounter = 1;
-
 // @Hack @Cleanup ?@Speed
 const getComponentTypes = (componentConfig: EntityConfig): ReadonlyArray<ServerComponentType> => {
    return Object.keys(componentConfig.components).map(Number) as Array<ServerComponentType>;
 }
 
-export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): Entity {
-   const id = idCounter++;
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): void {
+   const entity = entityConfig.entity;
+   
    // @Hack
    const componentTypes = getComponentTypes(entityConfig);
    const componentArrayRecord = getComponentArrayRecord();
@@ -28,7 +26,8 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
 
       if (typeof componentArray.onInitialise !== "undefined") {
          // @Cleanup: remove need for cast
-         componentArray.onInitialise(entityConfig, id, layer);
+         // @Cleanup: first 2 parameters can be combined
+         componentArray.onInitialise(entityConfig, entity, layer);
       }
    }
    
@@ -38,11 +37,9 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
       const component = entityConfig.components[componentType]!;
 
       const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
-      componentArray.addComponent(id, component, joinDelayTicks);
+      componentArray.addComponent(entity, component, joinDelayTicks);
    }
 
    // @Hack: cast
-   addEntityToJoinBuffer(id, entityConfig, layer, componentTypes, joinDelayTicks);
-
-   return id;
+   addEntityToJoinBuffer(entityConfig, layer, componentTypes, joinDelayTicks);
 }

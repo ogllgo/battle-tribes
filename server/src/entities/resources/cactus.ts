@@ -3,7 +3,7 @@ import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -100,15 +100,15 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    
    const cactusComponent = new CactusComponent(flowers);
 
-   return {
-      entityType: EntityType.cactus,
-      components: {
+   return createEntityConfig(
+      EntityType.cactus,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.cactus]: cactusComponent
       },
-      lights: []
-   };
+      []
+   );
 }

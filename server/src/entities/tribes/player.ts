@@ -10,7 +10,7 @@ import { PlanterBoxComponentArray, fertilisePlanterBox, placePlantInPlanterBox }
 import { HutComponentArray } from "../../components/HutComponent";
 import { SpikesComponentArray } from "../../components/SpikesComponent";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -66,9 +66,9 @@ export function createPlayerConfig(position: Point, rotation: number, tribe: Tri
 
    const inventoryUseComponent = new InventoryUseComponent();
 
-   return {
-      entityType: EntityType.player,
-      components: {
+   return createEntityConfig(
+      EntityType.player,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -80,8 +80,8 @@ export function createPlayerConfig(position: Point, rotation: number, tribe: Tri
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent
       },
-      lights: []
-   };
+      []
+   );
 }
 
 // @Cleanup: ton of copy and paste between these functions

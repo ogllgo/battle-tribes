@@ -6,7 +6,7 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { BracingsComponent } from "../../components/BracingsComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -42,9 +42,9 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
 
    const bracingsComponent = new BracingsComponent();
    
-   return {
-      entityType: EntityType.bracings,
-      components: {
+   return createEntityConfig(
+      EntityType.bracings,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -53,6 +53,6 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.bracings]: bracingsComponent
       },
-      lights: []
-   };
+      []
+   );
 }

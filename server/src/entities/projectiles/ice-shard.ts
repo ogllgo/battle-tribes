@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -22,13 +22,13 @@ export function createIceShardConfig(position: Point, rotation: number): EntityC
 
    const iceShardComponent = new IceShardComponent();
    
-   return {
-      entityType: EntityType.iceShardProjectile,
-      components: {
+   return createEntityConfig(
+      EntityType.iceShardProjectile,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.iceShard]: iceShardComponent
       },
-      lights: []
-   };
+      []
+   );
 }

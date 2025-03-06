@@ -6,7 +6,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { PebblumComponent } from "../../components/PebblumComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -32,15 +32,15 @@ export function createPebblumConfig(position: Point, rotation: number): EntityCo
    // @Incomplete?
    const pebblumComponent = new PebblumComponent(0);
    
-   return {
-      entityType: EntityType.pebblum,
-      components: {
+   return createEntityConfig(
+      EntityType.pebblum,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.pebblum]: pebblumComponent
       },
-      lights: []
-   };
+      []
+   );
 }

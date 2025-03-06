@@ -63,6 +63,11 @@ const addEntityCarryHierarchy = (entities: Set<Entity>, mount: Entity): void => 
    for (const carryInfo of mountTransformComponent.carriedEntities) {
       addEntityCarryHierarchy(entities, carryInfo.carriedEntity);
    }
+
+   // @HACK: so the glurb parent entity gets sent to clients
+   if (mountTransformComponent.rootEntity !== mount) {
+      entities.add(mountTransformComponent.rootEntity);
+   }
 }
 
 const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
@@ -128,12 +133,12 @@ class GameServer {
 
    public async start(): Promise<void> {
       // Seed the random number generator
-      if (OPTIONS.inBenchmarkMode) {
-         SRandom.seed(40404040404);
-      } else {
-         SRandom.seed(randInt(0, 9999999999));
-      }
-      // SRandom.seed(2620761354);
+      // if (OPTIONS.inBenchmarkMode) {
+      //    SRandom.seed(40404040404);
+      // } else {
+      //    SRandom.seed(randInt(0, 9999999999));
+      // }
+      SRandom.seed(3353554964);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();

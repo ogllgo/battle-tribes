@@ -1,7 +1,7 @@
 import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { EntityConfig } from "../components";
+import { createEntityConfig, EntityConfig } from "../components";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { BlueprintComponent } from "../components/BlueprintComponent";
@@ -75,15 +75,15 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
 
    const tribeComponent = new TribeComponent(tribe);
    
-   return {
-      entityType: EntityType.blueprintEntity,
-      components: {
+   return createEntityConfig(
+      EntityType.blueprintEntity,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.blueprint]: blueprintComponent,
          [ServerComponentType.tribe]: tribeComponent
       },
-      lights: []
-   };
+      []
+   );
 }

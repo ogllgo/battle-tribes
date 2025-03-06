@@ -301,6 +301,11 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
+   // @HACK: the glurb parent entity can have 0 hitboxes!
+   if (transformComponent.hitboxes.length === 0) {
+      return;
+   }
+
    // If the entity isn't being carried, update its' physics
    if (transformComponent.carryRoot === entity) {
       for (const hitbox of transformComponent.hitboxes) {

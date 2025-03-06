@@ -4,7 +4,7 @@ import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { GuardianGemFragmentProjectileComponent } from "../../components/GuardianGemFragmentProjectileComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
@@ -24,16 +24,16 @@ export function createGuardianGemFragmentProjectileConfig(position: Point, rotat
    
    const projectileComponent = new ProjectileComponent(creator);
    
-   const guardianGemFragmentProjectileCompoennt = new GuardianGemFragmentProjectileComponent();
+   const guardianGemFragmentProjectileComponent = new GuardianGemFragmentProjectileComponent();
    
-   return {
-      entityType: EntityType.guardianGemFragmentProjectile,
-      components: {
+   return createEntityConfig(
+      EntityType.guardianGemFragmentProjectile,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.projectile]: projectileComponent,
-         [ServerComponentType.guardianGemFragmentProjectile]: guardianGemFragmentProjectileCompoennt
+         [ServerComponentType.guardianGemFragmentProjectile]: guardianGemFragmentProjectileComponent
       },
-      lights: []
-   };
+      []
+   );
 }

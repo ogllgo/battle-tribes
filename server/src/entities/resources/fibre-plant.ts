@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -22,13 +22,13 @@ export function createFibrePlantConfig(position: Point, rotation: number): Entit
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
    
-   return {
-      entityType: EntityType.fibrePlant,
-      components: {
+   return createEntityConfig(
+      EntityType.fibrePlant,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent
       },
-      lights: []
-   }
+      []
+   );
 }

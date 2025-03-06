@@ -5,7 +5,7 @@ import { BlockType, ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 import { Point } from "../../../shared/src/utils";
-import { EntityConfig } from "../components";
+import { createEntityConfig, EntityConfig } from "../components";
 import { BlockAttackComponent } from "../components/BlockAttackComponent";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
@@ -29,13 +29,13 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const blockType = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? BlockType.shieldBlock : BlockType.toolBlock;
    const blockAttackComponent = new BlockAttackComponent(owner, blockType);
    
-   return {
-      entityType: EntityType.blockAttack,
-      components: {
+   return createEntityConfig(
+      EntityType.blockAttack,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.blockAttack]: blockAttackComponent
       },
-      lights: []
-   };
+      []
+   );
 }

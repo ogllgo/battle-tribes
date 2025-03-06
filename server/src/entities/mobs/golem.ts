@@ -8,7 +8,7 @@ import { GolemComponent } from "../../components/GolemComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -125,15 +125,15 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    
    const golemComponent = new GolemComponent(transformComponent.hitboxes, GolemVars.PEBBLUM_SUMMON_COOLDOWN_TICKS);
    
-   return {
-      entityType: EntityType.golem,
-      components: {
+   return createEntityConfig(
+      EntityType.golem,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.golem]: golemComponent
       },
-      lights: []
-   };
+      []
+   );
 }

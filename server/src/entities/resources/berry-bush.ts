@@ -4,7 +4,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { BerryBushComponent, BerryBushComponentArray } from "../../components/BerryBushComponent";
 import { TransformComponent } from "../../components/TransformComponent";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -48,15 +48,15 @@ export function createBerryBushConfig(position: Point, rotation: number): Entity
    
    const berryBushComponent = new BerryBushComponent();
    
-   return {
-      entityType: EntityType.berryBush,
-      components: {
+   return createEntityConfig(
+      EntityType.berryBush,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.berryBush]: berryBushComponent
       },
-      lights: []
-   }
+      []
+   );
 }

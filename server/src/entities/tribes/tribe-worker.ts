@@ -6,7 +6,7 @@ import Tribe from "../../Tribe";
 import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { createEntityConfig, EntityConfig } from "../../components";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
@@ -69,9 +69,9 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
 
    const inventoryUseComponent = new InventoryUseComponent();
 
-   return {
-      entityType: EntityType.tribeWorker,
-      components: {
+   return createEntityConfig(
+      EntityType.tribeWorker,
+      {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -86,6 +86,6 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent
       },
-      lights: []
-   };
+      []
+   );
 }

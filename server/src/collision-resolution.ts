@@ -76,11 +76,12 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    const componentTypes = getEntityComponentTypes(affectedEntity);
    const componentArrayRecord = getComponentArrayRecord();
    
-   // @SPEED: This 1 line is about 0.3% of CPU usage
-   // @Hack @Temporary
+   // @Speed
    // @HACK @TEMPORARY
-   const collisionPoint = new Point(0, 0);
-   // const collisionPoint = new Point((affectedEntityTransformComponent.position.x + affectedEntityTransformComponent.position.x) / 2, (collidingEntityTransformComponent.position.y + collidingEntityTransformComponent.position.y) / 2);
+   const affectedEntityHitbox = affectedEntityTransformComponent.hitboxes[0];
+   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   const collidingEntityHitbox = collidingEntityTransformComponent.hitboxes[0];
+   const collisionPoint = new Point((affectedEntityHitbox.box.position.x + affectedEntityHitbox.box.position.x) / 2, (affectedEntityHitbox.box.position.y + affectedEntityHitbox.box.position.y) / 2);
    
    for (let i = 0; i < collidingHitboxPairs.length; i++) {
       const pair = collidingHitboxPairs[i];

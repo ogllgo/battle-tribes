@@ -92,6 +92,9 @@ export class TransformComponent {
    public mount: Entity;
    public carriedEntities = new Array<EntityCarryInfo>();
 
+   public rootEntity: Entity = 0;
+   public readonly childEntities = new Array<Entity>();
+
    constructor(mount: Entity) {
       this.mount = mount;
    }
@@ -452,6 +455,7 @@ const updateRootHitbox = (hitbox: Hitbox): void => {
 
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
 TransformComponentArray.onJoin = onJoin;
+TransformComponentArray.preRemove = preRemove;
 TransformComponentArray.onRemove = onRemove;
 
 export function resolveEntityBorderCollisions(transformComponent: TransformComponent): void {
@@ -492,6 +496,13 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
+   if (transformComponent.rootEntity === 0) {
+      transformComponent.rootEntity = entity;
+   } else if (transformComponent.rootEntity !== entity) {
+      const rootEntityTransformComponent = TransformComponentArray.getComponent(transformComponent.rootEntity);
+      rootEntityTransformComponent.childEntities.push(entity);
+   }
+   
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
    if (transformComponent.mount !== 0) {
@@ -526,23 +537,34 @@ function onJoin(entity: Entity): void {
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.cleanHitboxes(entity);
 
-   resolveEntityBorderCollisions(transformComponent);
+   // @HACK: the glurb parent entity can have 0 hitboxes!
+   if (transformComponent.hitboxes.length !== 0) {
+      resolveEntityBorderCollisions(transformComponent);
 
-   if (transformComponent.isDirty) {
-      transformComponent.cleanHitboxes(entity);
-   }
-
-   transformComponent.updateIsInRiver(entity);
+      if (transformComponent.isDirty) {
+         transformComponent.cleanHitboxes(entity);
+      }
    
-   // Add to chunks
-   transformComponent.updateContainingChunks(entity);
-
-   // @Cleanup: should we make a separate PathfindingOccupancyComponent?
-   if (entityCanBlockPathfinding(entity)) {
-      updateEntityPathfindingNodeOccupance(entity);
+      transformComponent.updateIsInRiver(entity);
+      
+      // Add to chunks
+      transformComponent.updateContainingChunks(entity);
+   
+      // @Cleanup: should we make a separate PathfindingOccupancyComponent?
+      if (entityCanBlockPathfinding(entity)) {
+         updateEntityPathfindingNodeOccupance(entity);
+      }
+   
+      updateEntityLights(entity);
    }
+}
 
-   updateEntityLights(entity);
+function preRemove(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (const childEntity of transformComponent.childEntities) {
+      destroyEntity(childEntity);
+   }
 }
 
 function onRemove(entity: Entity): void {
@@ -606,7 +628,7 @@ function onRemove(entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
       lengthBytes += getHitboxDataLength(hitbox);
@@ -636,6 +658,8 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
+   packet.addNumber(transformComponent.rootEntity);
+   
    packet.addNumber(transformComponent.collisionBit);
    packet.addNumber(transformComponent.collisionMask);
    
@@ -765,4 +789,58 @@ export function getRandomPositionInEntity(transformComponent: TransformComponent
    const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
    const box = hitbox.box;
    return getRandomPositionInBox(box);
+}
+
+// @Hacky
+/** For a given entity, gets the first component up its entity tree. Returns null if none was found. */
+export function getFirstEntityWithComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): Entity | null {
+   if (componentArray.hasComponent(entity)) {
+      return entity;
+   }
+   
+   // Check root entity
+   // @Hack?
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity !== entity && componentArray.hasComponent(transformComponent.rootEntity)) {
+      return transformComponent.rootEntity;
+   }
+
+   return null;
+}
+
+// @Copynpaste
+/** For a given entity, gets the first component up its entity tree. Returns null if none was found. */
+export function getFirstComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): T | null {
+   if (componentArray.hasComponent(entity)) {
+      return componentArray.getComponent(entity);
+   }
+   
+   // Check root entity
+   // @Hack?
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity !== entity && componentArray.hasComponent(transformComponent.rootEntity)) {
+      return componentArray.getComponent(transformComponent.rootEntity);
+   }
+
+   return null;
+}
+
+export function entityTreeHasComponent(componentArray: ComponentArray, entity: Entity): boolean {
+   if (componentArray.hasComponent(entity)) {
+      return true;
+   }
+   
+   // Check root entity
+   // @Hack?
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity !== entity && componentArray.hasComponent(transformComponent.rootEntity)) {
+      return true;
+   }
+
+   return false;
+}
+
+export function getRootEntity(entity: Entity): Entity {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return transformComponent.rootEntity;
 }
