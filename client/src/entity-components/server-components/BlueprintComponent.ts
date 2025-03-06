@@ -1,6 +1,6 @@
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { assertUnreachable, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { createDustCloud, createLightWoodSpeckParticle, createRockParticle, createRockSpeckParticle, createSawdustCloud, createWoodShardParticle } from "../../particles";
 import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -8,11 +8,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityPreCreationInfo, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { BALLISTA_GEAR_X, BALLISTA_GEAR_Y, BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import { WARRIOR_HUT_SIZE } from "./HutComponent";
-import { EntityConfig } from "../ComponentArray";
 import { TribeComponentArray } from "./TribeComponent";
 import { playerTribe } from "../../tribes";
 
@@ -363,18 +362,19 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
 
 const createWoodenBlueprintWorkParticleEffects = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    
    for (let i = 0; i < 2; i++) {
-      createWoodShardParticle(transformComponent.position.x, transformComponent.position.y, 24);
+      createWoodShardParticle(hitbox.box.position.x, hitbox.box.position.y, 24);
    }
 
    for (let i = 0; i < 3; i++) {
-      createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 24 * Math.random());
+      createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 24 * Math.random());
    }
 
    for (let i = 0; i < 2; i++) {
-      const x = transformComponent.position.x + randFloat(-24, 24);
-      const y = transformComponent.position.y + randFloat(-24, 24);
+      const x = hitbox.box.position.x + randFloat(-24, 24);
+      const y = hitbox.box.position.y + randFloat(-24, 24);
       createSawdustCloud(x, y);
    }
 }
@@ -425,8 +425,8 @@ function createParamsFromData(reader: PacketReader): BlueprintComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprint, never>): BlueprintComponent {
-   const blueprintComponentParams = entityConfig.serverComponents[ServerComponentType.blueprint];
+function createComponent(entityParams: EntityParams): BlueprintComponent {
+   const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
    
    return {
       partialRenderParts: [],
@@ -436,8 +436,8 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.blueprin
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.blueprint>): number {
-   const blueprintComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.blueprint];
+function getMaxRenderParts(entityParams: EntityParams): number {
+   const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
    return 2 * BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintComponentParams.blueprintType].length;
 }
 
@@ -466,9 +466,12 @@ const updatePartialTexture = (entity: Entity): void => {
 
       const textureSource = progressTextureInfo.progressTextureSources[localTextureIndex];
       if (blueprintComponent.partialRenderParts.length <= i) {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
+         
          // New render part
          const renderPart = new TexturedRenderPart(
-            null,
+            hitbox,
             progressTextureInfo.zIndex + 0.01,
             progressTextureInfo.rotation,
             getTextureArrayIndex(textureSource)
@@ -505,8 +508,11 @@ function onLoad(entity: Entity): void {
    for (let i = 0; i < progressTextureInfoArray.length; i++) {
       const progressTextureInfo = progressTextureInfoArray[i];
 
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+
       const renderPart = new TexturedRenderPart(
-         null,
+         hitbox,
          progressTextureInfo.zIndex,
          progressTextureInfo.rotation,
          getTextureArrayIndex(progressTextureInfo.completedTextureSource)
@@ -529,7 +535,9 @@ function onLoad(entity: Entity): void {
 
 
 function onSpawn(entity: Entity): void {
-   playSoundOnEntity("blueprint-place.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, hitbox, false);
 }
 
 function padData(reader: PacketReader): void {
@@ -580,8 +588,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    if (blueprintProgress !== blueprintComponent.lastBlueprintProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
-      playSoundOnEntity("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity, false);
+      playSoundOnHitbox("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
 
       const progressTexture = getCurrentBlueprintProgressTexture(blueprintComponent.blueprintType, blueprintProgress);
       
@@ -590,8 +599,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       const textureArrayIndex = getTextureArrayIndex(progressTexture.completedTextureSource);
       const xShift = textureAtlas.textureWidths[textureArrayIndex] * 4 * 0.5 * randFloat(-0.75, 0.75);
       const yShift = textureAtlas.textureHeights[textureArrayIndex] * 4 * 0.5 * randFloat(-0.75, 0.75);
-      const particleOriginX = transformComponent.position.x + rotateXAroundOrigin(progressTexture.offsetX + xShift, progressTexture.offsetY + yShift, progressTexture.rotation);
-      const particleOriginY = transformComponent.position.y + rotateYAroundOrigin(progressTexture.offsetX + xShift, progressTexture.offsetY + yShift, progressTexture.rotation);
+      const particleOriginX = hitbox.box.position.x + rotateXAroundOrigin(progressTexture.offsetX + xShift, progressTexture.offsetY + yShift, progressTexture.rotation);
+      const particleOriginY = hitbox.box.position.y + rotateYAroundOrigin(progressTexture.offsetX + xShift, progressTexture.offsetY + yShift, progressTexture.rotation);
       
       // @Incomplete: Change the particle effect type depending on the material of the worked-on partial texture
       // Create particle effects
@@ -634,9 +643,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   playSoundOnEntity("blueprint-work.mp3", 0.4, 1, entity, false);
-   playSoundOnEntity("structure-shaping.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("blueprint-work.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("structure-shaping.mp3", 0.4, 1, hitbox, false);
 
    // @Cleanup: Copy and pasted from blueprint component
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
@@ -649,13 +659,13 @@ function onDie(entity: Entity): void {
       case BlueprintType.warriorHutUpgrade:
       case BlueprintType.fenceGate: {
          for (let i = 0; i < 5; i++) {
-            const x = transformComponent.position.x + randFloat(-32, 32);
-            const y = transformComponent.position.y + randFloat(-32, 32);
+            const x = hitbox.box.position.x + randFloat(-32, 32);
+            const y = hitbox.box.position.y + randFloat(-32, 32);
             createSawdustCloud(x, y);
          }
    
          for (let i = 0; i < 8; i++) {
-            createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32);
+            createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
          }
          break;
       }
@@ -672,16 +682,16 @@ function onDie(entity: Entity): void {
          for (let i = 0; i < 5; i++) {
             const offsetDirection = 2 * Math.PI * Math.random();
             const offsetAmount = 32 * Math.random();
-            createRockParticle(transformComponent.position.x + offsetAmount * Math.sin(offsetDirection), transformComponent.position.y + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
+            createRockParticle(hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection), hitbox.box.position.y + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
          }
       
          for (let i = 0; i < 10; i++) {
-            createRockSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random(), 0, 0, ParticleRenderLayer.high);
+            createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32 * Math.random(), 0, 0, ParticleRenderLayer.high);
          }
       
          for (let i = 0; i < 3; i++) {
-            const x = transformComponent.position.x + randFloat(-32, 32);
-            const y = transformComponent.position.y + randFloat(-32, 32);
+            const x = hitbox.box.position.x + randFloat(-32, 32);
+            const y = hitbox.box.position.y + randFloat(-32, 32);
             createDustCloud(x, y);
          }
          break;

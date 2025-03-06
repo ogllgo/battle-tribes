@@ -1,16 +1,15 @@
 import { EntityDebugData } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import Board from "./Board";
-import { updatePlayerRotation } from "./entities/Player";
 import { isDev } from "./utils";
 import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-canvas";
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime, getQueuedGameDataPackets, LASTP } from "./networking/Client";
-import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, getMouseTargetEntity, handleMouseMovement, renderCursorTooltip } from "./mouse";
+import Client, { getLastPacketTime, getQueuedGameDataPackets } from "./networking/Client";
+import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
-import { createTexture, createWebGLContext, gl, resizeCanvas, windowHeight, windowWidth } from "./webgl";
+import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidth, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
 import { GameScreen_getGameInteractState, GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
@@ -51,7 +50,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { cleanRenderPositions, markMovingRenderPositions, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { dirtifyMovingEntities, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
@@ -65,8 +64,6 @@ import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rende
 import { createCollapseParticles } from "./collapses";
 import { createSubtileSupportShaders, renderSubtileSupports } from "./rendering/webgl/subtile-support-rendering";
 import { createSlimeTrailShaders, renderSlimeTrails, updateSlimeTrails } from "./rendering/webgl/slime-trail-rendering";
-import { Entity } from "../../shared/src/entities";
-import { sendSetDebugEntityPacket } from "./networking/packet-creation";
 import { createTribePlanVisualiserGLContext, renderTribePlans } from "./rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { createBuildingBlockingTileShaders, renderBuildingBlockingTiles } from "./rendering/webgl/building-blocking-tiles-rendering";
 import { renderLightLevelsText } from "./rendering/light-levels-text-rendering";
@@ -77,6 +74,8 @@ import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions"
 import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/TamingMenu";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { setHitboxAngularVelocity } from "./hitboxes";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -111,11 +110,31 @@ const createEventListeners = (): void => {
 
 let lastRenderTime = Math.floor(new Date().getTime() / 1000);
 
-export let bag = {
-   bag: false
+// @Location
+/** Updates the rotation of the player to match the cursor position */
+const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
+   if (playerInstance === null || cursorX === null || cursorY === null) return;
+
+   const relativeCursorX = cursorX - halfWindowWidth;
+   const relativeCursorY = -cursorY + halfWindowHeight;
+
+   let cursorDirection = Math.atan2(relativeCursorY, relativeCursorX);
+   cursorDirection = Math.PI/2 - cursorDirection;
+
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const playerHitbox = transformComponent.hitboxes[0];
+   
+   const previousRotation = playerHitbox.box.angle;
+   playerHitbox.box.angle = cursorDirection;
+   playerHitbox.box.relativeAngle = cursorDirection;
+
+   // Angular velocity
+   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousRotation) * Settings.TPS);
+
+   const renderInfo = getEntityRenderInfo(playerInstance);
+   // @Temporary
+   // registerDirtyRenderInfo(renderInfo);
 }
-let lastCamX = 0;
-let lastCamY = 0;
 
 const main = (currentTime: number): void => {
    if (Game.isSynced) {
@@ -180,7 +199,7 @@ const main = (currentTime: number): void => {
 
 const renderLayer = (layer: Layer, frameProgress: number): void => {
    if (layer === getCurrentLayer()) {
-      renderText();
+      renderText(frameProgress);
    }
    
    resetRenderOrder();
@@ -536,29 +555,17 @@ abstract class Game {
 
       updateUBOs();
 
-      markMovingRenderPositions();
-      cleanRenderPositions(frameProgress);
+      dirtifyMovingEntities();
       updateRenderPartMatrices(frameProgress);
 
       // @Cleanup: move to update function in camera
       // Update the camera
       if (playerInstance !== null) {
-         Camera.updatePosition();
-         Camera.updateVisibleChunkBounds(getEntityLayer(playerInstance));
-         Camera.updateVisibleRenderChunkBounds();
-
-         if (bag.bag) console.log("____ RENDERING _____")
-         const dt = performance.now() - LASTP;
-         if (bag.bag) console.log("delta last packet:",dt);
-         if (bag.bag) console.log("frame progress:",frameProgress);
-         const dx = Camera.position.x - lastCamX;
-         const dy = Camera.position.y - lastCamY;
-         if (bag.bag)console.log("frame.to.frame cam diff:",dx,dy);
-         lastCamX = Camera.position.x;
-         lastCamY = Camera.position.y;
-
-         
+         Camera.updatePosition(frameProgress);
       }
+      console.log(Camera.position.x,Camera.position.y);
+      Camera.updateVisibleChunkBounds();
+      Camera.updateVisibleRenderChunkBounds();
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {

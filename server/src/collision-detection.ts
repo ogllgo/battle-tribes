@@ -2,12 +2,18 @@ import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/c
 import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
-import { collide } from "./collision";
+import { collide } from "./collision-resolution";
 import { TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
+import { Hitbox } from "./hitboxes";
+import { Box } from "../../shared/src/boxes/boxes";
+
+export const enum CollisionVars {
+   NO_COLLISION = 0xFFFF
+}
 
 type EntityCollisionPair = [affectedEntity: Entity, collidingEntity: Entity];
-export type HitboxCollisionPair = [affectedEntityIdx: number, collidingEntityIdx: number];
+export type HitboxCollisionPair = [affectedHitbox: Hitbox, collidingHitbox: Hitbox];
 
 export interface EntityPairCollisionInfo {
    readonly collidingEntity: Entity;
@@ -65,7 +71,7 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
          // If the objects are colliding, add the colliding object and this object
          if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
             // Check for existing collision info
-            collidingHitboxPairs.push([i, j]);
+            collidingHitboxPairs.push([hitbox, otherHitbox]);
          }
       }
    }
@@ -85,11 +91,48 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
    }
 }
 
+/**
+ * @returns A number where the first 8 bits hold the index of the entity's colliding hitbox, and the next 8 bits hold the index of the other entity's colliding hitbox
+*/
+export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
+   const transformComponent1 = TransformComponentArray.getComponent(entity1);
+   const transformComponent2 = TransformComponentArray.getComponent(entity2);
+   
+   // AABB bounding area check
+   if (transformComponent1.boundingAreaMinX > transformComponent2.boundingAreaMaxX || // minX(1) > maxX(2)
+       transformComponent1.boundingAreaMaxX < transformComponent2.boundingAreaMinX || // maxX(1) < minX(2)
+       transformComponent1.boundingAreaMinY > transformComponent2.boundingAreaMaxY || // minY(1) > maxY(2)
+       transformComponent1.boundingAreaMaxY < transformComponent2.boundingAreaMinY) { // maxY(1) < minY(2)
+      return CollisionVars.NO_COLLISION;
+   }
+   
+   // More expensive hitbox check
+   const numHitboxes = transformComponent1.hitboxes.length;
+   const numOtherHitboxes = transformComponent2.hitboxes.length;
+   for (let i = 0; i < numHitboxes; i++) {
+      const hitbox = transformComponent1.hitboxes[i];
+      const box = hitbox.box;
+
+      for (let j = 0; j < numOtherHitboxes; j++) {
+         const otherHitbox = transformComponent2.hitboxes[j];
+
+         // If the objects are colliding, add the colliding object and this object
+         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherHitbox.box)) {
+            return i + (j << 8);
+         }
+      }
+   }
+
+   // If no hitboxes match, then they aren't colliding
+   return CollisionVars.NO_COLLISION;
+}
+
 export function resolveEntityCollisions(layer: Layer): void {
    // @Speed: For each collision group there are plenty of 'inactive chunks', where there are 0 entities of that collision
    // group. Skipping inactive chunks could provide a bit of a speedup.
    // Total of 2m chunk pair checks each second for 8 true val's - not ideal!
-   // Main goal: Completely skip pair checks where both chunks are inactive. Ideally we would also be able to completely skip pair checks where only 1 chunk is inactive.
+   // Main goal: Completely skip pair checks where both chunks are inactive.
+   // Ideally we would also be able to completely skip pair checks where only 1 chunk is inactive. That would actually improve the performance for cases where even the whole board is full
 
    /*
                                  v  only care about this! like 95% of pairs are useless
@@ -164,4 +207,141 @@ export function resolveEntityCollisions(layer: Layer): void {
    }
 
    layer.globalCollisionInfo = globalCollisionInfo;
+}
+
+export function boxArraysAreColliding(boxes1: ReadonlyArray<Box>, boxes2: ReadonlyArray<Box>): boolean {
+   for (const box of boxes1) {
+      for (const otherBox of boxes2) {
+         if (box.isColliding(otherBox)) {
+            return true;
+         }
+      }
+   }
+   return false;
+}
+
+export function boxHasCollisionWithBoxes(box: Box, boxes: ReadonlyArray<Box>, epsilon: number = 0): boolean {
+   for (let i = 0; i < boxes.length; i++) {
+      const otherBox = boxes[i];
+      if (box.isColliding(otherBox, epsilon)) {
+         return true;
+      }
+   }
+   return false;
+}
+
+const boxHasCollisionWithHitboxes = (box: Box, boxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < boxes.length; i++) {
+      const otherHitbox = boxes[i];
+      if (box.isColliding(otherHitbox.box, epsilon)) {
+         return true;
+      }
+   }
+   return false;
+}
+
+export function getBoxesCollidingEntities(layer: Layer, boxes: ReadonlyArray<Box>, epsilon: number = 0): Array<Entity> {
+   const collidingEntities = new Array<Entity>();
+   const seenEntityIDs = new Set<number>();
+   
+   for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
+
+      let minX = box.calculateBoundsMinX();
+      let maxX = box.calculateBoundsMaxX();
+      let minY = box.calculateBoundsMinY();
+      let maxY = box.calculateBoundsMaxY();
+      if (minX < 0) {
+         minX = 0;
+      }
+      if (maxX >= Settings.BOARD_UNITS) {
+         maxX = Settings.BOARD_UNITS - 1;
+      }
+      if (minY < 0) {
+         minY = 0;
+      }
+      if (maxY >= Settings.BOARD_UNITS) {
+         maxY = Settings.BOARD_UNITS - 1;
+      }
+      
+      const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      
+      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+            const chunk = layer.getChunk(chunkX, chunkY);
+            for (let i = 0; i < chunk.entities.length; i++) {
+               const entity = chunk.entities[i];
+               if (seenEntityIDs.has(entity)) {
+                  continue;
+               }
+
+               seenEntityIDs.add(entity);
+               
+               const entityTransformComponent = TransformComponentArray.getComponent(entity);
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+                  collidingEntities.push(entity);
+               }
+            }
+         }
+      }
+   }
+
+   return collidingEntities;
+}
+
+// @Copynpaste
+export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): Array<Entity> {
+   const collidingEntities = new Array<Entity>();
+   const seenEntityIDs = new Set<number>();
+   
+   for (let i = 0; i < hitboxes.length; i++) {
+      const hitbox = hitboxes[i];
+      const box = hitbox.box;
+
+      let minX = box.calculateBoundsMinX();
+      let maxX = box.calculateBoundsMaxX();
+      let minY = box.calculateBoundsMinY();
+      let maxY = box.calculateBoundsMaxY();
+      if (minX < 0) {
+         minX = 0;
+      }
+      if (maxX >= Settings.BOARD_UNITS) {
+         maxX = Settings.BOARD_UNITS - 1;
+      }
+      if (minY < 0) {
+         minY = 0;
+      }
+      if (maxY >= Settings.BOARD_UNITS) {
+         maxY = Settings.BOARD_UNITS - 1;
+      }
+      
+      const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      
+      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+            const chunk = layer.getChunk(chunkX, chunkY);
+            for (let i = 0; i < chunk.entities.length; i++) {
+               const entity = chunk.entities[i];
+               if (seenEntityIDs.has(entity)) {
+                  continue;
+               }
+
+               seenEntityIDs.add(entity);
+               
+               const entityTransformComponent = TransformComponentArray.getComponent(entity);
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+                  collidingEntities.push(entity);
+               }
+            }
+         }
+      }
+   }
+
+   return collidingEntities;
 }

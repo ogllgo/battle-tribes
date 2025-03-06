@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface TribeMemberComponentParams {
@@ -20,18 +20,24 @@ export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberCom
    updateFromData: updateFromData
 });
 
-function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
-   const name = reader.readString();
+const fillParams = (name: string): TribeMemberComponentParams => {
    return {
       name: name
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeMember, never>): TribeMemberComponent {
-   const tribeMemberComponentParams = entityConfig.serverComponents[ServerComponentType.tribeMember];
-   return {
-      name: tribeMemberComponentParams.name
-   };
+export function createTribeMemberComponentParams(): TribeMemberComponentParams {
+   return fillParams("");
+}
+
+function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
+   const name = reader.readString();
+   return fillParams(name);
+}
+
+function createComponent(entityParams: EntityParams): TribeMemberComponent {
+   const tribeMemberComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeMember]!;
+   return fillParams(tribeMemberComponentParams.name);
 }
 
 function getMaxRenderParts(): number {

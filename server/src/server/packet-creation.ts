@@ -23,6 +23,7 @@ import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, ge
 import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
+import { Point } from "../../../shared/src/utils";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -488,7 +489,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    return packet.buffer;
 }
 
-export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): ArrayBuffer {
+export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Point): ArrayBuffer {
    const tamingSpecsMap = getTamingSpecsMap();
 
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT * 5;
@@ -517,7 +518,6 @@ export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: Ent
    packet.addNumber(layers.indexOf(spawnLayer));
    
    // Spawn position
-   const spawnPosition = playerConfig.components[ServerComponentType.transform].position;
    packet.addNumber(spawnPosition.x);
    packet.addNumber(spawnPosition.y);
    
@@ -581,11 +581,13 @@ export function createInitialGameDataPacket(spawnLayer: Layer, playerConfig: Ent
    return packet.buffer;
 }
 
+// @Cleanup: is this even used?
 export  function createSyncPacket(): ArrayBuffer {
    const packet = new Packet(PacketType.sync, Float32Array.BYTES_PER_ELEMENT);
    return packet.buffer;
 }
 
+// @Cleanup: is this even used?
 export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const player = playerClient.instance;
 
@@ -600,7 +602,7 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand);
    const gloveSlotInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
 
-   let lengthBytes = 11 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 7 * Float32Array.BYTES_PER_ELEMENT;
    
    // Player inventories
    lengthBytes += getInventoryDataLength(hotbarInventory);
@@ -615,17 +617,13 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const packet = new Packet(PacketType.syncData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(player);
-   packet.addNumber(transformComponent.position.x);
-   packet.addNumber(transformComponent.position.y);
-   packet.addNumber(transformComponent.relativeRotation);
+   const hitbox = transformComponent.hitboxes[0];
+   packet.addNumber(hitbox.box.position.x);
+   packet.addNumber(hitbox.box.position.y);
+   packet.addNumber(hitbox.box.angle);
 
-   const physicsComponent = PhysicsComponentArray.getComponent(player);
-   packet.addNumber(transformComponent.selfVelocity.x);
-   packet.addNumber(transformComponent.selfVelocity.y);
-   packet.addNumber(transformComponent.externalVelocity.x);
-   packet.addNumber(transformComponent.externalVelocity.y);
-   packet.addNumber(physicsComponent.acceleration.x);
-   packet.addNumber(physicsComponent.acceleration.y);
+   packet.addNumber(hitbox.velocity.x);
+   packet.addNumber(hitbox.velocity.y);
 
    // Add inventory data
    addInventoryDataToPacket(packet, hotbarInventory);

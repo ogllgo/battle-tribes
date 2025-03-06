@@ -1,3 +1,4 @@
+import { Biome } from "../../shared/src/biomes";
 import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
 import { EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
@@ -13,7 +14,7 @@ import OPTIONS from "./options";
 import { getEntityType } from "./world";
 
 const enum Vars {
-   TRIBESMAN_SPAWN_EXCLUSION_RANGE = 2000
+   TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
 }
 
 export interface EntitySpawnInfo {
@@ -39,7 +40,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.cow,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.004,
+      // maxDensity: 0.004,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.grass],
       minPackSize: 2,
       maxPackSize: 5,
@@ -85,7 +87,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.tombstone,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.003,
+      // maxDensity: 0.003,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.grass],
       minPackSize: 1,
       maxPackSize: 1,
@@ -97,7 +100,8 @@ export const SPAWN_INFOS = [
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.025,
+      // maxDensity: 0.025,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.rock],
       minPackSize: 1,
       maxPackSize: 1,
@@ -158,6 +162,20 @@ export const SPAWN_INFOS = [
       layer: surfaceLayer,
       spawnRate: 0.2,
       maxDensity: 0.3,
+      spawnableTileTypes: [TileType.slime],
+      minPackSize: 1,
+      maxPackSize: 1,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 50,
+      usesSpawnDistribution: false
+   },
+   // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
+   // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
+   {
+      entityType: EntityType.slime,
+      layer: surfaceLayer,
+      spawnRate: 0,
+      maxDensity: 0,
       spawnableTileTypes: [TileType.slime],
       minPackSize: 1,
       maxPackSize: 1,
@@ -254,10 +272,56 @@ export const SPAWN_INFOS = [
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       usesSpawnDistribution: true
+   },
+   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
+   {
+      entityType: EntityType.mithrilOreNode,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.stone],
+      minPackSize: 1,
+      maxPackSize: 1,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      usesSpawnDistribution: true
    }
 ] satisfies ReadonlyArray<EntitySpawnInfo>;
 
 export type SpawningEntityType = (typeof SPAWN_INFOS)[number]["entityType"];
+
+export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnInfo | null {
+   for (const spawnInfo of SPAWN_INFOS) {
+      if (spawnInfo.entityType === entityType) {
+         return spawnInfo;
+      }
+   }
+
+   return null;
+}
+
+export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
+   // @HACK @HACK @HACK
+   const tileType = spawnInfo.spawnableTileTypes[0];
+   switch (tileType) {
+      case TileType.grass: return Biome.grasslands;
+      case TileType.dirt: return Biome.grasslands;
+      case TileType.water: return Biome.grasslands;
+      case TileType.sludge: return Biome.swamp;
+      case TileType.slime: return Biome.swamp;
+      case TileType.rock: return Biome.mountains;
+      case TileType.sand: return Biome.desert;
+      case TileType.snow: return Biome.tundra;
+      case TileType.ice: return Biome.tundra;
+      case TileType.permafrost: return Biome.tundra;
+      case TileType.magma: return Biome.grasslands;
+      case TileType.lava: return Biome.grasslands;
+      case TileType.fimbultur: return Biome.tundra;
+      case TileType.dropdown: return Biome.grasslands;
+      case TileType.stone: return Biome.caves;
+      case TileType.stoneWallFloor: return Biome.caves;
+   }
+}
 
 const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): boolean => {
    if (!OPTIONS.spawnTribes) {
@@ -280,9 +344,12 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
                continue;
             }
 
-            const transformComponent = TransformComponentArray.getComponent(entity);
+            // @HACK
             
-            const distanceSquared = Math.pow(x - transformComponent.position.x, 2) + Math.pow(y - transformComponent.position.y, 2);
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            
+            const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
             if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {
                return false;
             }

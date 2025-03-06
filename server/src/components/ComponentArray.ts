@@ -2,10 +2,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
 import { Packet } from "battletribes-shared/packets";
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { assert, Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { HitboxCollisionPair } from "../collision-detection";
+import { Hitbox } from "../hitboxes";
 
 const enum ComponentArrayPriority {
    low,
@@ -305,6 +305,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.inventory]: ComponentArrayPriority.medium,
       [ServerComponentType.inventoryUse]: ComponentArrayPriority.medium,
       [ServerComponentType.item]: ComponentArrayPriority.medium,
+      [ServerComponentType.fleshSwordItem]: ComponentArrayPriority.medium,
       [ServerComponentType.pebblum]: ComponentArrayPriority.medium,
       [ServerComponentType.player]: ComponentArrayPriority.medium,
       [ServerComponentType.rockSpike]: ComponentArrayPriority.medium,
@@ -364,7 +365,9 @@ export function sortComponentArrays(): void {
       [ServerComponentType.furnace]: ComponentArrayPriority.medium,
       [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
-      [ServerComponentType.glurb]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurbSegment]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurbBodySegment]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurbHeadSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.attackingEntities]: ComponentArrayPriority.medium,
       [ServerComponentType.patrolAI]: ComponentArrayPriority.medium,
@@ -381,6 +384,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.blockAttack]: ComponentArrayPriority.medium,
       [ServerComponentType.slingTurretRock]: ComponentArrayPriority.medium,
       [ServerComponentType.taming]: ComponentArrayPriority.medium,
+      [ServerComponentType.loot]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

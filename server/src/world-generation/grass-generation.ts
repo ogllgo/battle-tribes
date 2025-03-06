@@ -4,7 +4,7 @@ import Layer from "../Layer";
 import { createGrassStrandConfig } from "../entities/grass-strand";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
-import { distance, getTileIndexIncludingEdges, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
+import { distance, getTileIndexIncludingEdges, Point, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
 import { pushJoinBuffer } from "../world";
 import { surfaceLayer } from "../layers";
 
@@ -102,9 +102,7 @@ export function generateGrassStrands(): void {
                continue;
             }
 
-            const config = createGrassStrandConfig();
-            config.components[ServerComponentType.transform].position.x = x;
-            config.components[ServerComponentType.transform].position.y = y;
+            const config = createGrassStrandConfig(new Point(x, y), 0);
             createEntity(config, surfaceLayer, 0);
 
             // Since the entity spawning has to find a place to insert the entity, we force push it to prevent it from taking forever

@@ -1,17 +1,19 @@
-import { BoxType, createHitbox, Hitbox, hitboxIsCircular, updateBox } from "../../../../shared/src/boxes/boxes";
-import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
+import { Box, cloneBox } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { HitboxCollisionBit } from "../../../../shared/src/collision";
+import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
 import { angle, Point } from "../../../../shared/src/utils";
 import { cleanAngle } from "../../ai-shared";
-import { addCircularHitboxData, addRectangularHitboxData, getCircularHitboxDataLength, getRectangularHitboxDataLength } from "../../components/TransformComponent";
+import { Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
+import { addBoxDataToPacket, getBoxDataLength } from "../../server/packet-hitboxes";
+import { createStructureConfig } from "../../structure-placement";
 import Tribe from "../../Tribe";
-import { addHitboxesOccupiedNodes, getSafetyNode, SafetyNode } from "../ai-building";
+import { getTribes } from "../../world";
+import { addBoxesOccupiedNodes, getSafetyNode, SafetyNode } from "../ai-building";
 import { TribeRoom } from "../ai-building-areas";
 
 /** The 4 lines of nodes directly outside a wall. */
@@ -23,32 +25,32 @@ export interface RestrictedBuildingArea {
    readonly height: number;
    readonly rotation: number;
    /** The ID of the building responsible for the restricted area */
-   readonly associatedBuildingID: number;
-   readonly hitbox: Hitbox<BoxType.rectangular>;
+   readonly associatedStructureID: number;
+   readonly box: RectangularBox;
    readonly occupiedNodes: Set<SafetyNode>;
 }
 
-export const enum VirtualBuildingType {
+export const enum VirtualStructureType {
    unidentified,
    wall
 }
 
-interface BaseVirtualBuilding {
+interface BaseVirtualStructure {
    readonly entityType: StructureType;
    readonly id: number;
    readonly layer: Layer;
    readonly position: Readonly<Point>;
    readonly rotation: number;
-   readonly hitboxes: ReadonlyArray<Hitbox>;
+   readonly boxes: ReadonlyArray<Box>;
    readonly occupiedNodes: Set<SafetyNode>;
    readonly restrictedBuildingAreas: ReadonlyArray<RestrictedBuildingArea>;
 }
 
-export interface VirtualUnidentifiedBuilding extends BaseVirtualBuilding {
+export interface VirtualUnidentifiedBuilding extends BaseVirtualStructure {
    readonly entityType: Exclude<StructureType, EntityType.wall | EntityType.door>;
 }
 
-export interface VirtualWall extends BaseVirtualBuilding {
+export interface VirtualWall extends BaseVirtualStructure {
    readonly entityType: EntityType.wall;
    readonly topSideNodes: Array<SafetyNode>;
    readonly rightSideNodes: Array<SafetyNode>;
@@ -62,7 +64,7 @@ export const enum TribeDoorType {
    enclosed
 }
 
-export interface VirtualDoor extends BaseVirtualBuilding {
+export interface VirtualDoor extends BaseVirtualStructure {
    readonly entityType: EntityType.door;
    doorType: TribeDoorType;
 }
@@ -72,28 +74,27 @@ export type VirtualStructure = VirtualUnidentifiedBuilding | VirtualWall | Virtu
 export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualStructure> };
 
 const createRestrictedBuildingArea = (position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea => {
-   const box = new RectangularBox(null, new Point(0, 0), width, height, rotation);
-   const hitbox = createHitbox<BoxType.rectangular>(box, 0, 0, HitboxCollisionBit.DEFAULT, 0, []);
-   box.position.x = position.x;
-   box.position.y = position.y;
+   const box = new RectangularBox(position, new Point(0, 0), rotation, width, height);
 
    const occupiedNodes = new Set<SafetyNode>();
-   addHitboxesOccupiedNodes([hitbox], occupiedNodes);
+   addBoxesOccupiedNodes([box], occupiedNodes);
    
    return {
       position: position,
       width: width,
       height: height,
       rotation: rotation,
-      associatedBuildingID: associatedBuildingID,
-      hitbox: hitbox,
+      associatedStructureID: associatedBuildingID,
+      box: box,
       occupiedNodes: occupiedNodes
    };
 }
 
 export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType, hitboxes: ReadonlyArray<Hitbox>): VirtualStructure {
+   const boxes = hitboxes.map(hitbox => cloneBox(hitbox.box));
+   
    const occupiedNodes = new Set<SafetyNode>();
-   addHitboxesOccupiedNodes(hitboxes, occupiedNodes);
+   addBoxesOccupiedNodes(boxes, occupiedNodes);
    
    const virtualEntityID = buildingLayer.tribe.virtualEntityIDCounter++;
    
@@ -108,7 +109,7 @@ export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingL
             rotation: rotation,
             occupiedNodes: occupiedNodes,
             entityType: entityType,
-            hitboxes: hitboxes,
+            boxes: boxes,
             restrictedBuildingAreas: [],
             topSideNodes: sides[0],
             rightSideNodes: sides[1],
@@ -137,7 +138,7 @@ export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingL
             position: position,
             rotation: rotation,
             occupiedNodes: occupiedNodes,
-            hitboxes: hitboxes,
+            boxes: boxes,
             restrictedBuildingAreas: restrictedBuildingAreas,
             // Default value until the actual door type gets calculated
             doorType: TribeDoorType.enclosed
@@ -182,7 +183,7 @@ export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingL
             position: position,
             rotation: rotation,
             occupiedNodes: occupiedNodes,
-            hitboxes: hitboxes,
+            boxes: boxes,
             restrictedBuildingAreas: restrictedBuildingAreas
          };
          return virtualBuilding;
@@ -191,53 +192,35 @@ export function createVirtualStructureFromHitboxes(buildingLayer: TribeBuildingL
 }
 
 export function createVirtualStructure(buildingLayer: TribeBuildingLayer, position: Readonly<Point>, rotation: number, entityType: StructureType): VirtualStructure {
-   const hitboxes = createNormalStructureHitboxes(entityType);
+   // @SUPAHACK
+   const tribe = getTribes()[0];
+   const entityConfig = createStructureConfig(tribe, entityType, position, rotation, []);
+   const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+   const hitboxes = transformComponent.hitboxes;
    
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-      updateBox(hitbox.box, position.x, position.y, rotation);
-   }
-
    return createVirtualStructureFromHitboxes(buildingLayer, position, rotation, entityType, hitboxes);
 }
 
 export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
-   packet.addNumber(virtualBuilding.entityType);
    packet.addNumber(virtualBuilding.id);
+   packet.addNumber(virtualBuilding.entityType);
    packet.addNumber(virtualBuilding.layer.depth);
    packet.addNumber(virtualBuilding.position.x);
    packet.addNumber(virtualBuilding.position.y);
    packet.addNumber(virtualBuilding.rotation);
 
    // Hitboxes
-   packet.addNumber(virtualBuilding.hitboxes.length);
-   for (const hitbox of virtualBuilding.hitboxes) {
-      const isCircular = hitboxIsCircular(hitbox);
-      
-      // Is circular
-      packet.addBoolean(isCircular);
-      packet.padOffset(3);
-
-      if (isCircular) {
-         addCircularHitboxData(packet, null, hitbox, 0);
-      } else {
-         // @Hack: cast
-         addRectangularHitboxData(packet, null, hitbox as Hitbox<BoxType.rectangular>, 0);
-      }
+   packet.addNumber(virtualBuilding.boxes.length);
+   for (const box of virtualBuilding.boxes) {
+      addBoxDataToPacket(packet, box);
    }
 }
 export function getVirtualBuildingDataLength(virtualBuilding: VirtualStructure): number {
    let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
 
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   for (const hitbox of virtualBuilding.hitboxes) {
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      if (hitboxIsCircular(hitbox)) {
-         lengthBytes += getCircularHitboxDataLength(hitbox);
-      } else {
-         // @Hack: cast
-         lengthBytes += getRectangularHitboxDataLength(hitbox as Hitbox<BoxType.rectangular>);
-      }
+   for (const box of virtualBuilding.boxes) {
+      lengthBytes += getBoxDataLength(box);
    }
    return lengthBytes;
 }
@@ -345,9 +328,9 @@ const wallSideIsConnected = (buildingLayer: TribeBuildingLayer, wallSideNodes: R
       }
 
       // Only make connections between walls and doors
-      const buildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
-      for (let i = 0; i < buildingIDs.length; i++) {
-         const buildingID = buildingIDs[i];
+      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
+      for (let i = 0; i < virtualBuildingIDs.length; i++) {
+         const buildingID = virtualBuildingIDs[i];
          const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
          if (virtualBuilding.entityType !== EntityType.wall && virtualBuilding.entityType !== EntityType.door) {
             return false;
@@ -441,9 +424,9 @@ export default class TribeBuildingLayer {
       this.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
 
       // Add to tribe
-      this.tribe.virtualBuildings.push(virtualBuilding);
-      this.tribe.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
-      this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+      this.tribe.virtualStructures.push(virtualBuilding);
+      this.tribe.virtualStructureRecord[virtualBuilding.id] = virtualBuilding;
+      this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
    }
 
    public removeVirtualBuilding(virtualBuilding: VirtualStructure): void {
@@ -468,21 +451,25 @@ export default class TribeBuildingLayer {
 
       // Remove from tribe
       
-      delete this.tribe.virtualBuildingRecord[virtualBuilding.id];
+      delete this.tribe.virtualStructureRecord[virtualBuilding.id];
       
-      idx = this.tribe.virtualBuildings.indexOf(virtualBuilding);
+      idx = this.tribe.virtualStructures.indexOf(virtualBuilding);
       if (idx !== -1) {
-         this.tribe.virtualBuildings.splice(idx, 1);
+         this.tribe.virtualStructures.splice(idx, 1);
       } else {
          throw new Error();
       }
 
-      buildingsOfType = this.tribe.virtualBuildingsByEntityType[virtualBuilding.entityType];
+      buildingsOfType = this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType];
       idx = buildingsOfType.indexOf(virtualBuilding);
       if (idx !== -1) {
          buildingsOfType.splice(idx, 1);
       } else {
          throw new Error();
       }
+
+      // @Bug: I don't think occupiedNodeToVirtualBuildingIDRecord is updated???
+      // Can cause a crash in wallSideIsConnected
+      // We should update it here, as it is used for more than calculating optimal building placements - new virtual buildings can connect to them
    }
 }

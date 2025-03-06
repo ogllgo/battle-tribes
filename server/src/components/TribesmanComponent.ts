@@ -1,7 +1,6 @@
-import { COLLISION_BITS } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType, Entity, LimbAction } from "../../../shared/src/entities";
-import { ArmourItemInfo, BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
+import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { TitleGenerationInfo, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "../../../shared/src/titles";
@@ -14,10 +13,8 @@ import { addHumanoidInventories } from "../inventories";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, addDefence, removeDefence } from "./HealthComponent";
 import { InventoryComponentArray, getInventory, resizeInventory } from "./InventoryComponent";
 import { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
@@ -48,10 +45,10 @@ TribesmanComponentArray.onKill = onKill;
 TribesmanComponentArray.onTakeDamage = onTakeDamage;
 TribesmanComponentArray.onDealDamage = onDealDamage;
 
-function onInitialise(config: EntityConfig<ServerComponentType.health | ServerComponentType.tribe | ServerComponentType.tribesman | ServerComponentType.inventory | ServerComponentType.inventoryUse>, _: unknown): void {
+function onInitialise(config: EntityConfig, _: unknown): void {
    // War paint type
-   const tribesmanComponent = config.components[ServerComponentType.tribesman];
-   const tribeComponent = config.components[ServerComponentType.tribe];
+   const tribesmanComponent = config.components[ServerComponentType.tribesman]!;
+   const tribeComponent = config.components[ServerComponentType.tribe]!;
    if (tribeComponent.tribe.tribeType === TribeType.goblins) {
       if (config.entityType === EntityType.tribeWarrior) {
          tribesmanComponent.warPaintType = randInt(1, 1);
@@ -66,8 +63,8 @@ function onInitialise(config: EntityConfig<ServerComponentType.health | ServerCo
    // Create inventories
    // 
 
-   const inventoryComponent = config.components[ServerComponentType.inventory];
-   const inventoryUseComponent = config.components[ServerComponentType.inventoryUse];
+   const inventoryComponent = config.components[ServerComponentType.inventory]!;
+   const inventoryUseComponent = config.components[ServerComponentType.inventoryUse]!;
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, config.entityType);
 }
 
@@ -253,10 +250,11 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   if (transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) {
-      const selfVelocityMagnitude = Math.sqrt(transformComponent.selfVelocity.x * transformComponent.selfVelocity.x + transformComponent.selfVelocity.y * transformComponent.selfVelocity.y);
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
+   if (tribeMemberHitbox.velocity.x !== 0 || tribeMemberHitbox.velocity.y !== 0) {
+      const velocityMagnitude = tribeMemberHitbox.velocity.length();
       
-      const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * selfVelocityMagnitude;
+      const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * velocityMagnitude;
       if (Math.random() < chance / Settings.TPS) {
          awardTitle(tribeMember, TribesmanTitle.sprinter);
       }

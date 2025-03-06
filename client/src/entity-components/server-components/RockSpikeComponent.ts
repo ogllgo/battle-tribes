@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { lerp, randFloat, randInt } from "battletribes-shared/utils";
 import { VisualRenderPart } from "../../render-parts/render-parts";
-import { getEntityAgeTicks, getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -13,15 +13,13 @@ import { createRockParticle } from "../../particles";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { EntityConfig } from "../ComponentArray";
 
 export interface RockSpikeComponentParams {
    readonly size: number;
    readonly lifetime: number;
 }
 
-export interface RenderParts {
+interface IntermediateInfo {
    readonly renderPart: VisualRenderPart;
 }
 
@@ -49,9 +47,9 @@ const ENTRANCE_SCALE = 0.65;
 
 const EXIT_SHAKE_AMOUNTS = [1.25, 2.25, 3.25];
 
-export const RockSpikeComponentArray = new ServerComponentArray<RockSpikeComponent, RockSpikeComponentParams, RenderParts>(ServerComponentType.rockSpike, true, {
+export const RockSpikeComponentArray = new ServerComponentArray<RockSpikeComponent, RockSpikeComponentParams, IntermediateInfo>(ServerComponentType.rockSpike, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -70,32 +68,34 @@ function createParamsFromData(reader: PacketReader): RockSpikeComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.rockSpike, never>): RenderParts {
-   const rockSpikeComponentParams = entityConfig.serverComponents[ServerComponentType.rockSpike];
+function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   const rockSpikeComponentParams = entityParams.serverComponentParams[ServerComponentType.rockSpike]!;
    
-   renderInfo.shakeAmount = ENTRANCE_SHAKE_AMOUNTS[rockSpikeComponentParams.size];
+   intermediateInfo.renderInfo.shakeAmount = ENTRANCE_SHAKE_AMOUNTS[rockSpikeComponentParams.size];
 
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(SPRITE_TEXTURE_SOURCES[rockSpikeComponentParams.size])
    );
    renderPart.scale = ENTRANCE_SCALE;
-   renderInfo.attachRenderPart(renderPart);
+   intermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.rockSpike, never>, renderParts: RenderParts): RockSpikeComponent {
-   const rockSpikeComponentParams = entityConfig.serverComponents[ServerComponentType.rockSpike];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): RockSpikeComponent {
+   const rockSpikeComponentParams = entityParams.serverComponentParams[ServerComponentType.rockSpike]!;
    
    return {
       size: rockSpikeComponentParams.size,
       lifetime: rockSpikeComponentParams.lifetime,
-      renderPart: renderParts.renderPart
+      renderPart: intermediateInfo.renderPart
    };
 }
 
@@ -131,11 +131,13 @@ function onLoad(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    for (let i = 0; i < numSpeckParticles; i++) {
       // @Cleanup: Move to particles file
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = transformComponent.position.x + SIZES[rockSpikeComponent.size] / 2 * Math.sin(spawnOffsetDirection);
-      const spawnPositionY = transformComponent.position.y + SIZES[rockSpikeComponent.size] / 2 * Math.cos(spawnOffsetDirection);
+      const spawnPositionX = hitbox.box.position.x + SIZES[rockSpikeComponent.size] / 2 * Math.sin(spawnOffsetDirection);
+      const spawnPositionY = hitbox.box.position.y + SIZES[rockSpikeComponent.size] / 2 * Math.cos(spawnOffsetDirection);
       
       const lifetime = randFloat(1, 1.2);
    
@@ -172,8 +174,8 @@ function onLoad(entity: Entity): void {
 
    for (let i = 0; i < numTexturedParticles; i++) {
       const spawnOffsetDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = transformComponent.position.x + SIZES[rockSpikeComponent.size] / 2 * Math.sin(spawnOffsetDirection);
-      const spawnPositionY = transformComponent.position.y + SIZES[rockSpikeComponent.size] / 2 * Math.cos(spawnOffsetDirection);
+      const spawnPositionX = hitbox.box.position.x + SIZES[rockSpikeComponent.size] / 2 * Math.sin(spawnOffsetDirection);
+      const spawnPositionY = hitbox.box.position.y + SIZES[rockSpikeComponent.size] / 2 * Math.cos(spawnOffsetDirection);
 
       createRockParticle(spawnPositionX, spawnPositionY, spawnOffsetDirection + randFloat(-0.5, 0.5), randFloat(80, 125), ParticleRenderLayer.low);
    }

@@ -15,28 +15,27 @@ import Camera from "../Camera";
 import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime, registerServerTick } from "../components/game/dev/GameInfoDisplay";
 import { Tile } from "../Tile";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
-import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, registerBasicEntityInfo, removeEntity, setCurrentLayer, getEntityAgeTicks, EntityPreCreationInfo, surfaceLayer } from "../world";
+import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, removeEntity, setCurrentLayer, EntityParams, surfaceLayer, addEntityToWorld } from "../world";
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { playSound } from "../sound";
 import { initialiseRenderables } from "../rendering/render-loop";
-import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
 import { createResearchNumber } from "../text-canvas";
-import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../rendering/render-part-matrices";
+import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
-import { ExtendedTribeInfo, readExtendedTribeData, readShortTribeData, TribeData, tribes, updatePlayerTribe } from "../tribes";
+import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
 import { readPacketDevData } from "./dev-packet-processing";
-import { TileIndex } from "../../../shared/src/utils";
+import { assert, TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { GrassBlocker } from "../../../shared/src/grass-blockers";
 import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
+import { getEntityClientComponentConfigs } from "../entity-components/client-components"
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -391,6 +390,7 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
    const entityType = reader.readNumber() as EntityType;
    const spawnTicks = reader.readNumber();
    const layerIdx = reader.readNumber();
+   console.assert(Number.isInteger(layerIdx) && layerIdx < layers.length);
 
    const entityServerComponentTypes = new Array<ServerComponentType>();
    const serverComponentParams = {} as EntityServerComponentParams;
@@ -403,40 +403,22 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
 
       const componentArray = getServerComponentArray(componentType);
 
-      const params = componentArray.createParamsFromData(reader);
       // @Cleanup: cast
-      serverComponentParams[componentType] = params as any;
+      serverComponentParams[componentType] = componentArray.createParamsFromData(reader) as any;
    }
 
    const layer = layers[layerIdx];
    
-   const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
-      serverComponentTypes: entityServerComponentTypes,
-      serverComponentParams: serverComponentParams
+   const entityParams: EntityParams = {
+      entityType: entityType,
+      serverComponentParams: serverComponentParams,
+      // @HACK
+      clientComponentParams: getEntityClientComponentConfigs(entityType)
    };
    
-   const creationInfo = createEntity(entity, entityType, layer, preCreationInfo);
+   const entityCreationInfo = createEntity(entity, entityParams);
 
-   registerBasicEntityInfo(entity, entityType, spawnTicks, layer, creationInfo.renderInfo);
-   
-   // @Cleanup: In both this and the placeable entity ghost entity stuff, after calling createEntity, we either set the renderPosition
-   // or mark that it should be updated. So perhaps it would be better if in the createEntity function we deduce the initial value of renderPosition,
-   // which would remove the need for these two behaviours.
-   registerDirtyRenderPosition(creationInfo.renderInfo);
-   
-   // @Incomplete: add components to component arrays here
-   
-   // Call onLoad functions
-   const componentArrays = getComponentArrays();
-   for (let i = 0; i < componentArrays.length; i++) {
-      const componentArray = componentArrays[i];
-      if (typeof componentArray.onLoad !== "undefined" && componentArray.hasComponent(entity)) {
-         componentArray.onLoad(entity);
-      }
-   }
-
-   const renderInfo = getEntityRenderInfo(entity);
-   layer.addEntityToRendering(entity, renderInfo.renderLayer, renderInfo.renderHeight);
+   addEntityToWorld(entity, spawnTicks, layer, entityCreationInfo);
 
    // Set the player instance
    if (entity === playerInstance) {
@@ -448,18 +430,6 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
          const componentArray = componentArrays[i];
          if (componentArray.hasComponent(playerInstance!) && typeof (componentArray as ServerComponentArray).updatePlayerAfterData !== "undefined") {
             (componentArray as ServerComponentArray).updatePlayerAfterData!();
-         }
-      }
-   }
-
-   // If the entity has first spawned in, call any spawn functions
-   const ageTicks = getEntityAgeTicks(entity);
-   if (ageTicks === 0) {
-      const componentArrays = getComponentArrays();
-      for (let i = 0; i < componentArrays.length; i++) {
-         const componentArray = componentArrays[i];
-         if (componentArray.hasComponent(entity) && typeof componentArray.onSpawn !== "undefined") {
-            componentArray.onSpawn(entity);
          }
       }
    }
@@ -521,7 +491,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       gameScreenSetIsDead(false);
    }
    const cameraSubject = reader.readNumber() as Entity;
-   Camera.setTrackedEntityID(cameraSubject);
 
    Board.serverTicks = ticks;
    updateDebugScreenTicks(ticks);
@@ -530,7 +499,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    // Tribes
    // @Temporary @Garbage
-   const tempTribes = new Set<TribeData>();
+   const tempTribes = new Set<Tribe>();
    const numTribes = reader.readNumber();
    for (let i = 0; i < numTribes; i++) {
       const isExtended = reader.readBoolean();
@@ -540,7 +509,7 @@ export function processGameDataPacket(reader: PacketReader): void {
       tempTribes.add(tribe);
       
       if (i === 0) {
-         updatePlayerTribe(tribe as ExtendedTribeInfo);
+         updatePlayerTribe(tribe as ExtendedTribe);
       }
    }
    tribes.splice(0, tribes.length);
@@ -549,16 +518,9 @@ export function processGameDataPacket(reader: PacketReader): void {
    }
 
    // Process entities
-
-   // Some entities' update data relies on entities created this tick. But the creation info could potentially be after the updating entity,
-   // so we process all entity creation data first, and then all entity update data.
-   
    const numEntities = reader.readNumber();
-   // @Garbage
-   const visibleEntities = [];
    for (let i = 0; i < numEntities; i++) {
       const entityID = reader.readNumber() as Entity;
-      visibleEntities.push(entityID);
       if (entityID === playerInstance) {
          if (entityExists(playerInstance)) {
             processPlayerUpdateData(reader);
@@ -571,6 +533,9 @@ export function processGameDataPacket(reader: PacketReader): void {
          processEntityCreationData(entityID, reader);
       }
    }
+
+   // Set the tracked entity after the entities are created so that it can find the first render part of the tracked entity
+   Camera.trackEntity(cameraSubject);
 
    const entitiesToRemove = new Set<Entity>();
 
@@ -603,29 +568,31 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    // @Cleanup: move to own function
    
+   // @Temporary: I seem to be having an issue with some trees being invisible, possibly caused by this removing entities when they shouldn't be removed?
+   
    // Remove entities which are no longer visible
-   const minVisibleChunkX = Camera.minVisibleChunkX - 2;
-   const maxVisibleChunkX = Camera.maxVisibleChunkX + 2;
-   const minVisibleChunkY = Camera.minVisibleChunkY - 2;
-   const maxVisibleChunkY = Camera.maxVisibleChunkY + 2;
-   // @Speed
-   for (let chunkX = 0; chunkX < Settings.BOARD_SIZE; chunkX++) {
-      for (let chunkY = 0; chunkY < Settings.BOARD_SIZE; chunkY++) {
-         // Skip visible chunks
-         if (chunkX >= minVisibleChunkX && chunkX <= maxVisibleChunkX && chunkY >= minVisibleChunkY && chunkY <= maxVisibleChunkY) {
-            continue;
-         }
+   // const minVisibleChunkX = Camera.minVisibleChunkX - 2;
+   // const maxVisibleChunkX = Camera.maxVisibleChunkX + 2;
+   // const minVisibleChunkY = Camera.minVisibleChunkY - 2;
+   // const maxVisibleChunkY = Camera.maxVisibleChunkY + 2;
+   // // @Speed
+   // for (let chunkX = 0; chunkX < Settings.BOARD_SIZE; chunkX++) {
+   //    for (let chunkY = 0; chunkY < Settings.BOARD_SIZE; chunkY++) {
+   //       // Skip visible chunks
+   //       if (chunkX >= minVisibleChunkX && chunkX <= maxVisibleChunkX && chunkY >= minVisibleChunkY && chunkY <= maxVisibleChunkY) {
+   //          continue;
+   //       }
 
-         const chunk = playerLayer.getChunk(chunkX, chunkY);
-         for (let i = 0; i < chunk.entities.length; i++) {
-            const entity = chunk.entities[i];
-            // @Hack?
-            if (entity !== playerInstance) {
-               entitiesToRemove.add(entity);
-            }
-         }
-      }
-   }
+   //       const chunk = playerLayer.getChunk(chunkX, chunkY);
+   //       for (let i = 0; i < chunk.entities.length; i++) {
+   //          const entity = chunk.entities[i];
+   //          // @Hack?
+   //          if (entity !== playerInstance) {
+   //             entitiesToRemove.add(entity);
+   //          }
+   //       }
+   //    }
+   // }
 
    for (const entity of entitiesToRemove) {
       const isDeath = serverRemovedEntityIDs.has(entity);
@@ -638,6 +605,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    const visibleHits = new Array<HitData>();
    const numHits = reader.readNumber();
+   console.assert(Number.isInteger(numHits));
    for (let i = 0; i < numHits; i++) {
       const hitEntityID = reader.readNumber();
       const x = reader.readNumber();
@@ -705,6 +673,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    const tileUpdates = new Array<ServerTileUpdateData>();
    const numTileUpdates = reader.readNumber();
+   console.assert(Number.isInteger(numTileUpdates));
    for (let i = 0; i < numTileUpdates; i++) {
       const layerIdx = reader.readNumber();
       const tileIndex = reader.readNumber();
@@ -798,6 +767,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
    // Collapses
    const numCollapses = reader.readNumber();
+   assert(Number.isInteger(numCollapses));
    for (let i = 0; i < numCollapses; i++) {
       const collapsingSubtileIndex = reader.readNumber();
       const ageTicks = reader.readNumber();
@@ -843,28 +813,20 @@ export function processSyncDataPacket(reader: PacketReader): void {
    
    const x = reader.readNumber();
    const y = reader.readNumber();
-   const rotation = reader.readNumber();
+   const angle = reader.readNumber();
 
-   const selfVelocityX = reader.readNumber();
-   const selfVelocityY = reader.readNumber();
-   const externalVelocityX = reader.readNumber();
-   const externalVelocityY = reader.readNumber();
-   const accelerationX = reader.readNumber();
-   const accelerationY = reader.readNumber();
+   const velocityX = reader.readNumber();
+   const velocityY = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const playerHitbox = transformComponent.hitboxes[0];
    
-   transformComponent.position.x = x;
-   transformComponent.position.y = y;
-   transformComponent.rotation = rotation;
+   playerHitbox.box.position.x = x;
+   playerHitbox.box.position.y = y;
+   playerHitbox.box.angle = angle;
 
-   const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
-   transformComponent.selfVelocity.x = selfVelocityX;
-   transformComponent.selfVelocity.y = selfVelocityY;
-   transformComponent.externalVelocity.x = externalVelocityX;
-   transformComponent.externalVelocity.y = externalVelocityY;
-   physicsComponent.acceleration.x = accelerationX;
-   physicsComponent.acceleration.y = accelerationY;
+   playerHitbox.velocity.x = velocityX;
+   playerHitbox.velocity.y = velocityY;
    
    Game.sync();
 }
@@ -878,6 +840,7 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const y = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   transformComponent.position.x = x;
-   transformComponent.position.y = y;
+   const playerHitbox = transformComponent.hitboxes[0];
+   playerHitbox.box.position.x = x;
+   playerHitbox.box.position.y = y;
 }

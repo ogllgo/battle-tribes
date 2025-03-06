@@ -14,9 +14,7 @@ export const enum TileType {
    fimbultur,
    dropdown,
    stone,
-   stoneWallFloor,
-
-   _LENGTH_
+   stoneWallFloor
 }
 
 export const enum SubtileType {

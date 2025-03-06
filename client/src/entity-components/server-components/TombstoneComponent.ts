@@ -3,13 +3,11 @@ import { DeathInfo, Entity, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
-import { playSound, playSoundOnEntity, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
+import { playSound, playSoundOnHitbox, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
-import { getEntityAgeTicks, getEntityLayer } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { TransformComponentArray } from "./TransformComponent";
@@ -22,7 +20,7 @@ export interface TombstoneComponentParams {
    readonly deathInfo: DeathInfo | null;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface TombstoneComponent {
    readonly tombstoneType: number;
@@ -35,9 +33,9 @@ export interface TombstoneComponent {
 const HITBOX_WIDTH = 48;
 const HITBOX_HEIGHT = 88;
 
-export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, RenderParts>(ServerComponentType.tombstone, true, {
+export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, IntermediateInfo>(ServerComponentType.tombstone, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -77,12 +75,15 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tombstone, never>): RenderParts {
-   const tombstoneComponentParams = entityConfig.serverComponents[ServerComponentType.tombstone];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
    
-   renderInfo.attachRenderPart(
+   const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex(`entities/tombstone/tombstone${tombstoneComponentParams.tombstoneType + 1}.png`)
@@ -92,8 +93,8 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tombstone, never>): TombstoneComponent {
-   const tombstoneComponentParams = entityConfig.serverComponents[ServerComponentType.tombstone];
+function createComponent(entityParams: EntityParams): TombstoneComponent {
+   const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
    
    return {
       tombstoneType:tombstoneComponentParams. tombstoneType,
@@ -158,10 +159,11 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 4; i++) {
-      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
-      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+      const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
       let moveDirection = Math.PI/2 - Math.atan2(spawnPositionY, spawnPositionX);
       moveDirection += randFloat(-1, 1);
@@ -170,33 +172,34 @@ function onHit(entity: Entity): void {
    }
 
    for (let i = 0; i < 8; i++) {
-      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
-      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+      const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
    // @Hack @Temporary
-   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, false);
+   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 8; i++) {
-      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
-      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+      const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
       createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 125), ParticleRenderLayer.low);
    }
 
    for (let i = 0; i < 5; i++) {
-      const spawnPositionX = transformComponent.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
-      const spawnPositionY = transformComponent.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
+      const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
+      const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
       createRockSpeckParticle(spawnPositionX, spawnPositionY, 0, 0, 0, ParticleRenderLayer.low);
    }
 
    // @Hack @Temporary
-   playSoundOnEntity(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity, false);
+   playSoundOnHitbox(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, hitbox, false);
 }

@@ -1,6 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { addMonocolourParticleToBufferContainer, ParticleColour, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -8,12 +7,13 @@ import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import Particle from "../../Particle";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface IceSpikesComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface IceSpikesComponent {}
 
@@ -21,9 +21,9 @@ const ICE_SPECK_COLOUR: ParticleColour = [140/255, 143/255, 207/255];
 
 const SIZE = 80;
 
-export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent, IceSpikesComponentParams, RenderParts>(ServerComponentType.iceSpikes, true, {
+export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent, IceSpikesComponentParams, IntermediateInfo>(ServerComponentType.iceSpikes, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -36,10 +36,13 @@ function createParamsFromData(): IceSpikesComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex(`entities/ice-spikes/ice-spikes.png`)
@@ -62,9 +65,11 @@ function padData(): void {}
 function updateFromData(): void {}
 
 const createIceSpeckProjectile = (transformComponent: TransformComponent): void => {
+   const hitbox = transformComponent.hitboxes[0];
+   
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
-   const spawnPositionX = transformComponent.position.x + SIZE / 2 * Math.sin(spawnOffsetDirection);
-   const spawnPositionY = transformComponent.position.y + SIZE / 2 * Math.cos(spawnOffsetDirection);
+   const spawnPositionX = hitbox.box.position.x + SIZE / 2 * Math.sin(spawnOffsetDirection);
+   const spawnPositionY = hitbox.box.position.y + SIZE / 2 * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(150, 300);
    const velocityDirection = spawnOffsetDirection + randFloat(-0.8, 0.8);
@@ -98,21 +103,23 @@ const createIceSpeckProjectile = (transformComponent: TransformComponent): void 
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Create ice particles on hit
    for (let i = 0; i < 10; i++) {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 15; i++) {
       createIceSpeckProjectile(transformComponent);
    }
    
-   playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("ice-spikes-destroy.mp3", 0.4, 1, hitbox, false);
 }

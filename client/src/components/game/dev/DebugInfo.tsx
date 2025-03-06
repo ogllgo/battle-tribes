@@ -1,5 +1,5 @@
 import { EntityDebugData } from "battletribes-shared/client-server-types";
-import { roundNum } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, roundNum } from "battletribes-shared/utils";
 import { TileType, TileTypeString } from "battletribes-shared/tiles";
 import { Settings } from "battletribes-shared/settings";
 import { useEffect, useReducer, useRef, useState } from "react";
@@ -8,14 +8,14 @@ import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
 import { getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
-import { Entity } from "../../../../../shared/src/entities";
+import { Entity, EntityTypeString } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { PhysicsComponentArray } from "../../../entity-components/server-components/PhysicsComponent";
 import { HealthComponentArray } from "../../../entity-components/server-components/HealthComponent";
 import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
+import { getTileLocalBiome } from "../../../local-biomes";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -35,6 +35,9 @@ const TileDebugInfo = ({ layer, tile }: TileDebugInfoProps) => {
 
    const renderChunkX = Math.floor(chunkX * Settings.CHUNK_SIZE / RENDER_CHUNK_SIZE);
    const renderChunkY = Math.floor(chunkY * Settings.CHUNK_SIZE / RENDER_CHUNK_SIZE);
+
+   const tileIndex = getTileIndexIncludingEdges(tile.x, tile.y);
+   const localBiome = getTileLocalBiome(tileIndex);
    
    return <>
       <div className="title"><span className="highlight">{TileTypeString[tile.type]}</span> tile</div>
@@ -55,6 +58,14 @@ const TileDebugInfo = ({ layer, tile }: TileDebugInfoProps) => {
          <p>Humidity: <span className="highlight">{layer.grassInfo[tile.x][tile.y].humidity}</span></p>
       </> : undefined}
 
+      {localBiome !== null ? (
+         <ul>
+            {[...localBiome.entityCensus].map(([entityType, entityCensusInfo], i) => {
+               return <li key={i}>{EntityTypeString[entityType]}: {entityCensusInfo.count} (density: {entityCensusInfo.density.toFixed(3)}/{entityCensusInfo.maxDensity.toFixed(3)})</li>
+            })}
+         </ul>
+      ) : null}
+
       <br />
    </>;
 }
@@ -65,16 +76,12 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   const displayX = roundNum(transformComponent.position.x, 0);
-   const displayY = roundNum(transformComponent.position.y, 0);
+   const displayX = roundNum(hitbox.box.position.x, 0);
+   const displayY = roundNum(hitbox.box.position.y, 0);
 
-   let displayVelocityMagnitude = roundNum(transformComponent.selfVelocity.length(), 0);
-   let displayAccelerationMagnitude: number | undefined;
-   if (PhysicsComponentArray.hasComponent(entity)) {
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      displayAccelerationMagnitude = roundNum(physicsComponent.acceleration.length(), 0);
-   }
+   let displayVelocityMagnitude = roundNum(hitbox.velocity.length(), 0);
 
    const chunks = Array.from(transformComponent.chunks).map(chunk => `${chunk.x}-${chunk.y}`);
    const chunkDisplayText = chunks.reduce((previousValue, chunk, idx) => {
@@ -100,13 +107,12 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
       { typeof displayVelocityMagnitude !== "undefined" ? (
          <p>Velocity: <span className="highlight">{displayVelocityMagnitude}</span></p>
       ) : null }
-      { typeof displayAccelerationMagnitude !== "undefined" ? (
-         <p>Acceleration: <span className="highlight">{displayAccelerationMagnitude}</span></p>
-      ) : null }
       
-      <p>Rotation: <span className="highlight">{transformComponent.rotation.toFixed(2)}</span></p>
+      <p>Rotation: <span className="highlight">{hitbox.box.angle.toFixed(2)}</span></p>
 
       <p>Chunks: {chunkDisplayText}</p>
+
+      <p>Bounds: {transformComponent.boundingAreaMinX.toFixed(0)}, {transformComponent.boundingAreaMaxX.toFixed(0)}, {transformComponent.boundingAreaMinY.toFixed(0)}, {transformComponent.boundingAreaMaxY.toFixed(0)}</p>
 
       {HealthComponentArray.hasComponent(entity) ? (() => {
          const healthComponent = HealthComponentArray.getComponent(entity);

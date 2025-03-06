@@ -2,21 +2,19 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { StatusEffectData } from "battletribes-shared/client-server-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, customTickIntervalHasPassed, lerp, randFloat, randItem } from "battletribes-shared/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize, createHeatParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolourParticleToBufferContainer, ParticleColour } from "../../rendering/webgl/particle-rendering";
-import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
+import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
-import { EntityConfig } from "../ComponentArray";
 import { playerInstance } from "../../player";
-import { getVelocityX, getVelocityY } from "./PhysicsComponent";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;
@@ -65,10 +63,14 @@ export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectC
    calculateTint: calculateTint
 });
 
-export function createStatusEffectComponentParams(statusEffects: Array<StatusEffectData>): StatusEffectComponentParams {
+const fillStatusEffectComponentParams = (statusEffects: Array<StatusEffectData>): StatusEffectComponentParams => {
    return {
       statusEffects: statusEffects
    };
+}
+
+export function createStatusEffectComponentParams(): StatusEffectComponentParams {
+   return fillStatusEffectComponentParams([]);
 }
 
 function createParamsFromData(reader: PacketReader): StatusEffectComponentParams {
@@ -85,12 +87,12 @@ function createParamsFromData(reader: PacketReader): StatusEffectComponentParams
       statusEffects.push(statusEffectData);
    }
 
-   return createStatusEffectComponentParams(statusEffects);
+   return fillStatusEffectComponentParams(statusEffects);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.statusEffect, never>): StatusEffectComponent {
+function createComponent(entityParams: EntityParams): StatusEffectComponent {
    return {
-      statusEffects: entityConfig.serverComponents[ServerComponentType.statusEffect].statusEffects,
+      statusEffects: entityParams.serverComponentParams[ServerComponentType.statusEffect]!.statusEffects,
       burningLight: null
    };
 }
@@ -101,6 +103,8 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    
    const poisonStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.poisoned);
@@ -109,8 +113,8 @@ function onTick(entity: Entity): void {
       if (customTickIntervalHasPassed(poisonStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random()
-         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
          const lifetime = 2;
          
@@ -141,8 +145,8 @@ function onTick(entity: Entity): void {
       if (customTickIntervalHasPassed(poisonStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random()
-         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
          createPoisonBubble(spawnPositionX, spawnPositionY, randFloat(0.4, 0.6));
       }
@@ -160,15 +164,18 @@ function onTick(entity: Entity): void {
             0,
             0
          );
-         attachLightToEntity(statusEffectComponent.burningLight, entity);
+
+         // @Hack
+         const renderInfo = getEntityRenderInfo(entity);
+         attachLightToRenderPart(statusEffectComponent.burningLight, renderInfo.renderPartsByZIndex[0], entity);
       }
       
       // Ember particles
       if (customTickIntervalHasPassed(fireStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
-         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
          const lifetime = randFloat(0.6, 1.2);
 
@@ -211,8 +218,8 @@ function onTick(entity: Entity): void {
       if (customTickIntervalHasPassed(fireStatusEffect.ticksElapsed, 3/20)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
-         const spawnPositionX = transformComponent.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
          const accelerationDirection = 2 * Math.PI * Math.random();
          const accelerationX = 40 * Math.sin(accelerationDirection);
@@ -261,8 +268,8 @@ function onTick(entity: Entity): void {
    if (bleedingStatusEffect !== null) {
       if (Board.tickIntervalHasPassed(0.15)) {
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
-         const spawnPositionX = transformComponent.position.x + 32 * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + 32 * Math.cos(spawnOffsetDirection);
+         const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
          createBloodParticle(Math.random() < 0.5 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(40, 60), true);
       }
    }
@@ -271,9 +278,9 @@ function onTick(entity: Entity): void {
    if (heatSicknessStatusEffect !== null) {
       if (Board.tickIntervalHasPassed(0.15)) {
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
-         const spawnPositionX = transformComponent.position.x + 32 * Math.sin(spawnOffsetDirection);
-         const spawnPositionY = transformComponent.position.y + 32 * Math.cos(spawnOffsetDirection);
-         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), getVelocityX(transformComponent), getVelocityY(transformComponent));
+         const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
+         const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
+         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), hitbox.velocity.x, hitbox.velocity.y);
       }
    }
 }
@@ -306,7 +313,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
-               playSoundOnEntity("freezing.mp3", 0.4, 1, entity, false);
+               const transformComponent = TransformComponentArray.getComponent(entity);
+               const hitbox = transformComponent.hitboxes[0];
+               playSoundOnHitbox("freezing.mp3", 0.4, 1, hitbox, false);
                break;
             }
          }

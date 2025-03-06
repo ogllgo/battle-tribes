@@ -4,19 +4,22 @@ import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
-import { getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface SlimeSpitComponentParams {}
 
+interface IntermediateInfo {}
+
 export interface SlimeSpitComponent {}
 
-export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, never>(ServerComponentType.slimeSpit, true, {
+export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, IntermediateInfo>(ServerComponentType.slimeSpit, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
@@ -32,27 +35,34 @@ function createParamsFromData(reader: PacketReader): SlimeSpitComponentParams {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<never, never>): SlimeSpitComponent {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
    const renderPart1 = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       0,
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart1.opacity = 0.75;
-   entityConfig.renderInfo.attachRenderPart(renderPart1);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart1);
 
    const renderPart2 = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       Math.PI/4,
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart2.opacity = 0.75;
-   entityConfig.renderInfo.attachRenderPart(renderPart2);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart2);
 
+   return {};
+}
+
+function createComponent(): SlimeSpitComponent {
    return {};
 }
 
@@ -61,12 +71,14 @@ function getMaxRenderParts(): number {
 }
 
 function onLoad(entity: Entity): void {
-   playSoundOnEntity("slime-spit.mp3", 0.5, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("slime-spit.mp3", 0.5, 1, hitbox, false);
 }
 
 function onTick(entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
-   const rotatingRenderPart = renderInfo.allRenderThings[0];
+   const rotatingRenderPart = renderInfo.renderPartsByZIndex[0];
    
    rotatingRenderPart.rotation += 1.5 * Math.PI / Settings.TPS;
    rotatingRenderPart.rotation -= 1.5 * Math.PI / Settings.TPS;

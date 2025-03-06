@@ -72,26 +72,24 @@ function addDataToComponent(packet: Packet, entity: Entity): void {
 export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
+   const planterBoxHitbox = transformComponent.hitboxes[0];
 
    // Create plant
-   let config: EntityConfig<ServerComponentType.transform>;
+   let config: EntityConfig;
    switch (plantedEntityType) {
       case EntityType.treePlanted: {
-         config = createTreePlantedConfig(planterBox);
+         config = createTreePlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
          break;
       }
       case EntityType.berryBushPlanted: {
-         config = createBerryBushPlantedConfig(planterBox);
+         config = createBerryBushPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
          break;
       }
       case EntityType.iceSpikesPlanted: {
-         config = createIceSpikesPlantedConfig(planterBox);
+         config = createIceSpikesPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
          break;
       }
    }
-   config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-   config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
    const plant = createEntity(config, getEntityLayer(planterBox), 0);
 
    planterBoxComponent.plant = plant;

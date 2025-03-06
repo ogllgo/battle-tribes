@@ -14,13 +14,14 @@ export const enum AppState {
 function App() {
    const usernameRef = useRef("");
    const tribeTypeRef = useRef(TribeType.plainspeople);
+   const isSpectatingRef = useRef(false);
    const [appState, setAppState] = useState(AppState.mainMenu);
 
    return <>
       {appState === AppState.mainMenu ? <>
-         <MainMenu existingUsername={usernameRef.current} usernameRef={usernameRef} tribeTypeRef={tribeTypeRef} setAppState={setAppState} />
+         <MainMenu existingUsername={usernameRef.current} usernameRef={usernameRef} tribeTypeRef={tribeTypeRef} isSpectatingRef={isSpectatingRef} setAppState={setAppState} />
       </> : appState === AppState.loading ? <>
-         <LoadingScreen username={usernameRef.current} tribeType={tribeTypeRef.current} setAppState={setAppState} />
+         <LoadingScreen username={usernameRef.current} tribeType={tribeTypeRef.current} isSpectating={isSpectatingRef.current} setAppState={setAppState} />
       </> : appState === AppState.game ? <>
          <GameScreen setAppState={setAppState} />
       </> : null}

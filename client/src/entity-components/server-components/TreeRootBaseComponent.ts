@@ -1,23 +1,23 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createWoodSpeckParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export interface TreeRootBaseComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface TreeRootBaseComponent {}
 
-export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseComponent, TreeRootBaseComponentParams, RenderParts>(ServerComponentType.treeRootBase, true, {
+export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseComponent, TreeRootBaseComponentParams, IntermediateInfo>(ServerComponentType.treeRootBase, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -30,10 +30,13 @@ function createParamsFromData(): TreeRootBaseComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/tree-root-base/tree-root-base.png")
@@ -57,20 +60,22 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 6; i++) {
-      createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 16 * Math.random());
+      createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }
 
-   playSoundOnEntity("tree-root-base-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), entity, false);
+   playSoundOnHitbox("tree-root-base-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 10; i++) {
-      createWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 16 * Math.random());
+      createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }
 
-   playSoundOnEntity("tree-root-base-death.mp3", 0.5, 1, entity, false);
+   playSoundOnHitbox("tree-root-base-death.mp3", 0.5, 1, hitbox, false);
 }

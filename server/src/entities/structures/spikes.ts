@@ -2,11 +2,10 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
+import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { createWallSpikesHitboxes, createFloorSpikesHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { getEntityType } from "../../world";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -15,21 +14,20 @@ import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.buildingMaterial
-   | ServerComponentType.spikes;
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
 const HEALTHS = [15, 45];
 
-export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createFloorSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createFloorSpikesHitboxes(), null);
+   
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   transformComponent.addHitbox(hitbox, null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -58,9 +56,12 @@ export function createFloorSpikesConfig(tribe: Tribe, material: BuildingMaterial
    };
 }
 
-export function createWallSpikesConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createWallSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createWallSpikesHitboxes(), null);
+   
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   transformComponent.addHitbox(hitbox, null);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -116,6 +117,6 @@ export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, colli
    }
    
    // @Incomplete: Cause of death
-   damageEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
 }

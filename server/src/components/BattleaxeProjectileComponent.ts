@@ -3,11 +3,11 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { lerp } from "battletribes-shared/utils";
-import { entitiesAreColliding, CollisionVars } from "../collision";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { ThrowingProjectileComponentArray } from "./ThrowingProjectileComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks } from "../world";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    RETURN_TIME_TICKS = 1 * Settings.TPS
@@ -22,14 +22,13 @@ BattleaxeProjectileComponentArray.onTick = {
 };
 
 function onTick(battleaxe: Entity): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(battleaxe);
+   const transformComponent = TransformComponentArray.getComponent(battleaxe);
+   const battleaxeHitbox = transformComponent.hitboxes[0];
 
    const ageTicks = getEntityAgeTicks(battleaxe);
    if (ageTicks < Vars.RETURN_TIME_TICKS) {
-      physicsComponent.angularVelocity = -6 * Math.PI;
+      setHitboxAngularVelocity(battleaxeHitbox, -6 * Math.PI);
    } else {
-      physicsComponent.angularVelocity = 0;
-      
       const throwingProjectileComponent = ThrowingProjectileComponentArray.getComponent(battleaxe);
 
       if (!entityExists(throwingProjectileComponent.tribeMember)) {
@@ -42,23 +41,23 @@ function onTick(battleaxe: Entity): void {
          return;
       }
 
-      const transformComponent = TransformComponentArray.getComponent(battleaxe);
+      
       const ownerTransformComponent = TransformComponentArray.getComponent(throwingProjectileComponent.tribeMember);
+      const ownerHitbox = ownerTransformComponent.hitboxes[0];
       
       const ageTicks = getEntityAgeTicks(battleaxe);
       const ticksSinceReturn = ageTicks - Vars.RETURN_TIME_TICKS;
-      transformComponent.relativeRotation -= lerp(6 * Math.PI / Settings.TPS, 0, Math.min(ticksSinceReturn / Settings.TPS * 1.25, 1));
+      battleaxeHitbox.box.relativeAngle -= lerp(6 * Math.PI / Settings.TPS, 0, Math.min(ticksSinceReturn / Settings.TPS * 1.25, 1));
 
       // @Hack: Just set velocity instead of adding to position
-      const returnDirection = transformComponent.position.calculateAngleBetween(ownerTransformComponent.position);
+      const returnDirection = battleaxeHitbox.box.position.calculateAngleBetween(ownerHitbox.box.position);
       const returnSpeed = lerp(0, 800, Math.min(ticksSinceReturn / Settings.TPS * 1.5, 1));
-      transformComponent.position.x += returnSpeed * Settings.I_TPS * Math.sin(returnDirection);
-      transformComponent.position.y += returnSpeed * Settings.I_TPS * Math.cos(returnDirection);
+      battleaxeHitbox.box.position.x += returnSpeed * Settings.I_TPS * Math.sin(returnDirection);
+      battleaxeHitbox.box.position.y += returnSpeed * Settings.I_TPS * Math.cos(returnDirection);
       transformComponent.isDirty = true;
 
       // Turn to face the owner
-      physicsComponent.targetRotation = ownerTransformComponent.relativeRotation;
-      physicsComponent.turnSpeed = ticksSinceReturn / Settings.TPS * Math.PI;
+      setHitboxIdealAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI);
    }
 }
 

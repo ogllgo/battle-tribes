@@ -1,19 +1,19 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randInt } from "../../../../shared/src/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface IceSpikesPlantedComponentParams {
    readonly growthProgress: number;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly renderPart: TexturedRenderPart;
 }
 
@@ -23,9 +23,9 @@ export interface IceSpikesPlantedComponent {
 
 const TEXTURE_SOURCES = ["entities/plant/ice-spikes-sapling-1.png", "entities/plant/ice-spikes-sapling-2.png", "entities/plant/ice-spikes-sapling-3.png", "entities/plant/ice-spikes-sapling-4.png", "entities/plant/ice-spikes-sapling-5.png", "entities/plant/ice-spikes-sapling-6.png", "entities/plant/ice-spikes-sapling-7.png", "entities/plant/ice-spikes-sapling-8.png", "entities/plant/ice-spikes-sapling-9.png"];
 
-export const IceSpikesPlantedComponentArray = new ServerComponentArray<IceSpikesPlantedComponent, IceSpikesPlantedComponentParams, RenderParts>(ServerComponentType.iceSpikesPlanted, true, {
+export const IceSpikesPlantedComponentArray = new ServerComponentArray<IceSpikesPlantedComponent, IceSpikesPlantedComponentParams, IntermediateInfo>(ServerComponentType.iceSpikesPlanted, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -46,26 +46,29 @@ function createParamsFromData(reader: PacketReader): IceSpikesPlantedComponentPa
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.iceSpikesPlanted, never>): RenderParts {
-   const iceSpikesPlantedComponentParams = entityConfig.serverComponents[ServerComponentType.iceSpikesPlanted];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const iceSpikesPlantedComponentParams = entityParams.serverComponentParams[ServerComponentType.iceSpikesPlanted]!;
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       // @Cleanup: why is this 9 instead of 0?
       9,
       0,
       getTextureArrayIndex(getTextureSource(iceSpikesPlantedComponentParams.growthProgress))
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
    };
 }
 
-function createComponent(_entityConfig: EntityConfig<never, never>, renderParts: RenderParts): IceSpikesPlantedComponent {
+function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): IceSpikesPlantedComponent {
    return {
-      renderPart: renderParts.renderPart
+      renderPart: intermediateInfo.renderPart
    };
 }
 
@@ -85,11 +88,15 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: particles?
-   playSoundOnEntity("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: particles?
-   playSoundOnEntity("ice-spikes-destroy.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("ice-spikes-destroy.mp3", 0.4, 1, hitbox, false);
 }

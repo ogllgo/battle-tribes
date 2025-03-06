@@ -3,25 +3,23 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { EntityConfig } from "../ComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityPreCreationInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface TribeWarriorComponentParams {
    readonly scars: Array<ScarInfo>;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface TribeWarriorComponent {
    readonly scars: Array<ScarInfo>;
 }
 
-export const TribeWarriorComponentArray = new ServerComponentArray<TribeWarriorComponent, TribeWarriorComponentParams, RenderParts>(ServerComponentType.tribeWarrior, true, {
+export const TribeWarriorComponentArray = new ServerComponentArray<TribeWarriorComponent, TribeWarriorComponentParams, IntermediateInfo>(ServerComponentType.tribeWarrior, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -50,13 +48,16 @@ function createParamsFromData(reader: PacketReader): TribeWarriorComponentParams
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.tribeWarrior, never>): RenderParts {
-   const tribeWarriorComponentParams = entityConfig.serverComponents[ServerComponentType.tribeWarrior];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
    for (let i = 0; i < tribeWarriorComponentParams.scars.length; i++) {
       const scarInfo = tribeWarriorComponentParams.scars[i];
 
       const renderPart = new TexturedRenderPart(
-         null,
+         hitbox,
          2.5,
          scarInfo.rotation,
          getTextureArrayIndex("scars/scar-" + (scarInfo.type + 1) + ".png")
@@ -64,20 +65,20 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       renderPart.offset.x = scarInfo.offsetX;
       renderPart.offset.y = scarInfo.offsetY;
 
-      renderInfo.attachRenderPart(renderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
    }
 
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.tribeWarrior, never>): TribeWarriorComponent {
+function createComponent(entityParams: EntityParams): TribeWarriorComponent {
    return {
-      scars: entityConfig.serverComponents[ServerComponentType.tribeWarrior].scars
+      scars: entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!.scars
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.tribeWarrior>): number {
-   const tribeWarriorComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.tribeWarrior];
+function getMaxRenderParts(entityParams: EntityParams): number {
+   const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
    return tribeWarriorComponentParams.scars.length;
 }
 

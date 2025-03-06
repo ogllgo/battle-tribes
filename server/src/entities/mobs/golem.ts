@@ -1,28 +1,24 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { distance, Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { GolemComponent, GolemComponentArray } from "../../components/GolemComponent";
-import { applyKnockback, PhysicsComponent } from "../../components/PhysicsComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { distance, Point, randInt } from "battletribes-shared/utils";
+import { HealthComponent } from "../../components/HealthComponent";
+import { GolemComponent } from "../../components/GolemComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { TransformComponent } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { createHitbox, HitboxCollisionType, Hitbox } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
+import { createHitbox, Hitbox } from "../../hitboxes";
 
 export const enum GolemVars {
    PEBBLUM_SUMMON_COOLDOWN_TICKS = 10 * Settings.TPS
 }
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.golem;
 
 // @Cleanup: shouldn't be polluting the exports!
 export const BODY_GENERATION_RADIUS = 55;
@@ -34,6 +30,13 @@ const ROCK_LARGE_MASS = 1.75;
 const ROCK_MASSIVE_MASS = 2.25;
 
 export const GOLEM_WAKE_TIME_TICKS = Math.floor(2.5 * Settings.TPS);
+
+registerEntityLootOnDeath(EntityType.golem, [
+   {
+      itemType: ItemType.living_rock,
+      getAmount: () => randInt(10, 20)
+   }
+]);
 
 const hitboxIsTooClose = (existingHitboxes: ReadonlyArray<Hitbox>, hitboxX: number, hitboxY: number): boolean => {
    for (let j = 0; j < existingHitboxes.length; j++) {
@@ -63,15 +66,15 @@ const getMinSeparationFromOtherHitboxes = (hitboxes: ReadonlyArray<Hitbox>, hitb
    return minSeparation;
 }
 
-export function createGolemConfig(): EntityConfig<ComponentTypes> {
+export function createGolemConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent(0);
    
    // Create core hitbox
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   const coreHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(coreHitbox, null);
 
    // Create head hitbox
-   transformComponent.addHitbox(createHitbox(new CircularBox(null, new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+   transformComponent.addHitbox(createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
    
    // Create body hitboxes
    let i = 0;
@@ -97,7 +100,7 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
       }
 
       const mass = size === 0 ? ROCK_SMALL_MASS : ROCK_MEDIUM_MASS;
-      const hitbox = createHitbox(new CircularBox(null, new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
       transformComponent.addHitbox(hitbox, null);
 
       i++;
@@ -106,12 +109,12 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
    // Create hand hitboxes
    for (let j = 0; j < 2; j++) {
       const offsetX = 60 * (j === 0 ? -1 : 1);
-      const hitbox = createHitbox(new CircularBox(null, new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
       transformComponent.addHitbox(hitbox, null);
 
       // Wrist
       const inFactor = 0.75;
-      transformComponent.addHitbox(createHitbox(new CircularBox(null, new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+      transformComponent.addHitbox(createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
    }
    
    const physicsComponent = new PhysicsComponent();
@@ -133,31 +136,4 @@ export function createGolemConfig(): EntityConfig<ComponentTypes> {
       },
       lights: []
    };
-}
-
-export function onGolemCollision(golem: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   if (!HealthComponentArray.hasComponent(collidingEntity)) {
-      return;
-   }
-   
-   // Don't hurt entities which aren't attacking the golem
-   const golemComponent = GolemComponentArray.getComponent(golem);
-   if (!golemComponent.attackingEntities.hasOwnProperty(collidingEntity)) {
-      return;
-   }
-   
-   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "golem")) {
-      return;
-   }
-   
-   const transformComponent = TransformComponentArray.getComponent(golem);
-   const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-   const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-
-   // @Incomplete: Cause of death
-   damageEntity(collidingEntity, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, 300, hitDirection);
-   addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

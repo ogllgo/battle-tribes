@@ -1,23 +1,22 @@
+import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityLayer } from "../../world";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { PhysicsComponentArray } from "../server-components/PhysicsComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface BallistaFrostcicleComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface BallistaFrostcicleComponent {}
 
-export const BallistaFrostcicleComponentArray = new ClientComponentArray<BallistaFrostcicleComponent, RenderParts>(ClientComponentType.ballistaFrostcicle, true, {
-   createRenderParts: createRenderParts,
+export const BallistaFrostcicleComponentArray = new ClientComponentArray<BallistaFrostcicleComponent, IntermediateInfo>(ClientComponentType.ballistaFrostcicle, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onDie: onDie
@@ -27,10 +26,13 @@ export function createBallistaFrostcicleComponentParams(): BallistaFrostcicleCom
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("projectiles/ballista-frostcicle.png")
@@ -50,11 +52,12 @@ function getMaxRenderParts(): number {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Create arrow break particles
    for (let i = 0; i < 6; i++) {
-      createArrowDestroyParticle(transformComponent.position.x, transformComponent.position.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
+      createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, hitbox.velocity.x, hitbox.velocity.y);
    }
 
-   playSoundOnEntity("ice-break.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("ice-break.mp3", 0.4, 1, hitbox, false);
 }

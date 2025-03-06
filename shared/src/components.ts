@@ -34,6 +34,7 @@ export enum ServerComponentType {
    inventory,
    inventoryUse,
    item,
+   fleshSwordItem,
    pebblum,
    physics,
    player,
@@ -95,7 +96,9 @@ export enum ServerComponentType {
    furnace,
    fireTorch,
    spikyBastard,
-   glurb,
+   glurbSegment,
+   glurbBodySegment,
+   glurbHeadSegment,
    slurbTorch,
    attackingEntities,
    patrolAI,
@@ -111,7 +114,8 @@ export enum ServerComponentType {
    swingAttack,
    blockAttack,
    slingTurretRock,
-   taming
+   taming,
+   loot
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -133,6 +137,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.inventory]: "Inventory Component",
    [ServerComponentType.inventoryUse]: "Inventory Use Component",
    [ServerComponentType.item]: "Item Component",
+   [ServerComponentType.fleshSwordItem]: "Flesh Sword Item Component",
    [ServerComponentType.pebblum]: "Pebblum Component",
    [ServerComponentType.physics]: "Physics Component",
    [ServerComponentType.player]: "Player Component",
@@ -199,7 +204,9 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.furnace]: "Furnace Component",
    [ServerComponentType.fireTorch]: "Fire Torch Component",
    [ServerComponentType.spikyBastard]: "Spiky Bastard Component",
-   [ServerComponentType.glurb]: "Glurb Component",
+   [ServerComponentType.glurbSegment]: "Glurb Segment Component",
+   [ServerComponentType.glurbBodySegment]: "Glurb Body Segment Component",
+   [ServerComponentType.glurbHeadSegment]: "Glurb Head Segment Component",
    [ServerComponentType.slurbTorch]: "Slurb Torch Component",
    [ServerComponentType.attackingEntities]: "Attacking Entities Component",
    [ServerComponentType.patrolAI]: "Patrol AI Component",
@@ -215,7 +222,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.swingAttack]: "Swing Attack Component",
    [ServerComponentType.blockAttack]: "Block Attack Component",
    [ServerComponentType.slingTurretRock]: "Sling Turret Rock Component",
-   [ServerComponentType.taming]: "Taming Component"
+   [ServerComponentType.taming]: "Taming Component",
+   [ServerComponentType.loot]: "Loot Component"
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -248,6 +256,7 @@ export const EntityComponents = {
    [EntityType.frozenYeti]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.frozenYeti, ServerComponentType.aiHelper] as const,
    [EntityType.fish]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.escapeAI, ServerComponentType.aiHelper, ServerComponentType.fish] as const,
    [EntityType.itemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
+   [EntityType.fleshSwordItemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
    [EntityType.woodenArrow]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.ballistaWoodenBolt]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.ballistaRock]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
@@ -296,7 +305,9 @@ export const EntityComponents = {
    [EntityType.bracings]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial, ServerComponentType.bracings],
    [EntityType.fireTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.fireTorch],
    [EntityType.spikyBastard]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.spikyBastard],
-   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurb],
+   [EntityType.glurbBodySegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
+   [EntityType.glurbHeadSegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
+   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
    [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
    [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],

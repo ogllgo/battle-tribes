@@ -1,7 +1,6 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createWallHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -11,20 +10,21 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.buildingMaterial;
+import { Point } from "../../../../shared/src/utils";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
 const HEALTHS = [25, 75];
 
-export function createWallConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createWallConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createWallHitboxes(), null);
+   
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 64);
+   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

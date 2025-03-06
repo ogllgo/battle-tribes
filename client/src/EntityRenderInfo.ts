@@ -1,17 +1,16 @@
-import { assert, Point } from "battletribes-shared/utils";
+import { assert } from "battletribes-shared/utils";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Board from "./Board";
-import { removeLightsAttachedToRenderPart } from "./lights";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
 import { RenderPart } from "./render-parts/render-parts";
-import { createIdentityMatrix } from "./rendering/matrices";
 import { RenderLayer } from "./render-layers";
 import { registerDirtyRenderInfo, renderParentIsHitbox } from "./rendering/render-part-matrices";
 import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
 import { gl } from "./webgl";
 import { EntityRenderingVars, setRenderInfoInVertexData } from "./rendering/webgl/entity-rendering";
+import { removeLightsAttachedToRenderPart } from "./lights";
 
 export interface ComponentTint {
    readonly tintR: number;
@@ -33,16 +32,13 @@ export class EntityRenderInfo {
    public readonly renderLayer: RenderLayer;
    public readonly renderHeight: number;
 
-   public renderPosition = new Point(0, 0);
-   public rotation = 0;
-
    /** Stores all render parts attached to the object, sorted ascending based on zIndex. (So that render part with smallest zIndex is rendered first) */
-   public readonly allRenderThings = new Array<RenderPart>();
+   public readonly renderPartsByZIndex = new Array<RenderPart>();
+   /** Render parts attached to hitboxes. */
+   public readonly rootRenderParts = new Array<RenderPart>();
 
    public readonly renderPartOverlayGroups = new Array<RenderPartOverlayGroup>();
    
-   public readonly modelMatrix = createIdentityMatrix();
-
    /** Amount the entity's render parts will shake */
    public shakeAmount = 0;
 
@@ -116,8 +112,8 @@ export class EntityRenderInfo {
    }
 
    public attachRenderPart(renderPart: RenderPart): void {
-      assert(this.allRenderThings.indexOf(renderPart) === -1);
-      assert(this.allRenderThings.length < this.maxRenderParts);
+      assert(this.renderPartsByZIndex.indexOf(renderPart) === -1);
+      assert(this.renderPartsByZIndex.length < this.maxRenderParts);
 
       // @Temporary?
       // @Incomplete: Check with the first render part up the chain
@@ -130,17 +126,19 @@ export class EntityRenderInfo {
       // Add to the array just after its parent
 
       // Add to the array of all render parts
-      let idx = this.allRenderThings.length;
-      for (let i = 0; i < this.allRenderThings.length; i++) {
-         const currentRenderPart = this.allRenderThings[i];
+      let idx = this.renderPartsByZIndex.length;
+      for (let i = 0; i < this.renderPartsByZIndex.length; i++) {
+         const currentRenderPart = this.renderPartsByZIndex[i];
          if (renderPart.zIndex < currentRenderPart.zIndex) {
             idx = i;
             break;
          }
       }
-      this.allRenderThings.splice(idx, 0, renderPart);
+      this.renderPartsByZIndex.splice(idx, 0, renderPart);
 
-      if (renderPart.parent !== null && !renderParentIsHitbox(renderPart.parent)) {
+      if (renderParentIsHitbox(renderPart.parent)) {
+         this.rootRenderParts.push(renderPart);
+      } else {
          renderPart.parent.children.push(renderPart);
       }
       
@@ -151,7 +149,7 @@ export class EntityRenderInfo {
 
    public removeRenderPart(renderPart: RenderPart): void {
       // Don't remove if already removed
-      const idx = this.allRenderThings.indexOf(renderPart);
+      const idx = this.renderPartsByZIndex.indexOf(renderPart);
       if (idx === -1) {
          console.warn("Tried to remove when already removed!");
          return;
@@ -162,12 +160,12 @@ export class EntityRenderInfo {
       delete Board.renderPartRecord[renderPart.id];
       
       // Remove from the root array
-      this.allRenderThings.splice(this.allRenderThings.indexOf(renderPart), 1);
+      this.renderPartsByZIndex.splice(this.renderPartsByZIndex.indexOf(renderPart), 1);
    }
 
    public getRenderThing(tag: string): RenderPart {
-      for (let i = 0; i < this.allRenderThings.length; i++) {
-         const renderThing = this.allRenderThings[i];
+      for (let i = 0; i < this.renderPartsByZIndex.length; i++) {
+         const renderThing = this.renderPartsByZIndex[i];
 
          if (renderThing.tags.includes(tag)) {
             return renderThing;
@@ -179,8 +177,8 @@ export class EntityRenderInfo {
 
    public getRenderThings(tag: string, expectedAmount?: number): Array<RenderPart> {
       const renderThings = new Array<RenderPart>();
-      for (let i = 0; i < this.allRenderThings.length; i++) {
-         const renderThing = this.allRenderThings[i];
+      for (let i = 0; i < this.renderPartsByZIndex.length; i++) {
+         const renderThing = this.renderPartsByZIndex[i];
 
          if (renderThing.tags.includes(tag)) {
             renderThings.push(renderThing);

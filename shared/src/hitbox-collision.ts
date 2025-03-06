@@ -1,11 +1,6 @@
-import { getChunk } from "./board-interface";
 import { rectanglesAreColliding } from "./collision";
-import { Entity } from "./entities";
-import { createNormalStructureHitboxes } from "./boxes/entity-hitbox-creation";
-import { Box, boxIsCircular, assertBoxIsRectangular, updateBox, Hitbox } from "./boxes/boxes";
-import { Settings } from "./settings";
-import { StructureType, WorldInfo } from "./structures";
-import { angle, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
+import { Box, boxIsCircular, assertBoxIsRectangular } from "./boxes/boxes";
+import { angle, Point, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 import CircularBox from "./boxes/CircularBox";
 import RectangularBox from "./boxes/RectangularBox";
 
@@ -29,7 +24,7 @@ const getCircleCircleCollisionPushInfo = (pushedBox: CircularBox, pushingBox: Ci
 }
 
 const getCircleRectCollisionPushInfo = (pushedBox: CircularBox, pushingBox: RectangularBox): CollisionPushInfo => {
-   const rectRotation = pushingBox.rotation;
+   const rectRotation = pushingBox.angle;
 
    const circlePosX = rotateXAroundPoint(pushedBox.position.x, pushedBox.position.y, pushingBox.position.x, pushingBox.position.y, -rectRotation);
    const circlePosY = rotateYAroundPoint(pushedBox.position.x, pushedBox.position.y, pushingBox.position.x, pushingBox.position.y, -rectRotation);
@@ -128,84 +123,6 @@ export function getCollisionPushInfo(pushedHitbox: Box, pushingHitbox: Box): Col
    }
 }
 
-export function hitboxesAreColliding(hitbox: Box, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean {
-   for (let j = 0; j < hitboxes.length; j++) {
-      const otherHitbox = hitboxes[j];
-
-      // If the objects are colliding, add the colliding object and this object
-      if (hitbox.isColliding(otherHitbox.box, epsilon)) {
-         return true;
-      }
-   }
-
-   // If no hitboxes match, then they aren't colliding
-   return false;
-}
-
 export function collisionBitsAreCompatible(collisionMask1: number, collisionBit1: number, collisionMask2: number, collisionBit2: number): boolean {
    return (collisionMask1 & collisionBit2) !== 0 && (collisionMask2 & collisionBit1) !== 0;
-}
-
-export function getHitboxesCollidingEntities(worldInfo: WorldInfo, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): Array<Entity> {
-   const collidingEntities = new Array<Entity>();
-   const seenEntityIDs = new Set<number>();
-   
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-      const box = hitbox.box;
-
-      let minX = box.calculateBoundsMinX();
-      let maxX = box.calculateBoundsMaxX();
-      let minY = box.calculateBoundsMinY();
-      let maxY = box.calculateBoundsMaxY();
-      if (minX < 0) {
-         minX = 0;
-      }
-      if (maxX >= Settings.BOARD_UNITS) {
-         maxX = Settings.BOARD_UNITS - 1;
-      }
-      if (minY < 0) {
-         minY = 0;
-      }
-      if (maxY >= Settings.BOARD_UNITS) {
-         maxY = Settings.BOARD_UNITS - 1;
-      }
-      
-      const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
-      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-      const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
-      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-      
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = getChunk(worldInfo.chunks, chunkX, chunkY);
-            for (let j = 0; j < chunk.entities.length; j++) {
-               const entityID = chunk.entities[j];
-               if (seenEntityIDs.has(entityID)) {
-                  continue;
-               }
-
-               seenEntityIDs.add(entityID);
-               
-               const entity = worldInfo.getEntityCallback(entityID);
-               if (hitboxesAreColliding(box, entity.hitboxes, epsilon)) {
-                  collidingEntities.push(entityID);
-               }
-            }
-         }
-      }
-   }
-
-   return collidingEntities;
-}
-
-// @Cleanup: broaden to EntityType instead of StructureType
-export function estimateCollidingEntities(worldInfo: WorldInfo, entityType: StructureType, x: number, y: number, rotation: number, epsilon: number): Array<Entity> {
-   const testHitboxes = createNormalStructureHitboxes(entityType);
-   for (let i = 0; i < testHitboxes.length; i++) {
-      const hitbox = testHitboxes[i];
-      updateBox(hitbox.box, x, y, rotation);
-   }
-   
-   return getHitboxesCollidingEntities(worldInfo, testHitboxes, epsilon);
 }

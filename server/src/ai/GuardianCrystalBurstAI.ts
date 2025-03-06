@@ -1,14 +1,14 @@
 import { GuardianCrystalBurstStage, ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
-import { stopEntity, turnToPosition } from "../ai-shared";
+import { lerp, Point, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
+import { turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
-import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemFragmentProjectileConfig } from "../entities/projectiles/guardian-gem-fragment-projectile";
 import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
+import { setHitboxAngularVelocity } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -23,24 +23,25 @@ const enum Vars {
 
 const createFragmentProjectile = (guardian: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
+   const bodyHitbox = transformComponent.rootHitboxes[0];
 
-   const offsetDirection = transformComponent.relativeRotation + randFloat(-0.2, 0.2);
+   const offsetDirection = bodyHitbox.box.angle + randFloat(-0.2, 0.2);
    const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS;
-   const originX = transformComponent.position.x + offsetMagnitude * Math.sin(offsetDirection);
-   const originY = transformComponent.position.y + offsetMagnitude * Math.cos(offsetDirection);
+   const originX = bodyHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
+   const originY = bodyHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
    const velocityMagnitude = randFloat(450, 700);
    const velocityDirection = offsetDirection + randFloat(-0.2, 0.2);
    const vx = velocityMagnitude * Math.sin(velocityDirection);
    const vy = velocityMagnitude * Math.cos(velocityDirection);
    
-   const config = createGuardianGemFragmentProjectileConfig(guardian);
-   config.components[ServerComponentType.transform].position.x = originX;
-   config.components[ServerComponentType.transform].position.y = originY;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-   config.components[ServerComponentType.transform].externalVelocity.x = vx;
-   config.components[ServerComponentType.transform].externalVelocity.y = vy;
-   config.components[ServerComponentType.physics].angularVelocity = randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign();
+   const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), 2 * Math.PI * Math.random(), guardian);
+
+   const snowballHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+   snowballHitbox.velocity.x = vx;
+   snowballHitbox.velocity.y = vy;
+   setHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign())
+
    createEntity(config, getEntityLayer(guardian), 0);
 }
 
@@ -77,10 +78,6 @@ export default class GuardianCrystalBurstAI {
    public run(guardian: Entity, targetX: number, targetY: number): void {
       turnToPosition(guardian, targetX, targetY, this.turnSpeed);
 
-      // Stop moving
-      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-      stopEntity(physicsComponent);
-      
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {
          this.windupProgressTicks++;

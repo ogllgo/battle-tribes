@@ -4,7 +4,7 @@ import { distance, AIPlanType, assert } from "../../../../../shared/src/utils";
 import CLIENT_ITEM_INFO_RECORD from "../../../client-item-info";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import TribesmanAssignmentDropdown from "../dev/tabs/TribesmanDropdown";
-import { ExtendedTribeInfo } from "../../../tribes";
+import { ExtendedTribe } from "../../../tribes";
 import { Entity } from "../../../../../shared/src/entities";
 
 const enum Vars {
@@ -24,7 +24,7 @@ interface PlanConnectorProps {
    readonly endPlan: AIPlan;
 }
 
-export let TribePlanVisualiser_setPlan: (tribeAssignmentInfo: TribeAssignmentInfo | null, tribe: ExtendedTribeInfo | null) => void = () => {};
+export let TribePlanVisualiser_setPlan: (tribeAssignmentInfo: TribeAssignmentInfo | null, tribe: ExtendedTribe | null) => void = () => {};
 
 const getPlanX = (plan: AIPlan, offsetX: number): number => {
    return plan.xOffset * 1.7 + offsetX;
@@ -147,7 +147,7 @@ const getAssignment = (tribeAssignmentInfo: TribeAssignmentInfo, selectedEntity:
 
 const TribePlanVisualiser = () => {
    const [tribeAssignmentInfo, setTribeAssignmentInfo] = useState<TribeAssignmentInfo | null>(null);
-   const [tribe, setTribe] = useState<ExtendedTribeInfo | null>(null);
+   const [tribe, setTribe] = useState<ExtendedTribe | null>(null);
    const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
    
    const [isDragging, setIsDragging] = useState(false);
@@ -158,7 +158,7 @@ const TribePlanVisualiser = () => {
    const [zoom, setZoom] = useState(1);
 
    useEffect(() => {
-      TribePlanVisualiser_setPlan = (tribeAssignmentInfo: TribeAssignmentInfo | null, tribe: ExtendedTribeInfo | null): void => {
+      TribePlanVisualiser_setPlan = (tribeAssignmentInfo: TribeAssignmentInfo | null, tribe: ExtendedTribe | null): void => {
          setTribeAssignmentInfo(tribeAssignmentInfo);
          setTribe(tribe);
       }

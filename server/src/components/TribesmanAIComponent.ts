@@ -154,6 +154,9 @@ export class TribesmanAIComponent {
    public currentCraftingTicks = 0;
 
    public lastItemThrowTicks = 0;
+
+   // @Hack
+   public targetEntity: Entity = 0;
 }
 
 export const TribesmanAIComponentArray = new ComponentArray<TribesmanAIComponent>(ServerComponentType.tribesmanAI, true, getDataLength, addDataToPacket);

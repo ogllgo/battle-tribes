@@ -6,7 +6,6 @@ import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { getVelocityMagnitude } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 
@@ -73,10 +72,11 @@ function onTick(cogwalker: Entity): void {
       let hasAccident = false;
       {
          const transformComponent = TransformComponentArray.getComponent(cogwalker);
-         if (getVelocityMagnitude(transformComponent) > 100) {
+         const hitbox = transformComponent.hitboxes[0];
+         if (hitbox.velocity.length() > 100) {
             hasAccident = true;
-            transformComponent.selfVelocity.x = 0;
-            transformComponent.selfVelocity.y = 0;
+            hitbox.velocity.x = 0;
+            hitbox.velocity.y = 0;
          }
       }
       

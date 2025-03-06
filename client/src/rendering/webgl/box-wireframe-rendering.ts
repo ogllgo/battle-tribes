@@ -5,7 +5,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "battletribes-shared/entities";
-import { getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { getEntityLayer, getEntityType } from "../../world";
 import Layer from "../../Layer";
 
 const BORDER_THICKNESS = 3;
@@ -57,13 +57,15 @@ export function createHitboxShaders(): void {
 }
 
 const calculateBoxAdjustment = (entity: Entity): Point => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const renderInfo = getEntityRenderInfo(entity);
+   return new Point(0, 0);
+   // @INCOMPLETE
+   // const transformComponent = TransformComponentArray.getComponent(entity);
+   // const renderInfo = getEntityRenderInfo(entity);
 
-   const adjustment = renderInfo.renderPosition.copy();
-   adjustment.x -= transformComponent.position.x;
-   adjustment.y -= transformComponent.position.y;
-   return adjustment;
+   // const adjustment = renderInfo.renderPosition.copy();
+   // adjustment.x -= transformComponent.position.x;
+   // adjustment.y -= transformComponent.position.y;
+   // return adjustment;
 }
 
 const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r: number, g: number, b: number): void => {
@@ -74,20 +76,20 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
    if (!boxIsCircular(box)) {
       // Rectangular
       
-      const rotation = box.rotation;
+      const angle = box.angle;
       const halfWidth = box.width * box.scale / 2;
       const halfHeight = box.height * box.scale / 2;
       
       // Top
       {
-         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
+         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
 
          vertices.push(
             blX, blY, r, g, b,
@@ -101,14 +103,14 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
       
       // Right
       {
-         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const blX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const blY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
+         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const blX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const blY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
 
          vertices.push(
             blX, blY, r, g, b,
@@ -122,14 +124,14 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
       
       // Bottom
       {
-         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
+         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth - HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brX = hitboxRenderPositionX + rotateXAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brY = hitboxRenderPositionY + rotateYAroundOrigin(halfWidth + HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
 
          vertices.push(
             blX, blY, r, g, b,
@@ -143,14 +145,14 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
       
       // Left
       {
-         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const trX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const trY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, rotation);
-         const brX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
-         const brY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, rotation);
+         const tlX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const tlY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, halfHeight + HALF_BORDER_THICKNESS, angle);
+         const trX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const trY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, halfHeight - HALF_BORDER_THICKNESS, angle);
+         const blX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const blY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth - HALF_BORDER_THICKNESS, -halfHeight - HALF_BORDER_THICKNESS, angle);
+         const brX = hitboxRenderPositionX + rotateXAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
+         const brY = hitboxRenderPositionY + rotateYAroundOrigin(-halfWidth + HALF_BORDER_THICKNESS, -halfHeight + HALF_BORDER_THICKNESS, angle);
 
          vertices.push(
             blX, blY, r, g, b,
@@ -218,7 +220,7 @@ export function renderHitboxes(layer: Layer): void {
    for (let i = 0; i < TransformComponentArray.entities.length; i++) {
       const entity = TransformComponentArray.entities[i];
 
-      // Don't show hitboxes from ohter layers
+      // Don't show hitboxes from other layers
       const entityLayer = getEntityLayer(entity);
       if (entityLayer !== layer) {
          continue;

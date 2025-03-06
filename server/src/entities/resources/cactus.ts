@@ -6,27 +6,32 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CactusComponent, CactusFlower } from "../../components/CactusComponent";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.cactus;
+import { ItemType } from "../../../../shared/src/items/items";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { createHitbox } from "../../hitboxes";
 
 const RADIUS = 40;
 /** Amount the hitbox is brought in. */
 const HITBOX_PADDING = 3;
 
-export function createCactusConfig(): EntityConfig<ComponentTypes> {
+registerEntityLootOnDeath(EntityType.cactus, [
+   {
+      itemType: ItemType.cactus_spine,
+      getAmount: () => randInt(2, 5)
+   }
+]);
+
+export function createCactusConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent(0);
    transformComponent.collisionBit = COLLISION_BITS.cactus;
 
    // Root hitbox
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(rootHitbox, null);
 
    const flowers = new Array<CactusFlower>();
 
@@ -37,7 +42,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
    }
    for (let i = 0; i < numFlowers; i++) {
       // @Hack
-      const idx = transformComponent.hitboxes.indexOf(hitbox);
+      const idx = transformComponent.hitboxes.indexOf(rootHitbox);
       const localID = transformComponent.hitboxLocalIDs[idx];
 
       const flowerOffsetMagnitude = randFloat(10, 30);
@@ -47,7 +52,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
          parentHitboxLocalID: localID,
          offsetX: flowerOffsetMagnitude * Math.sin(flowerOffsetDirection),
          offsetY: flowerOffsetMagnitude * Math.cos(flowerOffsetDirection),
-         rotation: 2 * Math.PI * Math.random(),
+         angle: 2 * Math.PI * Math.random(),
          flowerType: randInt(0, 4),
          size: randInt(0, 1),
       });
@@ -64,8 +69,8 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
    
    // Limbs
    for (let i = 0; i < numLimbs; i++) {
-      const box = new CircularBox(null, Point.fromVectorForm(37, Math.random()), 0, 18);
-      const hitbox = createHitbox(box, 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const box = new CircularBox(new Point(0, 0), Point.fromVectorForm(37, Math.random()), 0, 18);
+      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
       transformComponent.addHitbox(hitbox, null);
 
       if (Math.random() < 0.45) {
@@ -80,7 +85,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
             parentHitboxLocalID: localID,
             offsetX: flowerOffsetMagnitude * Math.sin(flowerOffsetDirection),
             offsetY: flowerOffsetMagnitude * Math.cos(flowerOffsetDirection),
-            rotation: 2 * Math.PI * Math.random(),
+            angle: 2 * Math.PI * Math.random(),
             flowerType: randInt(0, 3),
             size: CactusFlowerSize.small
          });
@@ -91,6 +96,8 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
+   const lootComponent = new LootComponent();
+   
    const cactusComponent = new CactusComponent(flowers);
 
    return {
@@ -99,6 +106,7 @@ export function createCactusConfig(): EntityConfig<ComponentTypes> {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.cactus]: cactusComponent
       },
       lights: []

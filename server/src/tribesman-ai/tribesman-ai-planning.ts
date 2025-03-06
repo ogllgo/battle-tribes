@@ -286,7 +286,7 @@ const craftingStationExists = (tribe: Tribe, craftingStation: CraftingStation): 
       }
    }
    
-   return tribe.virtualBuildingsByEntityType[entityType].length > 0;
+   return tribe.virtualStructuresByEntityType[entityType].length > 0;
 }
 
 const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: number): AIPlanAssignment<AICraftRecipePlan> => {
@@ -331,7 +331,7 @@ export function planToGetItem(tribe: Tribe, itemType: ItemType, amount: number):
 }
 
 const tribeHasResearchBench = (tribe: Tribe): boolean => {
-   return tribe.virtualBuildingsByEntityType[EntityType.researchBench].length > 0;
+   return tribe.virtualStructuresByEntityType[EntityType.researchBench].length > 0;
 }
 
 const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCompletePlan> => {
@@ -375,7 +375,8 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
    return createTechCompletePlanAssignment(children, tech);
 }
 
-const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> => {
+// @Cleanup: I feel like this should take in the entity type instead of the item type. That feels more natural
+export function planToPlaceStructure(tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> {
    const children = new Array<AIPlanAssignment>();
    
    let placedVirtualStructure: VirtualStructure;
@@ -392,7 +393,7 @@ const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtual
    }
    
    // @Hack
-   const numWorkbenches = tribe.virtualBuildingsByEntityType[EntityType.workbench].length;
+   const numWorkbenches = tribe.virtualStructuresByEntityType[EntityType.workbench].length;
    
    // Place the virtual building (before the light so that the light can't take its spot)
    const buildingLayer = tribe.getBuildingLayer(placedVirtualStructure.layer);
@@ -418,7 +419,7 @@ const planToPlaceStructure = (tribe: Tribe, itemType: StructureItemType, virtual
 
 const getNumDesiredBarrels = (tribe: Tribe): number => {
    // Want a barrel every 20 buildings
-   return Math.floor(tribe.virtualBuildings.length / 20);
+   return Math.floor(tribe.virtualStructures.length / 20);
 }
 
 const planIsValid = (tribe: Tribe, plan: AIPlan): boolean => {
@@ -463,18 +464,18 @@ export function updateTribePlans(tribe: Tribe): void {
    // @Incomplete: place huts for other tribesman
 
    // Trim invalid plans
-   trimAssignmentRecursively(tribe, tribe.assignment);
+   trimAssignmentRecursively(tribe, tribe.rootAssignment);
 
    // If the tribe doesn't have a totem, place one
-   if (tribe.virtualBuildingsByEntityType[EntityType.tribeTotem].length === 0) {
-      tribe.assignment.children.push(
+   if (tribe.virtualStructuresByEntityType[EntityType.tribeTotem].length === 0) {
+      tribe.rootAssignment.children.push(
          planToPlaceStructure(tribe, ItemType.tribe_totem, null)
       );
    }
 
    // Plan to place a hut so the settler can respawn if it dies
-   if (tribe.virtualBuildingsByEntityType[EntityType.workerHut].length === 0) {
-      tribe.assignment.children.push(
+   if (tribe.virtualStructuresByEntityType[EntityType.workerHut].length === 0) {
+      tribe.rootAssignment.children.push(
          planToPlaceStructure(tribe, ItemType.worker_hut, null)
       );
    }
@@ -485,7 +486,7 @@ export function updateTribePlans(tribe: Tribe): void {
          if (!areaHasOutsideDoor(room)) {
             const plan = getOutsideDoorPlacePlan(buildingLayer, room);
             if (plan !== null) {
-               tribe.assignment.children.push(plan);
+               tribe.rootAssignment.children.push(plan);
             }
          }
       }
@@ -493,8 +494,8 @@ export function updateTribePlans(tribe: Tribe): void {
 
    for (let i = 0; i < tribe.getNumHuts(); i++) {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
-      if (tribe.virtualBuildingsByEntityType[EntityType.barrel].length < numDesiredBarrels) {
-         tribe.assignment.children.push(
+      if (tribe.virtualStructuresByEntityType[EntityType.barrel].length < numDesiredBarrels) {
+         tribe.rootAssignment.children.push(
             planToPlaceStructure(tribe, ItemType.barrel, null)
          );
          continue;
@@ -510,7 +511,7 @@ export function updateTribePlans(tribe: Tribe): void {
             const assignment = planToPlaceStructure(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
             assignment.plan.potentialPlans = wallPlaceResult.potentialPlans;
 
-            tribe.assignment.children.push(assignment);
+            tribe.rootAssignment.children.push(assignment);
             continue;
          }
       }
@@ -537,7 +538,7 @@ export function getFirstAvailableAssignment(assignment: AIPlanAssignment): AIPla
 }
 
 export function checkForAvailableAssignment(tribe: Tribe): AIPlanAssignment | null {
-   return getFirstAvailableAssignment(tribe.assignment);
+   return getFirstAvailableAssignment(tribe.rootAssignment);
 }
 
 export function createPersonalAssignment(entity: Entity, assignment: AIPlanAssignment): AIPlanAssignment {

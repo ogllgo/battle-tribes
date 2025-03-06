@@ -3,11 +3,10 @@ import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getBlueprintEntityType } from "../entities/blueprint-entity";
 import { StructureComponentArray } from "./StructureComponent";
-import { calculateEntityPlaceInfo } from "battletribes-shared/structures";
 import { TribeComponentArray } from "./TribeComponent";
 import { BuildingMaterialComponentArray, upgradeMaterial } from "./BuildingMaterialComponent";
 import { HutComponentArray } from "./HutComponent";
-import { Item, ITEM_INFO_RECORD, HammerItemInfo, HammerItemType } from "battletribes-shared/items/items";
+import { ITEM_INFO_RECORD, HammerItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "./TransformComponent";
 import { createDoorConfig } from "../entities/structures/door";
 import { createEntity } from "../Entity";
@@ -19,10 +18,10 @@ import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer } from "../world";
-import { getLayerInfo } from "../layers";
 import { createScrappyConfig } from "../entities/tribes/automatons/scrappy";
 import { createCogwalkerConfig } from "../entities/tribes/automatons/cogwalker";
 import { registerDirtyEntity } from "../server/player-clients";
+import { calculateEntityPlaceInfo } from "../structure-placement";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -79,104 +78,77 @@ const upgradeBuilding = (building: Entity): void => {
 
 const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: BlueprintComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(blueprintEntity);
+   // @Hack
+   const blueprintEntityHitbox = transformComponent.hitboxes[0];
+   
    const tribeComponent = TribeComponentArray.getComponent(blueprintEntity);
    const tribe = tribeComponent.tribe;
    
    destroyEntity(blueprintEntity);
 
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
-   const position = transformComponent.position.copy();
+
+   // @Hack
+   const originHitbox = transformComponent.rootHitboxes[0];
+   const position = originHitbox.box.position.copy();
    const layer = getEntityLayer(blueprintEntity);
 
-   const placeInfo = calculateEntityPlaceInfo(position, transformComponent.relativeRotation, entityType, getLayerInfo(layer));
+   const placeInfo = calculateEntityPlaceInfo(position, originHitbox.box.angle, entityType, layer);
    
    // @Copynpaste
    switch (blueprintComponent.blueprintType) {
       case BlueprintType.woodenDoor: {
-         const config = createDoorConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createDoorConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.wood, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneDoor: {
-         const config = createDoorConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createDoorConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.stone, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.woodenEmbrasure: {
-         const config = createEmbrasureConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createEmbrasureConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.wood, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneEmbrasure: {
-         const config = createEmbrasureConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createEmbrasureConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.stone, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.ballista: {
-         const config = createBallistaConfig(tribe, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createBallistaConfig(position, blueprintEntityHitbox.box.angle, tribe, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.slingTurret: {
-         const config = createSlingTurretConfig(tribe, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createSlingTurretConfig(position, blueprintEntityHitbox.box.angle, tribe, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.woodenTunnel: {
-         const config = createTunnelConfig(tribe, BuildingMaterial.wood, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createTunnelConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.wood, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.stoneTunnel: {
-         const config = createTunnelConfig(tribe, BuildingMaterial.stone, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createTunnelConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.stone, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.scrappy: {
-         const config = createScrappyConfig(tribe);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createScrappyConfig(position, blueprintEntityHitbox.box.angle, tribe);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.cogwalker: {
-         const config = createCogwalkerConfig(tribe);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createCogwalkerConfig(position, blueprintEntityHitbox.box.angle, tribe);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
          return;
       }
       case BlueprintType.fenceGate: {
-         const config = createFenceGateConfig(tribe, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createFenceGateConfig(position, blueprintEntityHitbox.box.angle, tribe, placeInfo.connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
 
          destroyEntity(blueprintComponent.associatedEntityID);
@@ -184,10 +156,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.warriorHutUpgrade: {
-         const config = createWarriorHutConfig(tribe, placeInfo.connections, null);
-         config.components[ServerComponentType.transform].position.x = transformComponent.position.x;
-         config.components[ServerComponentType.transform].position.y = transformComponent.position.y;
-         config.components[ServerComponentType.transform].relativeRotation = transformComponent.relativeRotation;
+         const config = createWarriorHutConfig(position, blueprintEntityHitbox.box.angle, tribe, placeInfo.connections, null);
          const hut = createEntity(config, getEntityLayer(blueprintEntity), 0);
 
          // Remove the previous hut

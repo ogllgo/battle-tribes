@@ -1,4 +1,4 @@
-import { createHitbox, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -17,29 +17,24 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
 import Layer from "../../Layer";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.aiHelper
-   | ServerComponentType.guardian;
+import { createHitbox } from "../../hitboxes";
 
 function tileIsValidCallback(entity: Entity, _layer: Layer, tileIndex: TileIndex): boolean {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
    return guardianComponent.homeTiles.includes(tileIndex);
 }
 
-export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): EntityConfig<ComponentTypes> {
+export function createGuardianConfig(position: Point, rotation: number, homeTiles: ReadonlyArray<TileIndex>): EntityConfig {
    const transformComponent = new TransformComponent(0);
 
    // Head
-   transformComponent.addHitbox(createHitbox(new CircularBox(null, new Point(0, 0), 0, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(headHitbox, null);
 
    // Limbs
    const limbOrbitRadius = getGuardianLimbOrbitRadius();
    for (let i = 0; i < 2; i++) {
-      const hitbox = createHitbox(new CircularBox(null, new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
+      const hitbox = createHitbox(transformComponent, headHitbox, new CircularBox(new Point(0, 0), new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
       transformComponent.addHitbox(hitbox, null);
    }
    
@@ -49,7 +44,7 @@ export function createGuardianConfig(homeTiles: ReadonlyArray<TileIndex>): Entit
    
    const statusEffectComponent = new StatusEffectComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(300);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 300);
    aiHelperComponent.ais[AIType.wander] =                  new WanderAI(200, Math.PI * 0.5, 0.6, tileIsValidCallback),
    aiHelperComponent.ais[AIType.guardian] =                new GuardianAI(280, Math.PI * 0.5),
    aiHelperComponent.ais[AIType.guardianCrystalSlam] =     new GuardianCrystalSlamAI(200, Math.PI * 0.3),

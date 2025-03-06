@@ -2,7 +2,6 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, lerp } from "battletribes-shared/utils";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { ComponentArray } from "./ComponentArray";
 import { EntityConfig } from "../components";
 import { TransformComponentArray } from "./TransformComponent";
@@ -14,7 +13,7 @@ const DOOR_SWING_SPEED = 5 / Settings.TPS;
 export class DoorComponent {
    public originX = 0;
    public originY = 0;
-   public closedRotation = 0;
+   public closedAngle = 0;
    
    public toggleType = DoorToggleType.none;
    public openProgress = 0;
@@ -32,17 +31,18 @@ const angleToCenter = angle(16, 64);
 
 const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(door);
+   const doorHitbox = transformComponent.hitboxes[0];
    
-   const rotation = doorComponent.closedRotation + lerp(0, -Math.PI/2 + 0.1, doorComponent.openProgress);
+   const angle = doorComponent.closedAngle + lerp(0, -Math.PI/2 + 0.1, doorComponent.openProgress);
    
    // Rotate around the top left corner of the door
-   const offsetDirection = rotation + Math.PI/2 + angleToCenter;
-   const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(doorComponent.closedRotation + Math.PI/2 + angleToCenter);
-   const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(doorComponent.closedRotation + Math.PI/2 + angleToCenter);
+   const offsetDirection = angle + Math.PI/2 + angleToCenter;
+   const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(doorComponent.closedAngle + Math.PI/2 + angleToCenter);
+   const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(doorComponent.closedAngle + Math.PI/2 + angleToCenter);
 
-   transformComponent.position.x = doorComponent.originX + xOffset;
-   transformComponent.position.y = doorComponent.originY + yOffset;
-   transformComponent.relativeRotation = rotation;
+   doorHitbox.box.position.x = doorComponent.originX + xOffset;
+   doorHitbox.box.position.y = doorComponent.originY + yOffset;
+   doorHitbox.box.relativeAngle = angle;
    transformComponent.isDirty = true;
 }
 
@@ -94,10 +94,13 @@ export function toggleDoor(door: Entity): void {
 }
 
 // @Hack
-function onInitialise(config: EntityConfig<ServerComponentType.transform | ServerComponentType.door>): void {
-   config.components[ServerComponentType.door].originX = config.components[ServerComponentType.transform].position.x;
-   config.components[ServerComponentType.door].originY = config.components[ServerComponentType.transform].position.y;
-   config.components[ServerComponentType.door].closedRotation = config.components[ServerComponentType.transform].relativeRotation;
+function onInitialise(config: EntityConfig): void {
+   const transformComponent = config.components[ServerComponentType.transform]!;
+   const doorHitbox = transformComponent.hitboxes[0];
+   
+   config.components[ServerComponentType.door]!.originX = doorHitbox.box.position.x;
+   config.components[ServerComponentType.door]!.originY = doorHitbox.box.position.y;
+   config.components[ServerComponentType.door]!.closedAngle = doorHitbox.box.relativeAngle;
 }
 
 function getDataLength(): number {

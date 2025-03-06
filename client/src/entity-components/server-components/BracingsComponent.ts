@@ -1,35 +1,38 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface BracingsComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface BracingsComponent {}
 
-export const BracingsComponentArray = new ServerComponentArray<BracingsComponent, BracingsComponentParams, RenderParts>(ServerComponentType.bracings, true, {
+export const BracingsComponentArray = new ServerComponentArray<BracingsComponent, BracingsComponentParams, IntermediateInfo>(ServerComponentType.bracings, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData
 });
 
-export function createBracingsComponentParams(): BracingsComponentParams {
+const fillParams = (): BracingsComponentParams => {
    return {};
 }
 
-function createParamsFromData(): BracingsComponentParams {
-   return createBracingsComponentParams();
+export function createBracingsComponentParams(): BracingsComponentParams {
+   return fillParams();
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.transform, never>): RenderParts {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+function createParamsFromData(): BracingsComponentParams {
+   return fillParams();
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    // Vertical posts
    for (const hitbox of transformComponentParams.hitboxes) {
@@ -40,19 +43,21 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
          getTextureArrayIndex("entities/bracings/wooden-vertical-post.png")
       );
       renderPart.addTag("bracingsComponent:vertical");
-      renderInfo.attachRenderPart(renderPart);
+      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
    }
+
+   const hitbox = transformComponentParams.hitboxes[0];
 
    // Horizontal bar connecting the vertical ones
    const horizontalBar = new TexturedRenderPart(
-      null,
+      hitbox,
       1,
       0,
       getTextureArrayIndex("entities/bracings/wooden-horizontal-post.png")
    );
    horizontalBar.addTag("bracingsComponent:horizontal");
    horizontalBar.opacity = 0.5;
-   renderInfo.attachRenderPart(horizontalBar);
+   entityIntermediateInfo.renderInfo.attachRenderPart(horizontalBar);
 
    return {};
 }

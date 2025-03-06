@@ -175,8 +175,8 @@ export function setRenderInfoInVertexData(renderInfo: EntityRenderInfo, vertexDa
    const baseTintG = renderInfo.tintG;
    const baseTintB = renderInfo.tintB;
 
-   for (let j = 0; j < renderInfo.allRenderThings.length; j++) {
-      const renderPart = renderInfo.allRenderThings[j];
+   for (let j = 0; j < renderInfo.renderPartsByZIndex.length; j++) {
+      const renderPart = renderInfo.renderPartsByZIndex[j];
       if (!thingIsVisualRenderPart(renderPart)) {
          continue;
       }
@@ -363,8 +363,8 @@ const clearRenderPartInVertexData = (vertexData: Float32Array, renderPartIdx: nu
 }
 
 export function clearEntityInVertexData(renderInfo: EntityRenderInfo, vertexData: Float32Array, renderPartIdx: number): void {
-   for (let j = 0; j < renderInfo.allRenderThings.length; j++) {
-      const renderPart = renderInfo.allRenderThings[j];
+   for (let j = 0; j < renderInfo.renderPartsByZIndex.length; j++) {
+      const renderPart = renderInfo.renderPartsByZIndex[j];
       if (!thingIsVisualRenderPart(renderPart)) {
          continue;
       }
@@ -387,7 +387,7 @@ export function setupEntityRendering(): void {
 export function renderEntity(renderInfo: Readonly<EntityRenderInfo>, options?: EntityRenderingOptions): void {
    gl.uniform1f(overrideAlphaWithOneUniformLocation, options?.overrideAlphaWithOne ? 1 : 0);
 
-   const numRenderParts = renderInfo.allRenderThings.length;
+   const numRenderParts = renderInfo.renderPartsByZIndex.length;
    
    gl.bindVertexArray(renderInfo.vao);
    gl.drawElements(gl.TRIANGLES, numRenderParts * 6, gl.UNSIGNED_SHORT, 0);

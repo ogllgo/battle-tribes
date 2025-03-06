@@ -9,18 +9,24 @@ import Client from "./Client";
 import { getHotbarSelectedItemSlot, getInstancePlayerAction } from "../components/game/GameInteractableLayer";
 import { entityExists, getEntityType } from "../world";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { BlueprintType } from "../../../shared/src/components";
 import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
+import Camera from "../Camera";
 
 export function createPlayerDataPacket(): ArrayBuffer {
+   // Position, rotation
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   // Velocity
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   // angular velocity
+   lengthBytes += 1 * Float32Array.BYTES_PER_ELEMENT;
+   // window size
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   // inventory shit
    lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
+   // other random shit
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    
    lengthBytes = alignLengthBytes(lengthBytes);
@@ -28,18 +34,15 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const packet = new Packet(PacketType.playerData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   packet.addNumber(transformComponent.position.x);
-   packet.addNumber(transformComponent.position.y);
-   packet.addNumber(transformComponent.rotation);
+   const playerHitbox = transformComponent.hitboxes[0];
+   packet.addNumber(playerHitbox.box.position.x);
+   packet.addNumber(playerHitbox.box.position.y);
+   packet.addNumber(playerHitbox.box.angle);
 
-   const physicsComponent = PhysicsComponentArray.getComponent(playerInstance!);
-   packet.addNumber(transformComponent.selfVelocity.x);
-   packet.addNumber(transformComponent.selfVelocity.y);
-   packet.addNumber(transformComponent.externalVelocity.x);
-   packet.addNumber(transformComponent.externalVelocity.y);
-   packet.addNumber(physicsComponent.acceleration.x);
-   packet.addNumber(physicsComponent.acceleration.y);
-   packet.addNumber(physicsComponent.angularVelocity);
+   packet.addNumber(playerHitbox.velocity.x);
+   packet.addNumber(playerHitbox.velocity.y);
+
+   packet.addNumber(playerHitbox.angleTurnSpeed);
 
    packet.addNumber(windowWidth);
    packet.addNumber(windowHeight);
@@ -103,11 +106,12 @@ export function createSyncRequestPacket(): ArrayBuffer {
 
 export function createAttackPacket(): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const packet = new Packet(PacketType.attack, 3 * Float32Array.BYTES_PER_ELEMENT);
 
    packet.addNumber(getHotbarSelectedItemSlot());
-   packet.addNumber(transformComponent.rotation);
+   packet.addNumber(playerHitbox.box.angle);
    
    return packet.buffer;
 }
@@ -352,5 +356,12 @@ export function sendForceAcquireTamingSkillPacket(entity: Entity, skillID: Tamin
    const packet = new Packet(PacketType.forceAcquireTamingSkill, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entity);
    packet.addNumber(skillID);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetSpectatingPositionPacket(): void {
+   const packet = new Packet(PacketType.setSpectatingPosition, 3 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(Camera.position.x);
+   packet.addNumber(Camera.position.y);
    Client.sendPacket(packet.buffer);
 }

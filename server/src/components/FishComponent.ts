@@ -7,17 +7,17 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
-import { stopEntity, runHerdAI, moveEntityToPosition } from "../ai-shared";
-import { entitiesAreColliding, CollisionVars } from "../collision";
+import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
-import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { hitEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
-import { PhysicsComponentArray, applyKnockback } from "./PhysicsComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { TribesmanComponentArray } from "./TribesmanComponent";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { applyAcceleration, applyKnockback, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -49,34 +49,34 @@ FishComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-FishComponentArray.preRemove = preRemove;
 FishComponentArray.onRemove = onRemove;
 
 const move = (fish: Entity, direction: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const physicsComponent = PhysicsComponentArray.getComponent(fish);
+   const fishHitbox = transformComponent.hitboxes[0];
+
    const layer = getEntityLayer(fish);
    
    const tileIndex = getEntityTile(transformComponent);
    if (layer.tileTypes[tileIndex] === TileType.water) {
       // Swim on water
-      physicsComponent.acceleration.x = 40 * Math.sin(direction);
-      physicsComponent.acceleration.y = 40 * Math.cos(direction);
-      physicsComponent.targetRotation = direction;
-      physicsComponent.turnSpeed = Vars.TURN_SPEED;
+      const accelerationX = 40 * Math.sin(direction);
+      const accelerationY = 40 * Math.cos(direction);
+      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
+
+      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED);
    } else {
       // 
       // Lunge on land
       // 
 
-      stopEntity(physicsComponent);
-
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         transformComponent.externalVelocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
-         transformComponent.externalVelocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
-         if (direction !== transformComponent.relativeRotation) {
-            transformComponent.relativeRotation = direction;
+         
+         fishHitbox.velocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
+         fishHitbox.velocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
+         if (direction !== fishHitbox.box.angle) {
+            fishHitbox.box.angle = direction;
             transformComponent.isDirty = true;
          }
       }
@@ -114,6 +114,8 @@ const unfollowLeader = (fish: Entity, leader: Entity): void => {
 
 function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
+   const fishHitbox = transformComponent.hitboxes[0];
+   
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
 
@@ -127,7 +129,7 @@ function onTick(fish: Entity): void {
       fishComponent.secondsOutOfWater += Settings.I_TPS;
       if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, 1.5)) {
          const hitPosition = getRandomPositionInEntity(transformComponent);
-         damageEntity(fish, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
+         hitEntity(fish, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
    } else {
       fishComponent.secondsOutOfWater = 0;
@@ -159,14 +161,16 @@ function onTick(fish: Entity): void {
       const target = fishComponent.attackTargetID;
       if (entityExists(target)) {
          const leaderTransformComponent = TransformComponentArray.getComponent(fishComponent.leader);
+         const leaderHitbox = leaderTransformComponent.hitboxes[0];
          
          // Follow leader
-         move(fish, transformComponent.position.calculateAngleBetween(leaderTransformComponent.position));
+         move(fish, fishHitbox.box.position.calculateAngleBetween(leaderHitbox.box.position));
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
+         const targetHitbox = targetTransformComponent.hitboxes[0];
 
          // Attack the target
-         move(fish, transformComponent.position.calculateAngleBetween(targetTransformComponent.position));
+         move(fish, fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position));
 
          if (entitiesAreColliding(fish, target) !== CollisionVars.NO_COLLISION) {
             const healthComponent = HealthComponentArray.getComponent(target);
@@ -174,13 +178,13 @@ function onTick(fish: Entity): void {
                return;
             }
             
-            const hitDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+            const hitDirection = fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 
             // @Hack
-            const collisionPoint = new Point((transformComponent.position.x + targetTransformComponent.position.x) / 2, (transformComponent.position.y + targetTransformComponent.position.y) / 2);
+            const collisionPoint = new Point((fishHitbox.box.position.x + targetHitbox.box.position.x) / 2, (fishHitbox.box.position.y + targetHitbox.box.position.y) / 2);
             
-            damageEntity(target, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
-            applyKnockback(target, 100, hitDirection);
+            hitEntity(target, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
+            applyKnockback(target, targetHitbox, 100, hitDirection);
             addLocalInvulnerabilityHash(target, "fish", 0.3);
          }
       }
@@ -192,16 +196,15 @@ function onTick(fish: Entity): void {
       fishComponent.flailTimer += Settings.I_TPS;
       if (fishComponent.flailTimer >= 0.75) {
          const flailDirection = 2 * Math.PI * Math.random();
-         transformComponent.relativeRotation = flailDirection + randFloat(-0.5, 0.5);
+         fishHitbox.box.relativeAngle = flailDirection + randFloat(-0.5, 0.5);
          transformComponent.isDirty = true;
          
-         transformComponent.externalVelocity.x += 200 * Math.sin(flailDirection);
-         transformComponent.externalVelocity.y += 200 * Math.cos(flailDirection);
+         fishHitbox.velocity.x += 200 * Math.sin(flailDirection);
+         fishHitbox.velocity.y += 200 * Math.cos(flailDirection);
    
          fishComponent.flailTimer = 0;
       }
 
-      stopEntity(physicsComponent);
       return;
    }
 
@@ -224,8 +227,9 @@ function onTick(fish: Entity): void {
    if (herdMembers.length >= 1) {
       runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      physicsComponent.acceleration.x = 100 * Math.sin(transformComponent.relativeRotation);
-      physicsComponent.acceleration.y = 100 * Math.cos(transformComponent.relativeRotation);
+      const accelerationX = 100 * Math.sin(fishHitbox.box.angle);
+      const accelerationY = 100 * Math.cos(fishHitbox.box.angle);
+      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
       return;
    }
 
@@ -234,13 +238,7 @@ function onTick(fish: Entity): void {
    wanderAI.update(fish);
    if (wanderAI.targetPositionX !== -1) {
       moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI);
-   } else {
-      stopEntity(physicsComponent);
    }
-}
-
-function preRemove(fish: Entity): void {
-   createItemsOverEntity(fish, ItemType.raw_fish, 1);
 }
 
 function onRemove(entity: Entity): void {

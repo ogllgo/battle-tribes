@@ -5,28 +5,26 @@ import { randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { createSnowParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface SnowballComponentParams {
    readonly size: SnowballSize;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface SnowballComponent {
    readonly size: SnowballSize;
 }
 
-export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentParams, RenderParts>(ServerComponentType.snowball, true, {
+export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentParams, IntermediateInfo>(ServerComponentType.snowball, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -44,8 +42,11 @@ function createParamsFromData(reader: PacketReader): SnowballComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.snowball, never>): RenderParts {
-   const snowballComponentParams = entityConfig.serverComponents[ServerComponentType.snowball];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+
+   const snowballComponentParams = entityParams.serverComponentParams[ServerComponentType.snowball]!;
    
    let textureSource: string;
    switch (snowballComponentParams.size) {
@@ -59,9 +60,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       }
    }
 
-   renderInfo.attachRenderPart(
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex(textureSource)
@@ -71,9 +72,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    return {};
 }
    
-function createComponent(entityConfig: EntityConfig<ServerComponentType.snowball, never>): SnowballComponent {
+function createComponent(entityParams: EntityParams): SnowballComponent {
    return {
-      size: entityConfig.serverComponents[ServerComponentType.snowball].size
+      size: entityParams.serverComponentParams[ServerComponentType.snowball]!.size
    };
 }
 
@@ -83,9 +84,10 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   if ((transformComponent.selfVelocity.x !== 0 || transformComponent.selfVelocity.y !== 0) && transformComponent.selfVelocity.lengthSquared() > 2500) {
+   const hitbox = transformComponent.hitboxes[0];
+   if ((hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) && hitbox.velocity.lengthSquared() > 2500) {
       if (Board.tickIntervalHasPassed(0.05)) {
-         createSnowParticle(transformComponent.position.x, transformComponent.position.y, randFloat(40, 60));
+         createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
       }
    }
 }
@@ -134,6 +136,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    const snowballComponent = SnowballComponentArray.getComponent(entity);
    
    // Create a bunch of snow particles at the point of hit
@@ -141,13 +144,14 @@ function onHit(entity: Entity): void {
    for (let i = 0; i < numParticles; i++) {
       const pixelSize = SNOWBALL_SIZES[snowballComponent.size];
       
-      const position = transformComponent.position.offset(pixelSize / 2, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(pixelSize / 2, 2 * Math.PI * Math.random());
       createSnowSpeckParticle(position.x, position.y);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    const snowballComponent = SnowballComponentArray.getComponent(entity);
 
    // Create a bunch of snow particles throughout the snowball
@@ -156,8 +160,8 @@ function onDie(entity: Entity): void {
       const pixelSize = SNOWBALL_SIZES[snowballComponent.size];
       
       const offsetDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = transformComponent.position.x + pixelSize / 2 * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + pixelSize / 2 * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + pixelSize / 2 * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + pixelSize / 2 * Math.cos(offsetDirection);
       createSnowSpeckParticle(spawnPositionX, spawnPositionY);
    }
 }

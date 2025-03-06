@@ -245,7 +245,7 @@ export function getTribeSafety(tribe: Tribe): SafetyQuery {
       buildingResultingSafetys: []
    };
    
-   for (const virtualBuilding of tribe.virtualBuildings) {
+   for (const virtualBuilding of tribe.virtualStructures) {
       if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
          continue;
       }
@@ -261,7 +261,7 @@ export function getTribeSafety(tribe: Tribe): SafetyQuery {
 }
 
 export function tribeIsVulnerable(tribe: Tribe): boolean {
-   for (const virtualBuilding of tribe.virtualBuildings) {
+   for (const virtualBuilding of tribe.virtualStructures) {
       if (!buildingIsInfrastructure(virtualBuilding.entityType)) {
          continue;
       }

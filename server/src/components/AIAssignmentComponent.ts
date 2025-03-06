@@ -5,7 +5,7 @@ import { AIPlanType, assert } from "../../../shared/src/utils";
 import { throwItem } from "../entities/tribes/tribe-member";
 import { goCraftItem, craftGoalIsComplete } from "../entities/tribes/tribesman-ai/tribesman-crafting";
 import { goResearchTech, techStudyIsComplete, useItemsInResearch } from "../entities/tribes/tribesman-ai/tribesman-researching";
-import { gatherItemPlanIsComplete, gatherResource } from "../entities/tribes/tribesman-ai/tribesman-resource-gathering";
+import { gatherItemPlanIsComplete, workOnGatherPlan } from "../entities/tribes/tribesman-ai/tribesman-gathering";
 import { goPlaceBuilding, goUpgradeBuilding } from "../entities/tribes/tribesman-ai/tribesman-structures";
 import Tribe from "../Tribe";
 import { checkForAvailableAssignment, AIPlanAssignment, createPersonalAssignment, getFirstAvailableAssignment, AIPlan } from "../tribesman-ai/tribesman-ai-planning";
@@ -74,7 +74,7 @@ const completeAssignment = (entity: Entity, aiAssignmentComponent: AIAssignmentC
          buildingLayer.removeVirtualBuilding(plan.virtualBuilding);
 
          // @Hack
-         const parent = findAssignmentWithChildPlan(tribe.assignment, plan);
+         const parent = findAssignmentWithChildPlan(tribe.rootAssignment, plan);
          if (parent !== null) {
             // @Cleanup: messy
             let idx: number | undefined;
@@ -129,7 +129,8 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          assert(aiAssignmentComponent.currentAssignment !== null);
          
          aiAssignmentComponent.currentAssignment.assignedEntity = entity;
-         availableAssignment.assignedEntity = entity;
+         // @TEMPORARY
+         // availableAssignment.assignedEntity = entity;
       }
    }
 
@@ -152,12 +153,14 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
             let hasThrown = false;
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
             const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            
             for (let i = 0; i < hotbarInventory.items.length; i++) {
                const item = hotbarInventory.items[i];
 
                if (plan.recipe.ingredients.getItemCount(item.type) === 0) {
                   const itemSlot = hotbarInventory.getItemSlot(item);
-                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, transformComponent.relativeRotation);
+                  throwItem(entity, InventoryName.hotbar, itemSlot, item.count, entityHitbox.box.angle);
                   hasThrown = true;
                   break;
                }
@@ -170,8 +173,8 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
                return false;
             }
          }
-         
-         goCraftItem(entity, plan.recipe, tribeComponent.tribe);
+
+         goCraftItem(entity, plan, tribeComponent.tribe);
          if (craftGoalIsComplete(plan, inventoryComponent)) {
             completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          }
@@ -223,7 +226,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          if (gatherItemPlanIsComplete(inventoryComponent, plan)) {
             completeAssignment(entity, aiAssignmentComponent, assignment, tribeComponent.tribe);
          } else {
-            gatherResource(entity, plan, visibleItemEntities);
+            workOnGatherPlan(entity, plan, visibleItemEntities);
          }
          break;
       }

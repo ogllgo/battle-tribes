@@ -1,4 +1,4 @@
-import { EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { randInt, randFloat, TileIndex, Point, getTileIndexIncludingEdges } from "battletribes-shared/utils";
@@ -11,7 +11,7 @@ import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { isNight, pushJoinBuffer } from "./world";
+import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
 import { createCowConfig } from "./entities/mobs/cow";
 import { createBerryBushConfig } from "./entities/resources/berry-bush";
@@ -30,7 +30,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import Tribe from "./Tribe";
 import { createTreeConfig } from "./entities/resources/tree";
 import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn-info";
-import { HitboxFlag, updateBox } from "../../shared/src/boxes/boxes";
+import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
@@ -38,6 +38,8 @@ import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
 import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
 import { createSlimewispConfig } from "./entities/mobs/slimewisp";
+import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
+import { createSlimeConfig } from "./entities/mobs/slime";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -82,7 +84,7 @@ const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo)
    // Check if the entity density is right
    const entityCount = getEntityCount(spawnInfo.entityType);
    const density = entityCount / numEligibleTiles;
-   if (density > spawnInfo.maxDensity) {
+   if (density >= spawnInfo.maxDensity) {
       return false;
    }
 
@@ -131,9 +133,8 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
       if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
          continue;
       }
-      
+
       const box = hitbox.box;
-      updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.relativeRotation);
 
       const boundsMinX = box.calculateBoundsMinX();
       const boundsMaxX = box.calculateBoundsMaxX();
@@ -161,55 +162,62 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
 const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y: number): void => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
-   let config: EntityConfig<ServerComponentType.transform> | null;
+   const angle = 2 * Math.PI * Math.random();
+   
+   let configs: ReadonlyArray<EntityConfig> | null;
    switch (entityType) {
-      case EntityType.cow: config = createCowConfig(); break;
-      case EntityType.tree: config = createTreeConfig(); break;
-      case EntityType.berryBush: config = createBerryBushConfig(); break;
-      case EntityType.tombstone: config = createTombstoneConfig(); break;
-      case EntityType.boulder: config = createBoulderConfig(); break;
-      case EntityType.cactus: config = createCactusConfig(); break;
+      case EntityType.cow: configs = [createCowConfig(new Point(x, y), angle)]; break;
+      case EntityType.tree: configs = [createTreeConfig(new Point(x, y), angle)]; break;
+      case EntityType.berryBush: configs = [createBerryBushConfig(new Point(x, y), angle)]; break;
+      case EntityType.tombstone: configs = [createTombstoneConfig(new Point(x, y), angle)]; break;
+      case EntityType.boulder: configs = [createBoulderConfig(new Point(x, y), angle)]; break;
+      case EntityType.cactus: configs = [createCactusConfig(new Point(x, y), angle)]; break;
       case EntityType.yeti: {
          const tileX = Math.floor(x / Settings.TILE_SIZE);
          const tileY = Math.floor(y / Settings.TILE_SIZE);
          const territory = generateYetiTerritoryTiles(tileX, tileY);
          if (yetiTerritoryIsValid(territory)) {
-            config = createYetiConfig(territory);
+            configs = [createYetiConfig(new Point(x, y), angle, territory)];
          } else {
-            config = null;
+            configs = null;
          }
          break;
       }
-      case EntityType.iceSpikes: config = createIceSpikesConfig(0); break;
-      case EntityType.slimewisp: config = createSlimewispConfig(); break;
-      case EntityType.krumblid: config = createKrumblidConfig(); break;
-      case EntityType.frozenYeti: config = createFrozenYetiConfig(); break;
-      case EntityType.fish: config = createFishConfig(); break;
-      case EntityType.lilypad: config = createLilypadConfig(); break;
-      case EntityType.golem: config = createGolemConfig(); break;
-      case EntityType.tribeWorker: config = createTribeWorkerConfig(new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
-      case EntityType.glurb: config = createGlurbConfig(); break;
+      case EntityType.iceSpikes: configs = [createIceSpikesConfig(new Point(x, y), angle, 0)]; break;
+      case EntityType.slimewisp: configs = [createSlimewispConfig(new Point(x, y), angle)]; break;
+      // @TEMPORARY
+      case EntityType.slime: configs = [createSlimeConfig(new Point(x, y), angle, SlimeSize.small)]; break;
+      case EntityType.krumblid: configs = [createKrumblidConfig(new Point(x, y), angle)]; break;
+      case EntityType.frozenYeti: configs = [createFrozenYetiConfig(new Point(x, y), angle)]; break;
+      case EntityType.fish: configs = [createFishConfig(new Point(x, y), angle)]; break;
+      case EntityType.lilypad: configs = [createLilypadConfig(new Point(x, y), angle)]; break;
+      case EntityType.golem: configs = [createGolemConfig(new Point(x, y), angle)]; break;
+      case EntityType.tribeWorker: configs = [createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)))]; break;
+      case EntityType.glurb: configs = createGlurbConfig(x, y, angle); break;
+      // @TEMPORARY
+      case EntityType.mithrilOreNode: configs = createGlurbConfig(x, y, angle); break;
    }
 
-   if (config === null) {
-      return;
-   }
-   
-   const transformComponent = config.components[ServerComponentType.transform];
-   transformComponent.position.x = x;
-   transformComponent.position.y = y;
-   transformComponent.relativeRotation = Math.PI * Math.random();
-   
-   // Make sure the entity wouldn't spawn in a wall
-   if (entityWouldSpawnInWall(layer, transformComponent)) {
+   if (configs === null) {
       return;
    }
 
-   // Create the entity
-   const entity = createEntity(config, layer, 0);
-   addEntityToCensus(entity, entityType);
-   if (!SERVER.isRunning) {
-      pushJoinBuffer(false);
+   // @Cleanup: should this be done here, or automatically as the hitboxes are created
+
+   for (const config of configs) {
+      const transformComponent = config.components[ServerComponentType.transform];
+      if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(layer, transformComponent)) {
+         return;
+      }
+   }
+
+   for (const config of configs) {
+      // Create the entity
+      const entity = createEntity(config, layer, 0);
+      addEntityToCensus(entity, entityType);
+      if (!SERVER.isRunning) {
+         pushJoinBuffer(false);
+      }
    }
 }
 
@@ -263,7 +271,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
          continue;
       }
 
-      if (spawnPositionIsValid(spawnInfo, spawnPositionX, spawnPositionY)) {
+      if (spawnPositionIsClear(spawnInfo, spawnPositionX, spawnPositionY)) {
          const x = randInt(minX, maxX);
          const y = randInt(minY, maxY);
 
@@ -274,7 +282,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
    }
 }
 
-export function spawnPositionIsValid(spawnInfo: EntitySpawnInfo, positionX: number, positionY: number): boolean {
+export function spawnPositionIsClear(spawnInfo: EntitySpawnInfo, positionX: number, positionY: number): boolean {
    const minChunkX = Math.max(Math.min(Math.floor((positionX - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor((positionX + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
    const minChunkY = Math.max(Math.min(Math.floor((positionY - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
@@ -285,9 +293,18 @@ export function spawnPositionIsValid(spawnInfo: EntitySpawnInfo, positionX: numb
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = spawnInfo.layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
+            // @Hack
+            // @Speed: should be skipped entirely
+            const entityType = getEntityType(entity);
+            const collisionGroup = getEntityCollisionGroup(entityType);
+            if (collisionGroup === CollisionGroup.decoration) {
+               continue;
+            }
             
-            const distanceSquared = Math.pow(positionX - transformComponent.position.x, 2) + Math.pow(positionY - transformComponent.position.y, 2);
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            
+            const distanceSquared = Math.pow(positionX - entityHitbox.box.position.x, 2) + Math.pow(positionY - entityHitbox.box.position.y, 2);
             if (distanceSquared <= spawnInfo.minSpawnDistance * spawnInfo.minSpawnDistance) {
                return false;
             }
@@ -305,6 +322,7 @@ const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void =
    const tileY = randInt(0, Settings.BOARD_DIMENSIONS - 1);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
 
+   // (This is just to uphold the spawn attempt frequency)
    // If the tile is a valid tile for the spawn info, continue with the spawn event
    const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
    if (spawnableTiles.has(tileIndex)) {
@@ -320,7 +338,7 @@ const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void =
          y = (tileY + Math.random()) * Settings.TILE_SIZE;
       }
       
-      if (spawnPositionIsValid(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
+      if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
          spawnEntities(spawnInfoIdx, spawnInfo, x, y);
       }
    }
@@ -356,21 +374,6 @@ export function runSpawnAttempt(): void {
 }
 
 export function spawnInitialEntities(): void {
-   if (1 + 1 === 3) {
-      // @Temporary
-      for (let i = 0; i < 20; i++) {
-         const tree = createTreeConfig();
-         tree.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 200;
-         tree.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5 + i * 300;
-         createEntity(tree, surfaceLayer, 0);
-      }
-   
-      const cow = createCowConfig();
-      cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 - 200;
-      cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-      createEntity(cow, surfaceLayer, 0);
-   }
-
    if (!OPTIONS.spawnEntities) {
       return;
    }
@@ -394,17 +397,15 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      if(1+1===2)return;
-      for (let i = 0; i < 5; i++) {
+      // const config = createGlur(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0, false, 0);
+      // createEntity(config, surfaceLayer, 0);
+      // if(1+1===2)return;
+      // const configs = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
+      // // @Hack
+      // for (const config of configs) {
+      //    createEntity(config, surfaceLayer, 0);
+      // }
 
-         const cow = createCowConfig();
-         // const cactus = createCactusConfig();
-         cow.components[ServerComponentType.transform].position.x = Settings.BOARD_UNITS * 0.5 + 400;
-         cow.components[ServerComponentType.transform].position.y = Settings.BOARD_UNITS * 0.5;
-         cow.components[ServerComponentType.transform].position.x += randFloat(-100, 100);
-         cow.components[ServerComponentType.transform].position.y += randFloat(-100, 100);
-         createEntity(cow, surfaceLayer, 0);
-      }
       if(1+1===2)return;
       
       // // const x = Settings.BOARD_UNITS * 0.5 + 700;
@@ -412,11 +413,11 @@ export function spawnInitialEntities(): void {
       // // const y = Settings.BOARD_UNITS * 0.5;
       const y = 3400;
       
-      const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
-      const a = createTribeWorkerConfig(tribe);
-      a.components[ServerComponentType.transform].position.x = x;
-      a.components[ServerComponentType.transform].position.y = y;
-      createEntity(a, undergroundLayer, 0);
+      // const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
+      // const a = createTribeWorkerConfig(tribe);
+      // a.components[ServerComponentType.transform].position.x = x;
+      // a.components[ServerComponentType.transform].position.y = y;
+      // createEntity(a, undergroundLayer, 0);
 
       // {
       // const x = Settings.BOARD_UNITS * 0.5 + 800;
@@ -428,5 +429,5 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
       // }
-   }, 20000);
+   }, 1100);
 }

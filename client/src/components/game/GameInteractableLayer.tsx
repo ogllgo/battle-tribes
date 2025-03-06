@@ -4,7 +4,6 @@ import { Entity, LimbAction } from "../../../../shared/src/entities";
 import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD, QUIVER_PULL_TIME_TICKS, QUIVER_ACCESS_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
-import { calculateEntityPlaceInfo } from "../../../../shared/src/structures";
 import { TribesmanTitle } from "../../../../shared/src/titles";
 import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
@@ -27,13 +26,11 @@ import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrow
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
 import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
-import { PhysicsComponentArray } from "../../entity-components/server-components/PhysicsComponent";
-import { createEntity, entityExists, EntityPreCreationInfo, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
+import { createEntity, entityExists, EntityParams, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
-import { ClientHitbox } from "../../boxes";
+import { applyAcceleration, Hitbox } from "../../hitboxes";
 import { createBracingsComponentParams } from "../../entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
 import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
@@ -54,10 +51,12 @@ import { GameInteractState } from "./GameScreen";
 import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
-import { Point } from "../../../../shared/src/utils";
 import { playerInstance } from "../../player";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 import Game from "../../Game";
+import { calculateEntityPlaceInfo } from "../../structure-placement";
+import { assert } from "../../../../shared/src/utils";
+import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -145,21 +144,21 @@ export function setShittyCarrier(entity: Entity): void {
 const BOW_HOLDING_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 36,
-   rotation: -Math.PI * 0.4,
+   angle: -Math.PI * 0.4,
    extraOffsetX: 4,
    extraOffsetY: 0
 };
 const BOW_DRAWING_CHARGE_START_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: 0,
+   angle: 0,
    extraOffsetX: 0,
    extraOffsetY: 22
 };
 const BOW_DRAWING_CHARGE_END_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: 0,
+   angle: 0,
    extraOffsetX: 0,
    extraOffsetY: 8
 };
@@ -298,13 +297,14 @@ export function updatePlayerItems(): void {
          limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const playerHitbox = transformComponent.hitboxes[0];
 
          // Add extra range for moving attacks
-         const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
-         const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
+         const vx = playerHitbox.velocity.x;
+         const vy = playerHitbox.velocity.y;
          if (vx !== 0 || vy !== 0) {
             const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-            const attackAlignment = (vx * Math.sin(transformComponent.rotation) + vy * Math.cos(transformComponent.rotation)) / velocityMagnitude;
+            const attackAlignment = (vx * Math.sin(playerHitbox.box.angle) + vy * Math.cos(playerHitbox.box.angle)) / velocityMagnitude;
             if (attackAlignment > 0) {
                const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
                limb.currentActionEndLimbState.extraOffsetY += extraAmount;
@@ -702,7 +702,8 @@ const createHotbarKeyListeners = (): void => {
 const throwHeldItem = (): void => {
    if (playerInstance !== null) {
       const transformComponent = TransformComponentArray.getComponent(playerInstance);
-      Client.sendHeldItemDropPacket(99999, transformComponent.rotation);
+      const playerHitbox = transformComponent.hitboxes[0];
+      Client.sendHeldItemDropPacket(99999, playerHitbox.box.angle);
    }
 }
 
@@ -781,8 +782,10 @@ export function createPlayerInputListeners(): void {
 
          const isOffhand = selectedItemInfo.inventoryName === InventoryName.offhand;
          const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+         const playerHitbox = playerTransformComponent.hitboxes[0];
+         
          const dropAmount = keyIsPressed("shift") ? 99999 : 1;
-         sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerTransformComponent.rotation);
+         sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerHitbox.box.angle);
       }
    });
 
@@ -836,8 +839,9 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
    }
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const playerHitbox = transformComponent.hitboxes[0];
    // Get how aligned the intended movement direction and the player's rotation are
-   const directionAlignmentDot = Math.sin(moveDirection) * Math.sin(transformComponent.rotation) + Math.cos(moveDirection) * Math.cos(transformComponent.rotation);
+   const directionAlignmentDot = Math.sin(moveDirection) * Math.sin(playerHitbox.box.angle) + Math.cos(moveDirection) * Math.cos(playerHitbox.box.angle);
    // Move 15% slower if you're accelerating away from where you're moving
    if (directionAlignmentDot < 0) {
       const reductionMultiplier = -directionAlignmentDot;
@@ -849,9 +853,6 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
 
 /** Updates the player's movement to match what keys are being pressed. */
 export function updatePlayerMovement(): void {
-   // Don't update movement if the player doesn't exist
-   if (playerInstance === null) return;
-   
    // Get pressed keys
    const wIsPressed = keyIsPressed("w") || keyIsPressed("W") || keyIsPressed("ArrowUp");
    const aIsPressed = keyIsPressed("a") || keyIsPressed("A") || keyIsPressed("ArrowLeft");
@@ -881,37 +882,44 @@ export function updatePlayerMovement(): void {
       case 15: moveDirection = null;          break;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(playerInstance);
-
    if (moveDirection !== null) {
-      const playerAction = getInstancePlayerAction(InventoryName.hotbar);
-      
-      let acceleration: number;
-      if (keyIsPressed("l")) {
-         acceleration = PLAYER_LIGHTSPEED_ACCELERATION;
-      // @Bug: doesn't account for offhand
-      } else if (playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine || playerAction === LimbAction.chargeBow || playerAction === LimbAction.chargeSpear || playerAction === LimbAction.loadCrossbow || playerAction === LimbAction.block || playerAction === LimbAction.windShieldBash || playerAction === LimbAction.pushShieldBash || playerAction === LimbAction.returnShieldBashToRest || latencyGameState.playerIsPlacingEntity) {
-         acceleration = PLAYER_SLOW_ACCELERATION;
+      if (playerInstance !== null) {
+         const playerAction = getInstancePlayerAction(InventoryName.hotbar);
+         
+         let acceleration: number;
+         if (keyIsPressed("l")) {
+            acceleration = PLAYER_LIGHTSPEED_ACCELERATION;
+         // @Bug: doesn't account for offhand
+         } else if (playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine || playerAction === LimbAction.chargeBow || playerAction === LimbAction.chargeSpear || playerAction === LimbAction.loadCrossbow || playerAction === LimbAction.block || playerAction === LimbAction.windShieldBash || playerAction === LimbAction.pushShieldBash || playerAction === LimbAction.returnShieldBashToRest || latencyGameState.playerIsPlacingEntity) {
+            acceleration = PLAYER_SLOW_ACCELERATION;
+         } else {
+            acceleration = PLAYER_ACCELERATION;
+         }
+   
+         // If discombobulated, limit the acceleration to the discombobulated acceleration
+         if (discombobulationTimer > 0 && acceleration > PLAYER_DISCOMBOBULATED_ACCELERATION) {
+            acceleration = PLAYER_DISCOMBOBULATED_ACCELERATION;
+         }
+   
+         acceleration *= getPlayerMoveSpeedMultiplier(moveDirection);
+   
+         if (latencyGameState.lastPlantCollisionTicks >= Board.serverTicks - 1) {
+            acceleration *= 0.5;
+         }
+         
+         const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const playerHitbox = transformComponent.hitboxes[0];
+         
+         const accelerationX = acceleration * Math.sin(moveDirection);
+         const accelerationY = acceleration * Math.cos(moveDirection);
+         applyAcceleration(playerInstance, playerHitbox, accelerationX, accelerationY);
       } else {
-         acceleration = PLAYER_ACCELERATION;
+         const MOVE_SPEED = 700;
+         const velocityX = MOVE_SPEED * Math.sin(moveDirection);
+         const velocityY = MOVE_SPEED * Math.cos(moveDirection);
+         Camera.position.x += velocityX * Settings.I_TPS;
+         Camera.position.y += velocityY * Settings.I_TPS;
       }
-
-      // If discombobulated, limit the acceleration to the discombobulated acceleration
-      if (discombobulationTimer > 0 && acceleration > PLAYER_DISCOMBOBULATED_ACCELERATION) {
-         acceleration = PLAYER_DISCOMBOBULATED_ACCELERATION;
-      }
-
-      acceleration *= getPlayerMoveSpeedMultiplier(moveDirection);
-
-      if (latencyGameState.lastPlantCollisionTicks >= Board.serverTicks - 1) {
-         acceleration *= 0.5;
-      }
-      
-      physicsComponent.acceleration.x = acceleration * Math.sin(moveDirection);
-      physicsComponent.acceleration.y = acceleration * Math.cos(moveDirection);
-   } else {
-      physicsComponent.acceleration.x = 0;
-      physicsComponent.acceleration.y = 0;
    }
 }
 
@@ -1061,16 +1069,18 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "crossbow": {
+         const playerHitbox = transformComponent.hitboxes[0];
+         
          if (!definiteGameState.hotbarCrossbowLoadProgressRecord.hasOwnProperty(itemSlot) || definiteGameState.hotbarCrossbowLoadProgressRecord[itemSlot]! < 1) {
             // Start loading crossbow
             const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
             limb.action = LimbAction.loadCrossbow;
             limb.lastCrossbowLoadTicks = Board.serverTicks;
-            playSound("crossbow-load.mp3", 0.4, 1, transformComponent.position, null);
+            playSound("crossbow-load.mp3", 0.4, 1, playerHitbox.box.position, null);
          } else {
             // Fire crossbow
             sendItemUsePacket();
-            playSound("crossbow-fire.mp3", 0.4, 1, transformComponent.position, null);
+            playSound("crossbow-fire.mp3", 0.4, 1, playerHitbox.box.position, null);
          }
          break;
       }
@@ -1134,9 +1144,11 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "placeable": {
+         const playerHitbox = transformComponent.hitboxes[0];
+
          const layer = getEntityLayer(playerInstance!);
          const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
-         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, structureType, layer.getWorldInfo());
+         const placeInfo = calculateEntityPlaceInfo(playerHitbox.box.position, playerHitbox.box.angle, structureType, layer);
          
          if (placeInfo.isValid) {
             const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
@@ -1330,11 +1342,12 @@ const tickItem = (itemType: ItemType): void => {
 
          const layer = getCurrentLayer();
          const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+         const playerHitbox = transformComponent.hitboxes[0];
          
          const itemInfo = ITEM_INFO_RECORD[itemType] as PlaceableItemInfo;
          const entityType = itemInfo.entityType;
          
-         const placeInfo = calculateEntityPlaceInfo(transformComponent.position, transformComponent.rotation, entityType, layer.getWorldInfo());
+         const placeInfo = calculateEntityPlaceInfo(playerHitbox.box.position, playerHitbox.box.angle, entityType, layer);
 
          const components = {} as EntityServerComponentParams;
 
@@ -1345,54 +1358,41 @@ const tickItem = (itemType: ItemType): void => {
 
             switch (componentType) {
                case ServerComponentType.transform: {
-                  const hitboxes = new Array<ClientHitbox>();
+                  const hitboxes = new Array<Hitbox>();
                   const tethers = new Array<HitboxTether>();
-                  const staticHitboxes = new Array<ClientHitbox>();
+                  const staticHitboxes = new Array<Hitbox>();
                   for (let i = 0; i < placeInfo.hitboxes.length; i++) {
                      const hitbox = placeInfo.hitboxes[i];
-                     const clientHitbox = new ClientHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags, i);
-                     hitboxes.push(clientHitbox);
+                     hitboxes.push(hitbox);
                      // @Hack
-                     staticHitboxes.push(clientHitbox);
+                     staticHitboxes.push(hitbox);
                   }
 
                   const transformComponentParams = createTransformComponentParams(
-                     placeInfo.position.copy(),
-                     new Point(0, 0),
-                     new Point(0, 0),
-                     placeInfo.rotation,
-                     placeInfo.rotation,
-                     hitboxes,
-                     tethers,
-                     staticHitboxes,
-                     COLLISION_BITS.default,
-                     DEFAULT_COLLISION_MASK,
-                     0,
-                     0,
-                     []
+                     hitboxes
                   );
 
                   components[componentType] = transformComponentParams;
                   break;
                }
                case ServerComponentType.health: {
-                  const params = createHealthComponentParams(0, 0);
+                  const params = createHealthComponentParams();
                   components[componentType] = params;
                   break;
                }
                case ServerComponentType.statusEffect: {
-                  const params = createStatusEffectComponentParams([]);
+                  const params = createStatusEffectComponentParams();
                   components[componentType] = params;
                   break;
                }
                case ServerComponentType.structure: {
-                  components[componentType] = createStructureComponentParams(false, []);
+                  components[componentType] = createStructureComponentParams();
                   break;
                }
                case ServerComponentType.tribe: {
                   const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
                   
-                  components[componentType] = createTribeComponentParams(playerTribeComponent.tribeID);
+                  components[componentType] = createTribeComponentParams(playerTribe);
                   break;
                }
                case ServerComponentType.buildingMaterial: {
@@ -1404,11 +1404,11 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.inventory: {
-                  components[componentType] = createInventoryComponentParams({});
+                  components[componentType] = createInventoryComponentParams();
                   break;
                }
                case ServerComponentType.cooking: {
-                  components[componentType] = createCookingComponentParams(0, false);
+                  components[componentType] = createCookingComponentParams();
                   break;
                }
                case ServerComponentType.campfire: {
@@ -1420,7 +1420,7 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.spikes: {
-                  components[componentType] = createSpikesComponentParams(false);
+                  components[componentType] = createSpikesComponentParams();
                   break;
                }
                case ServerComponentType.fireTorch: {
@@ -1436,7 +1436,7 @@ const tickItem = (itemType: ItemType): void => {
                   break;
                }
                case ServerComponentType.researchBench: {
-                  components[componentType] = createResearchBenchComponentParams(false);
+                  components[componentType] = createResearchBenchComponentParams();
                   break;
                }
                case ServerComponentType.scrappy: {
@@ -1522,16 +1522,19 @@ const tickItem = (itemType: ItemType): void => {
             }
          }
 
-         const preCreationInfo: EntityPreCreationInfo<ServerComponentType> = {
-            serverComponentTypes: componentTypes,
-            // @Hack
-            serverComponentParams: components as any
+         const entityParams: EntityParams = {
+            entityType: entityType,
+            // @Hack: cast
+            serverComponentParams: components as any,
+            // @HACK
+            clientComponentParams: getEntityClientComponentConfigs(entityType)
          };
 
          // Create the entity
-         const creationInfo = createEntity(0, entityType, layer, preCreationInfo);
+         assert(entityParams.serverComponentParams[ServerComponentType.transform]!.hitboxes.length > 0);
+         const creationInfo = createEntity(0, entityParams);
 
-         const renderInfo = creationInfo.renderInfo;
+         const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
 
          // @Hack: Could potentially get overridden in the future
          renderInfo.tintR = placeInfo.isValid ? 0 : 0.5;
@@ -1539,8 +1542,8 @@ const tickItem = (itemType: ItemType): void => {
          renderInfo.tintB = placeInfo.isValid ? 0 : -0.5;
 
          // Modify all the render part's opacity
-         for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
-            const renderThing = renderInfo.allRenderThings[i];
+         for (let i = 0; i < renderInfo.renderPartsByZIndex.length; i++) {
+            const renderThing = renderInfo.renderPartsByZIndex[i];
             if (thingIsVisualRenderPart(renderThing)) {
                renderThing.opacity *= 0.5;
             }
@@ -1554,11 +1557,12 @@ const tickItem = (itemType: ItemType): void => {
          placeableEntityGhostRenderInfo = renderInfo;
          addGhostRenderInfo(renderInfo);
 
-         // Manually set the render info's position and rotation
-         const transformComponentParams = components[ServerComponentType.transform]!;
-         renderInfo.renderPosition.x = transformComponentParams.position.x;
-         renderInfo.renderPosition.y = transformComponentParams.position.y;
-         renderInfo.rotation = transformComponentParams.rotation;
+         // @Hack: Manually set the render info's position and rotation
+         // @INCOMPLETE
+         // const transformComponentParams = components[ServerComponentType.transform]!;
+         // renderInfo.renderPosition.x = transformComponentParams.position.x;
+         // renderInfo.renderPosition.y = transformComponentParams.position.y;
+         // renderInfo.rotation = transformComponentParams.rotation;
 
          break;
       }

@@ -1,11 +1,12 @@
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { randInt } from "battletribes-shared/utils";
 import { entityHasReachedPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
-import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { TransformComponentArray } from "../components/TransformComponent";
 import Layer from "../Layer";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { getEntityAgeTicks, getEntityLayer } from "../world";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    POSITION_RECORD_INTERVAL = Settings.TPS
@@ -34,42 +35,44 @@ export default class WanderAI {
       this.positionIsValidCallback = positionIsValidCallback;
    }
 
-   private shouldTryAndWander(transformComponent: TransformComponent): boolean {
-      return transformComponent.selfVelocity.x === 0 && transformComponent.selfVelocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
+   private shouldTryAndWander(hitbox: Hitbox): boolean {
+      return hitbox.velocity.x === 0 && hitbox.velocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
    }
 
    public update(entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      // @Hack
+      const entityHitbox = transformComponent.hitboxes[0];
       
       if (getEntityAgeTicks(entity) % Vars.POSITION_RECORD_INTERVAL === 0) {
          // If the entity hasn't moved enough since the last position check-in, clear the target as they are most likely stuck
          if (this.targetPositionX !== -1) {
-            const dx = transformComponent.position.x - this.lastRecordedPositionX;
-            const dy = transformComponent.position.y - this.lastRecordedPositionY;
+            const dx = entityHitbox.box.position.x - this.lastRecordedPositionX;
+            const dy = entityHitbox.box.position.y - this.lastRecordedPositionY;
             const positionDelta = Math.sqrt(dx * dx + dy * dy);
             if (positionDelta < 10) {
                this.targetPositionX = -1;
             }
          }
          
-         this.lastRecordedPositionX = transformComponent.position.x;
-         this.lastRecordedPositionY = transformComponent.position.y;
+         this.lastRecordedPositionX = entityHitbox.box.position.x;
+         this.lastRecordedPositionY = entityHitbox.box.position.y;
       }
       
       if (this.targetPositionX !== -1) {
          if (entityHasReachedPosition(entity, this.targetPositionX, this.targetPositionY)) {
             this.targetPositionX = -1;
          }
-      } else if (this.shouldTryAndWander(transformComponent)) {
+      } else if (this.shouldTryAndWander(entityHitbox)) {
          const layer = getEntityLayer(entity);
 
          const transformComponent = TransformComponentArray.getComponent(entity);
          const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
          
-         const minTileX = Math.max(Math.floor((transformComponent.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
-         const maxTileX = Math.min(Math.floor((transformComponent.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
-         const minTileY = Math.max(Math.floor((transformComponent.position.y - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
-         const maxTileY = Math.min(Math.floor((transformComponent.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
+         const minTileX = Math.max(Math.floor((entityHitbox.box.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
+         const maxTileX = Math.min(Math.floor((entityHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
+         const minTileY = Math.max(Math.floor((entityHitbox.box.position.y - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
+         const maxTileY = Math.min(Math.floor((entityHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
          
          let attempts = 0;
          let x: number;
@@ -84,7 +87,7 @@ export default class WanderAI {
             do {
                tileX = randInt(minTileX, maxTileX);
                tileY = randInt(minTileY, maxTileY);
-            } while (++attempts <= 50 && Math.pow(transformComponent.position.x - (tileX + 0.5) * Settings.TILE_SIZE, 2) + Math.pow(transformComponent.position.y - (tileY + 0.5) * Settings.TILE_SIZE, 2) > aiHelperComponent.visionRange * aiHelperComponent.visionRange);
+            } while (++attempts <= 50 && Math.pow(entityHitbox.box.position.x - (tileX + 0.5) * Settings.TILE_SIZE, 2) + Math.pow(entityHitbox.box.position.y - (tileY + 0.5) * Settings.TILE_SIZE, 2) > aiHelperComponent.visionRange * aiHelperComponent.visionRange);
          
             x = (tileX + Math.random()) * Settings.TILE_SIZE;
             y = (tileY + Math.random()) * Settings.TILE_SIZE;

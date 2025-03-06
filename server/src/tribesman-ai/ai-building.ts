@@ -3,10 +3,11 @@ import { Settings } from "battletribes-shared/settings";
 import { StructureType } from "battletribes-shared/structures";
 import { Point, assert, distBetweenPointAndRectangle } from "battletribes-shared/utils";
 import { TribeRoom, createTribeArea, updateTribeAreaDoors } from "./ai-building-areas";
-import { assertHitboxIsRectangular, BoxType, hitboxIsCircular, Hitbox } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import TribeBuildingLayer, { getNumWallConnections, updateTribeWalls } from "./building-plans/TribeBuildingLayer";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
 
 const enum Vars {
    /** How much safety increases when moving in a node */
@@ -56,9 +57,7 @@ export function getSafetyNode(nodeX: number, nodeY: number): SafetyNode {
    return nodeY * Settings.SAFETY_NODES_IN_WORLD_WIDTH + nodeX;
 }
 
-const addCircularHitboxNodePositions = (hitbox: Hitbox<BoxType.circular>, positions: Set<SafetyNode>): void => {
-   const box = hitbox.box;
-   
+const addCircularBoxNodePositions = (box: CircularBox, positions: Set<SafetyNode>): void => {
    const minX = box.calculateBoundsMinX();
    const maxX = box.calculateBoundsMaxX();
    const minY = box.calculateBoundsMinY();
@@ -107,19 +106,15 @@ export function addRectangularSafetyNodePositions(rectPosition: Point, rectWidth
    }
 }
 
-export function addHitboxesOccupiedNodes(hitboxes: ReadonlyArray<Hitbox>, positions: Set<SafetyNode>): void {
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
+export function addBoxesOccupiedNodes(boxes: ReadonlyArray<Box>, positions: Set<SafetyNode>): void {
+   for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i];
 
       // Add to occupied pathfinding nodes
-      if (hitboxIsCircular(hitbox)) {
-         addCircularHitboxNodePositions(hitbox, positions);
+      if (boxIsCircular(box)) {
+         addCircularBoxNodePositions(box, positions);
       } else {
-         // @Hack
-         assertHitboxIsRectangular(hitbox);
-         
-         const box = hitbox.box;
-         addRectangularSafetyNodePositions(box.position, box.width, box.height, box.rotation, box.calculateBoundsMinX(), box.calculateBoundsMaxX(), box.calculateBoundsMinY(), box.calculateBoundsMaxY(), positions);
+         addRectangularSafetyNodePositions(box.position, box.width, box.height, box.angle, box.calculateBoundsMinX(), box.calculateBoundsMaxX(), box.calculateBoundsMinY(), box.calculateBoundsMaxY(), positions);
       }
    }
 }

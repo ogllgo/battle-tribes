@@ -26,10 +26,10 @@ export function removeEntityFromCensus(entity: Entity): void {
    const entityType = getEntityType(entity);
    
    if (entityCounts[entityType] <= 0) {
-      console.log(entityCounts);
-      console.warn(`Entity type "${entityType}" is not in the census.`);
-      console.trace();
-      throw new Error();
+      // console.log(entityCounts);
+      // console.warn(`Entity type "${entityType}" is not in the census.`);
+      // console.trace();
+      // throw new Error();
    }
 
    entityCounts[entityType]--;

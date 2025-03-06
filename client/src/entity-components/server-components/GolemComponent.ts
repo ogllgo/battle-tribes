@@ -4,19 +4,16 @@ import { Point, randItem } from "battletribes-shared/utils";
 import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { Light, attachLightToRenderPart, createLight } from "../../lights";
-import { playSoundOnEntity, ROCK_HIT_SOUNDS } from "../../sound";
+import { Light, createLight } from "../../lights";
+import { playSoundOnHitbox, ROCK_HIT_SOUNDS } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { EntityPreCreationInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 enum GolemRockSize {
    massive,
@@ -28,6 +25,12 @@ enum GolemRockSize {
 
 export interface GolemComponentParams {
    readonly wakeProgress: number;
+}
+
+interface IntermediateInfo {
+   readonly rockRenderParts: Array<VisualRenderPart>;
+   readonly eyeRenderParts: Array<VisualRenderPart>;
+   readonly eyeLights: Array<Light>;
 }
 
 export interface GolemComponent {
@@ -94,8 +97,9 @@ const getZIndex = (size: GolemRockSize): number => {
    }
 }
 
-export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentParams, never>(ServerComponentType.golem, true, {
+export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentParams, IntermediateInfo>(ServerComponentType.golem, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -113,8 +117,8 @@ function createParamsFromData(reader: PacketReader): GolemComponentParams {
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform | ServerComponentType.golem, never>): GolemComponent {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    const rockRenderParts = new Array<VisualRenderPart>();
    const eyeRenderParts = new Array<VisualRenderPart>();
@@ -123,19 +127,17 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
    // Add new rocks
    for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
       const hitbox = transformComponentParams.hitboxes[i];
+
       const box = hitbox.box as CircularBox;
-      
       const size = getHitboxSize(box);
 
       const renderPart = new TexturedRenderPart(
-         null,
+         hitbox,
          getZIndex(size),
          2 * Math.PI * Math.random(),
          getTextureArrayIndex(getTextureSource(size))
       );
-      renderPart.offset.x = box.offset.x;
-      renderPart.offset.y = box.offset.y;
-      entityConfig.renderInfo.attachRenderPart(renderPart);
+      intermediateInfo.renderInfo.attachRenderPart(renderPart);
       rockRenderParts.push(renderPart);
 
       if (size === GolemRockSize.large) {
@@ -150,7 +152,7 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
             eyeRenderPart.offset.x = 20 * (i === 0 ? -1 : 1);
             eyeRenderPart.offset.y = 17;
             eyeRenderPart.inheritParentRotation = false;
-            entityConfig.renderInfo.attachRenderPart(eyeRenderPart);
+            intermediateInfo.renderInfo.attachRenderPart(eyeRenderPart);
             eyeRenderParts.push(eyeRenderPart);
 
             // Create eye light
@@ -164,21 +166,32 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.transfor
                0
             );
             eyeLights.push(light);
-            attachLightToRenderPart(light, eyeRenderPart, entityConfig.entity, entityConfig.layer);
+            intermediateInfo.lights.push({
+               light: light,
+               attachedRenderPart: eyeRenderPart
+            });
          }
       }
    }
-   
+
    return {
-      wakeProgress: entityConfig.serverComponents[ServerComponentType.golem].wakeProgress,
       rockRenderParts: rockRenderParts,
       eyeRenderParts: eyeRenderParts,
       eyeLights: eyeLights
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.transform>): number {
-   const transformComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.transform];
+function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): GolemComponent {
+   return {
+      wakeProgress: entityParams.serverComponentParams[ServerComponentType.golem]!.wakeProgress,
+      rockRenderParts: intermediateInfo.rockRenderParts,
+      eyeRenderParts: intermediateInfo.eyeRenderParts,
+      eyeLights: intermediateInfo.eyeLights
+   };
+}
+
+function getMaxRenderParts(entityParams: EntityParams): number {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    let maxRenderParts = 0;
    for (const hitbox of transformComponentParams.hitboxes) {
@@ -205,7 +218,7 @@ function onTick(entity: Entity): void {
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, hitbox.velocity.x, hitbox.velocity.y, ParticleRenderLayer.low);
       }
    } else if (golemComponent.wakeProgress === 1) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -219,7 +232,7 @@ function onTick(entity: Entity): void {
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, hitbox.velocity.x, hitbox.velocity.y, ParticleRenderLayer.low);
       }
    }
 }
@@ -236,14 +249,16 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const isAwake = reader.readBoolean();
    reader.padOffset(3);
 
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
    if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
-      playSoundOnEntity("golem-angry.mp3", 0.4, 1, entity, true);
+      const hitbox = transformComponent.hitboxes[0];
+      playSoundOnHitbox("golem-angry.mp3", 0.4, 1, hitbox, true);
    }
    
    golemComponent.wakeProgress = wakeProgress;
 
    const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
-   const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
       const box = hitbox.box;
@@ -261,5 +276,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 function onHit(entity: Entity): void {
-   playSoundOnEntity(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, hitbox, false);
 }

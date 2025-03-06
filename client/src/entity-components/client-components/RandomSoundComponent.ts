@@ -1,6 +1,6 @@
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
@@ -70,6 +70,6 @@ function onTick(entity: Entity): void {
       randomSoundComponent.soundTimerTicks = randFloat(randomSoundComponent.minSoundIntervalTicks, randomSoundComponent.maxSoundIntervalTicks);
 
       const soundSrc = randItem(randomSoundComponent.sounds);
-      playSoundOnEntity(soundSrc, randomSoundComponent.volume, 1, entity, false);
+      playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, false);
    }
 }

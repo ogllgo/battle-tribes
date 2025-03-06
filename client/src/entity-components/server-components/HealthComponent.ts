@@ -6,9 +6,8 @@ import { discombobulate } from "../../components/game/GameInteractableLayer";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
-import { getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
-import { EntityConfig } from "../ComponentArray";
 import { playerInstance } from "../../player";
 
 export interface HealthComponentParams {
@@ -39,22 +38,26 @@ export const HealthComponentArray = new ServerComponentArray<HealthComponent, He
    calculateTint: calculateTint
 });
 
-export function createHealthComponentParams(health: number, maxHealth: number): HealthComponentParams {
+const fillHealthComponentParams = (health: number, maxHealth: number): HealthComponentParams => {
    return {
       health: health,
       maxHealth: maxHealth
    };
 }
 
+export function createHealthComponentParams(): HealthComponentParams {
+   return fillHealthComponentParams(0, 0);
+}
+
 function createParamsFromData(reader: PacketReader): HealthComponentParams {
    const health = reader.readNumber();
    const maxHealth = reader.readNumber();
 
-   return createHealthComponentParams(health, maxHealth);
+   return fillHealthComponentParams(health, maxHealth);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.health, never>): HealthComponent {
-   const healthComponentParams = entityConfig.serverComponents[ServerComponentType.health];
+function createComponent(entityParams: EntityParams): HealthComponent {
+   const healthComponentParams = entityParams.serverComponentParams[ServerComponentType.health]!;
    
    return {
       health: healthComponentParams.health,

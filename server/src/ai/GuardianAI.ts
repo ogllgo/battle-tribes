@@ -26,6 +26,8 @@ const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity,
 }
 
 const getTarget = (transformComponent: TransformComponent, guardianComponent: GuardianComponent, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const hitbox = transformComponent.hitboxes[0];
+   
    let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
    
@@ -33,7 +35,9 @@ const getTarget = (transformComponent: TransformComponent, guardianComponent: Gu
       const entity = aiHelperComponent.visibleEntities[i];
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const dist = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+      const entityHitbox = entityTransformComponent.hitboxes[0];
+      
+      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist && entityIsTargetted(guardianComponent, entity, entityTransformComponent)) {
          minDist = dist;
          target = entity;

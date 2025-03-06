@@ -1,20 +1,21 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface SpearProjectileComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface SpearProjectileComponent {}
 
-export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent, SpearProjectileComponentParams, RenderParts>(ServerComponentType.spearProjectile, true, {
+export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent, SpearProjectileComponentParams, IntermediateInfo>(ServerComponentType.spearProjectile, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onSpawn: onSpawn,
@@ -27,10 +28,13 @@ function createParamsFromData(): SpearProjectileComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponent.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("items/misc/spear.png")
@@ -49,7 +53,9 @@ function getMaxRenderParts(): number {
 }
 
 function onSpawn(entity: Entity): void {
-   playSoundOnEntity("spear-throw.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("spear-throw.mp3", 0.4, 1, hitbox, false);
 }
 
 function padData(): void {}
@@ -57,5 +63,7 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
-   playSoundOnEntity("spear-hit.mp3", 0.4, 1, entity, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("spear-hit.mp3", 0.4, 1, hitbox, false);
 }

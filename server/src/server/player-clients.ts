@@ -1,10 +1,9 @@
 import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
-import { BuildingMaterial, MATERIAL_TO_ITEM_MAP, ServerComponentType } from "battletribes-shared/components";
-import { TechID, Tech, getTechByID } from "battletribes-shared/techs";
+import { BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
+import { TechID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
-import { modifyBuilding } from "../entities/tribes/player";
 import PlayerClient from "./PlayerClient";
 import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./packet-creation";
@@ -16,15 +15,11 @@ import { getTileX, getTileY, Point, randInt, randItem } from "battletribes-share
 import { Settings } from "battletribes-shared/settings";
 import { getTilesOfBiome } from "../census";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { attemptToOccupyResearchBench, deoccupyResearchBench } from "../components/ResearchBenchComponent";
-import { toggleDoor } from "../components/DoorComponent";
-import { toggleFenceGateDoor } from "../components/FenceGateComponent";
-import { toggleTunnelDoor } from "../components/TunnelComponent";
+import { deoccupyResearchBench } from "../components/ResearchBenchComponent";
 import { BuildingMaterialComponentArray } from "../components/BuildingMaterialComponent";
 import { TurretComponentArray } from "../components/TurretComponent";
 import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
 import { EntitySummonPacket } from "battletribes-shared/dev-packets";
-import { ItemRequirements } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
@@ -272,12 +267,12 @@ const devRemoveTitle = (playerClient: PlayerClient, title: TribesmanTitle): void
    removeTitle(player, title);
 }
 
-export function addPlayerClient(playerClient: PlayerClient, layer: Layer, playerConfig: EntityConfig<ServerComponentType.transform>): void {
+export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnPosition: Point): void {
    playerClients.push(playerClient);
 
    const socket = playerClient.socket;
 
-   const initialGameDataPacket = createInitialGameDataPacket(layer, playerConfig);
+   const initialGameDataPacket = createInitialGameDataPacket(layer, spawnPosition);
    socket.send(initialGameDataPacket);
 
    socket.on("deactivate", () => {
@@ -430,14 +425,16 @@ export function registerPlayerKnockback(playerID: number, knockback: number, kno
 
 export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
    const transformComponent = TransformComponentArray.getComponent(healedEntity);
+   const healedEntityHitbox = transformComponent.hitboxes[0];
+   
    const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {
       return;
    }
 
    const healData: HealData = {
-      entityPositionX: transformComponent.position.x,
-      entityPositionY: transformComponent.position.y,
+      entityPositionX: healedEntityHitbox.box.position.x,
+      entityPositionY: healedEntityHitbox.box.position.y,
       healedID: healedEntity,
       healerID: healer,
       healAmount: healAmount

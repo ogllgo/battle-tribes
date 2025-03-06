@@ -1,4 +1,3 @@
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, DamageSource } from "battletribes-shared/entities";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -7,9 +6,9 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { destroyEntity, getEntityAgeTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    TICKS_BEFORE_RECEED = (Settings.TPS * 0.2) | 0,
@@ -53,7 +52,7 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHit
          return;
       }
 
-      damageEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "gemQuake", 0.3);
    }
 }

@@ -9,8 +9,6 @@ import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
-import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "../entities/item-entity";
 
 const enum Vars {
    /** Average number of zombies that are created by the tombstone in a second */
@@ -38,10 +36,15 @@ export class TombstoneComponent {
 }
 
 export const TombstoneComponentArray = new ComponentArray<TombstoneComponent>(ServerComponentType.tombstone, true, getDataLength, addDataToPacket);
+TombstoneComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
+   const tombstoneHitbox = transformComponent.hitboxes[0];
    
    const seenIs = new Array<number>();
    for (;;) {
@@ -53,8 +56,8 @@ const generateZombieSpawnPosition = (tombstone: Entity): Point => {
       const angleFromTombstone = i * Math.PI / 2;
 
       const offsetMagnitude = Vars.ZOMBIE_SPAWN_DISTANCE + (i % 2 === 0 ? 15 : 0);
-      const x = transformComponent.position.x + offsetMagnitude * Math.sin(angleFromTombstone);
-      const y = transformComponent.position.y + offsetMagnitude * Math.cos(angleFromTombstone);
+      const x = tombstoneHitbox.box.position.x + offsetMagnitude * Math.sin(angleFromTombstone);
+      const y = tombstoneHitbox.box.position.y + offsetMagnitude * Math.cos(angleFromTombstone);
    
       // Make sure the spawn position is valid
       if (x < 0 || x >= Settings.BOARD_UNITS || y < 0 || y >= Settings.BOARD_UNITS) {
@@ -73,17 +76,15 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    // Spawn zombie
-   const config = createZombieConfig(isGolden, tombstone);
-   config.components[ServerComponentType.transform].position.x = tombstoneComponent.zombieSpawnPositionX;
-   config.components[ServerComponentType.transform].position.y = tombstoneComponent.zombieSpawnPositionY;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   const position = new Point(tombstoneComponent.zombieSpawnPositionX, tombstoneComponent.zombieSpawnPositionY);
+   const config = createZombieConfig(position, 2 * Math.PI * Math.random(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
    tombstoneComponent.isSpawningZombie = false;
 }
 
-export function tickTombstone(tombstone: Entity): void {
+function onTick(tombstone: Entity): void {
    // If in the daytime, chance to crumble
    if (!isNight()) {
       const dayProgress = (getGameTime() - 6) / 12;
@@ -125,18 +126,14 @@ function preRemove(tombstone: Entity): void {
       return;
    }
    
-   createItemsOverEntity(tombstone, ItemType.rock, randInt(2, 3));
-
    // @Copynpaste
    const tombstoneComponent = TombstoneComponentArray.getComponent(tombstone);
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
+   const tombstoneHitbox = tombstoneTransformComponent.hitboxes[0];
 
-   const config = createZombieConfig(isGolden, tombstone);
-   config.components[ServerComponentType.transform].position.x = tombstoneTransformComponent.position.x;
-   config.components[ServerComponentType.transform].position.y = tombstoneTransformComponent.position.y;
-   config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), 2 * Math.PI * Math.random(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 

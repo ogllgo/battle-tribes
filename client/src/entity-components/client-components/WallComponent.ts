@@ -2,15 +2,13 @@ import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { angle } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSound, playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
-import { EntityConfig } from "../ComponentArray";
 import { WALL_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
 import { HealthComponentArray } from "../server-components/HealthComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
@@ -19,7 +17,7 @@ import { TransformComponentArray } from "../server-components/TransformComponent
 
 export interface WallComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface WallComponent {
    damageRenderPart: TexturedRenderPart | null;
@@ -27,8 +25,8 @@ export interface WallComponent {
 
 const NUM_DAMAGE_STAGES = 6;
 
-export const WallComponentArray = new ClientComponentArray<WallComponent, RenderParts>(ClientComponentType.wall, true, {
-   createRenderParts: createRenderParts,
+export const WallComponentArray = new ClientComponentArray<WallComponent, IntermediateInfo>(ClientComponentType.wall, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
@@ -40,18 +38,21 @@ export function createWallComponentParams(): WallComponentParams {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): RenderParts {
-   const buildingMaterialComponentParams = entityConfig.serverComponents[ServerComponentType.buildingMaterial];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(WALL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -87,8 +88,11 @@ const updateDamageRenderPart = (entity: Entity, health: number, maxHealth: numbe
    
    const textureSource = "entities/wall/wooden-wall-damage-" + damageStage + ".png";
    if (wallComponent.damageRenderPart === null) {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      
       wallComponent.damageRenderPart = new TexturedRenderPart(
-         null,
+         hitbox,
          1,
          0,
          getTextureArrayIndex(textureSource)
@@ -107,19 +111,20 @@ function onTick(entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity, false);
+   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
 
    for (let i = 0; i < 6; i++) {
-      createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32);
+      createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
    }
 
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - transformComponent.position.x, hitData.hitPosition[1] - transformComponent.position.y);
+      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
-      const spawnPositionX = transformComponent.position.x + 32 * Math.sin(offsetDirection);
-      const spawnPositionY = transformComponent.position.y + 32 * Math.cos(offsetDirection);
+      const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
       createLightWoodSpeckParticle(spawnPositionX, spawnPositionY, 5);
    }
 }
@@ -127,6 +132,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 // @Incomplete: doesn't play when removed by deconstruction
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // @Speed @Hack
    // Don't play death effects if the wall was replaced by a blueprint
@@ -137,21 +143,22 @@ function onDie(entity: Entity): void {
          }
 
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
+         const entityHitbox = entityTransformComponent.hitboxes[0];
 
-         const dist = transformComponent.position.calculateDistanceBetween(entityTransformComponent.position);
+         const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (dist < 1) {
             return;
          }
       }
    }
 
-   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, hitbox, false);
 
    for (let i = 0; i < 16; i++) {
-      createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random());
+      createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32 * Math.random());
    }
 
    for (let i = 0; i < 8; i++) {
-      createWoodShardParticle(transformComponent.position.x, transformComponent.position.y, 32);
+      createWoodShardParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
    }
 }

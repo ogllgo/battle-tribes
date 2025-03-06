@@ -1,11 +1,11 @@
 import { Point, randFloat } from "battletribes-shared/utils";
 import Board from "../../Board";
-import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
+import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 
 export interface CookingComponentParams {
    readonly heatingProgress: number;
@@ -30,11 +30,15 @@ export const CookingComponentArray = new ServerComponentArray<CookingComponent, 
    updateFromData: updateFromData
 });
 
-export function createCookingComponentParams(heatingProgress: number, isCooking: boolean): CookingComponentParams {
+const fillParams = (heatingProgress: number, isCooking: boolean): CookingComponentParams => {
    return {
       heatingProgress: heatingProgress,
       isCooking: isCooking
    };
+}
+
+export function createCookingComponentParams(): CookingComponentParams {
+   return fillParams(0, false);
 }
 
 function createParamsFromData(reader: PacketReader): CookingComponentParams {
@@ -42,11 +46,11 @@ function createParamsFromData(reader: PacketReader): CookingComponentParams {
    const isCooking = reader.readBoolean();
    reader.padOffset(3);
 
-   return createCookingComponentParams(heatingProgress, isCooking);
+   return fillParams(heatingProgress, isCooking);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.cooking, never>): CookingComponent {
-   const cookingComponentParams = entityConfig.serverComponents[ServerComponentType.cooking];
+function createComponent(entityParams: EntityParams): CookingComponent {
+   const cookingComponentParams = entityParams.serverComponentParams[ServerComponentType.cooking]!;
    
    return {
       heatingProgress: cookingComponentParams.heatingProgress,
@@ -71,7 +75,10 @@ const updateLight = (cookingComponent: CookingComponent, entity: Entity): void =
             0.6,
             0.35
          );
-         attachLightToEntity(cookingComponent.light, entity);
+
+         // @Hack
+         const renderInfo = getEntityRenderInfo(entity);
+         attachLightToRenderPart(cookingComponent.light, renderInfo.renderPartsByZIndex[0], entity);
       }
 
       if (Board.tickIntervalHasPassed(0.15)) {

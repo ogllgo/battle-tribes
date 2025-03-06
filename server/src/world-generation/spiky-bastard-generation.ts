@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex, subtileIsInWorld } from "../../../shared/src/subtiles";
 import { SubtileType } from "../../../shared/src/tiles";
-import { angle, randSign } from "../../../shared/src/utils";
+import { angle, Point, randSign } from "../../../shared/src/utils";
 import { createSpikyBastardConfig } from "../entities/spiky-bastard";
 import { createEntity } from "../Entity";
 import Layer from "../Layer";
@@ -71,10 +71,7 @@ export function generateSpikyBastards(undergroundLayer: Layer): void {
          const x = (attachedSubtileX + 0.5 + moveDirX * 1.5) * Settings.SUBTILE_SIZE;
          const y = (attachedSubtileY + 0.5 + moveDirY * 1.5) * Settings.SUBTILE_SIZE;
 
-         const config = createSpikyBastardConfig();
-         config.components[ServerComponentType.transform].position.x = x;
-         config.components[ServerComponentType.transform].position.y = y;
-         config.components[ServerComponentType.transform].relativeRotation = angle(moveDirX, moveDirY);
+         const config = createSpikyBastardConfig(new Point(x, y), angle(moveDirX, moveDirY));
          createEntity(config, undergroundLayer, 0);
          
          pushJoinBuffer(false);

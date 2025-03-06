@@ -8,7 +8,6 @@ export const enum HitboxFlag {
    // @Cleanup @Speed: This seems like it's central collision logic, perhaps instead change into a "collidesWithWalls" boolean on hitbox objects?
    IGNORES_WALL_COLLISIONS,
    GUARDIAN_LIMB_HITBOX,
-   GLURB_HEAD_SEGMENT,
    GLURB_TAIL_SEGMENT,
    COW_BODY,
    COW_HEAD,
@@ -33,41 +32,8 @@ export type BoxFromType = {
    [BoxType.rectangular]: RectangularBox;
 }
 
-export interface Hitbox<T extends BoxType = BoxType> {
-   readonly box: BoxFromType[T];
-   mass: number;
-   collisionType: HitboxCollisionType;
-   readonly collisionBit: HitboxCollisionBit;
-   readonly collisionMask: number;
-   readonly flags: ReadonlyArray<HitboxFlag>;
-   // @Memory: entities without physics components don't need these 4.
-   boundsMinX: number;
-   boundsMaxX: number;
-   boundsMinY: number;
-   boundsMaxY: number;
-}
-
-export function createHitbox<T extends BoxType>(box: BoxFromType[T], mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox<T> {
-   return {
-      box: box,
-      mass: mass,
-      collisionType: collisionType,
-      collisionBit: collisionBit,
-      collisionMask: collisionMask,
-      flags: flags,
-      boundsMinX: 0,
-      boundsMaxX: 0,
-      boundsMinY: 0,
-      boundsMaxY: 0
-   };
-}
-
 export function boxIsCircular(box: Box): box is CircularBox {
    return typeof (box as CircularBox).radius !== "undefined";
-}
-
-export function hitboxIsCircular(hitbox: Hitbox): hitbox is Hitbox<BoxType.circular> {
-   return typeof (hitbox.box as CircularBox).radius !== "undefined";
 }
 
 export function assertBoxIsCircular(box: Box): asserts box is CircularBox {
@@ -82,18 +48,12 @@ export function assertBoxIsRectangular(box: Box): asserts box is RectangularBox 
    }
 }
 
-export function assertHitboxIsRectangular(hitbox: Hitbox): asserts hitbox is Hitbox<BoxType.rectangular> {
-   if (boxIsCircular(hitbox.box)) {
-      throw new Error();
-   }
-}
-
 export function updateVertexPositionsAndSideAxes(box: RectangularBox): void {
    const x1 = -box.width * box.scale * 0.5;
    const x2 = box.width * box.scale * 0.5;
    const y2 = box.height * box.scale * 0.5;
 
-   const rotation = box.rotation;
+   const rotation = box.angle;
    const sinRotation = Math.sin(rotation);
    const cosRotation = Math.cos(rotation);
 
@@ -118,7 +78,7 @@ export function updateBox(box: Box, parentX: number, parentY: number, parentRota
    box.position.x = parentX + cosRotation * offsetX + sinRotation * offsetY;
    box.position.y = parentY + cosRotation * offsetY - sinRotation * offsetX;
 
-   box.rotation = box.relativeRotation + parentRotation;
+   box.angle = box.relativeAngle + parentRotation;
 
    if (!boxIsCircular(box)) {
       updateVertexPositionsAndSideAxes(box);
@@ -131,10 +91,14 @@ export function boxIsWithinRange(box: Box, position: Point, range: number): bool
       return circlesDoIntersect(position, range, box.position, box.radius * box.scale);
    } else {
       // Rectangular hitbox
-      return circleAndRectangleDoIntersect(position, range, box.position, box.width * box.scale, box.height * box.scale, box.rotation);
+      return circleAndRectangleDoIntersect(position, range, box.position, box.width * box.scale, box.height * box.scale, box.angle);
    }
 }
 
-export function cloneHitbox(hitbox: Hitbox): Hitbox {
-   return createHitbox(hitbox.box, hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
+export function cloneBox(box: Box): Box {
+   if (boxIsCircular(box)) {
+      return new CircularBox(box.position.copy(), box.offset.copy(), box.angle, box.radius);
+   } else {
+      return new RectangularBox(box.position.copy(), box.offset.copy(), box.angle, box.width, box.height);
+   }
 }

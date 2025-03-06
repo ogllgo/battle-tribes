@@ -6,7 +6,7 @@ import { getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../c
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { playerInstance } from "../../player";
-import { EntityConfig } from "../ComponentArray";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbByInventoryName } from "./InventoryUseComponent";
 
@@ -195,10 +195,14 @@ export const InventoryComponentArray = new ServerComponentArray<InventoryCompone
    updatePlayerFromData: updatePlayerFromData
 });
 
-export function createInventoryComponentParams(inventories: Partial<Record<InventoryName, Inventory>>): InventoryComponentParams {
+const fillParams = (inventories: Partial<Record<InventoryName, Inventory>>): InventoryComponentParams => {
    return {
       inventories: inventories
    };
+}
+
+export function createInventoryComponentParams(): InventoryComponentParams {
+   return fillParams({});
 }
 
 function createParamsFromData(reader: PacketReader): InventoryComponentParams {
@@ -209,11 +213,11 @@ function createParamsFromData(reader: PacketReader): InventoryComponentParams {
       inventories[inventory.name] = inventory;
    }
 
-   return createInventoryComponentParams(inventories);
+   return fillParams(inventories);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.inventory, never>): InventoryComponent {
-   const inventoryComponentParams = entityConfig.serverComponents[ServerComponentType.inventory];
+function createComponent(entityParams: EntityParams): InventoryComponent {
+   const inventoryComponentParams = entityParams.serverComponentParams[ServerComponentType.inventory]!;
    
    return {
       inventoryRecord: inventoryComponentParams.inventories,

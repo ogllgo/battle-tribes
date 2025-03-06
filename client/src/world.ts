@@ -1,22 +1,18 @@
-import { ServerComponentType } from "../../shared/src/components";
-import { Entity, EntityType } from "../../shared/src/entities";
+import { ServerComponentType, ServerComponentTypeString } from "../../shared/src/components";
+import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
 import { EntityRenderInfo } from "./EntityRenderInfo";
-import { ComponentArray, EntityConfig, getClientComponentArray, getComponentArrays, getServerComponentArray } from "./entity-components/ComponentArray";
+import { ComponentArray, getClientComponentArray, getComponentArrays, getServerComponentArray } from "./entity-components/ComponentArray";
 import { ServerComponentParams } from "./entity-components/components";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
-import { removeLightsAttachedToEntity, removeLightsAttachedToRenderPart } from "./lights";
-import { registerDirtyRenderInfo, removeEntityFromDirtyArrays } from "./rendering/render-part-matrices";
+import { attachLightToRenderPart, LightIntermediateInfo, removeAllAttachedLights } from "./lights";
+import { registerDirtyRenderInfo, undirtyRenderInfo } from "./rendering/render-part-matrices";
 import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
-
-export interface EntityCreationInfo {
-   readonly renderInfo: EntityRenderInfo;
-}
 
 export const layers = new Array<Layer>();
 
@@ -90,94 +86,147 @@ export type ClientServerComponentParams = Partial<{
 }>;
 
 // @Cleanup: location
-// @Cleanup: perhaps 2 of these properties can be combined into a map? instead of record + array
-export interface EntityPreCreationInfo<ServerComponentTypes extends ServerComponentType> {
-   readonly serverComponentTypes: ReadonlyArray<ServerComponentType>;
-   readonly serverComponentParams: {
-      [T in ServerComponentTypes]: ServerComponentParams<T>;
-   };
+/** Basically just the paramaters of the components used to create an entity. */
+export interface EntityParams {
+   readonly entityType: EntityType;
+   readonly serverComponentParams: Partial<{
+      [T in ServerComponentType]: ServerComponentParams<T>;
+   }>;
+   readonly clientComponentParams: Partial<{
+      [T in ClientComponentType]: ClientComponentParams<T>;
+   }>;
 }
 
-/** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
-export function createEntity(entity: Entity, entityType: EntityType, layer: Layer, preCreationInfo: EntityPreCreationInfo<ServerComponentType>): EntityCreationInfo {
-   const clientComponentParams = getEntityClientComponentConfigs(entityType);
-   
-   // Calculate the max nbmer of render parts the entity can have
-   let maxNumRenderParts = 0;
-   for (const componentType of preCreationInfo.serverComponentTypes) {
-      const componentArray = getServerComponentArray(componentType);
-      maxNumRenderParts += componentArray.getMaxRenderParts(preCreationInfo);
-   }
-   // @Hack @Garbage
-   for (const componentType of Object.keys(clientComponentParams).map(Number) as Array<ClientComponentType>) {
-      const componentArray = getClientComponentArray(componentType);
-      maxNumRenderParts += componentArray.getMaxRenderParts(preCreationInfo);
-   }
-   
-   const renderLayer = getEntityRenderLayer(entityType, preCreationInfo);
-   const renderHeight = calculateRenderDepthFromLayer(renderLayer, preCreationInfo);
-   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, maxNumRenderParts);
-   
-   // Create entity config
-   const entityConfig: EntityConfig<never, never> = {
-      entity: entity,
-      entityType: entityType,
-      layer: layer,
-      renderInfo: renderInfo,
-      serverComponents: preCreationInfo.serverComponentParams,
-      // @Cleanup: Should this instead be extracted into pre-creation info?
-      clientComponents: clientComponentParams
-   };
+export interface EntityIntermediateInfo {
+   readonly renderInfo: EntityRenderInfo;
+   readonly lights: Array<LightIntermediateInfo>;
+}
 
-   // Get whichever client and server components the entity has
+// @Location
+/** Entity creation info, populated with all the data which comprises a full entity. */
+export interface EntityCreationInfo {
+   readonly entityParams: EntityParams;
+   componentIntermediateInfoRecord: Partial<Record<number, object>>;
+   readonly entityIntermediateInfo: EntityIntermediateInfo;
+}
+
+const getEntityServerComponentTypes = (entityParams: EntityParams): ReadonlyArray<ServerComponentType> => {
+   return Object.keys(entityParams.serverComponentParams).map(Number);
+}
+const getEntityClientComponentTypes = (entityParams: EntityParams): ReadonlyArray<ClientComponentType> => {
+   return Object.keys(entityParams.clientComponentParams).map(Number);
+}
+
+const getEntityComponentArrays = (entityParams: EntityParams): ReadonlyArray<ComponentArray> => {
+   // @Garbage
+   const serverComponentTypes = getEntityServerComponentTypes(entityParams);
+   const clientComponentTypes = getEntityClientComponentTypes(entityParams);
+
    const componentArrays = new Array<ComponentArray>();
-   // @Hack @Garbage
-   for (const serverComponentType of Object.keys(entityConfig.serverComponents).map(Number)) {
-      const componentArray = getServerComponentArray(serverComponentType);
-      componentArrays.push(componentArray);
+   for (const serverComponentType of serverComponentTypes) {
+      componentArrays.push(getServerComponentArray(serverComponentType));
    }
-   // @Hack @Garbage
-   for (const clientComponentType of Object.keys(entityConfig.clientComponents).map(Number)) {
-      const componentArray = getClientComponentArray(clientComponentType);
-      componentArrays.push(componentArray);
+   for (const clientComponentType of clientComponentTypes) {
+      componentArrays.push(getClientComponentArray(clientComponentType));
    }
+   return componentArrays;
+}
 
-   /** Stores the render parts based on their ID so that components can later access them */
-   const renderPartsRecord: Partial<Record<number, object>> = {};
+const getMaxNumRenderParts = (entityParams: EntityParams): number => {
+   let maxNumRenderParts = 0;
 
-   // Create render parts
-   for (const componentArray of componentArrays) {
-      if (typeof componentArray.createRenderParts !== "undefined") {
-         const renderParts = componentArray.createRenderParts(renderInfo, entityConfig);
-         renderPartsRecord[componentArray.id] = renderParts;
-      }
+   // @Garbage
+   const serverComponentTypes = getEntityServerComponentTypes(entityParams);
+   for (const componentType of serverComponentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+      maxNumRenderParts += componentArray.getMaxRenderParts(entityParams);
    }
 
-   // Create components
-   for (const componentArray of componentArrays) {
-      const renderParts = renderPartsRecord[componentArray.id]!;
-      const component = componentArray.createComponent(entityConfig, renderParts);
-      
-      // @Hack: so that ghost entites don't add components
-      if (entity !== 0) {
-         componentArray.addComponent(entity, component);
-      }
-
-      // @Cleanup: unneeded
-      // if (isPlayer) {
-      //    if (typeof componentArray.updatePlayerFromData !== "undefined") {
-      //       componentArray.updatePlayerFromData(reader, true);
-      //    } else {
-      //       componentArray.padData(reader);
-      //    }
-      // }
+   // @Garbage
+   const clientComponentTypes = getEntityClientComponentTypes(entityParams);
+   for (const componentType of clientComponentTypes) {
+      const componentArray = getClientComponentArray(componentType);
+      maxNumRenderParts += componentArray.getMaxRenderParts(entityParams);
    }
+
+   return maxNumRenderParts;
+}
+
+// @Cleanup: remove the need to pass in Entity
+/** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
+export function createEntity(entity: Entity, entityParams: EntityParams): EntityCreationInfo {
+   const maxNumRenderParts = getMaxNumRenderParts(entityParams);
+   const renderLayer = getEntityRenderLayer(entityParams.entityType, entityParams);
+   const renderHeight = calculateRenderDepthFromLayer(renderLayer, entityParams);
+   const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, maxNumRenderParts);
+
+   const componentArrays = getEntityComponentArrays(entityParams);
    
+   // Populate intermediate info
+   const entityIntermediateInfo: EntityIntermediateInfo = {
+      renderInfo: renderInfo,
+      lights: []
+   };
+   const componentIntermediateInfoRecord: Partial<Record<number, object>> = {};
+   for (const componentArray of componentArrays) {
+      if (typeof componentArray.populateIntermediateInfo !== "undefined") {
+         const componentIntermediateInfo = componentArray.populateIntermediateInfo(entityIntermediateInfo, entityParams);
+         componentIntermediateInfoRecord[componentArray.id] = componentIntermediateInfo;
+      }
+   }
+
    registerDirtyRenderInfo(renderInfo);
 
    return {
-      renderInfo: renderInfo
+      entityParams: entityParams,
+      componentIntermediateInfoRecord: componentIntermediateInfoRecord,
+      entityIntermediateInfo: entityIntermediateInfo
    };
+}
+
+export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Layer, creationInfo: EntityCreationInfo): void {
+   const componentArrays = getEntityComponentArrays(creationInfo.entityParams);
+
+   for (const componentArray of componentArrays) {
+      const componentIntermediateInfo = creationInfo.componentIntermediateInfoRecord[componentArray.id]!;
+      const component = componentArray.createComponent(creationInfo.entityParams, componentIntermediateInfo, creationInfo.entityIntermediateInfo);
+      
+      componentArray.addComponent(entity, component);
+   }
+
+   registerBasicEntityInfo(entity, creationInfo.entityParams.entityType, spawnTicks, layer, creationInfo.entityIntermediateInfo.renderInfo);
+      
+   // @Incomplete: is this really the right place to do this? is onLoad even what i want?
+   // Call onLoad functions
+   {
+      const componentArrays = getComponentArrays();
+      for (let i = 0; i < componentArrays.length; i++) {
+         const componentArray = componentArrays[i];
+         if (typeof componentArray.onLoad !== "undefined" && componentArray.hasComponent(entity)) {
+            componentArray.onLoad(entity);
+         }
+      }
+   }
+
+   const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
+   layer.addEntityToRendering(entity, renderInfo.renderLayer, renderInfo.renderHeight);
+   
+   // If the entity has first spawned in, call any spawn functions
+   const ageTicks = getEntityAgeTicks(entity);
+   if (ageTicks === 0) {
+      const componentArrays = getComponentArrays();
+      for (let i = 0; i < componentArrays.length; i++) {
+         const componentArray = componentArrays[i];
+         if (componentArray.hasComponent(entity) && typeof componentArray.onSpawn !== "undefined") {
+            componentArray.onSpawn(entity);
+         }
+      }
+   }
+
+   // Create lights
+   for (const lightIntermediateInfo of creationInfo.entityIntermediateInfo.lights) {
+      attachLightToRenderPart(lightIntermediateInfo.light, lightIntermediateInfo.attachedRenderPart, entity);
+   }
 }
 
 export function removeEntity(entity: Entity, isDeath: boolean): void {
@@ -198,17 +247,10 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
       }
    }
    
-   removeEntityFromDirtyArrays(renderInfo);
-
-   // Remove any attached lights
-   removeLightsAttachedToEntity(entity);
+   undirtyRenderInfo(renderInfo);
 
    removeEntitySounds(entity);
-
-   for (let i = 0; i < renderInfo.allRenderThings.length; i++) {
-      const renderPart = renderInfo.allRenderThings[i];
-      removeLightsAttachedToRenderPart(renderPart);
-   }
+   removeAllAttachedLights(renderInfo);
 
    const componentArrays = getComponentArrays();
 

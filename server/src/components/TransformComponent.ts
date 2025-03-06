@@ -4,22 +4,24 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, getTileIndexIncludingEdges, Point, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
 import { TileType } from "battletribes-shared/tiles";
-import { fixCarriedEntityPosition, PhysicsComponentArray } from "./PhysicsComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
-import { resolveWallCollision } from "../collision";
+import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
-import { Box, boxIsCircular, BoxType, Hitbox, HitboxFlag, hitboxIsCircular, updateBox } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
+import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
+import { Hitbox } from "../hitboxes";
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -30,8 +32,8 @@ interface HitboxTether {
    readonly damping: number;
 
    // Used for verlet integration
-   previousOffsetX: number;
-   previousOffsetY: number;
+   previousPositionX: number;
+   previousPositionY: number;
 }
 
 export interface EntityCarryInfo {
@@ -45,33 +47,13 @@ export interface EntityCarryInfo {
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
 export class TransformComponent {
-   /** Combined mass of all the entity's hitboxes */
-   public totalMass = 0;
-
-   /** Position of the entity in the world */
-   public position = new Point(0, 0);
-
-   // @Hack: I am now storing velocity on the transform component to account for static entities (entities
-   // without physics components) which can be carried on physics entities. So they need to have velocity
-   // to be properly interpolated on the client side.
-   public selfVelocity = new Point(0, 0);
-   public externalVelocity = new Point(0, 0);
-
-   // @Hack: this shit sucks!!!!
-   // I need it so that carried entities can accumulate rotation from their parents, but once the 
-   // hitbox-carry rework is done this won't be necessary. So I could probably then just remove the
-   // rotation property entirely from the transform component, that would be neat.
-   /** Direction the entity is facing in radians */
-   public relativeRotation = 0;
-   public rotation = 0;
-
+   // @Speed: may want to re-introduce the totalMass property
+   
    // @Cleanup: unused?
    public collisionPushForceMultiplier = 1;
 
-   /** Set of all chunks the entity is contained in */
+   /** All chunks the entity is contained in */
    public readonly chunks = new Array<Chunk>();
-   // @Hack: used just so we can get chunk chunkIndex of a chunk in the addChunk function. Cursed. Remove this
-   // public chunkIndexes = new Array<number>();
 
    public isInRiver = false;
 
@@ -88,7 +70,7 @@ export class TransformComponent {
    public boundingAreaMinY = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
 
-   /** Whether the entities' position/rotation/hitboxes have changed during the current tick or not. */
+   /** Whether the entities' position/angle/hitboxes have changed during the current tick or not. */
    public isDirty = false;
 
    public pathfindingNodesAreDirty = false;
@@ -133,12 +115,14 @@ export class TransformComponent {
       }
 
       // If the game object is standing on a stepping stone they aren't in a river
+      // @Hack
+      const hitbox = this.hitboxes[0];
       for (const chunk of this.chunks) {
          for (const steppingStone of chunk.riverSteppingStones) {
             const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
             
-            const distX = this.position.x - steppingStone.positionX;
-            const distY = this.position.y - steppingStone.positionY;
+            const distX = hitbox.box.position.x - steppingStone.positionX;
+            const distY = hitbox.box.position.y - steppingStone.positionY;
             if (distX * distX + distY * distY <= size * size / 4) {
                this.isInRiver = false;
                return;
@@ -156,8 +140,8 @@ export class TransformComponent {
          idealDistance: idealDistance,
          springConstant: springConstant,
          damping: damping,
-         previousOffsetX: hitbox.box.offset.x,
-         previousOffsetY: hitbox.box.offset.y
+         previousPositionX: hitbox.box.position.x,
+         previousPositionY: hitbox.box.position.y
       };
       this.tethers.push(tether);
    }
@@ -166,21 +150,20 @@ export class TransformComponent {
    // Note: entity is null if the hitbox hasn't been created yet
    public addHitbox(hitbox: Hitbox, entity: Entity | null): void {
       this.hitboxes.push(hitbox);
-      if (hitbox.box.parent === null) {
+      if (hitbox.parent === null) {
          this.rootHitboxes.push(hitbox);
-      } else {
-         hitbox.box.parent.children.push(hitbox.box);
       }
 
       const localID = this.nextHitboxLocalID++;
       this.hitboxLocalIDs.push(localID);
       
-      this.totalMass += hitbox.mass;
-
       // Only update the transform stuff if the entity is created, as if it isn't created then the position of the entity will just be 0,0 (default).
       if (entity !== null) {
          const box = hitbox.box;
-         updateBox(box, this.position.x, this.position.y, this.relativeRotation);
+         if (hitbox.parent !== null) {
+            const parentBox = hitbox.parent.box;
+            updateBox(box, parentBox.position.x, parentBox.position.y, parentBox.angle);
+         }
       
          const boundsMinX = box.calculateBoundsMinX();
          const boundsMaxX = box.calculateBoundsMaxX();
@@ -215,12 +198,16 @@ export class TransformComponent {
       }
    }
    
-   /** Recalculates the entities' miscellaneous transforms stuff to match their position and rotation */
+   /** Recalculates the entities' miscellaneous transforms stuff to match their position and angle */
    public cleanHitboxes(entity: Entity): void {
-      assert(this.hitboxes.length > 0);
+      // @Temporary?
+      // assert(this.hitboxes.length > 0);
+      if (this.hitboxes.length === 0) {
+         return;
+      }
 
       for (const hitbox of this.rootHitboxes) {
-         cleanHitbox(this, hitbox, this.position, this.rotation);
+         updateRootHitbox(hitbox);
       }
 
       this.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -439,24 +426,27 @@ export class TransformComponent {
    }
 }
 
-// @Hack: THIS SHIT STINKY
-const getHitboxByBox = (transformComponent: TransformComponent, box: Box): Hitbox => {
-   for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.box === box) {
-         return hitbox;
-      }
-   }
+const updateAttachedHitboxRecursively = (hitbox: Hitbox): void => {
+   const parent = hitbox.parent;
+   assert(parent !== null);
+   updateBox(hitbox.box, parent.box.position.x, parent.box.position.y, parent.box.angle);
+   
+   hitbox.velocity.x = parent.velocity.x;
+   hitbox.velocity.y = parent.velocity.y;
 
-   throw new Error();
+   for (const childHitbox of hitbox.children) {
+      updateAttachedHitboxRecursively(childHitbox);
+   }
 }
 
-// @Cleanup: name is bad, doesn't fully 'clean' the hitbox, only the position, rotation, etc.
-const cleanHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, parentPosition: Readonly<Point>, parentRotation: number): void => {
-   updateBox(hitbox.box, parentPosition.x, parentPosition.y, parentRotation);
-
-   for (const child of hitbox.box.children) {
-      const childHitbox = getHitboxByBox(transformComponent, child);
-      cleanHitbox(transformComponent, childHitbox, hitbox.box.position, hitbox.box.rotation);
+const updateRootHitbox = (hitbox: Hitbox): void => {
+   // For root hitboxes, they have no parent so we just set their angle to their relative angle
+   // @INCOMPLETE: Does this account for entities being carried??
+   // - If i make it so that carrying just attaches the hitbox to the other entities' hitboxes, then it does.
+   hitbox.box.angle = hitbox.box.relativeAngle;
+   
+   for (const attachedHitbox of hitbox.children) {
+      updateAttachedHitboxRecursively(attachedHitbox);
    }
 }
 
@@ -464,26 +454,84 @@ export const TransformComponentArray = new ComponentArray<TransformComponent>(Se
 TransformComponentArray.onJoin = onJoin;
 TransformComponentArray.onRemove = onRemove;
 
+export function resolveEntityBorderCollisions(transformComponent: TransformComponent): void {
+   // @Hack This will crash IMMEDIATELY
+   const rootHitbox = transformComponent.hitboxes[0];
+   
+   // Left border
+   if (transformComponent.boundingAreaMinX < 0) {
+      rootHitbox.box.position.x -= transformComponent.boundingAreaMinX;
+      rootHitbox.velocity.x = 0;
+      transformComponent.isDirty = true;
+      // Right border
+   } else if (transformComponent.boundingAreaMaxX > Settings.BOARD_UNITS) {
+      rootHitbox.box.position.x -= transformComponent.boundingAreaMaxX - Settings.BOARD_UNITS;
+      rootHitbox.velocity.x = 0;
+      transformComponent.isDirty = true;
+   }
+
+   // Bottom border
+   if (transformComponent.boundingAreaMinY < 0) {
+      rootHitbox.box.position.y -= transformComponent.boundingAreaMinY;
+      rootHitbox.velocity.y = 0;
+      transformComponent.isDirty = true;
+      // Top border
+   } else if (transformComponent.boundingAreaMaxY > Settings.BOARD_UNITS) {
+      rootHitbox.box.position.y -= transformComponent.boundingAreaMaxY - Settings.BOARD_UNITS;
+      rootHitbox.velocity.y = 0;
+      transformComponent.isDirty = true;
+   }
+
+   // If the entity is outside the world border after resolving border collisions, throw an error
+   if (rootHitbox.box.position.x < 0 || rootHitbox.box.position.x >= Settings.BOARD_UNITS || rootHitbox.box.position.y < 0 || rootHitbox.box.position.y >= Settings.BOARD_UNITS) {
+      const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
+      throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
+   }
+}
+
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
    if (transformComponent.mount !== 0) {
-      mountEntity(entity, transformComponent.mount, 0, 0, true);
+      attachEntityToHost(entity, transformComponent.mount, 0, 0, true);
    } else {
       transformComponent.carryRoot = entity;
    }
 
-   transformComponent.rotation = transformComponent.relativeRotation;
-   if (transformComponent.carryRoot !== entity) {
-      const carryRootTransformComponent = TransformComponentArray.getComponent(transformComponent.carryRoot);
-      transformComponent.rotation += carryRootTransformComponent.rotation;
+   // @Incomplete
+   // transformComponent.rotation = transformComponent.relativeRotation;
+   // if (transformComponent.carryRoot !== entity) {
+   //    const carryRootTransformComponent = TransformComponentArray.getComponent(transformComponent.carryRoot);
+   //    transformComponent.rotation += carryRootTransformComponent.rotation;
+   // }
+
+   // Add hitboxes to their parents' children
+   // We do this here instead of when the hitboxes are first added, so that hitboxes of entities which aren't added to the board yet can't be accessed.
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.parent !== null) {
+         hitbox.parent.children.push(hitbox);
+      }
    }
+
+   // Update the hitbox tether last positions, in case their positions were changed after creation
+   for (const tether of transformComponent.tethers) {
+      tether.previousPositionX = tether.hitbox.box.position.x;
+      tether.previousPositionY = tether.hitbox.box.position.y;
+   }
+   
+   // @Cleanup: This is so siliar to the updatePosition function
    
    // Hitboxes added before the entity joined the world haven't affected the transform yet, so we update them now
    transformComponent.cleanHitboxes(entity);
-   
+
+   resolveEntityBorderCollisions(transformComponent);
+
+   if (transformComponent.isDirty) {
+      transformComponent.cleanHitboxes(entity);
+   }
+
    transformComponent.updateIsInRiver(entity);
    
    // Add to chunks
@@ -530,6 +578,15 @@ function onRemove(entity: Entity): void {
          dismountEntity(carryInfo.carriedEntity);
       }
    }
+
+   // Remove hitboxes from their parent arrays
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.parent !== null) {
+         const idx = hitbox.parent.children.indexOf(hitbox);
+         assert(idx !== -1);
+         hitbox.parent.children.splice(idx, 1);
+      }
+   }
    
    // Remove from chunks
    const layer = getEntityLayer(entity);
@@ -546,84 +603,13 @@ function onRemove(entity: Entity): void {
    removeEntityLights(entity);
 }
 
-const getBoxLocalID = (transformComponent: TransformComponent, box: Box): number => {
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
-      if (hitbox.box === box) {
-         const localID = transformComponent.hitboxLocalIDs[i];
-         return localID;
-      }
-   }
-
-   throw new Error();
-}
-
-const addBaseHitboxData = (packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox, localID: number): void => {
-   // Important that local ID is important (see how the client uses it when updating from data)
-   packet.addNumber(localID);
-   
-   const box = hitbox.box;
-   packet.addNumber(box.position.x);
-   packet.addNumber(box.position.y);
-   packet.addNumber(box.relativeRotation);
-   packet.addNumber(box.rotation);
-   packet.addNumber(hitbox.mass);
-   packet.addNumber(box.offset.x);
-   packet.addNumber(box.offset.y);
-   packet.addNumber(box.scale);
-   packet.addNumber(hitbox.collisionType);
-   packet.addNumber(hitbox.collisionBit);
-   packet.addNumber(hitbox.collisionMask);
-   // Flags
-   packet.addNumber(hitbox.flags.length);
-   for (const flag of hitbox.flags) {
-      packet.addNumber(flag);
-   }
-
-   const parentHitboxLocalID = hitbox.box.parent !== null && transformComponent !== null ? getBoxLocalID(transformComponent, hitbox.box.parent) : -1;
-   packet.addNumber(parentHitboxLocalID);
-}
-const getBaseHitboxDataLength = (hitbox: Hitbox): number => {
-   let lengthBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   return lengthBytes;
-}
-
-export function addCircularHitboxData(packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox<BoxType.circular>, localID: number): void {
-   addBaseHitboxData(packet, transformComponent, hitbox, localID);
-   
-   const box = hitbox.box;
-   packet.addNumber(box.radius);
-}
-export function getCircularHitboxDataLength(hitbox: Hitbox<BoxType.circular>): number {
-   return getBaseHitboxDataLength(hitbox) + Float32Array.BYTES_PER_ELEMENT;
-}
-
-export function addRectangularHitboxData(packet: Packet, transformComponent: TransformComponent | null, hitbox: Hitbox<BoxType.rectangular>, localID: number): void {
-   addBaseHitboxData(packet, transformComponent, hitbox, localID);
-
-   const box = hitbox.box;
-   packet.addNumber(box.width);
-   packet.addNumber(box.height);
-}
-export function getRectangularHitboxDataLength(hitbox: Hitbox<BoxType.rectangular>): number {
-   return getBaseHitboxDataLength(hitbox) + 2 * Float32Array.BYTES_PER_ELEMENT;
-}
-
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const hitbox of transformComponent.hitboxes) {
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-      if (hitboxIsCircular(hitbox)) {
-         lengthBytes += getCircularHitboxDataLength(hitbox);
-      } else {
-         // @Hack: cast
-         lengthBytes += getRectangularHitboxDataLength(hitbox as Hitbox<BoxType.rectangular>);
-      }
+      lengthBytes += getHitboxDataLength(hitbox);
 
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
@@ -650,34 +636,12 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   packet.addNumber(transformComponent.position.x);
-   packet.addNumber(transformComponent.position.y);
-   packet.addNumber(transformComponent.rotation);
-   packet.addNumber(transformComponent.relativeRotation);
    packet.addNumber(transformComponent.collisionBit);
    packet.addNumber(transformComponent.collisionMask);
-
-   packet.addNumber(transformComponent.selfVelocity.x);
-   packet.addNumber(transformComponent.selfVelocity.y);
-   packet.addNumber(transformComponent.externalVelocity.x);
-   packet.addNumber(transformComponent.externalVelocity.y);
    
    packet.addNumber(transformComponent.hitboxes.length);
    for (const hitbox of transformComponent.hitboxes) {
-      const localID = transformComponent.hitboxLocalIDs[transformComponent.hitboxes.indexOf(hitbox)];
-
-      if (hitboxIsCircular(hitbox)) {
-         packet.addBoolean(true);
-         packet.padOffset(3);
-         
-         addCircularHitboxData(packet, transformComponent, hitbox, localID);
-      } else {
-         packet.addBoolean(false);
-         packet.padOffset(3);
-
-         // @Hack: cast
-         addRectangularHitboxData(packet, transformComponent, hitbox as Hitbox<BoxType.rectangular>, localID);
-      }
+      addHitboxDataToPacket(packet, hitbox);
 
       let tether: HitboxTether | undefined;
       for (const currentTether of transformComponent.tethers) {
@@ -692,7 +656,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.padOffset(3);
 
          // Other hitbox
-         packet.addNumber(getBoxLocalID(transformComponent, tether.otherHitbox.box));
+         packet.addNumber(tether.otherHitbox.localID);
       } else {
          packet.addBoolean(false);
          packet.padOffset(3);
@@ -709,24 +673,28 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-export function mountEntity(entity: Entity, mount: Entity, offsetX: number, offsetY: number, destroyWhenMountIsDestroyed: boolean): void {
-   assert(mount !== entity);
+/** Must be called after putting a hitbox as the child of another entity's hitbox.  */
+export function attachEntityToHost(attachment: Entity, host: Entity, offsetX: number, offsetY: number, destroyWhenMountIsDestroyed: boolean): void {
+   assert(host !== attachment);
    
-   const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   const mountTransformComponent = TransformComponentArray.getComponent(host);
+   const entityTransformComponent = TransformComponentArray.getComponent(attachment);
    
    entityTransformComponent.carryRoot = mountTransformComponent.carryRoot;
-   entityTransformComponent.mount = mount;
+   entityTransformComponent.mount = host;
 
    const carryInfo: EntityCarryInfo = {
-      carriedEntity: entity,
+      carriedEntity: attachment,
       offsetX: offsetX,
       offsetY: offsetY,
       destroyWhenMountIsDestroyed: destroyWhenMountIsDestroyed
    };
    mountTransformComponent.carriedEntities.push(carryInfo);
 
-   fixCarriedEntityPosition(entityTransformComponent, carryInfo, mountTransformComponent);
+   // @Hack: assume the first hitbox of the entity is the one attached
+   const attachmentTransformComponent = TransformComponentArray.getComponent(attachment);
+   const attachedHitbox = attachmentTransformComponent.hitboxes[0];
+   updateAttachedHitboxRecursively(attachedHitbox);
 }
 
 const propagateCarryRootChange = (transformComponent: TransformComponent, carryRoot: Entity): void => {
@@ -762,8 +730,18 @@ export function dismountEntity(entity: Entity): void {
 }
 
 export function getEntityTile(transformComponent: TransformComponent): TileIndex {
-   const tileX = Math.floor(transformComponent.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(transformComponent.position.y / Settings.TILE_SIZE);
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
+   return getTileIndexIncludingEdges(tileX, tileY);
+}
+
+// @Location?
+export function getHitboxTile(hitbox: Hitbox): TileIndex {
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
    return getTileIndexIncludingEdges(tileX, tileY);
 }
 
@@ -777,8 +755,8 @@ export function getRandomPositionInBox(box: Box): Point {
       const xOffset = randFloat(-halfWidth, halfWidth);
       const yOffset = randFloat(-halfHeight, halfHeight);
 
-      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
-      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.angle);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.angle);
       return new Point(x, y);
    }
 }

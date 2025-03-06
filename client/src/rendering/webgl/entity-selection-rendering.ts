@@ -1,9 +1,7 @@
-import { getHighlightedEntityID, getHighlightedRenderInfo, getSelectedEntityID } from "../../entity-selection";
 import { createWebGLProgram, gl, windowWidth, windowHeight, createTexture } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
-import { Entity } from "../../../../shared/src/entities";
 import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./entity-rendering";
-import { cleanEntityRenderInfo, translateEntityRenderParts } from "../render-part-matrices";
+import { cleanEntityRenderInfo, getRenderPartRenderPosition, translateEntityRenderParts } from "../render-part-matrices";
 import { gameFramebuffer } from "../../Game";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../../EntityRenderInfo";
 
@@ -16,50 +14,6 @@ let lastTextureWidth = 0;
 let lastTextureHeight = 0;
 
 let framebufferVertexData: Float32Array;
-
-// @Incomplete
-
-// export function getClosestGroupNum(entity: Entity): number {
-//    const groups = getEntityHighlightInfoArray(entity);
-   
-//    let minCursorDist = Number.MAX_SAFE_INTEGER;
-//    let closestGroupNum = 0;
-   
-//    for (let i = 0; i < groups.length; i++) {
-//       const group = groups[i];
-
-//       for (let j = 0; j < group.length; j++) {
-//          const highlightInfo = group[j];
-
-//          const x = entity.position.x + rotateXAroundOrigin(highlightInfo.xOffset, highlightInfo.yOffset, entity.rotation);
-//          const y = entity.position.y + rotateYAroundOrigin(highlightInfo.xOffset, highlightInfo.yOffset, entity.rotation);
-//          const dist = distance(Game.cursorPositionX!, Game.cursorPositionY!, x, y);
-//          if (dist < minCursorDist) {
-//             minCursorDist = dist;
-//             closestGroupNum = highlightInfo.group;
-//          }
-//       }
-//    }
-
-//    return closestGroupNum;
-// }
-
-// @Temporary
-export function getClosestGroupNum(entity: Entity): number {
-   return 1;
-}
-
-// const getHighlightInfoGroup = (entity: Entity): HighlightInfoGroup => {
-//    const groupNum = getClosestGroupNum(entity);
-//    const highlightInfoArray = getEntityHighlightInfoArray(entity);
-//    for (let i = 0; i < highlightInfoArray.length; i++) {
-//       const group = highlightInfoArray[i];
-//       if (group[0].group === groupNum) {
-//          return group;
-//       }
-//    }
-//    throw new Error();
-// }
 
 // @Temporary
 let originPositionUniformLocation: WebGLUniformLocation;
@@ -275,9 +229,12 @@ export function renderEntitySelection(renderInfo: EntityRenderInfo, frameProgres
    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0);
 
    gl.enableVertexAttribArray(0);
+
+   // @HACK
+   const renderPosition = getRenderPartRenderPosition(renderInfo.renderPartsByZIndex[0]);
    
    gl.uniform1f(isSelectedUniformLocation, isSelected ? 1 : 0);
-   gl.uniform2f(originPositionUniformLocation, renderInfo.renderPosition.x, renderInfo.renderPosition.y);
+   gl.uniform2f(originPositionUniformLocation, renderPosition.x, renderPosition.y);
 
    gl.activeTexture(gl.TEXTURE0);
    gl.bindTexture(gl.TEXTURE_2D, framebufferTexture);

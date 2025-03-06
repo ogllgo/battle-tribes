@@ -2,12 +2,11 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat, randInt } from "../../../../shared/src/utils";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createColouredParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
@@ -17,13 +16,13 @@ export interface MithrilOreNodeComponentParams {
    readonly renderHeight: number;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface MithrilOreNodeComponent {}
 
-export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreNodeComponent, MithrilOreNodeComponentParams, RenderParts>(ServerComponentType.mithrilOreNode, true, {
+export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreNodeComponent, MithrilOreNodeComponentParams, IntermediateInfo>(ServerComponentType.mithrilOreNode, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -43,8 +42,11 @@ function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentPara
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.mithrilOreNode, never>): RenderParts {
-   const mithrilOreNodeComponentParams = entityConfig.serverComponents[ServerComponentType.mithrilOreNode];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
    const size = mithrilOreNodeComponentParams.size;
    const variant = mithrilOreNodeComponentParams.variant;
 
@@ -68,12 +70,12 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    }
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(textureSource)
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -96,6 +98,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < 3; i++) {
       const c = randFloat(0.25, 0.4);
       
@@ -103,11 +106,12 @@ function onHit(entity: Entity): void {
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
    
-   playSoundOnEntity("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, false);
+   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < 6; i++) {
       const c = randFloat(0.25, 0.4);
       
@@ -115,6 +119,6 @@ function onDie(entity: Entity): void {
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
 
-   playSoundOnEntity("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, false);
-   playSoundOnEntity("mithril-death.mp3", 0.4, randFloat(0.9, 1.1), entity, false);
+   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("mithril-death.mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
 }

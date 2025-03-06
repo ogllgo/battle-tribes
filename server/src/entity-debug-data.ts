@@ -2,7 +2,6 @@ import { CircleDebugData, EntityDebugData, LineDebugData, PathData, TileHighligh
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { TRIBESMAN_COMMUNICATION_RANGE } from "./entities/tribes/tribesman-ai/tribesman-ai";
-import { StructureComponentArray } from "./components/StructureComponent";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { TribesmanAIComponentArray } from "./components/TribesmanAIComponent";
 import { ItemTypeString } from "battletribes-shared/items/items";
@@ -10,8 +9,9 @@ import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { getEntityType } from "./world";
 import { AIHelperComponentArray } from "./components/AIHelperComponent";
 import { AIPlan } from "./tribesman-ai/tribesman-ai-planning";
-import { AIPlanType } from "../../shared/src/utils";
+import { AIPlanType, getTileX, getTileY } from "../../shared/src/utils";
 import { AIAssignmentComponentArray } from "./components/AIAssignmentComponent";
+import { YetiComponentArray } from "./components/YetiComponent";
 
 const getPlanDebugString = (plan: AIPlan): string => {
    switch (plan.type) {
@@ -97,6 +97,18 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
    if (TribeComponentArray.hasComponent(entity)) {
       const tribeComponent = TribeComponentArray.getComponent(entity);
       debugEntries.push("Researched techs: " + tribeComponent.tribe.unlockedTechs.map(tech => tech.name).join(", "));
+   }
+
+   if (YetiComponentArray.hasComponent(entity)) {
+      const yetiComponent = YetiComponentArray.getComponent(entity);
+      for (const tileIndex of yetiComponent.territory) {
+         const tileX = getTileX(tileIndex);
+         const tileY = getTileY(tileIndex);
+         tileHighlights.push({
+            colour: [1, 0, 0],
+            tilePosition: [tileX, tileY]
+         });
+      }
    }
 
    return {

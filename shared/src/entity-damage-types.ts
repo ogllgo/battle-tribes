@@ -125,6 +125,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
+   [EntityType.fleshSwordItemEntity]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
    [EntityType.woodenArrow]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
@@ -314,6 +318,14 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.spikyBastard]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.glurbBodySegment]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.glurbHeadSegment]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },

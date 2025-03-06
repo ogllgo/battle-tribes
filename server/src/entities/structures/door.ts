@@ -1,6 +1,5 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
-import { createDoorHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { TransformComponent } from "../../components/TransformComponent";
@@ -13,22 +12,21 @@ import { TribeComponent } from "../../components/TribeComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { DoorComponent } from "../../components/DoorComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.buildingMaterial
-   | ServerComponentType.door;
+import { Point } from "../../../../shared/src/utils";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
 const HEALTHS = [15, 45];
 
-export function createDoorConfig(tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createDoorConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createDoorHitboxes(), null);
+   
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 16);
+   const hitbox = createHitbox(transformComponent, null, box, 0.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    // @Hack: Shouldn't need!
    const physicsComponent = new PhysicsComponent();

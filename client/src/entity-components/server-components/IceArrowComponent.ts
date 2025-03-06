@@ -33,9 +33,10 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    if (Math.random() < 30 / Settings.TPS) {
-      createSnowflakeParticle(transformComponent.position.x, transformComponent.position.y);
+      createSnowflakeParticle(hitbox.box.position.x, hitbox.box.position.y);
    }
 
    if (Math.random() < 30 / Settings.TPS) {

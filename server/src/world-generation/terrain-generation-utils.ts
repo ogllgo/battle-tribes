@@ -1,11 +1,13 @@
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { Biome } from "../../../shared/src/biomes";
-import { getTileIndexIncludingEdges, getTileX, getTileY, TileIndex, tileIsInWorld } from "../../../shared/src/utils";
+import { assert, getTileIndexIncludingEdges, getTileX, getTileY, TileIndex, tileIsInWorld } from "../../../shared/src/utils";
 import Layer from "../Layer";
 import { Settings } from "../../../shared/src/settings";
+import { EntityType } from "../../../shared/src/entities";
 
 export interface LocalBiome {
+   readonly id: number;
    readonly biome: Biome;
    readonly layer: Layer;
    readonly tiles: ReadonlyArray<TileIndex>;
@@ -13,12 +15,21 @@ export interface LocalBiome {
    readonly tilesInBorder: ReadonlyArray<TileIndex>;
    /** Stores how many tiles of each type there are in the local chunk */
    readonly tileCensus: Partial<Record<TileType, number>>;
+   readonly minTileX: number;
+   readonly maxTileX: number;
+   readonly minTileY: number;
+   readonly maxTileY: number;
+   /** Stores how many entities of each type there are in the local chunk.
+    * IMPORTANT: Only stores entities which can drop loot. */
+   readonly entityCensus: Map<EntityType, number>;
    // @Incomplete: This would be more accurate if we stored the index of the tile in the tiles array with the smallest average distance from the other tiles.
    //   e.g. think about a crescent shaped local biome, if we use the center pos then that won't even be in the biome!
    // The following 2 variables store the average position of the biome
    centerX: number;
    centerY: number;
 }
+
+let idCounter = 0;
 
 // @Cleanup: location? should these be in the layer file as it might be used outside of terrain generation (during the game loop)?
 
@@ -121,7 +132,7 @@ const getConnectedBiomeTiles = (layer: Layer, processedTiles: Set<TileIndex>, ti
    return connectedTiles;
 }
 
-/** Must be called for each layer */
+/** Must be called for each layer. Should be called before any entities in that layer are spawned, as components can rely on knowing the local biome of the entity. */
 export function groupLocalBiomes(layer: Layer): void {
    const tileBiomes = layer.tileBiomes;
    
@@ -146,7 +157,12 @@ export function groupLocalBiomes(layer: Layer): void {
          const centerX = totalTileX * Settings.TILE_SIZE / connectedTiles.length + Settings.TILE_SIZE * 0.5;
          const centerY = totalTileY * Settings.TILE_SIZE / connectedTiles.length + Settings.TILE_SIZE * 0.5;
 
+         let minTileX = Number.MAX_SAFE_INTEGER;
+         let maxTileX = Number.MIN_SAFE_INTEGER;
+         let minTileY = Number.MAX_SAFE_INTEGER;
+         let maxTileY = Number.MIN_SAFE_INTEGER;
          const tileCensus: Partial<Record<TileType, number>> = {};
+
          for (const tile of connectedTiles) {
             const tileType = layer.getTileType(tile);
             if (typeof tileCensus[tileType] === "undefined") {
@@ -155,14 +171,35 @@ export function groupLocalBiomes(layer: Layer): void {
                // @Hack: '!'
                tileCensus[tileType]!++;
             }
+
+            const tileX = getTileX(tile);
+            if (tileX < minTileX) {
+               minTileX = tileX;
+            }
+            if (tileX > maxTileX) {
+               maxTileX = tileX;
+            }
+            const tileY = getTileY(tile);
+            if (tileY < minTileY) {
+               minTileY = tileY;
+            }
+            if (tileY > maxTileY) {
+               maxTileY = tileY;
+            }
          }
          
          const localBiome: LocalBiome = {
+            id: idCounter++,
             biome: tileBiomes[tileIndex],
             layer: layer,
             tiles: connectedTiles,
             tilesInBorder: connectedTiles.filter(tileIndex => tileIsInWorld(getTileX(tileIndex), getTileY(tileIndex))),
             tileCensus: tileCensus,
+            minTileX: minTileX,
+            maxTileX: maxTileX,
+            minTileY: minTileY,
+            maxTileY: maxTileY,
+            entityCensus: new Map(),
             centerX: centerX,
             centerY: centerY
          };

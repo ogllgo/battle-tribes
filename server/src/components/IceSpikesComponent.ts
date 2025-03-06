@@ -8,18 +8,15 @@ import Layer from "../Layer";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
-import { ItemType } from "battletribes-shared/items/items";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { EntityConfig } from "../components";
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { createIceShardConfig } from "../entities/projectiles/ice-shard";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { getDistanceToClosestEntity } from "../layer-utils";
-import { createItemsOverEntity } from "../entities/item-entity";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -47,9 +44,9 @@ IceSpikesComponentArray.onTick = {
 IceSpikesComponentArray.preRemove = preRemove;
 IceSpikesComponentArray.onHitboxCollision = onHitboxCollision;
 
-function onInitialise(config: EntityConfig<ServerComponentType.iceSpikes>, entity: Entity): void {
-   if (config.components[ServerComponentType.iceSpikes].rootIceSpike === 0) {
-      config.components[ServerComponentType.iceSpikes].rootIceSpike = entity;
+function onInitialise(config: EntityConfig, entity: Entity): void {
+   if (config.components[ServerComponentType.iceSpikes]!.rootIceSpike === 0) {
+      config.components[ServerComponentType.iceSpikes]!.rootIceSpike = entity;
    }
 }
 
@@ -66,9 +63,10 @@ const grow = (iceSpikes: Entity): void => {
    // @Speed: Garbage collection
 
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Calculate the spawn position for the new ice spikes
-   const position = transformComponent.position.copy();
+   const position = hitbox.box.position.copy();
    const offsetDirection = 2 * Math.PI * Math.random();
    position.x += Vars.GROWTH_OFFSET * Math.sin(offsetDirection);
    position.y += Vars.GROWTH_OFFSET * Math.cos(offsetDirection);
@@ -86,14 +84,12 @@ const grow = (iceSpikes: Entity): void => {
       return;
    }
 
+   // @Speed: this function can be way too slow... just need to check for any entities within 40 units
    const minDistanceToEntity = getDistanceToClosestEntity(layer, position);
    if (minDistanceToEntity >= 40) {
       const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
 
-      const config = createIceSpikesConfig(iceSpikesComponent.rootIceSpike);
-      config.components[ServerComponentType.transform].position.x = position.x;
-      config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+      const config = createIceSpikesConfig(position.copy(), 2 * Math.PI * Math.random(), iceSpikesComponent.rootIceSpike);
       createEntity(config, layer, 0);
       
       const rootIceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikesComponent.rootIceSpike);
@@ -112,15 +108,12 @@ function onTick(iceSpikes: Entity): void {
 }
 
 function preRemove(iceSpikes: Entity): void {
-   if (Math.random() < 0.5) {
-      createItemsOverEntity(iceSpikes, ItemType.frostcicle, 1);
-   }
-
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
+   const iceSpikesHitbox = transformComponent.hitboxes[0];
    
    // Explode into a bunch of ice spikes
    const numProjectiles = randInt(3, 4);
-   createIceShardExplosion(getEntityLayer(iceSpikes), transformComponent.position.x, transformComponent.position.y, numProjectiles);
+   createIceShardExplosion(getEntityLayer(iceSpikes), iceSpikesHitbox.box.position.x, iceSpikesHitbox.box.position.y, numProjectiles);
 }
 
 function getDataLength(): number {
@@ -155,17 +148,14 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       const y = originY + 10 * Math.cos(moveDirection);
       const position = new Point(x, y);
 
-      const config = createIceShardConfig();
-      config.components[ServerComponentType.transform].position.x = position.x;
-      config.components[ServerComponentType.transform].position.y = position.y;
-      config.components[ServerComponentType.transform].relativeRotation = moveDirection;
-      config.components[ServerComponentType.transform].externalVelocity.x += 700 * Math.sin(moveDirection);
-      config.components[ServerComponentType.transform].externalVelocity.y += 700 * Math.cos(moveDirection);
+      const config = createIceShardConfig(position, moveDirection);
+      config.components[ServerComponentType.transform]!.hitboxes[0].velocity.x += 700 * Math.sin(moveDirection);
+      config.components[ServerComponentType.transform]!.hitboxes[0].velocity.y += 700 * Math.cos(moveDirection);
       createEntity(config, layer, 0);
    }
 }
 
-function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti || collidingEntityType === EntityType.snowball) {
       return;
@@ -174,13 +164,10 @@ function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, _pushedHi
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "ice_spikes")) {
-         const transformComponent = TransformComponentArray.getComponent(iceSpikes);
-         const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-         const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+         const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
          
-         damageEntity(collidingEntity, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
-         applyKnockback(collidingEntity, 180, hitDirection);
+         hitEntity(collidingEntity, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+         applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    
          if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

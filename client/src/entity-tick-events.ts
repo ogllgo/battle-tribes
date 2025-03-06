@@ -1,6 +1,6 @@
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { randFloat, randInt } from "battletribes-shared/utils";
-import { playSoundOnEntity } from "./sound";
+import { playSoundOnHitbox } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
@@ -8,26 +8,34 @@ import { getRandomPositionOnBoxEdge, TransformComponentArray } from "./entity-co
 import { createHotSparkParticle } from "./particles";
 
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
+   // @Hack
+   const transformComponent = TransformComponentArray.getComponent(sourceEntity);
+   const hitbox = transformComponent.hitboxes[0];
+
    switch (bowItemType) {
       case ItemType.wooden_bow: {
-         playSoundOnEntity("bow-fire.mp3", 0.4, 1, sourceEntity, false);
+         playSoundOnHitbox("bow-fire.mp3", 0.4, 1, hitbox, false);
          break;
       }
       case ItemType.reinforced_bow: {
-         playSoundOnEntity("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity, false);
+         playSoundOnHitbox("reinforced-bow-fire.mp3", 0.2, 1, hitbox, false);
          break;
       }
       case ItemType.ice_bow: {
-         playSoundOnEntity("ice-bow-fire.mp3", 0.4, 1, sourceEntity, false);
+         playSoundOnHitbox("ice-bow-fire.mp3", 0.4, 1, hitbox, false);
          break;
       }
    }
 }
 
 const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
+   // @Hack
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {
-         playSoundOnEntity("fart.mp3", 0.3, randFloat(0.9, 1.2), entity, false);
+         playSoundOnHitbox("fart.mp3", 0.3, randFloat(0.9, 1.2), hitbox, false);
          break;
       }
       case EntityTickEventType.fireBow: {
@@ -36,11 +44,9 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.automatonAccident: {
-         playSoundOnEntity("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), entity, false);
+         playSoundOnHitbox("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), hitbox, false);
 
          // Make sparks fly off
-         const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
          const position = getRandomPositionOnBoxEdge(hitbox.box);
 
          for (let i = 0; i < 5; i++) {
@@ -54,7 +60,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.cowEat: {
-         playSoundOnEntity("cow-eat.mp3", 0.4, randFloat(0.9, 1.1), entity, true);
+         playSoundOnHitbox("cow-eat.mp3", 0.4, randFloat(0.9, 1.1), hitbox, true);
          break;
       }
    }

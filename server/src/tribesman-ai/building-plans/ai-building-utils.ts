@@ -1,14 +1,15 @@
-import { Hitbox, updateBox } from "../../../../shared/src/boxes/boxes";
-import { createNormalStructureHitboxes } from "../../../../shared/src/boxes/entity-hitbox-creation";
+import { Box } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../../../shared/src/collision";
-import { hitboxesAreColliding } from "../../../../shared/src/hitbox-collision";
+import { ServerComponentType } from "../../../../shared/src/components";
 import { Settings } from "../../../../shared/src/settings";
 import { StructureType } from "../../../../shared/src/structures";
 import { getSubtileIndex } from "../../../../shared/src/subtiles";
 import { getTileIndexIncludingEdges, Point, randFloat } from "../../../../shared/src/utils";
-import { hitboxArraysAreColliding } from "../../collision";
-import { SafetyNode, addHitboxesOccupiedNodes } from "../ai-building";
+import { boxArraysAreColliding, boxHasCollisionWithBoxes } from "../../collision-detection";
+import { createStructureConfig } from "../../structure-placement";
+import { getTribes } from "../../world";
+import { SafetyNode, addBoxesOccupiedNodes } from "../ai-building";
 import TribeBuildingLayer from "./TribeBuildingLayer";
 
 const enum Vars {
@@ -19,32 +20,29 @@ export interface BuildingCandidate {
    readonly buildingLayer: TribeBuildingLayer;
    readonly position: Point;
    readonly rotation: number;
-   readonly hitboxes: ReadonlyArray<Hitbox>;
+   readonly boxes: ReadonlyArray<Box>;
 }
 
 export function createBuildingCandidate(entityType: StructureType, buildingLayer: TribeBuildingLayer, x: number, y: number, rotation: number): BuildingCandidate {
-   const hitboxes = createNormalStructureHitboxes(entityType);
+   // @SUPAHACK
+   const tribe = getTribes()[0];
+   const entityConfig = createStructureConfig(tribe, entityType, new Point(x, y), rotation, []);
+   const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+   const hitboxes = transformComponent.hitboxes;
 
    const candidate: BuildingCandidate = {
       buildingLayer: buildingLayer,
       position: new Point(x, y),
       rotation: rotation,
-      hitboxes: hitboxes
+      boxes: hitboxes.map(hitbox => hitbox.box)
    };
-
-   for (const hitbox of candidate.hitboxes) {
-      const box = hitbox.box;
-      updateBox(box, candidate.position.x, candidate.position.y, candidate.rotation);
-   }
 
    return candidate;
 }
 
 export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean {
    // Make sure the hitboxes don't go outside the world
-   for (const hitbox of candidate.hitboxes) {
-      const box = hitbox.box;
-
+   for (const box of candidate.boxes) {
       const minX = box.calculateBoundsMinX();
       const maxX = box.calculateBoundsMaxX();
       const minY = box.calculateBoundsMinY();
@@ -56,9 +54,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
    
    // Make sure the building isn't in any walls
    const layer = candidate.buildingLayer.layer;
-   for (const hitbox of candidate.hitboxes) {
-      const box = hitbox.box;
-
+   for (const box of candidate.boxes) {
       const minSubtileX = Math.floor(box.calculateBoundsMinX() / Settings.SUBTILE_SIZE);
       const maxSubtileX = Math.floor(box.calculateBoundsMaxX() / Settings.SUBTILE_SIZE);
       const minSubtileY = Math.floor(box.calculateBoundsMinY() / Settings.SUBTILE_SIZE);
@@ -76,9 +72,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
 
    // Make sure the building isn't over any building blocking tiles
    // @Copynpaste from structureIntersectsWithBuildingBlockingTiles in shared
-   for (const hitbox of candidate.hitboxes) {
-      const box = hitbox.box;
-      
+   for (const box of candidate.boxes) {
       const minTileX = Math.floor(box.calculateBoundsMinX() / Settings.TILE_SIZE);
       const maxTileX = Math.floor(box.calculateBoundsMaxX() / Settings.TILE_SIZE);
       const minTileY = Math.floor(box.calculateBoundsMinY() / Settings.TILE_SIZE);
@@ -92,8 +86,8 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
             }
             
             // @Speed
-            const tileBox = new RectangularBox(null, new Point(0, 0), Settings.TILE_SIZE, Settings.TILE_SIZE, 0);
-            updateBox(tileBox, (tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE, 0);
+            const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
+            const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
 
             if (box.isColliding(tileBox)) {
                return false;
@@ -105,12 +99,12 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
    // Make sure the space doesn't collide with any buildings or their restricted building areas
    // @Speed!!
    for (const virtualBuilding of candidate.buildingLayer.virtualBuildings) {
-      if (hitboxArraysAreColliding(candidate.hitboxes, virtualBuilding.hitboxes)) {
+      if (boxArraysAreColliding(candidate.boxes, virtualBuilding.boxes)) {
          return false;
       }
 
       for (const restrictedArea of virtualBuilding.restrictedBuildingAreas) {
-         if (hitboxesAreColliding(restrictedArea.hitbox.box, candidate.hitboxes)) {
+         if (boxHasCollisionWithBoxes(restrictedArea.box, candidate.boxes)) {
             return false;
          }
       }
@@ -122,7 +116,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
 export function buildingCandidateIsOnSafeNode(candidate: BuildingCandidate): boolean {
    const occupiedNodes = new Set<SafetyNode>();
    // @Speed
-   addHitboxesOccupiedNodes(candidate.hitboxes, occupiedNodes);
+   addBoxesOccupiedNodes(candidate.boxes, occupiedNodes);
    for (const node of occupiedNodes) {
       if (candidate.buildingLayer.safetyNodes.has(node)) {
          return true;

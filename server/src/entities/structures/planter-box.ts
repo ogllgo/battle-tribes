@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createPlanterBoxHitboxes } from "battletribes-shared/boxes/entity-hitbox-creation";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import Tribe from "../../Tribe";
@@ -11,18 +10,19 @@ import { StructureComponent } from "../../components/StructureComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { PlanterBoxComponent } from "../../components/PlanterBoxComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { StructureConnection } from "../../../../shared/src/structures";
+import { Point } from "../../../../shared/src/utils";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { createHitbox } from "../../hitboxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { StructureConnection } from "../../structure-placement";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.structure
-   | ServerComponentType.tribe
-   | ServerComponentType.planterBox;
-
-export function createPlanterBoxConfig(tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig<ComponentTypes> {
+export function createPlanterBoxConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   transformComponent.addHitboxes(createPlanterBoxHitboxes(), null);
+
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 80, 80);
+   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   transformComponent.addHitbox(hitbox, null);
    
    const healthComponent = new HealthComponent(15);
    

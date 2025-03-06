@@ -24,6 +24,7 @@ const SUMMON_DATA_RECORD = {
    },
    [ServerComponentType.inventoryUse]: {},
    [ServerComponentType.item]: {},
+   [ServerComponentType.fleshSwordItem]: {},
    [ServerComponentType.pebblum]: {},
    [ServerComponentType.physics]: {},
    [ServerComponentType.player]: {},
@@ -86,7 +87,9 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.furnace]: {},
    [ServerComponentType.fireTorch]: {},
    [ServerComponentType.spikyBastard]: {},
-   [ServerComponentType.glurb]: {},
+   [ServerComponentType.glurbSegment]: {},
+   [ServerComponentType.glurbBodySegment]: {},
+   [ServerComponentType.glurbHeadSegment]: {},
    [ServerComponentType.slurbTorch]: {},
    [ServerComponentType.attackingEntities]: {},
    [ServerComponentType.patrolAI]: {},
@@ -103,6 +106,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.blockAttack]: {},
    [ServerComponentType.slingTurretRock]: {},
    [ServerComponentType.taming]: {},
+   [ServerComponentType.loot]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

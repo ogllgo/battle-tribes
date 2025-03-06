@@ -2,21 +2,11 @@ import { Entity, TreeSize } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TransformComponentArray } from "./TransformComponent";
-import { createCircularGrassBlocker, GrassBlockerCircle } from "../grass-blockers";
 import { Packet } from "battletribes-shared/packets";
-import { ItemType } from "battletribes-shared/items/items";
-import { randInt } from "battletribes-shared/utils";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { getEntityLayer } from "../world";
-
-export const TREE_RADII: ReadonlyArray<number> = [40, 50];
-
-const SEED_DROP_CHANCES: ReadonlyArray<number> = [0.25, 0.5];
-
-const WOOD_DROP_AMOUNTS: ReadonlyArray<[number, number]> = [
-   [2, 4],
-   [5, 7]
-];
+import { createGrassBlocker } from "../grass-blockers";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
+import { Point } from "../../../shared/src/utils";
 
 const TREE_TRUNK_RADII: Record<TreeSize, number> = {
    [TreeSize.small]: 15,
@@ -33,23 +23,15 @@ export class TreeComponent {
 
 export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerComponentType.tree, true, getDataLength, addDataToPacket);
 TreeComponentArray.onJoin = onJoin;
-TreeComponentArray.preRemove = preRemove;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const treeHitbox = transformComponent.hitboxes[0];
+   
    const treeComponent = TreeComponentArray.getComponent(entity);
-   createCircularGrassBlocker(transformComponent.position.copy(), getEntityLayer(entity), 0, 0.9, TREE_TRUNK_RADII[treeComponent.treeSize], entity)
-}
 
-function preRemove(tree: Entity): void {
-   const treeComponent = TreeComponentArray.getComponent(tree);
-
-   createItemsOverEntity(tree, ItemType.wood, randInt(...WOOD_DROP_AMOUNTS[treeComponent.treeSize]));
-
-   const dropChance = SEED_DROP_CHANCES[treeComponent.treeSize];
-   if (Math.random() < dropChance) {
-      createItemsOverEntity(tree, ItemType.seed, 1)
-   }
+   const blockerBox = new CircularBox(treeHitbox.box.position.copy(), new Point(0, 0), 0, TREE_TRUNK_RADII[treeComponent.treeSize]);
+   createGrassBlocker(blockerBox, getEntityLayer(entity), 0, 0.9, entity)
 }
 
 function getDataLength(): number {

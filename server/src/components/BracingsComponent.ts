@@ -1,6 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { Packet } from "../../../shared/src/packets";
 import { deregisterEntitySupports, registerEntitySupports } from "../collapses";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
@@ -21,8 +20,8 @@ function onRemove(entity: Entity): void {
    deregisterEntitySupports(transformComponent);
 }
 
-function getDataLength(_entity: Entity): number {
+function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(packet: Packet, entity: Entity): void {}
+function addDataToPacket(): void {}

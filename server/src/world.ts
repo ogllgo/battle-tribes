@@ -5,7 +5,6 @@ import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityRemoval } from "./server/player-clients";
 import Tribe from "./Tribe";
-import Chunk from "./Chunk";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
@@ -19,7 +18,8 @@ import { EntityConfig } from "./components";
 import { attachLightToHitbox } from "./light-levels";
 
 const enum Vars {
-   START_TIME = 6
+   // START_TIME = 6
+   START_TIME = 20
 }
 
 interface EntityJoinInfo {

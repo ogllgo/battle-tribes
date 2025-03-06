@@ -1303,6 +1303,11 @@ export function itemInfoIsPlaceable(itemType: ItemType, itemInfo: unknown): item
    return itemTypeInfo === "placeable";
 }
 
+export function itemInfoIsConsumable(itemType: ItemType, itemInfo: unknown): itemInfo is ConsumableItemInfo {
+   const itemTypeInfo = ITEM_TYPE_RECORD[itemType];
+   return itemTypeInfo === "healing";
+}
+
 export function itemTypeIsArmour(itemType: ItemType): itemType is ArmourItemType {
    return ITEM_TYPE_RECORD[itemType] === "armour";
 }

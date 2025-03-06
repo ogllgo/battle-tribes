@@ -3,16 +3,15 @@ import { DecorationType } from "battletribes-shared/components";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface DecorationComponentParams {
    readonly decorationType: DecorationType;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface DecorationComponent {
    decorationType: DecorationType;
@@ -33,9 +32,9 @@ const DECORATION_RENDER_INFO: Record<DecorationType, string> = {
    [DecorationType.flower4]: "decorations/flower4.png"
 };
 
-export const DecorationComponentArray = new ServerComponentArray<DecorationComponent, DecorationComponentParams, RenderParts>(ServerComponentType.decoration, true, {
+export const DecorationComponentArray = new ServerComponentArray<DecorationComponent, DecorationComponentParams, IntermediateInfo>(ServerComponentType.decoration, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -50,12 +49,15 @@ function createParamsFromData(reader: PacketReader): DecorationComponentParams {
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.decoration, never>): RenderParts {
-   const decorationComponentParams = entityConfig.serverComponents[ServerComponentType.decoration];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
    
-   renderInfo.attachRenderPart(
+   const decorationComponentParams = entityParams.serverComponentParams[ServerComponentType.decoration]!;
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex(DECORATION_RENDER_INFO[decorationComponentParams.decorationType])
@@ -65,9 +67,9 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.decoration, never>): DecorationComponent {
+function createComponent(entityParams: EntityParams): DecorationComponent {
    return {
-      decorationType: entityConfig.serverComponents[ServerComponentType.decoration].decorationType
+      decorationType: entityParams.serverComponentParams[ServerComponentType.decoration]!.decorationType
    };
 }
 

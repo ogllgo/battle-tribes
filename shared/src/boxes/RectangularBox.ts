@@ -3,9 +3,7 @@ import { Point } from "../utils";
 import BaseBox from "./BaseBox";
 import { Box, boxIsCircular, updateVertexPositionsAndSideAxes } from "./boxes";
 
-export type RectangularBoxVertexPositions = [tl: Point, tr: Point, bl: Point, br: Point];
-
-export class RectangularBox extends BaseBox {
+class RectangularBox extends BaseBox {
    public width: number;
    public height: number;
 
@@ -16,8 +14,8 @@ export class RectangularBox extends BaseBox {
    public axisY = 0;
 
    // @Cleanup: move rotation to just after offset
-   constructor(parent: Box | null, offset: Point, width: number, height: number, rotation: number) {
-      super(parent, offset, rotation);
+   constructor(position: Point, offset: Point, rotation: number, width: number, height: number) {
+      super(position, offset, rotation);
 
       this.width = width;
       this.height = height;
@@ -41,7 +39,7 @@ export class RectangularBox extends BaseBox {
    public isColliding(otherHitbox: Box, epsilon: number = 0): boolean {
       if (boxIsCircular(otherHitbox)) {
          // Circular hitbox
-         return circleAndRectangleDoIntersect(otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon, this.position, this.width * this.scale - epsilon * 0.5, this.height * this.scale - epsilon * 0.5, this.rotation);
+         return circleAndRectangleDoIntersect(otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon, this.position, this.width * this.scale - epsilon * 0.5, this.height * this.scale - epsilon * 0.5, this.angle);
       } else {
          // Rectangular hitbox
 

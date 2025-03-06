@@ -18,6 +18,7 @@ export const enum LoadingScreenStatus {
 interface LoadingScreenProps {
    readonly username: string;
    readonly tribeType: TribeType;
+   readonly isSpectating: boolean;
    setAppState(appState: AppState): void;
 }
 const LoadingScreen = (props: LoadingScreenProps) => {
@@ -53,7 +54,7 @@ const LoadingScreen = (props: LoadingScreenProps) => {
             return;
          }
          
-         Client.sendInitialPlayerData(props.username, props.tribeType);
+         Client.sendInitialPlayerData(props.username, props.tribeType, props.isSpectating);
 
          // 
          // Initialise game

@@ -1,14 +1,15 @@
 import { Settings } from "battletribes-shared/settings";
-import { blockerIsCircluar } from "battletribes-shared/grass-blockers";
 import Chunk from "./Chunk";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./components/TransformComponent";
-import { boxIsCircular, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular, cloneBox, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import { entityExists, getEntityLayer } from "./world";
 import { surfaceLayer } from "./layers";
 import { Packet } from "../../shared/src/packets";
-import { distance, Point, pointIsInRectangle, unitsToChunksClamped } from "../../shared/src/utils";
+import { Point, unitsToChunksClamped } from "../../shared/src/utils";
 import Layer from "./Layer";
+import { boxIsInRange } from "./ai-shared";
+import { addBoxDataToPacket, getBoxDataLength } from "./server/packet-hitboxes";
 
 const enum Vars {
    GRASS_FULL_REGROW_TICKS = Settings.TPS * 120,
@@ -16,27 +17,15 @@ const enum Vars {
    STRUCTURE_BLOCKER_PADDING = -4
 }
 
-interface BaseGrassBlocker {
+export interface GrassBlocker {
    readonly id: number;
-   readonly position: Readonly<Point>;
    readonly layer: Layer;
+   readonly box: Readonly<Box>;
    /** Amount of grass that the blocker blocks (from 0 -> 1) */
    blockAmount: number;
    // @Bandwidth: unnecessary
    readonly maxBlockAmount: number;
 }
-
-export interface GrassBlockerRectangle extends BaseGrassBlocker {
-   readonly width: number;
-   readonly height: number;
-   readonly rotation: number;
-}
-
-export interface GrassBlockerCircle extends BaseGrassBlocker {
-   readonly radius: number;
-}
-
-export type GrassBlocker = GrassBlockerRectangle | GrassBlockerCircle;
 
 let nextID = 0;
 
@@ -44,21 +33,10 @@ const blockers = new Array<GrassBlocker>();
 const blockerAssociatedEntities = new Array<Entity>();
 
 const getBlockerChunks = (blocker: GrassBlocker): ReadonlyArray<Chunk> => {
-   let minX: number;
-   let maxX: number;
-   let minY: number;
-   let maxY: number;
-   if (blockerIsCircluar(blocker)) {
-      minX = blocker.position.x - blocker.radius;
-      maxX = blocker.position.x + blocker.radius;
-      minY = blocker.position.y - blocker.radius;
-      maxY = blocker.position.y + blocker.radius;
-   } else {
-      minX = blocker.position.x - blocker.width * 0.5;
-      maxX = blocker.position.x + blocker.width * 0.5;
-      minY = blocker.position.y - blocker.height * 0.5;
-      maxY = blocker.position.y + blocker.height * 0.5;
-   }
+   const minX = blocker.box.calculateBoundsMinX();
+   const maxX = blocker.box.calculateBoundsMaxX();
+   const minY = blocker.box.calculateBoundsMinY();
+   const maxY = blocker.box.calculateBoundsMaxY();
    
    const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -87,28 +65,13 @@ const addGrassBlocker = (blocker: GrassBlocker, associatedEntityID: number): voi
    blockerAssociatedEntities.push(associatedEntityID);
 }
 
-export function createCircularGrassBlocker(position: Readonly<Point>, layer: Layer, initialBlockAmount: number, maxBlockAmount: number, radius: number, associatedEntity: Entity): void {
-   const blocker: GrassBlockerCircle = {
+export function createGrassBlocker(box: Box, layer: Layer, initialBlockAmount: number, maxBlockAmount: number, associatedEntity: Entity): void {
+   const blocker: GrassBlocker = {
       id: nextID++,
-      position: position,
       layer: layer,
+      box: box,
       blockAmount: initialBlockAmount,
-      maxBlockAmount: maxBlockAmount,
-      radius: radius
-   };
-   addGrassBlocker(blocker, associatedEntity);
-}
-
-export function createRectangularGrassBlocker(position: Readonly<Point>, layer: Layer, initialBlockAmount: number, maxBlockAmount: number, width: number, height: number, rotation: number, associatedEntity: Entity): void {
-   const blocker: GrassBlockerRectangle = {
-      id: nextID++,
-      position: position,
-      layer: layer,
-      blockAmount: initialBlockAmount,
-      maxBlockAmount: maxBlockAmount,
-      width: width,
-      height: height,
-      rotation: rotation
+      maxBlockAmount: maxBlockAmount
    };
    addGrassBlocker(blocker, associatedEntity);
 }
@@ -158,50 +121,35 @@ export function createStructureGrassBlockers(structure: Entity): void {
       if (hitbox.flags.includes(HitboxFlag.NON_GRASS_BLOCKING)) {
          continue;
       }
-
-      const box = hitbox.box;
-
-      const position = transformComponent.position.copy();
-      position.x += box.offset.x;
-      position.y += box.offset.y;
-
+      
+      const box = cloneBox(hitbox.box);
       if (boxIsCircular(box)) {
-         createCircularGrassBlocker(position, layer, 0, 1, box.radius + Vars.STRUCTURE_BLOCKER_PADDING, structure);
+         box.radius += Vars.STRUCTURE_BLOCKER_PADDING;
       } else {
-         createRectangularGrassBlocker(position, layer, 0, 1, box.width + Vars.STRUCTURE_BLOCKER_PADDING * 2, box.height + Vars.STRUCTURE_BLOCKER_PADDING * 2, transformComponent.rotation + box.rotation, structure);
+         box.width += 2 * Vars.STRUCTURE_BLOCKER_PADDING;
+         box.height += 2 * Vars.STRUCTURE_BLOCKER_PADDING;
+         updateVertexPositionsAndSideAxes(box);
       }
+
+      createGrassBlocker(box, layer, 0, 1, structure);
    }
 }
 
 export function getGrassBlockerLengthBytes(blocker: GrassBlocker): number {
-   let lengthBytes = 7 * Float32Array.BYTES_PER_ELEMENT;
-
-   if (blockerIsCircluar(blocker)) {
-      lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   } else {
-      lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
-   }
-
+   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += getBoxDataLength(blocker.box);
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    return lengthBytes;
 }
 
 export function addGrassBlockerToData(packet: Packet, blocker: GrassBlocker): void {
    packet.addNumber(blocker.id);
    packet.addNumber(blocker.layer.depth);
-   packet.addNumber(blocker.position.x);
-   packet.addNumber(blocker.position.y);
+
+   addBoxDataToPacket(packet, blocker.box);
+   
    packet.addNumber(blocker.blockAmount);
    packet.addNumber(blocker.maxBlockAmount);
-
-   packet.addBoolean(blockerIsCircluar(blocker));
-   packet.padOffset(3);
-   if (blockerIsCircluar(blocker)) {
-      packet.addNumber(blocker.radius);
-   } else {
-      packet.addNumber(blocker.width);
-      packet.addNumber(blocker.height);
-      packet.addNumber(blocker.rotation);
-   }
 }
 
 export function positionHasGrassBlocker(layer: Layer, x: number, y: number): boolean {
@@ -217,15 +165,8 @@ export function positionHasGrassBlocker(layer: Layer, x: number, y: number): boo
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const blocker of chunk.grassBlockers) {
-            if (blockerIsCircluar(blocker)) {
-               const dist = distance(x, y, blocker.position.x, blocker.position.y);
-               if (dist <= blocker.radius) {
-                  return true;
-               }
-            } else {
-               if (pointIsInRectangle(x, y, blocker.position.x, blocker.position.y, blocker.width, blocker.height, blocker.rotation)) {
-                  return true;
-               }
+            if (boxIsInRange(new Point(x, y), range, blocker.box)) {
+               return true;
             }
          }
       }

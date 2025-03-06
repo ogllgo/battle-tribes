@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { Point } from "battletribes-shared/utils";
-import { HitboxCollisionType, Hitbox, updateBox, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
@@ -11,6 +11,8 @@ import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
+import { Hitbox } from "./hitboxes";
+import CircularBox from "../../shared/src/boxes/CircularBox";
 
 interface EntityPairCollisionInfo {
    readonly minEntityInvolvedHitboxes: Array<Hitbox>;
@@ -19,46 +21,28 @@ interface EntityPairCollisionInfo {
 
 type CollisionPairs = Record<number, Record<number, EntityPairCollisionInfo | null>>;
 
-// @Cleanup @Incomplete
-// const entity1 = Board.entityRecord[entity1ID]!;
-// const entity2 = Board.entityRecord[entity2ID]!;
-// collide(entity1, entity2, hitbox, otherHitbox);
-// collide(entity2, entity1, otherHitbox, hitbox);
-// } else {
-//    // @Hack
-//    if (otherTransformComponent.collisionBit === COLLISION_BITS.plants) {
-//       latencyGameState.lastPlantCollisionTicks = Board.serverTicks;
-//    }
-//    break;
-// }
-
-const resolveHardCollision = (entity: Entity, pushInfo: CollisionPushInfo): void => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
-   transformComponent.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
-   transformComponent.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
+   affectedHitbox.box.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
+   affectedHitbox.box.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
 
    // Kill all the velocity going into the hitbox
    const bx = Math.sin(pushInfo.direction + Math.PI/2);
    const by = Math.cos(pushInfo.direction + Math.PI/2);
-   const selfVelocityProjectionCoeff = transformComponent.selfVelocity.x * bx + transformComponent.selfVelocity.y * by;
-   transformComponent.selfVelocity.x = bx * selfVelocityProjectionCoeff;
-   transformComponent.selfVelocity.y = by * selfVelocityProjectionCoeff;
-   const externalVelocityProjectionCoeff = transformComponent.externalVelocity.x * bx + transformComponent.externalVelocity.y * by;
-   transformComponent.externalVelocity.x = bx * externalVelocityProjectionCoeff;
-   transformComponent.externalVelocity.y = by * externalVelocityProjectionCoeff;
+   const velocityProjectionCoeff = affectedHitbox.velocity.x * bx + affectedHitbox.velocity.y * by;
+   affectedHitbox.velocity.x = bx * velocityProjectionCoeff;
+   affectedHitbox.velocity.y = by * velocityProjectionCoeff;
 }
 
-const resolveSoftCollision = (entity: Entity, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
       // Force gets greater the further into each other the entities are
       const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
       
-      transformComponent.externalVelocity.x += pushForce * Math.sin(pushInfo.direction);
-      transformComponent.externalVelocity.y += pushForce * Math.cos(pushInfo.direction);
+      affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
+      affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);
    }
 }
 
@@ -66,9 +50,9 @@ export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: H
    if (isPushed && PhysicsComponentArray.hasComponent(entity)) {
       const pushInfo = getCollisionPushInfo(pushedHitbox.box, pushingHitbox.box);
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
-         resolveHardCollision(entity, pushInfo);
+         resolveHardCollision(pushedHitbox, pushInfo);
       } else {
-         resolveSoftCollision(entity, pushingHitbox, pushInfo);
+         resolveSoftCollision(entity, pushedHitbox, pushingHitbox, pushInfo);
       }
    }
 
@@ -253,20 +237,133 @@ export function resolveWallCollisions(entity: Entity): boolean {
                continue;
             }
 
-            // Check if the tile is colliding
+            // @Garbage
             const tileCenterX = (subtileX + 0.5) * Settings.SUBTILE_SIZE;
             const tileCenterY = (subtileY + 0.5) * Settings.SUBTILE_SIZE;
-
-            const tileBox = new RectangularBox(null, new Point(0, 0), Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE, 0);
-            updateBox(tileBox, tileCenterX, tileCenterY, 0);
-
+            const tileBox = new RectangularBox(new Point(tileCenterX, tileCenterY), new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
+            
+            // Check if the tile is colliding
             if (box.isColliding(tileBox)) {
                const pushInfo = getCollisionPushInfo(box, tileBox);
-               resolveHardCollision(entity, pushInfo);
+               resolveHardCollision(hitbox, pushInfo);
                hasMoved = true;
             }
          }
       }
    }
    return hasMoved;
+}
+
+const boxHasCollisionWithHitboxes = (box: Box, boxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < boxes.length; i++) {
+      const otherHitbox = boxes[i];
+      if (box.isColliding(otherHitbox.box, epsilon)) {
+         return true;
+      }
+   }
+   return false;
+}
+
+// @Copynpaste
+export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): Array<Entity> {
+   const collidingEntities = new Array<Entity>();
+   const seenEntityIDs = new Set<number>();
+   
+   for (let i = 0; i < hitboxes.length; i++) {
+      const hitbox = hitboxes[i];
+      const box = hitbox.box;
+
+      let minX = box.calculateBoundsMinX();
+      let maxX = box.calculateBoundsMaxX();
+      let minY = box.calculateBoundsMinY();
+      let maxY = box.calculateBoundsMaxY();
+      if (minX < 0) {
+         minX = 0;
+      }
+      if (maxX >= Settings.BOARD_UNITS) {
+         maxX = Settings.BOARD_UNITS - 1;
+      }
+      if (minY < 0) {
+         minY = 0;
+      }
+      if (maxY >= Settings.BOARD_UNITS) {
+         maxY = Settings.BOARD_UNITS - 1;
+      }
+      
+      const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      
+      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+            const chunk = layer.getChunk(chunkX, chunkY);
+            for (let i = 0; i < chunk.entities.length; i++) {
+               const entity = chunk.entities[i];
+               if (seenEntityIDs.has(entity)) {
+                  continue;
+               }
+
+               seenEntityIDs.add(entity);
+               
+               const entityTransformComponent = TransformComponentArray.getComponent(entity);
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+                  collidingEntities.push(entity);
+               }
+            }
+         }
+      }
+   }
+
+   return collidingEntities;
+}
+
+// @Cleanup: remove
+const testCircularBox = new CircularBox(new Point(0, 0), new Point(0, 0), 0, 0);
+
+// @Location
+export function getEntitiesInRange(layer: Layer, x: number, y: number, range: number): Array<Entity> {
+   const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+
+   testCircularBox.radius = range;
+   testCircularBox.position.x = x;
+   testCircularBox.position.y = y;
+
+   const visionRangeSquared = Math.pow(range, 2);
+   
+   const seenIDs = new Set<number>();
+   const entities = new Array<Entity>();
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const entity of chunk.entities) {
+            // Don't add existing game objects
+            if (seenIDs.has(entity)) {
+               continue;
+            }
+
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.hitboxes[0];
+            if (Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2) <= visionRangeSquared) {
+               entities.push(entity);
+               seenIDs.add(entity);
+               continue;
+            }
+
+            // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
+            for (const hitbox of transformComponent.hitboxes) {
+               if (testCircularBox.isColliding(hitbox.box)) {
+                  entities.push(entity);
+                  seenIDs.add(entity);
+                  break;
+               }
+            }
+         }
+      }  
+   }
+
+   return entities;
 }

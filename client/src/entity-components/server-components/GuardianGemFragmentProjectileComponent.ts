@@ -1,13 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { createGenericGemParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -17,7 +16,7 @@ export interface GuardianGemFragmentProjectileComponentParams {
    readonly baseTintMultiplier: number;
 }
 
-interface RenderParts {
+interface IntermediateInfo {
    readonly renderPart: VisualRenderPart;
 }
 
@@ -31,9 +30,9 @@ const TEXTURE_SOURCES = [
    "entities/guardian-gem-fragment-projectile/fragment-3.png"
 ];
 
-export const GuardianGemFragmentProjectileComponentArray = new ServerComponentArray<GuardianGemFragmentProjectileComponent, GuardianGemFragmentProjectileComponentParams, RenderParts>(ServerComponentType.guardianGemFragmentProjectile, true, {
+export const GuardianGemFragmentProjectileComponentArray = new ServerComponentArray<GuardianGemFragmentProjectileComponent, GuardianGemFragmentProjectileComponentParams, IntermediateInfo>(ServerComponentType.guardianGemFragmentProjectile, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onDie: onDie,
@@ -53,11 +52,14 @@ function createParamsFromData(reader: PacketReader): GuardianGemFragmentProjecti
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.guardianGemFragmentProjectile, never>): RenderParts {
-   const guardianGemFragmentProjectileComponentParams = entityConfig.serverComponents[ServerComponentType.guardianGemFragmentProjectile];
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const guardianGemFragmentProjectileComponentParams = entityParams.serverComponentParams[ServerComponentType.guardianGemFragmentProjectile]!;
    
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(TEXTURE_SOURCES[guardianGemFragmentProjectileComponentParams.fragmentShape])
@@ -89,16 +91,16 @@ function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityCon
       }
    }
 
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
    };
 }
 
-function createComponent(_entityConfig: EntityConfig<never, never>, renderParts: RenderParts): GuardianGemFragmentProjectileComponent {
+function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): GuardianGemFragmentProjectileComponent {
    return {
-      renderPart: renderParts.renderPart
+      renderPart: intermediateInfo.renderPart
    };
 }
 
@@ -109,13 +111,14 @@ function getMaxRenderParts(): number {
 function onDie(entity: Entity): void {
    const guardianGemFragmentProjectileComponent = GuardianGemFragmentProjectileComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {
-      createGenericGemParticle(transformComponent, 4, guardianGemFragmentProjectileComponent.renderPart.tintR, guardianGemFragmentProjectileComponent.renderPart.tintG, guardianGemFragmentProjectileComponent.renderPart.tintB);
+      createGenericGemParticle(hitbox, 4, guardianGemFragmentProjectileComponent.renderPart.tintR, guardianGemFragmentProjectileComponent.renderPart.tintG, guardianGemFragmentProjectileComponent.renderPart.tintB);
    }
 
    if (Math.random() < 0.5) {
-      playSoundOnEntity("guardian-gem-fragment-death.mp3", 0.3, 1, entity, false);
+      playSoundOnHitbox("guardian-gem-fragment-death.mp3", 0.3, 1, hitbox, false);
    }
 }
    

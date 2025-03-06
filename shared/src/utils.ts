@@ -399,7 +399,7 @@ export function distBetweenPointAndRectangle(pointX: number, pointY: number, rec
 }
 
 export function distBetweenPointAndRectangularBox(pointX: number, pointY: number, rect: RectangularBox): number {
-   return distBetweenPointAndRectangle(pointX, pointY, rect.position, rect.width, rect.height, rect.rotation);
+   return distBetweenPointAndRectangle(pointX, pointY, rect.position, rect.width, rect.height, rect.angle);
 }
 
 export function assertUnreachable(x: never): never {

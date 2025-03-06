@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { removeFleshSword } from "../flesh-sword-ai";
 import { ItemType } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
@@ -32,16 +31,7 @@ export const ItemComponentArray = new ComponentArray<ItemComponent>(ServerCompon
 ItemComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
-},
-ItemComponentArray.onRemove = onRemove;
-
-function onRemove(entity: Entity): void {
-   // Remove flesh sword item entities
-   const itemComponent = ItemComponentArray.getComponent(entity);
-   if (itemComponent.itemType === ItemType.flesh_sword) {
-      removeFleshSword(entity);
-   }
-}
+};
 
 function onTick(itemEntity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);

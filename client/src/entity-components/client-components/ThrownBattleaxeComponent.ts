@@ -1,17 +1,18 @@
-import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { ServerComponentType } from "../../../../shared/src/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
 export interface ThrownBattleaxeComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface ThrownBattleaxeComponent {}
 
-export const ThrownBattleaxeComponentArray = new ClientComponentArray<ThrownBattleaxeComponent, RenderParts>(ClientComponentType.thrownBattleaxe, true, {
-   createRenderParts: createRenderParts,
+export const ThrownBattleaxeComponentArray = new ClientComponentArray<ThrownBattleaxeComponent, IntermediateInfo>(ClientComponentType.thrownBattleaxe, true, {
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts
 });
@@ -20,10 +21,13 @@ export function createThrownBattleaxeComponentParams(): ThrownBattleaxeComponent
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("items/large/stone-battleaxe.png")

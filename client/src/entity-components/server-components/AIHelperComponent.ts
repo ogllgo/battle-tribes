@@ -14,10 +14,18 @@ export const AIHelperComponentArray = new ServerComponentArray<AIHelperComponent
    updateFromData: updateFromData
 });
 
+const fillParams = (): AIHelperComponentParams => {
+   return {};
+}
+
+export function createAIHelperComponentParams(): AIHelperComponentParams {
+   return fillParams();
+}
+
 function createParamsFromData(reader: PacketReader): AIHelperComponentParams {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
    
-   return {};
+   return fillParams();
 }
 
 function createComponent(): AIHelperComponent {

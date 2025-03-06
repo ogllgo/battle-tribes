@@ -1,46 +1,35 @@
-import { Box, updateBox } from "../../shared/src/boxes/boxes";
-import CircularBox from "../../shared/src/boxes/CircularBox";
-import RectangularBox from "../../shared/src/boxes/RectangularBox";
+import { Box } from "../../shared/src/boxes/boxes";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
-import { assert, Point, unitsToChunksClamped } from "../../shared/src/utils";
+import { assert, unitsToChunksClamped } from "../../shared/src/utils";
 import Board from "./Board";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import Layer from "./Layer";
+import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
 import ColouredRenderPart from "./render-parts/ColouredRenderPart";
 import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
+import { calculateGrassBlockerVertexData } from "./rendering/webgl/grass-blocker-rendering";
+import { gl } from "./webgl";
 import { entityExists, getEntityRenderInfo, getEntityType, layers } from "./world";
 
-interface BaseGrassBlocker {
-   readonly position: Readonly<Point>;
+export interface GrassBlocker {
+   readonly box: Box;
    /** Amount of grass that the blocker blocks (from 0 -> 1) */
    blockAmount: number;
    // @Bandwidth: unnecessary
    readonly maxBlockAmount: number;
    lastUpdateTicks: number;
    readonly affectedGrassStrands: Array<Entity>;
-}
 
-export interface GrassBlockerRectangle extends BaseGrassBlocker {
-   readonly width: number;
-   readonly height: number;
-   readonly rotation: number;
+   readonly vao: WebGLVertexArrayObject;
+   // @Cleanup: should be readonly
+   vertexDataLength: number;
 }
-
-export interface GrassBlockerCircle extends BaseGrassBlocker {
-   readonly radius: number;
-}
-
-export type GrassBlocker = GrassBlockerRectangle | GrassBlockerCircle;
 
 const grassBlockers = new Map<number, GrassBlocker>();
 
 const strandBlockers = new Map<Entity, Array<number>>();
-
-export function blockerIsCircluar(blocker: GrassBlocker): blocker is GrassBlockerCircle {
-   return typeof (blocker as GrassBlockerCircle).radius !== "undefined";
-}
 
 export function getGrassBlockers(): ReadonlyMap<number, Readonly<GrassBlocker>> {
    return grassBlockers;
@@ -70,61 +59,49 @@ const addAffectedGrassStrands = (layer: Layer, blockerBox: Box, blocker: GrassBl
 
 const readGrassBlockerExceptIDFromData = (reader: PacketReader): GrassBlocker => {
    const layerIdx = reader.readNumber();
-   const x = reader.readNumber();
-   const y = reader.readNumber();
+   const box = readBoxFromData(reader);
    const blockAmount = reader.readNumber();
    const maxBlockAmount = reader.readNumber();
+   
+   const vao = gl.createVertexArray();
 
-   const isCircular = reader.readBoolean();
-   reader.padOffset(3);
+   const blocker: GrassBlocker = {
+      box: box,
+      blockAmount: blockAmount,
+      maxBlockAmount: maxBlockAmount,
+      lastUpdateTicks: Board.serverTicks,
+      affectedGrassStrands: [],
+      vao: vao,
+      vertexDataLength: 0
+   };
 
    const layer = layers[layerIdx];
 
-   let blocker: GrassBlocker;
-   let blockerBox: Box;
-   if (isCircular) {
-      const radius = reader.readNumber();
-      
-      // @Speed
-      blockerBox = new CircularBox(null, new Point(0, 0), 0, radius);
-      updateBox(blockerBox, x, y, 0);
+   addAffectedGrassStrands(layer, box, blocker);
 
-      blocker =  {
-         position: new Point(x, y),
-         blockAmount: blockAmount,
-         maxBlockAmount: maxBlockAmount,
-         radius: radius,
-         lastUpdateTicks: Board.serverTicks,
-         affectedGrassStrands: []
-      };
-   } else {
-      const width = reader.readNumber();
-      const height = reader.readNumber();
-      const rotation = reader.readNumber();
+   gl.bindVertexArray(vao);
 
-      // @Speed
-      blockerBox = new RectangularBox(null, new Point(0, 0), width, height, rotation);
-      updateBox(blockerBox, x, y, 0);
+   const vertexData = calculateGrassBlockerVertexData(blocker);
+   blocker.vertexDataLength = vertexData.length;
    
-      blocker = {
-         position: new Point(x, y),
-         blockAmount: blockAmount,
-         maxBlockAmount: maxBlockAmount,
-         width: width,
-         height: height,
-         rotation: rotation,
-         lastUpdateTicks: Board.serverTicks,
-         affectedGrassStrands: []
-      };
-   }
+   const vertexBuffer = gl.createBuffer()!;
+   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+   gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
 
-   addAffectedGrassStrands(layer, blockerBox, blocker);
+   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0);
+   gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
+
+   gl.enableVertexAttribArray(0);
+   gl.enableVertexAttribArray(1);
+
+   // @Speed
+   gl.bindVertexArray(null);
 
    return blocker;
 }
 
 const updateGrassStrandOpacity = (renderInfo: EntityRenderInfo, opacity: number): void => {
-   for (const renderPart of renderInfo.allRenderThings as Array<ColouredRenderPart>) {
+   for (const renderPart of renderInfo.renderPartsByZIndex as Array<ColouredRenderPart>) {
       renderPart.opacity = opacity;
    }
 }
@@ -137,17 +114,11 @@ export function updateGrassBlockers(reader: PacketReader): void {
       const existingGrassBlocker = grassBlockers.get(id);
       if (typeof existingGrassBlocker !== "undefined") {
          // Update grass blocker
-         reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+         
+         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         padBoxData(reader);
          existingGrassBlocker.blockAmount = reader.readNumber();
          reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-         
-         const isCircular = reader.readBoolean();
-         reader.padOffset(3);
-         if (isCircular) {
-            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-         } else {
-            reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-         }
 
          existingGrassBlocker.lastUpdateTicks = Board.serverTicks;
       } else {

@@ -2,10 +2,11 @@ import { Settings } from "battletribes-shared/settings";
 import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
-import { getCurrentLayer, getEntityLayer } from "./world";
+import { getCurrentLayer } from "./world";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
+import { Hitbox } from "./hitboxes";
 
 type SoundID = number;
 
@@ -31,12 +32,10 @@ interface SoundAttachInfo {
    readonly isDestroyedWhenEntityIsDestroyed: boolean;
 }
 
-// Need to know when the 
-
 // @Cleanup: remove this once the 'attach to world' thing is in place
 const activeSounds = new Array<Sound>();
-const soundsAttachedToEntities = new Map<Entity, Array<SoundAttachInfo>>();
-const soundToEntityMap = new Map<Sound, Entity | null>();
+const soundsAttachedToHitboxes = new Map<Hitbox, Array<SoundAttachInfo>>();
+const soundToHitboxMap = new Map<Sound, Hitbox | null>();
 
 // Must be called after a user action
 export function createAudioContext(): void {
@@ -116,11 +115,12 @@ export async function loadSoundEffects(): Promise<void> {
       "zombie-hurt-1.mp3",
       "zombie-hurt-2.mp3",
       "zombie-hurt-3.mp3",
-      "zombie-die-1.mp3",
+      "zombie-dig-1.mp3",
       "zombie-dig-2.mp3",
       "zombie-dig-3.mp3",
       "zombie-dig-4.mp3",
       "zombie-dig-5.mp3",
+      "zombie-die-1.mp3",
       "cow-ambient-1.mp3",
       "cow-ambient-2.mp3",
       "cow-ambient-3.mp3",
@@ -318,9 +318,9 @@ const removeSound = (sound: Sound): void => {
       activeSounds.splice(idx, 1);
    }
 
-   const entity = soundToEntityMap.get(sound);
-   if (typeof entity !== "undefined" && entity !== null) {
-      const attachedSounds = soundsAttachedToEntities.get(entity);
+   const hitbox = soundToHitboxMap.get(sound);
+   if (typeof hitbox !== "undefined" && hitbox !== null) {
+      const attachedSounds = soundsAttachedToHitboxes.get(hitbox);
 
       // @Hack: shouldn't be necessary
       if (typeof attachedSounds !== "undefined") {
@@ -334,7 +334,7 @@ const removeSound = (sound: Sound): void => {
       }
    }
 
-   soundToEntityMap.delete(sound);
+   soundToHitboxMap.delete(sound);
 }
 
 export interface SoundInfo {
@@ -383,16 +383,16 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
 }
 
 // @Cleanup: Make this return the sound info. and make it so that the sound info is guaranteed. so if it starts in wrong layer it still plays if it goes to correct layer
-export function playSoundOnEntity(filePath: string, volume: number, pitchMultiplier: number, entity: Entity, isDestroyedWhenEntityIsDestroyed: boolean): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+export function playSoundOnHitbox(filePath: string, volume: number, pitchMultiplier: number, hitbox: Hitbox, isDestroyedWhenEntityIsDestroyed: boolean): SoundInfo | null {
    // @Incomplete: use render position
-   const soundInfo = playSound(filePath, volume, pitchMultiplier, transformComponent.position.copy(), getEntityLayer(entity));
+   // @INCOMPLETE: Layer
+   const soundInfo = playSound(filePath, volume, pitchMultiplier, hitbox.box.position.copy(), null);
    
    if (soundInfo !== null) {
-      soundToEntityMap.set(soundInfo.sound, entity);
+      soundToHitboxMap.set(soundInfo.sound, hitbox);
       
-      if (!soundsAttachedToEntities.has(entity)) {
-         soundsAttachedToEntities.set(entity, []);
+      if (!soundsAttachedToHitboxes.has(hitbox)) {
+         soundsAttachedToHitboxes.set(hitbox, []);
       }
 
       const attachInfo: SoundAttachInfo = {
@@ -400,40 +400,44 @@ export function playSoundOnEntity(filePath: string, volume: number, pitchMultipl
          isDestroyedWhenEntityIsDestroyed: isDestroyedWhenEntityIsDestroyed
       };
       
-      const entityAttachedSounds = soundsAttachedToEntities.get(entity)!;
-      entityAttachedSounds.push(attachInfo);
+      const hitboxAttachedSounds = soundsAttachedToHitboxes.get(hitbox)!;
+      hitboxAttachedSounds.push(attachInfo);
    }
+
+   return soundInfo;
 }
 
 export function removeEntitySounds(entity: Entity): void {
-   const entityAttachedSounds = soundsAttachedToEntities.get(entity)!;
-   if (typeof entityAttachedSounds === "undefined") {
-      return;
-   }
-
-   for (const attachInfo of entityAttachedSounds) {
-      if (attachInfo.isDestroyedWhenEntityIsDestroyed) {
-         removeSound(attachInfo.sound);
-      } else {
-         soundToEntityMap.delete(attachInfo.sound);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const hitbox of transformComponent.hitboxes) {
+      const entityAttachedSounds = soundsAttachedToHitboxes.get(hitbox)!;
+      if (typeof entityAttachedSounds === "undefined") {
+         return;
       }
+   
+      for (const attachInfo of entityAttachedSounds) {
+         if (attachInfo.isDestroyedWhenEntityIsDestroyed) {
+            removeSound(attachInfo.sound);
+         } else {
+            soundToHitboxMap.delete(attachInfo.sound);
+         }
+      }
+   
+      soundsAttachedToHitboxes.delete(hitbox);
    }
-
-   soundsAttachedToEntities.delete(entity);
 }
 
 export function updateSounds(): void {
-   for (const pair of soundsAttachedToEntities) {
-      const entity = pair[0];
-      const entityAttachedSounds = pair[1];
+   for (const pair of soundsAttachedToHitboxes) {
+      const hitbox = pair[0];
+      const hitboxAttachedSounds = pair[1];
       
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      for (let i = 0; i < entityAttachedSounds.length; i++) {
-         const attachInfo = entityAttachedSounds[i];
+      for (let i = 0; i < hitboxAttachedSounds.length; i++) {
+         const attachInfo = hitboxAttachedSounds[i];
          const sound = attachInfo.sound;
          
-         sound.position.x = transformComponent.position.x;
-         sound.position.y = transformComponent.position.y;
+         sound.position.x = hitbox.box.position.x;
+         sound.position.y = hitbox.box.position.y;
       }
    }
    
@@ -450,8 +454,8 @@ export function updateSounds(): void {
 }
 
 // @Hack: There should really be unique sounds for each entity type, not one generic sound.
-export function playBuildingHitSound(entity: Entity): void {
-   playSoundOnEntity("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, entity, false);
+export function playBuildingHitSound(hitbox: Hitbox): void {
+   playSoundOnHitbox("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, hitbox, false);
 }
 
 export function playRiverSounds(): void {

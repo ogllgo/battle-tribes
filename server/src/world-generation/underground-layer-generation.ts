@@ -1,13 +1,12 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import { distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
-import { ServerComponentType } from "../../../shared/src/components";
 import { createEntity } from "../Entity";
 import { getEntityType, pushJoinBuffer } from "../world";
 import { generateSpikyBastards } from "./spiky-bastard-generation";
@@ -20,7 +19,7 @@ import { generateMithrilOre } from "./mithril-ore-generation";
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
    TREE_ROOT_SPAWN_ATTEMPT_DENSITY = 0.5,
-   MIN_MITHRIL_GENERATION_WEIGHT = 0.65
+   MIN_MITHRIL_GENERATION_WEIGHT = 0.5
 }
 
 const NEIGHBOUR_TILE_OFFSETS: ReadonlyArray<[number, number]> = [
@@ -171,7 +170,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          let weightFactor = 0;
          
          if (weight > 0.57) {
-            if (depth > 0.5 && weight < 0.65 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
+            if (depth > 0.4 && weight < 0.65 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
                isMithrilRich = true;
                richnessFactor = (mithrilGenerationWeight - Vars.MIN_MITHRIL_GENERATION_WEIGHT) / (1 - Vars.MIN_MITHRIL_GENERATION_WEIGHT)
                weightFactor = 1 - (weight - 0.57) / (0.65 - 0.57);
@@ -180,7 +179,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             undergroundLayer.tileTypes[tileIndex] = TileType.stoneWallFloor;
             setWallInSubtiles(undergroundLayer.wallSubtileTypes, tileX, tileY, SubtileType.stoneWall);
          } else {
-            if (depth > 0.5 && weight > 0.54 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
+            if (depth > 0.4 && weight > 0.54 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
                isMithrilRich = true;
                richnessFactor = (mithrilGenerationWeight - Vars.MIN_MITHRIL_GENERATION_WEIGHT) / (1 - Vars.MIN_MITHRIL_GENERATION_WEIGHT)
                weightFactor = (weight - 0.54) / (0.57 - 0.54);
@@ -204,6 +203,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          }
       }
    }
+   
+   groupLocalBiomes(undergroundLayer);
 
    generateSpikyBastards(undergroundLayer);
 
@@ -261,14 +262,9 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          continue;
       }
       
-      const treeRoot = createTreeRootBaseConfig();
-      treeRoot.components[ServerComponentType.transform].position.x = x;
-      treeRoot.components[ServerComponentType.transform].position.y = y;
-      treeRoot.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+      const treeRoot = createTreeRootBaseConfig(new Point(x, y), 2 * Math.PI * Math.random());
       createEntity(treeRoot, undergroundLayer, 0);
 
       pushJoinBuffer(false);
    }
-   
-   groupLocalBiomes(undergroundLayer);
 }

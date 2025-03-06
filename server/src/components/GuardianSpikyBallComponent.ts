@@ -2,14 +2,12 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { Hitbox } from "battletribes-shared/boxes/boxes";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Point, randFloat } from "battletribes-shared/utils";
-import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 export class GuardianSpikyBallComponent {
    public lifetime = Math.floor(Settings.TPS * randFloat(6.5, 8));
@@ -37,7 +35,7 @@ function onWallCollision(spikyBall: Entity): void {
    spikyBallComponent.lifetime -= Math.floor(Settings.TPS * randFloat(0.2, 0.4));
 }
 
-function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    const entityType = getEntityType(collidingEntity);
    if (entityType === EntityType.guardianSpikyBall || entityType === EntityType.guardian) {
       return;
@@ -49,13 +47,10 @@ function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, _pushedHi
          return;
       }
 
-      const transformComponent = TransformComponentArray.getComponent(spikyBall);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-      damageEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 100, hitDirection);
+      hitEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "gemSpikyBall", 0.5);
    }
 }

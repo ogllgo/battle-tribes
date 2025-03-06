@@ -2,26 +2,22 @@ import { Point } from "../utils";
 import { Box } from "./boxes";
 
 abstract class BaseBox {
-   public readonly parent: Box | null;
-   public readonly children = new Array<Box>();
-   
-   public readonly position = new Point(0, 0);
-   /** Offset of the box from its parent */
+   public readonly position: Point;
+   /** Offset of the box from its parent. If on a root hitbox of a base entity, does nothing. */
    public readonly offset: Point;
-   
-   // Although it doesn't really make sense for a circle to have rotation, it is useful for propagating changes when a hitbox's parent is a circular hitbox.
-   /** The rotation of the hitbox relative to its game object */
-   public relativeRotation: number;
-   public rotation: number;
+
+   public relativeAngle: number;
+   /** Angle the hitbox is facing, taken counterclockwise from the positive x axis (radians) */
+   public angle: number;
 
    public scale = 1;
 
-   constructor(parent: Box | null, offset: Point, rotation: number) {
-      this.parent = parent;
+   constructor(position: Point, offset: Point, rotation: number) {
+      this.position = position;
       this.offset = offset;
       
-      this.relativeRotation = rotation;
-      this.rotation = rotation;
+      this.relativeAngle = rotation;
+      this.angle = rotation;
    }
 
    public abstract calculateBoundsMinX(): number;

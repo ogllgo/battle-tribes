@@ -1,12 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { createStructureConnection, StructureConnection } from "../../../../shared/src/structures";
-import { playSoundOnEntity } from "../../sound";
-import { getEntityType } from "../../world";
-import { EntityConfig } from "../ComponentArray";
+import { playSoundOnHitbox } from "../../sound";
+import { createStructureConnection, StructureConnection } from "../../structure-placement";
+import { EntityParams, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { addFenceConnection, FenceComponentArray, removeFenceConnection } from "./FenceComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface StructureComponentParams {
    readonly hasActiveBlueprint: boolean;
@@ -27,11 +27,15 @@ export const StructureComponentArray = new ServerComponentArray<StructureCompone
    updateFromData: updateFromData
 });
 
-export function createStructureComponentParams(hasActiveBlueprint: boolean, connections: Array<StructureConnection>): StructureComponentParams {
+const fillStructureComponentParams = (hasActiveBlueprint: boolean, connections: Array<StructureConnection>): StructureComponentParams => {
    return {
       hasActiveBlueprint: hasActiveBlueprint,
       connections: connections
    };
+}
+
+export function createStructureComponentParams(): StructureComponentParams {
+   return fillStructureComponentParams(false, []);
 }
 
 function createParamsFromData(reader: PacketReader): StructureComponentParams {
@@ -48,11 +52,11 @@ function createParamsFromData(reader: PacketReader): StructureComponentParams {
       connections.push(connection);
    }
 
-   return createStructureComponentParams(hasActiveBlueprint, connections);
+   return fillStructureComponentParams(hasActiveBlueprint, connections);
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.structure, never>): StructureComponent {
-   const structureComponentParams = entityConfig.serverComponents[ServerComponentType.structure];
+function createComponent(entityParams: EntityParams): StructureComponent {
+   const structureComponentParams = entityParams.serverComponentParams[ServerComponentType.structure]!;
    
    return {
       hasActiveBlueprint: structureComponentParams.hasActiveBlueprint,
@@ -65,39 +69,42 @@ function getMaxRenderParts(): number {
 }
 
 function onSpawn(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    switch (getEntityType(entity)) {
       case EntityType.wall: {
          // @Incomplete: Add sounds for stone+ walls
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
+         playSoundOnHitbox("wooden-wall-place.mp3", 0.3, 1, hitbox, false);
          break;
       }
       case EntityType.barrel: {
-         playSoundOnEntity("barrel-place.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("barrel-place.mp3", 0.4, 1, hitbox, false);
          break;
       }
       case EntityType.campfire: {
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
+         playSoundOnHitbox("wooden-wall-place.mp3", 0.3, 1, hitbox, false);
          break;
       }
       case EntityType.planterBox: {
          // @Temporary
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
+         playSoundOnHitbox("wooden-wall-place.mp3", 0.3, 1, hitbox, false);
          break;
       }
       case EntityType.floorPunjiSticks:
       case EntityType.wallPunjiSticks:
       case EntityType.floorSpikes:
       case EntityType.wallSpikes: {
-         playSoundOnEntity("spike-place.mp3", 0.5, 1, entity, false);
+         playSoundOnHitbox("spike-place.mp3", 0.5, 1, hitbox, false);
          break;
       }
       case EntityType.researchBench: {
          // @Temporary
-         playSoundOnEntity("wooden-wall-place.mp3", 0.3, 1, entity, false);
+         playSoundOnHitbox("wooden-wall-place.mp3", 0.3, 1, hitbox, false);
          break;
       }
       case EntityType.bracings: {
-         playSoundOnEntity("wooden-bracings-place.mp3", 0.4, 1, entity, false);
+         playSoundOnHitbox("wooden-bracings-place.mp3", 0.4, 1, hitbox, false);
          break;
       }
    }

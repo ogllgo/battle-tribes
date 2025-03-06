@@ -79,8 +79,10 @@ export function getMouseTargetEntity(): Entity | null {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.nonGrassEntities) {
             const transformComponent = TransformComponentArray.getComponent(entity);
+            // @Hack
+            const hitbox = transformComponent.hitboxes[0];
             
-            const distanceFromCursor = Math.sqrt(Math.pow(Game.cursorX - transformComponent.position.x, 2) + Math.pow(Game.cursorY - transformComponent.position.y, 2))
+            const distanceFromCursor = Math.sqrt(Math.pow(Game.cursorX - hitbox.box.position.x, 2) + Math.pow(Game.cursorY - hitbox.box.position.y, 2))
             if (distanceFromCursor <= CLIENT_SETTINGS.CURSOR_TOOLTIP_HOVER_RANGE && distanceFromCursor < minDistance) {
                closestEntity = entity;
                minDistance = distanceFromCursor;
@@ -119,8 +121,12 @@ export function renderCursorTooltip(): void {
 
    // Update the cursor tooltip
    const renderInfo = getEntityRenderInfo(targetEntity);
-   const entityScreenPositionX = Camera.calculateXScreenPos(renderInfo.renderPosition.x);
-   const entityScreenPositionY = Camera.calculateYScreenPos(renderInfo.renderPosition.y);
+   // @Hack
+   const transformComponent = TransformComponentArray.getComponent(targetEntity);
+   const hitbox = transformComponent.hitboxes[0];
+   // @Incomplete: doesn't account for render position
+   const entityScreenPositionX = Camera.calculateXScreenPos(hitbox.box.position.x);
+   const entityScreenPositionY = Camera.calculateYScreenPos(hitbox.box.position.y);
 
    const debugData = Game.getEntityDebugData();
    if (debugData === null || targetEntity === debugData.entityID) {

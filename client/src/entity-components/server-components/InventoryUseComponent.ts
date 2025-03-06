@@ -9,7 +9,7 @@ import Particle from "../../Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer } from "../../rendering/webgl/particle-rendering";
 import { animateLimb, createCraftingAnimationParticles, createMedicineAnimationParticles, generateRandomLimbPosition, updateBandageRenderPart, updateCustomItemRenderPart } from "../../limb-animations";
 import { createBlockParticle, createDeepFrostHeartBloodParticles, createEmberParticle, createSlurbParticle, createSmokeParticle } from "../../particles";
-import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool, ITEM_TRAITS_RECORD, ItemTypeString } from "battletribes-shared/items/items";
+import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool, ITEM_TRAITS_RECORD } from "battletribes-shared/items/items";
 import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
@@ -17,10 +17,9 @@ import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/i
 import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
-import { EntityPreCreationInfo, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
 import { attachLightToRenderPart, createLight, Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
@@ -204,21 +203,21 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
 const BOW_CHARGE_DOMINANT_START_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: 0,
+   angle: 0,
    extraOffsetX: 10,
    extraOffsetY: 30
 };
 const BOW_CHARGE_DOMINANT_END_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: 0,
+   angle: 0,
    extraOffsetX: 10,
    extraOffsetY: 10
 };
 const BOW_CHARGE_NON_DOMINANT_LIMB_STATE: LimbState = {
    direction: 0,
    extraOffset: 0,
-   rotation: 0,
+   angle: 0,
    extraOffsetX: 10,
    extraOffsetY: 40
 };
@@ -281,7 +280,7 @@ const readLimbStateFromPacket = (reader: PacketReader): LimbState => {
    return {
       direction: direction,
       extraOffset: extraOffset,
-      rotation: rotation,
+      angle: rotation,
       extraOffsetX: extraOffsetX,
       extraOffsetY: extraOffsetY
    };
@@ -290,7 +289,7 @@ const readLimbStateFromPacket = (reader: PacketReader): LimbState => {
 const updateLimbStateFromPacket = (reader: PacketReader, limbState: LimbState): void => {
    limbState.direction = reader.readNumber();
    limbState.extraOffset = reader.readNumber();
-   limbState.rotation = reader.readNumber();
+   limbState.angle = reader.readNumber();
    limbState.extraOffsetX = reader.readNumber();
    limbState.extraOffsetY = reader.readNumber();
 }
@@ -307,7 +306,7 @@ const setThingToState = (humanoidRadius: number, thing: RenderPart, state: LimbS
 
    thing.offset.x = offset * Math.sin(direction) + state.extraOffsetX;
    thing.offset.y = offset * Math.cos(direction) + state.extraOffsetY;
-   thing.rotation = state.rotation;
+   thing.rotation = state.angle;
 }
 
 const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
@@ -322,7 +321,7 @@ const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: L
    thing.offset.x = offset * Math.sin(direction) + lerp(startState.extraOffsetX, endState.extraOffsetX, progress);
    thing.offset.y = offset * Math.cos(direction) + lerp(startState.extraOffsetY, endState.extraOffsetY, progress);
    // @Incomplete? Hand mult
-   thing.rotation = lerp(startState.rotation, endState.rotation, progress);
+   thing.rotation = lerp(startState.angle, endState.angle, progress);
    // limb.rotation = attackHandRotation * handMult;
 }
 
@@ -508,9 +507,9 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
    };
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.inventoryUse, never>): InventoryUseComponent {
+function createComponent(entityParams: EntityParams): InventoryUseComponent {
    return {
-      limbInfos: entityConfig.serverComponents[ServerComponentType.inventoryUse].limbInfos,
+      limbInfos: entityParams.serverComponentParams[ServerComponentType.inventoryUse]!.limbInfos,
       limbAttachPoints: [],
       limbRenderParts: [],
       activeItemRenderParts: [],
@@ -521,9 +520,9 @@ function createComponent(entityConfig: EntityConfig<ServerComponentType.inventor
    };
 }
 
-function getMaxRenderParts(preCreationInfo: EntityPreCreationInfo<ServerComponentType.inventoryUse>): number {
+function getMaxRenderParts(entityParams: EntityParams): number {
    // Each limb can hold an active item render part
-   const inventoryUseComponentParams = preCreationInfo.serverComponentParams[ServerComponentType.inventoryUse];
+   const inventoryUseComponentParams = entityParams.serverComponentParams[ServerComponentType.inventoryUse]!;
    // (@Hack: plus one arrow render part)
    return inventoryUseComponentParams.limbInfos.length + 1;
 }
@@ -562,12 +561,13 @@ function onTick(entity: Entity): void {
       }
 
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
       switch (limbInfo.heldItemType) {
          case ItemType.deepfrost_heart: {
             // Make the deep frost heart item spew blue blood particles
             const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[limbIdx];
-            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, transformComponent.selfVelocity.x, transformComponent.selfVelocity.y);
+            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, hitbox.velocity.x, hitbox.velocity.y);
             break;
          }
          case ItemType.fireTorch: {
@@ -588,8 +588,8 @@ function onTick(entity: Entity): void {
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
-               const vx = transformComponent.selfVelocity.x + transformComponent.externalVelocity.x;
-               const vy = transformComponent.selfVelocity.y + transformComponent.externalVelocity.y;
+               const vx = hitbox.velocity.x;
+               const vy = hitbox.velocity.y;
                createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), vx, vy);
             }
 
@@ -630,12 +630,10 @@ function onTick(entity: Entity): void {
 
       // @Incomplete: If eating multiple foods at once, shouldn't be on the same tick interval
       if (Board.tickIntervalHasPassed(0.25) && limbInfo.action === LimbAction.eat && ITEM_TYPE_RECORD[limbInfo.heldItemType] === "healing") {
-         const transformComponent = TransformComponentArray.getComponent(entity);
-
          // Create food eating particles
          for (let i = 0; i < 3; i++) {
-            let spawnPositionX = transformComponent.position.x + 37 * Math.sin(transformComponent.rotation);
-            let spawnPositionY = transformComponent.position.y + 37 * Math.cos(transformComponent.rotation);
+            let spawnPositionX = hitbox.box.position.x + 37 * Math.sin(hitbox.box.angle);
+            let spawnPositionY = hitbox.box.position.y + 37 * Math.cos(hitbox.box.angle);
 
             const spawnOffsetMagnitude = randFloat(0, 6);
             const spawnOffsetDirection = 2 * Math.PI * Math.random();
@@ -644,9 +642,9 @@ function onTick(entity: Entity): void {
 
             let velocityMagnitude = randFloat(130, 170);
             const velocityDirection = 2 * Math.PI * Math.random();
-            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + transformComponent.selfVelocity.x;
-            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + transformComponent.selfVelocity.y;
-            velocityMagnitude += transformComponent.selfVelocity.length();
+            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + hitbox.velocity.x;
+            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + hitbox.velocity.y;
+            velocityMagnitude += hitbox.velocity.length();
             
             const lifetime = randFloat(0.3, 0.4);
 
@@ -818,7 +816,7 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
       if (typeof torchTrait !== "undefined") {
          if (limb.torchLight === null) {
             limb.torchLight = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
-            attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity, getEntityLayer(entity));
+            attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
          } else {
             limb.torchLight.intensity = torchTrait.lightIntensity;
             limb.torchLight.strength = torchTrait.lightStrength;

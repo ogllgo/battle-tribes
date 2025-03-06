@@ -55,6 +55,8 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    }
    
    const transformComponent = TransformComponentArray.getComponent(entity);
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
 
    for (const itemTypeString of Object.keys(recipe.ingredients)) {
       const ingredientType = Number(itemTypeString) as ItemType;
@@ -62,8 +64,8 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
       if (ingredientType === ItemType.wood && Math.random() < 1 / Settings.TPS) {
          const pos = generateRandomLimbPosition();
 
-         const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
-         const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
+         const x = hitbox.box.position.x + rotateXAroundOrigin(pos.x, pos.y, hitbox.box.angle);
+         const y = hitbox.box.position.y + rotateYAroundOrigin(pos.x, pos.y, hitbox.box.angle);
 
          createSawdustCloud(x, y);
       }
@@ -77,8 +79,8 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
          const colour = randItem(particleColours);
          const pos = generateRandomLimbPosition();
 
-         const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
-         const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
+         const x = hitbox.box.position.x + rotateXAroundOrigin(pos.x, pos.y, hitbox.box.angle);
+         const y = hitbox.box.position.y + rotateYAroundOrigin(pos.x, pos.y, hitbox.box.angle);
 
          createColouredParticle(x, y, randFloat(30, 50), colour[0], colour[1], colour[2]);
       }
@@ -86,8 +88,11 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
 }
 
 const createBandageRenderPart = (entity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       6,
       2 * Math.PI * Math.random(),
       getTextureArrayIndex("entities/miscellaneous/bandage.png")
@@ -127,12 +132,13 @@ export function updateBandageRenderPart(entity: Entity, renderPart: VisualRender
 export function createMedicineAnimationParticles(entity: Entity, limbIdx: number): void {
    if (Math.random() < 5 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
       const colour = randItem(MEDICINE_PARTICLE_COLOURS);
       const pos = generateRandomLimbPosition();
       
-      const x = transformComponent.position.x + rotateXAroundOrigin(pos.x, pos.y, transformComponent.rotation);
-      const y = transformComponent.position.y + rotateYAroundOrigin(pos.x, pos.y, transformComponent.rotation);
+      const x = hitbox.box.position.x + rotateXAroundOrigin(pos.x, pos.y, hitbox.box.angle);
+      const y = hitbox.box.position.y + rotateYAroundOrigin(pos.x, pos.y, hitbox.box.angle);
       
       createColouredParticle(x, y, randFloat(20, 35), colour[0], colour[1], colour[2]);
    }
@@ -209,8 +215,11 @@ export function updateCustomItemRenderPart(entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    if (customItemState !== null) {
       if (inventoryUseComponent.customItemRenderPart === null) {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
+         
          inventoryUseComponent.customItemRenderPart = new TexturedRenderPart(
-            null,
+            hitbox,
             getTextureArrayIndex(getCustomItemRenderPartTextureSource(entity, customItemState)),
             9,
             0

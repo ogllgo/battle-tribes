@@ -4,7 +4,7 @@ import { angle, distance, rotateXAroundPoint, rotateYAroundPoint } from "battlet
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { HealingTotemComponentArray } from "../../entity-components/server-components/HealingTotemComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { entityExists, getEntityRenderInfo } from "../../world";
+import { entityExists } from "../../world";
 
 export const HEALING_BEAM_THICKNESS = 32;
 
@@ -136,12 +136,13 @@ const getVisibleHealingBeams = (): ReadonlyArray<HealingBeam> => {
       const healingTotemComponent = HealingTotemComponentArray.components[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
 
       for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {
          const healingTargetData = healingTotemComponent.healingTargetsData[i];
          beams.push({
-            startX: transformComponent.position.x,
-            startY: transformComponent.position.y,
+            startX: hitbox.box.position.x,
+            startY: hitbox.box.position.y,
             endX: healingTargetData.x,
             endY: healingTargetData.y,
             entityID: healingTargetData.entityID,
@@ -162,9 +163,10 @@ const createData = (visibleBeams: ReadonlyArray<HealingBeam>): ReadonlyArray<num
       let endX: number;
       let endY: number;
       if (entityExists(beam.entityID)) {
-         const renderInfo = getEntityRenderInfo(beam.entityID)
-         endX = renderInfo.renderPosition.x;
-         endY = renderInfo.renderPosition.y;
+         const transformComponent = TransformComponentArray.getComponent(beam.entityID)
+         const hitbox = transformComponent.hitboxes[0];
+         endX = hitbox.box.position.x;
+         endY = hitbox.box.position.y;
       } else {
          endX = beam.endX;
          endY = beam.endY;

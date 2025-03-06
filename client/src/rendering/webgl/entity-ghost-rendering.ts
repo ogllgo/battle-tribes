@@ -62,7 +62,10 @@ export const PARTIAL_OPACITY = 0.5;
 const renderInfos = new Array<EntityRenderInfo>();
 
 export function addGhostRenderInfo(renderInfo: EntityRenderInfo): void {
-   renderInfos.push(renderInfo);
+   const idx = renderInfos.indexOf(renderInfo);
+   if (idx === -1) {
+      renderInfos.push(renderInfo);
+   }
 }
 
 export function removeGhostRenderInfo(renderInfo: EntityRenderInfo): void {

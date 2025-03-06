@@ -1,29 +1,32 @@
-import { assertBoxIsCircular, Hitbox } from "../../../shared/src/boxes/boxes";
+import { LimbState } from "../../../shared/src/attack-patterns";
+import { assertBoxIsCircular } from "../../../shared/src/boxes/boxes";
 import { HitFlags } from "../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness, calculateAttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { getItemAttackInfo, getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, ItemType, itemTypeIsHammer } from "../../../shared/src/items/items";
+import { getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, ItemType, itemTypeIsHammer } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { Point } from "../../../shared/src/utils";
+import { lerp, Point } from "../../../shared/src/utils";
+import { HitboxCollisionPair } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
 import { calculateItemDamage } from "../entities/tribes/tribe-member";
+import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { createEntity } from "../Entity";
-import { destroyEntity, getEntityLayer, getEntityType } from "../world";
-import { BerryBushComponentArray, dropBerryOverEntity } from "./BerryBushComponent";
+import { applyKnockback, Hitbox } from "../hitboxes";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
-import { damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
+import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
-import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray, lerpHitboxBetweenStates, LimbInfo } from "./InventoryUseComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
-import { TransformComponentArray } from "./TransformComponent";
-import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship } from "./TribeComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { hasTitle } from "./TribesmanComponent";
 
 export class SwingAttackComponent {
@@ -44,6 +47,32 @@ SwingAttackComponentArray.onTick = {
    tickInterval: 1
 };
 SwingAttackComponentArray.onEntityCollision = onEntityCollision;
+
+const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbAngle: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+   const flipMultiplier = isFlipped ? -1 : 1;
+
+   const offset = extraOffset + getHumanoidRadius(transformComponent) + 2;
+
+   const box = hitbox.box;
+   box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
+   box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
+   box.relativeAngle = limbAngle * flipMultiplier;
+
+   transformComponent.isDirty = true;
+}
+
+export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
+   const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
+   const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
+   const angle = lerp(startingLimbState.angle, targetLimbState.angle, progress);
+   const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
+   const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
+   setHitbox(transformComponent, hitbox, direction, extraOffset, angle, extraOffsetX, extraOffsetY, isFlipped);
+}
+
+export function setHitboxToState(transformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
+   setHitbox(transformComponent, hitbox, state.direction, state.extraOffset, state.angle, state.extraOffsetX, state.extraOffsetY, isFlipped);
+}
 
 function onTick(swingAttack: Entity): void {
    const swingAttackTransformComponent = TransformComponentArray.getComponent(swingAttack);
@@ -137,7 +166,8 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
 
       // As hitting the bush will drop a berry regardless, only drop extra ones here
       for (let i = 0; i < gatherMultiplier - 1; i++) {
-         dropBerryOverEntity(plant);
+         // @HACK: hit position
+         hitEntityWithoutDamage(plant, attacker, new Point(0, 0), 0);
       }
    } else {
       const plantHitbox = plantTransformComponent.hitboxes[0];
@@ -145,24 +175,23 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
       const plantRadius = plantHitbox.box.radius;
 
       const offsetDirection = 2 * Math.PI * Math.random();
-      const x = plantTransformComponent.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
-      const y = plantTransformComponent.position.y + (plantRadius - 7) * Math.cos(offsetDirection);
+      const x = plantHitbox.box.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
+      const y = plantHitbox.box.position.y + (plantRadius - 7) * Math.cos(offsetDirection);
    
-      const config = createItemEntityConfig(ItemType.leaf, 1, null);
-      config.components[ServerComponentType.transform].position.x = x;
-      config.components[ServerComponentType.transform].position.y = y;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
+      const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.leaf, 1, null);
       createEntity(config, getEntityLayer(plant), 0);
    }
 
    // @Hack
-   const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-   const collisionPoint = new Point((plantTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (plantTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
+   // const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
+   // const collisionPoint = new Point((plantHitbox.box.position.x + attackerTransformComponent.position.x) / 2, (plantHitbox.box.position.y + attackerTransformComponent.position.y) / 2);
+   // @HACK
+   const collisionPoint = new Point(0, 0);
 
-   damageEntity(plant, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
+   hitEntity(plant, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
-const damageEntityFromSwing = (swingAttack: Entity, victim: Entity): boolean => {
+const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const attacker = swingAttackComponent.owner;
    const attackingLimb = swingAttackComponent.limb;
@@ -189,18 +218,23 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity): boolean => 
    const attackDamage = calculateItemDamage(attacker, attackingItem, attackEffectiveness, swingAttackComponent.isBlocked);
    const attackKnockback = calculateItemKnockback(attackingItem, swingAttackComponent.isBlocked);
 
-   const targetEntityTransformComponent = TransformComponentArray.getComponent(victim);
-   const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-
-   const hitDirection = attackerTransformComponent.position.calculateAngleBetween(targetEntityTransformComponent.position);
+   let hitDirection = 0;
+   for (const hitboxPair of collidingHitboxPairs) {
+      const affectedHitbox = hitboxPair[0];
+      const collidingHitbox = hitboxPair[1];
+      hitDirection += affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   }
+   hitDirection /= collidingHitboxPairs.length;
 
    // @Hack
-   const collisionPoint = new Point((targetEntityTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (targetEntityTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
+   // const collisionPoint = new Point((targetEntityTransformComponent.position.x + attackerTransformComponent.position.x) / 2, (targetEntityTransformComponent.position.y + attackerTransformComponent.position.y) / 2);
+   // @HACK
+   const collisionPoint = new Point(0, 0);
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   damageEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, attackKnockback, hitDirection);
+   hitEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
+   applyKnockback(victim, collidingHitboxPairs[0][1], attackKnockback, hitDirection);
 
    if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
       applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
@@ -214,9 +248,18 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity): boolean => 
    return true;
 }
 
-function onEntityCollision(swingAttack: Entity, collidingEntity: Entity): void {
+function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const owner = swingAttackComponent.owner;
+   // @Temporary: remove when bug is fixed
+   if (!entityExists(owner)) {
+      throw new Error();
+   }
+   // @Temporary: remove when bug is fixed
+   if (!TribeComponentArray.hasComponent(owner)) {
+      console.log(getEntityType(owner));
+      throw new Error();
+   }
    
    // Build blueprints and repair buildings
    const swingItemType = getItemType(getHeldItem(swingAttackComponent.limb));
@@ -245,6 +288,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity): void {
       return;
    }
    
-   damageEntityFromSwing(swingAttack, collidingEntity);
+   damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs);
+
    destroyEntity(swingAttack);
 }

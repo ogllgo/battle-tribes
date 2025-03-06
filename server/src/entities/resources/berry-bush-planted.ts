@@ -3,24 +3,41 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { PlantedComponent } from "../../components/PlantedComponent";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
-import { BerryBushPlantedComponent } from "../../components/BerryBushPlantedComponent";
-   
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.planted
-   | ServerComponentType.berryBushPlanted;
+import { BerryBushPlantedComponent, BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
+import { createHitbox } from "../../hitboxes";
+import { registerEntityLootOnHit } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
+import { registerDirtyEntity } from "../../server/player-clients";
 
-export function createBerryBushPlantedConfig(planterBox: Entity): EntityConfig<ComponentTypes> {
+registerEntityLootOnHit(EntityType.berryBushPlanted, [
+   {
+      itemType: ItemType.berry,
+      getAmount: (berryBush: Entity) => {
+         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
+         return berryBushPlantedComponent.numFruit > 0 ? 1 : 0;
+      },
+      onItemDrop: (berryBush: Entity) => {
+         // @Hack: this type of logic feels like it should be done in a component
+         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
+         if (berryBushPlantedComponent.numFruit > 0) {
+            berryBushPlantedComponent.numFruit--;
+            registerDirtyEntity(berryBush);
+         }
+      }
+   }
+]);
+
+export function createBerryBushPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
 

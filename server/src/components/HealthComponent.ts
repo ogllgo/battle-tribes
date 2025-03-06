@@ -63,16 +63,18 @@ export function canDamageEntity(healthComponent: HealthComponent, attackHash: st
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function damageEntity(entity: Entity, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
    const healthComponent = HealthComponentArray.getComponent(entity);
 
-   const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
-   const actualDamage = damage - absorbedDamage;
-   
-   healthComponent.health -= actualDamage;
-
-   registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
-   registerDirtyEntity(entity);
+   if (damage !== 0) {
+      const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
+      const actualDamage = damage - absorbedDamage;
+      
+      healthComponent.health -= actualDamage;
+      
+      registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
+      registerDirtyEntity(entity);
+   }
 
    const componentArrayRecord = getComponentArrayRecord();
    const entityComponentTypes = getEntityComponentTypes(entity);
@@ -149,6 +151,11 @@ export function damageEntity(entity: Entity, attackingEntity: Entity | null, dam
    }
 
    return true;
+}
+
+/** Basically every effect of hitEntity, but doesn't reduce the entity's health. */
+export function hitEntityWithoutDamage(entity: Entity, attackingEntity: Entity | null, hitPosition: Point, hitFlags: number): void {
+
 }
 
 export function healEntity(entity: Entity, healAmount: number, healer: Entity): void {

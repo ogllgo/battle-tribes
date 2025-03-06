@@ -1,36 +1,47 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface MithrilAnvilComponentParams {}
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface MithrilAnvilComponent {}
 
-export const MithrilAnvilComponentArray = new ServerComponentArray<MithrilAnvilComponent, MithrilAnvilComponentParams, RenderParts>(ServerComponentType.mithrilAnvil, true, {
+export const MithrilAnvilComponentArray = new ServerComponentArray<MithrilAnvilComponent, MithrilAnvilComponentParams, IntermediateInfo>(ServerComponentType.mithrilAnvil, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
 });
 
-function createParamsFromData(): MithrilAnvilComponentParams {
+const fillParams = (): MithrilAnvilComponentParams => {
    return {};
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
+export function createMithrilAnvilComponentParams(): MithrilAnvilComponentParams {
+   return fillParams();
+}
+
+function createParamsFromData(): MithrilAnvilComponentParams {
+   return fillParams();
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex("entities/mithril-anvil/mithril-anvil.png")
    );
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
    
    return {};
 }

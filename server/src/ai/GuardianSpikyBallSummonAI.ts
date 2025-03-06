@@ -1,13 +1,13 @@
 import { GuardianSpikyBallSummonStage, ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { UtilVars, randFloat, randInt } from "battletribes-shared/utils";
-import { stopEntity, turnToPosition } from "../ai-shared";
+import { Point, UtilVars, randFloat, randInt } from "battletribes-shared/utils";
+import { turnToPosition } from "../ai-shared";
 import { GuardianComponentArray } from "../components/GuardianComponent";
-import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { createGuardianSpikyBallConfig } from "../entities/projectiles/guardian-spiky-ball";
 import { createEntity } from "../Entity";
 import { getEntityLayer, getGameTicks } from "../world";
+import { setHitboxAngularVelocity } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -43,13 +43,13 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
       const vx = velocityMagnitude * Math.sin(velocityDirection);
       const vy = velocityMagnitude * Math.cos(velocityDirection);
       
-      const config = createGuardianSpikyBallConfig(guardian);
-      config.components[ServerComponentType.transform].position.x = x!;
-      config.components[ServerComponentType.transform].position.y = y!;
-      config.components[ServerComponentType.transform].relativeRotation = 2 * Math.PI * Math.random();
-      config.components[ServerComponentType.transform].externalVelocity.x = vx;
-      config.components[ServerComponentType.transform].externalVelocity.y = vy;
-      config.components[ServerComponentType.physics].angularVelocity = Math.PI;
+      const config = createGuardianSpikyBallConfig(new Point(x!, y!), 2 * Math.PI * Math.random(), guardian);
+
+      const spikyBallHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+      spikyBallHitbox.velocity.x = vx;
+      spikyBallHitbox.velocity.y = vy;
+      setHitboxAngularVelocity(spikyBallHitbox, Math.PI);
+      
       createEntity(config, layer, 0);
    }
 }
@@ -71,8 +71,6 @@ export default class GuardianSpikyBallSummonAI {
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {
-      const physicsComponent = PhysicsComponentArray.getComponent(guardian);
-      stopEntity(physicsComponent);
       turnToPosition(guardian, targetX, targetY, this.turnSpeed);
 
       const guardianComponent = GuardianComponentArray.getComponent(guardian);

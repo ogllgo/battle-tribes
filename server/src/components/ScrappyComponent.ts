@@ -8,7 +8,6 @@ import { throwItem } from "../entities/tribes/tribe-member";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { ComponentArray } from "./ComponentArray";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
-import { getVelocityMagnitude } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
@@ -82,19 +81,20 @@ function onTick(scrappy: Entity): void {
       const inventoryComponent = InventoryComponentArray.getComponent(scrappy);
       const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
       
+      const transformComponent = TransformComponentArray.getComponent(scrappy);
+      const scrappyHitbox = transformComponent.hitboxes[0];
+
       let hasAccident = false;
       if (hotbar.hasItem(1) && Math.random() < 0.7) {
          hasAccident = true;
 
          // Drop the item
-         const transformComponent = TransformComponentArray.getComponent(scrappy);
-         throwItem(scrappy, InventoryName.hotbar, 1, 99, transformComponent.relativeRotation + randFloat(-0.3, 0.3));
+         throwItem(scrappy, InventoryName.hotbar, 1, 99, scrappyHitbox.box.angle + randFloat(-0.3, 0.3));
       } else {
-         const transformComponent = TransformComponentArray.getComponent(scrappy);
-         if (getVelocityMagnitude(transformComponent) > 100) {
+         if (scrappyHitbox.velocity.length() > 100) {
             hasAccident = true;
-            transformComponent.selfVelocity.x *= 0.3;
-            transformComponent.selfVelocity.y *= 0.3;
+            scrappyHitbox.velocity.x *= 0.3;
+            scrappyHitbox.velocity.y *= 0.3;
          }
       }
       

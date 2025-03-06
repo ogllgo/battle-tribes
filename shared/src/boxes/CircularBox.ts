@@ -6,9 +6,8 @@ import { Box, boxIsCircular } from "./boxes";
 export class CircularBox extends BaseBox {
    public radius: number;
 
-   constructor(parent: Box | null, offset: Point, rotation: number, radius: number) {
-      super(parent, offset, rotation);
-
+   constructor(position: Point, offset: Point, rotation: number, radius: number) {
+      super(position, offset, rotation);
       this.radius = radius;
    }
 
@@ -31,7 +30,7 @@ export class CircularBox extends BaseBox {
          return circlesDoIntersect(this.position, this.radius * this.scale - epsilon, otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon);
       } else {
          // Rectangular hitbox
-         return circleAndRectangleDoIntersect(this.position, this.radius - epsilon, otherHitbox.position, otherHitbox.width - epsilon * 0.5, otherHitbox.height - epsilon * 0.5, otherHitbox.rotation);
+         return circleAndRectangleDoIntersect(this.position, this.radius - epsilon, otherHitbox.position, otherHitbox.width - epsilon * 0.5, otherHitbox.height - epsilon * 0.5, otherHitbox.angle);
       }
    }
 }

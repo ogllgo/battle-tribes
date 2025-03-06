@@ -2,21 +2,20 @@ import { HealingTotemTargetData, ServerComponentType } from "battletribes-shared
 import { Settings } from "battletribes-shared/settings";
 import { Point, angle, distance, lerp, randInt } from "battletribes-shared/utils";
 import { createHealingParticle } from "../../particles";
-import { Light, attachLightToEntity, createLight, removeLight } from "../../lights";
+import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityConfig } from "../ComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 
 export interface HealingTotemComponentParams {
    readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface HealingTotemComponent {
    // @Hack @Temporary: make readonly
@@ -29,15 +28,25 @@ export interface HealingTotemComponent {
 const EYE_LIGHTS_TRANSFORM_TICKS = Math.floor(0.5 / Settings.TPS);
 const BASELINE_EYE_LIGHT_INTENSITY = 0.5;
 
-export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, RenderParts>(ServerComponentType.healingTotem, true, {
+export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, IntermediateInfo>(ServerComponentType.healingTotem, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onTick: onTick,
    padData: padData,
    updateFromData: updateFromData
 });
+
+const fillParams = (healTargets: Array<HealingTotemTargetData>): HealingTotemComponentParams => {
+   return {
+      healingTargetsData: healTargets
+   };
+}
+
+export function createHealingTotemComponentParams(): HealingTotemComponentParams {
+   return fillParams([]);
+}
 
 function createParamsFromData(reader: PacketReader): HealingTotemComponentParams {
    const healTargets = new Array<HealingTotemTargetData>();
@@ -56,15 +65,16 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
       });
    }
    
-   return {
-      healingTargetsData: healTargets
-   };
+   return fillParams(healTargets);
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
-   renderInfo.attachRenderPart(
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
-         null,
+         hitbox,
          0,
          0,
          getTextureArrayIndex("entities/healing-totem/healing-totem.png")
@@ -74,9 +84,9 @@ function createRenderParts(renderInfo: EntityRenderInfo): RenderParts {
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.healingTotem, never>): HealingTotemComponent {
+function createComponent(entityParams: EntityParams): HealingTotemComponent {
    return {
-      healingTargetsData: entityConfig.serverComponents[ServerComponentType.healingTotem].healingTargetsData,
+      healingTargetsData: entityParams.serverComponentParams[ServerComponentType.healingTotem]!.healingTargetsData,
       ticksSpentHealing: 0,
       eyeLights: []
    };
@@ -106,7 +116,10 @@ function onTick(entity: Entity): void {
                1,
                0
             );
-            attachLightToEntity(light, entity);
+
+            // @Hack
+            const renderInfo = getEntityRenderInfo(entity);
+            attachLightToRenderPart(light, renderInfo.renderPartsByZIndex[0], entity);
 
             healingTotemComponent.eyeLights.push(light);
          }
@@ -149,19 +162,20 @@ function onTick(entity: Entity): void {
    }
    
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const healingTotemHitbox = transformComponent.hitboxes[0];
    
    for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {    
       const targetData = healingTotemComponent.healingTargetsData[i];
-      const beamLength = distance(transformComponent.position.x, transformComponent.position.y, targetData.x, targetData.y);
+      const beamLength = distance(healingTotemHitbox.box.position.x, healingTotemHitbox.box.position.y, targetData.x, targetData.y);
       if (Math.random() > 0.02 * beamLength / Settings.TPS) {
          continue;
       }
 
-      const beamDirection = angle(targetData.x - transformComponent.position.x, targetData.y - transformComponent.position.y);
+      const beamDirection = angle(targetData.x - healingTotemHitbox.box.position.x, targetData.y - healingTotemHitbox.box.position.y);
       
       const progress = Math.random();
-      const startX = lerp(transformComponent.position.x + 48 * Math.sin(beamDirection), targetData.x - 30 * Math.sin(beamDirection), progress);
-      const startY = lerp(transformComponent.position.y + 48 * Math.cos(beamDirection), targetData.y - 30 * Math.cos(beamDirection), progress);
+      const startX = lerp(healingTotemHitbox.box.position.x + 48 * Math.sin(beamDirection), targetData.x - 30 * Math.sin(beamDirection), progress);
+      const startY = lerp(healingTotemHitbox.box.position.y + 48 * Math.cos(beamDirection), targetData.y - 30 * Math.cos(beamDirection), progress);
 
       // @Speed: garbage collection
       createHealingParticle(new Point(startX, startY), randInt(0, 2));

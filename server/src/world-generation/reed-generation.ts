@@ -4,7 +4,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createReedConfig } from "../entities/reed";
 import { createEntity } from "../Entity";
 import { WaterTileGenerationInfo } from "./river-generation";
-import { distance } from "battletribes-shared/utils";
+import { distance, Point } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
 import { isTooCloseToSteppingStone } from "../entity-spawn-info";
 import { pushJoinBuffer } from "../world";
@@ -67,9 +67,7 @@ export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray
             if (Math.random() >= successProbability) {
                continue;
             }
-            const config = createReedConfig();
-            config.components[ServerComponentType.transform].position.x = x;
-            config.components[ServerComponentType.transform].position.y = y;
+            const config = createReedConfig(new Point(x, y), 0);
             createEntity(config, surfaceLayer, 0);
          }
       }

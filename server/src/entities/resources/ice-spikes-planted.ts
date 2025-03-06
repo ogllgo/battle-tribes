@@ -1,26 +1,32 @@
 import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { PlantedComponent } from "../../components/PlantedComponent";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TransformComponent } from "../../components/TransformComponent";
-import { IceSpikesPlantedComponent } from "../../components/IceSpikesPlantedComponent";
-   
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.planted
-   | ServerComponentType.iceSpikesPlanted;
+import { IceSpikesPlantedComponent, plantedIceSpikesIsFullyGrown } from "../../components/IceSpikesPlantedComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
+import { createHitbox } from "../../hitboxes";
 
-export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<ComponentTypes> {
+registerEntityLootOnDeath(EntityType.iceSpikesPlanted, [
+   {
+      itemType: ItemType.frostcicle,
+      getAmount: (entity: Entity) => {
+         return plantedIceSpikesIsFullyGrown(entity) ? randInt(1, 2) : 0;
+      }
+   }
+]);
+
+export function createIceSpikesPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    transformComponent.collisionBit = COLLISION_BITS.plants;
 
@@ -30,6 +36,8 @@ export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<C
 
    const plantedComponent = new PlantedComponent(planterBox);
 
+   const lootComponent = new LootComponent();
+   
    const iceSpikesPlantedComponent = new IceSpikesPlantedComponent();
    
    return {
@@ -39,6 +47,7 @@ export function createIceSpikesPlantedConfig(planterBox: Entity): EntityConfig<C
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.iceSpikesPlanted]: iceSpikesPlantedComponent
       },
       lights: []

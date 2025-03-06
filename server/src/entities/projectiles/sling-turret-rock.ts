@@ -7,19 +7,15 @@ import { TribeComponent, TribeComponentArray } from "../../components/TribeCompo
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { SlingTurretRockComponent } from "../../components/SlingTurretRockComponent";
+import { createHitbox } from "../../hitboxes";
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.tribe
-   | ServerComponentType.projectile
-   | ServerComponentType.slingTurretRock;
-
-export function createSlingTurretRockConfig(owner: Entity): EntityConfig<ComponentTypes> {
+export function createSlingTurretRockConfig(position: Point, rotation: number, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new RectangularBox(null, new Point(0, 0), 12, 64, 0), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
+
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();

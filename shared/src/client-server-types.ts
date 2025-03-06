@@ -5,7 +5,6 @@ import { EntitySummonPacket } from "./dev-packets";
 import { LimbAction } from "./entities";
 import { AttackEffectiveness } from "./entity-damage-types";
 import { EntityTickEvent } from "./entity-events";
-import { GrassBlocker } from "./grass-blockers";
 import { HitboxCollisionType, HitboxFlag } from "./boxes/boxes";
 import { InventoryName, ItemType } from "./items/items";
 import { StatusEffect } from "./status-effects";

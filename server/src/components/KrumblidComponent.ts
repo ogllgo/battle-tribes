@@ -2,16 +2,13 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { randInt, UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition, stopEntity } from "../ai-shared";
+import { moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, startFollowingEntity } from "./FollowAIComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
-import { ItemType } from "../../../shared/src/items/items";
-import { createItemsOverEntity } from "../entities/item-entity";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -24,7 +21,6 @@ KrumblidComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-KrumblidComponentArray.preRemove = preRemove;
 
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
@@ -42,8 +38,11 @@ function onTick(krumblid: Entity): void {
    const followedEntity = followAIComponent.followTargetID;
    if (entityExists(followedEntity)) {
       const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
+      // @Hack
+      const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
+      
       // Continue following the entity
-      moveEntityToPosition(krumblid, followedEntityTransformComponent.position.x, followedEntityTransformComponent.position.y, 200, Vars.TURN_SPEED);
+      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 200, Vars.TURN_SPEED);
       return;
    } else if (entityWantsToFollow(followAIComponent)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -61,9 +60,6 @@ function onTick(krumblid: Entity): void {
    wanderAI.update(krumblid);
    if (wanderAI.targetPositionX !== -1) {
       moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 2 * Math.PI);
-   } else {
-      const physicsComponent = PhysicsComponentArray.getComponent(krumblid);
-      stopEntity(physicsComponent);
    }
 }
 
@@ -72,7 +68,3 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
-
-export function preRemove(krumblid: Entity): void {
-   createItemsOverEntity(krumblid, ItemType.leather, randInt(2, 3));
-}

@@ -6,11 +6,11 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { ZombieComponent, ZombieComponentArray } from "../../components/ZombieComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { Inventory, InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -18,43 +18,42 @@ import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { createHitbox } from "../../hitboxes";
 
 export const enum ZombieVars {
    CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
    VISION_RANGE = 375
 }
 
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.zombie
-   | ServerComponentType.aiHelper
-   | ServerComponentType.inventory
-   | ServerComponentType.inventoryUse;
-
-const MAX_HEALTH = 20;
+registerEntityLootOnDeath(EntityType.zombie, [
+   {
+      itemType: ItemType.eyeball,
+      getAmount: () => Math.random() < 0.1 ? 1 : 0
+   }
+]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-export function createZombieConfig(isGolden: boolean, tombstone: Entity): EntityConfig<ComponentTypes> {
+export function createZombieConfig(position: Point, rotation: number, isGolden: boolean, tombstone: Entity): EntityConfig {
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
 
    const physicsComponent = new PhysicsComponent();
    
-   const healthComponent = new HealthComponent(MAX_HEALTH);
+   const healthComponent = new HealthComponent(20);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const zombieComponent = new ZombieComponent(zombieType, tombstone);
 
-   const aiHelperComponent = new AIHelperComponent(ZombieVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(150, Math.PI * 3, 0.4, positionIsValidCallback);
    
    const inventoryComponent = new InventoryComponent();
@@ -64,11 +63,16 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
    addInventoryToInventoryComponent(inventoryComponent, handSlot, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    inventoryUseComponent.associatedInventoryNames.push(handSlot.name);
 
-   if (Math.random() < 0.7) {
+   // @IncompletE: chance to not have man hand instead of offhand
+   // @HACK @TEMPORARY: Since currently this will put the limb at the front of the zombie, instead of at its side...
+   // if (Math.random() < 0.7) {
+   if (true) {
       const offhand = new Inventory(0, 0, InventoryName.offhand);
       addInventoryToInventoryComponent(inventoryComponent, offhand, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
       inventoryUseComponent.associatedInventoryNames.push(offhand.name);
    }
+
+   const lootComponent = new LootComponent();
    
    return {
       entityType: EntityType.zombie,
@@ -80,7 +84,8 @@ export function createZombieConfig(isGolden: boolean, tombstone: Entity): Entity
          [ServerComponentType.zombie]: zombieComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.inventory]: inventoryComponent,
-         [ServerComponentType.inventoryUse]: inventoryUseComponent
+         [ServerComponentType.inventoryUse]: inventoryUseComponent,
+         [ServerComponentType.loot]: lootComponent
       },
       lights: []
    };

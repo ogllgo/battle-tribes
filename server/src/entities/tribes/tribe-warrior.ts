@@ -6,7 +6,7 @@ import { randInt, Point } from "battletribes-shared/utils";
 import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
-import { createHitbox, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
@@ -22,21 +22,7 @@ import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { PatrolAIComponent } from "../../components/PatrolAIComponent";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-
-type ComponentTypes = ServerComponentType.transform
-   | ServerComponentType.physics
-   | ServerComponentType.health
-   | ServerComponentType.statusEffect
-   | ServerComponentType.tribe
-   | ServerComponentType.tribeMember
-   | ServerComponentType.tribesman
-   | ServerComponentType.tribesmanAI
-   | ServerComponentType.aiHelper
-   | ServerComponentType.aiAssignment
-   | ServerComponentType.patrolAI
-   | ServerComponentType.inventoryUse
-   | ServerComponentType.inventory
-   | ServerComponentType.tribeWarrior;
+import { createHitbox } from "../../hitboxes";
 
 const generateScars = (): ReadonlyArray<ScarInfo> => {
    let numScars = 1;
@@ -72,9 +58,10 @@ const getHitboxRadius = (tribeType: TribeType): number => {
    }
 }
 
-export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTypes> {
+export function createTribeWarriorConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent(0);
-   const hitbox = createHitbox(new CircularBox(null, new Point(0, 0), 0, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
    transformComponent.addHitbox(hitbox, null);
    
    const physicsComponent = new PhysicsComponent();
@@ -93,7 +80,7 @@ export function createTribeWarriorConfig(tribe: Tribe): EntityConfig<ComponentTy
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(560);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 560);
 
    const aiAssignmentComponent = new AIAssignmentComponent();
    

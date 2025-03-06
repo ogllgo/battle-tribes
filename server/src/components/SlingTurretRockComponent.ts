@@ -1,14 +1,12 @@
-import { Hitbox } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
+import { applyKnockback, Hitbox } from "../hitboxes";
 import { getEntityType, validateEntity, destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, damageEntity } from "./HealthComponent";
-import { applyKnockback } from "./PhysicsComponent";
+import { HealthComponentArray, hitEntity } from "./HealthComponent";
 import { ProjectileComponentArray } from "./ProjectileComponent";
-import { TransformComponentArray } from "./TransformComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
 
 export class SlingTurretRockComponent {}
@@ -23,7 +21,7 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 // @Cleanup: Copy and paste
-function onHitboxCollision(slingTurretRock: Entity, collidingEntity: Entity, _affectedHitbox: Hitbox, _collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(slingTurretRock: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
    const relationship = getEntityRelationship(slingTurretRock, collidingEntity);
    if (relationship === EntityRelationship.friendly) {
@@ -56,16 +54,13 @@ function onHitboxCollision(slingTurretRock: Entity, collidingEntity: Entity, _af
    }
 
    if (HealthComponentArray.hasComponent(collidingEntity)) {
-      const transformComponent = TransformComponentArray.getComponent(slingTurretRock);
       const projectileComponent = ProjectileComponentArray.getComponent(slingTurretRock);
 
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
       const owner = validateEntity(projectileComponent.creator);
-      const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      damageEntity(collidingEntity, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, 75, hitDirection);
+      hitEntity(collidingEntity, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingEntity, collidingHitbox, 75, hitDirection);
 
       destroyEntity(slingTurretRock);
    }

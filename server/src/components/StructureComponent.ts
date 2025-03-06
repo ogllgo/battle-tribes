@@ -1,4 +1,4 @@
-import { calculateRelativeOffsetDirection, createStructureConnection, StructureConnection, StructureType } from "battletribes-shared/structures";
+import { StructureType } from "battletribes-shared/structures";
 import { createStructureGrassBlockers } from "../grass-blockers";
 import { BlueprintComponentArray } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -10,6 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { createVirtualStructureFromHitboxes, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { registerDirtyEntity } from "../server/player-clients";
+import { StructureConnection, calculateRelativeOffsetDirection, createStructureConnection } from "../structure-placement";
 
 export class StructureComponent {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -17,12 +18,12 @@ export class StructureComponent {
 
    public readonly connections = new Array<StructureConnection>();
 
-   /** The virtual building associated with the structure. If null, will automatically create a virtual building for the structure. */
-   public virtualBuilding: VirtualStructure | null;
+   /** The virtual structure associated with the structure. If null, will automatically create a virtual building for the structure. */
+   public virtualStructure: VirtualStructure | null;
 
    constructor(connections: Array<StructureConnection>, virtualBuilding: VirtualStructure | null) {
       this.connections = connections;
-      this.virtualBuilding = virtualBuilding;
+      this.virtualStructure = virtualBuilding;
    }
 }
 
@@ -32,9 +33,14 @@ StructureComponentArray.onRemove = onRemove;
 
 const addConnection = (entity: Entity, structureComponent: StructureComponent, connectedEntity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
+   // @Hack
+   const entityHitbox = transformComponent.hitboxes[0];
    
-   const relativeOffsetDirection = calculateRelativeOffsetDirection(transformComponent.position, transformComponent.rotation, connectedEntityTransformComponent.position);
+   const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
+   // @Hack
+   const connectedEntityHitbox = connectedEntityTransformComponent.hitboxes[0];
+   
+   const relativeOffsetDirection = calculateRelativeOffsetDirection(entityHitbox.box.position, entityHitbox.box.angle, connectedEntityHitbox.box.position);
    const connection = createStructureConnection(connectedEntity, relativeOffsetDirection);
    structureComponent.connections.push(connection)
 
@@ -57,12 +63,14 @@ function onJoin(entity: Entity): void {
 
    const layer = getEntityLayer(entity);
 
-   if (structureComponent.virtualBuilding === null) {
+   if (structureComponent.virtualStructure === null) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = transformComponent.hitboxes[0];
+      
       const entityType = getEntityType(entity) as StructureType;
       const buildingLayer = tribeComponent.tribe.buildingLayers[layer.depth];
       
-      structureComponent.virtualBuilding = createVirtualStructureFromHitboxes(buildingLayer, transformComponent.position.copy(), transformComponent.relativeRotation, entityType, transformComponent.hitboxes);
+      structureComponent.virtualStructure = createVirtualStructureFromHitboxes(buildingLayer, entityHitbox.box.position.copy(), entityHitbox.box.angle, entityType, transformComponent.hitboxes);
    }
    
    tribeComponent.tribe.addBuilding(entity);

@@ -8,22 +8,25 @@ import { randInt } from "battletribes-shared/utils";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { boxIsCircular, hitboxIsCircular, updateBox, HitboxFlag, updateVertexPositionsAndSideAxes, Box, Hitbox, BoxType } from "battletribes-shared/boxes/boxes";
-import CircularBox from "battletribes-shared/boxes/CircularBox";
-import RectangularBox from "battletribes-shared/boxes/RectangularBox";
+import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
-import { ClientHitbox } from "../../boxes";
+import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { HitboxCollisionBit } from "../../../../shared/src/collision";
-import { EntityConfig } from "../ComponentArray";
-import { registerDirtyRenderInfo, registerDirtyRenderPosition } from "../../rendering/render-part-matrices";
+import { COLLISION_BITS, DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
+import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playSound } from "../../sound";
 import Camera from "../../Camera";
 import { RideableComponentArray } from "./RideableComponent";
 import { playerInstance } from "../../player";
+import { createHitboxReference, Hitbox, HitboxReference } from "../../hitboxes";
+import { padHitboxData, readHitboxFromData, updateHitboxFromData } from "../../networking/packet-hitboxes";
+
+export interface HitboxTetherParams {
+   readonly hitboxLocalID: number;
+   readonly otherHitbox: HitboxReference;
+}
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -38,14 +41,8 @@ export interface EntityCarryInfo {
 }
 
 export interface TransformComponentParams {
-   readonly position: Point;
-   readonly selfVelocity: Point;
-   readonly externalVelocity: Point;
-   readonly rotation: number;
-   readonly relativeRotation: number;
-   readonly hitboxes: Array<ClientHitbox>;
-   readonly rootHitboxes: Array<ClientHitbox>;
-   readonly tethers: Array<HitboxTether>;
+   readonly hitboxes: Array<Hitbox>;
+   readonly tethers: Array<HitboxTetherParams>;
    readonly collisionBit: HitboxCollisionBit;
    readonly collisionMask: number;
    readonly carryRoot: Entity;
@@ -56,21 +53,12 @@ export interface TransformComponentParams {
 export interface TransformComponent {
    totalMass: number;
    
-   readonly position: Point;
-
-   readonly selfVelocity: Point;
-   readonly externalVelocity: Point;
-
-   /** Angle the object is facing, taken counterclockwise from the positive x axis (radians) */
-   rotation: number;
-   relativeRotation: number;
-
    readonly chunks: Set<Chunk>;
 
-   hitboxes: Array<ClientHitbox>;
-   readonly hitboxMap: Map<number, ClientHitbox>;
+   hitboxes: Array<Hitbox>;
+   readonly hitboxMap: Map<number, Hitbox>;
 
-   readonly rootHitboxes: Array<ClientHitbox>;
+   readonly rootHitboxes: Array<Hitbox>;
    readonly tethers: Array<HitboxTether>;
 
    collisionBit: number;
@@ -86,122 +74,10 @@ export interface TransformComponent {
    readonly carriedEntities: Array<EntityCarryInfo>;
 }
 
-const padBaseHitboxData = (reader: PacketReader): void => {
-   reader.padOffset(11 * Float32Array.BYTES_PER_ELEMENT);
-
-   const numFlags = reader.readNumber();
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numFlags);
-
-   // Parent local ID
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-// @Hack: shouldn't be exported, and shouldn't even exist in the first place
-export function getHitboxByLocalID(hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox | null {
-   if (localID === -1) {
-      return null;
-   }
-
-   for (const hitbox of hitboxes) {
-      if (hitbox.localID === localID) {
-         return hitbox;
-      }
-   }
-
-   throw new Error();
-}
-
-export function readCircularHitboxFromData(reader: PacketReader, hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox<BoxType.circular> {
-   const x = reader.readNumber();
-   const y = reader.readNumber();
-   const relativeRotation = reader.readNumber();
-   const rotation = reader.readNumber();
-   const mass = reader.readNumber();
-   const offsetX = reader.readNumber();
-   const offsetY = reader.readNumber();
-   const scale = reader.readNumber();
-   const collisionType = reader.readNumber();
-   const collisionBit = reader.readNumber();
-   const collisionMask = reader.readNumber();
-
-   const numFlags = reader.readNumber();
-   const flags = new Array<HitboxFlag>();
-   for (let i = 0; i < numFlags; i++) {
-      flags.push(reader.readNumber());
-   }
-
-   const parentLocalID = reader.readNumber();
-   const parentHitbox = getHitboxByLocalID(hitboxes, parentLocalID);
-
-   const radius = reader.readNumber();
-
-   const offset = new Point(offsetX, offsetY);
-   const box = new CircularBox(parentHitbox !== null ? parentHitbox.box : null, offset, 0, radius);
-   // @Hack
-   box.scale = scale;
-   box.position.x = x;
-   box.position.y = y;
-   box.relativeRotation = relativeRotation;
-   box.rotation = rotation;
-   
-   return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
-}
-const padCircularHitboxData = (reader: PacketReader): void => {
-   padBaseHitboxData(reader);
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-export function readRectangularHitboxFromData(reader: PacketReader, hitboxes: ReadonlyArray<ClientHitbox>, localID: number): ClientHitbox<BoxType.rectangular> {
-   const x = reader.readNumber();
-   const y = reader.readNumber();
-   const relativeRotation = reader.readNumber();
-   const rotation = reader.readNumber();
-   const mass = reader.readNumber();
-   const offsetX = reader.readNumber();
-   const offsetY = reader.readNumber();
-   const scale = reader.readNumber();
-   const collisionType = reader.readNumber();
-   const collisionBit = reader.readNumber();
-   const collisionMask = reader.readNumber();
-
-   const numFlags = reader.readNumber();
-   const flags = new Array<HitboxFlag>();
-   for (let i = 0; i < numFlags; i++) {
-      flags.push(reader.readNumber());
-   }
-
-   const parentLocalID = reader.readNumber();
-   const parentHitbox = getHitboxByLocalID(hitboxes, parentLocalID);
-   
-   const width = reader.readNumber();
-   const height = reader.readNumber();
-
-   const offset = new Point(offsetX, offsetY);
-   const box = new RectangularBox(parentHitbox !== null ? parentHitbox.box : null, offset, width, height, rotation);
-   // @Hack
-   box.scale = scale;
-   box.position.x = x;
-   box.position.y = y;
-   box.relativeRotation = relativeRotation;
-   box.rotation = rotation;
-
-   return new ClientHitbox(box, mass, collisionType, collisionBit, collisionMask, flags, localID);
-}
-const padRectangularHitboxData = (reader: PacketReader): void => {
-   padBaseHitboxData(reader);
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-export function createTransformComponentParams(position: Point, selfVelocity: Point, externalVelocity: Point, rotation: number, relativeRotation: number, hitboxes: Array<ClientHitbox>, tethers: Array<HitboxTether>, rootHitboxes: Array<ClientHitbox>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams {
+const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTetherParams>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>): TransformComponentParams => {
    return {
-      position: position,
-      selfVelocity: selfVelocity,
-      externalVelocity: externalVelocity,
-      rotation: rotation,
-      relativeRotation: relativeRotation,
       hitboxes: hitboxes,
       tethers: tethers,
-      rootHitboxes: rootHitboxes,
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       carryRoot: carryRoot,
@@ -210,61 +86,50 @@ export function createTransformComponentParams(position: Point, selfVelocity: Po
    };
 }
 
-export function createParamsFromData(reader: PacketReader): TransformComponentParams {
-   const positionX = reader.readNumber();
-   const positionY = reader.readNumber();
-   const position = new Point(positionX, positionY);
+export function createTransformComponentParams(hitboxes: Array<Hitbox>): TransformComponentParams {
+   return {
+      hitboxes: hitboxes,
+      tethers: [],
+      collisionBit: COLLISION_BITS.default,
+      collisionMask: DEFAULT_COLLISION_MASK,
+      carryRoot: 0,
+      mount: 0,
+      carriedEntities: []
+   };
+}
 
-   const rotation = reader.readNumber();
-   const relativeRotation = reader.readNumber();
-   
+function createParamsFromData(reader: PacketReader): TransformComponentParams {
    const collisionBit = reader.readNumber();
    const collisionMask = reader.readNumber();
 
-   const selfVelocityX = reader.readNumber();
-   const selfVelocityY = reader.readNumber();
-   const externalVelocityX = reader.readNumber();
-   const externalVelocityY = reader.readNumber();
-   const selfVelocity = new Point(selfVelocityX, selfVelocityY);
-   const externalVelocity = new Point(externalVelocityX, externalVelocityY);
-
-   const hitboxes = new Array<ClientHitbox>();
-   const tethers = new Array<HitboxTether>();
-   const rootHitboxes = new Array<ClientHitbox>();
+   const hitboxes = new Array<Hitbox>();
+   const tethers = new Array<HitboxTetherParams>();
    
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
       const localID = reader.readNumber();
 
-      let hitbox: ClientHitbox;
-      if (isCircular) {
-         hitbox = readCircularHitboxFromData(reader, hitboxes, localID);
-      } else {
-         hitbox = readRectangularHitboxFromData(reader, hitboxes, localID);
-      }
-
+      const hitbox = readHitboxFromData(reader, localID, hitboxes);
       hitboxes.push(hitbox);
-      if (hitbox.box.parent === null) {
-         rootHitboxes.push(hitbox);
-      }
 
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
       if (isTethered) {
          const otherHitboxLocalID = reader.readNumber();
+
          const otherHitbox = getHitboxByLocalID(hitboxes, otherHitboxLocalID);
          assert(otherHitbox !== null);
 
-         const tether: HitboxTether = {
-            hitbox: hitbox,
-            otherHitbox: otherHitbox
+         const tether: HitboxTetherParams = {
+            hitboxLocalID: hitbox.localID,
+            // @Incomplete: entity?
+            otherHitbox: createHitboxReference(null, otherHitbox.localID)
          };
          tethers.push(tether);
       }
    }
+
+   assert(hitboxes.length > 0);
 
    const carryRoot = reader.readNumber() as Entity;
    const mount = reader.readNumber() as Entity;
@@ -285,43 +150,55 @@ export function createParamsFromData(reader: PacketReader): TransformComponentPa
       carriedEntities.push(carryInfo);
    }
 
-   return createTransformComponentParams(position, selfVelocity, externalVelocity, rotation, relativeRotation, hitboxes, tethers, rootHitboxes, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
+   return fillTransformComponentParams(hitboxes, tethers, collisionBit, collisionMask, carryRoot, mount, carriedEntities);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
-   const tileX = Math.floor(transformComponent.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(transformComponent.position.y / Settings.TILE_SIZE);
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
    
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
    return layer.getTile(tileIndex);
 }
 
-const getHitboxLocalID = (transformComponent: TransformComponent, hitbox: ClientHitbox): number => {
-   for (const pair of transformComponent.hitboxMap) {
-      if (pair[1] === hitbox) {
-         return pair[0];
-      }
-   }
-
-   throw new Error();
+// @Location
+export function getHitboxTile(layer: Layer, hitbox: Hitbox): Tile {
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
+   
+   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   return layer.getTile(tileIndex);
 }
 
-const addHitbox = (transformComponent: TransformComponent, hitbox: ClientHitbox): void => {
-   updateBox(hitbox.box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
+export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: number): Hitbox | null {
+   for (const hitbox of hitboxes) {
+      if (hitbox.localID === localID) {
+         return hitbox;
+      }
+   }
+   return null;
+}
+
+const addHitbox = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
    transformComponent.hitboxes.push(hitbox);
    transformComponent.hitboxMap.set(hitbox.localID, hitbox);
 
-   if (hitbox.box.parent === null) {
+   if (hitbox.parent === null) {
       transformComponent.rootHitboxes.push(hitbox);
+   } else {
+      const parent = hitbox.parent;
+      updateBox(hitbox.box, parent.box.position.x, parent.box.position.y, parent.box.angle);
    }
 }
    
-export function removeHitboxFromEntity(transformComponent: TransformComponent, hitbox: ClientHitbox, idx: number): void {
+export function removeHitboxFromEntity(transformComponent: TransformComponent, hitbox: Hitbox, idx: number): void {
    transformComponent.hitboxes.splice(idx, 1);
-   const localID = getHitboxLocalID(transformComponent, hitbox);
-   transformComponent.hitboxMap.delete(localID);
+   transformComponent.hitboxMap.delete(hitbox.localID);
 
-   if (hitbox.box.parent === null) {
+   if (hitbox.parent === null) {
       const idx = transformComponent.rootHitboxes.indexOf(hitbox);
       assert(idx !== -1);
       transformComponent.rootHitboxes.splice(idx, 1);
@@ -335,12 +212,15 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
       return false;
    }
 
+   // @Hack
+   const hitbox = transformComponent.hitboxes[0];
+   
    // If the game object is standing on a stepping stone they aren't in a river
    for (const chunk of transformComponent.chunks) {
       for (const steppingStone of chunk.riverSteppingStones) {
          const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
          
-         const dist = distance(transformComponent.position.x, transformComponent.position.y, steppingStone.positionX, steppingStone.positionY);
+         const dist = distance(hitbox.box.position.x, hitbox.box.position.y, steppingStone.positionX, steppingStone.positionY);
          if (dist <= size/2) {
             return false;
          }
@@ -350,30 +230,26 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
    return true;
 }
 
-// @Hack: THIS SHIT STINKY
-const getHitboxByBox = (transformComponent: TransformComponent, box: Box): ClientHitbox => {
-   for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.box === box) {
-         return hitbox;
-      }
-   }
-
-   throw new Error();
-}
-
 // @Cleanup: name is bad, doesn't fully 'clean' the hitbox.
-const cleanHitbox = (transformComponent: TransformComponent, hitbox: ClientHitbox, parentPosition: Readonly<Point>, parentRotation: number): void => {
-   updateBox(hitbox.box, parentPosition.x, parentPosition.y, parentRotation);
+const updateAttachedHitboxRecursively = (hitbox: Hitbox): void => {
+   const parent = hitbox.parent;
+   assert(parent !== null);
 
-   for (const child of hitbox.box.children) {
-      const childHitbox = getHitboxByBox(transformComponent, child);
-      cleanHitbox(transformComponent, childHitbox, hitbox.box.position, hitbox.box.rotation);
+   hitbox.velocity.x = parent.velocity.x;
+   hitbox.velocity.y = parent.velocity.y;
+   
+   for (const childHitbox of hitbox.children) {
+      updateBox(childHitbox.box, hitbox.box.position.x, hitbox.box.position.y, hitbox.box.angle);
+      updateAttachedHitboxRecursively(childHitbox);
    }
 }
 
-const updateHitboxes = (transformComponent: TransformComponent): void => {
-   for (const hitbox of transformComponent.rootHitboxes) {
-      cleanHitbox(transformComponent, hitbox, transformComponent.position, transformComponent.rotation);
+const cleanHitboxes = (transformComponent: TransformComponent): void => {
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      rootHitbox.box.angle = rootHitbox.box.relativeAngle;
+      for (const child of rootHitbox.children) {
+         updateAttachedHitboxRecursively(child);
+      }
    }
    // @Incomplete
    // @Hack?
@@ -471,7 +347,7 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
 }
 
 export function updateEntityPosition(transformComponent: TransformComponent, entity: Entity): void {
-   updateHitboxes(transformComponent);
+   cleanHitboxes(transformComponent);
    updateContainingChunks(transformComponent, entity);
 }
 
@@ -486,28 +362,38 @@ export const TransformComponentArray = new ServerComponentArray<TransformCompone
    updatePlayerFromData: updatePlayerFromData
 });
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.transform, never>): TransformComponent {
-   const transformComponentParams = entityConfig.serverComponents[ServerComponentType.transform];
+function createComponent(entityParams: EntityParams): TransformComponent {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    let totalMass = 0;
-   const hitboxMap = new Map<number, ClientHitbox>();
+   const rootHitboxes = new Array<Hitbox>();
+   const hitboxMap = new Map<number, Hitbox>();
    for (const hitbox of transformComponentParams.hitboxes) {
       totalMass += hitbox.mass;
       hitboxMap.set(hitbox.localID, hitbox);
+      if (hitbox.parent === null) {
+         rootHitboxes.push(hitbox);
+      }
    }
+
+   const tethers = new Array<HitboxTether>();
+   for (const tetherParams of transformComponentParams.tethers) {
+      const otherHitbox = getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!;
+      tethers.push({
+         hitbox: getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!,
+         otherHitbox: otherHitbox
+      });
+   }
+
+   assert(transformComponentParams.hitboxes.length > 0);
    
    return {
       totalMass: totalMass,
-      position: transformComponentParams.position,
-      selfVelocity: transformComponentParams.selfVelocity,
-      externalVelocity: transformComponentParams.externalVelocity,
-      rotation: transformComponentParams.rotation,
-      relativeRotation: transformComponentParams.relativeRotation,
       chunks: new Set(),
       hitboxes: transformComponentParams.hitboxes,
       hitboxMap: hitboxMap,
-      tethers: transformComponentParams.tethers,
-      rootHitboxes: transformComponentParams.rootHitboxes,
+      tethers: tethers,
+      rootHitboxes: rootHitboxes,
       collisionBit: transformComponentParams.collisionBit,
       collisionMask: transformComponentParams.collisionMask,
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
@@ -537,21 +423,12 @@ function onRemove(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
-   // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
+   // @Bug: I think this is off.... Length of entity data is wrong then?
+   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
-      if (isCircular) {
-         padCircularHitboxData(reader);
-      } else {
-         padRectangularHitboxData(reader);
-      }
+      padHitboxData(reader);
 
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
@@ -563,57 +440,6 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
    const numCarriedEntities = reader.readNumber();
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numCarriedEntities);
-}
-
-const updateBaseHitbox = (hitbox: ClientHitbox, reader: PacketReader): void => {
-   const x = reader.readNumber();
-   const y = reader.readNumber();
-   const relativeRotation = reader.readNumber();
-   const rotation = reader.readNumber();
-   // @Incomplete: Unused
-   const mass = reader.readNumber();
-   const offsetX = reader.readNumber();
-   const offsetY = reader.readNumber();
-   const scale = reader.readNumber();
-   const collisionType = reader.readNumber();
-   const collisionBit = reader.readNumber();
-   const collisionMask = reader.readNumber();
-   const numFlags = reader.readNumber();
-   // @Speed @Garbage
-   const flags = new Array<HitboxFlag>();
-   for (let i = 0; i < numFlags; i++) {
-      flags.push(reader.readNumber());
-   }
-
-   // Skip parent local ID
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
-   const box = hitbox.box;
-   
-   box.position.x = x;
-   box.position.y = y;
-   box.relativeRotation = relativeRotation;
-   box.rotation = rotation;
-   box.offset.x = offsetX;
-   box.offset.y = offsetY;
-   box.scale = scale;
-   hitbox.collisionType = collisionType;
-   hitbox.lastUpdateTicks = Board.serverTicks;
-}
-
-const updateCircularHitbox = (clientHitbox: ClientHitbox<BoxType.circular>, reader: PacketReader): void => {
-   updateBaseHitbox(clientHitbox, reader);
-
-   clientHitbox.box.radius = reader.readNumber();
-}
-
-const updateRectangularHitbox = (clientHitbox: ClientHitbox<BoxType.rectangular>, reader: PacketReader): void => {
-   updateBaseHitbox(clientHitbox, reader);
-
-   clientHitbox.box.width = reader.readNumber();
-   clientHitbox.box.height = reader.readNumber();
-   
-   updateVertexPositionsAndSideAxes(clientHitbox.box);
 }
 
 const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transformComponent: TransformComponent): void => {
@@ -680,10 +506,15 @@ const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transform
             const carrySlot = rideableComponent.carrySlots[0];
 
             // Set the player to the dismount position
-            const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+
+            const transformComponent = TransformComponentArray.getComponent(playerInstance);
+            const playerHitbox = transformComponent.hitboxes[0];
+
             const mountTransformComponent = TransformComponentArray.getComponent(entity);
-            transformComponent.position.x = mountTransformComponent.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
-            transformComponent.position.y = mountTransformComponent.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountTransformComponent.relativeRotation);
+            // @Hack
+            const mountHitbox = mountTransformComponent.hitboxes[0];
+            playerHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
+            playerHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
          }
          
          transformComponent.carriedEntities.splice(i, 1);
@@ -693,38 +524,23 @@ const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transform
 }
    
 function updateFromData(reader: PacketReader, entity: Entity): void {
+   // @SPEED: What we could do is explicitly send which hitboxes have been created, and removed, from the server. (When using carmack networking)
+   
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   const positionX = reader.readNumber();
-   const positionY = reader.readNumber();
-   const rotation = reader.readNumber();
-   const relativeRotation = reader.readNumber();
-
-   if (positionX !== transformComponent.position.x || positionY !== transformComponent.position.y || rotation !== transformComponent.rotation || relativeRotation !== transformComponent.relativeRotation) {
-      transformComponent.position.x = positionX;
-      transformComponent.position.y = positionY;
-      transformComponent.rotation = rotation;
-      transformComponent.relativeRotation = relativeRotation;
-      
-      const renderInfo = getEntityRenderInfo(entity);
-      registerDirtyRenderInfo(renderInfo);
-      registerDirtyRenderPosition(renderInfo);
-   }
+   // @HACK @SPEED? (actually this might be ok just if we do the optimisation which only sends components which were updated, not all of em at once)
+   const renderInfo = getEntityRenderInfo(entity);
+   registerDirtyRenderInfo(renderInfo);
    
    transformComponent.collisionBit = reader.readNumber();
    transformComponent.collisionMask = reader.readNumber();
-
-   transformComponent.selfVelocity.x = reader.readNumber();
-   transformComponent.selfVelocity.y = reader.readNumber();
-   transformComponent.externalVelocity.x = reader.readNumber();
-   transformComponent.externalVelocity.y = reader.readNumber();
 
    // @Speed: would be faster if we split the hitboxes array
    let existingNumCircular = 0;
    let existingNumRectangular = 0;
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
-      if (hitboxIsCircular(hitbox)) {
+      if (boxIsCircular(hitbox.box)) {
          existingNumCircular++;
       } else {
          existingNumRectangular++;
@@ -738,28 +554,20 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
       const localID = reader.readNumber();
 
-      const hitbox = transformComponent.hitboxMap.get(localID);
-      if (typeof hitbox === "undefined") {
-         // Create new hitbox
-         let hitbox: ClientHitbox;
-         if (isCircular) {
-            hitbox = readCircularHitboxFromData(reader, transformComponent.hitboxes, localID);
+      const existingHitbox = transformComponent.hitboxMap.get(localID);
+      if (typeof existingHitbox === "undefined") {
+         const hitbox = readHitboxFromData(reader, localID, transformComponent.hitboxes);
 
+         addHitbox(transformComponent, hitbox);
+         if (boxIsCircular(hitbox.box)) {
             newNumCircular++;
             hasAddedCircular = true;
          } else {
-            hitbox = readRectangularHitboxFromData(reader, transformComponent.hitboxes, localID);
-
             newNumRectangular++;
             hasAddedRectangular = true;
          }
-
-         addHitbox(transformComponent, hitbox);
 
          const isTethered = reader.readBoolean();
          reader.padOffset(3);
@@ -775,15 +583,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             transformComponent.tethers.push(tether);
          }
       } else {
-         if (isCircular) {
-            // @Hack: Cast
-            updateCircularHitbox(hitbox as ClientHitbox<BoxType.circular>, reader);
-
+         updateHitboxFromData(existingHitbox, reader);
+         if (boxIsCircular(existingHitbox.box)) {
             newNumCircular++;
          } else {
-            // @Hack: Cast
-            updateRectangularHitbox(hitbox as ClientHitbox<BoxType.rectangular>, reader);
-
             newNumRectangular++;
          }
 
@@ -875,20 +678,13 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    // Update carry roots and carrying entities
    // 
    // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const isCircular = reader.readBoolean();
-      reader.padOffset(3);
-
       reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
-      if (isCircular) {
-         padCircularHitboxData(reader);
-      } else {
-         padRectangularHitboxData(reader);
-      }
+      padHitboxData(reader);
 
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
@@ -913,8 +709,8 @@ export function getRandomPositionInBox(box: Box): Point {
       const xOffset = randFloat(-halfWidth, halfWidth);
       const yOffset = randFloat(-halfHeight, halfHeight);
 
-      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
-      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.angle);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.angle);
       return new Point(x, y);
    }
 }
@@ -946,8 +742,8 @@ export function getRandomPositionOnBoxEdge(box: Box): Point {
          yOffset = randFloat(-halfHeight, halfHeight);
       }
 
-      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.rotation);
-      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.rotation);
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.angle);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.angle);
       return new Point(x, y);
    }
 }

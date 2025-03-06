@@ -169,6 +169,10 @@ export default class Layer {
       // }
    }
 
+   public tileIsBuildingBlocking(tileIndex: TileIndex): boolean {
+      return this.buildingBlockingTiles.has(tileIndex);
+   }
+
    public getTileMithrilRichness(tileX: number, tileY: number): number {
       const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
       return this.tileMithrilRichnesses[tileIndex];

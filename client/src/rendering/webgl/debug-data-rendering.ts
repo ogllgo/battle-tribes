@@ -5,6 +5,7 @@ import { createWebGLProgram, generateLine, generateThickCircleWireframeVertices,
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { entityExists, getEntityRenderInfo } from "../../world";
+import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 
 let lineProgram: WebGLProgram;
 
@@ -86,19 +87,19 @@ export function createDebugDataShaders(): void {
    bindUBOToProgram(gl, triangleProgram, UBOBindingIndex.CAMERA);
 }
 
-const addCircleVertices = (vertices: Array<number>, debugData: EntityDebugData, renderInfo: EntityRenderInfo): void => {
+const addCircleVertices = (vertices: Array<number>, debugData: EntityDebugData, position: Point): void => {
    for (const circle of debugData.circles) {
       vertices.push(
-         ...generateThickCircleWireframeVertices(renderInfo.renderPosition, circle.radius, circle.thickness, circle.colour[0], circle.colour[1], circle.colour[2])
+         ...generateThickCircleWireframeVertices(position, circle.radius, circle.thickness, circle.colour[0], circle.colour[1], circle.colour[2])
       );
    }
 }
 
-const addLineVertices = (vertices: Array<number>, debugData: EntityDebugData, renderInfo: EntityRenderInfo): void => {
+const addLineVertices = (vertices: Array<number>, debugData: EntityDebugData, position: Point): void => {
    for (const line of debugData.lines) {
       const targetPosition = new Point(...line.targetPosition);
       vertices.push(
-         ...generateLine(renderInfo.renderPosition, targetPosition, line.thickness, line.colour[0], line.colour[1], line.colour[2])
+         ...generateLine(position, targetPosition, line.thickness, line.colour[0], line.colour[1], line.colour[2])
       );
    }
 }
@@ -111,11 +112,12 @@ export function renderLineDebugData(debugData: EntityDebugData): void {
       throw new Error("Couldn't find game object.");
    }
 
-   const renderInfo = getEntityRenderInfo(debugData.entityID);
+   const transformComponent = TransformComponentArray.getComponent(debugData.entityID);
+   const hitbox = transformComponent.hitboxes[0];
    
    const vertices = new Array<number>();
-   addCircleVertices(vertices, debugData, renderInfo);
-   addLineVertices(vertices, debugData, renderInfo);
+   addCircleVertices(vertices, debugData, hitbox.box.position);
+   addLineVertices(vertices, debugData, hitbox.box.position);
 
    const buffer = gl.createBuffer();
    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);

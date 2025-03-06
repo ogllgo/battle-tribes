@@ -1,10 +1,8 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { randInt } from "../../../shared/src/utils";
-import { createItemsOverEntity } from "../entities/item-entity";
 import { getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { createIceShardExplosion } from "./IceSpikesComponent";
@@ -53,14 +51,14 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const iceSpikesPlantedComponent = IceSpikesPlantedComponentArray.getComponent(entity);
+
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    if (iceSpikesPlantedComponent.plantGrowthTicks === Vars.GROWTH_TIME_TICKS) {
-      createItemsOverEntity(entity, ItemType.frostcicle, randInt(1, 2));
-      
-      createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(2, 3));
+      createIceShardExplosion(layer, hitbox.box.position.x, hitbox.box.position.y, randInt(2, 3));
    } else if (iceSpikesPlantedComponent.plantGrowthTicks >= Vars.GROWTH_TIME_TICKS * 0.5) {
-      createIceShardExplosion(layer, transformComponent.position.x, transformComponent.position.y, randInt(1, 2));
+      createIceShardExplosion(layer, hitbox.box.position.x, hitbox.box.position.y, randInt(1, 2));
    }
 }

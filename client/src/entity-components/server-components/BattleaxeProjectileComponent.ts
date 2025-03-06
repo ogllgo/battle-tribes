@@ -1,8 +1,9 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface BattleaxeProjectileComponentParams {}
 
@@ -31,7 +32,9 @@ function getMaxRenderParts(): number {
 }
 
 const playWhoosh = (entity: Entity): void => {
-   playSoundOnEntity("air-whoosh.mp3", 0.25, 1, entity, true);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   playSoundOnHitbox("air-whoosh.mp3", 0.25, 1, hitbox, true);
 }
 
 function onLoad(entity: Entity): void {

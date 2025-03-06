@@ -1,31 +1,30 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
-import { playSoundOnEntity } from "../../sound";
+import { playSoundOnHitbox } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { DOOR_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
-import { EntityConfig } from "../ComponentArray";
+import { EntityIntermediateInfo, EntityParams } from "../../world";
 
 export interface DoorComponentParams {
    readonly toggleType: DoorToggleType;
    readonly openProgress: number;
 }
 
-interface RenderParts {}
+interface IntermediateInfo {}
 
 export interface DoorComponent {
    toggleType: DoorToggleType;
    openProgress: number;
 }
 
-export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorComponentParams, RenderParts>(ServerComponentType.door, true, {
+export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorComponentParams, IntermediateInfo>(ServerComponentType.door, true, {
    createParamsFromData: createParamsFromData,
-   createRenderParts: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -34,34 +33,44 @@ export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorCo
    onDie: onDie
 });
 
-function createParamsFromData(reader: PacketReader): DoorComponentParams {
-   const toggleType = reader.readNumber();
-   const openProgress = reader.readNumber();
-
+const fillParams = (toggleType: DoorToggleType, openProgress: number): DoorComponentParams => {
    return {
       toggleType: toggleType,
       openProgress: openProgress
    };
 }
 
-function createRenderParts(renderInfo: EntityRenderInfo, entityConfig: EntityConfig<ServerComponentType.buildingMaterial, never>): RenderParts {
-   const buildingMaterialComponentParams = entityConfig.serverComponents[ServerComponentType.buildingMaterial];
+export function createDoorComponentParams(): DoorComponentParams {
+   return fillParams(DoorToggleType.none, 0);
+}
+
+function createParamsFromData(reader: PacketReader): DoorComponentParams {
+   const toggleType = reader.readNumber();
+   const openProgress = reader.readNumber();
+   return fillParams(toggleType, openProgress);
+}
+
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const hitbox = transformComponentParams.hitboxes[0];
+   
+   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
    const renderPart = new TexturedRenderPart(
-      null,
+      hitbox,
       0,
       0,
       getTextureArrayIndex(DOOR_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
 
-function createComponent(entityConfig: EntityConfig<ServerComponentType.door, never>): DoorComponent {
-   const doorComponentParams = entityConfig.serverComponents[ServerComponentType.door];
+function createComponent(entityParams: EntityParams): DoorComponent {
+   const doorComponentParams = entityParams.serverComponentParams[ServerComponentType.door]!;
    
    return {
       toggleType: doorComponentParams.toggleType,
@@ -78,14 +87,17 @@ function padData(reader: PacketReader): void {
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const toggleType = reader.readNumber();
    const openProgress = reader.readNumber();
    
    const doorComponent = DoorComponentArray.getComponent(entity);
    if (toggleType === DoorToggleType.open && doorComponent.toggleType === DoorToggleType.none) {
-      playSoundOnEntity("door-open.mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
    } else if (toggleType === DoorToggleType.close && doorComponent.toggleType === DoorToggleType.none) {
-      playSoundOnEntity("door-close.mp3", 0.4, 1, entity, false);
+      playSoundOnHitbox("door-close.mp3", 0.4, 1, hitbox, false);
    }
 
    doorComponent.toggleType = toggleType;
@@ -94,29 +106,31 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   playSoundOnEntity("wooden-wall-hit.mp3", 0.3, 1, entity, false);
+   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
 
    for (let i = 0; i < 4; i++) {
-      createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 20);
+      createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    }
 
    for (let i = 0; i < 7; i++) {
-      const position = transformComponent.position.offset(20, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(20, 2 * Math.PI * Math.random());
       createLightWoodSpeckParticle(position.x, position.y, 5);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
-   playSoundOnEntity("wooden-wall-break.mp3", 0.4, 1, entity, false);
+   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, hitbox, false);
 
    for (let i = 0; i < 7; i++) {
-      createLightWoodSpeckParticle(transformComponent.position.x, transformComponent.position.y, 32 * Math.random());
+      createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32 * Math.random());
    }
 
    for (let i = 0; i < 3; i++) {
-      createWoodShardParticle(transformComponent.position.x, transformComponent.position.y, 32);
+      createWoodShardParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
    }
 }

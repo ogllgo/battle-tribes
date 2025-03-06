@@ -9,11 +9,10 @@ import { latencyGameState } from "./game-state/game-states";
 import { BuildMenu_hide, BuildMenu_setBuildingID, BuildMenu_updateBuilding, entityCanOpenBuildMenu, isHoveringInBlueprintMenu } from "./components/game/BuildMenu";
 import { InventoryMenuType, InventorySelector_inventoryIsOpen, InventorySelector_setInventoryMenuType } from "./components/game/inventories/InventorySelector";
 import { GhostInfo, GhostType, PARTIAL_OPACITY } from "./rendering/webgl/entity-ghost-rendering";
-import { getClosestGroupNum } from "./rendering/webgl/entity-selection-rendering";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./components/game/menus/CraftingMenu";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName, ITEM_INFO_RECORD } from "battletribes-shared/items/items";
-import { boxIsWithinRange } from "battletribes-shared/boxes/boxes";
+import { boxIsWithinRange, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { getPlayerSelectedItem } from "./components/game/GameInteractableLayer";
 import { entityExists, getEntityLayer, getEntityRenderInfo, getEntityType } from "./world";
 import { TombstoneComponentArray } from "./entity-components/server-components/TombstoneComponent";
@@ -30,13 +29,15 @@ import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
 import TexturedRenderPart from "./render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
-import { getVelocityMagnitude } from "./entity-components/server-components/PhysicsComponent";
 import { GameInteractState } from "./components/game/GameScreen";
 import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
+import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
+import { createHitbox } from "./hitboxes";
+import CircularBox from "../../shared/src/boxes/CircularBox";
+import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -208,15 +209,13 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
 
    // Toggle tunnel doors
    if (TunnelComponentArray.hasComponent(entity)) {
-      const groupNum = getClosestGroupNum(entity);
-      if (groupNum !== 0) {
-         return {
-            type: InteractActionType.toggleTunnelDoor,
-            interactEntity: entity,
-            interactRange: Vars.DEFAULT_INTERACT_RANGE,
-            doorSide: getTunnelDoorSide(groupNum)
-         };
-      }
+      return {
+         type: InteractActionType.toggleTunnelDoor,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE,
+         // @HACK: GROUP NUM PARAMETER IS OBSOLETE
+         doorSide: getTunnelDoorSide(0)
+      };
    }
 
    // Use fertiliser / plant seeds
@@ -284,7 +283,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Animal staff options
-   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && TamingComponentArray.hasComponent(entity)) {
+   if (selectedItem !== null && selectedItem.type === ItemType.animalStaff && entityIsTameableByPlayer(entity)) {
       return {
          type: InteractActionType.openAnimalStaffMenu,
          interactEntity: entity,
@@ -293,7 +292,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Taming almanac
-   if (selectedItem !== null && selectedItem.type === ItemType.tamingAlmanac && TamingComponentArray.hasComponent(entity)) {
+   if (selectedItem !== null && selectedItem.type === ItemType.tamingAlmanac && entityIsTameableByPlayer(entity)) {
       return {
          type: InteractActionType.openTamingMenu,
          interactEntity: entity,
@@ -315,7 +314,8 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    // Pick up arrows
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      if (getVelocityMagnitude(transformComponent) < 1) {
+      const hitbox = transformComponent.hitboxes[0];
+      if (hitbox.velocity.length() < 1) {
          return {
             type: InteractActionType.pickUpArrow,
             interactEntity: entity,
@@ -356,16 +356,19 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       }
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
+         const interactEntityHitbox = transformComponent.hitboxes[0];
          
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
-         renderInfo.renderPosition = new Point(transformComponent.position.x, transformComponent.position.y);
-         renderInfo.rotation = transformComponent.rotation;
 
          const rideableComponent = RideableComponentArray.getComponent(interactAction.interactEntity);
          const carrySlot = rideableComponent.carrySlots[0];
 
+         // @HACK
+         const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
+         const hitbox = createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
+
          const renderPart = new TexturedRenderPart(
-            null,
+            hitbox,
             0,
             0,
             getTextureArrayIndex("entities/miscellaneous/carry-slot.png")
@@ -547,6 +550,7 @@ export function deselectHighlightedEntity(): void {
 // @Cleanup: name
 const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityCheck: boolean, doCanSelectCheck: boolean): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const playerHitbox = playerTransformComponent.hitboxes[0];
    const layer = getEntityLayer(playerInstance!);
    
    const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
@@ -554,7 +558,7 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
    const minChunkY = Math.max(Math.floor((Game.cursorY! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
    const maxChunkY = Math.min(Math.floor((Game.cursorY! + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
-   const origin = new Point(Game.cursorX!, Game.cursorY!);
+   const cursorPosition = new Point(Game.cursorX!, Game.cursorY!);
 
    let minDist = HIGHLIGHT_CURSOR_RANGE + 1.1;
    let entityID = -1;
@@ -570,15 +574,15 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck && doCanSelectCheck) {
                // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from center
-               if (playerTransformComponent.position.calculateDistanceBetween(entityTransformComponent.position) > interactAction!.interactRange) {
+               if (playerHitbox.box.position.calculateDistanceBetween(playerHitbox.box.position) > interactAction!.interactRange) {
                   continue;
                }
             }
             
             // Distance from cursor
             for (const hitbox of entityTransformComponent.hitboxes) {
-               if (boxIsWithinRange(hitbox.box, origin, HIGHLIGHT_CURSOR_RANGE)) {
-                  const distance = origin.calculateDistanceBetween(entityTransformComponent.position);
+               if (boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
+                  const distance = cursorPosition.calculateDistanceBetween(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
                      entityID = currentEntity;
@@ -608,6 +612,7 @@ const getPlantGhostType = (plantedEntityType: PlantedEntityType): GhostType => {
 }
 
 // @Cleanup: setGhostInfo called at every return
+// @CLEANUP: Alsmost completely useless?
 const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: Entity | null): void => {
    if (entity === null) {
       // @Incomplete
@@ -628,12 +633,13 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
    highlightedRenderInfo = createInteractRenderInfo(interactAction);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    
    switch (interactAction.type) {
       case InteractActionType.plantSeed: {
          const ghostInfo: GhostInfo = {
-            position: entityTransformComponent.position,
-            rotation: entityTransformComponent.rotation,
+            position: entityHitbox.box.position,
+            rotation: entityHitbox.box.angle,
             ghostType: getPlantGhostType(interactAction.plantedEntityType),
             tint: [1, 1, 1],
             opacity: PARTIAL_OPACITY
@@ -644,8 +650,8 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
       }
       case InteractActionType.useFertiliser: {
          const ghostInfo: GhostInfo = {
-            position: entityTransformComponent.position,
-            rotation: entityTransformComponent.rotation,
+            position: entityHitbox.box.position,
+            rotation: entityHitbox.box.angle,
             ghostType: GhostType.fertiliser,
             tint: [1, 1, 1],
             opacity: PARTIAL_OPACITY
