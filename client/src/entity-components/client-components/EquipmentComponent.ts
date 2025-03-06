@@ -10,6 +10,7 @@ import { ClientComponentType } from "../client-component-types";
 import { TribeType } from "../../../../shared/src/tribes";
 import { TribeComponentArray } from "../server-components/TribeComponent";
 import { registerTextureSource } from "../../texture-atlases/texture-sources";
+import { TransformComponentArray } from "../server-components/TransformComponent";
 
 const enum ArmourPixelSize {
    _12x12,
@@ -161,8 +162,11 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
       const textureSource = getArmourTextureSource(entityType, tribeComponent.tribeType, armour.type as ArmourItemType);
       
       if (equipmentComponent.armourRenderPart === null) {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[0];
+         
          equipmentComponent.armourRenderPart = new TexturedRenderPart(
-            null,
+            hitbox,
             3,
             0,
             getTextureArrayIndex(textureSource)
