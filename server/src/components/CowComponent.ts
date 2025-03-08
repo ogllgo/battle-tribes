@@ -237,8 +237,10 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
    const rotatedMoveX = rotateXAroundOrigin(moveX, moveY, -parentAngle);
    const rotatedMoveY = rotateYAroundOrigin(moveX, moveY, -parentAngle);
    
-   headHitbox.box.position.x += rotatedMoveX;
-   headHitbox.box.position.y += rotatedMoveY;
+   headHitbox.box.offset.x += rotatedMoveX;
+   headHitbox.box.offset.y += rotatedMoveY;
+
+   // Rotate the head to the target
 
    // Turn the head to face the target
    headHitbox.box.relativeAngle = turnAngle(headHitbox.box.relativeAngle, headTargetDirection - parentAngle, Vars.HEAD_TURN_SPEED);

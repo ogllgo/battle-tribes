@@ -3,7 +3,7 @@ import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
 import { entityExists, getEntityType } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battletribes-shared/taming";
-import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { getRootEntity, hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import Menu from "./menus/Menu";
 import { keyIsPressed } from "../../keyboard-input";
 import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../networking/packet-creation";
@@ -44,16 +44,8 @@ const SKILL_ICON_NAMES: Record<TamingSkillID, string> = {
    [TamingSkillID.move]: "move-skill.png",
    [TamingSkillID.carry]: "carry-skill.png",
    [TamingSkillID.attack]: "attack-skill.png",
-   [TamingSkillID.shatteredWill]: "shattered-will-skill.png"
-};
-
-const TAMING_MENU_ICONS: Record<TamingSkillID, any> = {
-   [TamingSkillID.follow]: require("../../images/menus/taming-almanac/cow-skills/follow-skill.png"),
-   [TamingSkillID.riding]: require("../../images/menus/taming-almanac/cow-skills/riding-skill.png"),
-   [TamingSkillID.move]: require("../../images/menus/taming-almanac/cow-skills/move-skill.png"),
-   [TamingSkillID.carry]: require("../../images/menus/taming-almanac/cow-skills/carry-skill.png"),
-   [TamingSkillID.attack]: require("../../images/menus/taming-almanac/cow-skills/attack-skill.png"),
-   [TamingSkillID.shatteredWill]: require("../../images/menus/taming-almanac/cow-skills/shattered-will-skill.png")
+   [TamingSkillID.shatteredWill]: "shattered-will-skill.png",
+   [TamingSkillID.dulledPainReceptors]: "dulled-pain-receptors.png",
 };
 
 const UNUSED_NAMETAG_IMG = require("../../images/menus/taming-almanac/nametag-unused.png");
@@ -119,9 +111,10 @@ const TamingMenu = () => {
 
    const clientEntityInfo = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)];
 
-   const tamingComponent = TamingComponentArray.getComponent(entity);
-
-   const tamingSpec = getEntityTamingSpec(entity);
+   // @HACK: for glurb garbage
+   const rootEntity = getRootEntity(entity);
+   const tamingComponent = TamingComponentArray.getComponent(rootEntity);
+   const tamingSpec = getEntityTamingSpec(rootEntity);
    const nextTamingTierFoodCost: number | undefined = tamingSpec.tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
 
    const foodProgress = typeof nextTamingTierFoodCost !== "undefined" ? Math.min(tamingComponent.foodEatenInTier / nextTamingTierFoodCost, 1) : 1;
@@ -236,7 +229,7 @@ const TamingMenu = () => {
                }
 
                const ending = SKILL_ICON_NAMES[skill.id];
-               const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].internalName;
+               const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(rootEntity)].internalName;
                const iconSrc = require("../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
 
                return <div key={i} className={className} style={{top: skillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
@@ -270,10 +263,10 @@ const TamingMenu = () => {
             {tamingComponent.tamingTier < 1 ? (
                <TierSeparator tamingTier={1} />
             ) : null}
-            {tamingComponent.tamingTier < 2 ? (
+            {tamingComponent.tamingTier < 2 && tamingSpec.maxTamingTier >= 2 ? (
                <TierSeparator tamingTier={2} />
             ) : null}
-            {tamingComponent.tamingTier < 3 ? (
+            {tamingComponent.tamingTier < 3 && tamingSpec.maxTamingTier >= 3 ? (
                <TierSeparator tamingTier={3} />
             ) : null}
          </div>

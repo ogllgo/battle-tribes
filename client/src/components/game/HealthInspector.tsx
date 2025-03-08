@@ -82,7 +82,7 @@ export function updateInspectHealthBar(): void {
 
    InspectHealthBar_setEntity(hoveredEntity);
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const transformComponent = TransformComponentArray.getComponent(hoveredEntity);
    const hitbox = transformComponent.hitboxes[0];
    
    const healthComponent = HealthComponentArray.getComponent(hoveredEntity);

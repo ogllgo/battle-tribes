@@ -7,12 +7,14 @@ import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { applyAcceleration, setHitboxIdealAngle } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { undergroundLayer } from "../layers";
+import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
-import { TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
+import { ItemComponentArray } from "./ItemComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export class GlurbHeadSegmentComponent {
    // @Hack
@@ -24,7 +26,6 @@ GlurbHeadSegmentComponentArray.onTick = {
    func: onTick,
    tickInterval: 1
 };
-GlurbHeadSegmentComponentArray.preRemove = preRemove;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
@@ -92,10 +93,24 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
+         const itemEntityComponent = ItemComponentArray.getComponent(entity);
+         if (itemEntityComponent.itemType === ItemType.slurb){
+            continue;
+         }
+         
          moveToEntity(glurb, entity);
 
          if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
+
+            const x = glurbHitbox.box.position.x + 10 * Math.sin(glurbHitbox.box.angle);
+            const y = glurbHitbox.box.position.y + 10 * Math.cos(glurbHitbox.box.angle);
+            
+            const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.slurb, 1, null);
+            const itemEntityHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+            itemEntityHitbox.velocity.x = 50 * Math.sin(glurbHitbox.box.angle);
+            itemEntityHitbox.velocity.y = 50 * Math.cos(glurbHitbox.box.angle);
+            createEntity(config, undergroundLayer, 0);
          }
          
          return;
@@ -109,17 +124,5 @@ function onTick(glurb: Entity): void {
          
          return;
       }
-   }
-}
-
-function preRemove(glurb: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(glurb);
-   const layer = getEntityLayer(glurb);
-
-   for (const hitbox of transformComponent.hitboxes) {
-      const position = getRandomPositionInBox(hitbox.box);
-      
-      const config = createItemEntityConfig(position.copy(), 2 * Math.PI * Math.random(), ItemType.slurb, 1, null);
-      createEntity(config, layer, 0);
    }
 }

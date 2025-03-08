@@ -113,7 +113,7 @@ const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs
    return typeof collisionPairs[minEntity] !== "undefined" && typeof collisionPairs[minEntity][maxEntity] !== "undefined";
 }
 
-const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: Entity, chunk: Chunk): void => {
+const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: Entity, chunk: Chunk, a: boolean): void => {
    for (let i = 0; i < chunk.entities.length; i++) {
       const entity2 = chunk.entities[i];
       // @Speed
@@ -175,6 +175,7 @@ const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayer
    }
 }
 
+// @CLEANP: unused?
 export function resolveEntityCollisions(layer: Layer): void {
    const collisionPairs: CollisionPairs = {};
    
@@ -188,7 +189,7 @@ export function resolveEntityCollisions(layer: Layer): void {
       for (let j = 0; j < chunk.physicsEntities.length; j++) {
          const entity1ID = chunk.physicsEntities[j];
          
-         collectEntityCollisionsWithChunk(collisionPairs, entity1ID, chunk);
+         collectEntityCollisionsWithChunk(collisionPairs, entity1ID, chunk, false);
       }
    }
 
@@ -201,7 +202,7 @@ export function resolvePlayerCollisions(): void {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
 
    for (const chunk of transformComponent.chunks) {
-      collectEntityCollisionsWithChunk(collisionPairs, playerInstance!, chunk);
+      collectEntityCollisionsWithChunk(collisionPairs, playerInstance!, chunk, true);
    }
 
    resolveCollisionPairs(collisionPairs, true);
@@ -254,9 +255,9 @@ export function resolveWallCollisions(entity: Entity): boolean {
    return hasMoved;
 }
 
-const boxHasCollisionWithHitboxes = (box: Box, boxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
-   for (let i = 0; i < boxes.length; i++) {
-      const otherHitbox = boxes[i];
+const boxHasCollisionWithHitboxes = (box: Box, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < hitboxes.length; i++) {
+      const otherHitbox = hitboxes[i];
       if (box.isColliding(otherHitbox.box, epsilon)) {
          return true;
       }

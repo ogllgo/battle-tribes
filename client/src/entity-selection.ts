@@ -34,7 +34,7 @@ import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
+import { entityIsTameableByPlayer, getRootEntity } from "./entity-components/server-components/TamingComponent";
 import { createHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";

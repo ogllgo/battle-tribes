@@ -14,14 +14,6 @@ export const enum HitboxParentType {
    hitbox
 }
 
-// @INCOMPLETE: This is completely unnecessary if entities are just created one-after-each-other. Just get the hitbox immediately.
-/** Information needed to find a hitbox. */
-export interface HitboxReference {
-   /** If null, refers to the same entity. If non-null, refers to a different entity. */
-   readonly entity: Entity | null;
-   readonly localID: number;
-}
-
 export interface Hitbox {
    readonly localID: number;
 
@@ -45,13 +37,6 @@ export interface Hitbox {
    lastUpdateTicks: number;
 }
 
-export function createHitboxReference(entity: Entity | null, localID: number): HitboxReference {
-   return {
-      entity: entity,
-      localID: localID
-   };
-}
-
 export function createHitbox(localID: number, parent: Hitbox | null, box: Box, velocity: Point, mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
@@ -69,25 +54,6 @@ export function createHitbox(localID: number, parent: Hitbox | null, box: Box, v
       lastUpdateTicks: Board.serverTicks
    };
 }
-
-// @Incomplete
-// export function getHitboxFromReference(localID: number): Hitbox {
-//    // @Copynpaste @Cleanup
-//    if (hitboxReference.entity === null) {
-//       const hitbox = getHitboxByLocalID(transformComponent, hitboxReference.localID);
-//       if (hitbox === null) {
-//          throw new Error();
-//       }
-//       return hitbox;
-//    } else {
-//       const transformComponent = TransformComponentArray.getComponent(hitboxReference.entity);
-//       const hitbox = getHitboxByLocalID(transformComponent, hitboxReference.localID);
-//       if (hitbox === null) {
-//          throw new Error();
-//       }
-//       return hitbox;
-//    }
-// }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
 export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {

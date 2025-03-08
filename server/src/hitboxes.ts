@@ -12,7 +12,7 @@ import { getEntityLayer, getEntityType } from "./world";
 export interface Hitbox {
    readonly localID: number;
    
-   readonly parent: Hitbox | null;
+   parent: Hitbox | null;
    readonly children: Array<Hitbox>;
    
    readonly box: Box;

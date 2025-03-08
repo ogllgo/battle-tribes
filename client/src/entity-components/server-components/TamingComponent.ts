@@ -15,7 +15,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
 import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -338,5 +338,11 @@ export function entityIsTameableByPlayer(entity: Entity): boolean {
       return false;
    }
 
-   return TamingComponentArray.hasComponent(entity);
+   // @HACK: Cast
+   return entityTreeHasComponent(TamingComponentArray as any, entity);
+}
+
+export function getRootEntity(entity: Entity): Entity {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return transformComponent.rootEntity;
 }

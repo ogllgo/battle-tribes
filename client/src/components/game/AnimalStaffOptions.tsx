@@ -13,7 +13,7 @@ import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { playerInstance } from "../../player";
-import { TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -121,7 +121,9 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       setX(screenX);
       setY(screenY);
 
-      const tamingComponent = TamingComponentArray.getComponent(entity);
+      // @HACK: FOR GLURB GARBAGE
+      const rootEntity = getRootEntity(entity);
+      const tamingComponent = TamingComponentArray.getComponent(rootEntity);
       setFollowOptionIsSelected(tamingComponent.isFollowing);
    }
    

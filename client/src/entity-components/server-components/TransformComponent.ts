@@ -20,14 +20,9 @@ import { playSound } from "../../sound";
 import Camera from "../../Camera";
 import { RideableComponentArray } from "./RideableComponent";
 import { playerInstance } from "../../player";
-import { createHitboxReference, Hitbox, HitboxReference } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { padHitboxData, readHitboxFromData, updateHitboxFromData } from "../../networking/packet-hitboxes";
 import { ComponentArray } from "../ComponentArray";
-
-export interface HitboxTetherParams {
-   readonly hitboxLocalID: number;
-   readonly otherHitbox: HitboxReference;
-}
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
@@ -43,7 +38,7 @@ export interface EntityCarryInfo {
 
 export interface TransformComponentParams {
    readonly hitboxes: Array<Hitbox>;
-   readonly tethers: Array<HitboxTetherParams>;
+   readonly tethers: Array<HitboxTether>;
    readonly collisionBit: HitboxCollisionBit;
    readonly collisionMask: number;
    readonly carryRoot: Entity;
@@ -78,7 +73,7 @@ export interface TransformComponent {
    rootEntity: Entity;
 }
 
-const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTetherParams>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>, rootEntity: Entity): TransformComponentParams => {
+const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTether>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>, rootEntity: Entity): TransformComponentParams => {
    return {
       hitboxes: hitboxes,
       tethers: tethers,
@@ -111,7 +106,7 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
    const collisionMask = reader.readNumber();
 
    const hitboxes = new Array<Hitbox>();
-   const tethers = new Array<HitboxTetherParams>();
+   const tethers = new Array<HitboxTether>();
    
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
@@ -123,16 +118,7 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
       if (isTethered) {
-         const otherHitboxLocalID = reader.readNumber();
-
-         const otherHitbox = getHitboxByLocalID(hitboxes, otherHitboxLocalID);
-         assert(otherHitbox !== null);
-
-         const tether: HitboxTetherParams = {
-            hitboxLocalID: hitbox.localID,
-            // @Incomplete: entity?
-            otherHitbox: createHitboxReference(null, otherHitbox.localID)
-         };
+         const tether = readTetherFromData(reader, hitbox, hitboxes);
          tethers.push(tether);
       }
    }
@@ -186,6 +172,25 @@ export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: num
       }
    }
    return null;
+}
+
+const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return getHitboxByLocalID(transformComponent.hitboxes, localID);
+}
+
+const readTetherFromData = (reader: PacketReader, hitbox: Hitbox, readingEntityHitboxes: ReadonlyArray<Hitbox>): HitboxTether => {
+   const otherEntity = reader.readNumber() as Entity;
+   const otherHitboxLocalID = reader.readNumber();
+
+   const otherHitbox = otherEntity !== 0 ? findEntityHitbox(otherEntity, otherHitboxLocalID) : getHitboxByLocalID(readingEntityHitboxes, otherHitboxLocalID);
+   assert(otherHitbox !== null);
+   assert(otherHitbox !== hitbox);
+
+   return {
+      hitbox: hitbox,
+      otherHitbox: otherHitbox
+   };
 }
 
 const addHitbox = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
@@ -382,21 +387,12 @@ function createComponent(entityParams: EntityParams): TransformComponent {
       }
    }
 
-   const tethers = new Array<HitboxTether>();
-   for (const tetherParams of transformComponentParams.tethers) {
-      const otherHitbox = getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!;
-      tethers.push({
-         hitbox: getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!,
-         otherHitbox: otherHitbox
-      });
-   }
-
    return {
       totalMass: totalMass,
       chunks: new Set(),
       hitboxes: transformComponentParams.hitboxes,
       hitboxMap: hitboxMap,
-      tethers: tethers,
+      tethers: transformComponentParams.tethers,
       rootHitboxes: rootHitboxes,
       collisionBit: transformComponentParams.collisionBit,
       collisionMask: transformComponentParams.collisionMask,
@@ -438,7 +434,7 @@ function padData(reader: PacketReader): void {
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
       if (isTethered) {
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
       }
    }
 
@@ -579,14 +575,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          const isTethered = reader.readBoolean();
          reader.padOffset(3);
          if (isTethered) {
-            // @Copynpaste
-            const otherHitboxLocalID = reader.readNumber();
-            const otherHitbox = getHitboxByLocalID(transformComponent.hitboxes, otherHitboxLocalID);
-            assert(otherHitbox !== null);
-            const tether: HitboxTether = {
-               hitbox: hitbox,
-               otherHitbox: otherHitbox
-            };
+            const tether = readTetherFromData(reader, hitbox, transformComponent.hitboxes);
             transformComponent.tethers.push(tether);
          }
       } else {
@@ -600,7 +589,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          const isTethered = reader.readBoolean();
          reader.padOffset(3);
          if (isTethered) {
-            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+            reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
          }
       }
    }
@@ -618,18 +607,27 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
 
+   if (getEntityType(entity) === EntityType.woodenArrow) {
+      console.log(transformComponent.hitboxes[0].box.position.copy());
+   }
+
    // @Speed
    transformComponent.totalMass = 0;
    for (const hitbox of transformComponent.hitboxes) {
       transformComponent.totalMass += hitbox.mass;
    }
 
-   // Update containing chunks
+   // Update containing chunks and bounds
    // @Copynpaste
 
    // @Speed
    // @Speed
    // @Speed
+
+   transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
+   transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
+   transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
+   transformComponent.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
 
    const containingChunks = new Set<Chunk>();
 
@@ -641,6 +639,20 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       const maxX = box.calculateBoundsMaxX();
       const minY = box.calculateBoundsMinY();
       const maxY = box.calculateBoundsMaxY();
+
+      // Update bounding area
+      if (minX < transformComponent.boundingAreaMinX) {
+         transformComponent.boundingAreaMinX = minX;
+      }
+      if (maxX > transformComponent.boundingAreaMaxX) {
+         transformComponent.boundingAreaMaxX = maxX;
+      }
+      if (minY < transformComponent.boundingAreaMinY) {
+         transformComponent.boundingAreaMinY = minY;
+      }
+      if (maxY > transformComponent.boundingAreaMaxY) {
+         transformComponent.boundingAreaMaxY = maxY;
+      }
 
       // Recalculate the game object's containing chunks based on the new hitbox bounds
       const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -696,7 +708,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
       if (isTethered) {
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
       }
    }
 

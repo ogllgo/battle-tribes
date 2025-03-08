@@ -55,7 +55,6 @@ export function createDebugImageShaders(): void {
 
 export function renderDebugImages(): void {
    const vertices = new Array<number>();
-
    for (let i = 0; i < TransformComponentArray.components.length; i++) {
       const transformComponent = TransformComponentArray.components[i];
 
@@ -92,7 +91,8 @@ export function renderDebugImages(): void {
 
    gl.enable(gl.BLEND);
    // @Hack :DarkTransparencyBug
-   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+   // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
    const textureUniformLocation = gl.getUniformLocation(program, "u_texture")!;
    gl.uniform1i(textureUniformLocation, 0);

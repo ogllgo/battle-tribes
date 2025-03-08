@@ -138,7 +138,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(3353554964);
+      SRandom.seed(3358381573);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -167,13 +167,13 @@ class GameServer {
       a = performance.now();
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - a)
-      // a = performance.now();
-      // generateGrassStrands();
-      // console.log("grass",performance.now() - a)
-      // a = performance.now();
-      // generateDecorations();
-      // console.log("decorations",performance.now() - a)
-      // a = performance.now();
+      a = performance.now();
+      generateGrassStrands();
+      console.log("grass",performance.now() - a)
+      a = performance.now();
+      generateDecorations();
+      console.log("decorations",performance.now() - a)
+      a = performance.now();
       // spawnGuardians();
       // console.log("guardians",performance.now() - a)
       // a = performance.now();

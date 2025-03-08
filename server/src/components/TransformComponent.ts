@@ -25,6 +25,8 @@ import { Hitbox } from "../hitboxes";
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
+   /** If null, the tether is between the same entity */
+   readonly otherEntity: Entity | null;
    readonly otherHitbox: Hitbox;
    
    readonly idealDistance: number;
@@ -136,9 +138,10 @@ export class TransformComponent {
       this.isInRiver = true;
    }
 
-   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number): void {
+   public addHitboxTether(hitbox: Hitbox, otherEntity: Entity | null, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number): void {
       const tether: HitboxTether = {
          hitbox: hitbox,
+         otherEntity: otherEntity,
          otherHitbox: otherHitbox,
          idealDistance: idealDistance,
          springConstant: springConstant,
@@ -644,7 +647,7 @@ function getDataLength(entity: Entity): number {
       }
 
       if (typeof tether !== "undefined") {
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+         lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
       }
    }
 
@@ -680,6 +683,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.padOffset(3);
 
          // Other hitbox
+         packet.addNumber(tether.otherEntity !== null ? tether.otherEntity : 0);
          packet.addNumber(tether.otherHitbox.localID);
       } else {
          packet.addBoolean(false);
@@ -715,10 +719,22 @@ export function attachEntityToHost(attachment: Entity, host: Entity, offsetX: nu
    };
    mountTransformComponent.carriedEntities.push(carryInfo);
 
-   // @Hack: assume the first hitbox of the entity is the one attached
+   // @Hack: this assumes the first hitbox of the entity is the one attached
    const attachmentTransformComponent = TransformComponentArray.getComponent(attachment);
    const attachedHitbox = attachmentTransformComponent.hitboxes[0];
-   updateAttachedHitboxRecursively(attachedHitbox);
+
+   attachedHitbox.box.offset.x = offsetX;
+   attachedHitbox.box.offset.y = offsetY;
+
+   // @HACK
+   const mountHitbox = mountTransformComponent.hitboxes[0];
+   attachedHitbox.parent = mountHitbox;
+   mountHitbox.children.push(attachedHitbox);
+
+   // @HACK: for arrow
+   if (attachedHitbox.parent !== null) {
+      updateAttachedHitboxRecursively(attachedHitbox);
+   }
 }
 
 const propagateCarryRootChange = (transformComponent: TransformComponent, carryRoot: Entity): void => {

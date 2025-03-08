@@ -2,7 +2,7 @@ import { updateBox, boxIsCircular } from "../../shared/src/boxes/boxes";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { getEntityCollisionGroup, CollisionGroup } from "../../shared/src/collision-groups";
-import { Entity, EntityType } from "../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../shared/src/structures";
 import { getSubtileIndex, subtileIsInWorld, getSubtileX, getSubtileY } from "../../shared/src/subtiles";
@@ -170,23 +170,16 @@ const structureIntersectsWithBuildingBlockingTiles = (layer: Layer, hitboxes: Re
    return false;
 }
 
-const structurePlaceIsValid = (entityType: EntityType, layer: Layer, x: number, y: number, rotation: number): boolean => {
+const structurePlaceIsValid = (hitboxes: ReadonlyArray<Hitbox>, layer: Layer): boolean => {
    // @Speed @Copynpaste: already done for candidates
    // @SUPAHACK!!!!
-   const entityParams = createStructureConfig(entityType, new Point(x, y), rotation);
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const testHitboxes = transformComponentParams.hitboxes;
-   for (let i = 0; i < testHitboxes.length; i++) {
-      const hitbox = testHitboxes[i];
-      updateBox(hitbox.box, x, y, rotation);
-   }
-   
-   if (structureIntersectsWithBuildingBlockingTiles(layer, testHitboxes)) {
+   if (structureIntersectsWithBuildingBlockingTiles(layer, hitboxes)) {
+      console.log("C");
       return false;
    }
 
    // Make sure the structure wouldn't be in any walls
-   for (const hitbox of testHitboxes) {
+   for (const hitbox of hitboxes) {
       const box = hitbox.box;
 
       const minSubtileX = Math.floor(box.calculateBoundsMinX() / Settings.SUBTILE_SIZE);
@@ -199,13 +192,14 @@ const structurePlaceIsValid = (entityType: EntityType, layer: Layer, x: number, 
             const subtileIndex = getSubtileIndex(subtileX, subtileY);
             const subtileType = layer.getSubtileType(subtileIndex);
             if (subtileType !== SubtileType.none && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+               console.log("A");
                return false;
             }
          }
       }
    }
    
-   const collidingEntities = getHitboxesCollidingEntities(layer, testHitboxes, Vars.COLLISION_EPSILON);
+   const collidingEntities = getHitboxesCollidingEntities(layer, hitboxes, Vars.COLLISION_EPSILON);
 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entity = collidingEntities[i];
@@ -220,6 +214,7 @@ const structurePlaceIsValid = (entityType: EntityType, layer: Layer, x: number, 
       }
       
       if (!ItemComponentArray.hasComponent(entity)) {
+         console.log("B",entity,EntityTypeString[entityType]);
          return false;
       }
    }
@@ -526,9 +521,7 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: E
          connections: connections,
          entityType: entityType,
          hitboxes: firstTransform.hitboxes,
-         // @INCOMPLETE
-         isValid: true,
-         // isValid: structurePlaceIsValid(entityType, firstTransform.position.x, firstTransform.position.y, firstTransform.rotation, worldInfo)
+         isValid: structurePlaceIsValid(firstTransform.hitboxes, layer)
       };
       placeInfos.push(placeInfo);
    }
@@ -703,7 +696,7 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: n
          connections: [],
          entityType: entityType,
          hitboxes: hitboxes,
-         isValid: structurePlaceIsValid(entityType, layer, desiredPlacePosition.x, desiredPlacePosition.y, desiredPlaceRotation)
+         isValid: structurePlaceIsValid(hitboxes, layer)
       };
    } else {
       // @Incomplete:

@@ -7,7 +7,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
-import { getFirstComponent, getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
+import { getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
 

@@ -37,8 +37,6 @@ import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/t
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
 import { setHitboxAngularVelocity } from "../hitboxes";
-import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
-import Tribe from "../Tribe";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -322,21 +320,9 @@ export function processStopItemUsePacket(playerClient: PlayerClient): void {
    registerDirtyEntity(player);
 }
 
-// @TEMPORARY
-const dwarfTribe = new Tribe(TribeType.dwarves, true, new Point(0, 0));
-
 export function processItemDropPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
-   }
-
-   // @TEMPORARY
-   if (playerClient.username.includes("Dragon")) {
-      const playerTransformComponent = TransformComponentArray.getComponent(playerClient.instance);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
-      
-      const config = createTribeWorkerConfig(playerHitbox.box.position.copy(), 0, dwarfTribe);
-      createEntity(config, undergroundLayer, 0);
    }
 
    const isOffhand = reader.readBoolean();

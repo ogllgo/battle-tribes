@@ -258,14 +258,15 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    golemComponent.wakeProgress = wakeProgress;
 
+   // @CLEANUP
    const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
       const box = hitbox.box;
       const renderPart = golemComponent.rockRenderParts[i];
 
-      renderPart.offset.x = box.offset.x;
-      renderPart.offset.y = box.offset.y;
+      // renderPart.offset.x = box.offset.x;
+      // renderPart.offset.y = box.offset.y;
       renderPart.shakeAmount = shakeAmount;
    }
 
