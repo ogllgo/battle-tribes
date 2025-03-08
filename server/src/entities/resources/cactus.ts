@@ -41,15 +41,11 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       numFlowers++;
    }
    for (let i = 0; i < numFlowers; i++) {
-      // @Hack
-      const idx = transformComponent.hitboxes.indexOf(rootHitbox);
-      const localID = transformComponent.hitboxLocalIDs[idx];
-
       const flowerOffsetMagnitude = randFloat(10, 30);
       const flowerOffsetDirection = 2 * Math.PI / 8 * randInt(0, 7);
 
       flowers.push({
-         parentHitboxLocalID: localID,
+         parentHitboxLocalID: rootHitbox.localID,
          offsetX: flowerOffsetMagnitude * Math.sin(flowerOffsetDirection),
          offsetY: flowerOffsetMagnitude * Math.cos(flowerOffsetDirection),
          angle: 2 * Math.PI * Math.random(),
@@ -74,15 +70,11 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       transformComponent.addHitbox(hitbox, null);
 
       if (Math.random() < 0.45) {
-         // @Hack
-         const idx = transformComponent.hitboxes.indexOf(hitbox);
-         const localID = transformComponent.hitboxLocalIDs[idx];
-
          const flowerOffsetMagnitude = randFloat(6, 10);
          const flowerOffsetDirection = 2 * Math.PI * Math.random();
 
          flowers.push({
-            parentHitboxLocalID: localID,
+            parentHitboxLocalID: hitbox.localID,
             offsetX: flowerOffsetMagnitude * Math.sin(flowerOffsetDirection),
             offsetY: flowerOffsetMagnitude * Math.cos(flowerOffsetDirection),
             angle: 2 * Math.PI * Math.random(),

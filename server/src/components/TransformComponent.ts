@@ -61,10 +61,9 @@ export class TransformComponent {
 
    /** All hitboxes attached to the entity */
    public hitboxes = new Array<Hitbox>();
-   public hitboxLocalIDs = new Array<number>();
-
    /** Hitboxes with no parent */
    public readonly rootHitboxes = new Array<Hitbox>();
+
    public readonly tethers = new Array<HitboxTether>();
    
    public boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -160,9 +159,6 @@ export class TransformComponent {
          this.rootHitboxes.push(hitbox);
       }
 
-      const localID = this.nextHitboxLocalID++;
-      this.hitboxLocalIDs.push(localID);
-      
       // Only update the transform stuff if the entity is created, as if it isn't created then the position of the entity will just be 0,0 (default).
       if (entity !== null) {
          const box = hitbox.box;
