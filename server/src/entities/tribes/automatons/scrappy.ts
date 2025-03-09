@@ -14,20 +14,20 @@ import { PatrolAIComponent } from "../../../components/PatrolAIComponent";
 import { PhysicsComponent } from "../../../components/PhysicsComponent";
 import { ScrappyComponent } from "../../../components/ScrappyComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
-import { TransformComponent } from "../../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
 import { TribeMemberComponent } from "../../../components/TribeMemberComponent";
 import { TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
-import { createHitbox } from "../../../hitboxes";
+import { createHitbox, Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
 
 export function createScrappyConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 20), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;
@@ -42,7 +42,7 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
 
    const tribesmanAIComponent = new TribesmanAIComponent();
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 300);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300);
 
    const aiAssignmentComponent = new AIAssignmentComponent();
 

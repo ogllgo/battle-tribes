@@ -10,6 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import Board from "../../Board";
 import { CookingComponentArray } from "./CookingComponent";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface FurnaceComponentParams {}
 
@@ -45,7 +46,7 @@ function createParamsFromData(): FurnaceComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -75,7 +76,7 @@ function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
    if (cookingComponent.isCooking) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       // Smoke particles
       if (Board.tickIntervalHasPassed(0.17)) {
@@ -103,7 +104,7 @@ function onTick(entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 2; i++) {
       let spawnPositionX: number;
@@ -130,7 +131,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 5; i++) {
       const spawnPositionX = hitbox.box.position.x + randFloat(-0.5, 0.5) * SIZE;

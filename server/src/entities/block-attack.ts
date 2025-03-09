@@ -5,15 +5,15 @@ import { BlockType, ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 import { Point } from "../../../shared/src/utils";
-import { createEntityConfig, EntityConfig } from "../components";
+import { createEntityConfig, createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { BlockAttackComponent } from "../components/BlockAttackComponent";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
-import { TransformComponent } from "../components/TransformComponent";
-import { createHitbox } from "../hitboxes";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { createHitbox, Hitbox } from "../hitboxes";
 
 export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityConfig {
-   const transformComponent = new TransformComponent(owner);
+   const transformComponent = new TransformComponent();
 
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    
@@ -22,12 +22,15 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo!;
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
 
    const blockType = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? BlockType.shieldBlock : BlockType.toolBlock;
    const blockAttackComponent = new BlockAttackComponent(owner, blockType);
+
+   const ownerTransformComponent = TransformComponentArray.getComponent(owner);
+   const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
    
    return createEntityConfig(
       EntityType.blockAttack,
@@ -36,6 +39,7 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.blockAttack]: blockAttackComponent
       },
-      []
+      [],
+      createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
    );
 }

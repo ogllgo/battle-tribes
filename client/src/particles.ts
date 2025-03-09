@@ -68,7 +68,7 @@ const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 export function createBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
    const offset = 2 * Math.PI * Math.random();
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 4; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
@@ -128,7 +128,7 @@ export function createFootprintParticle(entity: Entity, numFootstepsTaken: numbe
    const footstepAngleOffset = numFootstepsTaken % 2 === 0 ? Math.PI : 0;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const velocityDirection = angle(hitbox.velocity.x, hitbox.velocity.y);
 
@@ -996,7 +996,7 @@ export function createFlowerParticle(spawnPositionX: number, spawnPositionY: num
 }
 
 export function createCactusSpineParticle(transformComponent: TransformComponent, offset: number, flyDirection: number): void {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    // @Speed: Garbage collection
    const spawnPosition = Point.fromVectorForm(offset, flyDirection);
@@ -1298,7 +1298,7 @@ export function createBlueBloodParticle(size: BloodParticleSize, spawnPositionX:
 const BLUE_BLOOD_FOUNTAIN_RAY_COUNT = 7;
 
 export function createBlueBloodParticleFountain(transformComponent: TransformComponent, interval: number, speedMultiplier: number): void {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const offset = 2 * Math.PI * Math.random();
 
    for (let i = 0; i < 6; i++) {
@@ -1684,7 +1684,7 @@ const POISON_COLOUR_HIGH = [77/255, 173/255, 38/255];
 
 export function createPoisonParticle(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Calculate spawn position
    const offsetMagnitude = 20 * Math.random();
@@ -1728,7 +1728,7 @@ export function createPoisonParticle(entity: Entity): void {
 }
 
 export function createIceSpeckProjectile(transformComponent: TransformComponent): void {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
    const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);
@@ -1803,7 +1803,7 @@ export function createBlockParticle(x: number, y: number, blockType: BlockType):
 }
 
 export function createGemQuakeProjectile(transformComponent: TransformComponent): void {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
    const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);

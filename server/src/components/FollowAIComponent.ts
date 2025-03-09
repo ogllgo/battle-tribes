@@ -6,6 +6,7 @@ import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists } from "../world";
+import { Hitbox } from "../hitboxes";
 
 export class FollowAIComponent {
    /** ID of the followed entity */
@@ -61,22 +62,22 @@ export function startFollowingEntity(entity: Entity, followedEntity: Entity, acc
    followAIComponent.currentTargetIsForgettable = isForgettable;
 
    const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-   const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
+   const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
    moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
 export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
-   const followAIComponent = FollowAIComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const followAIComponent = FollowAIComponentArray.getComponent(entity);
 
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const followTargetTransformComponent = TransformComponentArray.getComponent(followTarget);
-   const followTargetHitbox = followTargetTransformComponent.hitboxes[0];
+   const followTargetHitbox = followTargetTransformComponent.children[0] as Hitbox;
    
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
-   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, entity) - 32;
+   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - 32;
    if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance)) {
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {

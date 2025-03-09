@@ -8,7 +8,7 @@ import Layer from "../../Layer";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -95,13 +95,13 @@ function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: num
 }
 
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
-   transformComponent.addHitbox(bodyHitbox, null);
+   addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 36), 0, 28), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
-   transformComponent.addHitbox(headHitbox, null);
+   addHitboxToTransformComponent(transformComponent, headHitbox);
    
    const physicsComponent = new PhysicsComponent();
    
@@ -115,7 +115,7 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(0, 0, 64, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, 0, 64, 0));
    
    const lootComponent = new LootComponent();
    

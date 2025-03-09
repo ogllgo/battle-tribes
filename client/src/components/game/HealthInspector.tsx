@@ -10,6 +10,7 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { Entity } from "../../../../shared/src/entities";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
 
 const Y_OFFSET = -50;
 
@@ -82,8 +83,8 @@ export function updateInspectHealthBar(): void {
 
    InspectHealthBar_setEntity(hoveredEntity);
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const hitbox = transformComponent.hitboxes[0];
+   const transformComponent = TransformComponentArray.getComponent(hoveredEntity);
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const healthComponent = HealthComponentArray.getComponent(hoveredEntity);
    InspectHealthBar_setHealth(healthComponent.health);

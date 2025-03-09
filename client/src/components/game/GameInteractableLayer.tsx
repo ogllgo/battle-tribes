@@ -297,7 +297,7 @@ export function updatePlayerItems(): void {
          limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
 
          // Add extra range for moving attacks
          const vx = playerHitbox.velocity.x;
@@ -702,7 +702,7 @@ const createHotbarKeyListeners = (): void => {
 const throwHeldItem = (): void => {
    if (playerInstance !== null) {
       const transformComponent = TransformComponentArray.getComponent(playerInstance);
-      const playerHitbox = transformComponent.hitboxes[0];
+      const playerHitbox = transformComponent.children[0] as Hitbox;
       Client.sendHeldItemDropPacket(99999, playerHitbox.box.angle);
    }
 }
@@ -782,7 +782,7 @@ export function createPlayerInputListeners(): void {
 
          const isOffhand = selectedItemInfo.inventoryName === InventoryName.offhand;
          const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = playerTransformComponent.hitboxes[0];
+         const playerHitbox = playerTransformComponent.children[0] as Hitbox;
          
          const dropAmount = keyIsPressed("shift") ? 99999 : 1;
          sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerHitbox.box.angle);
@@ -792,7 +792,7 @@ export function createPlayerInputListeners(): void {
    addKeyListener("shift", () => {
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         if (entityExists(transformComponent.mount)) {
+         if (entityExists(transformComponent.parentEntity)) {
             sendDismountCarrySlotPacket();
          }
       }
@@ -839,7 +839,7 @@ const getPlayerMoveSpeedMultiplier = (moveDirection: number): number => {
    }
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    // Get how aligned the intended movement direction and the player's rotation are
    const directionAlignmentDot = Math.sin(moveDirection) * Math.sin(playerHitbox.box.angle) + Math.cos(moveDirection) * Math.cos(playerHitbox.box.angle);
    // Move 15% slower if you're accelerating away from where you're moving
@@ -911,7 +911,7 @@ export function updatePlayerMovement(): void {
          }
          
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
          
          const accelerationX = acceleration * Math.sin(moveDirection);
          const accelerationY = acceleration * Math.cos(moveDirection);
@@ -1070,7 +1070,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "crossbow": {
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
          
          if (!definiteGameState.hotbarCrossbowLoadProgressRecord.hasOwnProperty(itemSlot) || definiteGameState.hotbarCrossbowLoadProgressRecord[itemSlot]! < 1) {
             // Start loading crossbow
@@ -1145,7 +1145,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          break;
       }
       case "placeable": {
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
 
          const layer = getEntityLayer(playerInstance!);
          const structureType = ITEM_INFO_RECORD[itemType as PlaceableItemType].entityType;
@@ -1343,7 +1343,7 @@ const tickItem = (itemType: ItemType): void => {
 
          const layer = getCurrentLayer();
          const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
          
          const itemInfo = ITEM_INFO_RECORD[itemType] as PlaceableItemInfo;
          const entityType = itemInfo.entityType;
@@ -1532,7 +1532,7 @@ const tickItem = (itemType: ItemType): void => {
          };
 
          // Create the entity
-         assert(entityParams.serverComponentParams[ServerComponentType.transform]!.hitboxes.length > 0);
+         assert(entityParams.serverComponentParams[ServerComponentType.transform]!.children.length > 0);
          const creationInfo = createEntity(0, entityParams);
 
          const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;

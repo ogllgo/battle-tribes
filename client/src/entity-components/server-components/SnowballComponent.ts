@@ -11,6 +11,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface SnowballComponentParams {
    readonly size: SnowballSize;
@@ -44,7 +45,7 @@ function createParamsFromData(reader: PacketReader): SnowballComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const snowballComponentParams = entityParams.serverComponentParams[ServerComponentType.snowball]!;
    
@@ -84,7 +85,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    if ((hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) && hitbox.velocity.lengthSquared() > 2500) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
@@ -136,7 +137,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const snowballComponent = SnowballComponentArray.getComponent(entity);
    
    // Create a bunch of snow particles at the point of hit
@@ -151,7 +152,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const snowballComponent = SnowballComponentArray.getComponent(entity);
 
    // Create a bunch of snow particles throughout the snowball

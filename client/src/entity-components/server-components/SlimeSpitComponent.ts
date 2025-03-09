@@ -10,6 +10,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface SlimeSpitComponentParams {}
 
@@ -39,7 +40,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const renderPart1 = new TexturedRenderPart(
       hitbox,
@@ -72,7 +73,7 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("slime-spit.mp3", 0.5, 1, hitbox, false);
 }
 

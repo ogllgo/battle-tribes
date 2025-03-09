@@ -7,7 +7,7 @@ import { GuardianComponentArray } from "../components/GuardianComponent";
 import { createGuardianSpikyBallConfig } from "../entities/projectiles/guardian-spiky-ball";
 import { createEntity } from "../Entity";
 import { getEntityLayer, getGameTicks } from "../world";
-import { setHitboxAngularVelocity } from "../hitboxes";
+import { Hitbox, setHitboxAngularVelocity } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -45,7 +45,7 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
       
       const config = createGuardianSpikyBallConfig(new Point(x!, y!), 2 * Math.PI * Math.random(), guardian);
 
-      const spikyBallHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+      const spikyBallHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
       spikyBallHitbox.velocity.x = vx;
       spikyBallHitbox.velocity.y = vy;
       setHitboxAngularVelocity(spikyBallHitbox, Math.PI);

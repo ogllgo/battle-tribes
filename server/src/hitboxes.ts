@@ -5,15 +5,15 @@ import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
 import { assert, Point } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { getHitboxTile, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { EntityAttachInfo, entityChildIsEntity, getHitboxTile, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { getEntityLayer, getEntityType } from "./world";
 
 export interface Hitbox {
    readonly localID: number;
    
-   readonly parent: Hitbox | null;
-   readonly children: Array<Hitbox>;
+   parent: Hitbox | null;
+   readonly children: Array<Hitbox | EntityAttachInfo>;
    
    readonly box: Box;
    
@@ -85,17 +85,35 @@ const getRootHitbox = (hitbox: Hitbox): Hitbox => {
    return currentHitbox;
 }
 
-const getHitboxTotalMass = (hitbox: Hitbox): number => {
-   let totalMass = hitbox.mass;
-   for (const child of hitbox.children) {
-      totalMass += getHitboxTotalMass(child);
+const getTotalMass = (node: Hitbox | Entity): number => {
+   let totalMass = 0;
+   if (typeof node === "number") {
+      const transformComponent = TransformComponentArray.getComponent(node);
+      for (const child of transformComponent.children) {
+         if (entityChildIsEntity(child)) {
+            totalMass += getTotalMass(child.attachedEntity);
+         } else {
+            totalMass += getTotalMass(child);
+         }
+      }
+   } else {
+      const hitbox = node;
+      totalMass += hitbox.mass;
+
+      for (const child of hitbox.children) {
+         if (entityChildIsEntity(child)) {
+            totalMass += getTotalMass(child.attachedEntity);
+         } else {
+            totalMass += getTotalMass(child);
+         }
+      }
    }
    return totalMass;
 }
 
 export function getHitboxConnectedMass(hitbox: Hitbox): number {
    const rootHitbox = getRootHitbox(hitbox);
-   return getHitboxTotalMass(rootHitbox);
+   return getTotalMass(rootHitbox);
 }
 
 export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {

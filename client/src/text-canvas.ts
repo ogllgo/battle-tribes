@@ -13,6 +13,7 @@ import { playerInstance } from "./player";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
+import { Hitbox } from "./hitboxes";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -109,7 +110,7 @@ export function createHealNumber(healedEntityID: number, positionX: number, posi
    for (let i = 0; i < healNumbers.length; i++) {
       const healNumber = healNumbers[i];
       if (healNumber.healedEntityID === healedEntityID) {
-         healNumber.amount += healAmount;;
+         healNumber.amount += healAmount;
          healNumber.positionX = positionX;
          healNumber.positionY = positionY;
          healNumber.age = 0;
@@ -313,7 +314,7 @@ const renderNames = (frameProgress: number): void => {
       const tribeMemberComponent = TribeMemberComponentArray.components[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       
       // Calculate position in camera
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);

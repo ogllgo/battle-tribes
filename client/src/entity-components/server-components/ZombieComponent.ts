@@ -13,6 +13,7 @@ import { HitData } from "../../../../shared/src/client-server-types";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface ZombieComponentParams {
    readonly zombieType: number;
@@ -50,7 +51,7 @@ function createParamsFromData(reader: PacketReader): ZombieComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const zombieComponentParams = entityParams.serverComponentParams[ServerComponentType.zombie]!;
    const inventoryUseComponentParams = entityParams.serverComponentParams[ServerComponentType.inventoryUse]!;
@@ -107,7 +108,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    // @Sync should be a server event
    if (Math.random() < 0.1 / Settings.TPS) {
@@ -125,7 +126,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Blood pool particle
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
@@ -146,7 +147,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);

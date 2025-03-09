@@ -8,7 +8,7 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemQuakeConfig } from "../entities/guardian-gem-quake";
 import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
-import { applyAbsoluteKnockback } from "../hitboxes";
+import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -42,7 +42,7 @@ export default class GuardianCrystalSlamAI {
    private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      const bodyHitbox = transformComponent.rootHitboxes[0];
+      const bodyHitbox = transformComponent.children[0] as Hitbox;
       
       applyAbsoluteKnockback(guardian, bodyHitbox, 150, bodyHitbox.box.angle + UtilVars.PI);
 

@@ -27,6 +27,7 @@ import { getStringLengthBytes, Packet } from "../../shared/src/packets";
 import PlayerClient from "./server/PlayerClient";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
 import { StructureComponentArray } from "./components/StructureComponent";
+import { Hitbox } from "./hitboxes";
 
 const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
 const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
@@ -404,7 +405,7 @@ export default class Tribe {
       hutComponent.hasTribesman = true;
       
       const transformComponent = TransformComponentArray.getComponent(hut);
-      const hutHitbox = transformComponent.hitboxes[0];
+      const hutHitbox = transformComponent.children[0] as Hitbox;
       
       // Offset the spawn position so the tribesman comes out of the correct side of the hut
       const position = new Point(hutHitbox.box.position.x + 10 * Math.sin(hutHitbox.box.angle), hutHitbox.box.position.y + 10 * Math.cos(hutHitbox.box.angle));

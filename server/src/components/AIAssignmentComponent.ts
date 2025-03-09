@@ -13,6 +13,7 @@ import { ComponentArray } from "./ComponentArray";
 import { getInventory, hasSpaceForRecipe, InventoryComponentArray } from "./InventoryComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
+import { Hitbox } from "../hitboxes";
 
 export class AIAssignmentComponent {
    public wholeAssignment: AIPlanAssignment | null = null;
@@ -153,7 +154,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
             let hasThrown = false;
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.hitboxes[0];
+            const entityHitbox = transformComponent.children[0] as Hitbox;
             
             for (let i = 0; i < hotbarInventory.items.length; i++) {
                const item = hotbarInventory.items[i];

@@ -2,12 +2,14 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
+import { Hitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { dismountEntity, attachEntityToHost, TransformComponentArray } from "./TransformComponent";
+import { attachEntity, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
+   readonly parentHitbox: Hitbox;
    readonly offsetX: number;
    readonly offsetY: number;
    // Offset from the carry slot
@@ -21,9 +23,10 @@ export class RideableComponent {
 
 export const RideableComponentArray = new ComponentArray<RideableComponent>(ServerComponentType.rideable, true, getDataLength, addDataToPacket);
 
-export function createCarrySlot(offsetX: number, offsetY: number, dismountOffsetX: number, dismountOffsetY: number): CarrySlot {
+export function createCarrySlot(parentHitbox: Hitbox, offsetX: number, offsetY: number, dismountOffsetX: number, dismountOffsetY: number): CarrySlot {
    return {
       occupiedEntity: 0,
+      parentHitbox: parentHitbox,
       offsetX: offsetX,
       offsetY: offsetY,
       dismountOffsetX: dismountOffsetX,
@@ -41,8 +44,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    packet.addNumber(rideableComponent.carrySlots.length);
    for (const carrySlot of rideableComponent.carrySlots) {
-      packet.addBoolean(entityExists(carrySlot.occupiedEntity));
-      packet.padOffset(3);
+      packet.addNumber(carrySlot.occupiedEntity);
       packet.addNumber(carrySlot.offsetX);
       packet.addNumber(carrySlot.offsetY);
       packet.addNumber(carrySlot.dismountOffsetX);
@@ -51,7 +53,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   attachEntityToHost(entity, mount, carrySlot.offsetX, carrySlot.offsetY, false);
+   attachEntity(entity, mount, carrySlot.parentHitbox, carrySlot.offsetX, carrySlot.offsetY, false);
    carrySlot.occupiedEntity = entity;
 }
 
@@ -59,16 +61,16 @@ export function dismountCarrySlot(entity: Entity, mount: Entity): void {
    const rideableComponent = RideableComponentArray.getComponent(mount);
    const carrySlot = rideableComponent.carrySlots[0];
 
-   dismountEntity(entity);
+   removeAttachedEntity(mount, entity); 
    carrySlot.occupiedEntity = 0;
 
    // Set the entity to the dismount position
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   const mountHitbox = mountTransformComponent.hitboxes[0];
+   const mountHitbox = mountTransformComponent.children[0] as Hitbox;
    
    entityHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
    entityHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);

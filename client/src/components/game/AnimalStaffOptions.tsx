@@ -13,7 +13,8 @@ import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { playerInstance } from "../../player";
-import { TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { Hitbox } from "../../hitboxes";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -114,14 +115,16 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
       const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
       setX(screenX);
       setY(screenY);
 
-      const tamingComponent = TamingComponentArray.getComponent(entity);
+      // @HACK: FOR GLURB GARBAGE
+      const rootEntity = getRootEntity(entity);
+      const tamingComponent = TamingComponentArray.getComponent(rootEntity);
       setFollowOptionIsSelected(tamingComponent.isFollowing);
    }
    

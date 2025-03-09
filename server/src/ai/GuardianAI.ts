@@ -5,6 +5,7 @@ import { GuardianComponent, GuardianComponentArray } from "../components/Guardia
 import { GuardianSpikyBallComponentArray } from "../components/GuardianSpikyBallComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { getEntityTile, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { Hitbox } from "../hitboxes";
 
 const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity, targetTransformComponent: TransformComponent): boolean => {
    if (!HealthComponentArray.hasComponent(target)) {
@@ -26,7 +27,7 @@ const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity,
 }
 
 const getTarget = (transformComponent: TransformComponent, guardianComponent: GuardianComponent, aiHelperComponent: AIHelperComponent): Entity | null => {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -35,7 +36,7 @@ const getTarget = (transformComponent: TransformComponent, guardianComponent: Gu
       const entity = aiHelperComponent.visibleEntities[i];
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.hitboxes[0];
+      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
       
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist && entityIsTargetted(guardianComponent, entity, entityTransformComponent)) {

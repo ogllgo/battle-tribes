@@ -8,7 +8,7 @@ import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesCo
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { getEntityType } from "../../world";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import Tribe from "../../Tribe";
@@ -23,11 +23,11 @@ import { StructureConnection } from "../../structure-placement";
 const HEALTHS = [15, 45];
 
 export function createFloorSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
    const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -57,11 +57,11 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
 }
 
 export function createWallSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
    const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

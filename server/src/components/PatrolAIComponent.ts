@@ -3,6 +3,7 @@ import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { distance, getTileX, getTileY, Point, TileIndex } from "../../../shared/src/utils";
 import { getHumanoidRadius, pathfindTribesman, clearTribesmanPath } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
+import { Hitbox } from "../hitboxes";
 import { getEntityFootprint, PathfindFailureDefault, findSingleLayerPath, PathfindOptions } from "../pathfinding";
 import { getEntityLayer, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -29,7 +30,7 @@ const getTargetTileHeuristic = (transformComponent: TransformComponent, tileInde
    const IDEAL_DIST = 1000;
 
    // @HACK
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const tileX = getTileX(tileIndex);
    const tileY = getTileY(tileIndex);
@@ -62,7 +63,7 @@ const generateRandomPatrolTargetTile = (transformComponent: TransformComponent, 
 
 const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileIndex>): Point | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
 

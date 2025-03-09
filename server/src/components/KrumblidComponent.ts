@@ -9,6 +9,7 @@ import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, s
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -39,7 +40,7 @@ function onTick(krumblid: Entity): void {
    if (entityExists(followedEntity)) {
       const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
       // @Hack
-      const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
+      const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
       
       // Continue following the entity
       moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 200, Vars.TURN_SPEED);

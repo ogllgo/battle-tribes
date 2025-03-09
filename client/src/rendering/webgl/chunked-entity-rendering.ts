@@ -9,6 +9,7 @@ import { gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import Layer from "../../Layer";
+import { Hitbox } from "../../hitboxes";
 
 type ChunkedRenderLayer = typeof CHUNKED_RENDER_LAYERS[number];
 
@@ -151,7 +152,7 @@ const getChunkIndex = (chunkX: number, chunkY: number): number => {
 
 const getEntityChunkIndex = (entity: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const chunkX = Math.floor(hitbox.box.position.x / Settings.CHUNK_UNITS);
    const chunkY = Math.floor(hitbox.box.position.y / Settings.CHUNK_UNITS);

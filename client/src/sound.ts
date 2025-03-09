@@ -3,7 +3,7 @@ import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
 import { getCurrentLayer } from "./world";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
@@ -409,7 +409,11 @@ export function playSoundOnHitbox(filePath: string, volume: number, pitchMultipl
 
 export function removeEntitySounds(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   for (const hitbox of transformComponent.hitboxes) {
+   for (const hitbox of transformComponent.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+      
       const entityAttachedSounds = soundsAttachedToHitboxes.get(hitbox)!;
       if (typeof entityAttachedSounds === "undefined") {
          return;

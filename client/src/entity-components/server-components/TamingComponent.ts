@@ -15,7 +15,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
 import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -145,7 +145,7 @@ const createTamingTierRenderPart = (tamingTier: number, parentHitbox: Hitbox): T
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const tamingComponentParams = entityParams.serverComponentParams[ServerComponentType.taming]!;
    const tamingTier = tamingComponentParams.tamingTier;
@@ -242,7 +242,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (tamingTier !== tamingComponent.tamingTier) {
       if (tamingComponent.tamingTierRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          tamingComponent.tamingTierRenderPart = createTamingTierRenderPart(tamingTier, hitbox);
          const renderInfo = getEntityRenderInfo(entity);
@@ -338,5 +338,11 @@ export function entityIsTameableByPlayer(entity: Entity): boolean {
       return false;
    }
 
-   return TamingComponentArray.hasComponent(entity);
+   // @HACK: Cast
+   return entityTreeHasComponent(TamingComponentArray as any, entity);
+}
+
+export function getRootEntity(entity: Entity): Entity {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return transformComponent.rootEntity;
 }

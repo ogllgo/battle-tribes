@@ -24,6 +24,7 @@ import { attachLightToRenderPart, createLight, Light, removeLight } from "../../
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -561,7 +562,7 @@ function onTick(entity: Entity): void {
       }
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       switch (limbInfo.heldItemType) {
          case ItemType.deepfrost_heart: {

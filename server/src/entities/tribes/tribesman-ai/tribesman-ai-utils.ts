@@ -13,14 +13,14 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
 import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo } from "battletribes-shared/items/items";
-import { getEntityTile, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
-import { changeEntityLayer, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
+import { changeEntityLayer, getEntityTile, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
+import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
 import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
-import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -51,7 +51,7 @@ export function getTribesmanDesiredAttackRange(tribesman: Entity): number {
  * @param transformComponent The tribesman's transform component
  */
 export function getHumanoidRadius(transformComponent: TransformComponent): number {
-   return (transformComponent.hitboxes[0].box as CircularBox).radius;
+   return ((transformComponent.children[0] as Hitbox).box as CircularBox).radius;
 }
 
 const isCollidingWithCoveredSpikes = (tribesman: Entity): boolean => {
@@ -117,7 +117,7 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    // @Speed
    // Recalculate if the tribesman isn't making any progress
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
    const vx = tribesmanHitbox.velocity.x;
    const vy = tribesmanHitbox.velocity.y;
@@ -153,7 +153,7 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
 
 const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(tribesman);
    
@@ -209,7 +209,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       const nextNode = nodes[0];
       const targetDirection = getAngleToNode(transformComponent, nextNode);
 
-      const tribesmanHitbox = transformComponent.hitboxes[0];
+      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
       setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
 
@@ -252,7 +252,7 @@ export function getFinalPath(tribesmanAIComponent: TribesmanAIComponent): Path |
 
 const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(tribesman);
    
@@ -331,7 +331,7 @@ export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: numbe
    // If moving to a new target node, recalculate path
    if (shouldRecalculatePath(tribesman, goalX, goalY, goalLayer, goalRadius)) {
       const transformComponent = TransformComponentArray.getComponent(tribesman); // @Speed
-      const tribesmanHitbox = transformComponent.hitboxes[0];
+      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
       
       const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
       const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman); // @Speed
@@ -366,7 +366,7 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
    preparePathfinding(entity, tribe, blockingTribesmen);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(entity);
    const isAccessible = positionIsAccessible(layer, entityHitbox.box.position.x, entityHitbox.box.position.y, tribe.pathfindingGroupID, getEntityFootprint(goalRadius));
@@ -378,12 +378,12 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
 
 export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goalRadius: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
 
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
-   const targetHitbox = huntedEntityTransformComponent.hitboxes[0];
+   const targetHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
    
    const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
    preparePathfinding(huntedEntity, tribeComponent.tribe, blockingTribesmen);

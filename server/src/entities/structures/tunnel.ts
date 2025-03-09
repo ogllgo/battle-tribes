@@ -2,7 +2,7 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { createEntityConfig, EntityConfig } from "../../components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import Tribe from "../../Tribe";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -21,7 +21,7 @@ import { StructureConnection } from "../../structure-placement";
 const HEALTHS = [25, 75];
 
 export function createTunnelConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const HITBOX_WIDTH = 8;
    const HITBOX_HEIGHT = 64;
@@ -29,15 +29,15 @@ export function createTunnelConfig(position: Point, rotation: number, tribe: Tri
    
    // Soft hitboxes
    const soft1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(-32 + HITBOX_WIDTH / 2, 0), rotation, HITBOX_WIDTH, HITBOX_HEIGHT), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(soft1, null);
+   addHitboxToTransformComponent(transformComponent, soft1);
    const soft2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(32 - HITBOX_WIDTH / 2, 0), rotation, HITBOX_WIDTH, HITBOX_HEIGHT), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(soft2, null);
+   addHitboxToTransformComponent(transformComponent, soft2);
 
    // Hard hitboxes
    const hard1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(-32.5 + THIN_HITBOX_WIDTH, 0), rotation, THIN_HITBOX_WIDTH, HITBOX_HEIGHT), 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hard1, null);
+   addHitboxToTransformComponent(transformComponent, hard1);
    const hard2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(32.5 - THIN_HITBOX_WIDTH, 0), rotation, THIN_HITBOX_WIDTH, HITBOX_HEIGHT), 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hard2, null);
+   addHitboxToTransformComponent(transformComponent, hard2);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

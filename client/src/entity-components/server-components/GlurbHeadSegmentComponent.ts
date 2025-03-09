@@ -5,6 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Point } from "../../../../shared/src/utils";
 import { createLight } from "../../lights";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface GlurbHeadSegmentComponentParams {}
 
@@ -31,7 +32,7 @@ function createParamsFromData(): GlurbHeadSegmentComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const renderPart = new TexturedRenderPart(
       hitbox,

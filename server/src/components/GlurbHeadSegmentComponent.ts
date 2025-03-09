@@ -6,13 +6,15 @@ import { angle, lerp, Point } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import { applyAcceleration, setHitboxIdealAngle } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { undergroundLayer } from "../layers";
+import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
-import { TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
+import { ItemComponentArray } from "./ItemComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export class GlurbHeadSegmentComponent {
    // @Hack
@@ -24,7 +26,6 @@ GlurbHeadSegmentComponentArray.onTick = {
    func: onTick,
    tickInterval: 1
 };
-GlurbHeadSegmentComponentArray.preRemove = preRemove;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
@@ -45,7 +46,7 @@ const move = (glurb: Entity, targetPosition: Point): void => {
 
    for (const glurbSegment of glurbHeadSegmentComponent.allSegments) {
       const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
    
       let targetDirection: number;
       
@@ -66,19 +67,19 @@ const move = (glurb: Entity, targetPosition: Point): void => {
 
 const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetHitbox = targetTransformComponent.hitboxes[0];
+   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    move(glurb, targetHitbox.box.position);
 }
 
 function onTick(glurb: Entity): void {
    const glurbTransformComponent = TransformComponentArray.getComponent(glurb);
-   const glurbHitbox = glurbTransformComponent.hitboxes[0];
+   const glurbHitbox = glurbTransformComponent.children[0] as Hitbox;
    
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(glurb);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const attacker = pair[0];
       const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-      const attackerHitbox = attackerTransformComponent.hitboxes[0];
+      const attackerHitbox = attackerTransformComponent.children[0] as Hitbox;
 
       // Run away!!
       const targetX = glurbHitbox.box.position.x * 2 - attackerHitbox.box.position.x;
@@ -92,10 +93,24 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
+         const itemEntityComponent = ItemComponentArray.getComponent(entity);
+         if (itemEntityComponent.itemType === ItemType.slurb){
+            continue;
+         }
+         
          moveToEntity(glurb, entity);
 
          if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
+
+            const x = glurbHitbox.box.position.x + 10 * Math.sin(glurbHitbox.box.angle);
+            const y = glurbHitbox.box.position.y + 10 * Math.cos(glurbHitbox.box.angle);
+            
+            const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.slurb, 1, null);
+            const itemEntityHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+            itemEntityHitbox.velocity.x = 50 * Math.sin(glurbHitbox.box.angle);
+            itemEntityHitbox.velocity.y = 50 * Math.cos(glurbHitbox.box.angle);
+            createEntity(config, undergroundLayer, 0);
          }
          
          return;
@@ -109,17 +124,5 @@ function onTick(glurb: Entity): void {
          
          return;
       }
-   }
-}
-
-function preRemove(glurb: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(glurb);
-   const layer = getEntityLayer(glurb);
-
-   for (const hitbox of transformComponent.hitboxes) {
-      const position = getRandomPositionInBox(hitbox.box);
-      
-      const config = createItemEntityConfig(position.copy(), 2 * Math.PI * Math.random(), ItemType.slurb, 1, null);
-      createEntity(config, layer, 0);
    }
 }

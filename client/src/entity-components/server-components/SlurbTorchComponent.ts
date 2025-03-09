@@ -10,6 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { createSlurbParticle } from "../../particles";
 import { Settings } from "../../../../shared/src/settings";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 const enum Vars {
    MIN_PARTICLE_CREATION_INTERVAL_SECONDS = 0.45,
@@ -51,7 +52,7 @@ function createParamsFromData(): SlurbTorchComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -92,7 +93,7 @@ function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    // Slurb particles
    const slurbTorchComponent = SlurbTorchComponentArray.getComponent(entity);

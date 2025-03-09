@@ -9,6 +9,7 @@ import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnHitbox } from "../../s
 import { RenderPart } from "../../render-parts/render-parts";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface BallistaComponentParams {}
 
@@ -41,7 +42,7 @@ function createParamsFromData(): BallistaComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    // Base
    entityIntermediateInfo.renderInfo.attachRenderPart(
@@ -127,14 +128,14 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    // @Temporary
    playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    // @Temporary
    playSoundOnHitbox(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, hitbox, false);
 }

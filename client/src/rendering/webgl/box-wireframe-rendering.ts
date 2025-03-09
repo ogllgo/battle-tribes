@@ -3,7 +3,7 @@ import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/col
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "battletribes-shared/entities";
 import { getEntityLayer, getEntityType } from "../../world";
 import Layer from "../../Layer";
@@ -236,7 +236,11 @@ export function renderHitboxes(layer: Layer): void {
       
       const adjustment = calculateBoxAdjustment(entity);
 
-      for (const hitbox of transformComponent.hitboxes) {
+      for (const hitbox of transformComponent.children) {
+         if (!entityChildIsHitbox(hitbox)) {
+            continue;
+         }
+         
          let r: number;
          let g: number;
          let b: number;

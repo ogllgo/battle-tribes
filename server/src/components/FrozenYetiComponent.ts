@@ -18,7 +18,7 @@ import { TransformComponentArray, getEntityTile } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
-import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -112,7 +112,7 @@ const getAttackType = (frozenYeti: Entity, target: Entity, angleToTarget: number
    }
 
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    const angleDifference = getAngleDifference(angleToTarget, frozenYetiHitbox.box.angle);
    
    // Bite if target is in range and the yeti's mouth is close enough
@@ -162,7 +162,7 @@ const generateRockSpikeAttackInfo = (frozenYeti: Entity, targets: ReadonlyArray<
    // @Speed: Garbage collection
 
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    
    const rockSpikeInfoArray = new Array<FrozenYetiRockSpikeInfo>();
    
@@ -176,7 +176,7 @@ const generateRockSpikeAttackInfo = (frozenYeti: Entity, targets: ReadonlyArray<
       availableTargetIndexes.splice(idx, 1);
 
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       const direction = frozenYetiHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       
@@ -294,7 +294,7 @@ const createRockSpikes = (frozenYeti: Entity, frozenYetiComponent: FrozenYetiCom
 
 const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    
    const angle = frozenYetiHitbox.box.angle + randFloat(-1, 1);
    
@@ -305,8 +305,8 @@ const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const velocityMagnitude = randFloat(Vars.SNOWBALL_THROW_SPEED_MIN, Vars.SNOWBALL_THROW_SPEED_MAX);
 
    const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), frozenYeti, size);
-   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.x = velocityMagnitude * Math.sin(angle);
-   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.y = velocityMagnitude * Math.cos(angle);
+   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = velocityMagnitude * Math.sin(angle);
+   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = velocityMagnitude * Math.cos(angle);
    createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
@@ -323,17 +323,17 @@ const throwSnow = (frozenYeti: Entity): void => {
 
    // Kickback
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    applyAbsoluteKnockback(frozenYeti, frozenYetiHitbox, 50, frozenYetiHitbox.box.angle + Math.PI);
 }
 
 const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    
    for (const entity of targets) {
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const targetHitbox = entityTransformComponent.hitboxes[0];
+      const targetHitbox = entityTransformComponent.children[0] as Hitbox;
       
       // Make sure the entity is in range
       if (frozenYetiHitbox.box.position.calculateDistanceSquaredBetween(targetHitbox.box.position) > Vars.ROAR_REACH * Vars.ROAR_REACH) {
@@ -356,7 +356,7 @@ const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void =>
 
 const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    
    const x = frozenYetiHitbox.box.position.x + Vars.BITE_ATTACK_OFFSET * Math.sin(frozenYetiHitbox.box.angle);
    const y = frozenYetiHitbox.box.position.y + Vars.BITE_ATTACK_OFFSET * Math.cos(frozenYetiHitbox.box.angle);
@@ -368,7 +368,7 @@ const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
          if (HealthComponentArray.hasComponent(victim)) {
             const hitEntityTransformComponent = TransformComponentArray.getComponent(victim);
             // @HACK
-            const hitHitbox = hitEntityTransformComponent.hitboxes[0];
+            const hitHitbox = hitEntityTransformComponent.children[0] as Hitbox;
             
             // @Hack
             const collisionPoint = new Point((hitHitbox.box.position.x + frozenYetiHitbox.box.position.x) / 2, (hitHitbox.box.position.y + frozenYetiHitbox.box.position.y) / 2);
@@ -447,7 +447,7 @@ function onTick(frozenYeti: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(frozenYeti);
-   const frozenYetiHitbox = transformComponent.hitboxes[0];
+   const frozenYetiHitbox = transformComponent.children[0] as Hitbox;
    
    // If any target has dealt damage to the yeti, choose the target based on which one has dealt the most damage to it
    // Otherwise attack the closest target
@@ -457,7 +457,7 @@ function onTick(frozenYeti: Entity): void {
       let minDist = Number.MAX_SAFE_INTEGER;
       for (const currentTarget of targets) {
          const targetTransformComponent = TransformComponentArray.getComponent(currentTarget);
-         const targetHitbox = targetTransformComponent.hitboxes[0];
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
          const distance = frozenYetiHitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
          if (distance < minDist) {
@@ -477,7 +477,7 @@ function onTick(frozenYeti: Entity): void {
    }
    if (target !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       // @Speed: Garbage collection
       frozenYetiComponent.lastTargetPosition = targetHitbox.box.position.copy();
    }
@@ -485,7 +485,7 @@ function onTick(frozenYeti: Entity): void {
    let angleToTarget: number;
    if (target !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       angleToTarget = frozenYetiHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
    } else {
       angleToTarget = frozenYetiHitbox.box.position.calculateAngleBetween(frozenYetiComponent.lastTargetPosition!);

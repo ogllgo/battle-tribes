@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point } from "battletribes-shared/utils";
-import { EntityType } from "battletribes-shared/entities";
+import { Point, randInt } from "battletribes-shared/utils";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -19,12 +19,12 @@ registerEntityTamingSpec(EntityType.glurb, {
    skillNodes: [
       {
          skill: getTamingSkill(TamingSkillID.follow),
-         x: -18,
+         x: -13,
          y: 10
       },
       {
          skill: getTamingSkill(TamingSkillID.dulledPainReceptors),
-         x: 18,
+         x: 13,
          y: 10
       }
    ],
@@ -41,7 +41,7 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
    const configs = new Array<EntityConfig>();
    
    // just so that the glurb can have the childEntities propperty
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
@@ -67,9 +67,8 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
    
    let headConfig!: EntityConfig;
    let lastHitbox: Hitbox | undefined;
-   // @Temporary
-   // const numSegments = randInt(3, 5);
-   const numSegments = 5;
+   let lastEntity: Entity | undefined;
+   const numSegments = randInt(3, 5);
    for (let i = 0; i < numSegments; i++) {
       currentY -= 30;
       
@@ -78,12 +77,14 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
          headConfig = config;
       } else {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, i < numSegments - 1);
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastEntity!, lastHitbox!, i < numSegments - 1);
       }
       
       const transformComponent = config.components[ServerComponentType.transform]!;
       transformComponent.rootEntity = rootEntityConfig.entity;
-      lastHitbox = transformComponent.hitboxes[0];
+      lastHitbox = transformComponent.children[0] as Hitbox;
+
+      lastEntity = config.entity;
 
       configs.push(config);
 

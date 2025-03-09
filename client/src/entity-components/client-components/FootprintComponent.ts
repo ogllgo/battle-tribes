@@ -9,6 +9,7 @@ import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../serv
 import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
+import { Hitbox } from "../../hitboxes";
 
 export interface FootprintComponentParams {
    readonly footstepParticleIntervalSeconds: number;
@@ -65,7 +66,7 @@ function getMaxRenderParts(): number {
 
 const createFootstepSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const layer = getEntityLayer(entity);
    
    const tile = getEntityTile(layer, transformComponent);
@@ -99,8 +100,8 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const footprintComponent = FootprintComponentArray.getComponent(entity);
 
-   if (transformComponent.carryRoot === entity) {
-      const hitbox = transformComponent.hitboxes[0];
+   if (transformComponent.rootEntity === entity) {
+      const hitbox = transformComponent.children[0] as Hitbox;
       
       // Footsteps
       if (hitbox.velocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {

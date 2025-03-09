@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
+import { Hitbox } from "../../hitboxes";
 import { playSoundOnHitbox } from "../../sound";
 import { createStructureConnection, StructureConnection } from "../../structure-placement";
 import { EntityParams, getEntityType } from "../../world";
@@ -70,7 +71,7 @@ function getMaxRenderParts(): number {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    switch (getEntityType(entity)) {
       case EntityType.wall: {

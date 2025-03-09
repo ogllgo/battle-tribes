@@ -18,7 +18,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { beginSwing } from "../limb-use";
 import { TribeType } from "../../../../../shared/src/tribes";
-import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TPS,
@@ -86,7 +86,7 @@ const getMostDamagingItemSlot = (tribesman: Entity, huntedEntity: Entity): numbe
 
 const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(tribesman);
    
@@ -107,7 +107,7 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
             }
 
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.hitboxes[0];
+            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
             const usePointX = entityHitbox.box.position.x - 22 * Math.sin(entityHitbox.box.angle);
             const usePointY = entityHitbox.box.position.y - 22 * Math.cos(entityHitbox.box.angle);
@@ -124,7 +124,7 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
 
 const getClosestEmbrasureUsePoint = (tribesman: Entity, usePoints: ReadonlyArray<Point>): Point => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestPoint!: Point;
@@ -147,12 +147,12 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
    // @Incomplete: Only accounts for hotbar
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
 
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
-   const huntedHitbox = huntedEntityTransformComponent.hitboxes[0];
+   const huntedHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
    
    const mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
 
@@ -175,7 +175,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
          setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
 
-         const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntity) - getHumanoidRadius(transformComponent);
+         const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
          if (distance > 250) {
             // Move closer
             const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(targetAngle);
@@ -221,7 +221,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
          }
          
          if (isInLineOfSight || (getGameTicks() - tribesmanComponent.lastEnemyLineOfSightTicks) <= Vars.BOW_LINE_OF_SIGHT_WAIT_TIME) {
-            const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntity) - getHumanoidRadius(transformComponent);
+            const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
             
             // If there are any nearby embrasure use points, move to them
             const nearbyEmbrasureUsePoints = getNearbyEmbrasureUsePoints(tribesman);
@@ -275,7 +275,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
       if (isAggressive && weaponCategory === "battleaxe") {
          // Use the battleaxe if the entity is in the use range
-         const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntity) - getHumanoidRadius(transformComponent);
+         const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
          if (distance >= Vars.BATTLEAXE_MIN_USE_RANGE && distance <= Vars.BATTLEAXE_MAX_USE_RANGE && selectedItem.id !== hotbarLimb.thrownBattleaxeItemID) {
             if (hotbarLimb.action !== LimbAction.chargeBattleaxe) {
                hotbarLimb.lastBattleaxeChargeTicks = getGameTicks();
@@ -345,7 +345,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
 
-   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntity) - getHumanoidRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {

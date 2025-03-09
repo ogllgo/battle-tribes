@@ -3,11 +3,12 @@ import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, lerp } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { cleanTransform, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { registerDirtyEntity } from "../server/player-clients";
+import { Hitbox } from "../hitboxes";
 
 // @Cleanup: All the door toggling logic is stolen from DoorComponent.ts
 
@@ -43,14 +44,14 @@ const updateDoorOpenProgress = (fenceGate: Entity, fenceGateComponent: FenceGate
 
    const transformComponent = TransformComponentArray.getComponent(fenceGate);
    
-   const hitbox = transformComponent.hitboxes[0].box as RectangularBox;
+   const hitbox = (transformComponent.children[0] as Hitbox).box as RectangularBox;
    hitbox.offset.x = xOffset;
    hitbox.offset.y = yOffset;
    hitbox.relativeAngle = angle - Math.PI/2;
 
    // @Hack: dirtying doesn't work on transform components for now
    // transformComponent.isDirty = true;
-   transformComponent.cleanHitboxes(fenceGate);
+   cleanTransform(fenceGate);
    registerDirtyEntity(fenceGate);
 }
 
@@ -89,7 +90,7 @@ export function toggleFenceGateDoor(fenceGate: Entity): void {
 
    const transformComponent = TransformComponentArray.getComponent(fenceGate);
    
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    if (fenceGateComponent.openProgress === 0) {
       // Open the door
       fenceGateComponent.toggleType = DoorToggleType.open;

@@ -35,7 +35,7 @@ function onTick(quake: Entity): void {
       const life = getLife(age);
       
       const transformComponent = TransformComponentArray.getComponent(quake);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       hitbox.box.scale = life;
       transformComponent.isDirty = true;
 

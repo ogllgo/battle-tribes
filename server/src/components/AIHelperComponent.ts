@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import Chunk from "../Chunk";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "../world";
@@ -108,10 +108,16 @@ const boxIsVisible = (seeingHitbox: Hitbox, box: Box, visionRange: number): bool
 
 const entityIsVisible = (seeingHitbox: Hitbox, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
    // If the mob can see any of the game object's hitboxes, it is visible
-   for (let i = 0; i < checkEntityTransformComponent.hitboxes.length; i++) {
-      const hitbox = checkEntityTransformComponent.hitboxes[i];
-      if (boxIsVisible(seeingHitbox, hitbox.box, visionRange)) {
-         return true;
+   for (const child of checkEntityTransformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         if (entityIsVisible(seeingHitbox, childTransformComponent, visionRange)) {
+            return true;
+         }
+      } else {
+         if (boxIsVisible(seeingHitbox, child.box, visionRange)) {
+            return true;
+         }
       }
    }
 
@@ -132,7 +138,7 @@ const calculateVisibleEntities = (entity: Entity, aiHelperComponent: AIHelperCom
       const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
 
       // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
-      if (transformComponent.carryRoot === currentEntityTransformComponent.carryRoot) {
+      if (transformComponent.rootEntity === currentEntityTransformComponent.rootEntity) {
          continue;
       }
 

@@ -5,7 +5,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { TreeComponent, TreeComponentArray } from "../../components/TreeComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -47,10 +47,10 @@ const TREE_RADII: ReadonlyArray<number> = [40, 50];
 export function createTreeConfig(position: Point, rotation: number): EntityConfig {
    const size: TreeSize = Math.random() > 1/3 ? 1 : 0;
    
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);

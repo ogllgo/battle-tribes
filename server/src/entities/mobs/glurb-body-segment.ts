@@ -2,7 +2,7 @@ import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/bo
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point } from "../../../../shared/src/utils";
 import { createEntityConfig, EntityConfig, LightCreationInfo } from "../../components";
@@ -10,7 +10,7 @@ import { GlurbBodySegmentComponent } from "../../components/GlurbBodySegmentComp
 import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
 import { createLight } from "../../light-levels";
 
@@ -21,7 +21,7 @@ registerEntityLootOnDeath(EntityType.glurbBodySegment, [
    }
 ]);
 
-export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox, isMiddleSegment: boolean): EntityConfig {
+export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastEntity: Entity, lastHitbox: Hitbox, isMiddleSegment: boolean): EntityConfig {
    // @Cleanup: should we split glurb body segment into middle segment and tail segment?
    let radius: number;
    let flags: Array<HitboxFlag>;
@@ -44,13 +44,13 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
       lightRadius = 4;
    }
    
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   transformComponent.addHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15, 0.5);
+   transformComponent.addHitboxTether(hitbox, lastEntity, lastHitbox, tetherIdealDistance, 15, 0.5);
 
    const physicsComponent = new PhysicsComponent();
 

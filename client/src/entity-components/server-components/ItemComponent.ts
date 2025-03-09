@@ -11,6 +11,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createLight } from "../../lights";
 import { Point } from "../../../../shared/src/utils";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface ItemComponentParams {
    readonly itemType: ItemType;
@@ -41,7 +42,7 @@ function createParamsFromData(reader: PacketReader): ItemComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const itemComponentParams = entityParams.serverComponentParams[ServerComponentType.item]!;
       
@@ -81,7 +82,7 @@ function onTick(entity: Entity): void {
    // Make the deep frost heart item spew blue blood particles
    if (itemComponent.itemType === ItemType.deepfrost_heart) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       createDeepFrostHeartBloodParticles(hitbox.box.position.x, hitbox.box.position.y, 0, 0);
    }
 }

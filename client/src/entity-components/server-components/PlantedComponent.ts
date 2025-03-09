@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { createDirtParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import ServerComponentArray from "../ServerComponentArray";
@@ -39,7 +40,7 @@ function onSpawn(entity: Entity): void {
    // Create dirt particles
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    for (let i = 0; i < 7; i++) {
       const offsetDirection = 2 * Math.PI * Math.random();
       const offsetMagnitude = randFloat(0, 10);

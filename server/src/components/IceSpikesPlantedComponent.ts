@@ -3,6 +3,7 @@ import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { randInt } from "../../../shared/src/utils";
+import { Hitbox } from "../hitboxes";
 import { getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { createIceShardExplosion } from "./IceSpikesComponent";
@@ -53,7 +54,7 @@ function preRemove(entity: Entity): void {
    const iceSpikesPlantedComponent = IceSpikesPlantedComponentArray.getComponent(entity);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(entity);
    if (iceSpikesPlantedComponent.plantGrowthTicks === Vars.GROWTH_TIME_TICKS) {

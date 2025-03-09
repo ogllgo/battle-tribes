@@ -4,6 +4,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface BattleaxeProjectileComponentParams {}
 
@@ -33,7 +34,7 @@ function getMaxRenderParts(): number {
 
 const playWhoosh = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("air-whoosh.mp3", 0.25, 1, hitbox, true);
 }
 

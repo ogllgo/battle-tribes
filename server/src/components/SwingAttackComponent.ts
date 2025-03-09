@@ -76,7 +76,7 @@ export function setHitboxToState(transformComponent: TransformComponent, hitbox:
 
 function onTick(swingAttack: Entity): void {
    const swingAttackTransformComponent = TransformComponentArray.getComponent(swingAttack);
-   const limbHitbox = swingAttackTransformComponent.hitboxes[0];
+   const limbHitbox = swingAttackTransformComponent.children[0] as Hitbox;
    
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const limb = swingAttackComponent.limb;
@@ -170,7 +170,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
          hitEntityWithoutDamage(plant, attacker, new Point(0, 0), 0);
       }
    } else {
-      const plantHitbox = plantTransformComponent.hitboxes[0];
+      const plantHitbox = plantTransformComponent.children[0] as Hitbox;
       assertBoxIsCircular(plantHitbox.box);
       const plantRadius = plantHitbox.box.radius;
 
@@ -228,7 +228,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
 
    // @Hack
    const victimTransformComponent = TransformComponentArray.getComponent(victim);
-   const victimHitbox = victimTransformComponent.hitboxes[0];
+   const victimHitbox = victimTransformComponent.children[0] as Hitbox;
    const collisionPoint = new Point((victimHitbox.box.position.x + victimHitbox.box.position.x) / 2, (victimHitbox.box.position.y + victimHitbox.box.position.y) / 2);
 
    // Register the hit

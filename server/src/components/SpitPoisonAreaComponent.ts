@@ -5,6 +5,7 @@ import { Settings } from "battletribes-shared/settings";
 import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity } from "../world";
+import { Hitbox } from "../hitboxes";
 
 export class SpitPoisonAreaComponent {}
 
@@ -17,7 +18,7 @@ SpitPoisonAreaComponentArray.onTick = {
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const box = hitbox.box as CircularBox;
    box.radius -= 5 / Settings.TPS;
    if (box.radius <= 0) {

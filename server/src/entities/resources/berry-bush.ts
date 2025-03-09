@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { BerryBushComponent, BerryBushComponentArray } from "../../components/BerryBushComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -34,10 +34,10 @@ registerEntityLootOnHit(EntityType.berryBush, [
 ]);
 
 export function createBerryBushConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = COLLISION_BITS.plants;
    
    const healthComponent = new HealthComponent(10);

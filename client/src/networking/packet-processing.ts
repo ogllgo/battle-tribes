@@ -36,6 +36,7 @@ import { selectItemSlot } from "../components/game/GameInteractableLayer";
 import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { getEntityClientComponentConfigs } from "../entity-components/client-components"
+import { Hitbox } from "../hitboxes";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -819,7 +820,7 @@ export function processSyncDataPacket(reader: PacketReader): void {
    const velocityY = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
@@ -840,7 +841,7 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const y = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
 }

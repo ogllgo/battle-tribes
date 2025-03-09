@@ -16,6 +16,7 @@ import { TransformComponentArray } from "../../../entity-components/server-compo
 import { sendCraftItemPacket } from "../../../networking/packet-creation";
 import { playerTribe } from "../../../tribes";
 import { playerInstance } from "../../../player";
+import { Hitbox } from "../../../hitboxes";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
@@ -225,7 +226,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       }
 
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
+      const playerHitbox = playerTransformComponent.children[0] as Hitbox;
 
       playSound("craft.mp3", 0.25, 1, playerHitbox.box.position, null);
       sendCraftItemPacket(selectedRecipeIndex.current);

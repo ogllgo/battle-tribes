@@ -9,7 +9,7 @@ import SRandom from "./SRandom";
 import { createEntity } from "./Entity";
 import { SERVER } from "./server/server";
 import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
-import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
@@ -40,6 +40,7 @@ import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/Y
 import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { createSlimeConfig } from "./entities/mobs/slime";
+import { Hitbox } from "./hitboxes";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -128,29 +129,37 @@ const getTribeType = (layer: Layer, x: number, y: number): TribeType => {
 
 const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
    // @Copynpaste from transform component resolveWallCollisions
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
-      if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
-         continue;
-      }
-
-      const box = hitbox.box;
-
-      const boundsMinX = box.calculateBoundsMinX();
-      const boundsMaxX = box.calculateBoundsMaxX();
-      const boundsMinY = box.calculateBoundsMinY();
-      const boundsMaxY = box.calculateBoundsMaxY();
-
-      const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
-      const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
-
-      for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
-         for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-            const subtileIndex = getSubtileIndex(subtileX, subtileY);
-            if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
-               return true;
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const child = transformComponent.children[i];
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         if (entityWouldSpawnInWall(layer, childTransformComponent)) {
+            return true;
+         }
+      } else {
+         const hitbox = child;
+         if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
+            continue;
+         }
+   
+         const box = hitbox.box;
+   
+         const boundsMinX = box.calculateBoundsMinX();
+         const boundsMaxX = box.calculateBoundsMaxX();
+         const boundsMinY = box.calculateBoundsMinY();
+         const boundsMaxY = box.calculateBoundsMaxY();
+   
+         const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+         const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+         const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+         const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   
+         for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+            for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+               const subtileIndex = getSubtileIndex(subtileX, subtileY);
+               if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
+                  return true;
+               }
             }
          }
       }
@@ -302,7 +311,8 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnInfo, positionX: numb
             }
             
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.hitboxes[0];
+            // @Hack
+            const entityHitbox = transformComponent.children[0] as Hitbox;
             
             const distanceSquared = Math.pow(positionX - entityHitbox.box.position.x, 2) + Math.pow(positionY - entityHitbox.box.position.y, 2);
             if (distanceSquared <= spawnInfo.minSpawnDistance * spawnInfo.minSpawnDistance) {
@@ -397,8 +407,8 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      // const config = createGlurb(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0, false, 0);
-      // createEntity(config, surfaceLayer, 0);
+      const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
+      createEntity(config, surfaceLayer, 0);
       // if(1+1===2)return;
       // const configs = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
       // // // @Hack

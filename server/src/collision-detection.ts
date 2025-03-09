@@ -3,7 +3,7 @@ import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision-resolution";
-import { TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./components/TransformComponent";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
 import { Box } from "../../shared/src/boxes/boxes";
@@ -58,14 +58,22 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
    
    // Check hitboxes
    const collidingHitboxPairs = new Array<HitboxCollisionPair>();
-   const numHitboxes = affectedEntityTransformComponent.hitboxes.length;
-   const numOtherHitboxes = collidingEntityTransformComponent.hitboxes.length;
+   const numHitboxes = affectedEntityTransformComponent.children.length;
+   const numOtherHitboxes = collidingEntityTransformComponent.children.length;
    for (let i = 0; i < numHitboxes; i++) {
-      const hitbox = affectedEntityTransformComponent.hitboxes[i];
+      const hitbox = affectedEntityTransformComponent.children[i];
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+      
       const box = hitbox.box;
 
       for (let j = 0; j < numOtherHitboxes; j++) {
-         const otherHitbox = collidingEntityTransformComponent.hitboxes[j];
+         const otherHitbox = collidingEntityTransformComponent.children[j];
+         if (!entityChildIsHitbox(otherHitbox)) {
+            continue;
+         }
+         
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
@@ -107,14 +115,18 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
    }
    
    // More expensive hitbox check
-   const numHitboxes = transformComponent1.hitboxes.length;
-   const numOtherHitboxes = transformComponent2.hitboxes.length;
-   for (let i = 0; i < numHitboxes; i++) {
-      const hitbox = transformComponent1.hitboxes[i];
+   for (let i = 0; i < transformComponent1.children.length; i++) {
+      const hitbox = transformComponent1.children[i];
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
       const box = hitbox.box;
 
-      for (let j = 0; j < numOtherHitboxes; j++) {
-         const otherHitbox = transformComponent2.hitboxes[j];
+      for (let j = 0; j < transformComponent2.children.length; j++) {
+         const otherHitbox = transformComponent2.children[j];
+         if (!entityChildIsHitbox(otherHitbox)) {
+            continue;
+         }
 
          // If the objects are colliding, add the colliding object and this object
          if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherHitbox.box)) {
@@ -175,7 +187,7 @@ export function resolveEntityCollisions(layer: Layer): void {
                const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
                // Make sure the entities aren't in the same carry heirarchy
-               if (affectedEntityTransformComponent.carryRoot === collidingEntityTransformComponent.carryRoot) {
+               if (affectedEntityTransformComponent.rootEntity === collidingEntityTransformComponent.rootEntity) {
                   continue;
                }
 
@@ -230,11 +242,13 @@ export function boxHasCollisionWithBoxes(box: Box, boxes: ReadonlyArray<Box>, ep
    return false;
 }
 
-const boxHasCollisionWithHitboxes = (box: Box, boxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
-   for (let i = 0; i < boxes.length; i++) {
-      const otherHitbox = boxes[i];
-      if (box.isColliding(otherHitbox.box, epsilon)) {
-         return true;
+const boxHasCollisionWithChildren = (box: Box, children: ReadonlyArray<TransformNode>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < children.length; i++) {
+      const otherHitbox = children[i];
+      if (entityChildIsHitbox(otherHitbox)) {
+         if (box.isColliding(otherHitbox.box, epsilon)) {
+            return true;
+         }
       }
    }
    return false;
@@ -281,7 +295,7 @@ export function getBoxesCollidingEntities(layer: Layer, boxes: ReadonlyArray<Box
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+               if (boxHasCollisionWithChildren(box, entityTransformComponent.children, epsilon)) {
                   collidingEntities.push(entity);
                }
             }
@@ -335,7 +349,7 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+               if (boxHasCollisionWithChildren(box, entityTransformComponent.children, epsilon)) {
                   collidingEntities.push(entity);
                }
             }

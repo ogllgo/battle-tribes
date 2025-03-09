@@ -7,6 +7,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
+import { Hitbox } from "../../hitboxes";
 
 const enum Vars {
    MAX_RANGE = 55
@@ -45,7 +46,7 @@ function getMaxRenderParts(): number {
 // @INCOMPLETE: Won't play when you walk into discovering a previously-offscreen spit poison!
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
    
@@ -62,7 +63,7 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
 
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const box = hitbox.box as CircularBox;
    const range = box.radius;
 

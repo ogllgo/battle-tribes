@@ -4,52 +4,47 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import Chunk from "../../Chunk";
-import { randInt } from "battletribes-shared/utils";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, surfaceLayer } from "../../world";
 import Board from "../../Board";
-import { Entity, EntityType } from "../../../../shared/src/entities";
+import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
-import { playSound } from "../../sound";
-import Camera from "../../Camera";
-import { RideableComponentArray } from "./RideableComponent";
 import { playerInstance } from "../../player";
-import { createHitboxReference, Hitbox, HitboxReference } from "../../hitboxes";
-import { padHitboxData, readHitboxFromData, updateHitboxFromData } from "../../networking/packet-hitboxes";
+import { Hitbox } from "../../hitboxes";
+import { padBoxData, padHitboxData, readHitboxFromData, updateHitboxFromData } from "../../networking/packet-hitboxes";
 import { ComponentArray } from "../ComponentArray";
-
-export interface HitboxTetherParams {
-   readonly hitboxLocalID: number;
-   readonly otherHitbox: HitboxReference;
-}
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
    readonly otherHitbox: Hitbox;
 }
 
-export interface EntityCarryInfo {
-   readonly carriedEntity: Entity;
-   readonly offsetX: number;
-   readonly offsetY: number;
+export interface EntityAttachInfo {
+   readonly attachedEntity: Entity;
+   readonly parent: Hitbox | null;
    lastUpdateTicks: number;
 }
 
+const enum TransformNodeType {
+   hitbox,
+   entity
+}
+
+export type TransformNode = Hitbox | EntityAttachInfo;
+
 export interface TransformComponentParams {
-   readonly hitboxes: Array<Hitbox>;
-   readonly tethers: Array<HitboxTetherParams>;
+   readonly rootEntity: Entity;
+   readonly parentEntity: Entity;
+   readonly children: Array<TransformNode>;
+   readonly tethers: Array<HitboxTether>;
    readonly collisionBit: HitboxCollisionBit;
    readonly collisionMask: number;
-   readonly carryRoot: Entity;
-   readonly mount: Entity;
-   readonly carriedEntities: Array<EntityCarryInfo>;
-   readonly rootEntity: Entity;
 }
 
 export interface TransformComponent {
@@ -57,10 +52,10 @@ export interface TransformComponent {
    
    readonly chunks: Set<Chunk>;
 
-   hitboxes: Array<Hitbox>;
+   children: Array<TransformNode>;
    readonly hitboxMap: Map<number, Hitbox>;
 
-   readonly rootHitboxes: Array<Hitbox>;
+   readonly rootChildren: Array<TransformNode>;
    readonly tethers: Array<HitboxTether>;
 
    collisionBit: number;
@@ -71,97 +66,90 @@ export interface TransformComponent {
    boundingAreaMinY: number;
    boundingAreaMaxY: number;
 
-   carryRoot: Entity;
-   mount: Entity;
-   readonly carriedEntities: Array<EntityCarryInfo>;
-
    rootEntity: Entity;
+   parentEntity: Entity;
 }
 
-const fillTransformComponentParams = (hitboxes: Array<Hitbox>, tethers: Array<HitboxTetherParams>, collisionBit: HitboxCollisionBit, collisionMask: number, carryRoot: Entity, mount: Entity, carriedEntities: Array<EntityCarryInfo>, rootEntity: Entity): TransformComponentParams => {
+const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, children: Array<TransformNode>, tethers: Array<HitboxTether>, collisionBit: HitboxCollisionBit, collisionMask: number): TransformComponentParams => {
    return {
-      hitboxes: hitboxes,
+      children: children,
       tethers: tethers,
       collisionBit: collisionBit,
       collisionMask: collisionMask,
-      carryRoot: carryRoot,
-      mount: mount,
-      carriedEntities: carriedEntities,
-      rootEntity: rootEntity
+      rootEntity: rootEntity,
+      parentEntity: parentEntity
    };
 }
 
-export function createTransformComponentParams(hitboxes: Array<Hitbox>): TransformComponentParams {
+export function createTransformComponentParams(children: Array<TransformNode>): TransformComponentParams {
    return {
-      hitboxes: hitboxes,
+      children: children,
       tethers: [],
       collisionBit: COLLISION_BITS.default,
       collisionMask: DEFAULT_COLLISION_MASK,
-      carryRoot: 0,
-      mount: 0,
-      carriedEntities: [],
-      rootEntity: 0
+      rootEntity: 0,
+      parentEntity: 0
+   };
+}
+
+const readEntityAttachInfo = (reader: PacketReader, children: Array<TransformNode>): EntityAttachInfo => {
+   const attachedEntity = reader.readNumber();
+
+   const parentHitboxLocalID = reader.readNumber();
+
+   let parent: Hitbox | null;
+   if (parentHitboxLocalID !== -1) {
+      parent = getHitboxByLocalID(children, parentHitboxLocalID);
+      if (parent === null) {
+         throw new Error();
+      }
+   } else {
+      parent = null;
+   }
+   return {
+      attachedEntity: attachedEntity,
+      parent: parent,
+      lastUpdateTicks: Board.serverTicks
    };
 }
 
 function createParamsFromData(reader: PacketReader): TransformComponentParams {
    const rootEntity = reader.readNumber();
+   const parentEntity = reader.readNumber();
    
    const collisionBit = reader.readNumber();
    const collisionMask = reader.readNumber();
 
-   const hitboxes = new Array<Hitbox>();
-   const tethers = new Array<HitboxTetherParams>();
+   const children = new Array<TransformNode>();
+   const tethers = new Array<HitboxTether>();
    
-   const numHitboxes = reader.readNumber();
-   for (let i = 0; i < numHitboxes; i++) {
-      const localID = reader.readNumber();
-
-      const hitbox = readHitboxFromData(reader, localID, hitboxes);
-      hitboxes.push(hitbox);
-
-      const isTethered = reader.readBoolean();
-      reader.padOffset(3);
-      if (isTethered) {
-         const otherHitboxLocalID = reader.readNumber();
-
-         const otherHitbox = getHitboxByLocalID(hitboxes, otherHitboxLocalID);
-         assert(otherHitbox !== null);
-
-         const tether: HitboxTetherParams = {
-            hitboxLocalID: hitbox.localID,
-            // @Incomplete: entity?
-            otherHitbox: createHitboxReference(null, otherHitbox.localID)
-         };
-         tethers.push(tether);
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const nodeType = reader.readNumber() as TransformNodeType;
+      if (nodeType === TransformNodeType.entity) {
+         const attachInfo = readEntityAttachInfo(reader, children);
+         children.push(attachInfo);
+      } else {
+         const localID = reader.readNumber();
+   
+         const hitbox = readHitboxFromData(reader, localID, children);
+         children.push(hitbox);
+   
+         const isTethered = reader.readBoolean();
+         reader.padOffset(3);
+         if (isTethered) {
+            const tether = readTetherFromData(reader, hitbox, children);
+            tethers.push(tether);
+         }
       }
    }
 
-   const carryRoot = reader.readNumber() as Entity;
-   const mount = reader.readNumber() as Entity;
-   const carriedEntities = new Array<EntityCarryInfo>();
-   
-   const numCarriedEntities = reader.readNumber();
-   for (let i = 0; i < numCarriedEntities; i++) {
-      const carriedEntity = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-
-      const carryInfo: EntityCarryInfo = {
-         carriedEntity: carriedEntity,
-         offsetX: offsetX,
-         offsetY: offsetY,
-         lastUpdateTicks: Board.serverTicks
-      };
-      carriedEntities.push(carryInfo);
-   }
-
-   return fillTransformComponentParams(hitboxes, tethers, collisionBit, collisionMask, carryRoot, mount, carriedEntities, rootEntity);
+   return fillTransformComponentParams(rootEntity, parentEntity, children, tethers, collisionBit, collisionMask);
 }
 
 export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
    // @Hack
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
    const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
@@ -179,35 +167,81 @@ export function getHitboxTile(layer: Layer, hitbox: Hitbox): Tile {
    return layer.getTile(tileIndex);
 }
 
-export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: number): Hitbox | null {
-   for (const hitbox of hitboxes) {
-      if (hitbox.localID === localID) {
-         return hitbox;
+export function entityChildIsHitbox(child: Hitbox | EntityAttachInfo): child is Hitbox {
+   return typeof (child as Hitbox).mass !== "undefined";
+}
+
+export function entityChildIsEntity(child: Hitbox | EntityAttachInfo): child is EntityAttachInfo {
+   return typeof (child as EntityAttachInfo).attachedEntity !== "undefined";
+}
+
+export function getHitboxByLocalID(children: ReadonlyArray<TransformNode>, localID: number): Hitbox | null {
+   for (const child of children) {
+      if (entityChildIsHitbox(child) && child.localID === localID) {
+         return child;
       }
    }
    return null;
 }
 
+const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return getHitboxByLocalID(transformComponent.children, localID);
+}
+
+const readTetherFromData = (reader: PacketReader, hitbox: Hitbox, readingEntityChildren: ReadonlyArray<TransformNode>): HitboxTether => {
+   const otherEntity = reader.readNumber() as Entity;
+   const otherHitboxLocalID = reader.readNumber();
+
+   const otherHitbox = otherEntity !== 0 ? findEntityHitbox(otherEntity, otherHitboxLocalID) : getHitboxByLocalID(readingEntityChildren, otherHitboxLocalID);
+   assert(otherHitbox !== null);
+   assert(otherHitbox !== hitbox);
+
+   return {
+      hitbox: hitbox,
+      otherHitbox: otherHitbox
+   };
+}
+
+const addAttachInfo = (transformComponent: TransformComponent, attachInfo: EntityAttachInfo): void => {
+   transformComponent.children.push(attachInfo);
+
+   if (attachInfo.parent === null) {
+      transformComponent.rootChildren.push(attachInfo);
+   }
+}
+
 const addHitbox = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
-   transformComponent.hitboxes.push(hitbox);
+   transformComponent.children.push(hitbox);
    transformComponent.hitboxMap.set(hitbox.localID, hitbox);
 
    if (hitbox.parent === null) {
-      transformComponent.rootHitboxes.push(hitbox);
+      transformComponent.rootChildren.push(hitbox);
    } else {
+      // @CLEANUP: completely unnecessary??
       const parent = hitbox.parent;
       updateBox(hitbox.box, parent.box.position.x, parent.box.position.y, parent.box.angle);
    }
 }
+
+const removeEntityAttachInfoFromEntity = (transformComponent: TransformComponent, attachInfo: EntityAttachInfo, idx: number): void => {
+   transformComponent.children.splice(idx, 1);
+
+   if (attachInfo.parent === null) {
+      const idx = transformComponent.rootChildren.indexOf(attachInfo);
+      assert(idx !== -1);
+      transformComponent.rootChildren.splice(idx, 1);
+   }
+}
    
 export function removeHitboxFromEntity(transformComponent: TransformComponent, hitbox: Hitbox, idx: number): void {
-   transformComponent.hitboxes.splice(idx, 1);
+   transformComponent.children.splice(idx, 1);
    transformComponent.hitboxMap.delete(hitbox.localID);
 
    if (hitbox.parent === null) {
-      const idx = transformComponent.rootHitboxes.indexOf(hitbox);
+      const idx = transformComponent.rootChildren.indexOf(hitbox);
       assert(idx !== -1);
-      transformComponent.rootHitboxes.splice(idx, 1);
+      transformComponent.rootChildren.splice(idx, 1);
    }
 }
 
@@ -219,7 +253,7 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
    }
 
    // @Hack
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    // If the game object is standing on a stepping stone they aren't in a river
    for (const chunk of transformComponent.chunks) {
@@ -236,85 +270,16 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
    return true;
 }
 
-// @Cleanup: name is bad, doesn't fully 'clean' the hitbox.
-const updateAttachedHitboxRecursively = (hitbox: Hitbox): void => {
-   const parent = hitbox.parent;
-   assert(parent !== null);
-
-   hitbox.velocity.x = parent.velocity.x;
-   hitbox.velocity.y = parent.velocity.y;
-   
-   for (const childHitbox of hitbox.children) {
-      updateBox(childHitbox.box, hitbox.box.position.x, hitbox.box.position.y, hitbox.box.angle);
-      updateAttachedHitboxRecursively(childHitbox);
-   }
-}
-
-const cleanHitboxes = (transformComponent: TransformComponent): void => {
-   for (const rootHitbox of transformComponent.rootHitboxes) {
-      rootHitbox.box.angle = rootHitbox.box.relativeAngle;
-      for (const child of rootHitbox.children) {
-         updateAttachedHitboxRecursively(child);
-      }
-   }
-   // @Incomplete
-   // @Hack?
-   // if (!TetheredHitboxComponentArray.hasComponent(entity)) {
-   //    for (const hitbox of transformComponent.hitboxes) {
-   //       updateBox(hitbox.box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
-   //    }
-   // } else {
-   //    // @hack
-   //    const box = transformComponent.hitboxes[0].box;
-
-   //    // @Hack
-   //    const tempX = box.offset.x;
-   //    const tempY = box.offset.y;
-   //    box.offset.x = 0;
-   //    box.offset.y = 0;
-
-   //    updateBox(box, transformComponent.position.x, transformComponent.position.y, transformComponent.rotation);
-
-   //    box.offset.x = tempX;
-   //    box.offset.y = tempY;
-   // }
-
-   transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
-   transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
-   transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
-   transformComponent.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
-
-   for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
-
-      const boundsMinX = box.calculateBoundsMinX();
-      const boundsMaxX = box.calculateBoundsMaxX();
-      const boundsMinY = box.calculateBoundsMinY();
-      const boundsMaxY = box.calculateBoundsMaxY();
-
-      // Update bounding area
-      if (boundsMinX < transformComponent.boundingAreaMinX) {
-         transformComponent.boundingAreaMinX = boundsMinX;
-      }
-      if (boundsMaxX > transformComponent.boundingAreaMaxX) {
-         transformComponent.boundingAreaMaxX = boundsMaxX;
-      }
-      if (boundsMinY < transformComponent.boundingAreaMinY) {
-         transformComponent.boundingAreaMinY = boundsMinY;
-      }
-      if (boundsMaxY > transformComponent.boundingAreaMaxY) {
-         transformComponent.boundingAreaMaxY = boundsMaxY;
-      }
-   }
-}
-
 /** Recalculates which chunks the game object is contained in */
 const updateContainingChunks = (transformComponent: TransformComponent, entity: Entity): void => {
    const layer = getEntityLayer(entity);
    const containingChunks = new Set<Chunk>();
    
    // Find containing chunks
-   for (const hitbox of transformComponent.hitboxes) {
+   for (const hitbox of transformComponent.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
       const box = hitbox.box;
 
       const minX = box.calculateBoundsMinX();
@@ -352,9 +317,70 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
    }
 }
 
-export function updateEntityPosition(transformComponent: TransformComponent, entity: Entity): void {
-   cleanHitboxes(transformComponent);
-   updateContainingChunks(transformComponent, entity);
+export function cleanTransform(node: Hitbox | Entity): void {
+   if (typeof node !== "number") {
+      const hitbox = node;
+      if (hitbox.parent === null) {
+         hitbox.box.angle = hitbox.box.relativeAngle;
+      } else {
+         updateBox(hitbox.box, hitbox.parent.box.position.x, hitbox.parent.box.position.y, hitbox.parent.box.angle);
+         // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
+         hitbox.velocity.x = hitbox.parent.velocity.x;
+         hitbox.velocity.y = hitbox.parent.velocity.y;
+      }
+      
+      for (const child of node.children) {
+         if (entityChildIsHitbox(child)) {
+            cleanTransform(child);
+         } else {
+            cleanTransform(child.attachedEntity);
+         }
+      }
+   } else {
+      const entity = node;
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      
+      for (const child of transformComponent.rootChildren) {
+         if (entityChildIsHitbox(child)) {
+            cleanTransform(child);
+         } else {
+            cleanTransform(child.attachedEntity);
+         }
+      }
+   
+      transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
+      transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
+      transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
+      transformComponent.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
+   
+      for (const hitbox of transformComponent.children) {
+         if (!entityChildIsHitbox(hitbox)) {
+            continue;
+         }
+         const box = hitbox.box;
+   
+         const boundsMinX = box.calculateBoundsMinX();
+         const boundsMaxX = box.calculateBoundsMaxX();
+         const boundsMinY = box.calculateBoundsMinY();
+         const boundsMaxY = box.calculateBoundsMaxY();
+   
+         // Update bounding area
+         if (boundsMinX < transformComponent.boundingAreaMinX) {
+            transformComponent.boundingAreaMinX = boundsMinX;
+         }
+         if (boundsMaxX > transformComponent.boundingAreaMaxX) {
+            transformComponent.boundingAreaMaxX = boundsMaxX;
+         }
+         if (boundsMinY < transformComponent.boundingAreaMinY) {
+            transformComponent.boundingAreaMinY = boundsMinY;
+         }
+         if (boundsMaxY > transformComponent.boundingAreaMaxY) {
+            transformComponent.boundingAreaMaxY = boundsMaxY;
+         }
+      }
+   
+      updateContainingChunks(transformComponent, entity);
+   }
 }
 
 export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentParams, never>(ServerComponentType.transform, true, {
@@ -371,43 +397,36 @@ export const TransformComponentArray = new ServerComponentArray<TransformCompone
 function createComponent(entityParams: EntityParams): TransformComponent {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
+   // @INCOMPLETE
    let totalMass = 0;
-   const rootHitboxes = new Array<Hitbox>();
+   const rootChildren = new Array<TransformNode>();
    const hitboxMap = new Map<number, Hitbox>();
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentParams.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
       totalMass += hitbox.mass;
       hitboxMap.set(hitbox.localID, hitbox);
       if (hitbox.parent === null) {
-         rootHitboxes.push(hitbox);
+         rootChildren.push(hitbox);
       }
-   }
-
-   const tethers = new Array<HitboxTether>();
-   for (const tetherParams of transformComponentParams.tethers) {
-      const otherHitbox = getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!;
-      tethers.push({
-         hitbox: getHitboxByLocalID(transformComponentParams.hitboxes, tetherParams.hitboxLocalID)!,
-         otherHitbox: otherHitbox
-      });
    }
 
    return {
       totalMass: totalMass,
       chunks: new Set(),
-      hitboxes: transformComponentParams.hitboxes,
+      children: transformComponentParams.children,
       hitboxMap: hitboxMap,
-      tethers: tethers,
-      rootHitboxes: rootHitboxes,
+      tethers: transformComponentParams.tethers,
+      rootChildren: rootChildren,
       collisionBit: transformComponentParams.collisionBit,
       collisionMask: transformComponentParams.collisionMask,
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxY: Number.MIN_SAFE_INTEGER,
-      carryRoot: transformComponentParams.carryRoot,
-      mount: transformComponentParams.mount,
-      carriedEntities: transformComponentParams.carriedEntities,
-      rootEntity: transformComponentParams.rootEntity
+      rootEntity: transformComponentParams.rootEntity,
+      parentEntity: transformComponentParams.parentEntity
    };
 }
 
@@ -416,8 +435,7 @@ function getMaxRenderParts(): number {
 }
 
 function onLoad(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   updateEntityPosition(transformComponent, entity);
+   cleanTransform(entity);
 }
 
 function onRemove(entity: Entity): void {
@@ -438,7 +456,7 @@ function padData(reader: PacketReader): void {
       const isTethered = reader.readBoolean();
       reader.padOffset(3);
       if (isTethered) {
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
       }
    }
 
@@ -447,85 +465,13 @@ function padData(reader: PacketReader): void {
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numCarriedEntities);
 }
 
-const updateCarryInfoFromData = (reader: PacketReader, entity: Entity, transformComponent: TransformComponent): void => {
-   transformComponent.carryRoot = reader.readNumber();
-
-   const mount = reader.readNumber();
-   if (mount !== transformComponent.mount) {
-      // Play mount sound when entity mounts a carry slot
-      if (entityExists(mount) && !entityExists(transformComponent.mount) && RideableComponentArray.hasComponent(mount)) {
-         switch (getEntityType(entity)) {
-            case EntityType.barrel: {
-               playSound("barrel-mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
-               break;
-            }
-            default: {
-               playSound("mount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
-               break;
-            }
-         }
-      // Play a sound when the entity dismounts a carry slot
-      } else if (!entityExists(mount) && entityExists(transformComponent.mount) && RideableComponentArray.hasComponent(transformComponent.mount)) {
-         playSound("dismount.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
+const getExistingAttachInfo = (transformComponent: TransformComponent, attachedEntity: Entity): EntityAttachInfo | null => {
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child) && child.attachedEntity === attachedEntity) {
+         return child;
       }
    }
-   transformComponent.mount = mount;
-
-   // Update existing and check for new carried entities
-   const numCarriedEntities = reader.readNumber();
-   for (let i = 0; i < numCarriedEntities; i++) {
-      const carriedEntity = reader.readNumber();
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-
-      let existingCarryInfo: EntityCarryInfo | undefined;
-      for (let i = 0; i < transformComponent.carriedEntities.length; i++) {
-         const carryInfo = transformComponent.carriedEntities[i];
-         if (carryInfo.carriedEntity === carriedEntity) {
-            existingCarryInfo = carryInfo;
-            break;
-         }
-      }
-      
-      if (typeof existingCarryInfo !== "undefined") {
-         existingCarryInfo.lastUpdateTicks = Board.serverTicks;
-      } else {
-         // @Copynpaste
-         const carryInfo: EntityCarryInfo = {
-            carriedEntity: carriedEntity,
-            offsetX: offsetX,
-            offsetY: offsetY,
-            lastUpdateTicks: Board.serverTicks
-         };
-         transformComponent.carriedEntities.push(carryInfo);
-      }
-   }
-
-   // Check for removed carried entities
-   for (let i = 0; i < transformComponent.carriedEntities.length; i++) {
-      const carryInfo = transformComponent.carriedEntities[i];
-      if (carryInfo.lastUpdateTicks !== Board.serverTicks) {
-         // @Hack
-         if (carryInfo.carriedEntity === playerInstance) {
-            const rideableComponent = RideableComponentArray.getComponent(entity);
-            const carrySlot = rideableComponent.carrySlots[0];
-
-            // Set the player to the dismount position
-
-            const transformComponent = TransformComponentArray.getComponent(playerInstance);
-            const playerHitbox = transformComponent.hitboxes[0];
-
-            const mountTransformComponent = TransformComponentArray.getComponent(entity);
-            // @Hack
-            const mountHitbox = mountTransformComponent.hitboxes[0];
-            playerHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
-            playerHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
-         }
-         
-         transformComponent.carriedEntities.splice(i, 1);
-         i--;
-      }
-   }
+   return null;
 }
    
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -537,7 +483,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
    registerDirtyRenderInfo(renderInfo);
    
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   transformComponent.rootEntity = reader.readNumber();
+   transformComponent.parentEntity = reader.readNumber();
    
    transformComponent.collisionBit = reader.readNumber();
    transformComponent.collisionMask = reader.readNumber();
@@ -545,71 +492,89 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // @Speed: would be faster if we split the hitboxes array
    let existingNumCircular = 0;
    let existingNumRectangular = 0;
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
-      if (boxIsCircular(hitbox.box)) {
-         existingNumCircular++;
-      } else {
-         existingNumRectangular++;
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const hitbox = transformComponent.children[i];
+      if (entityChildIsHitbox(hitbox)) {
+         if (boxIsCircular(hitbox.box)) {
+            existingNumCircular++;
+         } else {
+            existingNumRectangular++;
+         }
       }
    }
-
-   let newNumCircular = 0;
-   let newNumRectangular = 0;
-   let hasAddedCircular = false;
-   let hasAddedRectangular = false;
 
    const numHitboxes = reader.readNumber();
    for (let i = 0; i < numHitboxes; i++) {
-      const localID = reader.readNumber();
+      const nodeType = reader.readNumber() as TransformNodeType;
 
-      const existingHitbox = transformComponent.hitboxMap.get(localID);
-      if (typeof existingHitbox === "undefined") {
-         const hitbox = readHitboxFromData(reader, localID, transformComponent.hitboxes);
+      if (nodeType === TransformNodeType.entity) {
+         const attachedEntity = reader.readNumber();
+         
+         const existingAttachInfo = getExistingAttachInfo(transformComponent, attachedEntity);
+         if (existingAttachInfo !== null) {
+            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
-         addHitbox(transformComponent, hitbox);
-         if (boxIsCircular(hitbox.box)) {
-            newNumCircular++;
-            hasAddedCircular = true;
+            existingAttachInfo.lastUpdateTicks = Board.serverTicks;
          } else {
-            newNumRectangular++;
-            hasAddedRectangular = true;
-         }
-
-         const isTethered = reader.readBoolean();
-         reader.padOffset(3);
-         if (isTethered) {
             // @Copynpaste
-            const otherHitboxLocalID = reader.readNumber();
-            const otherHitbox = getHitboxByLocalID(transformComponent.hitboxes, otherHitboxLocalID);
-            assert(otherHitbox !== null);
-            const tether: HitboxTether = {
-               hitbox: hitbox,
-               otherHitbox: otherHitbox
+
+            const parentHitboxLocalID = reader.readNumber();
+         
+            let parent: Hitbox | null;
+            if (parentHitboxLocalID !== -1) {
+               parent = getHitboxByLocalID(transformComponent.children, parentHitboxLocalID);
+               if (parent === null) {
+                  throw new Error();
+               }
+            } else {
+               parent = null;
+            }
+
+            const attachInfo: EntityAttachInfo = {
+               attachedEntity: attachedEntity,
+               parent: parent,
+               lastUpdateTicks: Board.serverTicks
             };
-            transformComponent.tethers.push(tether);
+            addAttachInfo(transformComponent, attachInfo);
          }
       } else {
-         updateHitboxFromData(existingHitbox, reader);
-         if (boxIsCircular(existingHitbox.box)) {
-            newNumCircular++;
+         const localID = reader.readNumber();
+   
+         const existingHitbox = transformComponent.hitboxMap.get(localID);
+         if (typeof existingHitbox === "undefined") {
+            const hitbox = readHitboxFromData(reader, localID, transformComponent.children);
+   
+            addHitbox(transformComponent, hitbox);
+   
+            const isTethered = reader.readBoolean();
+            reader.padOffset(3);
+            if (isTethered) {
+               const tether = readTetherFromData(reader, hitbox, transformComponent.children);
+               transformComponent.tethers.push(tether);
+            }
          } else {
-            newNumRectangular++;
-         }
-
-         const isTethered = reader.readBoolean();
-         reader.padOffset(3);
-         if (isTethered) {
-            reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+            updateHitboxFromData(existingHitbox, reader);
+   
+            const isTethered = reader.readBoolean();
+            reader.padOffset(3);
+            if (isTethered) {
+               reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+            }
          }
       }
    }
 
-   // Remove hitboxes which no longer exist
-   if (((newNumCircular !== existingNumRectangular) || hasAddedCircular) ||
-       (newNumRectangular !== existingNumRectangular) || hasAddedRectangular) {
-      for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-         const hitbox = transformComponent.hitboxes[i];
+   // Remove children which no longer exist
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const child = transformComponent.children[i];
+      if (entityChildIsEntity(child)) {
+         const attachInfo = child;
+         if (attachInfo.lastUpdateTicks !== Board.serverTicks) {
+            removeEntityAttachInfoFromEntity(transformComponent, attachInfo, i);
+            i--;
+         }
+      } else {
+         const hitbox = child;
          if (hitbox.lastUpdateTicks !== Board.serverTicks) {
             // Hitbox is removed!
             removeHitboxFromEntity(transformComponent, hitbox, i);
@@ -620,27 +585,51 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // @Speed
    transformComponent.totalMass = 0;
-   for (const hitbox of transformComponent.hitboxes) {
-      transformComponent.totalMass += hitbox.mass;
+   for (const hitbox of transformComponent.children) {
+      if (entityChildIsHitbox(hitbox)) {
+         transformComponent.totalMass += hitbox.mass;
+      }
    }
 
-   // Update containing chunks
+   // Update containing chunks and bounds
    // @Copynpaste
 
    // @Speed
    // @Speed
    // @Speed
 
+   transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
+   transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
+   transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
+   transformComponent.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
+
    const containingChunks = new Set<Chunk>();
 
    const layer = getEntityLayer(entity);
-   for (const hitbox of transformComponent.hitboxes) {
+   for (const hitbox of transformComponent.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
       const box = hitbox.box;
 
       const minX = box.calculateBoundsMinX();
       const maxX = box.calculateBoundsMaxX();
       const minY = box.calculateBoundsMinY();
       const maxY = box.calculateBoundsMaxY();
+
+      // Update bounding area
+      if (minX < transformComponent.boundingAreaMinX) {
+         transformComponent.boundingAreaMinX = minX;
+      }
+      if (maxX > transformComponent.boundingAreaMaxX) {
+         transformComponent.boundingAreaMaxX = maxX;
+      }
+      if (minY < transformComponent.boundingAreaMinY) {
+         transformComponent.boundingAreaMinY = minY;
+      }
+      if (maxY > transformComponent.boundingAreaMaxY) {
+         transformComponent.boundingAreaMaxY = maxY;
+      }
 
       // Recalculate the game object's containing chunks based on the new hitbox bounds
       const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -671,8 +660,27 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          transformComponent.chunks.add(chunk);
       }
    }
+}
 
-   updateCarryInfoFromData(reader, entity, transformComponent);
+const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader: PacketReader): void => {
+   padBoxData(reader);
+
+   reader.padOffset(8 * Float32Array.BYTES_PER_ELEMENT);
+   
+   const numFlags = reader.readNumber();
+   reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
+
+   // @HACK @INCOMPLETE
+   const parentLocalID = reader.readNumber();
+   if (parentLocalID === -1) {
+      hitbox.parent = null;
+   } else {
+      assert(entityExists(parentEntity));
+      hitbox.parent = findEntityHitbox(parentEntity, parentLocalID);
+      assert(hitbox.parent !== null);
+   }
+
+   hitbox.lastUpdateTicks = Board.serverTicks;
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
@@ -681,27 +689,32 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
       return;
    }
 
-   // 
-   // Update carry roots and carrying entities
-   // 
-   // @Bug: This should be 7...? Length of entity data is wrong then?
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   transformComponent.rootEntity = reader.readNumber();
+   transformComponent.parentEntity = reader.readNumber();
+   
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
-   const numHitboxes = reader.readNumber();
-   for (let i = 0; i < numHitboxes; i++) {
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const nodeType = reader.readNumber() as TransformNodeType;
 
-      padHitboxData(reader);
+      if (nodeType === TransformNodeType.entity) {
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+      } else {
+         const localID = reader.readNumber();
+         const hitbox = transformComponent.hitboxMap.get(localID);
+         assert(typeof hitbox !== "undefined");
 
-      const isTethered = reader.readBoolean();
-      reader.padOffset(3);
-      if (isTethered) {
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+         updatePlayerHitboxFromData(hitbox, transformComponent.parentEntity, reader);
+   
+         const isTethered = reader.readBoolean();
+         reader.padOffset(3);
+         if (isTethered) {
+            reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+         }
       }
    }
-
-   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   updateCarryInfoFromData(reader, playerInstance!, transformComponent);
 }
 
 export function getRandomPositionInBox(box: Box): Point {
@@ -722,12 +735,50 @@ export function getRandomPositionInBox(box: Box): Point {
    }
 }
 
-// @Cleanup: copy and paste from server
-export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
-   const hitbox = transformComponent.hitboxes[randInt(0, transformComponent.hitboxes.length - 1)];
-   const box = hitbox.box;
+const countHitboxes = (transformComponent: TransformComponent): number => {
+   let numHitboxes = 0;
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         numHitboxes += countHitboxes(childTransformComponent);
+      } else {
+         numHitboxes++;
+      }
+   } 
+   return numHitboxes;
+}
 
-   return getRandomPositionInBox(box);
+const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: number, hitboxIdx: number): Hitbox | number => {
+   let newI = i;
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
+         if (typeof result === "number") {
+            newI = i;
+         } else {
+            return result;
+         }
+      } else {
+         if (newI === hitboxIdx) {
+            return child;
+         }
+         
+         newI++;
+      }
+   } 
+   return newI;
+}
+
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const numHitboxes = countHitboxes(transformComponent);
+   const hitboxIdx = Math.floor(Math.random() * numHitboxes);
+   
+   const hitbox = getHeirarchyIndexedHitbox(transformComponent, 0, hitboxIdx);
+   if (typeof hitbox === "number") {
+      throw new Error();
+   }
+   return getRandomPositionInBox(hitbox.box);
 }
 
 export function getRandomPositionOnBoxEdge(box: Box): Point {

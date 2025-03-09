@@ -11,6 +11,7 @@ import { EntityConfig } from "../components";
 import { createTreePlantedConfig } from "../entities/resources/tree-planted";
 import { createIceSpikesPlantedConfig } from "../entities/resources/ice-spikes-planted";
 import { createBerryBushPlantedConfig } from "../entities/resources/berry-bush-planted";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    FERTILISER_DURATION_TICKS = 300 * Settings.TPS
@@ -72,7 +73,7 @@ function addDataToComponent(packet: Packet, entity: Entity): void {
 export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
-   const planterBoxHitbox = transformComponent.hitboxes[0];
+   const planterBoxHitbox = transformComponent.children[0] as Hitbox;
 
    // Create plant
    let config: EntityConfig;

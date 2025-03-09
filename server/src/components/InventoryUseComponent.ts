@@ -17,7 +17,7 @@ import { createBlockAttackConfig } from "../entities/block-attack";
 import { createEntity } from "../Entity";
 import { destroyEntity, entityExists, getEntityLayer } from "../world";
 import { createSwingAttackConfig } from "../entities/swing-attack";
-import { applyKnockback } from "../hitboxes";
+import { applyKnockback, Hitbox } from "../hitboxes";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -252,7 +252,7 @@ function onTick(entity: Entity): void {
 
                // Push forwards
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const entityHitbox = transformComponent.hitboxes[0];
+               const entityHitbox = transformComponent.children[0] as Hitbox;
                
                applyKnockback(entity, entityHitbox, 250, entityHitbox.box.angle);
 

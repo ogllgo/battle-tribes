@@ -11,6 +11,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { getTileIndexIncludingEdges, tileIsInWorld } from "./Layer";
 import { getCurrentLayer, getEntityRenderInfo } from "./world";
 import { Entity } from "../../shared/src/entities";
+import { Hitbox } from "./hitboxes";
 
 export let cursorX: number | null = null;
 export let cursorY: number | null = null;
@@ -80,7 +81,7 @@ export function getMouseTargetEntity(): Entity | null {
          for (const entity of chunk.nonGrassEntities) {
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack
-            const hitbox = transformComponent.hitboxes[0];
+            const hitbox = transformComponent.children[0] as Hitbox;
             
             const distanceFromCursor = Math.sqrt(Math.pow(Game.cursorX - hitbox.box.position.x, 2) + Math.pow(Game.cursorY - hitbox.box.position.y, 2))
             if (distanceFromCursor <= CLIENT_SETTINGS.CURSOR_TOOLTIP_HOVER_RANGE && distanceFromCursor < minDistance) {
@@ -123,7 +124,7 @@ export function renderCursorTooltip(): void {
    const renderInfo = getEntityRenderInfo(targetEntity);
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(targetEntity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    // @Incomplete: doesn't account for render position
    const entityScreenPositionX = Camera.calculateXScreenPos(hitbox.box.position.x);
    const entityScreenPositionY = Camera.calculateYScreenPos(hitbox.box.position.y);

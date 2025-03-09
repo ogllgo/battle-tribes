@@ -24,6 +24,7 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-creation";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
 
 /*
 // @Incomplete
@@ -378,10 +379,10 @@ export function entityCanOpenBuildMenu(entity: Entity): boolean {
 // @Cleanup: copy paste of shared function
 const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.hitboxes[0];
+   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
    
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
-   const entityHitbox = entityTransformComponent.hitboxes[0];
+   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
    const playerDirection = playerHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
    let snapRotation = playerDirection - rotation;
@@ -396,7 +397,7 @@ const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => 
 const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
    // @HACK
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
-   const buildingHitbox = buildingTransformComponent.hitboxes[0];
+   const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
    
    switch (ghostType) {
       case GhostType.tunnelDoor: {
@@ -462,7 +463,7 @@ const BuildMenu = () => {
          }
 
          const transformComponent = TransformComponentArray.getComponent(building);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
 
          const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
          const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
@@ -507,7 +508,7 @@ const BuildMenu = () => {
       const option = options[hoveredOptionIdx];
 
       const transformComponent = TransformComponentArray.getComponent(buildingID);
-      const buildingHitbox = transformComponent.hitboxes[0];
+      const buildingHitbox = transformComponent.children[0] as Hitbox;
 
       const ghostInfo: GhostInfo = {
          position: buildingHitbox.box.position.copy(),
@@ -549,7 +550,7 @@ const BuildMenu = () => {
    
             if (count < cost.amount) {
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-               const playerHitbox = playerTransformComponent.hitboxes[0];
+               const playerHitbox = playerTransformComponent.children[0] as Hitbox;
                playSound("error.mp3", 0.4, 1, playerHitbox.box.position, null);
                return;
             }

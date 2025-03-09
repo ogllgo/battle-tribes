@@ -1,14 +1,14 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, attachEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -19,10 +19,10 @@ import { Settings } from "../../../../shared/src/settings";
 import { applyKnockback, createHitbox, Hitbox, slowVelocity } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
@@ -68,7 +68,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    if (entityExists(projectileComponent.creator)) {
       const creatorTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      if (creatorTransformComponent.carryRoot === collidingEntityTransformComponent.carryRoot) {
+      if (creatorTransformComponent.rootEntity === collidingEntityTransformComponent.rootEntity) {
          return;
       }
    }
@@ -86,9 +86,10 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
       return;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(arrow);
+   // Don't collide with anything when the arrow is being carried
    // @Speed: faster to just change its collision group
-   if (transformComponent.carryRoot !== arrow) {
+   const transformComponent = TransformComponentArray.getComponent(arrow);
+   if (transformComponent.rootEntity !== arrow) {
       return;
    }
 
@@ -119,31 +120,29 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    slowVelocity(affectedHitbox, 10000 * Settings.I_TPS);
 
    // Lodge the arrow in the entity when it's slow enough
-   // @Incomplete
-   // if (getVelocityMagnitude(transformComponent) < 50) {
-   //    const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   if (affectedHitbox.velocity.lengthSquared() < 50) {
+      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+      const collidingHitbox = collidingEntityTransformComponent.children[0] as Hitbox;
 
-   //    // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
-   //    transformComponent.relativeRotation -= collidingEntityTransformComponent.rotation;
+      // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
+      affectedHitbox.box.relativeAngle -= collidingHitbox.box.angle;
 
-   //    const diffX = affectedHitbox.box.position.x - collidingHitbox.box.position.x;
-   //    const diffY = affectedHitbox.box.position.y - collidingHitbox.box.position.y;
+      const diffX = affectedHitbox.box.position.x - collidingHitbox.box.position.x;
+      const diffY = affectedHitbox.box.position.y - collidingHitbox.box.position.y;
 
-   //    const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingEntityTransformComponent.relativeRotation);
-   //    const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingEntityTransformComponent.relativeRotation);
+      const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingHitbox.box.relativeAngle);
+      const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingHitbox.box.relativeAngle);
       
-   //    // @Incomplete: SHOULD BE CARRIED ON THE HITBOX INSTEAD!
+      // @Incomplete: SHOULD BE CARRIED ON THE HITBOX INSTEAD!
       
-   //    mountEntity(arrow, collidingEntity, rotatedDiffX, rotatedDiffY, false);
+      attachEntity(arrow, collidingEntity, collidingHitbox, rotatedDiffX, rotatedDiffY, false);
 
-   //    // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
-   //    // This is because this "fix carried entity position" code only runs on physics components, and if
-   //    // the arrow gets stuck on a tree then it has no physics component and the velocity never gets overridden
-   //    // with 0.
-   //    // Need to make the fixing carried entity position code run on the transform component instead.
-   //    transformComponent.selfVelocity.x = 0;
-   //    transformComponent.selfVelocity.y = 0;
-   //    transformComponent.externalVelocity.x = 0;
-   //    transformComponent.externalVelocity.y = 0;
-   // }
+      // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
+      // This is because this "fix carried entity position" code only runs on physics components, and if
+      // the arrow gets stuck on a tree then it has no physics component and the velocity never gets overridden
+      // with 0.
+      // Need to make the fixing carried entity position code run on the transform component instead.
+      affectedHitbox.velocity.x = 0;
+      affectedHitbox.velocity.y = 0;
+   }
 }

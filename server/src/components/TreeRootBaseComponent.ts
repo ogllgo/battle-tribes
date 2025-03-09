@@ -6,6 +6,7 @@ import { getAbsAngleDiff, Point, randFloat, randInt } from "../../../shared/src/
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
 import { createEntity } from "../Entity";
+import { Hitbox } from "../hitboxes";
 import Layer from "../Layer";
 import { destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -54,7 +55,7 @@ const segmentWillBeInWall = (rootLayer: Layer, rootX: number, rootY: number, off
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.hitboxes[0];
+   const treeRootHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(entity);
 
@@ -98,7 +99,7 @@ function onJoin(entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.hitboxes[0];
+   const treeRootHitbox = transformComponent.children[0] as Hitbox;
 
    // Respawn the tree root after a while
    const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), 2 * Math.PI * Math.random());

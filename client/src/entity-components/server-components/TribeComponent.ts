@@ -11,6 +11,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { Tribe, tribeExists } from "../../tribes";
 import { playerInstance } from "../../player";
 import { EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface TribeComponentParams {
    readonly tribeID: number;
@@ -78,7 +79,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       playSoundOnHitbox("conversion.mp3", 0.4, 1, hitbox, false);
 

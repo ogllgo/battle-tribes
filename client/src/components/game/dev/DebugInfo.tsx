@@ -16,6 +16,7 @@ import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 import { getTileLocalBiome } from "../../../local-biomes";
+import { Hitbox } from "../../../hitboxes";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -76,7 +77,7 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const displayX = roundNum(hitbox.box.position.x, 0);
    const displayY = roundNum(hitbox.box.position.y, 0);

@@ -8,7 +8,7 @@ import { createEntityConfig, EntityConfig } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { getRandomPositionInEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, getRandomPositionInEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
@@ -17,10 +17,10 @@ import { createEntity } from "../Entity";
 import { createHitbox } from "../hitboxes";
 
 export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~COLLISION_BITS.planterBox;
    
    const physicsComponent = new PhysicsComponent();

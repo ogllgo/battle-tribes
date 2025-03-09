@@ -5,12 +5,13 @@ import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { TribeComponentArray } from "./TribeComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { createVirtualStructureFromHitboxes, VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { registerDirtyEntity } from "../server/player-clients";
 import { StructureConnection, calculateRelativeOffsetDirection, createStructureConnection } from "../structure-placement";
+import { Hitbox } from "../hitboxes";
 
 export class StructureComponent {
    /** The blueprint currently placed on the structure. 0 if none is present */
@@ -34,11 +35,11 @@ StructureComponentArray.onRemove = onRemove;
 const addConnection = (entity: Entity, structureComponent: StructureComponent, connectedEntity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const connectedEntityTransformComponent = TransformComponentArray.getComponent(connectedEntity);
    // @Hack
-   const connectedEntityHitbox = connectedEntityTransformComponent.hitboxes[0];
+   const connectedEntityHitbox = connectedEntityTransformComponent.children[0] as Hitbox;
    
    const relativeOffsetDirection = calculateRelativeOffsetDirection(entityHitbox.box.position, entityHitbox.box.angle, connectedEntityHitbox.box.position);
    const connection = createStructureConnection(connectedEntity, relativeOffsetDirection);
@@ -65,12 +66,12 @@ function onJoin(entity: Entity): void {
 
    if (structureComponent.virtualStructure === null) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = transformComponent.hitboxes[0];
+      const entityHitbox = transformComponent.children[0] as Hitbox;
       
       const entityType = getEntityType(entity) as StructureType;
       const buildingLayer = tribeComponent.tribe.buildingLayers[layer.depth];
       
-      structureComponent.virtualStructure = createVirtualStructureFromHitboxes(buildingLayer, entityHitbox.box.position.copy(), entityHitbox.box.angle, entityType, transformComponent.hitboxes);
+      structureComponent.virtualStructure = createVirtualStructureFromHitboxes(buildingLayer, entityHitbox.box.position.copy(), entityHitbox.box.angle, entityType, transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>);
    }
    
    tribeComponent.tribe.addBuilding(entity);

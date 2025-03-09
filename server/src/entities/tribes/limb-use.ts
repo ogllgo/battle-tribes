@@ -3,6 +3,7 @@ import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsToo
 import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { Hitbox } from "../../hitboxes";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
@@ -85,7 +86,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
    const transformComponent = TransformComponentArray.getComponent(attackingEntity);
-   const attackingEntityHitbox = transformComponent.hitboxes[0];
+   const attackingEntityHitbox = transformComponent.children[0] as Hitbox;
 
    // Add extra range for moving attacks
    const vx = attackingEntityHitbox.velocity.x;

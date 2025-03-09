@@ -330,7 +330,7 @@ export function getPlayerNearbyCollapses(playerClient: PlayerClient): ReadonlyAr
 export function registerEntitySupports(transformComponent: TransformComponent): void {
    // @Incomplete
 
-   for (const hitbox of transformComponent.hitboxes) {
+   for (const hitbox of transformComponent.children) {
       
    }
 }
