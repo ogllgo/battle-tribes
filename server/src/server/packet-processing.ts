@@ -52,12 +52,17 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       return;
    }
 
+   const playerComponent = PlayerComponentArray.getComponent(player);
+
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
    const angle = reader.readNumber();
 
    const velocityX = reader.readNumber();
    const velocityY = reader.readNumber();
+
+   playerComponent.movementIntention.x = reader.readNumber();
+   playerComponent.movementIntention.y = reader.readNumber();
 
    const angularVelocity = reader.readNumber();
 
@@ -112,7 +117,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       registerDirtyEntity(player);
    }
 
-   const playerComponent = PlayerComponentArray.getComponent(player);
    playerComponent.interactingEntityID = interactingEntityID;
 
    // @Bug: won't work for using medicine in offhand

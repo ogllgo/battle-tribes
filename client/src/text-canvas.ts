@@ -181,7 +181,7 @@ const getDamageNumberColour = (damage: number): string => {
 }
 
 const renderDamageNumbers = (): void => {
-   if (accumulatedDamage === 0||1+1===2) {
+   if (accumulatedDamage === 0) {
       return;
    }
    

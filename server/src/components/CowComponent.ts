@@ -24,7 +24,7 @@ import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEnti
 import { getEntitiesAtPosition } from "../layer-utils";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray } from "./TamingComponent";
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
@@ -263,7 +263,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
 
    // if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
    //    // Force is in the direction which will get head offset direction back towards 0
-   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY * Math.sign(headOffsetDirection));
+   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY) * Math.sign(headOffsetDirection) * Settings.I_TPS;
 
    //    cowBodyHitbox.box.relativeAngle += rotationForce;
 
@@ -367,30 +367,19 @@ function onTick(cow: Entity): void {
       return;
    }
 
-   // @INCOMPLETE: This used to rely on the acceleration of the carried entity, but that's gone now.
-   // What will need to be done to return this to a functional state is to make all AI components report
-   // what their current movement target is. (Use AIHelperComponent for now but add @Hack comment?)
-
-   // // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
-   // //   entity isn't exactly on the thing being accelerated.
-   // // When something is riding the cow, that entity controls the cow's movement
-   // const rideableComponent = RideableComponentArray.getComponent(cow);
-   // const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   // // @Hack: the physics component check for the rider
-   // if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
-   //    const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
-   //    const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
-   //    if (accelerationMagnitude > 0) {
-   //       const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
-   //       const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
-
-   //       const targetX = cowBodyHitbox.box.position.x + 400 * normalisedAccelerationX;
-   //       const targetY = cowBodyHitbox.box.position.y + 400 * normalisedAccelerationY;
-   //       const targetDirection = angle(normalisedAccelerationX, normalisedAccelerationY);
-   //       moveCow(cow, targetX, targetY, targetDirection, Vars.FAST_ACCELERATION);
-   //       return;
-   //    }
-   // }
+   // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
+   //   entity isn't exactly on the thing being accelerated.
+   // When something is riding the cow, that entity controls the cow's movement
+   const rideableComponent = RideableComponentArray.getComponent(cow);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   if (entityExists(rider)) {
+      const targetPosition = getRiderTargetPosition(rider);
+      if (targetPosition !== null) {
+         const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetPosition);
+         moveCow(cow, targetPosition.x, targetPosition.y, targetDirection, Vars.FAST_ACCELERATION);
+         return;
+      }
+   }
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 

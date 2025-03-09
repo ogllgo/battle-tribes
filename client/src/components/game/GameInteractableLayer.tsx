@@ -55,7 +55,7 @@ import { playerInstance } from "../../player";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 import Game from "../../Game";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
-import { assert } from "../../../../shared/src/utils";
+import { assert, Point } from "../../../../shared/src/utils";
 import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
 
 export interface ItemRestTime {
@@ -138,6 +138,12 @@ let placeableEntityGhostRenderInfo: EntityRenderInfo | null = null;
 let carrier: Entity = 0;
 export function setShittyCarrier(entity: Entity): void {
    carrier = entity;
+}
+
+let playerMoveIntention = new Point(0, 0);
+
+export function getPlayerMoveIntention(): Point {
+   return playerMoveIntention;
 }
 
 // @Copynpaste
@@ -886,6 +892,9 @@ export function updatePlayerMovement(): void {
    Camera.velocity.y = 0;
 
    if (moveDirection !== null) {
+      playerMoveIntention.x = Math.sin(moveDirection);
+      playerMoveIntention.y = Math.cos(moveDirection);
+
       if (playerInstance !== null) {
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
          
