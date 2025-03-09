@@ -7,6 +7,7 @@ import { getEntityLayer } from "../world";
 import { createGrassBlocker } from "../grass-blockers";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { Point } from "../../../shared/src/utils";
+import { Hitbox } from "../hitboxes";
 
 const TREE_TRUNK_RADII: Record<TreeSize, number> = {
    [TreeSize.small]: 15,
@@ -26,7 +27,7 @@ TreeComponentArray.onJoin = onJoin;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeHitbox = transformComponent.hitboxes[0];
+   const treeHitbox = transformComponent.children[0] as Hitbox;
    
    const treeComponent = TreeComponentArray.getComponent(entity);
 

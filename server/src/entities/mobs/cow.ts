@@ -10,7 +10,7 @@ import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -93,15 +93,15 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createCowConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    // Body hitbox
    const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), rotation, 50, 80), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
-   transformComponent.addHitbox(bodyHitbox, null);
-   
+   addHitboxToTransformComponent(transformComponent, bodyHitbox);
+ 
    // Head hitbox
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
-   transformComponent.addHitbox(headHitbox, null);
+   addHitboxToTransformComponent(transformComponent, headHitbox);
    transformComponent.addHitboxTether(headHitbox, null, bodyHitbox, 50, 5, 0.4);
 
    const physicsComponent = new PhysicsComponent();
@@ -120,7 +120,7 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
    const followAIComponent = new FollowAIComponent(randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), 0.2, 60);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(0, -14, 48, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -14, 48, 0));
    
    const lootComponent = new LootComponent();
    

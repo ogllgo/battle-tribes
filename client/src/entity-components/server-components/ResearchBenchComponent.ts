@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { createPaperParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -48,7 +49,7 @@ function createParamsFromData(reader: PacketReader): ResearchBenchComponentParam
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(

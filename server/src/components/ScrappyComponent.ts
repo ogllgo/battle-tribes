@@ -5,6 +5,7 @@ import { InventoryName } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { randFloat } from "../../../shared/src/utils";
 import { throwItem } from "../entities/tribes/tribe-member";
+import { Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { ComponentArray } from "./ComponentArray";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
@@ -82,7 +83,7 @@ function onTick(scrappy: Entity): void {
       const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
       
       const transformComponent = TransformComponentArray.getComponent(scrappy);
-      const scrappyHitbox = transformComponent.hitboxes[0];
+      const scrappyHitbox = transformComponent.children[0] as Hitbox;
 
       let hasAccident = false;
       if (hotbar.hasItem(1) && Math.random() < 0.7) {

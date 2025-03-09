@@ -10,6 +10,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
 import { EntityParams } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface TribesmanAIComponentParams {
    readonly aiType: TribesmanAIType;
@@ -78,7 +79,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const tribeComponent = TribeComponentArray.getComponent(entity);
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);

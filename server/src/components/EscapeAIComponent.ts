@@ -4,7 +4,7 @@ import { Entity } from "battletribes-shared/entities";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { applyAcceleration, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 export class EscapeAIComponent {
    public readonly acceleration: number;
@@ -26,7 +26,7 @@ export function shouldRunEscapeAI(entity: Entity): boolean {
 export function getEscapeTarget(entity: Entity): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
@@ -43,7 +43,7 @@ export function getEscapeTarget(entity: Entity): Entity | null {
       
       const attackingEntityTransformComponent = TransformComponentArray.getComponent(attackingEntity);
       // @Hack
-      const attackingEntityHitbox = attackingEntityTransformComponent.hitboxes[0];
+      const attackingEntityHitbox = attackingEntityTransformComponent.children[0] as Hitbox;
       
       const distance = entityHitbox.box.position.calculateDistanceBetween(attackingEntityHitbox.box.position);
       if (distance < minDistance) {
@@ -57,12 +57,12 @@ export function getEscapeTarget(entity: Entity): Entity | null {
 
 export function runEscapeAI(entity: Entity, escapeTarget: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
 
    const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
 
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-   const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
+   const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
 
    const direction = escapeTargetHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
 

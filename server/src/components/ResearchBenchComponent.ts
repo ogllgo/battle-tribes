@@ -15,6 +15,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType, getGameTicks } from "../world";
 import { hasTitle, awardTitle } from "./TribesmanComponent";
+import { Hitbox } from "../hitboxes";
 
 const ORB_COMPLETE_TICKS = Math.floor(RESEARCH_ORB_COMPLETE_TIME * Settings.TPS);
 
@@ -119,7 +120,7 @@ export function continueResearching(researchBench: Entity, researcher: Entity, t
       const amount = RESEARCH_ORB_AMOUNTS[size];
       
       const researcherTransformComponent = TransformComponentArray.getComponent(researcher);
-      const researcherHitbox = researcherTransformComponent.hitboxes[0];
+      const researcherHitbox = researcherTransformComponent.children[0] as Hitbox;
 
       const tribeComponent = TribeComponentArray.getComponent(researchBench);
       tribeComponent.tribe.studyTech(tech, researcherHitbox.box.position.x, researcherHitbox.box.position.y, amount);

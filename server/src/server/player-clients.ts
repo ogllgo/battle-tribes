@@ -24,11 +24,11 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { EntityConfig } from "../components";
 import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
 import { surfaceLayer } from "../layers";
 import { createItemsOverEntity } from "../entities/item-entity";
 import { acceptTitleOffer, rejectTitleOffer, forceAddTitle, removeTitle } from "../components/TribesmanComponent";
+import { Hitbox } from "../hitboxes";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 
@@ -425,7 +425,7 @@ export function registerPlayerKnockback(playerID: number, knockback: number, kno
 
 export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
    const transformComponent = TransformComponentArray.getComponent(healedEntity);
-   const healedEntityHitbox = transformComponent.hitboxes[0];
+   const healedEntityHitbox = transformComponent.children[0] as Hitbox;
    
    const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
    if (viewingPlayers.length === 0) {

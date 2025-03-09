@@ -5,9 +5,9 @@ import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { registerDirtyEntity } from "../server/player-clients";
-import { EntityCarryInfo, getEntityTile, getHitboxTile, resolveEntityBorderCollisions, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { cleanTransform, getEntityTile, getHitboxTile, resolveEntityBorderCollisions, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray, changeEntityLayer } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { changeEntityLayer, getEntityLayer, getEntityType } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
 import { Hitbox } from "../hitboxes";
@@ -171,8 +171,7 @@ const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformCo
 
 const updatePosition = (entity: Entity, transformComponent: TransformComponent): void => {
    if (transformComponent.isDirty) {
-      transformComponent.cleanHitboxes(entity);
-      transformComponent.isDirty = false;
+      cleanTransform(entity);
 
       // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
       dirtifyPathfindingNodes(entity, transformComponent);
@@ -183,7 +182,8 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
 
       // If the object moved due to resolving wall tile collisions, recalculate
       if (transformComponent.isDirty) {
-         transformComponent.cleanHitboxes(entity);
+         cleanTransform(entity);
+         // @Cleanup: pointless, if always done above?
          registerDirtyEntity(entity);
       }
 
@@ -192,7 +192,8 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
    
       // If the object moved due to resolving border collisions, recalculate
       if (transformComponent.isDirty) {
-         transformComponent.cleanHitboxes(entity);
+         cleanTransform(entity);
+         // @Cleanup: pointless, if always done above?
          registerDirtyEntity(entity);
       }
 
@@ -279,47 +280,37 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    transformComponent.isDirty = true;
 }
 
-const tickCarriedEntity = (carryInfo: EntityCarryInfo): void => {
-   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
-
-   // @Speed: what if the hitboxes don't change?
-   registerDirtyEntity(carryInfo.carriedEntity);
-
-   for (const hitbox of transformComponent.hitboxes) {
-      turnHitbox(carryInfo.carriedEntity, hitbox, transformComponent);
+const tickEntityPhysics = (entity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   for (const child of transformComponent.children) {
+      if (entityChildIsHitbox(child)) {
+         turnHitbox(entity, child, transformComponent);
+      }
+   }
+   for (const rootChild of transformComponent.children) {
+      if (entityChildIsHitbox(rootChild)) {
+         applyHitboxKinematics(entity, rootChild, transformComponent, physicsComponent);
+      }
    }
    applyHitboxTethers(transformComponent);
-   updatePosition(carryInfo.carriedEntity, transformComponent);
-   
-   // Propagate to children
-   for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(carryInfo);
+   updatePosition(entity, transformComponent);
+
+   for (const entityAttachInfo of transformComponent.children) {
+      if (entityChildIsEntity(entityAttachInfo)) {
+         tickEntityPhysics(entityAttachInfo.attachedEntity);
+      }
    }
+
+   // @Speed: what if the hitboxes don't change?
+   // (just for carried entities)
+   registerDirtyEntity(entity);
 }
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
-   // @HACK: the glurb parent entity can have 0 hitboxes!
-   if (transformComponent.hitboxes.length === 0) {
-      return;
-   }
-
-   // If the entity isn't being carried, update its' physics
-   if (transformComponent.carryRoot === entity) {
-      for (const hitbox of transformComponent.hitboxes) {
-         turnHitbox(entity, hitbox, transformComponent);
-      }
-      for (const rootHitbox of transformComponent.rootHitboxes) {
-         applyHitboxKinematics(entity, rootHitbox, transformComponent, physicsComponent);
-      }
-      applyHitboxTethers(transformComponent);
-      updatePosition(entity, transformComponent);
-
-      for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(carryInfo);
-      }
+   if (transformComponent.rootEntity === entity) {
+      tickEntityPhysics(entity);
    }
 }
 

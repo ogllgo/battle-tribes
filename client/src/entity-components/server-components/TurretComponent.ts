@@ -11,6 +11,7 @@ import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityTyp
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 // @Cleanup: can make this a whole lot better by having the projectile not be a render part, but the actual projectile pre-created, and then just un-carried from the turret once fired.
 
@@ -103,7 +104,7 @@ const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): nu
 
 const playFireSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {

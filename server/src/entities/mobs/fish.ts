@@ -12,7 +12,7 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { TileType } from "battletribes-shared/tiles";
 import Layer from "../../Layer";
 import { Settings } from "battletribes-shared/settings";
-import { TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAIComponent } from "../../components/EscapeAIComponent";
@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { createHitbox, Hitbox } from "../../hitboxes";
 
 const enum Vars {
    TILE_VALIDATION_PADDING = 20
@@ -60,7 +60,7 @@ function tileIsValidCallback(fish: Entity, layer: Layer, x: number, y: number): 
    }
 
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.hitboxes[0];
+   const fishHitbox = transformComponent.children[0] as Hitbox;
    
    if (!layer.tileRaytraceMatchesTileTypes(fishHitbox.box.position.x, fishHitbox.box.position.y, x, y, [TileType.water])) {
       return false;
@@ -70,9 +70,10 @@ function tileIsValidCallback(fish: Entity, layer: Layer, x: number, y: number): 
 }
 
 export function createFishConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
+   
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
 

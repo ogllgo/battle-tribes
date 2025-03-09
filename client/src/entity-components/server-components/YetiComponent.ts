@@ -6,7 +6,7 @@ import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, cr
 import { playSoundOnHitbox } from "../../sound";
 import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -14,6 +14,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
@@ -71,7 +72,11 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    const pawRenderParts = new Array<VisualRenderPart>();
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentParams.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+      
       if (hitbox.flags.includes(HitboxFlag.YETI_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -124,7 +129,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const yetiComponent = YetiComponentArray.getComponent(entity);
 
@@ -155,7 +160,7 @@ function onTick(entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox(randItem(HURT_SOUNDS), 0.7, 1, hitbox, false);
 
@@ -175,7 +180,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox(randItem(DEATH_SOUNDS), 0.7, 1, hitbox, false);
 

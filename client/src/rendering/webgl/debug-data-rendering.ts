@@ -6,6 +6,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { entityExists, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 let lineProgram: WebGLProgram;
 
@@ -113,7 +114,7 @@ export function renderLineDebugData(debugData: EntityDebugData): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(debugData.entityID);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const vertices = new Array<number>();
    addCircleVertices(vertices, debugData, hitbox.box.position);

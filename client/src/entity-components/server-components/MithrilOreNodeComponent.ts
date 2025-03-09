@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat, randInt } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { createColouredParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
@@ -44,7 +45,7 @@ function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentPara
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
    const size = mithrilOreNodeComponentParams.size;
@@ -98,7 +99,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    for (let i = 0; i < 3; i++) {
       const c = randFloat(0.25, 0.4);
       
@@ -111,7 +112,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    for (let i = 0; i < 6; i++) {
       const c = randFloat(0.25, 0.4);
       

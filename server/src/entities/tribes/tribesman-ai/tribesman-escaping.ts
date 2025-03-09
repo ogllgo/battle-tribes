@@ -5,7 +5,7 @@ import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entiti
 import { HealthComponent } from "../../../components/HealthComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 export function tribeMemberShouldEscape(entityType: EntityType, healthComponent: HealthComponent): boolean {
    const remainingHealthRatio = healthComponent.health / healthComponent.maxHealth;
@@ -25,7 +25,7 @@ export function tribeMemberShouldEscape(entityType: EntityType, healthComponent:
 // @Cleanup: just pass in visibleThreats
 export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArray<Entity>, visibleHostileMobs: ReadonlyArray<Entity>): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    const visionRange = aiHelperComponent.visionRange;
@@ -37,7 +37,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleEnemies[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.hitboxes[0];
+      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
       
       let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
       // @Hack
@@ -62,7 +62,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleHostileMobs[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.hitboxes[0];
+      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
 
       let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
       if (distance > visionRange) {

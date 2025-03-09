@@ -15,6 +15,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { playerInstance } from "../../player";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface FrozenYetiComponentParams {
    readonly attackType: FrozenYetiAttackType;
@@ -81,7 +82,7 @@ function createParamsFromData(reader: PacketReader): FrozenYetiComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    entityIntermediateInfo.renderInfo.attachRenderPart(new TexturedRenderPart(
       hitbox,
@@ -146,7 +147,7 @@ const setPawRotationAndOffset = (frozenYetiComponent: FrozenYetiComponent, rotat
 }
 
 const createRoarParticles = (transformComponent: TransformComponent): void => {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    for (let i = 0; i < 2; i++) {
       const direction = randFloat(hitbox.box.angle - ROAR_ARC / 2, hitbox.box.angle + ROAR_ARC / 2);
@@ -236,7 +237,7 @@ function onTick(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
@@ -328,7 +329,7 @@ function onTick(entity: Entity): void {
                createRoarParticles(transformComponent);
 
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
-               const playerHitbox = playerTransformComponent.hitboxes[0];
+               const playerHitbox = playerTransformComponent.children[0] as Hitbox;
 
                const distanceToPlayer = hitbox.box.position.calculateDistanceBetween(playerHitbox.box.position);
 
@@ -479,7 +480,7 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
    
@@ -526,7 +527,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Blood pool particle
    createBlueBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, SIZE / 2);
@@ -543,7 +544,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    for (let i = 0; i < 4; i++) {
       createBlueBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, SIZE / 2);

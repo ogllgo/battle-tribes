@@ -8,7 +8,7 @@ import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelat
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { attachEntityToHost, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, attachEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -19,10 +19,10 @@ import { Settings } from "../../../../shared/src/settings";
 import { applyKnockback, createHitbox, Hitbox, slowVelocity } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
@@ -68,7 +68,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    if (entityExists(projectileComponent.creator)) {
       const creatorTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      if (creatorTransformComponent.carryRoot === collidingEntityTransformComponent.carryRoot) {
+      if (creatorTransformComponent.rootEntity === collidingEntityTransformComponent.rootEntity) {
          return;
       }
    }
@@ -86,9 +86,10 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
       return;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(arrow);
+   // Don't collide with anything when the arrow is being carried
    // @Speed: faster to just change its collision group
-   if (transformComponent.carryRoot !== arrow) {
+   const transformComponent = TransformComponentArray.getComponent(arrow);
+   if (transformComponent.rootEntity !== arrow) {
       return;
    }
 
@@ -121,7 +122,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    // Lodge the arrow in the entity when it's slow enough
    if (affectedHitbox.velocity.lengthSquared() < 50) {
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      const collidingHitbox = collidingEntityTransformComponent.hitboxes[0];
+      const collidingHitbox = collidingEntityTransformComponent.children[0] as Hitbox;
 
       // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
       affectedHitbox.box.relativeAngle -= collidingHitbox.box.angle;
@@ -134,7 +135,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
       
       // @Incomplete: SHOULD BE CARRIED ON THE HITBOX INSTEAD!
       
-      attachEntityToHost(arrow, collidingEntity, rotatedDiffX, rotatedDiffY, false);
+      attachEntity(arrow, collidingEntity, collidingHitbox, rotatedDiffX, rotatedDiffY, false);
 
       // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
       // This is because this "fix carried entity position" code only runs on physics components, and if

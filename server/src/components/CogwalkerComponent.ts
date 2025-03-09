@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
+import { Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
@@ -72,7 +73,7 @@ function onTick(cogwalker: Entity): void {
       let hasAccident = false;
       {
          const transformComponent = TransformComponentArray.getComponent(cogwalker);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          if (hitbox.velocity.length() > 100) {
             hasAccident = true;
             hitbox.velocity.x = 0;

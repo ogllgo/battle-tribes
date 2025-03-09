@@ -4,7 +4,7 @@ import { TileType } from "battletribes-shared/tiles";
 import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { getEntityPathfindingGroupID } from "./pathfinding";
-import { TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -25,13 +25,15 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   // @Hack
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    let closestEntity!: Entity;
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const currentEntity of entities) {
       const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
-      const currentEntityHitbox = currentEntityTransformComponent.hitboxes[0];
+      // @Hack
+      const currentEntityHitbox = currentEntityTransformComponent.children[0] as Hitbox;
       
       const dist = entityHitbox.box.position.calculateDistanceBetween(currentEntityHitbox.box.position);
       if (dist < minDistance) {
@@ -61,7 +63,8 @@ export function willStopAtDesiredDistance(hitbox: Hitbox, desiredDistance: numbe
 
 export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   // @Hack
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
    setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed);
@@ -69,7 +72,8 @@ export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: 
 
 export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   // @Hack
+   const entityHitbox = transformComponent.children[0] as Hitbox;
 
    const targetDirection = angle(positionX - entityHitbox.box.position.x, positionY - entityHitbox.box.position.y);
 
@@ -81,20 +85,23 @@ export function moveEntityToPosition(entity: Entity, positionX: number, position
 }
 export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetHitbox = targetTransformComponent.hitboxes[0];
+   // @Hack
+   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    turnToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, turnSpeed);
 }
 
 // @Cleanup: unused?
 export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceleration: number, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetHitbox = targetTransformComponent.hitboxes[0];
+   // @Hack
+   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    moveEntityToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, acceleration, turnSpeed);
 }
 
 export function entityHasReachedPosition(entity: Entity, positionX: number, positionY: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   // @HACK
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const relativeX = entityHitbox.box.position.x - positionX;
    const relativeY = entityHitbox.box.position.y - positionY;
@@ -113,7 +120,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
    // 
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
 
    // Average angle of nearby entities
    let totalXVal: number = 0;
@@ -129,7 +136,8 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       const herdMember = herdMembers[i];
 
       const herdMemberTransformComponent = TransformComponentArray.getComponent(herdMember);
-      const herdMemberHitbox = herdMemberTransformComponent.hitboxes[0];
+      // @HACK
+      const herdMemberHitbox = herdMemberTransformComponent.children[0] as Hitbox;
 
       const distance = entityHitbox.box.position.calculateDistanceBetween(herdMemberHitbox.box.position);
       if (distance < minDist) {
@@ -164,7 +172,8 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       weight = curveWeight(weight, 2, 0.2);
       
       const herdMemberTransformComponent = TransformComponentArray.getComponent(closestHerdMember);
-      const herdMemberHitbox = herdMemberTransformComponent.hitboxes[0];
+      // @Hack
+      const herdMemberHitbox = herdMemberTransformComponent.children[0] as Hitbox;
       
       // @Speed: Garbage collection
       const distanceVector = herdMemberHitbox.box.position.convertToVector(entityHitbox.box.position);
@@ -390,7 +399,7 @@ export function boxIsInRange(position: Point, range: number, box: Box): boolean 
 
 export function entityIsInVisionRange(position: Point, visionRange: number, entity: Entity): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
 
    if (Math.pow(position.x - entityHitbox.box.position.x, 2) + Math.pow(position.y - entityHitbox.box.position.y, 2) <= Math.pow(visionRange, 2)) {
       return true;
@@ -401,8 +410,8 @@ export function entityIsInVisionRange(position: Point, visionRange: number, enti
    testCircularBox.position.y = position.y;
 
    // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
-   for (const hitbox of transformComponent.hitboxes) {
-      if (testCircularBox.isColliding(hitbox.box)) {
+   for (const hitbox of transformComponent.children) {
+      if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
          return true;
       }
    }
@@ -434,7 +443,8 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.hitboxes[0];
+            // @Hack
+            const entityHitbox = transformComponent.children[0] as Hitbox;
             if (Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2) <= visionRangeSquared) {
                entities.push(entity);
                seenIDs.add(entity);
@@ -442,8 +452,8 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
             }
 
             // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
-            for (const hitbox of transformComponent.hitboxes) {
-               if (testCircularBox.isColliding(hitbox.box)) {
+            for (const hitbox of transformComponent.children) {
+               if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
                   entities.push(entity);
                   seenIDs.add(entity);
                   break;
@@ -551,7 +561,8 @@ export function angleIsInRange(angle: number, minAngle: number, maxAngle: number
 
 export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: number): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   // @Hack
+   const hitbox = transformComponent.children[0] as Hitbox;
    const dotProduct = Math.sin(hitbox.box.angle) * Math.sin(targetDirection) + Math.cos(hitbox.box.angle) * Math.cos(targetDirection);
    if (dotProduct <= 0) {
       // Turn at full speed when facing away from the direction
@@ -649,23 +660,30 @@ const lineIntersectsCircularHitbox = (lineX1: number, lineY1: number, lineX2: nu
 const entityIntersectsLineOfSight = (entity: Entity, rayStartX: number, rayStartY: number, rayEndX: number, rayEndY: number): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
-      const box = hitbox.box;
-
-      // @Hack @Cleanup
-      // Ignore the horizontal hitboxes of embrasures
-      if (getEntityType(entity) === EntityType.embrasure && i > 1) {
-         continue;
-      }
-
-      if (boxIsCircular(box)) {
-         if (lineIntersectsCircularHitbox(rayStartX, rayStartY, rayEndX, rayEndY, box)) {
-            return false;
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const child = transformComponent.children[i];
+      if (entityChildIsEntity(child)) {
+         if (entityIntersectsLineOfSight(child.attachedEntity, rayStartX, rayStartY, rayEndX, rayEndY)) {
+            return true;
          }
       } else {
-         if (lineIntersectsRectangularHitbox(rayStartX, rayStartY, rayEndX, rayEndY, box)) {
-            return true;
+         const hitbox = child;
+         const box = hitbox.box;
+   
+         // @Hack @Cleanup
+         // Ignore the horizontal hitboxes of embrasures
+         if (getEntityType(entity) === EntityType.embrasure && i > 1) {
+            continue;
+         }
+   
+         if (boxIsCircular(box)) {
+            if (lineIntersectsCircularHitbox(rayStartX, rayStartY, rayEndX, rayEndY, box)) {
+               return false;
+            }
+         } else {
+            if (lineIntersectsRectangularHitbox(rayStartX, rayStartY, rayEndX, rayEndY, box)) {
+               return true;
+            }
          }
       }
    }
@@ -675,11 +693,11 @@ const entityIntersectsLineOfSight = (entity: Entity, rayStartX: number, rayStart
 
 export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity, ignoredPathfindingGroupID: number): boolean {
    const originEntityTransformComponent = TransformComponentArray.getComponent(originEntity);
-   // @Bug
-   const originEntityHitbox = originEntityTransformComponent.hitboxes[0];
-   // @Bug
+   // @Bug @Hack
+   const originEntityHitbox = originEntityTransformComponent.children[0] as Hitbox;
+   // @Bug @Hack
    const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetEntityHitbox = targetEntityTransformComponent.hitboxes[0];
+   const targetEntityHitbox = targetEntityTransformComponent.children[0] as Hitbox;
 
    const layer = getEntityLayer(originEntity);
 
@@ -728,23 +746,30 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
    return true;
 }
 
-export function getDistanceFromPointToEntity(point: Readonly<Point>, entity: Entity): number {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+export function getDistanceFromPointToEntity(point: Readonly<Point>, transformComponent: TransformComponent): number {
    let minDistance = Number.MAX_SAFE_INTEGER;
-   for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
-      
-      if (boxIsCircular(box)) {
-         const rawDistance = distance(point.x, point.y, box.position.x, box.position.y);
-         const hitboxDistance = rawDistance - box.radius;
-         if (hitboxDistance < minDistance) {
-            minDistance = hitboxDistance;
-         }
-      } else {
-         const dist = distBetweenPointAndRectangle(point.x, point.y, box.position, box.width, box.height, box.angle);
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         const dist = getDistanceFromPointToEntity(point, childTransformComponent);
          if (dist < minDistance) {
             minDistance = dist;
+         }
+      } else {
+         const hitbox = child;
+         const box = hitbox.box;
+         
+         if (boxIsCircular(box)) {
+            const rawDistance = distance(point.x, point.y, box.position.x, box.position.y);
+            const hitboxDistance = rawDistance - box.radius;
+            if (hitboxDistance < minDistance) {
+               minDistance = hitboxDistance;
+            }
+         } else {
+            const dist = distBetweenPointAndRectangle(point.x, point.y, box.position, box.width, box.height, box.angle);
+            if (dist < minDistance) {
+               minDistance = dist;
+            }
          }
       }
    }

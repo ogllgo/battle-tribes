@@ -10,6 +10,7 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { TurretComponentArray } from "../../entity-components/server-components/TurretComponent";
 import { playerInstance } from "../../player";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
+import { Hitbox } from "../../hitboxes";
 
 const CIRCLE_DETAIL = 300;
 
@@ -144,7 +145,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    const playerSelectedItem = getPlayerSelectedItem();
    if (playerSelectedItem !== null && (playerSelectedItem.type === ItemType.ballista || playerSelectedItem.type === ItemType.sling_turret)) {
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
+      const playerHitbox = playerTransformComponent.children[0] as Hitbox;
 
       const layer = getEntityLayer(playerInstance!);
       const structureType = ITEM_INFO_RECORD[playerSelectedItem.type as PlaceableItemType].entityType;
@@ -163,7 +164,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    if (entityExists(hoveredEntity) && TurretComponentArray.hasComponent(hoveredEntity)) {
       const hoveredEntityTransformComponent = TransformComponentArray.getComponent(hoveredEntity);
       // @Hack
-      const hoveredEntityHitbox = hoveredEntityTransformComponent.hitboxes[0];
+      const hoveredEntityHitbox = hoveredEntityTransformComponent.children[0] as Hitbox;
       
       const itemType = getTurretItemType(hoveredEntity);
       return {

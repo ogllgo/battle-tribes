@@ -4,7 +4,7 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
-import { getHitboxByLocalID } from "../entity-components/server-components/TransformComponent";
+import { getHitboxByLocalID, TransformNode } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
@@ -69,7 +69,7 @@ export function padBoxData(reader: PacketReader): void {
    }
 }
 
-export function readHitboxFromData(reader: PacketReader, localID: number, hitboxes: ReadonlyArray<Hitbox>): Hitbox {
+export function readHitboxFromData(reader: PacketReader, localID: number, children: ReadonlyArray<TransformNode>): Hitbox {
    const box = readBoxFromData(reader);
 
    const velocity = new Point(reader.readNumber(), reader.readNumber());
@@ -90,7 +90,7 @@ export function readHitboxFromData(reader: PacketReader, localID: number, hitbox
 
    const parentHitboxLocalID = reader.readNumber();
    // @INCOMPLETE @BUG: can't get from other transform components!
-   const parentHitbox = getHitboxByLocalID(hitboxes, parentHitboxLocalID);
+   const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
 
    const hitbox = createHitbox(localID, parentHitbox, box, velocity, mass, collisionType, collisionBit, collisionMask, flags);
    hitbox.idealAngle = idealAngle;

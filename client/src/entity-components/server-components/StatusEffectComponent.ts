@@ -15,6 +15,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;
@@ -103,7 +104,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    
@@ -314,7 +315,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const hitbox = transformComponent.hitboxes[0];
+               const hitbox = transformComponent.children[0] as Hitbox;
                playSoundOnHitbox("freezing.mp3", 0.4, 1, hitbox, false);
                break;
             }

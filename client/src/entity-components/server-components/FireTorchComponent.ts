@@ -10,6 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import Board from "../../Board";
 import { createEmberParticle, createSmokeParticle } from "../../particles";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface FireTorchComponentParams {}
 
@@ -45,7 +46,7 @@ function createParamsFromData(): FireTorchComponentParams {
 
 function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -81,7 +82,7 @@ function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    if (Board.tickIntervalHasPassed(0.15)) {
       const fireTorchComponent = FireTorchComponentArray.getComponent(entity);

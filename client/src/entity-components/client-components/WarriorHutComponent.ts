@@ -1,5 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
@@ -29,7 +30,7 @@ export function createWarriorHutComponentParams(): WarriorHutComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    // Hut
    const hutRenderPart = new TexturedRenderPart(
@@ -67,12 +68,12 @@ function getMaxRenderParts(): number {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playBuildingHitSound(hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, hitbox, false);
 }

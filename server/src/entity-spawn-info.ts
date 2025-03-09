@@ -8,6 +8,7 @@ import { distance } from "../../shared/src/utils";
 import { getEntitiesInRange } from "./ai-shared";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { entityIsTribesman } from "./entities/tribes/tribe-member";
+import { Hitbox } from "./hitboxes";
 import Layer from "./Layer";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import OPTIONS from "./options";
@@ -348,7 +349,7 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
             // @HACK
             
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.hitboxes[0];
+            const entityHitbox = transformComponent.children[0] as Hitbox;
             
             const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
             if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {

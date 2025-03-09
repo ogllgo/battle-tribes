@@ -1,10 +1,10 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
-import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, getTileX, getTileY, TileIndex } from "battletribes-shared/utils";
+import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, getTileX, getTileY, Point, TileIndex } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
 import { TribeComponentArray } from "./components/TribeComponent";
-import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -19,6 +19,7 @@ import { getTilesOfType } from "./census";
 import { surfaceLayer } from "./layers";
 import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
 import { Hitbox } from "./hitboxes";
+import { getDistanceFromPointToEntity } from "./ai-shared";
 
 const enum Vars {
    NODE_ACCESSIBILITY_RESOLUTION = 3
@@ -349,7 +350,7 @@ export function positionIsAccessible(layer: Layer, x: number, y: number, ignored
 
 export function getAngleToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
    // @Hack
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
@@ -357,25 +358,10 @@ export function getAngleToNode(transformComponent: TransformComponent, node: Pat
 }
 
 export function getDistanceToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
-   // @Hack
-   const hitbox = transformComponent.hitboxes[0];
-   
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-
-   const diffX = hitbox.box.position.x - x;
-   const diffY = hitbox.box.position.y - y;
-   return Math.sqrt(diffX * diffX + diffY * diffY);
-}
-
-export function getDistFromNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
-   // @Hack
-   const hitbox = transformComponent.hitboxes[0];
    
-   const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-   const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-
-   return Math.sqrt(Math.pow(x - hitbox.box.position.x, 2) + Math.pow(y - hitbox.box.position.y, 2));
+   return getDistanceFromPointToEntity(new Point(x, y), transformComponent);
 }
 
 export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: PathfindingNodeIndex): number {
@@ -392,7 +378,7 @@ export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: Pathfind
 
 export function entityHasReachedNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): boolean {
    // @Hack
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
@@ -798,12 +784,10 @@ export function updateEntityPathfindingNodeOccupance(entity: Entity): void {
    const occupiedPathfindingNodes = transformComponent.occupiedPathfindingNodes;
    const entityType = getEntityType(entity);
    
-   const hitboxes = transformComponent.hitboxes;
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
-   
-      // Add to occupied pathfinding nodes
-      addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
+   for (const hitbox of transformComponent.children) {
+      if (entityChildIsHitbox(hitbox)) {
+         addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
+      }
    }
 }
 

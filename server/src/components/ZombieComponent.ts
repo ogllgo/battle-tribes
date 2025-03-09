@@ -111,7 +111,7 @@ export function zombieShouldAttackEntity(zombie: Entity, entity: Entity): boolea
 
 const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.hitboxes[0];
+   const zombieHitbox = transformComponent.children[0] as Hitbox;
    
    // Attack the closest target in vision range
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -120,7 +120,7 @@ const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity
       const entity = aiHelperComponent.visibleEntities[i];
       if (zombieShouldAttackEntity(zombie, entity)) {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.hitboxes[0];
+         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
          
          const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (distance < minDist) {
@@ -172,10 +172,10 @@ const doMeleeAttack = (zombie: Entity, target: Entity): void => {
 
 const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.hitboxes[0];
+   const zombieHitbox = transformComponent.children[0] as Hitbox;
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.hitboxes[0];
+   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
    // Lunge at the target
    const lungeDirection = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
@@ -252,7 +252,7 @@ function onTick(zombie: Entity): void {
       }
       
       const targetTransformComponent = TransformComponentArray.getComponent(attackTarget);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       moveEntityToPosition(zombie, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
       
@@ -262,7 +262,7 @@ function onTick(zombie: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.hitboxes[0];
+   const zombieHitbox = transformComponent.children[0] as Hitbox;
 
    // Eat raw beef and fish
    {
@@ -277,7 +277,7 @@ function onTick(zombie: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.raw_beef || itemComponent.itemType === ItemType.raw_fish) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.hitboxes[0];
+            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
             
             const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
             if (distance < minDist) {
@@ -288,7 +288,7 @@ function onTick(zombie: Entity): void {
       }
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
-         const foodHitbox = foodTransformComponent.hitboxes[0];
+         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
          
          moveEntityToPosition(zombie, foodHitbox.box.position.x, foodHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
 
@@ -305,7 +305,7 @@ function onTick(zombie: Entity): void {
       const hurtEntity = zombieComponent.visibleHurtEntityID;
       if (entityExists(hurtEntity)) {
          const hurtEntityTransformComponent = TransformComponentArray.getComponent(hurtEntity);
-         const hurtEntityHitbox = hurtEntityTransformComponent.hitboxes[0];
+         const hurtEntityHitbox = hurtEntityTransformComponent.children[0] as Hitbox;
          
          moveEntityToPosition(zombie, hurtEntityHitbox.box.position.x, hurtEntityHitbox.box.position.y, Vars.ACCELERATION_SLOW, Vars.TURN_SPEED);
          return;

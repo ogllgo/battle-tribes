@@ -2,12 +2,13 @@ import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat, Point } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
 import { playSound, playSoundOnHitbox } from "../../sound";
 import { getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
+import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox, entityChildIsHitbox } from "./TransformComponent";
 
 export interface GlurbSegmentComponentParams {}
 
@@ -45,8 +46,10 @@ function onTick(glurb: Entity): void {
    if (entityIsVisibleToCamera(glurb)) {
       const layer = getEntityLayer(glurb);
       const transformComponent = TransformComponentArray.getComponent(glurb);
-      for (const hitbox of transformComponent.hitboxes) {
-         coatSlimeTrails(layer, hitbox.box);
+      for (const hitbox of transformComponent.children) {
+         if (entityChildIsHitbox(hitbox)) {
+            coatSlimeTrails(layer, hitbox.box);
+         }
       }
    }
 }
@@ -64,7 +67,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 3; i++) {
       const pos = getRandomPositionInBox(hitbox.box);

@@ -13,7 +13,7 @@ import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import Tribe from "../../Tribe";
 import { TribeWarriorComponent } from "../../components/TribeWarriorComponent";
@@ -22,7 +22,7 @@ import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { PatrolAIComponent } from "../../components/PatrolAIComponent";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-import { createHitbox } from "../../hitboxes";
+import { createHitbox, Hitbox } from "../../hitboxes";
 
 const generateScars = (): ReadonlyArray<ScarInfo> => {
    let numScars = 1;
@@ -59,10 +59,10 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 }
 
 export function createTribeWarriorConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;
@@ -80,7 +80,7 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 560);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560);
 
    const aiAssignmentComponent = new AIAssignmentComponent();
    

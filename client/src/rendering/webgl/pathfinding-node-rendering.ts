@@ -8,6 +8,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { nerdVisionIsVisible } from "../../components/game/dev/NerdVision";
 import { entityExists } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 enum NodeType {
    occupied,
@@ -149,7 +150,7 @@ const renderConnectors = (pathData: PathData): void => {
    }
 
    const transformComponent = TransformComponentArray.getComponent(debugEntity);
-   const entityHitbox = transformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const vertices = new Array<number>();
    let lastNodeX = entityHitbox.box.position.x;

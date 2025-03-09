@@ -7,7 +7,7 @@ import { ThrowingProjectileComponentArray } from "./ThrowingProjectileComponent"
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
+import { Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    RETURN_TIME_TICKS = 1 * Settings.TPS
@@ -23,7 +23,7 @@ BattleaxeProjectileComponentArray.onTick = {
 
 function onTick(battleaxe: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(battleaxe);
-   const battleaxeHitbox = transformComponent.hitboxes[0];
+   const battleaxeHitbox = transformComponent.children[0] as Hitbox;
 
    const ageTicks = getEntityAgeTicks(battleaxe);
    if (ageTicks < Vars.RETURN_TIME_TICKS) {
@@ -43,7 +43,7 @@ function onTick(battleaxe: Entity): void {
 
       
       const ownerTransformComponent = TransformComponentArray.getComponent(throwingProjectileComponent.tribeMember);
-      const ownerHitbox = ownerTransformComponent.hitboxes[0];
+      const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
       
       const ageTicks = getEntityAgeTicks(battleaxe);
       const ticksSinceReturn = ageTicks - Vars.RETURN_TIME_TICKS;

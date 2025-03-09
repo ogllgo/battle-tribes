@@ -36,6 +36,7 @@ import { createHealingParticle, createSlimePoolParticle, createSparkParticle } f
 import Board from "../Board";
 import { resolvePlayerCollisions } from "../collision";
 import { setPlayerInstance, playerInstance } from "../player";
+import { Hitbox } from "../hitboxes";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -290,7 +291,7 @@ abstract class Client {
                // Register stopped hit
                         
                const transformComponent = TransformComponentArray.getComponent(hitEntity);
-               const hitbox = transformComponent.hitboxes[0];
+               const hitbox = transformComponent.children[0] as Hitbox;
                for (let i = 0; i < 6; i++) {
                   const position = hitbox.box.position.offset(randFloat(0, 6), 2 * Math.PI * Math.random());
                   createSparkParticle(position.x, position.y);
@@ -301,7 +302,7 @@ abstract class Client {
                // If the entity is hit by a flesh sword, create slime puddles
                if (hitData.flags & HitFlags.HIT_BY_FLESH_SWORD) {
                   const transformComponent = TransformComponentArray.getComponent(hitEntity);
-                  const hitbox = transformComponent.hitboxes[0];
+                  const hitbox = transformComponent.children[0] as Hitbox;
                   for (let i = 0; i < 2; i++) {
                      createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
                   }
@@ -330,7 +331,7 @@ abstract class Client {
 
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.hitboxes[0];
+         const playerHitbox = transformComponent.children[0] as Hitbox;
          // Register player knockback
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];

@@ -4,7 +4,7 @@ import { Point } from "battletribes-shared/utils";
 import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Entity } from "battletribes-shared/entities";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 import { getEntityLayer } from "./world";
@@ -82,14 +82,16 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
    const entity2InvolvedHitboxes = new Array<Hitbox>();
    
    // More expensive hitbox check
-   const numHitboxes = transformComponent1.hitboxes.length;
-   const numOtherHitboxes = transformComponent2.hitboxes.length;
-   for (let i = 0; i < numHitboxes; i++) {
-      const hitbox = transformComponent1.hitboxes[i];
+   for (const hitbox of transformComponent1.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
       const box = hitbox.box;
 
-      for (let j = 0; j < numOtherHitboxes; j++) {
-         const otherHitbox = transformComponent2.hitboxes[j];
+      for (const otherHitbox of transformComponent2.children) {
+         if (!entityChildIsHitbox(otherHitbox)) {
+            continue;
+         }
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
@@ -126,7 +128,7 @@ const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity
       const entity2TransformComponent = TransformComponentArray.getComponent(entity2);
 
       // Make sure the entities aren't in the same carry heirarchy
-      if (entity1TransformComponent.carryRoot === entity2TransformComponent.carryRoot) {
+      if (entity1TransformComponent.rootEntity === entity2TransformComponent.rootEntity) {
          continue;
       }
 
@@ -212,9 +214,9 @@ export function resolveWallCollisions(entity: Entity): boolean {
    let hasMoved = false;
    const layer = getEntityLayer(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
-   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-      const hitbox = transformComponent.hitboxes[i];
-      if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const hitbox = transformComponent.children[i];
+      if (!entityChildIsHitbox(hitbox) || hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
          continue;
       }
       
@@ -255,10 +257,10 @@ export function resolveWallCollisions(entity: Entity): boolean {
    return hasMoved;
 }
 
-const boxHasCollisionWithHitboxes = (box: Box, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
-   for (let i = 0; i < hitboxes.length; i++) {
-      const otherHitbox = hitboxes[i];
-      if (box.isColliding(otherHitbox.box, epsilon)) {
+const boxHasCollisionWithHitboxes = (box: Box, children: ReadonlyArray<TransformNode>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < children.length; i++) {
+      const otherHitbox = children[i];
+      if (entityChildIsHitbox(otherHitbox) && box.isColliding(otherHitbox.box, epsilon)) {
          return true;
       }
    }
@@ -308,7 +310,7 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.children, epsilon)) {
                   collidingEntities.push(entity);
                }
             }
@@ -347,7 +349,7 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.hitboxes[0];
+            const entityHitbox = transformComponent.children[0] as Hitbox;
             if (Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2) <= visionRangeSquared) {
                entities.push(entity);
                seenIDs.add(entity);
@@ -355,8 +357,8 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
             }
 
             // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
-            for (const hitbox of transformComponent.hitboxes) {
-               if (testCircularBox.isColliding(hitbox.box)) {
+            for (const hitbox of transformComponent.children) {
+               if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
                   entities.push(entity);
                   seenIDs.add(entity);
                   break;

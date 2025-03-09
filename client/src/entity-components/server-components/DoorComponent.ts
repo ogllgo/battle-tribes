@@ -9,6 +9,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { DOOR_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface DoorComponentParams {
    readonly toggleType: DoorToggleType;
@@ -52,7 +53,7 @@ function createParamsFromData(reader: PacketReader): DoorComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -88,7 +89,7 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const toggleType = reader.readNumber();
    const openProgress = reader.readNumber();
@@ -106,7 +107,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
 
@@ -122,7 +123,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, hitbox, false);
 

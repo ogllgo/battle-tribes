@@ -11,6 +11,7 @@ import { TribeType } from "../../../../shared/src/tribes";
 import { TribeComponentArray } from "../server-components/TribeComponent";
 import { registerTextureSource } from "../../texture-atlases/texture-sources";
 import { TransformComponentArray } from "../server-components/TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 const enum ArmourPixelSize {
    _12x12,
@@ -163,7 +164,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
       
       if (equipmentComponent.armourRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          equipmentComponent.armourRenderPart = new TexturedRenderPart(
             hitbox,

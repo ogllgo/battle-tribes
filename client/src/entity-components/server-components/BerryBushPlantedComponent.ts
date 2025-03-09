@@ -8,6 +8,7 @@ import { randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface BerryBushPlantedComponentParams {
    readonly growthProgress: number;
@@ -68,7 +69,7 @@ function createParamsFromData(reader: PacketReader): BerryBushPlantedComponentPa
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const berryBushPlantedComponentParams = entityParams.serverComponentParams[ServerComponentType.berryBushPlanted]!;
    
@@ -110,14 +111,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    // @Incomplete: particles?
    playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    // @Incomplete: particles?
    playSoundOnHitbox("berry-bush-destroy-1.mp3", 0.4, 1, hitbox, false);
 }

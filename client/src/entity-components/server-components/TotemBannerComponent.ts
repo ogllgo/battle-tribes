@@ -110,7 +110,7 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    // Main render part
    entityIntermediateInfo.renderInfo.attachRenderPart(
@@ -183,7 +183,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    for (const banner of banners) {
       if (!totemBannerComponent.banners.hasOwnProperty(banner.hutNum)) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const renderPart = createBannerRenderPart(tribeComponent.tribeType, renderInfo, hitbox, banner);
@@ -207,12 +207,12 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playBuildingHitSound(hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, hitbox, false);
 }

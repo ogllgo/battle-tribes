@@ -27,7 +27,7 @@ import { getBoxesCollidingEntities } from "../../../collision-detection";
 import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
 import { StructureType } from "../../../../../shared/src/structures";
 import { createEntity } from "../../../Entity";
-import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -57,9 +57,10 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
    const placeableItemSlot = getPlaceableItemSlot(hotbarInventory, virtualBuilding.entityType);
    assert(placeableItemSlot !== null);
    
+   const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   
-   const distance = getDistanceFromPointToEntity(virtualBuilding.position, tribesman);
+
+   const distance = getDistanceFromPointToEntity(virtualBuilding.position, transformComponent);
 
    // if the entity is close enough to the build location, become concerned about blocking entities
    if (distance < Vars.BUILDING_PLACE_DISTANCE + 100) {
@@ -103,8 +104,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
       useInfo.selectedItemSlot = placeableItemSlot;
       
-      const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const tribesmanHitbox = transformComponent.hitboxes[0];
+      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
       
       const targetDirection = angle(virtualBuilding.position.x - tribesmanHitbox.box.position.x, virtualBuilding.position.y - tribesmanHitbox.box.position.y);
       if (distance < getTribesmanAttackRadius(tribesman)) {
@@ -185,12 +185,12 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
    
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
-   const buildingHitbox = buildingTransformComponent.hitboxes[0];
+   const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
 
-   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, building) - getHumanoidRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, buildingTransformComponent) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
@@ -215,7 +215,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
 
 export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
@@ -233,7 +233,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.hitboxes[0];
+      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
       // @Incomplete: Skip buildings which there isn't a path to
 
@@ -256,9 +256,9 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
-   const buildingHitbox = buildingTransformComponent.hitboxes[0];
+   const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
    
-   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, closestDamagedBuilding) - getHumanoidRadius(transformComponent);
+   const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, buildingTransformComponent) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {

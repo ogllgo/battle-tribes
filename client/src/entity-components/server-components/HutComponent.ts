@@ -119,7 +119,7 @@ const createRecallMarker = (parentHitbox: Hitbox): TexturedRenderPart => {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    return {
       doorRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
@@ -181,7 +181,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // @Incomplete: What if this packet is skipped?
    if (lastDoorSwingTicks === Board.serverTicks) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
    }
    
@@ -192,7 +192,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (hutComponent.isRecalling) {
       if (hutComponent.recallMarker === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          hutComponent.recallMarker = createRecallMarker(hitbox);
          const renderInfo = getEntityRenderInfo(entity);

@@ -10,6 +10,7 @@ import Particle from "../../Particle";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface IceSpikesComponentParams {}
 
@@ -38,7 +39,7 @@ function createParamsFromData(): IceSpikesComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -65,7 +66,7 @@ function padData(): void {}
 function updateFromData(): void {}
 
 const createIceSpeckProjectile = (transformComponent: TransformComponent): void => {
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
    const spawnPositionX = hitbox.box.position.x + SIZE / 2 * Math.sin(spawnOffsetDirection);
@@ -103,7 +104,7 @@ const createIceSpeckProjectile = (transformComponent: TransformComponent): void 
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Create ice particles on hit
    for (let i = 0; i < 10; i++) {
@@ -115,7 +116,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 15; i++) {
       createIceSpeckProjectile(transformComponent);

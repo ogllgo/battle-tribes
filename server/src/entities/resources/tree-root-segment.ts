@@ -9,7 +9,7 @@ import { createEntityConfig, EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TreeRootSegmentComponent } from "../../components/TreeRootSegmentComponent";
 import { createHitbox } from "../../hitboxes";
 
@@ -21,10 +21,10 @@ registerEntityLootOnDeath(EntityType.treeRootSegment, [
 ]);
    
 export function createTreeRootSegmentConfig(position: Point, rotation: number, root: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 24, 40), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);
 

@@ -11,6 +11,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
+import { Hitbox } from "../../hitboxes";
 
 export interface FishComponentParams {
    readonly colour: FishColour;
@@ -51,7 +52,7 @@ function createParamsFromData(reader: PacketReader): FishComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const fishComponentParams = entityParams.serverComponentParams[ServerComponentType.fish]!;
    
@@ -80,7 +81,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    const layer = getEntityLayer(entity);
    
    const tile = getEntityTile(layer, transformComponent);
@@ -105,7 +106,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Blood particles
    for (let i = 0; i < 5; i++) {
@@ -118,7 +119,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    createBloodParticleFountain(entity, 0.1, 0.8);
    

@@ -1,5 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { Hitbox } from "../../hitboxes";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -27,7 +28,7 @@ export function createBallistaSlimeballComponentParams(): BallistaSlimeballCompo
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -52,7 +53,7 @@ function getMaxRenderParts(): number {
 function onDie(entity: Entity): void {
    // Create arrow break particles
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    for (let i = 0; i < 6; i++) {
       createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, hitbox.velocity.x, hitbox.velocity.y);
    }

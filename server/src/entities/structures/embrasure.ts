@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { destroyEntity, getEntityType } from "../../world";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
@@ -21,7 +21,7 @@ import { StructureConnection } from "../../structure-placement";
 const HEALTHS = [15, 45];
 
 export function createEmbrasureConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const VERTICAL_HITBOX_WIDTH = 12;
    const VERTICAL_HITBOX_HEIGHT = 20;
@@ -31,15 +31,15 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
 
    // Add the two vertical hitboxes (can stop arrows)
    const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(-(64 - VERTICAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, VERTICAL_HITBOX_WIDTH, VERTICAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox1, null);
+   addHitboxToTransformComponent(transformComponent, hitbox1);
    const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point((64 - VERTICAL_HITBOX_WIDTH) / 2 - 0.025, 0), rotation, VERTICAL_HITBOX_WIDTH, VERTICAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox2, null);
+   addHitboxToTransformComponent(transformComponent, hitbox2);
 
    // Add the two horizontal hitboxes (cannot stop arrows)
    const hitbox3 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(-(64 - HORIZONTAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, HORIZONTAL_HITBOX_WIDTH, HORIZONTAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, HitboxCollisionBit.ARROW_PASSABLE, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox3, null);
+   addHitboxToTransformComponent(transformComponent, hitbox3);
    const hitbox4 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point((64 - HORIZONTAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, HORIZONTAL_HITBOX_WIDTH, HORIZONTAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, HitboxCollisionBit.ARROW_PASSABLE, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox4, null);
+   addHitboxToTransformComponent(transformComponent, hitbox4);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

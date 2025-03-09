@@ -10,7 +10,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { MithrilOreNodeComponent } from "../../components/MithrilOreNodeComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 
 registerEntityLootOnDeath(EntityType.mithrilOreNode, [
@@ -21,10 +21,10 @@ registerEntityLootOnDeath(EntityType.mithrilOreNode, [
 ]);
 
 export function createMithrilOreNodeConfig(position: Point, rotation: number, size: number, variant: number, children: ReadonlyArray<Entity>, renderHeight: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(15);
 

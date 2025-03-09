@@ -6,6 +6,7 @@ import { Point } from "../../../../shared/src/utils";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { createLight } from "../../lights";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface GlurbBodySegmentComponentParams {}
 
@@ -32,7 +33,7 @@ function createParamsFromData(): GlurbBodySegmentComponentParams {
 
 function createRenderParts(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    let textureSource: string;
    let lightIntensity: number;

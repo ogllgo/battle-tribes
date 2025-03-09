@@ -2,7 +2,7 @@ import { COLLISION_BITS } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { createEntityConfig, EntityConfig } from "../components";
-import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { BlueprintComponent } from "../components/BlueprintComponent";
 import Tribe from "../Tribe";
@@ -41,28 +41,36 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): EntityType
 }
 
 export function createBlueprintEntityConfig(position: Point, rotation: number, tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    transformComponent.collisionBit = COLLISION_BITS.none;
    transformComponent.collisionMask = 0;
 
    if (associatedEntityID !== 0) {
       const structureTransformComponent = TransformComponentArray.getComponent(associatedEntityID);
 
-      for (const structureHitbox of structureTransformComponent.hitboxes) {
+      for (const structureHitbox of structureTransformComponent.children) {
+         if (!entityChildIsHitbox(structureHitbox)) {
+            continue;
+         }
+
          const hitbox = cloneHitbox(transformComponent, structureHitbox);
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
-         transformComponent.addHitbox(hitbox, null);
+         addHitboxToTransformComponent(transformComponent, hitbox);
       }
    } else {
       const entityType = getBlueprintEntityType(blueprintType);
       const entityConfig = createStructureConfig(tribe, entityType, position, rotation, []);
 
       const transformComponentParams = entityConfig.components[ServerComponentType.transform]!;
-      for (const hitbox of transformComponentParams.hitboxes) {
+      for (const hitbox of transformComponentParams.children) {
+         if (!entityChildIsHitbox(hitbox)) {
+            continue;
+         }
+         
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
-         transformComponent.addHitbox(hitbox, null);
+         addHitboxToTransformComponent(transformComponent, hitbox);
       }
    }
 

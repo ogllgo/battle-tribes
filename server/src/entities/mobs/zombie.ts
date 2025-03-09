@@ -9,7 +9,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -40,10 +40,10 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 export function createZombieConfig(position: Point, rotation: number, isGolden: boolean, tombstone: Entity): EntityConfig {
    const zombieType = isGolden ? 3 : randInt(0, 2);
 
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
    

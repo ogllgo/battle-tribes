@@ -13,6 +13,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
+import { Hitbox } from "../../hitboxes";
 
 export interface SlimeComponentParams {
    readonly size: SlimeSize;
@@ -96,7 +97,7 @@ function createParamsFromData(reader: PacketReader): SlimeComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const size = entityParams.serverComponentParams[ServerComponentType.slime]!.size;
    const sizeString = SIZE_STRINGS[size];
@@ -152,7 +153,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(entity);
 
@@ -212,7 +213,7 @@ const createOrb = (slimeComponent: SlimeComponent, entity: Entity, size: SlimeSi
    const offsetMagnitude = spriteSize / 2 * lerp(0.3, 0.7, orbInfo.offset);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -286,7 +287,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
@@ -305,7 +306,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 

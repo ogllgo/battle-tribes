@@ -22,6 +22,7 @@ import { createScrappyConfig } from "../entities/tribes/automatons/scrappy";
 import { createCogwalkerConfig } from "../entities/tribes/automatons/cogwalker";
 import { registerDirtyEntity } from "../server/player-clients";
 import { calculateEntityPlaceInfo } from "../structure-placement";
+import { Hitbox } from "../hitboxes";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -79,7 +80,7 @@ const upgradeBuilding = (building: Entity): void => {
 const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: BlueprintComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(blueprintEntity);
    // @Hack
-   const blueprintEntityHitbox = transformComponent.hitboxes[0];
+   const blueprintEntityHitbox = transformComponent.children[0] as Hitbox;
    
    const tribeComponent = TribeComponentArray.getComponent(blueprintEntity);
    const tribe = tribeComponent.tribe;
@@ -89,7 +90,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
 
    // @Hack
-   const originHitbox = transformComponent.rootHitboxes[0];
+   const originHitbox = transformComponent.children[0] as Hitbox;
    const position = originHitbox.box.position.copy();
    const layer = getEntityLayer(blueprintEntity);
 

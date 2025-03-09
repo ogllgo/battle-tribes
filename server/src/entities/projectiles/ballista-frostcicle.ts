@@ -5,7 +5,7 @@ import { Point } from "battletribes-shared/utils";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -13,10 +13,10 @@ import Tribe from "../../Tribe";
 import { createHitbox } from "../../hitboxes";
 
 export function createBallistaFrostcicleConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~HitboxCollisionBit.ARROW_PASSABLE, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;

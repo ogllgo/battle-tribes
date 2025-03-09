@@ -7,7 +7,7 @@ import { FrozenYetiComponent } from "../../components/FrozenYetiComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import Layer from "../../Layer";
@@ -44,19 +44,19 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createFrozenYetiConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, FrozenYetiVars.FROZEN_YETI_SIZE / 2), 4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(bodyHitbox, null);
+   addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 60), 0, 36), 0.8, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(headHitbox, null);
+   addHitboxToTransformComponent(transformComponent, headHitbox);
 
    // Paw hitboxes
    for (let i = 0; i < 2; i++) {
       const pawDirection = (Math.PI / 3.5) * (i === 0 ? -1 : 1);
       const hitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), Point.fromVectorForm(80, pawDirection), 0, 16), 0.6, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      addHitboxToTransformComponent(transformComponent, hitbox);
    }
 
    const physicsComponent = new PhysicsComponent();

@@ -14,6 +14,7 @@ import { GameInteractState } from "./GameScreen";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { playerInstance } from "../../player";
 import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { Hitbox } from "../../hitboxes";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -114,7 +115,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
       const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);

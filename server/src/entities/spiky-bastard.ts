@@ -5,7 +5,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { TransformComponent } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
@@ -13,9 +13,9 @@ import { SpikyBastardComponent } from "../components/SpikyBastardComponent";
 import { createHitbox } from "../hitboxes";
    
 export function createSpikyBastardConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 32), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(5);
 

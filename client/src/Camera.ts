@@ -143,7 +143,7 @@ abstract class Camera {
       // @Hack
       if (entityExists(trackedEntity)) {
          const transformComponent = TransformComponentArray.getComponent(trackedEntity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          this.trackedHitbox = hitbox;
       } else {
          this.trackedHitbox = null;

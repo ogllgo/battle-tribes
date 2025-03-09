@@ -2,7 +2,8 @@ import { boxIsWithinRange } from "../../shared/src/boxes/boxes";
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { Point, positionIsInWorld } from "../../shared/src/utils";
-import { TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./components/TransformComponent";
+import { Hitbox } from "./hitboxes";
 import Layer from "./Layer";
 
 export function getDistanceToClosestEntity(layer: Layer, position: Point): number {
@@ -23,7 +24,7 @@ export function getDistanceToClosestEntity(layer: Layer, position: Point): numbe
             
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @HACK
-            const hitbox = transformComponent.hitboxes[0];
+            const hitbox = transformComponent.children[0] as Hitbox;
             
             const distance = position.calculateDistanceBetween(hitbox.box.position);
             if (distance <= minDistance) {
@@ -54,8 +55,8 @@ export function getEntitiesAtPosition(layer: Layer, x: number, y: number): Array
    const chunk = layer.getChunk(chunkX, chunkY);
    for (const entity of chunk.entities) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      for (const hitbox of transformComponent.hitboxes) {
-         if (boxIsWithinRange(hitbox.box, testPosition, 1)) {
+      for (const hitbox of transformComponent.children) {
+         if (entityChildIsHitbox(hitbox) && boxIsWithinRange(hitbox.box, testPosition, 1)) {
             entities.push(entity);
             break;
          }

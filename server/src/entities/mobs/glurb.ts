@@ -41,7 +41,7 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
    const configs = new Array<EntityConfig>();
    
    // just so that the glurb can have the childEntities propperty
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
@@ -82,7 +82,7 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
       
       const transformComponent = config.components[ServerComponentType.transform]!;
       transformComponent.rootEntity = rootEntityConfig.entity;
-      lastHitbox = transformComponent.hitboxes[0];
+      lastHitbox = transformComponent.children[0] as Hitbox;
 
       lastEntity = config.entity;
 

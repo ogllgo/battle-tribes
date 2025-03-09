@@ -17,7 +17,7 @@ import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } fro
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -53,7 +53,7 @@ FishComponentArray.onRemove = onRemove;
 
 const move = (fish: Entity, direction: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.hitboxes[0];
+   const fishHitbox = transformComponent.children[0] as Hitbox;
 
    const layer = getEntityLayer(fish);
    
@@ -114,7 +114,7 @@ const unfollowLeader = (fish: Entity, leader: Entity): void => {
 
 function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.hitboxes[0];
+   const fishHitbox = transformComponent.children[0] as Hitbox;
    
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
@@ -161,13 +161,13 @@ function onTick(fish: Entity): void {
       const target = fishComponent.attackTargetID;
       if (entityExists(target)) {
          const leaderTransformComponent = TransformComponentArray.getComponent(fishComponent.leader);
-         const leaderHitbox = leaderTransformComponent.hitboxes[0];
+         const leaderHitbox = leaderTransformComponent.children[0] as Hitbox;
          
          // Follow leader
          move(fish, fishHitbox.box.position.calculateAngleBetween(leaderHitbox.box.position));
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
-         const targetHitbox = targetTransformComponent.hitboxes[0];
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
          // Attack the target
          move(fish, fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position));

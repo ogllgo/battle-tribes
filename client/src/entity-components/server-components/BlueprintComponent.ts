@@ -14,6 +14,7 @@ import { BALLISTA_GEAR_X, BALLISTA_GEAR_Y, BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_
 import { WARRIOR_HUT_SIZE } from "./HutComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { playerTribe } from "../../tribes";
+import { Hitbox } from "../../hitboxes";
 
 export interface BlueprintComponentParams {
    readonly blueprintType: BlueprintType;
@@ -362,7 +363,7 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
 
 const createWoodenBlueprintWorkParticleEffects = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    for (let i = 0; i < 2; i++) {
       createWoodShardParticle(hitbox.box.position.x, hitbox.box.position.y, 24);
@@ -467,7 +468,7 @@ const updatePartialTexture = (entity: Entity): void => {
       const textureSource = progressTextureInfo.progressTextureSources[localTextureIndex];
       if (blueprintComponent.partialRenderParts.length <= i) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          // New render part
          const renderPart = new TexturedRenderPart(
@@ -509,7 +510,7 @@ function onLoad(entity: Entity): void {
       const progressTextureInfo = progressTextureInfoArray[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       const renderPart = new TexturedRenderPart(
          hitbox,
@@ -536,7 +537,7 @@ function onLoad(entity: Entity): void {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, hitbox, false);
 }
 
@@ -588,7 +589,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    if (blueprintProgress !== blueprintComponent.lastBlueprintProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       playSoundOnHitbox("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
 
@@ -643,7 +644,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox("blueprint-work.mp3", 0.4, 1, hitbox, false);
    playSoundOnHitbox("structure-shaping.mp3", 0.4, 1, hitbox, false);

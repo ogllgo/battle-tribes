@@ -5,7 +5,7 @@ import { Entity } from "../../shared/src/entities";
 import { Point } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
 import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityIsInRiver, getHitboxTile, TransformComponentArray, TransformNode } from "./entity-components/server-components/TransformComponent";
 import { getEntityLayer } from "./world";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
@@ -19,7 +19,7 @@ export interface Hitbox {
 
    parent: Hitbox | null;
    
-   readonly children: Array<Hitbox>;
+   readonly children: Array<TransformNode>;
 
    readonly box: Box;
    

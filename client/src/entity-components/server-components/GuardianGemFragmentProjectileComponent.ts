@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
+import { Hitbox } from "../../hitboxes";
 import { createGenericGemParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -54,7 +55,7 @@ function createParamsFromData(reader: PacketReader): GuardianGemFragmentProjecti
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const guardianGemFragmentProjectileComponentParams = entityParams.serverComponentParams[ServerComponentType.guardianGemFragmentProjectile]!;
    
@@ -111,7 +112,7 @@ function getMaxRenderParts(): number {
 function onDie(entity: Entity): void {
    const guardianGemFragmentProjectileComponent = GuardianGemFragmentProjectileComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 3; i++) {
       createGenericGemParticle(hitbox, 4, guardianGemFragmentProjectileComponent.renderPart.tintR, guardianGemFragmentProjectileComponent.renderPart.tintG, guardianGemFragmentProjectileComponent.renderPart.tintB);

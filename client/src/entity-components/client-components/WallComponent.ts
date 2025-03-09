@@ -2,6 +2,7 @@ import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { angle } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
@@ -40,7 +41,7 @@ export function createWallComponentParams(): WallComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
    
@@ -89,7 +90,7 @@ const updateDamageRenderPart = (entity: Entity, health: number, maxHealth: numbe
    const textureSource = "entities/wall/wooden-wall-damage-" + damageStage + ".png";
    if (wallComponent.damageRenderPart === null) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       
       wallComponent.damageRenderPart = new TexturedRenderPart(
          hitbox,
@@ -111,7 +112,7 @@ function onTick(entity: Entity): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
 
@@ -132,7 +133,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 // @Incomplete: doesn't play when removed by deconstruction
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // @Speed @Hack
    // Don't play death effects if the wall was replaced by a blueprint
@@ -143,7 +144,7 @@ function onDie(entity: Entity): void {
          }
 
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.hitboxes[0];
+         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
          const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (dist < 1) {

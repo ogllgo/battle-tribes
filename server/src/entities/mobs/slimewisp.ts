@@ -10,7 +10,7 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -22,10 +22,10 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createSlimewispConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
    

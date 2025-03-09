@@ -57,7 +57,6 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          
          // @HACK
          Camera.isSpectating = props.isSpectating;
-         console.log(Camera.isSpectating);
          
          Client.sendInitialPlayerData(props.username, props.tribeType, props.isSpectating);
 

@@ -354,7 +354,7 @@ export function calculateWallBorderInfo(layer: Layer, renderChunkX: number, rend
 export function recalculateWallBorders(layer: Layer, renderChunkX: number, renderChunkY: number): void {
    const wallBorderInfo = getRenderChunkWallBorderInfo(layer, renderChunkX, renderChunkY);
 
-   wallBorderInfo.vertexData = calculateVertexData(layer, renderChunkX, renderChunkY);;
+   wallBorderInfo.vertexData = calculateVertexData(layer, renderChunkX, renderChunkY);
 
    gl.bindVertexArray(wallBorderInfo.vao);
 

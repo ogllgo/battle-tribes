@@ -20,7 +20,7 @@ import { TunnelComponentArray } from "./entity-components/server-components/Tunn
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
 import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
@@ -34,8 +34,8 @@ import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { entityIsTameableByPlayer, getRootEntity } from "./entity-components/server-components/TamingComponent";
-import { createHitbox } from "./hitboxes";
+import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
+import { createHitbox, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
 
@@ -302,7 +302,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    } else if (RideableComponentArray.hasComponent(entity)) {
       const rideableComponent = RideableComponentArray.getComponent(entity);
       const carrySlot = rideableComponent.carrySlots[0];
-      if (!carrySlot.isOccupied) {
+      if (!entityExists(carrySlot.occupiedEntity)) {
          return {
             type: InteractActionType.mountCarrySlot,
             interactEntity: entity,
@@ -314,7 +314,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    // Pick up arrows
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       if (hitbox.velocity.length() < 1) {
          return {
             type: InteractActionType.pickUpArrow,
@@ -356,7 +356,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       }
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
-         const interactEntityHitbox = transformComponent.hitboxes[0];
+         const interactEntityHitbox = transformComponent.children[0] as Hitbox;
          
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
 
@@ -550,7 +550,7 @@ export function deselectHighlightedEntity(): void {
 // @Cleanup: name
 const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityCheck: boolean, doCanSelectCheck: boolean): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.hitboxes[0];
+   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
    const layer = getEntityLayer(playerInstance!);
    
    const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
@@ -580,8 +580,8 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
             }
             
             // Distance from cursor
-            for (const hitbox of entityTransformComponent.hitboxes) {
-               if (boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
+            for (const hitbox of entityTransformComponent.children) {
+               if (entityChildIsHitbox(hitbox) && boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
                   const distance = cursorPosition.calculateDistanceBetween(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
@@ -633,7 +633,7 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
    highlightedRenderInfo = createInteractRenderInfo(interactAction);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.hitboxes[0];
+   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
    
    switch (interactAction.type) {
       case InteractActionType.plantSeed: {

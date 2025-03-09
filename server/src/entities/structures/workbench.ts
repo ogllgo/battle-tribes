@@ -3,7 +3,7 @@ import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import Tribe from "../../Tribe";
@@ -19,12 +19,13 @@ import { createHitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 
 export function createWorkbenchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox1, null);
+   addHitboxToTransformComponent(transformComponent, hitbox1);
+   
    const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox2, null);
+   addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(15);
    

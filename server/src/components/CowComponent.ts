@@ -110,7 +110,7 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
 
    // Shit it out
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const bodyHitbox = transformComponent.hitboxes[0];
+   const bodyHitbox = transformComponent.children[0] as Hitbox;
    const poopPosition = bodyHitbox.box.position.offset(randFloat(0, 16), 2 * Math.PI * Math.random());
    const config = createItemEntityConfig(poopPosition, 2 * Math.PI * Math.random(), ItemType.poop, 1, null);
    createEntity(config, getEntityLayer(cow), 0);
@@ -126,14 +126,14 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
 
 const getTargetGrass = (cow: Entity): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const rootHitbox = transformComponent.hitboxes[0];
+   const rootHitbox = transformComponent.children[0] as Hitbox;
    
    for (const chunk of transformComponent.chunks) {
       for (const entity of chunk.entities) {
          // @Hack: ignored pathfinding group id
          if (getEntityType(entity) === EntityType.grassStrand) {
             const grassTransformComponent = TransformComponentArray.getComponent(entity);
-            const grassHitbox = grassTransformComponent.hitboxes[0];
+            const grassHitbox = grassTransformComponent.children[0] as Hitbox;
             
             const dist = rootHitbox.box.position.calculateDistanceBetween(grassHitbox.box.position);
             if (dist >= 50) {
@@ -157,7 +157,7 @@ const getTargetGrass = (cow: Entity): Entity | null => {
 const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): void => {
    // const cowTransformComponent = TransformComponentArray.getComponent(cow);
    const grassTransformComponent = TransformComponentArray.getComponent(targetGrass);
-   const grassHitbox = grassTransformComponent.hitboxes[0];
+   const grassHitbox = grassTransformComponent.children[0] as Hitbox;
    // const targetX = grassTransformComponent.position.x;
    // const targetY = grassTransformComponent.position.y;
    // const targetDirection = cowTransformComponent.position.calculateAngleBetween(grassTransformComponent.position);
@@ -203,7 +203,7 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
 
 const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTargetDirection: number, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = transformComponent.rootHitboxes[0];
+   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
 
    // 
    // Move whole cow to the target
@@ -223,7 +223,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
    // Move head to the target
    // 
    
-   const headHitbox = transformComponent.hitboxes[1];
+   const headHitbox = transformComponent.children[1] as Hitbox;
    const headTargetDirection = angle(turnTargetX - headHitbox.box.position.x, turnTargetY - headHitbox.box.position.y);
 
    const parentAngle = headHitbox.parent!.box.angle;
@@ -281,10 +281,10 @@ const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEnti
    }
 
    const cowTransformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = cowTransformComponent.rootHitboxes[0];
+   const cowBodyHitbox = cowTransformComponent.rootChildren[0] as Hitbox;
 
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
-   const berryHitbox = berryTransformComponent.hitboxes[0];
+   const berryHitbox = berryTransformComponent.children[0] as Hitbox;
 
    const targetX = berryHitbox.box.position.x;
    const targetY = berryHitbox.box.position.y;
@@ -335,7 +335,7 @@ const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: 
 
 function onTick(cow: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = transformComponent.rootHitboxes[0];
+   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
    
    const cowComponent = CowComponentArray.getComponent(cow);
 
@@ -397,7 +397,7 @@ function onTick(cow: Entity): void {
    const escapeTarget = getEscapeTarget(cow);
    if (escapeTarget !== null) {
       const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-      const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
+      const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
       
       const targetX = cowBodyHitbox.box.position.x * 2 - escapeTargetHitbox.box.position.x;
       const targetY = cowBodyHitbox.box.position.y * 2 - escapeTargetHitbox.box.position.y;
@@ -411,7 +411,7 @@ function onTick(cow: Entity): void {
    const tamingComponent = TamingComponentArray.getComponent(cow);
    if (entityExists(tamingComponent.followTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = angle(targetHitbox.box.position.x - cowBodyHitbox.box.position.x, targetHitbox.box.position.y - cowBodyHitbox.box.position.y);
       moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
@@ -434,13 +434,13 @@ function onTick(cow: Entity): void {
    // Pick up carry target
    if (entityExists(tamingComponent.carryTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
 
       // Force carry if colliding and head is looking at the carry target
-      const headHitbox = transformComponent.hitboxes[1];
+      const headHitbox = transformComponent.children[1] as Hitbox;
       if (getAbsAngleDiff(headHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(cow, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
          const rideableComponent = RideableComponentArray.getComponent(cow);
          const carrySlot = rideableComponent.carrySlots[0];
@@ -452,7 +452,7 @@ function onTick(cow: Entity): void {
 
    if (entityExists(cowComponent.attackTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.attackTarget);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
       // Do the ram attack
       if (cowComponent.isRamming) {
@@ -469,7 +469,7 @@ function onTick(cow: Entity): void {
             cowComponent.ramCooldownTicks--;
          }
          
-         const dist = getDistanceFromPointToEntity(cowBodyHitbox.box.position, cowComponent.attackTarget);
+         const dist = getDistanceFromPointToEntity(cowBodyHitbox.box.position, targetTransformComponent);
          
          if (willStopAtDesiredDistance(cowBodyHitbox, 130, dist)) {
             // If the cow is too close, move away
@@ -482,7 +482,7 @@ function onTick(cow: Entity): void {
             moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, 0, 0);
             if (cowComponent.ramCooldownTicks === 0) {
                // If the ram attack isn't 
-               const headHitbox = transformComponent.hitboxes[1];
+               const headHitbox = transformComponent.children[1] as Hitbox;
                const targetDirection = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
                if (getAbsAngleDiff(headHitbox.box.angle, targetDirection) < 0.1) {
                   // Start the ram attack
@@ -556,7 +556,7 @@ function onTick(cow: Entity): void {
             }
 
             const berryBushTransformComponent = TransformComponentArray.getComponent(berryBush);
-            const berryBushHitbox = berryBushTransformComponent.hitboxes[0];
+            const berryBushHitbox = berryBushTransformComponent.children[0] as Hitbox;
             
             const distance = cowBodyHitbox.box.position.calculateDistanceBetween(berryBushHitbox.box.position);
             if (distance < minDistance) {
@@ -572,7 +572,7 @@ function onTick(cow: Entity): void {
 
       if (entityExists(cowComponent.targetBushID)) {
          const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
-         const targetHitbox = targetTransformComponent.hitboxes[0];
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
          const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
          moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOW_ACCELERATION);
@@ -608,7 +608,7 @@ function onTick(cow: Entity): void {
 
    if (entityExists(followAIComponent.followTargetID)) {
       const targetTransformComponent = TransformComponentArray.getComponent(followAIComponent.followTargetID);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOW_ACCELERATION);

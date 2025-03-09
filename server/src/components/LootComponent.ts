@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert } from "../../../shared/src/utils";

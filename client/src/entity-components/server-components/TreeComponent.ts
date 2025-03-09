@@ -10,6 +10,7 @@ import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWo
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface TreeComponentParams {
    readonly treeSize: TreeSize;
@@ -53,7 +54,7 @@ function createParamsFromData(reader: PacketReader): TreeComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const treeComponentParams = entityParams.serverComponentParams[ServerComponentType.tree]!;
    
@@ -89,7 +90,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const treeComponent = TreeComponentArray.getComponent(entity);
 
@@ -132,7 +133,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const treeComponent = TreeComponentArray.getComponent(entity);
 

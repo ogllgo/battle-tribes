@@ -5,6 +5,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { HealingTotemComponentArray } from "../../entity-components/server-components/HealingTotemComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { entityExists } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export const HEALING_BEAM_THICKNESS = 32;
 
@@ -136,7 +137,7 @@ const getVisibleHealingBeams = (): ReadonlyArray<HealingBeam> => {
       const healingTotemComponent = HealingTotemComponentArray.components[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {
          const healingTargetData = healingTotemComponent.healingTargetsData[i];
@@ -164,7 +165,7 @@ const createData = (visibleBeams: ReadonlyArray<HealingBeam>): ReadonlyArray<num
       let endY: number;
       if (entityExists(beam.entityID)) {
          const transformComponent = TransformComponentArray.getComponent(beam.entityID)
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          endX = hitbox.box.position.x;
          endY = hitbox.box.position.y;
       } else {

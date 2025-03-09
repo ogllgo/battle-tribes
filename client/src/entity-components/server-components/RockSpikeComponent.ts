@@ -13,6 +13,7 @@ import { createRockParticle } from "../../particles";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
+import { Hitbox } from "../../hitboxes";
 
 export interface RockSpikeComponentParams {
    readonly size: number;
@@ -70,7 +71,7 @@ function createParamsFromData(reader: PacketReader): RockSpikeComponentParams {
 
 function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    const rockSpikeComponentParams = entityParams.serverComponentParams[ServerComponentType.rockSpike]!;
    
    intermediateInfo.renderInfo.shakeAmount = ENTRANCE_SHAKE_AMOUNTS[rockSpikeComponentParams.size];
@@ -131,7 +132,7 @@ function onLoad(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < numSpeckParticles; i++) {
       // @Cleanup: Move to particles file

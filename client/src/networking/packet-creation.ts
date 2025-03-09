@@ -14,6 +14,7 @@ import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
 import Camera from "../Camera";
+import { Hitbox } from "../hitboxes";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
@@ -34,7 +35,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const packet = new Packet(PacketType.playerData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    packet.addNumber(playerHitbox.box.position.x);
    packet.addNumber(playerHitbox.box.position.y);
    packet.addNumber(playerHitbox.box.angle);
@@ -106,7 +107,7 @@ export function createSyncRequestPacket(): ArrayBuffer {
 
 export function createAttackPacket(): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    
    const packet = new Packet(PacketType.attack, 3 * Float32Array.BYTES_PER_ELEMENT);
 

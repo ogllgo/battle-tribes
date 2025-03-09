@@ -8,6 +8,7 @@ import { getEntityTile, TransformComponentArray } from "./TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
+import { Hitbox } from "../../hitboxes";
 
 export interface SlimewispComponentParams {}
 
@@ -38,7 +39,7 @@ function createParamsFromData(): SlimewispComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -81,7 +82,7 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 
@@ -92,7 +93,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 

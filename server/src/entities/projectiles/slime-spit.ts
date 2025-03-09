@@ -5,17 +5,17 @@ import { SlimeSpitComponent } from "../../components/SlimeSpitComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { createHitbox } from "../../hitboxes";
 
 export function createSlimeSpitConfig(position: Point, rotation: number, size: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitboxSize = size === 0 ? 20 : 30;
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, hitboxSize, hitboxSize), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    

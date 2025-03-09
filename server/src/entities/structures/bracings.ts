@@ -12,7 +12,7 @@ import { BuildingMaterialComponent } from "../../components/BuildingMaterialComp
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { createHitbox } from "../../hitboxes";
 import Tribe from "../../Tribe";
@@ -22,13 +22,13 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 const HEALTHS = [5, 20]; 
 
 export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
-   transformComponent.addHitbox(hitbox1, null);
+   addHitboxToTransformComponent(transformComponent, hitbox1);
 
    const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [])
-   transformComponent.addHitbox(hitbox2, null);
+   addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    

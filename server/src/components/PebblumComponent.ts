@@ -34,7 +34,7 @@ function onTick(pebblum: Entity): void {
    const target = pebblumComponent.targetEntityID;
    if (entityExists(target)) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
       moveEntityToPosition(pebblum, targetHitbox.box.position.x, targetHitbox.box.position.y, 850, Vars.TURN_SPEED);
    }

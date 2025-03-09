@@ -5,7 +5,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -26,12 +26,12 @@ registerEntityLootOnDeath(EntityType.cactus, [
 ]);
 
 export function createCactusConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    transformComponent.collisionBit = COLLISION_BITS.cactus;
 
    // Root hitbox
    const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(rootHitbox, null);
+   addHitboxToTransformComponent(transformComponent, rootHitbox);
 
    const flowers = new Array<CactusFlower>();
 
@@ -67,7 +67,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    for (let i = 0; i < numLimbs; i++) {
       const box = new CircularBox(new Point(0, 0), Point.fromVectorForm(37, Math.random()), 0, 18);
       const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (Math.random() < 0.45) {
          const flowerOffsetMagnitude = randFloat(6, 10);

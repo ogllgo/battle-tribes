@@ -18,6 +18,7 @@ import { AICraftRecipePlan, planToPlaceStructure } from "../../../tribesman-ai/t
 import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { assert } from "../../../../../shared/src/utils";
+import { Hitbox } from "../../../hitboxes";
 
 const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
@@ -27,7 +28,7 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
    // @Incomplete: slime
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    // @Speed
    let closestStation: Entity | undefined;
@@ -37,7 +38,7 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
 
       if (buildingMatchesCraftingStation(building, craftingStation)) {
          const buildingTransformComponent = TransformComponentArray.getComponent(building);
-         const buildingHitbox = buildingTransformComponent.hitboxes[0];
+         const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
          
          const dist = tribesmanHitbox.box.position.calculateDistanceBetween(buildingHitbox.box.position);
          if (dist < minDist) {
@@ -81,7 +82,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
 
       if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
          const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
-         const craftingStationHitbox = craftingStationTransformComponent.hitboxes[0];
+         const craftingStationHitbox = craftingStationTransformComponent.children[0] as Hitbox;
          
          const isFinished = pathfindTribesman(tribesman, craftingStationHitbox.box.position.x, craftingStationHitbox.box.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
          if (!isFinished) {

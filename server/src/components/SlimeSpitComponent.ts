@@ -36,7 +36,7 @@ SlimeSpitComponentArray.preRemove = preRemove;
 
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    const vx = hitbox.velocity.x;
    const vy = hitbox.velocity.y;
@@ -58,7 +58,7 @@ function preRemove(spit: Entity): void {
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    if (spitComponent.size === 1) {
       const transformComponent = TransformComponentArray.getComponent(spit);
-      const spitHitbox = transformComponent.hitboxes[0];
+      const spitHitbox = transformComponent.children[0] as Hitbox;
 
       const config = createSpitPoisonAreaConfig(spitHitbox.box.position.copy(), 2 * Math.PI * Math.random());
       createEntity(config, getEntityLayer(spit), 0);

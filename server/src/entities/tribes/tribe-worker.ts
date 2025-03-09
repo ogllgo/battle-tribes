@@ -15,7 +15,7 @@ import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import { PatrolAIComponent } from "../../components/PatrolAIComponent";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
@@ -38,10 +38,10 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 }
 
 export function createTribeWorkerConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;

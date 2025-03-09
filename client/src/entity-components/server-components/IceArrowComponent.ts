@@ -4,6 +4,7 @@ import { createIceSpeckProjectile, createSnowflakeParticle } from "../../particl
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "battletribes-shared/entities";
 import ServerComponentArray from "../ServerComponentArray";
+import { Hitbox } from "../../hitboxes";
 
 export interface IceArrowComponentParams {}
 
@@ -33,7 +34,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    if (Math.random() < 30 / Settings.TPS) {
       createSnowflakeParticle(hitbox.box.position.x, hitbox.box.position.y);

@@ -8,7 +8,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -39,10 +39,10 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 export function createKrumblidConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 24), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    

@@ -16,7 +16,7 @@ import { assert } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { applyAcceleration, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -31,7 +31,7 @@ const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComp
 
 const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    let id = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -43,7 +43,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
       }
 
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
+      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
 
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(researchBenchHitbox.box.position);
       if (dist < minDist) {
@@ -57,7 +57,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
 
 export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.hitboxes[0];
+   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    
@@ -70,7 +70,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
-      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
+      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
       
       const targetDirection = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
 
@@ -95,7 +95,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
+      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
 
       const benchLayer = getEntityLayer(bench);
 
@@ -107,7 +107,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
 
       // If close enough, switch to doing research
       if (benchLayer === getEntityLayer(tribesman)) {
-         const dist = getDistanceFromPointToEntity(tribesmanHitbox.box.position, bench) - getHumanoidRadius(transformComponent);
+         const dist = getDistanceFromPointToEntity(tribesmanHitbox.box.position, benchTransformComponent) - getHumanoidRadius(transformComponent);
          if (dist < 30) {
             attemptToOccupyResearchBench(bench, tribesman);
          }

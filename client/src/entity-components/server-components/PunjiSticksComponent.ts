@@ -9,6 +9,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface PunjiSticksComponentParams {}
 
@@ -53,7 +54,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    }
 
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -84,7 +85,7 @@ function onTick(entity: Entity): void {
    punjiSticksComponent.ticksSinceLastFly++;
    const flyChance = ((punjiSticksComponent.ticksSinceLastFly / Settings.TPS) - 0.25) * 0.2;
    if (Math.random() / Settings.TPS < flyChance) {
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       
       const offsetMagnitude = 32 * Math.random();
       const offsetDirection = 2 * Math.PI * Math.random();
@@ -97,7 +98,7 @@ function onTick(entity: Entity): void {
    punjiSticksComponent.ticksSinceLastFlySound++;
    const soundChance = ((punjiSticksComponent.ticksSinceLastFlySound / Settings.TPS) - 0.3) * 2;
    if (Math.random() < soundChance / Settings.TPS) {
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
       playSoundOnHitbox("flies.mp3", 0.15, randFloat(0.9, 1.1), hitbox, false);
       punjiSticksComponent.ticksSinceLastFlySound = 0;
    }
@@ -109,12 +110,12 @@ function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("wooden-spikes-hit.mp3", 0.3, 1, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    playSoundOnHitbox("wooden-spikes-destroy.mp3", 0.4, 1, hitbox, false);
 }

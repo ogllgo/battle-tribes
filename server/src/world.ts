@@ -5,7 +5,6 @@ import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityRemoval } from "./server/player-clients";
 import Tribe from "./Tribe";
-import { TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
 import { addLayerBuildingBlockingTiles, layers, surfaceLayer, undergroundLayer } from "./layers";
@@ -16,6 +15,7 @@ import { generateSurfaceTerrain } from "./world-generation/surface-layer-generat
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig } from "./components";
 import { attachLightToHitbox } from "./light-levels";
+import { attachEntity } from "./components/TransformComponent";
 
 const enum Vars {
    START_TIME = 6
@@ -169,6 +169,10 @@ export function getEntityComponentTypes(entity: Entity): ReadonlyArray<ServerCom
    return entityComponentTypes[entity]!;
 }
 
+export function setEntityLayer(entity: Entity, layer: Layer): void {
+   entityLayers[entity] = layer;
+}
+
 export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    // Push entities
    let finalPushedIdx: number | undefined;
@@ -189,12 +193,6 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
       } else if (shouldTickJoinInfos) {
          joinInfo.ticksRemaining--;
       }
-   }
-
-   if (typeof finalPushedIdx !== "undefined") {
-      // Clear pushed entities from queue
-      const numPushedEntities = finalPushedIdx + 1;
-      entityJoinBuffer.splice(0, numPushedEntities);
    }
    
    const componentArrayFinalJoiningIndexes = {} as Record<ServerComponentType, number | null>;
@@ -232,6 +230,22 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
       }
 
       componentArray.clearJoinedComponents(finalJoiningIdx);
+   }
+
+   if (typeof finalPushedIdx !== "undefined") {
+      // Check if there are any entities which are immediately being carried
+      for (let i = 0; i <= finalPushedIdx; i++) {
+         const joinInfo = entityJoinBuffer[i];
+
+         const attachInfo = joinInfo.entityConfig.attachInfo;
+         if (typeof attachInfo !== "undefined") {
+            attachEntity(joinInfo.entityConfig.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.offset.x, attachInfo.offset.y, attachInfo.destroyWhenParentIsDestroyed);
+         }
+      }
+      
+      // Clear pushed entities from queue
+      const numPushedEntities = finalPushedIdx + 1;
+      entityJoinBuffer.splice(0, numPushedEntities);
    }
 }
 
@@ -288,6 +302,7 @@ export function destroyEntity(entity: Entity): void {
    // Add the entity to the remove buffer
    entityRemoveBuffer.push(entity);
    // Remove the entity from the join buffer
+   // @Speed ?
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
 
@@ -343,34 +358,6 @@ export function tickEntities(): void {
 
       componentArray.deactivateQueue();
    }
-}
-
-export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   // Remove from previous chunks
-   const previousLayer = getEntityLayer(entity);
-   while (transformComponent.chunks.length > 0) {
-      const chunk = transformComponent.chunks[0];
-      transformComponent.removeFromChunk(entity, previousLayer, chunk);
-      transformComponent.chunks.splice(0, 1);
-   }
-
-   // Add to the new ones
-   // @Cleanup: this logic should be in transformcomponent, perhaps there is a function which already does this...
-   const minChunkX = Math.max(Math.floor(transformComponent.boundingAreaMinX / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor(transformComponent.boundingAreaMinY / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const newChunk = newLayer.getChunk(chunkX, chunkY);
-         transformComponent.addToChunk(entity, newLayer, newChunk);
-         transformComponent.chunks.push(newChunk);
-      }
-   }
-
-   entityLayers[entity] = newLayer;
 }
 
 export function tickIntervalHasPassed(intervalSeconds: number): boolean {

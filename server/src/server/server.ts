@@ -20,18 +20,18 @@ import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket,
 import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { TransformComponentArray } from "../components/TransformComponent";
+import { entityChildIsEntity, TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
 import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers } from "../world";
-import { spawnGuardians } from "../world-generation/cave-entrance-generation";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
 import { surfaceLayer, layers, undergroundLayer } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
+import { Hitbox } from "../hitboxes";
 import OPTIONS from "../options";
 
 /*
@@ -40,8 +40,6 @@ Reference for future self:
 node --prof-process isolate-0xnnnnnnnnnnnn-v8.log > processed.txt
 
 */
-
-let a = 0;
 
 const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean => {
    if (SpikesComponentArray.hasComponent(entity) && TribeComponentArray.hasComponent(entity)) {
@@ -56,17 +54,14 @@ const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean =
    return false;
 }
 
-const addEntityCarryHierarchy = (entities: Set<Entity>, mount: Entity): void => {
-   entities.add(mount);
+const addEntityHierarchy = (entities: Set<Entity>, entity: Entity): void => {
+   entities.add(entity);
 
-   const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   for (const carryInfo of mountTransformComponent.carriedEntities) {
-      addEntityCarryHierarchy(entities, carryInfo.carriedEntity);
-   }
-
-   // @HACK: so the glurb parent entity gets sent to clients
-   if (mountTransformComponent.rootEntity !== mount) {
-      entities.add(mountTransformComponent.rootEntity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         addEntityHierarchy(entities, child.attachedEntity);
+      }
    }
 }
 
@@ -92,7 +87,7 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
             const transformComponent = TransformComponentArray.getComponent(entity);
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
-               addEntityCarryHierarchy(entities, transformComponent.carryRoot);
+               addEntityHierarchy(entities, transformComponent.rootEntity);
             }
          }
       }
@@ -133,12 +128,12 @@ class GameServer {
 
    public async start(): Promise<void> {
       // Seed the random number generator
-      // if (OPTIONS.inBenchmarkMode) {
-      //    SRandom.seed(40404040404);
-      // } else {
-      //    SRandom.seed(randInt(0, 9999999999));
-      // }
-      SRandom.seed(3358381573);
+      if (OPTIONS.inBenchmarkMode) {
+         SRandom.seed(40404040404);
+      } else {
+         SRandom.seed(randInt(0, 9999999999));
+      }
+      // SRandom.seed(3358381573);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -168,9 +163,9 @@ class GameServer {
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - a)
       a = performance.now();
-      generateGrassStrands();
-      console.log("grass",performance.now() - a)
-      a = performance.now();
+      // generateGrassStrands();
+      // console.log("grass",performance.now() - a)
+      // a = performance.now();
       generateDecorations();
       console.log("decorations",performance.now() - a)
       a = performance.now();
@@ -459,7 +454,7 @@ class GameServer {
          // Update player client info
          if (entityExists(viewedEntity)) {
             const transformComponent = TransformComponentArray.getComponent(viewedEntity);
-            const hitbox = transformComponent.hitboxes[0];
+            const hitbox = transformComponent.children[0] as Hitbox;
             playerClient.updatePosition(hitbox.box.position.x, hitbox.box.position.y);
 
             playerClient.lastLayer = getEntityLayer(viewedEntity);

@@ -16,6 +16,7 @@ import { adjustTribesmanRelationsAfterGift } from "./TribesmanAIComponent";
 import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { addDefence, HealthComponentArray, removeDefence } from "./HealthComponent";
 import { COLLISION_BITS } from "../../../shared/src/collision";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -46,7 +47,7 @@ function onJoin(entity: Entity): void {
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.hitboxes[0];
+   const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(tribeMember);
    
@@ -71,7 +72,7 @@ function onTick(tribeMember: Entity): void {
             }
 
             const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
-            const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
+            const itemEntityHitbox = itemEntityTransformComponent.children[0] as Hitbox;
             
             const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
             if (distance <= VACUUM_RANGE) {

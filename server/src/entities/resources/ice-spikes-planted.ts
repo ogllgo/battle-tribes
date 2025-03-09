@@ -9,7 +9,7 @@ import { PlantedComponent } from "../../components/PlantedComponent";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { IceSpikesPlantedComponent, plantedIceSpikesIsFullyGrown } from "../../components/IceSpikesPlantedComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
@@ -25,9 +25,9 @@ registerEntityLootOnDeath(EntityType.iceSpikesPlanted, [
 ]);
 
 export function createIceSpikesPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = COLLISION_BITS.plants;
 
    const healthComponent = new HealthComponent(5);

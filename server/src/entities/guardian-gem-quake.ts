@@ -7,13 +7,13 @@ import { Point } from "battletribes-shared/utils";
 import { createEntityConfig, EntityConfig } from "../components";
 import { GuardianGemQuakeComponent } from "../components/GuardianGemQuakeComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
-import { TransformComponent } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { createHitbox } from "../hitboxes";
 
 export function createGuardianGemQuakeConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 10), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    // @Hack: shouldn't have
    const physicsComponent = new PhysicsComponent();

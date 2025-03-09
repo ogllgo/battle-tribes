@@ -14,6 +14,7 @@ import { VisualRenderPart } from "./render-parts/render-parts";
 import { TribesmanAIComponentArray } from "./entity-components/server-components/TribesmanAIComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityAgeTicks, getEntityRenderInfo } from "./world";
+import { Hitbox } from "./hitboxes";
 
 enum CustomItemState {
    usingMedicine,
@@ -56,7 +57,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (const itemTypeString of Object.keys(recipe.ingredients)) {
       const ingredientType = Number(itemTypeString) as ItemType;
@@ -89,7 +90,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
 
 const createBandageRenderPart = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -132,7 +133,7 @@ export function updateBandageRenderPart(entity: Entity, renderPart: VisualRender
 export function createMedicineAnimationParticles(entity: Entity, limbIdx: number): void {
    if (Math.random() < 5 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.hitboxes[0];
+      const hitbox = transformComponent.children[0] as Hitbox;
 
       const colour = randItem(MEDICINE_PARTICLE_COLOURS);
       const pos = generateRandomLimbPosition();
@@ -216,7 +217,7 @@ export function updateCustomItemRenderPart(entity: Entity): void {
    if (customItemState !== null) {
       if (inventoryUseComponent.customItemRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         const hitbox = transformComponent.children[0] as Hitbox;
          
          inventoryUseComponent.customItemRenderPart = new TexturedRenderPart(
             hitbox,

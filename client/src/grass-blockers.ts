@@ -5,6 +5,7 @@ import { assert, unitsToChunksClamped } from "../../shared/src/utils";
 import Board from "./Board";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { EntityRenderInfo } from "./EntityRenderInfo";
+import { Hitbox } from "./hitboxes";
 import Layer from "./Layer";
 import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
 import ColouredRenderPart from "./render-parts/ColouredRenderPart";
@@ -47,7 +48,7 @@ const addAffectedGrassStrands = (layer: Layer, blockerBox: Box, blocker: GrassBl
          for (const entity of chunk.entities) {
             if (getEntityType(entity) === EntityType.grassStrand) {
                const grassTransformComponent = TransformComponentArray.getComponent(entity);
-               const grassHitbox = grassTransformComponent.hitboxes[0];
+               const grassHitbox = grassTransformComponent.children[0] as Hitbox;
                if (blockerBox.isColliding(grassHitbox.box)) {
                   blocker.affectedGrassStrands.push(entity);
                }

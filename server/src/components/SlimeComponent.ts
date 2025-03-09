@@ -111,13 +111,13 @@ const updateAngerTarget = (slime: Entity): Entity | null => {
 
 const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(slime);
-   const slimeHitbox = transformComponent.hitboxes[0];
+   const slimeHitbox = transformComponent.children[0] as Hitbox;
    const x = slimeHitbox.box.position.x + SLIME_RADII[slimeComponent.size] * Math.sin(slimeHitbox.box.angle);
    const y = slimeHitbox.box.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(slimeHitbox.box.angle);
 
    const config = createSlimeSpitConfig(new Point(x, y), 2 * Math.PI * Math.random(), slimeComponent.size === SlimeSize.large ? 1 : 0);
-   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.x = 500 * Math.sin(slimeHitbox.box.angle);
-   config.components[ServerComponentType.transform]!.hitboxes[0].velocity.y = 500 * Math.cos(slimeHitbox.box.angle);
+   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = 500 * Math.sin(slimeHitbox.box.angle);
+   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = 500 * Math.cos(slimeHitbox.box.angle);
    createEntity(config, getEntityLayer(slime), 0);
 }
 
@@ -125,7 +125,7 @@ const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
 
 const getEnemyChaseTargetID = (slime: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(slime);
-   const slimeHitbox = transformComponent.hitboxes[0];
+   const slimeHitbox = transformComponent.children[0] as Hitbox;
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
@@ -136,7 +136,7 @@ const getEnemyChaseTargetID = (slime: Entity): number => {
       const entity = aiHelperComponent.visibleEntities[i];
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.hitboxes[0];
+      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
       const tileIndex = getEntityTile(entityTransformComponent);
       
@@ -157,7 +157,7 @@ const getEnemyChaseTargetID = (slime: Entity): number => {
 
 const getChaseTargetID = (slime: Entity): number => {
    const transformComponent = TransformComponentArray.getComponent(slime);
-   const slimeHitbox = transformComponent.hitboxes[0];
+   const slimeHitbox = transformComponent.children[0] as Hitbox;
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const layer = getEntityLayer(slime);
@@ -168,7 +168,7 @@ const getChaseTargetID = (slime: Entity): number => {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       const otherTransformComponent = TransformComponentArray.getComponent(entity);
-      const otherHitbox = otherTransformComponent.hitboxes[0];
+      const otherHitbox = otherTransformComponent.children[0] as Hitbox;
 
       if (getEntityType(entity) === EntityType.slime) {
          // Don't try to merge with larger slimes
@@ -210,7 +210,7 @@ const slimeWantsToMerge = (slimeComponent: SlimeComponent): boolean => {
 
 function onTick(slime: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slime);
-   const slimeHitbox = transformComponent.hitboxes[0];
+   const slimeHitbox = transformComponent.children[0] as Hitbox;
 
    const layer = getEntityLayer(slime);
 
@@ -234,7 +234,7 @@ function onTick(slime: Entity): void {
    const angerTarget = updateAngerTarget(slime);
    if (angerTarget !== null) {
       const angerTargetTransformComponent = TransformComponentArray.getComponent(angerTarget);
-      const targetHitbox = angerTargetTransformComponent.hitboxes[0];
+      const targetHitbox = angerTargetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = slimeHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
@@ -278,7 +278,7 @@ function onTick(slime: Entity): void {
    }
    if (chaseTarget !== 0) {
       const chaseTargetTransformComponent = TransformComponentArray.getComponent(chaseTarget);
-      const targetHitbox = chaseTargetTransformComponent.hitboxes[0];
+      const targetHitbox = chaseTargetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = slimeHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
@@ -383,9 +383,9 @@ const merge = (slime1: Entity, slime2: Entity): void => {
       orbSizes.push(slimeComponent2.size);
       
       const slime1TransformComponent = TransformComponentArray.getComponent(slime1);
-      const slime1Hitbox = slime1TransformComponent.hitboxes[0];
+      const slime1Hitbox = slime1TransformComponent.children[0] as Hitbox;
       const slime2TransformComponent = TransformComponentArray.getComponent(slime2);
-      const slime2Hitbox = slime2TransformComponent.hitboxes[0];
+      const slime2Hitbox = slime2TransformComponent.children[0] as Hitbox;
       
       const x = (slime1Hitbox.box.position.x + slime2Hitbox.box.position.x) / 2;
       const y = (slime1Hitbox.box.position.y + slime2Hitbox.box.position.y) / 2;
@@ -491,7 +491,7 @@ const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, pr
    for (const entity of visibleEntities) {
       if (getEntityType(entity) === EntityType.slime && !propagationInfo.propagatedEntityIDs.has(entity)) {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.hitboxes[0];
+         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
          
          const distance = seeingHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          const distanceFactor = distance / visionRange;

@@ -5,15 +5,15 @@ import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { TransformComponent } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { DecorationComponent } from "../components/DecorationComponent";
 import { createHitbox } from "../hitboxes";
 
 export function createDecorationConfig(position: Point, rotation: number, decorationType: DecorationType): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const decorationComponent = new DecorationComponent(decorationType);
    

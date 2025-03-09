@@ -12,7 +12,7 @@ import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
 import { entityExists, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
-import { EntityCarryInfo, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, updateEntityPosition } from "./TransformComponent";
+import { EntityAttachInfo, entityChildIsEntity, entityChildIsHitbox, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, cleanTransform } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
@@ -90,7 +90,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
       hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;
 
       // Mark entity's position as updated
-      updateEntityPosition(transformComponent, entity);
+      cleanTransform(entity);
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);
    }
@@ -109,12 +109,16 @@ const resolveBorderCollisions = (entity: Entity): boolean => {
    let hasMoved = false;
    
    // @HACK
-   const baseHitbox = transformComponent.hitboxes[0];
+   const baseHitbox = transformComponent.children[0] as Hitbox;
 
    // @Incomplete: do this using transform component bounds
    
    // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
-   for (const hitbox of transformComponent.hitboxes) {
+   for (const hitbox of transformComponent.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+      
       const box = hitbox.box;
       
       const minX = box.calculateBoundsMinX();
@@ -184,7 +188,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition
@@ -226,21 +230,23 @@ function onTick(entity: Entity): void {
    }
 }
 
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityCarryInfo): void => {
-   assert(entityExists(carryInfo.carriedEntity));
+const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityAttachInfo): void => {
+   assert(entityExists(carryInfo.attachedEntity));
    
-   const transformComponent = TransformComponentArray.getComponent(carryInfo.carriedEntity);
+   const transformComponent = TransformComponentArray.getComponent(carryInfo.attachedEntity);
 
    // @Incomplete
    // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
    // (Don't apply physics for carried entities)
    // @Incomplete
    // applyHitboxTethers(transformComponent, physicsComponent);
-   updateEntityPosition(transformComponent, carryInfo.carriedEntity);
+   cleanTransform(carryInfo.attachedEntity);
 
    // Propagate to children
-   for (const carryInfo of transformComponent.carriedEntities) {
-      tickCarriedEntity(transformComponent, carryInfo);
+   for (const entityAttachInfo of transformComponent.children) {
+      if (entityChildIsEntity(entityAttachInfo)) {
+         tickCarriedEntity(transformComponent, entityAttachInfo);
+      }
    }
 }
 
@@ -248,36 +254,43 @@ function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // If the entity isn't being carried, update its' physics
-   if (transformComponent.carryRoot === entity) {
-      for (const hitbox of transformComponent.rootHitboxes) {
-         applyHitboxKinematics(transformComponent, entity, hitbox);
+   if (transformComponent.rootEntity === entity) {
+      for (const rootChild of transformComponent.rootChildren) {
+         if (entityChildIsHitbox(rootChild)) {
+            applyHitboxKinematics(transformComponent, entity, rootChild);
+         }
       }
       // @Speed: only do if the kinematics moved the entity
-      updateEntityPosition(transformComponent, entity);
+      cleanTransform(entity);
       
       // Don't resolve wall tile collisions in lightspeed mode
       if (entity !== playerInstance || !keyIsPressed("l")) { 
          const hasMoved = resolveWallCollisions(entity);
    
          if (hasMoved) {
-            updateEntityPosition(transformComponent, entity);
+            cleanTransform(entity);
          }
       }
    
       const hasMoved = resolveBorderCollisions(entity);
       if (hasMoved) {
-         updateEntityPosition(transformComponent, entity);
+         cleanTransform(entity);
       }
 
       // Propagate to children
-      for (const carryInfo of transformComponent.carriedEntities) {
-         tickCarriedEntity(transformComponent, carryInfo);
+      for (const entityAttachInfo of transformComponent.children) {
+         if (entityChildIsEntity(entityAttachInfo)) {
+            tickCarriedEntity(transformComponent, entityAttachInfo);
+         }
       }
    } else {
-      // The player is being carried
-      const carryRootTransformComponent = TransformComponentArray.getComponent(transformComponent.carryRoot);
-      for (const carryInfo of carryRootTransformComponent.carriedEntities) {
-         tickCarriedEntity(carryRootTransformComponent, carryInfo);
+      // The player is attached to a parent: need to snap them to the parent!
+      for (const child of transformComponent.children) {
+         if (entityChildIsEntity(child)) {
+            cleanTransform(child.attachedEntity);
+         } else {
+            cleanTransform(child);
+         }
       }
    }
    console.assert(transformComponent.boundingAreaMinX >= 0 && transformComponent.boundingAreaMaxX < Settings.BOARD_UNITS && transformComponent.boundingAreaMinY >= 0 && transformComponent.boundingAreaMaxY < Settings.BOARD_UNITS, getEntityType(entity).toString());

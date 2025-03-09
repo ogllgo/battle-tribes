@@ -9,6 +9,7 @@ import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    /** Average number of zombies that are created by the tombstone in a second */
@@ -44,7 +45,7 @@ TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = transformComponent.hitboxes[0];
+   const tombstoneHitbox = transformComponent.children[0] as Hitbox;
    
    const seenIs = new Array<number>();
    for (;;) {
@@ -131,7 +132,7 @@ function preRemove(tombstone: Entity): void {
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = tombstoneTransformComponent.hitboxes[0];
+   const tombstoneHitbox = tombstoneTransformComponent.children[0] as Hitbox;
 
    const config = createZombieConfig(tombstoneHitbox.box.position.copy(), 2 * Math.PI * Math.random(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);

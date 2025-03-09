@@ -9,6 +9,7 @@ import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, create
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface KrumblidComponentParams {}
 
@@ -33,7 +34,7 @@ function createParamsFromData(): KrumblidComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -61,7 +62,7 @@ function updateFromData(): void {}
 
 function onHit(krumblid: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
@@ -81,7 +82,7 @@ function onHit(krumblid: Entity, hitData: HitData): void {
 
 function onDie(krumblid: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);

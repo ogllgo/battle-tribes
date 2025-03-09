@@ -89,7 +89,7 @@ const createConnectingRenderPart = (connection: StructureConnection, parentHitbo
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -132,7 +132,7 @@ function updateFromData(): void {}
 
 export function addFenceConnection(fence: Entity, connection: StructureConnection): void {
    const transformComponent = TransformComponentArray.getComponent(fence);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const fenceComponent = FenceComponentArray.getComponent(fence);
 

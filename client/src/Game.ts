@@ -75,7 +75,7 @@ import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { setHitboxAngularVelocity } from "./hitboxes";
+import { Hitbox, setHitboxAngularVelocity } from "./hitboxes";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -122,7 +122,7 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    cursorDirection = Math.PI/2 - cursorDirection;
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.hitboxes[0];
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    
    const previousRotation = playerHitbox.box.angle;
    playerHitbox.box.angle = cursorDirection;

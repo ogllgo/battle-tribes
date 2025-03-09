@@ -101,6 +101,7 @@ import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponen
 import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { Hitbox } from "./hitboxes";
+import { Point } from "../../shared/src/utils";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -219,21 +220,40 @@ type EntityComponents = Partial<{
    [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
 }>;
 
+export interface EntityConfigAttachInfo {
+   readonly parent: Entity;
+   readonly parentHitbox: Hitbox | null;
+   readonly offset: Point;
+   readonly destroyWhenParentIsDestroyed: boolean;
+}
+
 export interface EntityConfig {
    readonly entity: Entity;
    readonly entityType: EntityType;
    readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
+   /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
+   readonly attachInfo?: EntityConfigAttachInfo;
 }
 
-// We skip 0 as that is reserved for there being no entity
+// We skip 0 as that is reserved for being a no-entity marker
 let idCounter = 1;
 
-export function createEntityConfig(entityType: EntityType, components: EntityComponents, lights: ReadonlyArray<LightCreationInfo>): EntityConfig {
+export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, offset: Point, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
+   return {
+      parent: parent,
+      parentHitbox: parentHitbox,
+      offset: offset,
+      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+   };
+}
+
+export function createEntityConfig(entityType: EntityType, components: EntityComponents, lights: ReadonlyArray<LightCreationInfo>, attachInfo?: EntityConfigAttachInfo): EntityConfig {
    return {
       entity: idCounter++,
       entityType: entityType,
       components: components,
-      lights: lights
+      lights: lights,
+      attachInfo: attachInfo
    };
 }

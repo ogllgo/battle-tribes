@@ -8,14 +8,14 @@ import { createEntityConfig, EntityConfig } from "../../components";
 import { GuardianGemFragmentProjectileComponent } from "../../components/GuardianGemFragmentProjectileComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 
 export function createGuardianGemFragmentProjectileConfig(position: Point, rotation: number, creator: Entity): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 8, 16), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByAirFriction = false;

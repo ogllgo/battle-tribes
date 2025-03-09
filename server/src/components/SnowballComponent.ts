@@ -33,7 +33,7 @@ SnowballComponentArray.onHitboxCollision = onHitboxCollision;
 function onTick(snowball: Entity): void {
    // Decrease angular velocity over time
    const transformComponent = TransformComponentArray.getComponent(snowball);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    if (hitbox.angleTurnSpeed !== 0) {
       const beforeSign = Math.sign(hitbox.angleTurnSpeed);
       hitbox.angleTurnSpeed -= Math.PI / Settings.TPS * beforeSign;

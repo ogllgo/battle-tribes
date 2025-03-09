@@ -10,7 +10,7 @@ import { SubtileType } from "../../shared/src/tiles";
 import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
 import { Hitbox } from "./hitboxes";
 import { ItemComponentArray } from "./entity-components/server-components/ItemComponent";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
 import { EntityParams, getEntityType } from "./world";
 import { playerTribe } from "./tribes";
@@ -233,7 +233,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitboxes = transformComponentParams.hitboxes;
+   const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
 
    let entityMinX = Number.MAX_SAFE_INTEGER;
    let entityMaxX = Number.MIN_SAFE_INTEGER;
@@ -274,7 +274,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
 const getStructureSnapOrigin = (structure: Entity): Point => {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(structure);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const snapOrigin = hitbox.box.position.copy();
    if (getEntityType(structure) === EntityType.embrasure) {
@@ -291,7 +291,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const placingEntityHitboxes = transformComponentParams.hitboxes;
+   const placingEntityHitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
    const snapOrigin = getStructureSnapOrigin(connectingEntity);
    
    const snapPositions = new Array<SnapCandidate>();
@@ -317,7 +317,11 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
          placingEntityHitboxHalfHeight += 20;
       }
       
-      for (const connectingEntityHitbox of connectingEntityTransformComponent.hitboxes) {
+      for (const connectingEntityHitbox of connectingEntityTransformComponent.children) {
+         if (!entityChildIsHitbox(connectingEntityHitbox)) {
+            continue;
+         }
+         
          const box = connectingEntityHitbox.box;
       
          let hitboxHalfWidth: number;
@@ -362,7 +366,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             // @SUPAHACK!!!!
             const entityParams = createStructureConfig(entityType, position, placingEntityRotation);
             const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-            const hitboxes = transformComponentParams.hitboxes;
+            const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
             
             // Don't add the position if it would be colliding with the connecting entity
             let isValid = true;
@@ -508,7 +512,7 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: E
       for (const transform of group) {
          // @Hack
          const connectingEntityTransformComponent = TransformComponentArray.getComponent(transform.connectedEntity);
-         const connectingEntityHitbox = connectingEntityTransformComponent.hitboxes[0];
+         const connectingEntityHitbox = connectingEntityTransformComponent.children[0] as Hitbox;
          
          const relativeOffsetDirection = calculateRelativeOffsetDirection(transform.position, transform.rotation, connectingEntityHitbox.box.position);
          const connection = createStructureConnection(transform.connectedEntity, relativeOffsetDirection);
@@ -657,7 +661,7 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, layer: Layer): Struct
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(EntityType.bracings, position, rotation);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitboxes = transformComponentParams.hitboxes;
+   const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
    
    if (structureIntersectsWithBuildingBlockingTiles(layer, hitboxes)) {
       isValid = false;
@@ -687,7 +691,7 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceRotation: n
       // @SUPAHACK!!!!
       const entityParams = createStructureConfig(entityType, desiredPlacePosition.copy(), desiredPlaceRotation);
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitboxes = transformComponentParams.hitboxes;
+      const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
 
       // If no connections are found, use the regular place position
       return {

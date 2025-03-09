@@ -6,7 +6,7 @@ import { distance, Point, randInt } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { GolemComponent } from "../../components/GolemComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -67,14 +67,14 @@ const getMinSeparationFromOtherHitboxes = (hitboxes: ReadonlyArray<Hitbox>, hitb
 }
 
 export function createGolemConfig(position: Point, rotation: number): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    // Create core hitbox
    const coreHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(coreHitbox, null);
+   addHitboxToTransformComponent(transformComponent, coreHitbox);
 
    // Create head hitbox
-   transformComponent.addHitbox(createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+   addHitboxToTransformComponent(transformComponent, createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []));
    
    // Create body hitboxes
    let i = 0;
@@ -89,19 +89,19 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
       const radius = size === 0 ? 20 : 26;
 
       // Make sure the hitboxes aren't too close
-      if (hitboxIsTooClose(transformComponent.hitboxes, x, y)) {
+      if (hitboxIsTooClose(transformComponent.children as Array<Hitbox>, x, y)) {
          continue;
       }
 
       // Make sure the hitbox touches another one at least a small amount
-      const minSeparation = getMinSeparationFromOtherHitboxes(transformComponent.hitboxes, x, y, radius);
+      const minSeparation = getMinSeparationFromOtherHitboxes(transformComponent.children as Array<Hitbox>, x, y, radius);
       if (minSeparation > -6) {
          continue;
       }
 
       const mass = size === 0 ? ROCK_SMALL_MASS : ROCK_MEDIUM_MASS;
       const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      addHitboxToTransformComponent(transformComponent, hitbox);
 
       i++;
    }
@@ -110,11 +110,12 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    for (let j = 0; j < 2; j++) {
       const offsetX = 60 * (j === 0 ? -1 : 1);
       const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-      transformComponent.addHitbox(hitbox, null);
+      addHitboxToTransformComponent(transformComponent, hitbox);
 
       // Wrist
       const inFactor = 0.75;
-      transformComponent.addHitbox(createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), null);
+      const wristHitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      addHitboxToTransformComponent(transformComponent, wristHitbox);
    }
    
    const physicsComponent = new PhysicsComponent();
@@ -123,7 +124,7 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning | StatusEffect.poisoned);
    
-   const golemComponent = new GolemComponent(transformComponent.hitboxes, GolemVars.PEBBLUM_SUMMON_COOLDOWN_TICKS);
+   const golemComponent = new GolemComponent(transformComponent.children, GolemVars.PEBBLUM_SUMMON_COOLDOWN_TICKS);
    
    return createEntityConfig(
       EntityType.golem,

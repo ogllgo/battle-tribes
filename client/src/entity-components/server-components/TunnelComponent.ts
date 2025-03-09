@@ -2,6 +2,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
@@ -85,7 +86,7 @@ function createParamsFromData(reader: PacketReader): TunnelComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
 
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -118,7 +119,7 @@ function getMaxRenderParts(): number {
 
 const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: number): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -165,7 +166,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
 
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {

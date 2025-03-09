@@ -1,11 +1,16 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { Entity } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityParams } from "../../world";
+import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
+import { playerInstance } from "../../player";
+import { playSound } from "../../sound";
+import { entityExists, EntityParams, getEntityLayer, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
-   isOccupied: boolean;
+   occupiedEntity: Entity;
    readonly offsetX: number;
    readonly offsetY: number;
    readonly dismountOffsetX: number;
@@ -39,8 +44,7 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
    
    const numCarrySlots = reader.readNumber();
    for (let i = 0; i < numCarrySlots; i++) {
-      const isOccupied = reader.readBoolean();
-      reader.padOffset(3);
+      const occupiedEntity = reader.readNumber();
 
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
@@ -49,7 +53,7 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
       const dismountOffsetY = reader.readNumber();
 
       const carrySlot: CarrySlot = {
-         isOccupied: isOccupied,
+         occupiedEntity: occupiedEntity,
          offsetX: offsetX,
          offsetY: offsetY,
          dismountOffsetX: dismountOffsetX,
@@ -84,13 +88,48 @@ function padData(reader: PacketReader): void {
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const rideableComponent = RideableComponentArray.getComponent(entity);
 
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT)
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
    for (let i = 0; i < rideableComponent.carrySlots.length; i++) {
       const carrySlot = rideableComponent.carrySlots[i];
       
-      carrySlot.isOccupied = reader.readBoolean();
-      reader.padOffset(3);
+      const occupiedEntity = reader.readNumber();
+
+      if (occupiedEntity !== carrySlot.occupiedEntity) {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         // @Hack
+         const mountHitbox = transformComponent.children[0] as Hitbox;
+         const layer = getEntityLayer(entity);
+         
+         if (entityExists(occupiedEntity)) {
+            // Play mount sound when entity mounts a carry slot
+            switch (getEntityType(occupiedEntity)) {
+               case EntityType.barrel: {
+                  playSound("barrel-mount.mp3", 0.4, 1, mountHitbox.box.position.copy(), layer);
+                  break;
+               }
+               default: {
+                  playSound("mount.mp3", 0.4, 1, mountHitbox.box.position.copy(), layer);
+                  break;
+               }
+            }
+         } else {
+            // Play a sound when the entity dismounts a carry slot
+            playSound("dismount.mp3", 0.4, 1, mountHitbox.box.position.copy(), layer);
+
+            if (carrySlot.occupiedEntity === playerInstance) {
+               // Set the player to the dismount position
+   
+               const transformComponent = TransformComponentArray.getComponent(playerInstance);
+               const playerHitbox = transformComponent.children[0] as Hitbox;
+   
+               playerHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
+               playerHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
+            }
+         }
+      }
+      
+      carrySlot.occupiedEntity = occupiedEntity;
 
       reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
    }

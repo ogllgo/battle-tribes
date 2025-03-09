@@ -1,11 +1,10 @@
-import { ServerComponentType, ServerComponentTypeString } from "battletribes-shared/components";
+import { ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
 import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
-import { PhysicsComponentArray } from "../components/PhysicsComponent";
 import { SERVER } from "./server";
 import { Settings } from "battletribes-shared/settings";
 import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
@@ -13,7 +12,6 @@ import PlayerClient from "./PlayerClient";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { EntityConfig } from "../components";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes } from "../world";
 import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from "../collapses";
@@ -24,6 +22,7 @@ import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation"
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 import { Point } from "../../../shared/src/utils";
+import { Hitbox } from "../hitboxes";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -617,7 +616,7 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const packet = new Packet(PacketType.syncData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(player);
-   const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.children[0] as Hitbox;
    packet.addNumber(hitbox.box.position.x);
    packet.addNumber(hitbox.box.position.y);
    packet.addNumber(hitbox.box.angle);

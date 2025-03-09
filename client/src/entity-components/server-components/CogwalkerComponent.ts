@@ -6,6 +6,7 @@ import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
 import { updateLimb_TEMP } from "./InventoryUseComponent";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { Hitbox } from "../../hitboxes";
 
 export interface CogwalkerComponentParams {}
 
@@ -28,7 +29,7 @@ function createParamsFromData(): CogwalkerComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const hitbox = transformComponentParams.children[0] as Hitbox;
    
    entityIntermediateInfo.renderInfo.attachRenderPart(
       new TexturedRenderPart(

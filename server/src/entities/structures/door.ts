@@ -2,7 +2,7 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { EntityType } from "battletribes-shared/entities";
 import { createEntityConfig, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -22,11 +22,11 @@ import { StructureConnection } from "../../structure-placement";
 const HEALTHS = [15, 45];
 
 export function createDoorConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent(0);
+   const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 16);
    const hitbox = createHitbox(transformComponent, null, box, 0.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   transformComponent.addHitbox(hitbox, null);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
    // @Hack: Shouldn't need!
    const physicsComponent = new PhysicsComponent();
