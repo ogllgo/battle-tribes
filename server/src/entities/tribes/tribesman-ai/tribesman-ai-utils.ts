@@ -13,14 +13,14 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
 import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo } from "battletribes-shared/items/items";
-import { changeEntityLayer, getEntityTile, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
+import { changeEntityLayer, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
 import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -191,7 +191,8 @@ export function continueCurrentPath(tribesman: Entity): boolean {
    const finalPath = tribesmanAIComponent.paths[tribesmanAIComponent.paths.length - 1];
    if (getEntityLayer(tribesman) !== finalPath.layer) {
       const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const currentTileIndex = getEntityTile(transformComponent);
+      const hitbox = transformComponent.children[0] as Hitbox;
+      const currentTileIndex = getHitboxTile(hitbox);
       if (surfaceLayer.getTileType(currentTileIndex) === TileType.dropdown) {
          changeEntityLayer(tribesman, finalPath.layer);
       }

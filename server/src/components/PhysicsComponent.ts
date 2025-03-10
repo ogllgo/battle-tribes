@@ -5,12 +5,12 @@ import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { registerDirtyEntity } from "../server/player-clients";
-import { cleanTransform, getEntityTile, getHitboxTile, resolveEntityBorderCollisions, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray, changeEntityLayer } from "./TransformComponent";
+import { cleanTransform, resolveEntityBorderCollisions, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray, changeEntityLayer } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { Hitbox } from "../hitboxes";
+import { getHitboxTile, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { updateBox } from "../../../shared/src/boxes/boxes";
 import { cleanAngleNEW } from "../ai-shared";
@@ -42,10 +42,6 @@ export class PhysicsComponent {
 }
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
-PhysicsComponentArray.onTick = {
-   tickInterval: 1,
-   func: onTick
-};
 
 const cleanAngle = (hitbox: Hitbox): void => {
    // Clamp angle to [-PI, PI) range
@@ -141,7 +137,7 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
 
    // If the game object is in a river, push them in the flow direction of the river
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
-   if (transformComponent.isInRiver && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
+   if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
       hitbox.velocity.x += 240 * Settings.I_TPS * a[flowDirectionIdx];
       hitbox.velocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
@@ -217,20 +213,23 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
          registerDirtyEntity(entity);
       }
 
-      transformComponent.updateIsInRiver(entity);
-
       // Check to see if the entity has descended into the underground layer
       const entityType = getEntityType(entity);
       if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
-         // Update the last valid layer
-         const layer = getEntityLayer(entity);
-         const tileIndex = getEntityTile(transformComponent);
-         if (layer.getTileType(tileIndex) !== TileType.dropdown) {
-            transformComponent.lastValidLayer = layer;
-         // If the layer is valid and the entity is on a dropdown, move down
-         } else if (layer === transformComponent.lastValidLayer) {
-            // @Temporary
-            changeEntityLayer(entity, undergroundLayer);
+         // @Hack: fo da glurb container entity
+         if (entityChildIsHitbox(transformComponent.children[0])) {
+            // Update the last valid layer
+            const layer = getEntityLayer(entity);
+            // @Hack
+            const hitbox = transformComponent.children[0] as Hitbox;
+            const tileIndex = getHitboxTile(hitbox);
+            if (layer.getTileType(tileIndex) !== TileType.dropdown) {
+               transformComponent.lastValidLayer = layer;
+            // If the layer is valid and the entity is on a dropdown, move down
+            } else if (layer === transformComponent.lastValidLayer) {
+               // @Temporary
+               changeEntityLayer(entity, undergroundLayer);
+            }
          }
       }
 
@@ -336,7 +335,8 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    transformComponent.isDirty = true;
 }
 
-const tickEntityPhysics = (entity: Entity): void => {
+// @Hack: this function used to be called from the physicscomponent, but I realised that all entities need to tick this regardless, so it's now called from the transformcomponent's onTick function. but it's still here, i guess.
+export function tickEntityPhysics(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (const child of transformComponent.children) {
@@ -344,7 +344,7 @@ const tickEntityPhysics = (entity: Entity): void => {
          turnHitbox(entity, child, transformComponent);
       }
    }
-   for (const rootChild of transformComponent.children) {
+   for (const rootChild of transformComponent.rootChildren) {
       if (entityChildIsHitbox(rootChild)) {
          applyHitboxKinematics(entity, rootChild, transformComponent, physicsComponent);
       }
@@ -361,13 +361,6 @@ const tickEntityPhysics = (entity: Entity): void => {
    // @Speed: what if the hitboxes don't change?
    // (just for carried entities)
    registerDirtyEntity(entity);
-}
-
-function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (transformComponent.rootEntity === entity) {
-      tickEntityPhysics(entity);
-   }
 }
 
 function getDataLength(): number {

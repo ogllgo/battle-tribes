@@ -12,7 +12,7 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { ItemType, InventoryName, ItemTypeString, ITEM_INFO_RECORD, itemInfoIsConsumable } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { goKillEntity } from "./tribesman-combat-ai";
-import { getEntityTile, TransformComponentArray } from "../../../components/TransformComponent";
+import { TransformComponentArray } from "../../../components/TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../../../world";
 import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randItem } from "../../../../../shared/src/utils";
@@ -23,7 +23,7 @@ import { getSpawnInfoBiome, getSpawnInfoForEntityType } from "../../../entity-sp
 import { Biome } from "../../../../../shared/src/biomes";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
 import Layer from "../../../Layer";
-import { Hitbox } from "../../../hitboxes";
+import { getHitboxTile, Hitbox } from "../../../hitboxes";
 
 // @Cleanup: unused?
 const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: EntityType): boolean => {
@@ -335,7 +335,8 @@ export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan
    
       // If the entity isn't in the right biome, go to the right biome
       const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const currentTile = getEntityTile(transformComponent);
+      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+      const currentTile = getHitboxTile(tribesmanHitbox);
       if (layer.getTileBiome(currentTile) !== biome) {
          moveTribesmanToBiome(tribesman, spawnInfo.layer, biome);
          return;

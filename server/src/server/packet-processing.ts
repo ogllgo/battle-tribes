@@ -6,7 +6,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { changeEntityLayer, getEntityTile, TransformComponentArray } from "../components/TransformComponent";
+import { changeEntityLayer, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
@@ -36,7 +36,7 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { Hitbox, setHitboxAngularVelocity } from "../hitboxes";
+import { getHitboxTile, Hitbox, setHitboxAngularVelocity } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 
@@ -512,7 +512,8 @@ export function processAscendPacket(playerClient: PlayerClient): void {
    const currentLayer = getEntityLayer(player);
    if (currentLayer === undergroundLayer) {
       const transformComponent = TransformComponentArray.getComponent(player);
-      const tileAbove = getEntityTile(transformComponent);
+      const playerHitbox = transformComponent.children[0] as Hitbox;
+      const tileAbove = getHitboxTile(playerHitbox);
       if (surfaceLayer.getTileType(tileAbove) === TileType.dropdown) {
          changeEntityLayer(player, surfaceLayer);
       }

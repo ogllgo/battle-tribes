@@ -13,11 +13,11 @@ import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { hitEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { TransformComponentArray, getEntityTile, getRandomPositionInEntity } from "./TransformComponent";
+import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -57,7 +57,7 @@ const move = (fish: Entity, direction: number): void => {
 
    const layer = getEntityLayer(fish);
    
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(fishHitbox);
    if (layer.tileTypes[tileIndex] === TileType.water) {
       // Swim on water
       const accelerationX = 40 * Math.sin(direction);
@@ -119,7 +119,7 @@ function onTick(fish: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
 
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(fishHitbox);
    const layer = getEntityLayer(fish)
    const tileType = layer.tileTypes[tileIndex];
 

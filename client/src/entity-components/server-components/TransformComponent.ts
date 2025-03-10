@@ -790,7 +790,7 @@ const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: nu
          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
          const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
          if (typeof result === "number") {
-            newI = i;
+            newI = result;
          } else {
             return result;
          }

@@ -573,8 +573,9 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
 
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck && doCanSelectCheck) {
-               // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from center
-               if (playerHitbox.box.position.calculateDistanceBetween(playerHitbox.box.position) > interactAction!.interactRange) {
+               const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+               // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from player center
+               if (playerHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position) > interactAction!.interactRange) {
                   continue;
                }
             }

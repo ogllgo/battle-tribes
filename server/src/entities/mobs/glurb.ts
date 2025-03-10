@@ -11,8 +11,7 @@ import { TamingComponent } from "../../components/TamingComponent";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
-import { TransformComponent } from "../../components/TransformComponent";
-import { HealthComponent } from "../../components/HealthComponent";
+import { addEntityToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -45,9 +44,6 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
-   // @TEMPORARY
-   const healthComponent = new HealthComponent(10);
-
    const tamingComponent = new TamingComponent()
    
    const rootEntityConfig = createEntityConfig(
@@ -55,7 +51,6 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
       {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.health]: healthComponent,
          [ServerComponentType.taming]: tamingComponent,
       },
       []
@@ -65,7 +60,6 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
    let currentX = x;
    let currentY = y;
    
-   let headConfig!: EntityConfig;
    let lastHitbox: Hitbox | undefined;
    let lastEntity: Entity | undefined;
    const numSegments = randInt(3, 5);
@@ -75,21 +69,20 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Reado
       let config: EntityConfig;
       if (i === 0) {
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
-         headConfig = config;
       } else {
          config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastEntity!, lastHitbox!, i < numSegments - 1);
       }
       
-      const transformComponent = config.components[ServerComponentType.transform]!;
-      transformComponent.rootEntity = rootEntityConfig.entity;
-      lastHitbox = transformComponent.children[0] as Hitbox;
+      const segmentTransformComponent = config.components[ServerComponentType.transform]!;
+      segmentTransformComponent.rootEntity = rootEntityConfig.entity;
+      segmentTransformComponent.parentEntity = rootEntityConfig.entity;
+      lastHitbox = segmentTransformComponent.children[0] as Hitbox;
 
       lastEntity = config.entity;
 
       configs.push(config);
 
-      const headSegmentComponent = headConfig.components[ServerComponentType.glurbHeadSegment]!;
-      headSegmentComponent.allSegments.push(config.entity);
+      addEntityToTransformComponent(transformComponent, config.entity, true);
    }
 
    return configs;

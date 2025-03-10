@@ -105,9 +105,11 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
+      const attacker = entityExists(projectileComponent.creator) ? projectileComponent.creator : arrow;
+
       const damage = 2 * (projectileComponent.isBlocked ? 0.5 : 1);
       const knockback = 150 * (projectileComponent.isBlocked ? 0.5 : 1);
-      hitEntity(collidingEntity, arrow, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, attacker, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, knockback, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, attackHash, 9);
    
@@ -121,19 +123,15 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
 
    // Lodge the arrow in the entity when it's slow enough
    if (affectedHitbox.velocity.lengthSquared() < 50) {
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      const collidingHitbox = collidingEntityTransformComponent.children[0] as Hitbox;
-
+      // Once the arrow gets attached, it's going to have the colliding hitboxes' angle added to it, so subtract it now.
       // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
       affectedHitbox.box.relativeAngle -= collidingHitbox.box.angle;
 
       const diffX = affectedHitbox.box.position.x - collidingHitbox.box.position.x;
       const diffY = affectedHitbox.box.position.y - collidingHitbox.box.position.y;
 
-      const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingHitbox.box.relativeAngle);
-      const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingHitbox.box.relativeAngle);
-      
-      // @Incomplete: SHOULD BE CARRIED ON THE HITBOX INSTEAD!
+      const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingHitbox.box.angle);
+      const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingHitbox.box.angle);
       
       attachEntity(arrow, collidingEntity, collidingHitbox, rotatedDiffX, rotatedDiffY, false);
 

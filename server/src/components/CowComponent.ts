@@ -28,7 +28,7 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle, stopHitboxTurning } from "../hitboxes";
 import { translateHitbox } from "./PhysicsComponent";
 
 const enum Vars {
@@ -186,6 +186,8 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
          cowComponent.targetGrass = 0;
       }
    // }
+      
+   stopCow(cow);
 }
 
 const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
@@ -200,6 +202,15 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
       }
    }
    return herdMembers;
+}
+
+const stopCow = (cow: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const headHitbox = transformComponent.children[1] as Hitbox;
+
+   stopHitboxTurning(bodyHitbox);
+   stopHitboxTurning(headHitbox);
 }
 
 const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTargetDirection: number, acceleration: number): void => {
@@ -356,6 +367,7 @@ function onTick(cow: Entity): void {
    // If the cow is recovering after doing a ram, just stand still and do nothing else
    if (cowComponent.ramRestTicks > 0) {
       cowComponent.ramRestTicks--;
+      stopCow(cow);
       return;
    }
 
@@ -613,6 +625,7 @@ function onTick(cow: Entity): void {
       const accelerationX = 200 * Math.sin(cowBodyHitbox.box.angle);
       const accelerationY = 200 * Math.cos(cowBodyHitbox.box.angle);
       applyAcceleration(cow, cowBodyHitbox, accelerationX, accelerationY);
+      stopCow(cow);
       return;
    }
 
@@ -622,6 +635,8 @@ function onTick(cow: Entity): void {
    if (wanderAI.targetPositionX !== -1) {
       const targetDirection = angle(wanderAI.targetPositionX - cowBodyHitbox.box.position.x, wanderAI.targetPositionY - cowBodyHitbox.box.position.y);
       moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, targetDirection, Vars.SLOW_ACCELERATION);
+   } else {
+      stopCow(cow);
    }
 }
 

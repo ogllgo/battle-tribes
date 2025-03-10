@@ -8,6 +8,7 @@ import { Point } from "../../../../shared/src/utils";
 import { createEntityConfig, EntityConfig, LightCreationInfo } from "../../components";
 import { GlurbBodySegmentComponent } from "../../components/GlurbBodySegmentComponent";
 import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
+import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -54,7 +55,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
 
    const physicsComponent = new PhysicsComponent();
 
-   // const healthComponent = new HealthComponent(5);
+   const healthComponent = new HealthComponent(5);
 
    const lootComponent = new LootComponent();
    
@@ -73,7 +74,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
       {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
-         // [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.health]: healthComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.glurbSegment]: glurbSegmentComponent,
          [ServerComponentType.glurbBodySegment]: glurbBodySegmentComponent

@@ -18,11 +18,15 @@ import { EntityParams } from "../world";
 export function createWorkbenchConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
+   
+   // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
+   const hitbox = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   hitboxes.push(hitbox);
 
-   const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   hitboxes.push(hitbox1);
-   const hitbox2 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   hitboxes.push(hitbox2);
+   // const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // hitboxes.push(hitbox1);
+   // const hitbox2 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // hitboxes.push(hitbox2);
    
    return {
       entityType: EntityType.workbench,

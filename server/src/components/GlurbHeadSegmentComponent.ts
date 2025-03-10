@@ -14,12 +14,9 @@ import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityChildIsEntity, TransformComponentArray } from "./TransformComponent";
 
-export class GlurbHeadSegmentComponent {
-   // @Hack
-   public readonly allSegments = new Array<Entity>();
-}
+export class GlurbHeadSegmentComponent {}
 
 export const GlurbHeadSegmentComponentArray = new ComponentArray<GlurbHeadSegmentComponent>(ServerComponentType.glurbHeadSegment, true, getDataLength, addDataToPacket);
 GlurbHeadSegmentComponentArray.onTick = {
@@ -40,11 +37,23 @@ const getAcceleration = (glurb: Entity): number => {
    return lerp(200, 450, u);
 }
 
-const move = (glurb: Entity, targetPosition: Point): void => {
-   const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurb);
-   const acceleration = getAcceleration(glurb);
+const move = (head: Entity, targetPosition: Point): void => {
+   const acceleration = getAcceleration(head);
 
-   for (const glurbSegment of glurbHeadSegmentComponent.allSegments) {
+   const headTransformComponent = TransformComponentArray.getComponent(head);
+
+   const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
+
+   for (const child of glurbTransformComponent.children) {
+      if (!entityChildIsEntity(child)) {
+         continue;
+      }
+
+      const glurbSegment = child.attachedEntity;
+      if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
+         continue;
+      }
+
       const transformComponent = TransformComponentArray.getComponent(glurbSegment);
       const hitbox = transformComponent.children[0] as Hitbox;
    

@@ -33,7 +33,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
 
    const physicsComponent = new PhysicsComponent();
 
-   // const healthComponent = new HealthComponent(5);
+   const healthComponent = new HealthComponent(5);
    
    const aiHelperComponent = new AIHelperComponent(hitbox, 280);
 
@@ -45,7 +45,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
    const lootComponent = new LootComponent();
 
    // @HACK DO ON PARENT GLURB
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 500);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 5);
 
    const light = createLight(new Point(0, 0), 0.35, 0.8, 6, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
@@ -58,7 +58,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
       {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
-         // [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.glurbSegment]: glurbSegmentComponent,
          [ServerComponentType.glurbHeadSegment]: glurbHeadSegmentComponent,

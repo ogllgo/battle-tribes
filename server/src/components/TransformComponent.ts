@@ -4,12 +4,12 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, getTileIndexIncludingEdges, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
 import { TileType } from "battletribes-shared/tiles";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { PhysicsComponentArray, tickEntityPhysics } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
@@ -76,8 +76,6 @@ export class TransformComponent {
    /** All chunks the entity is contained in */
    public readonly chunks = new Array<Chunk>();
 
-   public isInRiver = false;
-
    public rootEntity: Entity = 0;
    public parentEntity: Entity = 0;
    
@@ -108,43 +106,6 @@ export class TransformComponent {
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();
 
    public nextHitboxLocalID = 1;
-
-   public updateIsInRiver(entity: Entity): void {
-      const tileIndex = getEntityTile(this);
-      const layer = getEntityLayer(entity);
-      
-      const tileType = layer.tileTypes[tileIndex];
-      if (tileType !== TileType.water) {
-         this.isInRiver = false;
-         return;
-      }
-
-      if (PhysicsComponentArray.hasComponent(entity)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(entity);
-         if (!physicsComponent.isAffectedByGroundFriction) {
-            this.isInRiver = false;
-            return;
-         }
-      }
-
-      // If the game object is standing on a stepping stone they aren't in a river
-      // @Hack
-      const hitbox = this.children[0] as Hitbox;
-      for (const chunk of this.chunks) {
-         for (const steppingStone of chunk.riverSteppingStones) {
-            const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
-            
-            const distX = hitbox.box.position.x - steppingStone.positionX;
-            const distY = hitbox.box.position.y - steppingStone.positionY;
-            if (distX * distX + distY * distY <= size * size / 4) {
-               this.isInRiver = false;
-               return;
-            }
-         }
-      }
-
-      this.isInRiver = true;
-   }
 
    public addHitboxTether(hitbox: Hitbox, otherEntity: Entity | null, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, angularTether?: AngularTetherInfo): void {
       const tether: HitboxTether = {
@@ -219,6 +180,17 @@ export function addHitboxToTransformComponent(transformComponent: TransformCompo
    } else {
       hitbox.parent.children.push(hitbox);
    }
+}
+
+export function addEntityToTransformComponent(transformComponent: TransformComponent, entity: Entity, destroyWhenParentIsDestroyed: boolean): void {
+   const attachInfo: EntityAttachInfo = {
+      attachedEntity: entity,
+      parent: null,
+      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+   };
+
+   transformComponent.children.push(attachInfo);
+   transformComponent.rootChildren.push(attachInfo);
 }
 
 /** Should only be called after an entity is created */
@@ -429,48 +401,63 @@ export function cleanTransform(node: Hitbox | Entity): void {
       // An object only changes their chunks if a hitboxes' bounds change chunks.
       let hitboxChunkBoundsHaveChanged = false;
       for (let i = 0; i < transformComponent.children.length; i++) {
-         const hitbox = transformComponent.children[i];
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
-         const box = hitbox.box;
-   
-         const boundsMinX = box.calculateBoundsMinX();
-         const boundsMaxX = box.calculateBoundsMaxX();
-         const boundsMinY = box.calculateBoundsMinY();
-         const boundsMaxY = box.calculateBoundsMaxY();
-   
-         // Update bounding area
-         if (boundsMinX < transformComponent.boundingAreaMinX) {
-            transformComponent.boundingAreaMinX = boundsMinX;
-         }
-         if (boundsMaxX > transformComponent.boundingAreaMaxX) {
-            transformComponent.boundingAreaMaxX = boundsMaxX;
-         }
-         if (boundsMinY < transformComponent.boundingAreaMinY) {
-            transformComponent.boundingAreaMinY = boundsMinY;
-         }
-         if (boundsMaxY > transformComponent.boundingAreaMaxY) {
-            transformComponent.boundingAreaMaxY = boundsMaxY;
-         }
-   
-         // Check if the hitboxes' chunk bounds have changed
-         // @Speed
-         // @Speed
-         // @Speed
-         if (!hitboxChunkBoundsHaveChanged) {
-            if (Math.floor(boundsMinX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinX / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMaxX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxX / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMinY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinY / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMaxY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxY / Settings.CHUNK_UNITS)) {
-               hitboxChunkBoundsHaveChanged = true;
+         const child = transformComponent.children[i];
+         if (entityChildIsEntity(child)) {
+            const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+            // We can do this as earlier in the code we guaranteed that all children of the hitbox have their bounding area updated.
+            if (childTransformComponent.boundingAreaMinX < transformComponent.boundingAreaMinX) {
+               transformComponent.boundingAreaMinX = childTransformComponent.boundingAreaMinX;
             }
+            if (childTransformComponent.boundingAreaMaxX < transformComponent.boundingAreaMaxX) {
+               transformComponent.boundingAreaMaxX = childTransformComponent.boundingAreaMaxX;
+            }
+            if (childTransformComponent.boundingAreaMinY < transformComponent.boundingAreaMinY) {
+               transformComponent.boundingAreaMinY = childTransformComponent.boundingAreaMinY;
+            }
+            if (childTransformComponent.boundingAreaMaxY < transformComponent.boundingAreaMaxY) {
+               transformComponent.boundingAreaMaxY = childTransformComponent.boundingAreaMaxY;
+            }
+         } else {
+            const hitbox = child;
+            const box = hitbox.box;
+      
+            const boundsMinX = box.calculateBoundsMinX();
+            const boundsMaxX = box.calculateBoundsMaxX();
+            const boundsMinY = box.calculateBoundsMinY();
+            const boundsMaxY = box.calculateBoundsMaxY();
+      
+            // Update bounding area
+            if (boundsMinX < transformComponent.boundingAreaMinX) {
+               transformComponent.boundingAreaMinX = boundsMinX;
+            }
+            if (boundsMaxX > transformComponent.boundingAreaMaxX) {
+               transformComponent.boundingAreaMaxX = boundsMaxX;
+            }
+            if (boundsMinY < transformComponent.boundingAreaMinY) {
+               transformComponent.boundingAreaMinY = boundsMinY;
+            }
+            if (boundsMaxY > transformComponent.boundingAreaMaxY) {
+               transformComponent.boundingAreaMaxY = boundsMaxY;
+            }
+      
+            // Check if the hitboxes' chunk bounds have changed
+            // @Speed
+            // @Speed
+            // @Speed
+            if (!hitboxChunkBoundsHaveChanged) {
+               if (Math.floor(boundsMinX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinX / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMaxX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxX / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMinY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinY / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMaxY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxY / Settings.CHUNK_UNITS)) {
+                  hitboxChunkBoundsHaveChanged = true;
+               }
+            }
+      
+            hitbox.boundsMinX = boundsMinX;
+            hitbox.boundsMaxX = boundsMaxX;
+            hitbox.boundsMinY = boundsMinY;
+            hitbox.boundsMaxY = boundsMaxY;
          }
-   
-         hitbox.boundsMinX = boundsMinX;
-         hitbox.boundsMaxX = boundsMaxX;
-         hitbox.boundsMinY = boundsMinY;
-         hitbox.boundsMaxY = boundsMaxY;
       }
    
       transformComponent.isDirty = false;
@@ -483,6 +470,10 @@ export function cleanTransform(node: Hitbox | Entity): void {
 
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
 TransformComponentArray.onJoin = onJoin;
+TransformComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 TransformComponentArray.preRemove = preRemove;
 TransformComponentArray.onRemove = onRemove;
 
@@ -560,8 +551,6 @@ function onJoin(entity: Entity): void {
       cleanTransform(entity);
    }
 
-   transformComponent.updateIsInRiver(entity);
-   
    // Add to chunks
    updateContainingChunks(transformComponent, entity);
 
@@ -571,6 +560,13 @@ function onJoin(entity: Entity): void {
    }
 
    updateEntityLights(entity);
+}
+
+function onTick(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity === entity) {
+      tickEntityPhysics(entity);
+   }
 }
 
 function preRemove(entity: Entity): void {
@@ -796,6 +792,17 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    assert(typeof idx !== "undefined" && typeof entityAttachInfo !== "undefined");
 
    parentTransformComponent.children.splice(idx, 1);
+
+   // Remove from the parent's root children
+   const idx2 = parentTransformComponent.rootChildren.indexOf(entityAttachInfo);
+   if (idx2 !== -1) {
+      parentTransformComponent.rootChildren.splice(idx2, 1);
+   }
+
+   // If the parent has no children left, destroy the parent
+   if (parentTransformComponent.children.length === 0) {
+      destroyEntity(parent);
+   }
    
    const childTransformComponent = TransformComponentArray.getComponent(child);
    childTransformComponent.parentEntity = 0;
@@ -820,22 +827,6 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    registerDirtyEntity(child);
    
    propagateRootEntityChange(child, child);
-}
-
-export function getEntityTile(transformComponent: TransformComponent): TileIndex {
-   // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
-
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
-}
-
-// @Location?
-export function getHitboxTile(hitbox: Hitbox): TileIndex {
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
 }
 
 export function getRandomPositionInBox(box: Box): Point {
@@ -874,7 +865,7 @@ const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: nu
          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
          const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
          if (typeof result === "number") {
-            newI = i;
+            newI = result;
          } else {
             return result;
          }

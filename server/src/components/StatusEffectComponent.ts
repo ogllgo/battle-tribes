@@ -8,6 +8,7 @@ import { PhysicsComponentArray } from "./PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
+import { Hitbox, hitboxIsInRiver } from "../hitboxes";
 
 export class StatusEffectComponent {
    public readonly activeStatusEffectTypes = new Array<StatusEffect>();
@@ -109,8 +110,10 @@ function onTick(entity: Entity): void {
       switch (statusEffect) {
          case StatusEffect.burning: {
             const transformComponent = TransformComponentArray.getComponent(entity);
+            // @Hack
+            const hitbox = transformComponent.children[0] as Hitbox;
             // If the entity is in a river, clear the fire effect
-            if (transformComponent.isInRiver) {
+            if (hitboxIsInRiver(entity, hitbox)) {
                clearStatusEffect(entity, i);
             } else {
                // Fire tick
