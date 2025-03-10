@@ -22,7 +22,11 @@ import { ComponentArray } from "../ComponentArray";
 
 export interface HitboxTether {
    readonly hitbox: Hitbox;
-   readonly otherHitbox: Hitbox;
+   readonly originHitbox: Hitbox;
+
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
 }
 
 export interface EntityAttachInfo {
@@ -197,9 +201,16 @@ const readTetherFromData = (reader: PacketReader, hitbox: Hitbox, readingEntityC
    assert(otherHitbox !== null);
    assert(otherHitbox !== hitbox);
 
+   const idealDistance = reader.readNumber();
+   const springConstant = reader.readNumber();
+   const damping = reader.readNumber();
+
    return {
       hitbox: hitbox,
-      otherHitbox: otherHitbox
+      originHitbox: otherHitbox,
+      idealDistance: idealDistance,
+      springConstant: springConstant,
+      damping: damping
    };
 }
 
@@ -558,7 +569,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             const isTethered = reader.readBoolean();
             reader.padOffset(3);
             if (isTethered) {
-               reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+               reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
             }
          }
       }
@@ -683,6 +694,15 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
    hitbox.lastUpdateTicks = Board.serverTicks;
 }
 
+const getExistingTether = (transformComponent: TransformComponent, hitbox: Hitbox): HitboxTether | null => {
+   for (const tether of transformComponent.tethers) {
+      if (tether.hitbox === hitbox) {
+         return tether;
+      }
+   }
+   return null;
+}
+
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
    if (isInitialData) {
       updateFromData(reader, playerInstance!);
@@ -711,7 +731,22 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
          const isTethered = reader.readBoolean();
          reader.padOffset(3);
          if (isTethered) {
-            reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+            const existingTether = getExistingTether(transformComponent, hitbox);
+            if (existingTether === null) {
+               const tether = readTetherFromData(reader, hitbox, transformComponent.children);
+               transformComponent.tethers.push(tether);
+            } else {
+               reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+            }
+         } else {
+            // Remove the tether if possible
+            for (let i = 0; i < transformComponent.tethers.length; i++) {
+               const tether = transformComponent.tethers[i];
+               if (tether.hitbox === hitbox) {
+                  transformComponent.tethers.splice(i, 1);
+                  break;
+               }
+            }
          }
       }
    }

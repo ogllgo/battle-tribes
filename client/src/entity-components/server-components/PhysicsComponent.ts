@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { assert, customTickIntervalHasPassed, lerp, randInt } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import Board from "../../Board";
@@ -17,6 +17,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
 import { Hitbox } from "../../hitboxes";
+import { updateBox } from "../../../../shared/src/boxes/boxes";
 
 export interface PhysicsComponentParams {
    readonly traction: number;
@@ -230,6 +231,58 @@ function onTick(entity: Entity): void {
    }
 }
 
+const translateHitbox = (hitbox: Hitbox, pushX: number, pushY: number): void => {
+   if (hitbox.parent === null) {
+      // Add the raw translation here because the position is already world-relative
+      hitbox.box.position.x += pushX;
+      hitbox.box.position.y += pushY;
+   } else {
+      // We need to adjust the offset of the parent such that the position is moved by (springForceX, springForceY)
+      const rotatedSpringForceX = rotateXAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
+      const rotatedSpringForceY = rotateYAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
+
+      hitbox.box.offset.x += rotatedSpringForceX;
+      hitbox.box.offset.y += rotatedSpringForceY;
+      updateBox(hitbox.box, hitbox.parent.box.position.x, hitbox.parent.box.position.y, hitbox.parent.box.angle);
+   }
+}
+
+const applyHitboxTethers = (transformComponent: TransformComponent): void => {
+   const tethers = transformComponent.tethers;
+   
+   // Apply the spring physics
+   for (const tether of tethers) {
+      console.log(tether);
+      const hitbox = tether.hitbox;
+      const originHitbox = tether.originHitbox;
+
+      const diffX = originHitbox.box.position.x - hitbox.box.position.x;
+      const diffY = originHitbox.box.position.y - hitbox.box.position.y;
+      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+      if (distance === 0) {
+         throw new Error();
+      }
+
+      const normalisedDiffX = diffX / distance;
+      const normalisedDiffY = diffY / distance;
+
+      const displacement = distance - tether.idealDistance;
+      
+      // Calculate spring force
+      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      
+      // Apply spring force 
+      translateHitbox(hitbox, springForceX, springForceY);
+      translateHitbox(originHitbox, -springForceX, -springForceY);
+
+      // @Hack !
+      // This is so that the player's velocity matches the thing they're riding, but in reality it's not exactly equal...
+      hitbox.velocity.x = originHitbox.velocity.x;
+      hitbox.velocity.y = originHitbox.velocity.y;
+   }
+}
+
 const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityAttachInfo): void => {
    assert(entityExists(carryInfo.attachedEntity));
    
@@ -278,12 +331,14 @@ function onUpdate(entity: Entity): void {
       }
 
       // Propagate to children
-      for (const entityAttachInfo of transformComponent.children) {
-         if (entityChildIsEntity(entityAttachInfo)) {
-            tickCarriedEntity(transformComponent, entityAttachInfo);
-         }
-      }
+      // for (const entityAttachInfo of transformComponent.children) {
+      //    if (entityChildIsEntity(entityAttachInfo)) {
+      //       tickCarriedEntity(transformComponent, entityAttachInfo);
+      //    }
+      // }
    } else {
+      applyHitboxTethers(transformComponent);
+
       // The player is attached to a parent: need to snap them to the parent!
       for (const child of transformComponent.children) {
          if (entityChildIsEntity(child)) {

@@ -136,12 +136,14 @@ export function getRiderTargetPosition(rider: Entity): Point | null {
    if (PlayerComponentArray.hasComponent(rider)) {
       const playerComponent = PlayerComponentArray.getComponent(rider);
       
-      const transformComponent = TransformComponentArray.getComponent(rider);
-      const playerHitbox = transformComponent.children[0] as Hitbox;
-
-      const x = playerHitbox.box.position.x + 400 * playerComponent.movementIntention.x;
-      const y = playerHitbox.box.position.y + 400 * playerComponent.movementIntention.y;
-      return new Point(x, y);
+      if (playerComponent.movementIntention.x !== 0 || playerComponent.movementIntention.y !== 0) {
+         const transformComponent = TransformComponentArray.getComponent(rider);
+         const playerHitbox = transformComponent.children[0] as Hitbox;
+   
+         const x = playerHitbox.box.position.x + 400 * playerComponent.movementIntention.x;
+         const y = playerHitbox.box.position.y + 400 * playerComponent.movementIntention.y;
+         return new Point(x, y);
+      }
    }
 
    return null;

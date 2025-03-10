@@ -8,7 +8,7 @@ import { Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
 
 export const enum PlayerClientVars {
-   VIEW_PADDING = 128
+   VIEW_PADDING = -128
 }
 
 class PlayerClient {

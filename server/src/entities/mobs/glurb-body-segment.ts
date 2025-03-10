@@ -50,7 +50,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   transformComponent.addHitboxTether(hitbox, lastEntity, lastHitbox, tetherIdealDistance, 15, 0.5);
+   transformComponent.addHitboxTether(hitbox, lastEntity, lastHitbox, tetherIdealDistance, 15, 0.5, true);
 
    const physicsComponent = new PhysicsComponent();
 

@@ -930,6 +930,9 @@ export function updatePlayerMovement(): void {
          Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);
          Camera.velocity.y = MOVE_SPEED * Math.cos(moveDirection);
       }
+   } else {
+      playerMoveIntention.x = 0;
+      playerMoveIntention.y = 0;
    }
 }
 

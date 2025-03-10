@@ -29,6 +29,7 @@ import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { translateHitbox } from "./PhysicsComponent";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -226,27 +227,18 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headTargetDirection = angle(turnTargetX - headHitbox.box.position.x, turnTargetY - headHitbox.box.position.y);
 
-   const parentAngle = headHitbox.parent!.box.angle;
-   
    // @Hack
-   const headForce = 40 * accelerationMultiplier;
+   const headForce = 30;
    const moveX = headForce * Settings.I_TPS * Math.sin(headTargetDirection);
    const moveY = headForce * Settings.I_TPS * Math.cos(headTargetDirection);
-
-   // Counteract the body's angle
-   const rotatedMoveX = rotateXAroundOrigin(moveX, moveY, -parentAngle);
-   const rotatedMoveY = rotateYAroundOrigin(moveX, moveY, -parentAngle);
-   
-   headHitbox.box.offset.x += rotatedMoveX;
-   headHitbox.box.offset.y += rotatedMoveY;
-
-   // Rotate the head to the target
+   translateHitbox(headHitbox, moveX, moveY);
 
    // Turn the head to face the target
-   headHitbox.box.relativeAngle = turnAngle(headHitbox.box.relativeAngle, headTargetDirection - parentAngle, Vars.HEAD_TURN_SPEED);
-   // @Cleanup: should really be done in the turnAngle func
+
+   setHitboxIdealAngle(headHitbox, headTargetDirection, Vars.HEAD_TURN_SPEED);
+
+   // Restrict how far the neck can turn
    headHitbox.box.relativeAngle = cleanAngleNEW(headHitbox.box.relativeAngle);
-   // Clamp the head's relative angle (purely for visuals)
    if (headHitbox.box.relativeAngle < -0.5) {
       headHitbox.box.relativeAngle = -0.5;
    } else if (headHitbox.box.relativeAngle > 0.5) {
@@ -612,7 +604,7 @@ function onTick(cow: Entity): void {
    }
 
    // Herd AI
-   // @Incomplete: Steer the herd away from non-grasslands biomes
+   // @Incomplete: Steer the herd away from non-plains biomes
    const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);

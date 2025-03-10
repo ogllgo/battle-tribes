@@ -13,10 +13,10 @@ import { getHitboxConnectedMass, Hitbox } from "./hitboxes";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
    for (const tether of transformComponent.tethers) {
-      if (tether.hitbox === hitbox1 && tether.otherHitbox === hitbox2) {
+      if (tether.hitbox === hitbox1 && tether.originHitbox === hitbox2) {
          return true;
       }
-      if (tether.hitbox === hitbox2 && tether.otherHitbox === hitbox1) {
+      if (tether.hitbox === hitbox2 && tether.originHitbox === hitbox1) {
          return true;
       }
    }

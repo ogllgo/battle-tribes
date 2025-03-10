@@ -11,8 +11,9 @@ import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
 import { Hitbox } from "../hitboxes";
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
+import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { updateBox } from "../../../shared/src/boxes/boxes";
+import { cleanAngleNEW } from "../ai-shared";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -46,6 +47,15 @@ PhysicsComponentArray.onTick = {
    func: onTick
 };
 
+const cleanAngle = (hitbox: Hitbox): void => {
+   // Clamp angle to [-PI, PI) range
+   if (hitbox.box.angle < -Math.PI) {
+      hitbox.box.angle += Math.PI * 2;
+   } else if (hitbox.box.angle >= Math.PI) {
+      hitbox.box.angle -= Math.PI * 2;
+   }
+}
+
 const cleanRelativeAngle = (hitbox: Hitbox): void => {
    // Clamp angle to [-PI, PI) range
    if (hitbox.box.relativeAngle < -Math.PI) {
@@ -66,11 +76,12 @@ const turnHitbox = (entity: Entity, hitbox: Hitbox, transformComponent: Transfor
       transformComponent.isDirty = true;
       registerDirtyEntity(entity);
    } else {
+      cleanAngle(hitbox);
       cleanRelativeAngle(hitbox);
 
-      const previousAngle = hitbox.box.relativeAngle;
+      const previousRelativeAngle = hitbox.box.relativeAngle;
       
-      let clockwiseDist = hitbox.idealAngle - hitbox.box.relativeAngle;
+      let clockwiseDist = hitbox.idealAngle - hitbox.box.angle;
       if (clockwiseDist < 0) {
          clockwiseDist += 2 * Math.PI;
       } else if (clockwiseDist >= 2 * Math.PI) {
@@ -78,25 +89,34 @@ const turnHitbox = (entity: Entity, hitbox: Hitbox, transformComponent: Transfor
       }
 
       if (clockwiseDist <= Math.PI) {  
+         // (Must record it before the relative angle is increased)
+         const parentAngle = (hitbox.box.angle - hitbox.box.relativeAngle);
+         
          hitbox.box.relativeAngle += hitbox.angleTurnSpeed * Settings.I_TPS;
          // If the entity would turn past the target direction, snap back to the target direction
          if (hitbox.angleTurnSpeed * Settings.I_TPS > clockwiseDist) {
-            hitbox.box.relativeAngle = hitbox.idealAngle;
+            hitbox.box.relativeAngle = hitbox.idealAngle - parentAngle;
          }
       } else {
          const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
+         // (Must record it before the relative angle is decreased)
+         const parentAngle = (hitbox.box.angle - hitbox.box.relativeAngle);
          
          hitbox.box.relativeAngle -= hitbox.angleTurnSpeed * Settings.I_TPS
          // If the entity would turn past the target direction, snap back to the target direction
          if (hitbox.angleTurnSpeed * Settings.I_TPS > anticlockwiseDist) {
-            hitbox.box.relativeAngle = hitbox.idealAngle;
+            hitbox.box.relativeAngle = hitbox.idealAngle - parentAngle;
          }
       }
 
       // @Incomplete: Floating point inconsistencies might shittify this check.
-      if (hitbox.box.relativeAngle !== previousAngle) {
+      if (hitbox.box.relativeAngle !== previousRelativeAngle) {
          transformComponent.isDirty = true;
          registerDirtyEntity(entity);
+      }
+
+      if (getAbsAngleDiff(previousRelativeAngle, hitbox.box.relativeAngle) > hitbox.angleTurnSpeed + 0.001) {
+         throw new Error("Hitbox turned more than it should have!");
       }
    }
 }
@@ -218,15 +238,15 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
    }
 }
 
-const pushHitbox = (hitbox: Hitbox, springForceX: number, springForceY: number): void => {
+export function translateHitbox(hitbox: Hitbox, pushX: number, pushY: number): void {
    if (hitbox.parent === null) {
-      // Add the raw spring force here because the position is already world-relative
-      hitbox.box.position.x += springForceX;
-      hitbox.box.position.y += springForceY;
+      // Add the raw translation here because the position is already world-relative
+      hitbox.box.position.x += pushX;
+      hitbox.box.position.y += pushY;
    } else {
       // We need to adjust the offset of the parent such that the position is moved by (springForceX, springForceY)
-      const rotatedSpringForceX = rotateXAroundOrigin(springForceX, springForceY, -hitbox.parent.box.angle);
-      const rotatedSpringForceY = rotateYAroundOrigin(springForceX, springForceY, -hitbox.parent.box.angle);
+      const rotatedSpringForceX = rotateXAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
+      const rotatedSpringForceY = rotateYAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
 
       hitbox.box.offset.x += rotatedSpringForceX;
       hitbox.box.offset.y += rotatedSpringForceY;
@@ -240,10 +260,10 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    // Apply the spring physics
    for (const tether of tethers) {
       const hitbox = tether.hitbox;
-      const otherHitbox = tether.otherHitbox;
+      const originHitbox = tether.originHitbox;
 
-      const diffX = otherHitbox.box.position.x - hitbox.box.position.x;
-      const diffY = otherHitbox.box.position.y - hitbox.box.position.y;
+      const diffX = originHitbox.box.position.x - hitbox.box.position.x;
+      const diffY = originHitbox.box.position.y - hitbox.box.position.y;
       const distance = Math.sqrt(diffX * diffX + diffY * diffY);
 
       const normalisedDiffX = diffX / distance;
@@ -256,8 +276,44 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
       
       // Apply spring force 
-      pushHitbox(hitbox, springForceX, springForceY);
-      pushHitbox(otherHitbox, -springForceX, -springForceY);
+      translateHitbox(hitbox, springForceX, springForceY);
+      if (tether.affectsOriginHitbox) {
+         translateHitbox(originHitbox, -springForceX, -springForceY);
+      }
+
+      // Angular tether
+      if (typeof tether.angularTether !== "undefined") {
+         const idealDirection = originHitbox.box.angle;
+         const tetherDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+         const diff = cleanAngleNEW(tetherDirection - idealDirection);
+
+         if (Math.abs(diff) > tether.angularTether.padding) {
+            const rotationForce = (diff - tether.angularTether.padding * Math.sign(diff)) * tether.angularTether.springConstant * Settings.I_TPS;
+   
+            originHitbox.box.relativeAngle += rotationForce;
+            
+            // hitbox.box.relativeAngle -= rotationForce;
+   
+            // We want to rotate the hitbox by -rotationForce relative to the originHitbox. But if the origin hitbox is the hitbox' parent, then we need to subtract it twice to counteract it.
+            // const rotationalOffsetForce = -rotationForce * (hitbox.parent === originHitbox ? 2 : 1);
+            const rotationalOffsetForce = -rotationForce;
+            
+            const currentOffsetX = hitbox.box.position.x - originHitbox.box.position.x;
+            const currentOffsetY = hitbox.box.position.y - originHitbox.box.position.y;
+            const newOffsetX = rotateXAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
+            const newOffsetY = rotateYAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
+            const moveX = newOffsetX - currentOffsetX;
+            const moveY = newOffsetY - currentOffsetY;
+            translateHitbox(hitbox, moveX, moveY);
+   
+            // {
+            //    const idealDirection = originHitbox.box.angle;
+            //    const tetherDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+            //    const after = cleanAngleNEW(tetherDirection - idealDirection);
+            //    console.log(diff,after,rotationForce);
+            // }
+         }
+      }
    }
 
    // Verlet integration

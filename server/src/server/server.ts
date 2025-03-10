@@ -54,22 +54,21 @@ const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean =
    return false;
 }
 
-const addEntityHierarchy = (entities: Set<Entity>, entity: Entity): void => {
-   entities.add(entity);
+const addEntityHierarchy = (playerClient: PlayerClient, entitiesToSend: Set<Entity>, entity: Entity): void => {
+   playerClient.visibleEntities.add(entity);
+   entitiesToSend.add(entity);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    for (const child of transformComponent.children) {
       if (entityChildIsEntity(child)) {
-         addEntityHierarchy(entities, child.attachedEntity);
+         addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
       }
    }
 }
 
-const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
+const updatePlayerVisibleEntities = (playerClient: PlayerClient, entitiesToSend: Set<Entity>): void => {
    const layer = playerClient.lastLayer;
    
-   const entities = new Set<Entity>();
-      
    // @Copynpaste
    const minVisibleX = playerClient.lastViewedPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
    const maxVisibleX = playerClient.lastViewedPositionX + playerClient.screenWidth * 0.5 + PlayerClientVars.VIEW_PADDING;
@@ -80,20 +79,18 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
       for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
-            if (entityIsHiddenFromPlayer(entity, playerClient.tribe)) {
+            if (playerClient.visibleEntities.has(entity) || entityIsHiddenFromPlayer(entity, playerClient.tribe)) {
                continue;
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
-               addEntityHierarchy(entities, transformComponent.rootEntity);
+               addEntityHierarchy(playerClient, entitiesToSend, transformComponent.rootEntity);
             }
          }
       }
    }
-
-   return entities;
 }
 
 const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, screenHeight: number): VisibleChunkBounds => {
@@ -162,9 +159,9 @@ class GameServer {
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - a)
       a = performance.now();
-      // generateGrassStrands();
-      // console.log("grass",performance.now() - a)
-      // a = performance.now();
+      generateGrassStrands();
+      console.log("grass",performance.now() - a)
+      a = performance.now();
       generateDecorations();
       console.log("decorations",performance.now() - a)
       a = performance.now();
@@ -459,17 +456,9 @@ class GameServer {
             playerClient.lastLayer = getEntityLayer(viewedEntity);
          }
       
-         const visibleEntities = getPlayerVisibleEntities(playerClient);
-         
          const entitiesToSend = new Set<Entity>();
-
-         // Send all newly visible entities
-         // @Speed
-         for (const visibleEntity of visibleEntities) {
-            if (!playerClient.visibleEntities.has(visibleEntity)) {
-               entitiesToSend.add(visibleEntity);
-            }
-         }
+         
+         updatePlayerVisibleEntities(playerClient, entitiesToSend);
 
          // Send dirty entities
          for (const entity of playerClient.visibleDirtiedEntities) {
@@ -487,8 +476,6 @@ class GameServer {
          // Send the game data to the player
          const gameDataPacket = createGameDataPacket(playerClient, entitiesToSend);
          playerClient.socket.send(gameDataPacket);
-
-         playerClient.visibleEntities = visibleEntities;
 
          // @Cleanup: should these be here?
          playerClient.visibleHits = [];
