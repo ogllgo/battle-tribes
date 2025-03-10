@@ -499,7 +499,7 @@ function onRemove(yeti: Entity): void {
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

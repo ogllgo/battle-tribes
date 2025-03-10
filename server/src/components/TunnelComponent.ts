@@ -187,7 +187,7 @@ export function toggleTunnelDoor(tunnel: Entity, doorBit: number): void {
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

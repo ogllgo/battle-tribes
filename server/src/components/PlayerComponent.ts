@@ -42,7 +42,7 @@ function onDeath(entity: Entity, _attackingEntity: Entity | null, damageSource: 
 
 function getDataLength(entity: Entity): number {
    const playerComponent = PlayerComponentArray.getComponent(entity);
-   return Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(playerComponent.client.username);
+   return getStringLengthBytes(playerComponent.client.username);
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

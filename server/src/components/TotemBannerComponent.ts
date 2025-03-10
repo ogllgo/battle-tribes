@@ -57,7 +57,7 @@ function getDataLength(entity: Entity): number {
    const totemBannerComponent = TotemBannerComponentArray.getComponent(entity);
 
    const numBanners = Object.keys(totemBannerComponent.banners).length;
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * numBanners;
+   return Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * numBanners;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

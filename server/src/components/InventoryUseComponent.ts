@@ -444,7 +444,7 @@ export function addCrossbowLoadProgressRecordToPacket(packet: Packet, useInfo: L
 function getDataLength(entity: Entity): number {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    for (const useInfo of inventoryUseComponent.limbInfos) {
       lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;

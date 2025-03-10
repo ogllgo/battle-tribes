@@ -16,7 +16,7 @@ export const PlantedComponentArray = new ComponentArray<PlantedComponent>(Server
 PlantedComponentArray.onRemove = onRemove;
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

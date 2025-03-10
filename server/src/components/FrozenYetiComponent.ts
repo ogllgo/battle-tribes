@@ -658,8 +658,8 @@ function onTick(frozenYeti: Entity): void {
 function getDataLength(entity: Entity): number {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
 
-   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 2 *Float32Array.BYTES_PER_ELEMENT * frozenYetiComponent.rockSpikeInfoArray.length;
+   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * frozenYetiComponent.rockSpikeInfoArray.length;
 
    return lengthBytes;
 }

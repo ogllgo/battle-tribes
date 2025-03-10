@@ -54,6 +54,7 @@ export function getEntityDataLength(entity: Entity, player: Entity | null): numb
       const componentArray = ComponentArrays[i];
 
       if (componentArray.hasComponent(entity)) {
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT; // Component type
          lengthBytes += componentArray.getDataLength(entity, player);
       }
    }
@@ -91,8 +92,8 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
          componentArray.addDataToPacket(packet, entity, player);
 
          // @Speed
-         if (packet.currentByteOffset - start !== componentArray.getDataLength(entity, player)) {
-            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
+         if (packet.currentByteOffset - start !== (Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player))) {
+            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
          }
       }
    }

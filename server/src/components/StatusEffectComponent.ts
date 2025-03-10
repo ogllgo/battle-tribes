@@ -168,7 +168,7 @@ function onTick(entity: Entity): void {
 
 function getDataLength(entity: Entity): number {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * statusEffectComponent.activeStatusEffectTypes.length;
+   return Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * statusEffectComponent.activeStatusEffectTypes.length;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

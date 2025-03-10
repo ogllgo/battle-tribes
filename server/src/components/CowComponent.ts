@@ -641,7 +641,7 @@ function onTick(cow: Entity): void {
 }
 
 function getDataLength(): number {
-   return 5 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

@@ -27,7 +27,7 @@ AttackingEntitiesComponentArray.onTakeDamage = onTakeDamage;
 
 function getDataLength(entity: Entity): number {
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 3 * attackingEntitiesComponent.attackingEntities.size * Float32Array.BYTES_PER_ELEMENT;
+   return Float32Array.BYTES_PER_ELEMENT + 3 * attackingEntitiesComponent.attackingEntities.size * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

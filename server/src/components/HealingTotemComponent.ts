@@ -114,7 +114,7 @@ function onTick(healingTotem: Entity): void {
 function getDataLength(entity: Entity): number {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
 
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT * healingTotemComponent.healTargetIDs.length;
 
    return lengthBytes;

@@ -60,7 +60,7 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

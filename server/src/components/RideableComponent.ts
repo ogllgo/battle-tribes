@@ -36,7 +36,7 @@ export function createCarrySlot(parentHitbox: Hitbox, offsetX: number, offsetY: 
 
 function getDataLength(entity: Entity): number {
    const rideableComponent = RideableComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
+   return Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

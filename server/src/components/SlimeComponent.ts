@@ -304,7 +304,7 @@ function onTick(slime: Entity): void {
 function getDataLength(entity: Entity): number {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
-   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT * slimeComponent.orbSizes.length;
 

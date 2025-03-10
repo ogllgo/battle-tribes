@@ -51,7 +51,7 @@ function onTick(entity: Entity): void {
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToComponent(packet: Packet, entity: Entity): void {

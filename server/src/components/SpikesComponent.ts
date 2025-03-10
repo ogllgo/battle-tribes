@@ -10,7 +10,7 @@ export class SpikesComponent {
 export const SpikesComponentArray = new ComponentArray<SpikesComponent>(ServerComponentType.spikes, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
-   return 2 * Float32Array.BYTES_PER_ELEMENT;
+   return Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

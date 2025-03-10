@@ -38,7 +38,7 @@ export const TamingComponentArray = new ComponentArray<TamingComponent>(ServerCo
 
 function getDataLength(entity: Entity): number {
    const tamingComponent = TamingComponentArray.getComponent(entity);
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(tamingComponent.name);
+   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(tamingComponent.name);
 
    // Acquired skills
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * tamingComponent.acquiredSkills.length;

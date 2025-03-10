@@ -673,7 +673,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const child of transformComponent.children) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;

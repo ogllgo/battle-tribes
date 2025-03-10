@@ -90,7 +90,7 @@ export function entityWantsToFollow(followAIComponent: FollowAIComponent): boole
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

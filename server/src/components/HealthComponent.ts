@@ -244,7 +244,7 @@ export function removeDefence(healthComponent: HealthComponent, name: string): v
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entityID: number): void {
