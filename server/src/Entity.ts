@@ -7,13 +7,16 @@ import { addEntityToJoinBuffer } from "./world";
 
 // @Cleanup: Rename this file
 
+// We skip 0 as that is reserved for being a no-entity marker
+let idCounter = 1;
+
 // @Hack @Cleanup ?@Speed
 const getComponentTypes = (componentConfig: EntityConfig): ReadonlyArray<ServerComponentType> => {
    return Object.keys(componentConfig.components).map(Number) as Array<ServerComponentType>;
 }
 
-export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): void {
-   const entity = entityConfig.entity;
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): Entity {
+   const entity = idCounter++;
    
    // @Hack
    const componentTypes = getComponentTypes(entityConfig);
@@ -40,6 +43,14 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
       componentArray.addComponent(entity, component, joinDelayTicks);
    }
 
-   // @Hack: cast
-   addEntityToJoinBuffer(entityConfig, layer, componentTypes, joinDelayTicks);
+   addEntityToJoinBuffer(entity, entityConfig, layer, componentTypes, joinDelayTicks);
+
+   // @Hack? Should the child configs just be handled on the entity config when adding it to the world?
+   if (typeof entityConfig.childConfigs !== "undefined") {
+      for (const childEntityConfig of entityConfig.childConfigs) {
+         createEntity(childEntityConfig, layer, joinDelayTicks);
+      }
+   }
+
+   return entity;
 }

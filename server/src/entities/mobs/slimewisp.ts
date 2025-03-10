@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -38,9 +38,9 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
    
    const slimewispComponent = new SlimewispComponent();
    
-   return createEntityConfig(
-      EntityType.slimewisp,
-      {
+   return {
+      entityType: EntityType.slimewisp,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -48,6 +48,6 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.slimewisp]: slimewispComponent
       },
-      []
-   );
+      lights: []
+   };
 }

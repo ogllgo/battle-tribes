@@ -1,6 +1,6 @@
 import { assert, Point } from "battletribes-shared/utils";
 import Board from "./Board";
-import { entityExists, getEntityLayer, getEntityRenderInfo } from "./world";
+import { getEntityLayer } from "./world";
 import { createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./rendering/matrices";
 import Layer from "./Layer";
 import { Entity } from "../../shared/src/entities";

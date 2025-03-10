@@ -1,15 +1,14 @@
-import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
-import { assert, getTileIndexIncludingEdges, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
+import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
-import { TileType } from "battletribes-shared/tiles";
-import { PhysicsComponentArray, tickEntityPhysics } from "./PhysicsComponent";
+import { tickEntityPhysics } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
@@ -32,8 +31,6 @@ interface AngularTetherInfo {
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
-   /** If null, the tether is between the same entity */
-   readonly originEntity: Entity | null;
    readonly originHitbox: Hitbox;
    
    readonly idealDistance: number;
@@ -107,10 +104,9 @@ export class TransformComponent {
 
    public nextHitboxLocalID = 1;
 
-   public addHitboxTether(hitbox: Hitbox, otherEntity: Entity | null, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, angularTether?: AngularTetherInfo): void {
+   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, angularTether?: AngularTetherInfo): void {
       const tether: HitboxTether = {
          hitbox: hitbox,
-         originEntity: otherEntity,
          originHitbox: otherHitbox,
          idealDistance: idealDistance,
          springConstant: springConstant,
@@ -655,8 +651,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
             packet.addBoolean(true);
             packet.padOffset(3);
    
-            packet.addNumber(tether.originEntity !== null ? tether.originEntity : 0);
-            packet.addNumber(tether.originHitbox.localID);
+            addHitboxDataToPacket(packet, tether.originHitbox);
             packet.addNumber(tether.idealDistance);
             packet.addNumber(tether.springConstant);
             packet.addNumber(tether.damping);
@@ -694,7 +689,8 @@ function getDataLength(entity: Entity): number {
          }
    
          if (typeof tether !== "undefined") {
-            lengthBytes += 5 * Float32Array.BYTES_PER_ELEMENT;
+            lengthBytes += getHitboxDataLength(tether.originHitbox);
+            lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
          }
       }
    }
@@ -760,7 +756,7 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
       // Attach all root hitboxes to the parent hitbox
       for (const rootHitbox of entityTransformComponent.rootChildren) {
          if (entityChildIsHitbox(rootHitbox)) {
-            entityTransformComponent.addHitboxTether(rootHitbox, parent, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
+            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
          }
       }
    }
@@ -971,4 +967,21 @@ export function entityTreeHasComponent(componentArray: ComponentArray, entity: E
 export function getRootEntity(entity: Entity): Entity {
    const transformComponent = TransformComponentArray.getComponent(entity);
    return transformComponent.rootEntity;
+}
+
+/** Attempts to return the first hitbox which can be found in the transform component or any of its parents */
+export function getTransformComponentFirstHitbox(transformComponent: TransformComponent): Hitbox | null {
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         const childFirstHitbox = getTransformComponentFirstHitbox(childTransformComponent);
+         if (childFirstHitbox !== null) {
+            return childFirstHitbox;
+         }
+      } else {
+         return child;
+      }
+   }
+
+   return null;
 }

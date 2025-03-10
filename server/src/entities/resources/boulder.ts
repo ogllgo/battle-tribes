@@ -3,7 +3,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -34,15 +34,15 @@ export function createBoulderConfig(position: Point, rotation: number): EntityCo
    
    const boulderComponent = new BoulderComponent();
    
-   return createEntityConfig(
-      EntityType.boulder,
-      {
+   return {
+      entityType: EntityType.boulder,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.boulder]: boulderComponent
       },
-      []
-   );
+      lights: []
+   };
 }

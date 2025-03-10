@@ -173,60 +173,56 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
 
    const angle = 2 * Math.PI * Math.random();
    
-   let configs: ReadonlyArray<EntityConfig> | null;
+   let config: EntityConfig | null;
    switch (entityType) {
-      case EntityType.cow: configs = [createCowConfig(new Point(x, y), angle)]; break;
-      case EntityType.tree: configs = [createTreeConfig(new Point(x, y), angle)]; break;
-      case EntityType.berryBush: configs = [createBerryBushConfig(new Point(x, y), angle)]; break;
-      case EntityType.tombstone: configs = [createTombstoneConfig(new Point(x, y), angle)]; break;
-      case EntityType.boulder: configs = [createBoulderConfig(new Point(x, y), angle)]; break;
-      case EntityType.cactus: configs = [createCactusConfig(new Point(x, y), angle)]; break;
+      case EntityType.cow: config = createCowConfig(new Point(x, y), angle); break;
+      case EntityType.tree: config = createTreeConfig(new Point(x, y), angle); break;
+      case EntityType.berryBush: config = createBerryBushConfig(new Point(x, y), angle); break;
+      case EntityType.tombstone: config = createTombstoneConfig(new Point(x, y), angle); break;
+      case EntityType.boulder: config = createBoulderConfig(new Point(x, y), angle); break;
+      case EntityType.cactus: config = createCactusConfig(new Point(x, y), angle); break;
       case EntityType.yeti: {
          const tileX = Math.floor(x / Settings.TILE_SIZE);
          const tileY = Math.floor(y / Settings.TILE_SIZE);
          const territory = generateYetiTerritoryTiles(tileX, tileY);
          if (yetiTerritoryIsValid(territory)) {
-            configs = [createYetiConfig(new Point(x, y), angle, territory)];
+            config = createYetiConfig(new Point(x, y), angle, territory);
          } else {
-            configs = null;
+            config = null;
          }
          break;
       }
-      case EntityType.iceSpikes: configs = [createIceSpikesConfig(new Point(x, y), angle, 0)]; break;
-      case EntityType.slimewisp: configs = [createSlimewispConfig(new Point(x, y), angle)]; break;
+      case EntityType.iceSpikes: config = createIceSpikesConfig(new Point(x, y), angle, 0); break;
+      case EntityType.slimewisp: config = createSlimewispConfig(new Point(x, y), angle); break;
       // @TEMPORARY
-      case EntityType.slime: configs = [createSlimeConfig(new Point(x, y), angle, SlimeSize.small)]; break;
-      case EntityType.krumblid: configs = [createKrumblidConfig(new Point(x, y), angle)]; break;
-      case EntityType.frozenYeti: configs = [createFrozenYetiConfig(new Point(x, y), angle)]; break;
-      case EntityType.fish: configs = [createFishConfig(new Point(x, y), angle)]; break;
-      case EntityType.lilypad: configs = [createLilypadConfig(new Point(x, y), angle)]; break;
-      case EntityType.golem: configs = [createGolemConfig(new Point(x, y), angle)]; break;
-      case EntityType.tribeWorker: configs = [createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)))]; break;
-      case EntityType.glurb: configs = createGlurbConfig(x, y, angle); break;
+      case EntityType.slime: config = createSlimeConfig(new Point(x, y), angle, SlimeSize.small); break;
+      case EntityType.krumblid: config = createKrumblidConfig(new Point(x, y), angle); break;
+      case EntityType.frozenYeti: config = createFrozenYetiConfig(new Point(x, y), angle); break;
+      case EntityType.fish: config = createFishConfig(new Point(x, y), angle); break;
+      case EntityType.lilypad: config = createLilypadConfig(new Point(x, y), angle); break;
+      case EntityType.golem: config = createGolemConfig(new Point(x, y), angle); break;
+      case EntityType.tribeWorker: config = createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
+      case EntityType.glurb: config = createGlurbConfig(x, y, angle); break;
       // @TEMPORARY
-      case EntityType.mithrilOreNode: configs = createGlurbConfig(x, y, angle); break;
+      case EntityType.mithrilOreNode: config = createGlurbConfig(x, y, angle); break;
    }
 
-   if (configs === null) {
+   if (config === null) {
       return;
    }
 
    // @Cleanup: should this be done here, or automatically as the hitboxes are created
 
-   for (const config of configs) {
-      const transformComponent = config.components[ServerComponentType.transform];
-      if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(layer, transformComponent)) {
-         return;
-      }
+   const transformComponent = config.components[ServerComponentType.transform];
+   if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(layer, transformComponent)) {
+      return;
    }
 
-   for (const config of configs) {
-      // Create the entity
-      createEntity(config, layer, 0);
-      addEntityToCensus(config.entity, entityType);
-      if (!SERVER.isRunning) {
-         pushJoinBuffer(false);
-      }
+   // Create the entity
+   const entity = createEntity(config, layer, 0);
+   addEntityToCensus(entity, entityType);
+   if (!SERVER.isRunning) {
+      pushJoinBuffer(false);
    }
 }
 
@@ -410,11 +406,8 @@ export function spawnInitialEntities(): void {
       // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
       // createEntity(config, surfaceLayer, 0);
       // if(1+1===2)return;
-      const configs = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
-      // @Hack
-      for (const config of configs) {
-         createEntity(config, surfaceLayer, 0);
-      }
+      const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
+      createEntity(config, surfaceLayer, 0);
 
       if(1+1===2)return;
       

@@ -213,6 +213,7 @@ export default class Layer {
    }
 
    public getTileLocalBiome(tileIndex: TileIndex): LocalBiome {
+      // @Bug: this '!' is causing problems . . .
       return this.tileToLocalBiomeRecord[tileIndex]!;
    }
 

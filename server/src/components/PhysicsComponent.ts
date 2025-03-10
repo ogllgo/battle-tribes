@@ -331,8 +331,10 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    //    hitbox.box.position.y += velocityY;
    // }
 
-   // @Speed: Is this necessary every tick?
-   transformComponent.isDirty = true;
+   if (tethers.length > 0) {
+      // @Speed: Is this necessary every tick?
+      transformComponent.isDirty = true;
+   }
 }
 
 // @Hack: this function used to be called from the physicscomponent, but I realised that all entities need to tick this regardless, so it's now called from the transformcomponent's onTick function. but it's still here, i guess.
@@ -344,9 +346,12 @@ export function tickEntityPhysics(entity: Entity): void {
          turnHitbox(entity, child, transformComponent);
       }
    }
-   for (const rootChild of transformComponent.rootChildren) {
-      if (entityChildIsHitbox(rootChild)) {
-         applyHitboxKinematics(entity, rootChild, transformComponent, physicsComponent);
+   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
+   if (PhysicsComponentArray.hasComponent(entity)) {
+      for (const rootChild of transformComponent.rootChildren) {
+         if (entityChildIsHitbox(rootChild)) {
+            applyHitboxKinematics(entity, rootChild, transformComponent, physicsComponent);
+         }
       }
    }
    applyHitboxTethers(transformComponent);

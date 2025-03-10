@@ -97,7 +97,7 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    hitbox.angleTurnSpeed = angleTurnSpeed;
    return hitbox;
 }
-export function padHitboxData(reader: PacketReader): void {
+export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    padBoxData(reader);
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
@@ -148,7 +148,7 @@ export function updateBoxFromData(box: Box, reader: PacketReader): void {
    }
 }
 
-export function updateHitboxFromData(hitbox: Hitbox, reader: PacketReader): void {
+export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: PacketReader): void {
    updateBoxFromData(hitbox.box, reader);
 
    hitbox.velocity.x = reader.readNumber();

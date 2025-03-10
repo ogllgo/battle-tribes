@@ -6,7 +6,7 @@ import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from ".
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -32,17 +32,17 @@ export function createBattleaxeProjectileConfig(position: Point, rotation: numbe
    
    const battleaxeProjectileComponent = new BattleaxeProjectileComponent();
    
-   return createEntityConfig(
-      EntityType.battleaxeProjectile,
-      {
+   return {
+      entityType: EntityType.battleaxeProjectile,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.battleaxeProjectile]: battleaxeProjectileComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 // export function onBattleaxeProjectileCollision(battleaxe: Entity, collidingEntity: Entity, collisionPoint: Point): void {

@@ -69,11 +69,11 @@ const spawnMithrilOre = (layer: Layer, x: number, y: number, direction: number, 
    const renderHeight = (2 - currentDepth) * 0.5 + Math.random() * 0.1;
 
    const config = createMithrilOreNodeConfig(new Point(x, y), direction + randFloat(-0.1, 0.1), size, variant, children, renderHeight);
-   createEntity(config, layer, 0);
+   const oreNode = createEntity(config, layer, 0);
    
    pushJoinBuffer(false);
 
-   return config.entity;
+   return oreNode;
 }
 
 const canSpawnMithrilOre = (layer: Layer, subtileX: number, subtileY: number, moveDirX: number, moveDirY: number): boolean => {

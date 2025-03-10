@@ -5,7 +5,7 @@ import { BlockType, ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
 import { Point } from "../../../shared/src/utils";
-import { createEntityConfig, createEntityConfigAttachInfo, EntityConfig } from "../components";
+import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { BlockAttackComponent } from "../components/BlockAttackComponent";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
@@ -32,14 +32,14 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const ownerTransformComponent = TransformComponentArray.getComponent(owner);
    const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
    
-   return createEntityConfig(
-      EntityType.blockAttack,
-      {
+   return {
+      entityType: EntityType.blockAttack,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.blockAttack]: blockAttackComponent
       },
-      [],
-      createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
-   );
+      lights: [],
+      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
+   };
 }

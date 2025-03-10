@@ -5,7 +5,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -35,15 +35,15 @@ export function createIceSpikesConfig(position: Point, rotation: number, rootIce
    
    const iceSpikesComponent = new IceSpikesComponent(rootIceSpikes);
    
-   return createEntityConfig(
-      EntityType.iceSpikes,
-      {
+   return {
+      entityType: EntityType.iceSpikes,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.iceSpikes]: iceSpikesComponent
       },
-      []
-   );
+      lights: []
+   };
 }

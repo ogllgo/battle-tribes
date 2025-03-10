@@ -6,7 +6,7 @@ import { EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { Point } from "../../../../shared/src/utils";
-import { createEntityConfig, EntityConfig, LightCreationInfo } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { GlurbHeadSegmentComponent } from "../../components/GlurbHeadSegmentComponent";
@@ -53,9 +53,9 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
       attachedHitbox: hitbox
    }];
 
-   return createEntityConfig(
-      EntityType.glurbHeadSegment,
-      {
+   return {
+      entityType: EntityType.glurbHeadSegment,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -65,6 +65,6 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent
       },
-      lights
-   );
+      lights: lights
+   };
 }

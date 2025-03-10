@@ -252,7 +252,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    
    // Apply the spring physics
    for (const tether of tethers) {
-      console.log(tether);
       const hitbox = tether.hitbox;
       const originHitbox = tether.originHitbox;
 

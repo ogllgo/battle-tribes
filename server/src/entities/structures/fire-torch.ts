@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
@@ -34,9 +34,9 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
    
    const fireTorchComponent = new FireTorchComponent();
    
-   return createEntityConfig(
-      EntityType.fireTorch,
-      {
+   return {
+      entityType: EntityType.fireTorch,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.fireTorch]: fireTorchComponent
       },
-      []
-   );
+      lights: []
+   };
 }

@@ -91,9 +91,8 @@ export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: Pl
          break;
       }
    }
-   createEntity(config, getEntityLayer(planterBox), 0);
-
-   planterBoxComponent.plant = config.entity;
+   planterBoxComponent.plant = createEntity(config, getEntityLayer(planterBox), 0);
+   
    planterBoxComponent.replantEntityType = plantedEntityType;
 }
 

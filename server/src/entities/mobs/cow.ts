@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -102,7 +102,7 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
    // Head hitbox
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
-   transformComponent.addHitboxTether(headHitbox, null, bodyHitbox, 50, 5, 0.4, true, {
+   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, {
       springConstant: 5,
       angularDamping: 0,
       padding: Math.PI * 0.1
@@ -132,9 +132,9 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
    
    const cowComponent = new CowComponent();
    
-   return createEntityConfig(
-      EntityType.cow,
-      {
+   return {
+      entityType: EntityType.cow,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -148,6 +148,6 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.cow]: cowComponent
       },
-      []
-   );
+      lights: []
+   };
 }

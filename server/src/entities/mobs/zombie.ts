@@ -8,7 +8,7 @@ import { addInventoryToInventoryComponent, InventoryComponent } from "../../comp
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -74,9 +74,9 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
 
    const lootComponent = new LootComponent();
    
-   return createEntityConfig(
-      EntityType.zombie,
-      {
+   return {
+      entityType: EntityType.zombie,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -87,8 +87,8 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.loot]: lootComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function onZombieVisibleEntityHurt(zombie: Entity, hurtEntity: Entity): void {

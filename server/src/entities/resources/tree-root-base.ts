@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point, randInt } from "../../../../shared/src/utils";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -34,15 +34,15 @@ export function createTreeRootBaseConfig(position: Point, rotation: number): Ent
    
    const treeRootBaseComponent = new TreeRootBaseComponent();
    
-   return createEntityConfig(
-      EntityType.treeRootBase,
-      {
+   return {
+      entityType: EntityType.treeRootBase,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.treeRootBase]: treeRootBaseComponent
       },
-      []
-   );
+      lights: []
+   };
 }

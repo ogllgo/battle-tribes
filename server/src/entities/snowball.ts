@@ -5,7 +5,7 @@ import { Point, randFloat, randSign } from "battletribes-shared/utils";
 import { HealthComponent } from "../components/HealthComponent";
 import { SnowballComponent } from "../components/SnowballComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -30,15 +30,15 @@ export function createSnowballConfig(position: Point, rotation: number, yeti: En
    
    const snowballComponent = new SnowballComponent(yeti, size);
    
-   return createEntityConfig(
-      EntityType.snowball,
-      {
+   return {
+      entityType: EntityType.snowball,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.snowball]: snowballComponent
       },
-      []
-   );
+      lights: []
+   };
 }

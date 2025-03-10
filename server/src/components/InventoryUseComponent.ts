@@ -307,8 +307,7 @@ function onTick(entity: Entity): void {
                limb.currentActionEndLimbState = copyLimbState(attackPattern.swung);
                
                const swingAttackConfig = createSwingAttackConfig(new Point(0, 0), 0, entity, limb);
-               limb.swingAttack = swingAttackConfig.entity;
-               createEntity(swingAttackConfig, getEntityLayer(entity), 0);
+               limb.swingAttack = createEntity(swingAttackConfig, getEntityLayer(entity), 0);
                break;
             }
             case LimbAction.attack: {

@@ -228,16 +228,14 @@ export interface EntityConfigAttachInfo {
 }
 
 export interface EntityConfig {
-   readonly entity: Entity;
    readonly entityType: EntityType;
    readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
    readonly attachInfo?: EntityConfigAttachInfo;
+   /** Any child entities' configs. */
+   readonly childConfigs?: ReadonlyArray<EntityConfig>;
 }
-
-// We skip 0 as that is reserved for being a no-entity marker
-let idCounter = 1;
 
 export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, offset: Point, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
    return {
@@ -245,15 +243,5 @@ export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbo
       parentHitbox: parentHitbox,
       offset: offset,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
-   };
-}
-
-export function createEntityConfig(entityType: EntityType, components: EntityComponents, lights: ReadonlyArray<LightCreationInfo>, attachInfo?: EntityConfigAttachInfo): EntityConfig {
-   return {
-      entity: idCounter++,
-      entityType: entityType,
-      components: components,
-      lights: lights,
-      attachInfo: attachInfo
    };
 }

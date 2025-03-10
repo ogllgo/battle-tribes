@@ -7,7 +7,7 @@ import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hit
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
@@ -23,14 +23,14 @@ export function createSpitPoisonAreaConfig(position: Point, rotation: number): E
    
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();
    
-   return createEntityConfig(
-      EntityType.spitPoisonArea,
-      {
+   return {
+      entityType: EntityType.spitPoisonArea,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.spitPoisonArea]: spitPoisonAreaComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function onSpitPoisonCollision(spit: Entity, collidingEntity: Entity, collisionPoint: Point): void {

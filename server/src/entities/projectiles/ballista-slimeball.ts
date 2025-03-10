@@ -6,7 +6,7 @@ import { HealthComponentArray, hitEntity } from "../../components/HealthComponen
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ItemType } from "battletribes-shared/items/items";
@@ -31,16 +31,16 @@ export function createBallistaSlimeballConfig(position: Point, rotation: number,
 
    const projectileComponent = new ProjectileComponent(creator);
    
-   return createEntityConfig(
-      EntityType.ballistaSlimeball,
-      {
+   return {
+      entityType: EntityType.ballistaSlimeball,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 // @Cleanup: Copy and paste

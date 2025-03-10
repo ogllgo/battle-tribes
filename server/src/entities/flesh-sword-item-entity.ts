@@ -3,7 +3,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -27,15 +27,15 @@ export function createFleshSwordItemEntityConfig(position: Point, rotation: numb
    
    const fleshSwordItemComponent = new FleshSwordItemComponent();
    
-   return createEntityConfig(
-      EntityType.fleshSwordItemEntity,
-      {
+   return {
+      entityType: EntityType.fleshSwordItemEntity,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.fleshSwordItem]: fleshSwordItemComponent
       },
-      []
-   );
+      lights: []
+   };
 }

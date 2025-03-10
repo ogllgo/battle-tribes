@@ -9,7 +9,7 @@ import GuardianCrystalBurstAI from "../../ai/GuardianCrystalBurstAI";
 import GuardianCrystalSlamAI from "../../ai/GuardianCrystalSlamAI";
 import GuardianSpikyBallSummonAI from "../../ai/GuardianSpikyBallSummonAI";
 import WanderAI from "../../ai/WanderAI";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { getGuardianLimbOrbitRadius, GuardianComponent, GuardianComponentArray } from "../../components/GuardianComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -53,9 +53,9 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
    
    const guardianComponent = new GuardianComponent(homeTiles);
    
-   return createEntityConfig(
-      EntityType.guardian,
-      {
+   return {
+      entityType: EntityType.guardian,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -63,6 +63,6 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.guardian]: guardianComponent
       },
-      []
-   );
+      lights: []
+   };
 }

@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../../components";
+import { EntityConfig } from "../../../components";
 import Tribe from "../../../Tribe";
 import { CookingComponent } from "../../../components/CookingComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
@@ -52,9 +52,9 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
 
    const furnaceComponent = new FurnaceComponent();
    
-   return createEntityConfig(
-      EntityType.furnace,
-      {
+   return {
+      entityType: EntityType.furnace,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -64,6 +64,6 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
          [ServerComponentType.cooking]: cookingComponent,
          [ServerComponentType.furnace]: furnaceComponent
       },
-      []
-   );
+      lights: []
+   };
 }

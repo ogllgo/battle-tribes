@@ -158,9 +158,9 @@ const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: E
       
       const config = createPebblumConfig(new Point(x, y), 2 * Math.PI * Math.random());
       config.components[ServerComponentType.pebblum]!.targetEntityID = target;
-      createEntity(config, layer, 0);
+      const pebblum = createEntity(config, layer, 0);
       
-      golemComponent.summonedPebblumIDs.push(config.entity);
+      golemComponent.summonedPebblumIDs.push(pebblum);
    }
 }
 

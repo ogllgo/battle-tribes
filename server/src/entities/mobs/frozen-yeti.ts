@@ -6,7 +6,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { FrozenYetiComponent } from "../../components/FrozenYetiComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -70,9 +70,9 @@ export function createFrozenYetiConfig(position: Point, rotation: number): Entit
    
    const frozenYetiComponent = new FrozenYetiComponent();
    
-   return createEntityConfig(
-      EntityType.frozenYeti,
-      {
+   return {
+      entityType: EntityType.frozenYeti,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -80,8 +80,8 @@ export function createFrozenYetiConfig(position: Point, rotation: number): Entit
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.frozenYeti]: frozenYetiComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 // export function onFrozenYetiCollision(frozenYeti: Entity, collidingEntity: Entity, collisionPoint: Point): void {

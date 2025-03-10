@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -41,9 +41,9 @@ export function createBarrelConfig(position: Point, rotation: number, tribe: Tri
    
    const barrelComponent = new BarrelComponent();
    
-   return createEntityConfig(
-      EntityType.barrel,
-      {
+   return {
+      entityType: EntityType.barrel,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -52,6 +52,6 @@ export function createBarrelConfig(position: Point, rotation: number, tribe: Tri
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.barrel]: barrelComponent
       },
-      []
-   );
+      lights: []
+   };
 }

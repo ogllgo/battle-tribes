@@ -8,7 +8,7 @@ import { getHitboxTile, Hitbox } from "../hitboxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 
 export interface LootEntry {
    readonly itemType: ItemType;
@@ -60,23 +60,26 @@ export function registerEntityLootOnDeath(entityType: EntityType, lootEntries: R
 }
 
 const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
-   if (lootComponent.localBiome !== null) {
-      const census = lootComponent.localBiome.entityCensus
-      const entityType = getEntityType(entity);
-      
-      const previousCount = census.get(entityType);
-      assert(typeof previousCount !== "undefined");
+   if (lootComponent.localBiome === null) {
+      return;
+   }
 
-      census.set(entityType, previousCount - 1);
-      if (previousCount === 1) {
-         census.delete(entityType);
-      }
+   const census = lootComponent.localBiome.entityCensus;
+   const entityType = getEntityType(entity);
+   
+   const previousCount = census.get(entityType);
+   assert(typeof previousCount !== "undefined");
+
+   census.set(entityType, previousCount - 1);
+   if (previousCount === 1) {
+      census.delete(entityType);
    }
 }
 
 const addToNewLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = getTransformComponentFirstHitbox(transformComponent);
+   assert(hitbox !== null);
    
    const layer = getEntityLayer(entity);
    const tileIndex = getHitboxTile(hitbox);

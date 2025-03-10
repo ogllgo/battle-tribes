@@ -1,7 +1,7 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { destroyEntity, getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -51,9 +51,9 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
    
    const buildingMaterialComponent = new BuildingMaterialComponent(material, HEALTHS);
    
-   return createEntityConfig(
-      EntityType.embrasure,
-      {
+   return {
+      entityType: EntityType.embrasure,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -61,8 +61,8 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function onEmbrasureCollision(collidingEntity: Entity, pushedHitboxIdx: number): void {

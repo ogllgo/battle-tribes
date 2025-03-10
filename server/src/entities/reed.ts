@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
 import { EntityType } from "battletribes-shared/entities";
 import { Colour, Point, randInt } from "battletribes-shared/utils";
@@ -23,12 +23,12 @@ export function createReedConfig(position: Point, rotation: number): EntityConfi
    };
    const layeredRodComponent = new LayeredRodComponent(randInt(7, 11), colour);
    
-   return createEntityConfig(
-      EntityType.reed,
-      {
+   return {
+      entityType: EntityType.reed,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.layeredRod]: layeredRodComponent
       },
-      []
-   );
+      lights: []
+   };
 }

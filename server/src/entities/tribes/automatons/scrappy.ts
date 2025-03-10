@@ -4,7 +4,7 @@ import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../.
 import { ServerComponentType } from "../../../../../shared/src/components";
 import { EntityType } from "../../../../../shared/src/entities";
 import { Point } from "../../../../../shared/src/utils";
-import { createEntityConfig, EntityConfig } from "../../../components";
+import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
@@ -56,9 +56,9 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
 
    const scrappyComponent = new ScrappyComponent();
 
-   return createEntityConfig(
-      EntityType.scrappy,
-      {
+   return {
+      entityType: EntityType.scrappy,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -73,6 +73,6 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.scrappy]: scrappyComponent
       },
-      []
-   );
+      lights: []
+   };
 }

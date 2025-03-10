@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -41,9 +41,9 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    
    const craftingStationComponent = new CraftingStationComponent(CraftingStation.workbench);
    
-   return createEntityConfig(
-      EntityType.workbench,
-      {
+   return {
+      entityType: EntityType.workbench,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -51,6 +51,6 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
       },
-      []
-   );
+      lights: []
+   };
 }

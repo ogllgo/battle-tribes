@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { Colour, Point, randFloat, randInt } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
@@ -22,12 +22,12 @@ export function createGrassStrandConfig(position: Point, rotation: number): Enti
    };
    const layeredRodComponent = new LayeredRodComponent(randInt(2, 5), colour);
    
-   return createEntityConfig(
-      EntityType.grassStrand,
-      {
+   return {
+      entityType: EntityType.grassStrand,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.layeredRod]: layeredRodComponent
       },
-      []
-   );
+      lights: []
+   };
 }
