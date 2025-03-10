@@ -41,6 +41,7 @@ import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { createSlimeConfig } from "./entities/mobs/slime";
 import { Hitbox } from "./hitboxes";
+import { createMossConfig } from "./entities/moss";
 
 const PACK_SPAWN_RANGE = 200;
 
@@ -205,6 +206,7 @@ const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: n
       case EntityType.glurb: config = createGlurbConfig(x, y, angle); break;
       // @TEMPORARY
       case EntityType.mithrilOreNode: config = createGlurbConfig(x, y, angle); break;
+      case EntityType.moss: config = createMossConfig(new Point(x, y)); break;
    }
 
    if (config === null) {

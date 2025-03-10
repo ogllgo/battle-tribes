@@ -98,6 +98,7 @@ import { LootComponent, LootComponentArray, LootComponentParams } from "./server
 import { GlurbSegmentComponent, GlurbSegmentComponentArray, GlurbSegmentComponentParams } from "./server-components/GlurbSegmentComponent";
 import { GlurbBodySegmentComponent, GlurbBodySegmentComponentArray, GlurbBodySegmentComponentParams } from "./server-components/GlurbBodySegmentComponent";
 import { FleshSwordComponent, FleshSwordComponentArray, FleshSwordComponentParams } from "./server-components/FleshSwordComponent";
+import { MossComponent, MossComponentArray, MossComponentParams } from "./server-components/MossComponent";
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -201,6 +202,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.slingTurretRock]: SlingTurretRockComponentArray,
    [ServerComponentType.taming]: TamingComponentArray,
    [ServerComponentType.loot]: LootComponentArray,
+   [ServerComponentType.moss]: MossComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -303,6 +305,7 @@ const ServerComponentRecord = {
    [ServerComponentType.slingTurretRock]: (): SlingTurretRockComponent => 0 as any,
    [ServerComponentType.taming]: (): TamingComponent => 0 as any,
    [ServerComponentType.loot]: (): LootComponent => 0 as any,
+   [ServerComponentType.moss]: (): MossComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -407,6 +410,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.slingTurretRock]: (): SlingTurretRockComponentParams => 0 as any,
    [ServerComponentType.taming]: (): TamingComponentParams => 0 as any,
    [ServerComponentType.loot]: (): LootComponentParams => 0 as any,
+   [ServerComponentType.moss]: (): MossComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

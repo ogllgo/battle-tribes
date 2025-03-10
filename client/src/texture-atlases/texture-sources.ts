@@ -361,6 +361,9 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/miscellaneous/taming-tier-1.png",
    "entities/miscellaneous/taming-tier-2.png",
    "entities/miscellaneous/taming-tier-3.png",
+   "entities/moss/moss-large.png",
+   "entities/moss/moss-medium.png",
+   "entities/moss/moss-small.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

@@ -9,7 +9,7 @@ import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../s
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
 import { getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityComponentTypes, getEntityType } from "../world";
 
 export class HealthComponent {
    public maxHealth: number;
@@ -67,6 +67,11 @@ const callOnTakeDamageCallbacks = (entity: Entity, attackingEntity: Entity | nul
          componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
       }
    }
+
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (entityExists(transformComponent.parentEntity)) {
+      callOnTakeDamageCallbacks(transformComponent.parentEntity, attackingEntity, damageSource, damage);
+   }
 }
 
 const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource): void => {
@@ -78,6 +83,11 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
       if (typeof componentArray.onDeath !== "undefined") {
          componentArray.onDeath(entity, attackingEntity, damageSource);
       }
+   }
+
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (entityExists(transformComponent.parentEntity)) {
+      callOnDeathCallbacks(transformComponent.parentEntity, attackingEntity, damageSource);
    }
 }
 

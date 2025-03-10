@@ -358,6 +358,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Block Attack",
       internalName: "block-attack"
    },
+   [EntityType.moss]: {
+      name: "Moss",
+      internalName: "moss"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

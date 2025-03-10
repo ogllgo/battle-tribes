@@ -102,6 +102,7 @@ import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
+import { MossComponent } from "./components/MossComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -205,6 +206,7 @@ const ComponentClassRecord = {
    [ServerComponentType.slingTurretRock]: () => SlingTurretRockComponent,
    [ServerComponentType.taming]: () => TamingComponent,
    [ServerComponentType.loot]: () => LootComponent,
+   [ServerComponentType.moss]: () => MossComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

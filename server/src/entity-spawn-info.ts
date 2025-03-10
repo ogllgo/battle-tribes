@@ -285,6 +285,18 @@ export const SPAWN_INFOS = [
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       usesSpawnDistribution: true
+   },
+   {
+      entityType: EntityType.moss,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.stone],
+      minPackSize: 1,
+      maxPackSize: 1,
+      onlySpawnsInNight: false,
+      minSpawnDistance: 40,
+      usesSpawnDistribution: false 
    }
 ] satisfies ReadonlyArray<EntitySpawnInfo>;
 

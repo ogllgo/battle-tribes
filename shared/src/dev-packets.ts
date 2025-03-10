@@ -107,6 +107,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.slingTurretRock]: {},
    [ServerComponentType.taming]: {},
    [ServerComponentType.loot]: {},
+   [ServerComponentType.moss]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

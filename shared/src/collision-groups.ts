@@ -138,6 +138,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.mithrilAnvil]: CollisionGroup.boring,
    [EntityType.swingAttack]: CollisionGroup.exclusiveDamaging,
    [EntityType.blockAttack]: CollisionGroup.default,
+   [EntityType.moss]: CollisionGroup.decoration,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {
