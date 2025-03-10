@@ -12,6 +12,8 @@ import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { TransformComponent } from "../../components/TransformComponent";
+import { Settings } from "../../../../shared/src/settings";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -40,6 +42,8 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
    const transformComponent = new TransformComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
+
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 6);
 
    const tamingComponent = new TamingComponent();
 
@@ -71,7 +75,8 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.taming]: tamingComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.taming]: tamingComponent
       },
       lights: [],
       childConfigs: childConfigs

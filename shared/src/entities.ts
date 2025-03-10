@@ -89,7 +89,7 @@ export const enum EntityType {
    automatonAssembler,
    mithrilAnvil,
    swingAttack,
-   blockAttack,
+   blockAttack
 }
 
 export const EntityTypeString: Record<EntityType, string> = {

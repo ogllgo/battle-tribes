@@ -21,6 +21,7 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
 import { Hitbox } from "../hitboxes";
+import { EntityConfig } from "../components";
 
 interface AngularTetherInfo {
    readonly springConstant: number;
@@ -465,6 +466,7 @@ export function cleanTransform(node: Hitbox | Entity): void {
 }
 
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
+TransformComponentArray.onInitialise = onInitialise;
 TransformComponentArray.onJoin = onJoin;
 TransformComponentArray.onTick = {
    tickInterval: 1,
@@ -523,12 +525,17 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 }
 
-function onJoin(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+function onInitialise(config: EntityConfig, entity: Entity): void {
+   // This used to be done in the onJoin function, but since entities can now be attached just before the onJoin functions
+   // are called, we have to initialise the root entity before that.
+   const transformComponent = config.components[ServerComponentType.transform]!;
    if (transformComponent.rootEntity === 0) {
       transformComponent.rootEntity = entity;
    }
+}
+
+function onJoin(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
    
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
@@ -934,7 +941,7 @@ export function getFirstEntityWithComponent<T extends object>(componentArray: Co
 
 // @Copynpaste
 /** For a given entity, gets the first component up its entity tree. Returns null if none was found. */
-export function getFirstComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): T | null {
+export function getFirstComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): T {
    if (componentArray.hasComponent(entity)) {
       return componentArray.getComponent(entity);
    }
@@ -946,7 +953,7 @@ export function getFirstComponent<T extends object>(componentArray: ComponentArr
       return componentArray.getComponent(transformComponent.rootEntity);
    }
 
-   return null;
+   throw new Error();
 }
 
 export function entityTreeHasComponent(componentArray: ComponentArray, entity: Entity): boolean {

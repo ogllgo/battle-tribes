@@ -14,7 +14,7 @@ import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { entityChildIsEntity, TransformComponentArray } from "./TransformComponent";
+import { entityChildIsEntity, getFirstComponent, TransformComponentArray } from "./TransformComponent";
 
 export class GlurbHeadSegmentComponent {}
 
@@ -80,11 +80,11 @@ const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {
    move(glurb, targetHitbox.box.position);
 }
 
-function onTick(glurb: Entity): void {
-   const glurbTransformComponent = TransformComponentArray.getComponent(glurb);
+function onTick(glurbHead: Entity): void {
+   const glurbTransformComponent = TransformComponentArray.getComponent(glurbHead);
    const glurbHitbox = glurbTransformComponent.children[0] as Hitbox;
    
-   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(glurb);
+   const attackingEntitiesComponent = getFirstComponent(AttackingEntitiesComponentArray, glurbHead);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const attacker = pair[0];
       const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
@@ -93,11 +93,11 @@ function onTick(glurb: Entity): void {
       // Run away!!
       const targetX = glurbHitbox.box.position.x * 2 - attackerHitbox.box.position.x;
       const targetY = glurbHitbox.box.position.y * 2 - attackerHitbox.box.position.y;
-      move(glurb, new Point(targetX, targetY));
+      move(glurbHead, new Point(targetX, targetY));
       return;
    }
    
-   const aiHelperComponent = AIHelperComponentArray.getComponent(glurb);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(glurbHead);
 
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
@@ -107,9 +107,9 @@ function onTick(glurb: Entity): void {
             continue;
          }
          
-         moveToEntity(glurb, entity);
+         moveToEntity(glurbHead, entity);
 
-         if (entitiesAreColliding(glurb, entity) !== CollisionVars.NO_COLLISION) {
+         if (entitiesAreColliding(glurbHead, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
 
             const x = glurbHitbox.box.position.x + 10 * Math.sin(glurbHitbox.box.angle);
@@ -129,7 +129,7 @@ function onTick(glurb: Entity): void {
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.player) {
-         moveToEntity(glurb, entity);
+         moveToEntity(glurbHead, entity);
          
          return;
       }

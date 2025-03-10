@@ -264,6 +264,9 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       const diffX = originHitbox.box.position.x - hitbox.box.position.x;
       const diffY = originHitbox.box.position.y - hitbox.box.position.y;
       const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+      if (distance === 0) {
+         continue;
+      }
 
       const normalisedDiffX = diffX / distance;
       const normalisedDiffY = diffY / distance;

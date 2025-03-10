@@ -44,9 +44,6 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
 
    const lootComponent = new LootComponent();
 
-   // @HACK DO ON PARENT GLURB
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 5);
-
    const light = createLight(new Point(0, 0), 0.35, 0.8, 6, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
       light: light,
@@ -62,8 +59,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.glurbSegment]: glurbSegmentComponent,
          [ServerComponentType.glurbHeadSegment]: glurbHeadSegmentComponent,
-         [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.attackingEntities]: attackingEntitiesComponent
+         [ServerComponentType.loot]: lootComponent
       },
       lights: lights
    };
