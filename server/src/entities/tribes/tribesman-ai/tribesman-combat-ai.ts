@@ -11,7 +11,7 @@ import { calculateItemDamage, useItem } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestHammerItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
@@ -319,7 +319,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
    // @Cleanup: Shouldn't be done here. Just skip out of this function and let the main path do the repairing.
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   const hammerItemSlot = getBestToolItemSlot(hotbarInventory, "hammer");
+   const hammerItemSlot = getBestHammerItemSlot(hotbarInventory);
    if (hammerItemSlot !== null) {
       // If there isn't a path to the entity, try to repair buildings
       // @Incomplete: This will cause a delay after the tribesman finishes repairing the building.

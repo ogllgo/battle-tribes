@@ -8,7 +8,7 @@ import { noteSpawnableTiles, runSpawnAttempt, spawnInitialEntities } from "../en
 import Tribe from "../Tribe";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
-import { countTileTypesForResourceDistributions, updateResourceDistributions } from "../resource-distributions";
+import { createResourceDistributions, updateResourceDistributions } from "../resource-distributions";
 import { updateGrassBlockers } from "../grass-blockers";
 import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-creation";
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
@@ -66,8 +66,10 @@ const addEntityHierarchy = (playerClient: PlayerClient, entitiesToSend: Set<Enti
    }
 }
 
-const updatePlayerVisibleEntities = (playerClient: PlayerClient, entitiesToSend: Set<Entity>): void => {
+const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
    const layer = playerClient.lastLayer;
+
+   const visibleEntities = new Set<Entity>();
    
    // @Copynpaste
    const minVisibleX = playerClient.lastViewedPositionX - playerClient.screenWidth * 0.5 - PlayerClientVars.VIEW_PADDING;
@@ -79,18 +81,20 @@ const updatePlayerVisibleEntities = (playerClient: PlayerClient, entitiesToSend:
       for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.entities) {
-            if (playerClient.visibleEntities.has(entity) || entityIsHiddenFromPlayer(entity, playerClient.tribe)) {
+            if (entityIsHiddenFromPlayer(entity, playerClient.tribe)) {
                continue;
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
-               addEntityHierarchy(playerClient, entitiesToSend, transformComponent.rootEntity);
+               addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
             }
          }
       }
    }
+
+   return visibleEntities;
 }
 
 const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, screenHeight: number): VisibleChunkBounds => {
@@ -145,7 +149,7 @@ class GameServer {
       a = performance.now();
 
       noteSpawnableTiles();
-      countTileTypesForResourceDistributions();
+      createResourceDistributions();
       updateResourceDistributions();
       console.log("resources",performance.now() - a)
       a = performance.now();
@@ -456,9 +460,24 @@ class GameServer {
             playerClient.lastLayer = getEntityLayer(viewedEntity);
          }
       
-         const entitiesToSend = new Set<Entity>();
+         const visibleEntities = getPlayerVisibleEntities(playerClient);
          
-         updatePlayerVisibleEntities(playerClient, entitiesToSend);
+         const entitiesToSend = new Set<Entity>();
+         const removedEntities = new Array<Entity>();
+
+         // Add newly visible entities
+         for (const entity of visibleEntities) {
+            if (!playerClient.visibleEntities.has(entity)) {
+               entitiesToSend.add(entity);
+            }
+         }
+
+         // Add removed entities
+         for (const entity of playerClient.visibleEntities) {
+            if (!visibleEntities.has(entity)) {
+               removedEntities.push(entity);
+            }
+         }
 
          // Send dirty entities
          for (const entity of playerClient.visibleDirtiedEntities) {
@@ -474,8 +493,10 @@ class GameServer {
          }
          
          // Send the game data to the player
-         const gameDataPacket = createGameDataPacket(playerClient, entitiesToSend);
+         const gameDataPacket = createGameDataPacket(playerClient, entitiesToSend, removedEntities);
          playerClient.socket.send(gameDataPacket);
+
+         playerClient.visibleEntities = visibleEntities;
 
          // @Cleanup: should these be here?
          playerClient.visibleHits = [];

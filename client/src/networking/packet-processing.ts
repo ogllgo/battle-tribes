@@ -595,15 +595,6 @@ export function processGameDataPacket(reader: PacketReader): void {
    //    }
    // }
 
-   for (const entity of entitiesToRemove) {
-      const isDeath = serverRemovedEntityIDs.has(entity);
-      removeEntity(entity, isDeath);
-
-      if (entity === playerInstance) {
-         Client.killPlayer();
-      }
-   }
-
    const visibleHits = new Array<HitData>();
    const numHits = reader.readNumber();
    console.assert(Number.isInteger(numHits));
@@ -656,11 +647,20 @@ export function processGameDataPacket(reader: PacketReader): void {
       });
    }
 
-   const visibleEntityDeathIDs = new Array<Entity>();
+   const visibleEntityDeathIDs = new Set<Entity>();
    const numVisibleDeaths = reader.readNumber();
    for (let i = 0; i < numVisibleDeaths; i++) {
       const id = reader.readNumber();
-      visibleEntityDeathIDs.push(id);
+      visibleEntityDeathIDs.add(id);
+   }
+
+   for (const entity of entitiesToRemove) {
+      const isDeath = visibleEntityDeathIDs.has(entity);
+      removeEntity(entity, isDeath);
+
+      if (entity === playerInstance) {
+         Client.killPlayer();
+      }
    }
 
    // Research orb completes

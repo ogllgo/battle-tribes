@@ -12,7 +12,7 @@ import { InventoryUseComponentArray } from "../../../components/InventoryUseComp
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
-import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo } from "battletribes-shared/items/items";
+import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo, HammerItemInfo } from "battletribes-shared/items/items";
 import { changeEntityLayer, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
@@ -402,19 +402,19 @@ export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goal
 
 /* INVENTORY UTILS */
 
-/** Returns 0 if no tool is in the inventory */
-export function getBestToolItemSlot(inventory: Inventory, toolCategory: keyof ItemInfoRecord): number | null {
-   let bestLevel = 0;
+/** Returns 0 if no hammer is in the inventory */
+export function getBestHammerItemSlot(inventory: Inventory): number | null {
+   let bestRepairAmount = 0;
    let bestItemSlot: number | null = null;
 
    for (let i = 0; i < inventory.items.length; i++) {
       const item = inventory.items[i];
 
       const itemCategory = ITEM_TYPE_RECORD[item.type];
-      if (itemCategory === toolCategory) {
-         const itemInfo = ITEM_INFO_RECORD[item.type] as ToolItemInfo;
-         if (itemInfo.level > bestLevel) {
-            bestLevel = itemInfo.level;
+      if (itemCategory === "hammer") {
+         const itemInfo = ITEM_INFO_RECORD[item.type] as HammerItemInfo;
+         if (itemInfo.repairAmount > bestRepairAmount) {
+            bestRepairAmount = itemInfo.repairAmount;
             bestItemSlot = inventory.getItemSlot(item);
          }
       }

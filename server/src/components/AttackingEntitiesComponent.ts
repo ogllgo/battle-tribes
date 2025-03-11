@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
+import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 
 interface AttackerInfo {
@@ -49,10 +50,15 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 function onTick(entity: Entity): void {
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
+      const entity = pair[0];
+      if (!entityExists(entity)) {
+         attackingEntitiesComponent.attackingEntities.delete(entity);
+         continue;
+      }
+      
       const attackerInfo = pair[1];
       attackerInfo.ticksSinceLastHit++;
       if (attackerInfo.ticksSinceLastHit >= attackingEntitiesComponent.attackSubsideTicks) {
-         const entity = pair[0];
          attackingEntitiesComponent.attackingEntities.delete(entity);
       }
    }

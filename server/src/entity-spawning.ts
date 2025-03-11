@@ -407,7 +407,7 @@ export function spawnInitialEntities(): void {
    setTimeout(() => {
       // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
       // createEntity(config, surfaceLayer, 0);
-      // if(1+1===2)return;
+      if(1+1===2)return;
       const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
       createEntity(config, surfaceLayer, 0);
 

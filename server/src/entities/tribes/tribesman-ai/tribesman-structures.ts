@@ -14,7 +14,7 @@ import { PathfindFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
 import { placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getBestToolItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
+import { getBestHammerItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
 import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { Inventory, InventoryName, ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType } from "battletribes-shared/items/items";
@@ -171,7 +171,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
-   const hammerItemSlot = getBestToolItemSlot(hotbarInventory, "hammer");
+   const hammerItemSlot = getBestHammerItemSlot(hotbarInventory);
    if (hammerItemSlot === null) {
       console.warn("Tried to upgrade a building without a hammer.");
       return;

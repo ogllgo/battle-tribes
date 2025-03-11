@@ -18,6 +18,17 @@ const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
 }
 
+export interface SpawnDistributionChunkInfo {
+   /** How dense the sample is. The higher the number, the lower the chance of a position being generated there. */
+   density: number;
+   readonly numSpawnableTiles: number;
+}
+
+export interface SpawnDistribution {
+   readonly chunks: ReadonlyArray<SpawnDistributionChunkInfo>;
+   totalDensity: number;
+}
+
 export interface EntitySpawnInfo {
    /** The type of entity to spawn */
    readonly entityType: EntityType;
@@ -32,6 +43,8 @@ export interface EntitySpawnInfo {
    readonly onlySpawnsInNight: boolean;
    /** Minimum distance a spawn event can occur from another entity */
    readonly minSpawnDistance: number;
+   readonly spawnDistribution?: Float32Array;
+   /** If true, spawn attempts will be weighted towards areas with less of that entity. */
    readonly usesSpawnDistribution: boolean;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
@@ -289,8 +302,8 @@ export const SPAWN_INFOS = [
    {
       entityType: EntityType.moss,
       layer: undergroundLayer,
-      spawnRate: 0.0025,
-      maxDensity: 0.004,
+      spawnRate: 0.01,
+      maxDensity: 0.04,
       spawnableTileTypes: [TileType.stone],
       minPackSize: 1,
       maxPackSize: 1,

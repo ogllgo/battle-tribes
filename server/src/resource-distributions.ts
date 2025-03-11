@@ -10,28 +10,18 @@ const enum Vars {
    SAMPLES_IN_WORLD_SIZE = Settings.TILES_IN_WORLD_WIDTH / Vars.SAMPLE_SIZE
 }
 
-/** How dense the sample is. The higher the number, the lower the chance of a position being generated there. */
-type SampleDensity = number;
-
-const distributions = new Array<Array<SampleDensity>>();
-const totalSampleDensities: Record<number, number> = {};
-
-const sampleNumSpawnableTilesRecord: Partial<Record<number, ReadonlyArray<number>>> = {};
-
-for (let i = 0; i < SPAWN_INFOS.length; i++) {
-   const samples = new Array<number>();
-   for (let i = 0; i < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; i++) {
-      samples.push(-1);
-   }
-   distributions.push(samples);
+interface ChunkInfo {
+   /** How dense the sample is. The higher the number, the lower the chance of a position being generated there. */
+   density: number;
+   readonly numSpawnableTiles: number;
 }
 
-const resetDistributions = (spawnInfoIdx: number): void => {
-   const samples = distributions[spawnInfoIdx];
-   for (let i = 0; i < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; i++) {
-      samples[i] = 0;
-   }
+interface DistributionInfo {
+   readonly chunks: ReadonlyArray<ChunkInfo>;
+   totalDensity: number;
 }
+
+const spawnInfoDistributions = new Array<DistributionInfo>();
 
 const countNumSpawnableTiles = (sampleX: number, sampleY: number, spawnableTiles: ReadonlySet<TileIndex>): number => {
    const originTileX = sampleX * Vars.SAMPLE_SIZE;
@@ -51,67 +41,71 @@ const countNumSpawnableTiles = (sampleX: number, sampleY: number, spawnableTiles
    return count;
 }
 
-export function countTileTypesForResourceDistributions(): void {
+export function createResourceDistributions(): void {
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
       const spawnableTiles = getSpawnInfoSpawnableTiles(i);
 
-      const numSpawnableTilesArray = new Array<number>();
-      for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
-         for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
-            const numSpawnableTiles = countNumSpawnableTiles(sampleX, sampleY, spawnableTiles);
-            numSpawnableTilesArray.push(numSpawnableTiles);
-         }
-      }
+      const chunks = new Array<ChunkInfo>();
+      for (let sampleIdx = 0; sampleIdx < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; sampleIdx++) {
+         const sampleX = sampleIdx % Vars.SAMPLES_IN_WORLD_SIZE;
+         const sampleY = Math.floor(sampleIdx / Vars.SAMPLES_IN_WORLD_SIZE);
 
-      sampleNumSpawnableTilesRecord[i] = numSpawnableTilesArray;
+         chunks.push({
+            density: -1,
+            numSpawnableTiles: countNumSpawnableTiles(sampleX, sampleY, spawnableTiles)
+         });
+      }
+   
+      const distributionInfo: DistributionInfo = {
+         chunks: chunks,
+         totalDensity: 0
+      };
+      spawnInfoDistributions.push(distributionInfo);
    }
 }
 
-// @Speed: this is reaaaally slow. 8% of CPU usage (should be way less), and causes CPU spikes.
 export function updateResourceDistributions(): void {
    // Weight the distributions to the amount of tiles
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
-      resetDistributions(i);
+      const distributionInfo = spawnInfoDistributions[i];
       
-      const samples = distributions[i];
-      const numSpawnableTilesArray = sampleNumSpawnableTilesRecord[i]!;
-
-      let totalDensity = 0;
+      distributionInfo.totalDensity = 0;
       
       let idx = 0;
       for (let sampleY = 0; sampleY < Vars.SAMPLES_IN_WORLD_SIZE; sampleY++) {
          for (let sampleX = 0; sampleX < Vars.SAMPLES_IN_WORLD_SIZE; sampleX++) {
-            const entityCount = samples[idx];
-            const numSpawnableTiles = numSpawnableTilesArray[idx];
+            const chunkInfo = distributionInfo.chunks[idx];
 
-            if (numSpawnableTiles === 0) {
-               samples[idx] = -1;
+            if (chunkInfo.numSpawnableTiles === 0) {
+               chunkInfo.density = -1;
             } else {
-               const inverseDensity = numSpawnableTiles / (entityCount + 0.15);
+               // @HACK !
+               // const entityCount = samples[idx];
+               const entityCount = 0;
+
+               const inverseDensity = chunkInfo.numSpawnableTiles / (entityCount + 0.15);
                
-               samples[idx] = inverseDensity;
-               totalDensity += inverseDensity;
+               chunkInfo.density = inverseDensity;
+               distributionInfo.totalDensity += inverseDensity;
             }
 
             idx++;
          }
       }
-
-      totalSampleDensities[i] = totalDensity;
    }
 }
 
 const getDistributionWeightedSampleIndex = (spawnInfoIdx: number): number => {
    // @Incomplete: investigate inverse
    
-   const totalDensity = totalSampleDensities[spawnInfoIdx];
-   const samples = distributions[spawnInfoIdx];
+   const distributionInfo = spawnInfoDistributions[spawnInfoIdx];
 
-   const targetDensity = totalDensity * Math.random();
+   const targetDensity = distributionInfo.totalDensity * Math.random();
 
    let currentDensity = 0;
    for (let i = 0; i < Vars.SAMPLES_IN_WORLD_SIZE * Vars.SAMPLES_IN_WORLD_SIZE; i++) {
-      const density = samples[i];
+      const chunkInfo = distributionInfo.chunks[i];
+      const density = chunkInfo.density;
       if (density === -1) {
          continue;
       }

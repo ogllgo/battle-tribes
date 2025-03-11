@@ -228,8 +228,6 @@ export interface ToolItemInfo extends StackableItemInfo {
    readonly toolType: ToolType;
    readonly damage: number;
    readonly knockback: number;
-   /** Rough estimate of how powerful the item is. */
-   readonly level: number;
 }
 
 export interface SwordItemInfo extends ToolItemInfo {
@@ -243,7 +241,6 @@ export interface BowItemInfo extends BaseItemInfo {
    readonly projectileSpeed: number;
    /** The units of speed that the arrow's velocity gets decreased by each second */
    readonly airResistance: number;
-   readonly level: number;
 }
 
 export interface CrossbowItemInfo extends BowItemInfo {}
@@ -273,19 +270,13 @@ export interface BackpackItemInfo extends BaseItemInfo {
    readonly inventoryWidth: number;
    /** Width of the backpack inventory in terms of item slots. */
    readonly inventoryHeight: number
-   /** Rough estimate of how powerful the item is. */
-   readonly level: number;
 }
 
 export interface ArmourItemInfo extends BaseItemInfo {
    readonly defence: number;
-   /** Rough estimate of how powerful the item is. */
-   readonly level: number;
 }
 
-export interface GloveItemInfo extends BaseItemInfo {
-   readonly level: number;
-}
+export interface GloveItemInfo extends BaseItemInfo {}
 
 export interface SpearItemInfo extends ToolItemInfo {}
 
@@ -554,11 +545,10 @@ export const ITEM_INFO_RECORD = {
    [ItemType.wooden_sword]: {
       stackSize: 1,
       toolType: "sword",
-      damage: 2,
+      damage: 1,
       knockback: 150,
       // @Incomplete
       // attackCooldown: 0.3,
-      level: 1
    },
    [ItemType.wooden_axe]: {
       stackSize: 1,
@@ -567,7 +557,6 @@ export const ITEM_INFO_RECORD = {
       knockback: 100,
       // @Incomplete
       // attackCooldown: 0.5,
-      level: 1
    },
    [ItemType.wooden_pickaxe]: {
       stackSize: 1,
@@ -576,7 +565,6 @@ export const ITEM_INFO_RECORD = {
       knockback: 100,
       // @Incomplete
       // attackCooldown: 0.5,
-      level: 1,
       wallDamage: 1
    },
    [ItemType.wooden_hammer]: {
@@ -586,7 +574,6 @@ export const ITEM_INFO_RECORD = {
       knockback: 150,
       // @Incomplete
       // attackCooldown: 0.7,
-      level: 1,
       repairAmount: 3,
       workAmount: 1
    },
@@ -614,31 +601,27 @@ export const ITEM_INFO_RECORD = {
    [ItemType.stone_sword]: {
       stackSize: 1,
       toolType: "sword",
-      damage: 3,
-      knockback: 150,
-      level: 2
+      damage: 2,
+      knockback: 150
    },
    [ItemType.stone_pickaxe]: {
       stackSize: 1,
       toolType: "pickaxe",
       damage: 8,
       knockback: 100,
-      level: 2,
       wallDamage: 2
    },
    [ItemType.stone_axe]: {
       stackSize: 1,
       toolType: "axe",
       damage: 5,
-      knockback: 100,
-      level: 2
+      knockback: 100
    },
    [ItemType.stone_hammer]: {
       stackSize: 1,
       toolType: "hammer",
       damage: 3,
       knockback: 150,
-      level: 2,
       repairAmount: 5,
       workAmount: 2
    },
@@ -647,8 +630,7 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.leather_backpack]: {
       inventoryWidth: 2,
-      inventoryHeight: 2,
-      level: 1
+      inventoryHeight: 2
    },
    [ItemType.cactus_spine]: {
       stackSize: 99
@@ -668,11 +650,10 @@ export const ITEM_INFO_RECORD = {
    [ItemType.flesh_sword]: {
       stackSize: 1,
       toolType: "sword",
-      damage: 2,
-      knockback: 0,
+      damage: 1,
+      knockback: 0
       // @Incomplete
       // attackCooldown: 0.3,
-      level: 1.5
    },
    [ItemType.tribe_totem]: {
       stackSize: 99,
@@ -689,28 +670,25 @@ export const ITEM_INFO_RECORD = {
    [ItemType.frostSword]: {
       stackSize: 1,
       toolType: "sword",
-      damage: 4,
-      knockback: 150,
-      level: 3
+      // @Incomplete: shouldn't be as good as the mithril sword!
+      damage: 3,
+      knockback: 150
    },
    [ItemType.frostPickaxe]: {
       stackSize: 1,
       toolType: "pickaxe",
       damage: 10,
       knockback: 100,
-      level: 3,
       wallDamage: 3
    },
    [ItemType.frostAxe]: {
       stackSize: 1,
       toolType: "axe",
       damage: 8,
-      knockback: 100,
-      level: 3
+      knockback: 100
    },
    [ItemType.frostArmour]: {
-      defence: 0.25,
-      level: 2
+      defence: 0.25
    },
    [ItemType.campfire]: {
       stackSize: 99,
@@ -725,36 +703,31 @@ export const ITEM_INFO_RECORD = {
       projectileKnockback: 150,
       shotChargeTimeTicks: 1 * Settings.TPS,
       projectileSpeed: 1100,
-      airResistance: 400,
-      level: 2
+      airResistance: 400
    },
    [ItemType.reinforced_bow]: {
       projectileDamage: 6,
       projectileKnockback: 200,
       shotChargeTimeTicks: 1 * Settings.TPS,
       projectileSpeed: 1500,
-      airResistance: 300,
-      level: 2.5
+      airResistance: 300
    },
    [ItemType.ice_bow]: {
       projectileDamage: 0,
       projectileKnockback: 0,
       shotChargeTimeTicks: 1.25 * Settings.TPS,
       projectileSpeed: 1100,
-      airResistance: 400,
-      level: 2.5
+      airResistance: 400
    },
    [ItemType.crossbow]: {
       projectileDamage: 6,
       projectileKnockback: 200,
       shotChargeTimeTicks: 1 * Settings.TPS,
       projectileSpeed: 1500,
-      airResistance: 300,
-      level: 2.5
+      airResistance: 300
    },
    [ItemType.meat_suit]: {
-      defence: 0,
-      level: 1
+      defence: 0
    },
    [ItemType.deepfrost_heart]: {
       stackSize: 99
@@ -772,8 +745,7 @@ export const ITEM_INFO_RECORD = {
       consumableItemCategory: ConsumableItemCategory.food
    },
    [ItemType.fishlord_suit]: {
-      defence: 0.1,
-      level: 1
+      defence: 0.1
    },
    [ItemType.gathering_gloves]: {
       level: 1
@@ -782,23 +754,20 @@ export const ITEM_INFO_RECORD = {
       stackSize: 1,
       toolType: "sword",
       damage: 2,
-      knockback: 400,
+      knockback: 400
       // @Incomplete
       // attackCooldown: 0.5,
-      level: 2.5
    },
    [ItemType.leather_armour]: {
-      defence: 0.1,
-      level: 1
+      defence: 0.1
    },
    [ItemType.spear]: {
       stackSize: 99,
       toolType: "spear",
       damage: 4,
-      knockback: 300,
+      knockback: 300
       // @Incomplete
       // attackCooldown: 0.8,
-      level: 2.5
    },
    [ItemType.paper]: {
       stackSize: 99
@@ -815,10 +784,9 @@ export const ITEM_INFO_RECORD = {
       stackSize: 1,
       toolType: "battleaxe",
       damage: 3,
-      knockback: 150,
+      knockback: 150
       // @Incomplete
       // attackCooldown: 0.5,
-      level: 2.5
    },
    [ItemType.living_rock]: {
       stackSize: 99
@@ -862,8 +830,7 @@ export const ITEM_INFO_RECORD = {
       consumableItemCategory: ConsumableItemCategory.medicine
    },
    [ItemType.leaf_suit]: {
-      defence: 0,
-      level: 1
+      defence: 0
    },
    [ItemType.seed]: {
       stackSize: 99
@@ -924,16 +891,14 @@ export const ITEM_INFO_RECORD = {
    [ItemType.mithrilSword]: {
       stackSize: 1,
       toolType: "sword",
-      damage: 4,
-      knockback: 170,
-      level: 4
+      damage: 3,
+      knockback: 170
    },
    [ItemType.mithrilPickaxe]: {
       stackSize: 1,
       toolType: "pickaxe",
       damage: 13,
       knockback: 100,
-      level: 4,
       // @Temporary
       wallDamage: 12
    },
@@ -941,12 +906,10 @@ export const ITEM_INFO_RECORD = {
       stackSize: 1,
       toolType: "axe",
       damage: 8,
-      knockback: 100,
-      level: 4
+      knockback: 100
    },
    [ItemType.mithrilArmour]: {
-      defence: 0.4,
-      level: 4
+      defence: 0.4
    },
    [ItemType.scrappy]: {
       stackSize: 99,
