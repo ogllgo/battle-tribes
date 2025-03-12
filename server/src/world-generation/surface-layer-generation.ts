@@ -10,6 +10,19 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
+import { EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
+import { EntityType } from "../../../shared/src/entities";
+import { createBalancedSpawnDistribution } from "../balanced-spawn-distributions";
+import { getEntitiesInRange } from "../ai-shared";
+import { getEntityType } from "../world";
+import { TransformComponentArray } from "../components/TransformComponent";
+import { entityIsTribesman } from "../entities/tribes/tribe-member";
+import { Hitbox } from "../hitboxes";
+import { entityIsStructure } from "../structure-placement";
+
+const enum Vars {
+   TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
+}
 
 export interface TerrainGenerationInfo {
    readonly tileTypes: Float32Array;
@@ -28,6 +41,65 @@ const TEMPERATURE_NOISE_SCALE = 120;
 const HUMIDITY_NOISE_SCALE = 30;
 
 export let riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
+
+const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): boolean => {
+   if (!OPTIONS.spawnTribes) {
+      return false;
+   }
+   
+   // @Cleanup: copy and paste
+   
+   const minChunkX = Math.max(Math.min(Math.floor((x - Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const entity of chunk.entities) {
+            const entityType = getEntityType(entity);
+            if (!entityIsStructure(entityType) && !entityIsTribesman(entityType)) {
+               continue;
+            }
+
+            // @HACK
+            
+            const transformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = transformComponent.children[0] as Hitbox;
+            
+            const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
+            if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {
+               return false;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+const isTooCloseToReedOrLilypad = (layer: Layer, x: number, y: number): boolean => {
+   // Don't overlap with reeds at all
+   let entities = getEntitiesInRange(layer, x, y, 24);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.reed) {
+         return true;
+      }
+   }
+
+   // Only allow overlapping slightly with other lilypads
+   entities = getEntitiesInRange(layer, x, y, 24 - 6);
+   for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (getEntityType(entity) === EntityType.lilypad) {
+         return true;
+      }
+   }
+
+   return false;
+}
 
 const matchesBiomeRequirements = (generationInfo: BiomeSpawnRequirements, height: number, temperature: number, humidity: number): boolean => {
    // Height
@@ -252,5 +324,182 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
 
    if (OPTIONS.generateCaves) {
       generateCaveEntrances(surfaceLayer);
+   }
+
+   registerNewSpawnInfo({
+      entityType: EntityType.cow,
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.grass],
+      packSpawning: {
+         minPackSize: 2,
+         maxPackSize: 5,
+         spawnRange: 200
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.berryBush,
+      layer: surfaceLayer,
+      spawnRate: 0.001,
+      maxDensity: 0.0025,
+      spawnableTileTypes: [TileType.grass],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.tree,
+      layer: surfaceLayer,
+      spawnRate: 0.013,
+      maxDensity: 0.02,
+      spawnableTileTypes: [TileType.grass],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 75,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.tombstone,
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      // maxDensity: 0.003,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.grass],
+      onlySpawnsInNight: true,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.boulder,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      // maxDensity: 0.025,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.rock],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 60,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.cactus,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      maxDensity: 0.03,
+      spawnableTileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 75,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.yeti,
+      layer: surfaceLayer,
+      spawnRate: 0.004,
+      maxDensity: 0.008,
+      spawnableTileTypes: [TileType.snow],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.iceSpikes,
+      layer: surfaceLayer,
+      spawnRate: 0.015,
+      maxDensity: 0.06,
+      spawnableTileTypes: [TileType.ice, TileType.permafrost],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.slimewisp,
+      layer: surfaceLayer,
+      spawnRate: 0.2,
+      maxDensity: 0.3,
+      spawnableTileTypes: [TileType.slime],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 50
+   });
+   // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
+   // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
+   registerNewSpawnInfo({
+      entityType: EntityType.slime,
+      layer: surfaceLayer,
+      spawnRate: 0,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.slime],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 50
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.krumblid,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      maxDensity: 0.015,
+      spawnableTileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.frozenYeti,
+      layer: surfaceLayer,
+      spawnRate: 0.004,
+      maxDensity: 0.008,
+      spawnableTileTypes: [TileType.fimbultur],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.fish,
+      layer: surfaceLayer,
+      spawnRate: 0.015,
+      maxDensity: 0.03,
+      spawnableTileTypes: [TileType.water],
+      packSpawning: {
+         minPackSize: 3,
+         maxPackSize: 4,
+         spawnRange: 200
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.lilypad,
+      layer: surfaceLayer,
+      spawnRate: 0,
+      maxDensity: 0.03,
+      spawnableTileTypes: [TileType.water],
+      packSpawning: {
+         minPackSize: 2,
+         maxPackSize: 3,
+         spawnRange: 200
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 0,
+      customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
+         return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.golem,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.rock],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   if (OPTIONS.spawnTribes) {
+      registerNewSpawnInfo({
+         entityType: EntityType.tribeWorker,
+         layer: surfaceLayer,
+         spawnRate: 0.002,
+         maxDensity: 0.002,
+         spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
+         onlySpawnsInNight: false,
+         minSpawnDistance: 100,
+         customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
+            return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
+         }
+      });
    }
 }

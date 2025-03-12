@@ -77,6 +77,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
          assert(typeof decorationComponentParams !== "undefined");
          return decorationIsHigh(decorationComponentParams.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
       }
+      case EntityType.moss: {
+         return RenderLayer.lowDecorations;
+      }
       case EntityType.guardianGemQuake: {
          return RenderLayer.quakes;
       }

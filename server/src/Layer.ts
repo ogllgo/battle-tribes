@@ -287,7 +287,7 @@ export default class Layer {
       return this.chunks[chunkIndex];
    }
 
-   // @Temporary
+   // @Temporary @Speed @Hack
    public getChunkIndex(chunk: Chunk): number {
       const idx = this.chunks.indexOf(chunk);
       if (idx === -1) {

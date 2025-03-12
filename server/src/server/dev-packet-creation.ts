@@ -3,13 +3,13 @@ import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { AIPlanType, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
-import { getSpawnInfoForEntityType } from "../entity-spawn-info";
+import { EntitySpawnInfo, getSpawnInfoForEntityType, SpawnDistribution } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, addTribeBuildingSafetyData, getTribeAssignmentDataLength, getTribeBuildingSafetyDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
-import { getTribes } from "../world";
+import { getEntitySpawnTicks, getTribes } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import PlayerClient from "./PlayerClient";
 
@@ -238,8 +238,34 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
    for (const localBiome of info.visibleLocalBiomes) {
       lengthBytes += getLocalBiomeDataLength(playerClient, localBiome);
    }
+   
+   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
+   const distribution = spawnInfo?.spawnDistribution;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   if (typeof distribution !== "undefined") {
+      lengthBytes += getViewedSpawnDistributionDataLength(playerClient);
+   }
 
    return lengthBytes;
+}
+
+const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient): number => {
+   const numVisibleChunks = (playerClient.maxVisibleChunkX + 1 - playerClient.minVisibleChunkX) * (playerClient.maxVisibleChunkY + 1 - playerClient.minVisibleChunkY);
+
+   return Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * numVisibleChunks;
+}
+
+const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
+   packet.addNumber((playerClient.maxVisibleChunkX + 1 - playerClient.minVisibleChunkX) * (playerClient.maxVisibleChunkY + 1 - playerClient.minVisibleChunkY));
+   for (let chunkX = playerClient.minVisibleChunkX; chunkX <= playerClient.maxVisibleChunkX; chunkX++) {
+      for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
+         const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
+         const weight = distribution.weights[chunkIndex];
+
+         packet.addNumber(chunkIndex);
+         packet.addNumber(weight);
+      }
+   }
 }
 
 export function addDevPacketData(packet: Packet, playerClient: PlayerClient): void {
@@ -320,5 +346,13 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
    packet.addNumber(info.visibleLocalBiomes.length);
    for (const localBiome of info.visibleLocalBiomes) {
       addLocalBiomeDataToPacket(packet, playerClient, localBiome);
+   }
+
+   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
+   const distribution = spawnInfo?.spawnDistribution;
+   packet.addBoolean(typeof distribution !== "undefined");
+   packet.padOffset(3);
+   if (typeof distribution !== "undefined") {
+      addViewedSpawnDistributionData(packet, playerClient, distribution);
    }
 }

@@ -9,6 +9,7 @@ import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-pl
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { SubtileSupportInfo, setVisibleSubtileSupports } from "../rendering/webgl/subtile-support-rendering";
+import { setChunkWeights } from "../text-canvas";
 import { readGhostVirtualBuildings, pruneGhostBuildingPlans } from "../virtual-buildings";
 
 export function readPacketDevData(reader: PacketReader): void {
@@ -90,4 +91,21 @@ export function readPacketDevData(reader: PacketReader): void {
    pruneGhostBuildingPlans();
 
    readLocalBiomes(reader);
+
+   const hasSpawnDistribution = reader.readBoolean();
+   reader.padOffset(3);
+   if (hasSpawnDistribution) {
+      const chunkWeights = new Map<number, number>();
+      
+      const numChunks = reader.readNumber();
+      for (let i = 0; i < numChunks; i++) {
+         const chunkIndex = reader.readNumber();
+         const weight = reader.readNumber();
+         chunkWeights.set(chunkIndex, weight);
+      }
+
+      setChunkWeights(chunkWeights);
+   } else {
+      setChunkWeights(new Map());
+   }
 }

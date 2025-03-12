@@ -60,6 +60,12 @@ let damageTime = 0;
 let damageNumberX = -1;
 let damageNumberY = -1;
 
+let chunkWeights = new Map<number, number>();
+
+export function setChunkWeights(newWeights: Map<number, number>): void {
+   chunkWeights = newWeights;
+}
+
 export function createTextCanvasContext(): void {
    const textCanvas = document.getElementById("text-canvas") as HTMLCanvasElement;
 
@@ -599,6 +605,29 @@ const renderBuildingSafetys = (): void => {
    }
 }
 
+const renderChunkWeights = (): void => {
+   const fontSize = 18;
+   
+   ctx.font = "400 " + fontSize + "px Helvetica";
+   ctx.lineJoin = "round";
+   ctx.miterLimit = 2;
+   for (const pair of chunkWeights) {
+      const chunkIndex = pair[0];
+      const weight = pair[1];
+
+      const chunkX = chunkIndex % Settings.BOARD_SIZE;
+      const chunkY = Math.floor(chunkIndex / Settings.BOARD_SIZE);
+      const x = (chunkX + 0.5) * Settings.CHUNK_UNITS;
+      const y = (chunkY + 0.5) * Settings.CHUNK_UNITS;
+
+      const left = getXPosInTextCanvas(x);
+      const top = getYPosInTextCanvas(y);
+      
+      ctx.fillStyle = "#fff";
+      ctx.fillText(weight.toFixed(2).toString(), left, top + fontSize);
+   }
+}
+
 export function renderText(frameProgress: number): void {
    clearTextCanvas();
    renderNames(frameProgress);
@@ -615,4 +644,6 @@ export function renderText(frameProgress: number): void {
       // @Temporary @Incomplete
       // renderHoveredPotentialPlanInfo();
    // }
+
+   renderChunkWeights();
 }

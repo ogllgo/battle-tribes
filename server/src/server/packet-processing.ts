@@ -864,3 +864,8 @@ export function processSetSpectatingPositionPacket(playerClient: PlayerClient, r
    const y = reader.readNumber() as TamingSkillID;
    playerClient.updatePosition(x, y);
 }
+
+export function processDevSetViewedSpawnDistribution(playerClient: PlayerClient, reader: PacketReader): void {
+   const entityType = reader.readNumber();
+   playerClient.viewedSpawnDistribution = entityType;
+}

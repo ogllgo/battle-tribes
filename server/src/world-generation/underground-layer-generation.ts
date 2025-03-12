@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import { assert, clampToBoardDimensions, distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
@@ -15,6 +15,8 @@ import { EntityType } from "../../../shared/src/entities";
 import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
+import { createEmptySpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { createBalancedSpawnDistribution } from "../balanced-spawn-distributions";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -118,6 +120,38 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
    return depths;
 }
 
+const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistribution, waterTileIndex: number): void => {
+   const WEIGHT_SPREAD_DISTANCE = 18;
+
+   const originTileX = getTileX(waterTileIndex);
+   const originTileY = getTileY(waterTileIndex);
+
+   const minTileX = clampToBoardDimensions(originTileX - WEIGHT_SPREAD_DISTANCE);
+   const maxTileX = clampToBoardDimensions(originTileX + WEIGHT_SPREAD_DISTANCE);
+   const minTileY = clampToBoardDimensions(originTileY - WEIGHT_SPREAD_DISTANCE);
+   const maxTileY = clampToBoardDimensions(originTileY + WEIGHT_SPREAD_DISTANCE);
+   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+         const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
+         const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
+         const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
+         
+         const dist = distance(tileX, tileY, originTileX, originTileY);
+         if (dist > WEIGHT_SPREAD_DISTANCE) {
+            continue;
+         }
+
+         let weight = (WEIGHT_SPREAD_DISTANCE - dist) / WEIGHT_SPREAD_DISTANCE;
+         assert(weight >= 0 && weight <= 1);
+         weight *= weight;
+         weight *= weight;
+
+         mossSpawnDistribution.weights[chunkIndex] += weight;
+         mossSpawnDistribution.totalWeight += weight;
+      }
+   }
+}
+
 export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
    for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
       for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
@@ -146,6 +180,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
+   const mossSpawnDistribution = createEmptySpawnDistribution();
+   
    const depths = generateDepths(dropdowns);
 
    const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
@@ -190,6 +226,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             waterGenerationWeight *= lerp(0.5, 1, 1 - depth);
             if (weight > 0.44 && weight < 0.51 && waterGenerationWeight > 0.65) {
                undergroundLayer.tileTypes[tileIndex] = TileType.water;
+               setWaterInMossSpawnDistribution(mossSpawnDistribution, tileIndex);
             } else {
                undergroundLayer.tileTypes[tileIndex] = TileType.stone;
             }
@@ -205,6 +242,23 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
    }
    
    groupLocalBiomes(undergroundLayer);
+
+   // Mose
+   registerNewSpawnInfo({
+      entityType: EntityType.moss,
+      layer: undergroundLayer,
+      spawnRate: 0.01,
+      maxDensity: 0.04,
+      spawnableTileTypes: [TileType.stone],
+      packSpawning: {
+         minPackSize: 2,
+         maxPackSize: 5,
+         spawnRange: 40
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 40,
+      spawnDistribution: mossSpawnDistribution
+   });
 
    generateSpikyBastards(undergroundLayer);
 
@@ -267,4 +321,35 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
       pushJoinBuffer(false);
    }
+
+   registerNewSpawnInfo({
+      entityType: EntityType.boulder,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      maxDensity: 0.025,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 60,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.glurb,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0.004,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      spawnDistribution: createBalancedSpawnDistribution()
+   });
+   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
+   registerNewSpawnInfo({
+      entityType: EntityType.mithrilOreNode,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      maxDensity: 0,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100
+   });
 }

@@ -372,3 +372,9 @@ export function sendSetSpectatingPositionPacket(): void {
    packet.addNumber(Camera.position.y);
    Client.sendPacket(packet.buffer);
 }
+
+export function sendDevSetViewedSpawnDistributionPacket(entityType: EntityType | -1): void {
+   const packet = new Packet(PacketType.devSetViewedSpawnDistribution, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entityType);
+   Client.sendPacket(packet.buffer);
+}

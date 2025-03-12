@@ -9,10 +9,10 @@ import { MossComponent } from "../components/MossComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { createHitbox } from "../hitboxes";
 
-export function createMossConfig(position: Point): EntityConfig {
+export function createMossConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), 0, 40, 40), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 40, 40), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const mossComponent = new MossComponent();
