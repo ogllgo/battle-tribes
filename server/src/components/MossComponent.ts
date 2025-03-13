@@ -8,7 +8,8 @@ export class MossComponent {
    public readonly size = randInt(0, 2);
    public readonly colour: number;
 
-   constructor(colour: number) {
+   constructor(size: number, colour: number) {
+      this.size = size;
       this.colour = colour;
    }
 }

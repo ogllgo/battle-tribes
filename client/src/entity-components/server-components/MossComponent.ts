@@ -57,14 +57,16 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    }
 
    entityIntermediateInfo.renderInfo.attachRenderPart(
-      new TexturedRenderPart(
+   new TexturedRenderPart(
          hitbox,
          0,
          0,
          getTextureArrayIndex(textureSource)
       )
    );
-   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).opacity = randFloat(0.65, 0.75);
+   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintR = randFloat(-0.05, 0.05);
+   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintG = randFloat(-0.05, 0.05);
+   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintB = randFloat(-0.05, 0.05);
 
    return {};
 }

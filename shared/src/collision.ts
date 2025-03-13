@@ -209,3 +209,11 @@ export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: 
    
    return box.isColliding(tileBox);
 }
+
+export function boxIsCollidingWithTile(box: Box, tileX: number, tileY: number): boolean {
+   // @Speed
+   const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
+   const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
+   
+   return box.isColliding(tileBox);
+}

@@ -16,7 +16,7 @@ import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
-import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
+import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
@@ -115,6 +115,66 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
    return false;
 }
 
+const hitboxTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnInfo): boolean => {
+   const minX = hitbox.box.calculateBoundsMinX();
+   const maxX = hitbox.box.calculateBoundsMaxX();
+   const minY = hitbox.box.calculateBoundsMinY();
+   const maxY = hitbox.box.calculateBoundsMaxY();
+
+   const minTileX = Math.floor(minX / Settings.TILE_SIZE);
+   const maxTileX = Math.floor(maxX / Settings.TILE_SIZE);
+   const minTileY = Math.floor(minY / Settings.TILE_SIZE);
+   const maxTileY = Math.floor(maxY / Settings.TILE_SIZE);
+   for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (!spawnInfo.spawnableTileTypes.includes(spawnInfo.layer.getTileType(tileIndex)) && boxIsCollidingWithTile(hitbox.box, tileX, tileY)) {
+            return false;
+         }
+      }
+   }
+
+   return true;
+}
+
+// @Hack
+const nodeIsEntityConfig = (node: EntityConfig | Hitbox): node is EntityConfig => {
+   return typeof (node as EntityConfig).components !== "undefined";
+}
+
+const entityTileTypesAreValid = (node: EntityConfig | Hitbox, spawnInfo: EntitySpawnInfo): boolean => {
+   if (nodeIsEntityConfig(node)) {
+      const entityConfig = node;
+
+      const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+      for (const child of transformComponent.children) {
+         if (entityChildIsEntity(child)) {
+            // @Hack! would this actually be the preferrable way of doing it as opposed to having a whole ass child configs thing?
+            throw new Error();
+         } else {
+            if (!entityTileTypesAreValid(child, spawnInfo)) {
+               return false;
+            }
+         }
+      }
+      
+      if (typeof entityConfig.childConfigs !== "undefined") {
+         for (const childEntityConfig of entityConfig.childConfigs) {
+            if (!entityTileTypesAreValid(childEntityConfig, spawnInfo)) {
+               return false;
+            }
+         }
+      }
+   } else {
+      const hitbox = node;
+      if (!hitboxTileTypesAreValid(hitbox, spawnInfo)) {
+         return false;
+      }
+   }
+
+   return true;
+}
+
 const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
@@ -129,6 +189,11 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
 
    const transformComponent = config.components[ServerComponentType.transform];
    if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
+      return null;
+   }
+
+   // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
+   if (spawnInfo.doStrictTileTypeCheck && !entityTileTypesAreValid(config, spawnInfo)) {
       return null;
    }
 

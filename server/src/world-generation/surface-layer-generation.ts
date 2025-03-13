@@ -383,6 +383,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
          return createCowConfig(new Point(x, y), angle, species);
@@ -397,6 +398,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.0025),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBerryBushConfig(new Point(x, y), angle);
       }
@@ -408,8 +410,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.02),
+      rawSpawnDistribution: createRawSpawnDistribution(8, 0.02),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTreeConfig(new Point(x, y), angle);
       }
@@ -423,6 +426,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.003),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTombstoneConfig(new Point(x, y), angle);
       }
@@ -436,6 +440,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 60,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.025),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBoulderConfig(new Point(x, y), angle);
       }
@@ -449,6 +454,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 75,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createCactusConfig(new Point(x, y), angle);
       }
@@ -462,6 +468,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          const tileX = Math.floor(x / Settings.TILE_SIZE);
          const tileY = Math.floor(y / Settings.TILE_SIZE);
@@ -482,6 +489,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.06),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createIceSpikesConfig(new Point(x, y), angle, 0);
       }
@@ -495,6 +503,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 50,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.3),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimewispConfig(new Point(x, y), angle);
       }
@@ -510,6 +519,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 50,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimeConfig(new Point(x, y), angle, 0);
       }
@@ -523,6 +533,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.015),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createKrumblidConfig(new Point(x, y), angle);
       }
@@ -536,6 +547,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createFrozenYetiConfig(new Point(x, y), angle);
       }
@@ -554,6 +566,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
          return createFishConfig(new Point(x, y), angle, colour);
@@ -573,6 +586,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 0,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
          return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
       },
@@ -589,6 +603,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       minSpawnDistance: 150,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createGolemConfig(new Point(x, y), angle);
       }
@@ -601,8 +616,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
          onlySpawnsInNight: false,
          minSpawnDistance: 100,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.002),
-      balanceSpawnDistribution: false,
+         rawSpawnDistribution: createRawSpawnDistribution(4, 0.002),
+         balanceSpawnDistribution: false,
+         doStrictTileTypeCheck: true,
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },

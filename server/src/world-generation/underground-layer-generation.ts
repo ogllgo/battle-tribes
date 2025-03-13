@@ -124,9 +124,36 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
    return depths;
 }
 
-const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<SpawnDistribution>, mossHumidityMultipliers: Float32Array, waterTileIndex: number): void => {
-   const WEIGHT_SPREAD_DISTANCE = 20;
+const WEIGHT_SPREAD_DISTANCE = 20;
 
+const getMossHumidity = (layer: Layer, x: number, y: number): number => {
+   const originTileX = Math.floor(x / Settings.TILE_SIZE);
+   const originTileY = Math.floor(y / Settings.TILE_SIZE);
+
+   const minTileX = clampToBoardDimensions(originTileX - WEIGHT_SPREAD_DISTANCE);
+   const maxTileX = clampToBoardDimensions(originTileX + WEIGHT_SPREAD_DISTANCE);
+   const minTileY = clampToBoardDimensions(originTileY - WEIGHT_SPREAD_DISTANCE);
+   const maxTileY = clampToBoardDimensions(originTileY + WEIGHT_SPREAD_DISTANCE);
+
+   let minDistToWaterTile = WEIGHT_SPREAD_DISTANCE;
+   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (layer.getTileType(tileIndex) === TileType.water) {
+            const dist = distance(tileX, tileY, originTileX, originTileY);
+            if (dist < minDistToWaterTile) {
+               minDistToWaterTile = dist;
+            }
+         }
+      }
+   }
+
+   let humidity = 1 - minDistToWaterTile / WEIGHT_SPREAD_DISTANCE;
+   humidity *= humidity;
+   return humidity;
+}
+
+const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<SpawnDistribution>, mossHumidityMultipliers: Float32Array, waterTileIndex: number): void => {
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
 
@@ -188,7 +215,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   const mossSpawnDistribution = createRawSpawnDistribution(2, 2.5);
+   const mossSpawnDistribution = createRawSpawnDistribution(2, 0.15);
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
    const mossHumidityMultipliers = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
@@ -271,12 +298,21 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          spawnRange: 40
       },
       onlySpawnsInNight: false,
-      minSpawnDistance: 40,
+      minSpawnDistance: 30,
       rawSpawnDistribution: mossSpawnDistribution,
       balanceSpawnDistribution: false,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+         const humidity = getMossHumidity(layer, x, y);
+         const minSize = lerp(0, 1, humidity);
+         const maxSize = lerp(0, 3, humidity);
+         let size = Math.floor(lerp(minSize, maxSize, Math.random()));
+         if (size > 2) {
+            size = 2;
+         }
+         
          const colour = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
-         return createMossConfig(new Point(x, y), angle, colour);
+         return createMossConfig(new Point(x, y), angle, size, colour);
       }
    });
 
@@ -352,6 +388,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       minSpawnDistance: 60,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0.025),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBoulderConfig(new Point(x, y), angle);
       }
@@ -365,6 +402,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       minSpawnDistance: 100,
       rawSpawnDistribution: createRawSpawnDistribution(32, 0.004),
       balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createGlurbConfig(x, y, angle);
       }
@@ -379,6 +417,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       minSpawnDistance: 100,
       rawSpawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return null;
       }

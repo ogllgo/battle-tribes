@@ -28,6 +28,8 @@ export interface SpawnDistribution {
    readonly entityDensityMap: Map<Entity, Array<EntityBlockDensityInfo>>;
 }
 
+// @Cleanup: shouldn't be params and then actual info: should just be 1! perhaps created with function
+
 export interface EntitySpawnInfoParams {
    /** The type of entity to spawn */
    readonly entityType: EntityType;
@@ -41,6 +43,8 @@ export interface EntitySpawnInfoParams {
    readonly packSpawning?: PackSpawningInfo;
    readonly rawSpawnDistribution: SpawnDistribution;
    readonly balanceSpawnDistribution: boolean;
+   /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
+   readonly doStrictTileTypeCheck: boolean;
    readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
@@ -58,6 +62,8 @@ export interface EntitySpawnInfo {
    readonly packSpawning?: PackSpawningInfo;
    readonly spawnDistribution: SpawnDistribution;
    readonly balanceSpawnDistribution: boolean;
+   /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
+   readonly doStrictTileTypeCheck: boolean;
    readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
@@ -103,7 +109,7 @@ export function createRawSpawnDistribution(blockSize: number, maxDensity: number
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
 
-   const densityPerBlock = maxDensity / (blockSize * blockSize);
+   const densityPerBlock = maxDensity * blockSize * blockSize;
 
    const currentDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
    const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
@@ -275,6 +281,7 @@ const createEntitySpawnInfo = (params: EntitySpawnInfoParams): EntitySpawnInfo =
       packSpawning: params.packSpawning,
       spawnDistribution: params.rawSpawnDistribution,
       balanceSpawnDistribution: params.balanceSpawnDistribution,
+      doStrictTileTypeCheck: params.doStrictTileTypeCheck,
       createEntity: params.createEntity,
       customSpawnIsValidFunc: params.customSpawnIsValidFunc
    };

@@ -625,6 +625,12 @@ const renderChunkWeights = (): void => {
       ctx.fillStyle = "#fff";
       ctx.fillText(block.currentDensity.toFixed(2).toString(), left, top + fontSize);
       ctx.fillText(block.targetDensity.toFixed(2).toString(), left, top + fontSize + fontSize + 4);
+
+      const mult = block.currentDensity / block.targetDensity
+      if (mult >= 1) {
+         ctx.fillStyle = "#f00";
+      }
+      ctx.fillText(mult.toFixed(1) + "x", left, top + fontSize + fontSize + fontSize + 8);
    }
 }
 
