@@ -64,7 +64,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          getTextureArrayIndex(textureSource)
       )
    );
-   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).opacity = randFloat(0.55, 0.75);
+   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).opacity = randFloat(0.65, 0.75);
 
    return {};
 }

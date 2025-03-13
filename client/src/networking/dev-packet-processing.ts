@@ -9,7 +9,7 @@ import { updateTribePlanData } from "../rendering/tribe-plan-visualiser/tribe-pl
 import { setVisiblePathfindingNodeOccupances } from "../rendering/webgl/pathfinding-node-rendering";
 import { setVisibleSafetyNodes } from "../rendering/webgl/safety-node-rendering";
 import { SubtileSupportInfo, setVisibleSubtileSupports } from "../rendering/webgl/subtile-support-rendering";
-import { setChunkWeights, SpawnDistributionBlock } from "../text-canvas";
+import { setSpawnDistributionBlocks, SpawnDistributionBlock } from "../text-canvas";
 import { readGhostVirtualBuildings, pruneGhostBuildingPlans } from "../virtual-buildings";
 
 export function readPacketDevData(reader: PacketReader): void {
@@ -101,16 +101,18 @@ export function readPacketDevData(reader: PacketReader): void {
       for (let i = 0; i < numBlocks; i++) {
          const x = reader.readNumber();
          const y = reader.readNumber();
-         const weight = reader.readNumber();
+         const currentDensity = reader.readNumber();
+         const targetDensity = reader.readNumber();
          chunkWeights.push({
             x: x,
             y: y,
-            weight: weight
+            currentDensity: currentDensity,
+            targetDensity: targetDensity
          });
       }
 
-      setChunkWeights(chunkWeights);
+      setSpawnDistributionBlocks(chunkWeights);
    } else {
-      setChunkWeights([]);
+      setSpawnDistributionBlocks([]);
    }
 }

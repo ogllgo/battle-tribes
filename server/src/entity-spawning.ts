@@ -1,7 +1,6 @@
-import { EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex, Point, getTileIndexIncludingEdges } from "battletribes-shared/utils";
+import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, distance } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
 import OPTIONS from "./options";
@@ -12,34 +11,15 @@ import { entityChildIsEntity, TransformComponent, TransformComponentArray } from
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
-import { createCowConfig } from "./entities/mobs/cow";
-import { createBerryBushConfig } from "./entities/resources/berry-bush";
-import { createTombstoneConfig } from "./entities/tombstone";
-import { createBoulderConfig } from "./entities/resources/boulder";
-import { createCactusConfig } from "./entities/resources/cactus";
-import { createYetiConfig } from "./entities/mobs/yeti";
-import { createIceSpikesConfig } from "./entities/resources/ice-spikes";
-import { createKrumblidConfig } from "./entities/mobs/krumblid";
-import { createFrozenYetiConfig } from "./entities/mobs/frozen-yeti";
-import { createFishConfig } from "./entities/mobs/fish";
-import { createLilypadConfig } from "./entities/lilypad";
-import { createGolemConfig } from "./entities/mobs/golem";
-import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
-import { TribeType } from "battletribes-shared/tribes";
-import Tribe from "./Tribe";
-import { createTreeConfig } from "./entities/resources/tree";
-import { EntitySpawnInfo, getDistributionWeightedSpawnPosition, SPAWN_INFOS } from "./entity-spawn-info";
+import { addEntityToSpawnDistribution, EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
-import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
-import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
-import { createMossConfig } from "./entities/moss";
 
 let spawnInfoSpawnableTilesRecord: Record<number, ReadonlySet<TileIndex>>;
 
@@ -73,16 +53,16 @@ export function getSpawnInfoSpawnableTiles(spawnInfoIdx: number): ReadonlySet<Ti
    return spawnInfoSpawnableTilesRecord[spawnInfoIdx];
 }
 
-const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): boolean => {
-   // If there are no tiles upon which the entity is able to be spawned, the spawn conditions aren't valid
-   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   const numEligibleTiles = spawnableTiles.size;
-   if (numEligibleTiles === 0) return false;
-   
-   // Check if the entity density is right
-   const entityCount = getEntityCount(spawnInfo.entityType);
-   const density = entityCount / numEligibleTiles;
-   if (density >= spawnInfo.maxDensity) {
+const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
+   // Make sure there is a block which lacks density
+   let isFullyDense = true;
+   for (let i = 0; i < spawnInfo.spawnDistribution.targetDensities.length; i++) {
+      if (spawnInfo.spawnDistribution.currentDensities[i] < spawnInfo.spawnDistribution.targetDensities[i]) {
+         isFullyDense = false;
+         break;
+      }
+   }
+   if (isFullyDense) {
       return false;
    }
 
@@ -148,13 +128,14 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    // @Cleanup: should this be done here, or automatically as the hitboxes are created
 
    const transformComponent = config.components[ServerComponentType.transform];
-   if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
+   if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
       return null;
    }
 
    // Create the entity
    const entity = createEntity(config, spawnInfo.layer, 0);
    addEntityToCensus(entity, spawnInfo.entityType);
+   addEntityToSpawnDistribution(spawnInfo.spawnDistribution, entity, x, y);
    if (!SERVER.isRunning) {
       pushJoinBuffer(false);
    }
@@ -163,11 +144,6 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
 }
 
 const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
-   // @Incomplete @Cleanup: Make all cows spawn with the same type,
-   // and make fish spawn with the same colour
-   
-   // const cowSpecies = randInt(0, 1);
-
    const firstEntityConfig = attemptToSpawnEntity(spawnInfo, spawnOriginX, spawnOriginY, null);
    if (firstEntityConfig === null) {
       return;
@@ -186,22 +162,16 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
       const additionalSpawnCount = randInt(spawnInfo.packSpawning.minPackSize, spawnInfo.packSpawning.maxPackSize) - 1;
    
       const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-      for (let i = 0; i < additionalSpawnCount;) {
+      for (let i = 0; i < additionalSpawnCount; i++) {
          if (++totalSpawnAttempts === 100) {
             break;
          }
    
-         // @Speed: Garbage collection, and doing a whole bunch of unnecessary continues here
-         
-         // Generate a spawn position near the spawn origin
-         let spawnPositionX: number;
-         let spawnPositionY: number;
-         if (OPTIONS.inBenchmarkMode) {
-            spawnPositionX = SRandom.randFloat(minX, maxX);
-            spawnPositionY = SRandom.randFloat(minY, maxY);
-         } else {
-            spawnPositionX = randFloat(minX, maxX);
-            spawnPositionY = randFloat(minY, maxY);
+         const spawnPositionX = randFloat(minX, maxX);
+         const spawnPositionY = randFloat(minY, maxY);
+         const dist = distance(spawnPositionX, spawnPositionY, spawnOriginX, spawnOriginY);
+         if (dist > spawnInfo.packSpawning.spawnRange) {
+            continue;
          }
    
          const tileX = Math.floor(spawnPositionX / Settings.TILE_SIZE);
@@ -216,8 +186,6 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
             const y = randInt(minY, maxY);
    
             attemptToSpawnEntity(spawnInfo, x, y, firstEntityConfig);
-            
-            i++;
          }
       }
    }
@@ -258,31 +226,32 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnInfo, positionX: numb
 }
 
 const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void => {
-   // Pick a random tile to spawn at
-   // @Speed: Instead of randomly picking a tile until it matches the spawnable, pick a random tile from the spawnable tiles
-   const tileX = randInt(0, Settings.BOARD_DIMENSIONS - 1);
-   const tileY = randInt(0, Settings.BOARD_DIMENSIONS - 1);
-   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   const x = Settings.BOARD_UNITS * Math.random();
+   const y = Settings.BOARD_UNITS * Math.random();
 
-   // (This is just to uphold the spawn attempt frequency)
-   // If the tile is a valid tile for the spawn info, continue with the spawn event
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / spawnInfo.spawnDistribution.blockSize;
+
+   const blockX = Math.floor(x / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+   // Don't spawn entities in places which already have the target density
+   if (spawnInfo.spawnDistribution.currentDensities[blockIdx] >= spawnInfo.spawnDistribution.targetDensities[blockIdx]) {
+      return;
+   }
+   
+   const tileX = Math.floor(x / Settings.TILE_SIZE);
+   const tileY = Math.floor(y / Settings.TILE_SIZE);
+   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   
    const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   if (spawnableTiles.has(tileIndex)) {
-      // Calculate a random position in that tile to run the spawn at
-      let x: number;
-      let y: number;
-      if (typeof spawnInfo.spawnDistribution !== "undefined") {
-         const position = getDistributionWeightedSpawnPosition(spawnInfoIdx, spawnInfo.spawnDistribution);
-         x = position.x;
-         y = position.y;
-      } else {
-         x = (tileX + Math.random()) * Settings.TILE_SIZE;
-         y = (tileY + Math.random()) * Settings.TILE_SIZE;
-      }
-      
-      if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
-         spawnEntities(spawnInfoIdx, spawnInfo, x, y);
-      }
+   if (!spawnableTiles.has(tileIndex)) {
+      return;
+   }
+
+   if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
+      spawnEntities(spawnInfoIdx, spawnInfo, x, y);
    }
 }
 
@@ -294,7 +263,7 @@ export function runSpawnAttempt(): void {
    // Regular spawning
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
       const spawnInfo = SPAWN_INFOS[i];
-      if (!spawnConditionsAreMet(i, spawnInfo)) {
+      if (!spawnConditionsAreMet(spawnInfo)) {
          continue;
       }
 
@@ -306,7 +275,7 @@ export function runSpawnAttempt(): void {
       }
       for (let j = 0; j < numSpawnEvents; j++) {
          runSpawnEvent(i, spawnInfo);
-         if (!spawnConditionsAreMet(i, spawnInfo)) {
+         if (!spawnConditionsAreMet(spawnInfo)) {
             break;
          }
       }
@@ -327,7 +296,7 @@ export function spawnInitialEntities(): void {
       const spawnInfo = SPAWN_INFOS[i];
       
       numSpawnAttempts = 0;
-      while (spawnConditionsAreMet(i, spawnInfo)) {
+      while (spawnConditionsAreMet(spawnInfo)) {
          runSpawnEvent(i, spawnInfo);
 
          if (++numSpawnAttempts >= 9999) {

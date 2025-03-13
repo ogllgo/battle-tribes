@@ -63,13 +63,14 @@ let damageNumberY = -1;
 export interface SpawnDistributionBlock {
    readonly x: number;
    readonly y: number;
-   readonly weight: number;
+   readonly currentDensity: number;
+   readonly targetDensity: number;
 }
 
-let chunkWeights = new Array<SpawnDistributionBlock>();
+let spawnDistributionBlocks = new Array<SpawnDistributionBlock>();
 
-export function setChunkWeights(newWeights: Array<SpawnDistributionBlock>): void {
-   chunkWeights = newWeights;
+export function setSpawnDistributionBlocks(newSpawnDistributionBlocks: Array<SpawnDistributionBlock>): void {
+   spawnDistributionBlocks = newSpawnDistributionBlocks;
 }
 
 export function createTextCanvasContext(): void {
@@ -617,12 +618,13 @@ const renderChunkWeights = (): void => {
    ctx.font = "400 " + fontSize + "px Helvetica";
    ctx.lineJoin = "round";
    ctx.miterLimit = 2;
-   for (const block of chunkWeights) {
+   for (const block of spawnDistributionBlocks) {
       const left = getXPosInTextCanvas(block.x);
       const top = getYPosInTextCanvas(block.y);
       
       ctx.fillStyle = "#fff";
-      ctx.fillText(block.weight.toFixed(2).toString(), left, top + fontSize);
+      ctx.fillText(block.currentDensity.toFixed(2).toString(), left, top + fontSize);
+      ctx.fillText(block.targetDensity.toFixed(2).toString(), left, top + fontSize + fontSize + 4);
    }
 }
 

@@ -10,7 +10,7 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
+import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
@@ -373,7 +373,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.cow,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.004,
       spawnableTileTypes: [TileType.grass],
       packSpawning: {
          minPackSize: 2,
@@ -382,7 +381,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
@@ -393,11 +392,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.berryBush,
       layer: surfaceLayer,
       spawnRate: 0.001,
-      maxDensity: 0.0025,
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.0025),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBerryBushConfig(new Point(x, y), angle);
@@ -407,11 +405,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tree,
       layer: surfaceLayer,
       spawnRate: 0.013,
-      maxDensity: 0.02,
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.02),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTreeConfig(new Point(x, y), angle);
@@ -421,11 +418,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tombstone,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      maxDensity: 0.003,
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: true,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.003),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTombstoneConfig(new Point(x, y), angle);
@@ -435,11 +431,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.025,
       spawnableTileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.025),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBoulderConfig(new Point(x, y), angle);
@@ -449,11 +444,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.cactus,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.03,
       spawnableTileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createCactusConfig(new Point(x, y), angle);
@@ -463,11 +457,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.yeti,
       layer: surfaceLayer,
       spawnRate: 0.004,
-      maxDensity: 0.008,
       spawnableTileTypes: [TileType.snow],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          const tileX = Math.floor(x / Settings.TILE_SIZE);
@@ -484,11 +477,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.iceSpikes,
       layer: surfaceLayer,
       spawnRate: 0.015,
-      maxDensity: 0.06,
       spawnableTileTypes: [TileType.ice, TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.06),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createIceSpikesConfig(new Point(x, y), angle, 0);
@@ -498,11 +490,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.slimewisp,
       layer: surfaceLayer,
       spawnRate: 0.2,
-      maxDensity: 0.3,
       spawnableTileTypes: [TileType.slime],
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.3),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimewispConfig(new Point(x, y), angle);
@@ -514,11 +505,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.slime,
       layer: surfaceLayer,
       spawnRate: 0,
-      maxDensity: 0,
       spawnableTileTypes: [TileType.slime],
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimeConfig(new Point(x, y), angle, 0);
@@ -528,11 +518,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.krumblid,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.015,
       spawnableTileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.015),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createKrumblidConfig(new Point(x, y), angle);
@@ -542,11 +531,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,
       spawnRate: 0.004,
-      maxDensity: 0.008,
       spawnableTileTypes: [TileType.fimbultur],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createFrozenYetiConfig(new Point(x, y), angle);
@@ -556,7 +544,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.fish,
       layer: surfaceLayer,
       spawnRate: 0.015,
-      maxDensity: 0.03,
       spawnableTileTypes: [TileType.water],
       packSpawning: {
          minPackSize: 3,
@@ -565,7 +552,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
@@ -576,7 +563,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.lilypad,
       layer: surfaceLayer,
       spawnRate: 0,
-      maxDensity: 0.03,
       spawnableTileTypes: [TileType.water],
       packSpawning: {
          minPackSize: 2,
@@ -585,7 +571,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 0,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
          return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
@@ -598,11 +584,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.golem,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      maxDensity: 0.004,
       spawnableTileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createGolemConfig(new Point(x, y), angle);
@@ -613,12 +598,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          entityType: EntityType.tribeWorker,
          layer: surfaceLayer,
          spawnRate: 0.002,
-         maxDensity: 0.002,
          spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
          onlySpawnsInNight: false,
          minSpawnDistance: 100,
-         blockSize: 4,
-         balanceSpawnDistribution: false,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.002),
+      balanceSpawnDistribution: false,
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },

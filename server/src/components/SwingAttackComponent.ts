@@ -256,6 +256,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       throw new Error();
    }
    // @Temporary: remove when bug is fixed
+   // @Bug: Happens when a zombie swings !!!
    if (!TribeComponentArray.hasComponent(owner)) {
       console.log(getEntityType(owner));
       throw new Error();

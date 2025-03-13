@@ -15,7 +15,7 @@ import { EntityType } from "../../../shared/src/entities";
 import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
-import { createEmptySpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { createRawSpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
 import { EntityConfig } from "../components";
 import { createBoulderConfig } from "../entities/resources/boulder";
 import { createGlurbConfig } from "../entities/mobs/glurb";
@@ -124,8 +124,8 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
    return depths;
 }
 
-const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistribution, waterTileIndex: number): void => {
-   const WEIGHT_SPREAD_DISTANCE = 24;
+const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<SpawnDistribution>, mossHumidityMultipliers: Float32Array, waterTileIndex: number): void => {
+   const WEIGHT_SPREAD_DISTANCE = 20;
 
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
@@ -149,13 +149,13 @@ const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistributio
          weight *= weight;
          weight *= weight;
          weight *= weight;
+         weight *= weight;
 
          const blockX = Math.floor(tileX / mossSpawnDistribution.blockSize);
          const blockY = Math.floor(tileY / mossSpawnDistribution.blockSize);
          const blockIndex = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
 
-         mossSpawnDistribution.weights[blockIndex] += weight;
-         mossSpawnDistribution.totalWeight += weight;
+         mossHumidityMultipliers[blockIndex] += weight;
       }
    }
 }
@@ -188,7 +188,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   const mossSpawnDistribution = createEmptySpawnDistribution(2);
+   const mossSpawnDistribution = createRawSpawnDistribution(2, 2.5);
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
+   const mossHumidityMultipliers = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
    
    const depths = generateDepths(dropdowns);
 
@@ -234,7 +237,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             waterGenerationWeight *= lerp(0.5, 1, 1 - depth);
             if (weight > 0.44 && weight < 0.51 && waterGenerationWeight > 0.65) {
                undergroundLayer.tileTypes[tileIndex] = TileType.water;
-               setWaterInMossSpawnDistribution(mossSpawnDistribution, tileIndex);
+               setWaterInMossHumidityMultipliers(mossSpawnDistribution, mossHumidityMultipliers, tileIndex);
             } else {
                undergroundLayer.tileTypes[tileIndex] = TileType.stone;
             }
@@ -248,6 +251,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          }
       }
    }
+
+   // @Copynpaste
+   for (let i = 0; i < mossHumidityMultipliers.length; i++) {
+      mossSpawnDistribution.targetDensities[i] *= mossHumidityMultipliers[i];
+   }
    
    groupLocalBiomes(undergroundLayer);
 
@@ -256,7 +264,6 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.moss,
       layer: undergroundLayer,
       spawnRate: 0.01,
-      maxDensity: 0.08,
       spawnableTileTypes: [TileType.stone],
       packSpawning: {
          minPackSize: 2,
@@ -265,13 +272,13 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 40,
-      blockSize: 2,
+      rawSpawnDistribution: mossSpawnDistribution,
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const colour = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
          return createMossConfig(new Point(x, y), angle, colour);
       }
-   }, mossSpawnDistribution);
+   });
 
    generateSpikyBastards(undergroundLayer);
 
@@ -340,11 +347,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      maxDensity: 0.025,
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.025),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createBoulderConfig(new Point(x, y), angle);
@@ -354,11 +360,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.glurb,
       layer: undergroundLayer,
       spawnRate: 0.0025,
-      maxDensity: 0.004,
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
-      blockSize: 32,
+      rawSpawnDistribution: createRawSpawnDistribution(32, 0.004),
       balanceSpawnDistribution: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createGlurbConfig(x, y, angle);
@@ -369,11 +374,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.mithrilOreNode,
       layer: undergroundLayer,
       spawnRate: 0.0025,
-      maxDensity: 0,
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
-      blockSize: 4,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return null;

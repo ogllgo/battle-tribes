@@ -1,10 +1,11 @@
 import { Biome } from "../../shared/src/biomes";
 import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
-import { EntityType } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
-import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, Point, TileIndex } from "../../shared/src/utils";
+import { assert, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
 import { EntityConfig } from "./components";
+import { getTransformComponentFirstHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
 import { surfaceLayer } from "./layers";
 
@@ -15,18 +16,16 @@ export interface PackSpawningInfo {
    readonly spawnRange: number;
 }
 
-export interface SpawnDistributionChunkInfo {
-   /** How dense the sample is. The higher the number, the lower the chance of a position being generated there. */
-   density: number;
-   readonly numSpawnableTiles: number;
+interface EntityBlockDensityInfo {
+   readonly blockIdx: number;
+   readonly density: number;
 }
 
-/** Spawn attempts will be weighted towards areas with more weight. */
 export interface SpawnDistribution {
-   /** For each chunk idx, stores that chunk's corresponding weight */
-   readonly weights: Float32Array;
-   totalWeight: number;
+   readonly currentDensities: Float32Array;
+   readonly targetDensities: Float32Array;
    readonly blockSize: number;
+   readonly entityDensityMap: Map<Entity, Array<EntityBlockDensityInfo>>;
 }
 
 export interface EntitySpawnInfoParams {
@@ -35,14 +34,12 @@ export interface EntitySpawnInfoParams {
    readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
-   /** Maximum global density per tile the entity type can have. */
-   readonly maxDensity: number;
    readonly spawnableTileTypes: ReadonlyArray<TileType>;
    readonly onlySpawnsInNight: boolean;
    /** Minimum distance a spawn event can occur from another entity */
    readonly minSpawnDistance: number;
    readonly packSpawning?: PackSpawningInfo;
-   readonly blockSize: number;
+   readonly rawSpawnDistribution: SpawnDistribution;
    readonly balanceSpawnDistribution: boolean;
    readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
@@ -54,8 +51,6 @@ export interface EntitySpawnInfo {
    readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
-   /** Maximum global density per tile the entity type can have. */
-   readonly maxDensity: number;
    readonly spawnableTileTypes: ReadonlyArray<TileType>;
    readonly onlySpawnsInNight: boolean;
    /** Minimum distance a spawn event can occur from another entity */
@@ -82,13 +77,15 @@ export interface EntitySpawnInfo {
 export const SPAWN_INFOS = new Array<EntitySpawnInfo>();
 
 const countNumSpawnableTiles = (params: EntitySpawnInfoParams, blockX: number, blockY: number): number => {
-   const originTileX = blockX * params.blockSize;
-   const originTileY = blockY * params.blockSize;
+   const blockSize = params.rawSpawnDistribution.blockSize;
+
+   const originTileX = blockX * blockSize;
+   const originTileY = blockY * blockSize;
    
    // @Incomplete: doesn't account for layer
    let count = 0;
-   for (let tileX = originTileX; tileX < originTileX + params.blockSize; tileX++) {
-      for (let tileY = originTileY; tileY < originTileY + params.blockSize; tileY++) {
+   for (let tileX = originTileX; tileX < originTileX + blockSize; tileX++) {
+      for (let tileY = originTileY; tileY < originTileY + blockSize; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tileType = params.layer.getTileType(tileIndex);
          if (params.spawnableTileTypes.includes(tileType)) {
@@ -100,79 +97,191 @@ const countNumSpawnableTiles = (params: EntitySpawnInfoParams, blockX: number, b
    return count;
 }
 
-export function createEmptySpawnDistribution(blockSize: number): SpawnDistribution {
+/** Max density is the target number of entities per tile */
+export function createRawSpawnDistribution(blockSize: number, maxDensity: number): SpawnDistribution {
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
 
-   return {
-      weights: new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS),
-      totalWeight: 0,
-      blockSize: blockSize
+   const densityPerBlock = maxDensity / (blockSize * blockSize);
+
+   const currentDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+   const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+
+   for (let i = 0; i < targetDensities.length; i++) {
+      targetDensities[i] = densityPerBlock;
    }
+   
+   return {
+      currentDensities: currentDensities,
+      targetDensities: targetDensities,
+      blockSize: blockSize,
+      entityDensityMap: new Map()
+   };
 }
 
-const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): SpawnDistribution => {
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / params.blockSize;
+/** Takes into account the spawnable tiles into the raw spawn distribution */
+const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): void => {
+   const blockSize = params.rawSpawnDistribution.blockSize;
+   
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
    
-   const weights = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
-   let totalWeight = 0;
+   const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
    let i = 0;
    for (let blockY = 0; blockY < BLOCKS_IN_BOARD_DIMENSIONS; blockY++) {
       for (let blockX = 0; blockX < BLOCKS_IN_BOARD_DIMENSIONS; blockX++) {
          const numSpawnableTiles = countNumSpawnableTiles(params, blockX, blockY);
 
-         const weight = numSpawnableTiles / (params.blockSize * params.blockSize);
-         weights[i] = weight;
-         totalWeight += weight;
+         const targetDensity = numSpawnableTiles / (blockSize * blockSize);
+         targetDensities[i] = targetDensity;
          i++;
       }
    }
 
-   return {
-      weights: weights,
-      totalWeight: totalWeight,
-      blockSize: params.blockSize
-   };
+   for (let i = 0; i < params.rawSpawnDistribution.targetDensities.length; i++) {
+      params.rawSpawnDistribution.targetDensities[i] *= targetDensities[i];
+   }
 }
 
-const combineSpawnDistributions = (baseDistribution: SpawnDistribution, customDistribution: SpawnDistribution): void => {
-   assert(baseDistribution.weights.length === customDistribution.weights.length);
+export function addEntityToSpawnDistribution(spawnDistribution: SpawnDistribution, entity: Entity, x: number, y: number): void {
+   // Distribute a density of 1 amongst the blocks in a diamond-shaped expansion
+   // @Correctness: Instead of adding from just the position of the entity, it should add from all blocks in the bounding area
    
-   baseDistribution.totalWeight = 0;
-   for (let i = 0; i < baseDistribution.weights.length; i++) {
-      const weight = baseDistribution.weights[i] * customDistribution.weights[i];
-      baseDistribution.weights[i] = weight;
-      baseDistribution.totalWeight += weight;
+   const blockSize = spawnDistribution.blockSize;
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   
+   const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
+   
+   let remainingDensity = 1;
+   const densityInfos = new Array<EntityBlockDensityInfo>();
+   
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+   const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+
+   const usedDensity = Math.min(remainingDensity, blockTargetDensity);
+
+   // This can sometimes not be the case due to pack spawning causing an entity to spawn in a block with 0 target density
+   if (usedDensity > 0) {
+      remainingDensity -= usedDensity;
+      densityInfos.push({
+         blockIdx: blockIdx,
+         density: usedDensity
+      });
+   }
+
+   for (let dist = 1; remainingDensity > 0; dist++) {
+      // Count the total density in the pass
+      let totalPassDensity = 0;
+      for (let i = 0; i <= dist; i++) {
+         // Top right
+         if (blockX + i >= 0 && blockX + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Bottom right
+         if (blockX + dist - i >= 0 && blockX + dist - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + dist - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Bottom left
+         if (blockX - dist + i >= 0 && blockX - dist + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - dist + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Top left
+         if (blockX - i >= 0 && blockX - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+      }
+
+      const totalUsedDensity = Math.min(remainingDensity, totalPassDensity);
+      if (totalUsedDensity === 0) {
+         // Empty passes should stop the search
+         break;
+      }
+
+      for (let i = 0; i <= dist; i++) {
+         // Top right
+         if (blockX + i >= 0 && blockX + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Bottom right
+         if (blockX + dist - i >= 0 && blockX + dist - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + dist - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Bottom left
+         if (blockX - dist + i >= 0 && blockX - dist + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - dist + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Top left
+         if (blockX - i >= 0 && blockX - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+      }
+
+      remainingDensity -= totalUsedDensity;
+   }
+
+   spawnDistribution.entityDensityMap.set(entity, densityInfos);
+
+   // Affect the current densities
+   for (const densityInfo of densityInfos) {
+      spawnDistribution.currentDensities[densityInfo.blockIdx] += densityInfo.density;
    }
 }
 
-const createEntitySpawnInfo = (params: EntitySpawnInfoParams, customSpawnDistribution?: SpawnDistribution): EntitySpawnInfo => {
-   const baseSpawnDistribution = createBaseSpawnDistribution(params);
-
-   if (typeof customSpawnDistribution !== "undefined") {
-      combineSpawnDistributions(baseSpawnDistribution, customSpawnDistribution);
-   }
+const createEntitySpawnInfo = (params: EntitySpawnInfoParams): EntitySpawnInfo => {
+   createBaseSpawnDistribution(params);
 
    return {
       entityType: params.entityType,
       layer: params.layer,
       spawnRate: params.spawnRate,
-      maxDensity: params.maxDensity,
       spawnableTileTypes: params.spawnableTileTypes,
       onlySpawnsInNight: params.onlySpawnsInNight,
       minSpawnDistance: params.minSpawnDistance,
       packSpawning: params.packSpawning,
-      spawnDistribution: baseSpawnDistribution,
+      spawnDistribution: params.rawSpawnDistribution,
       balanceSpawnDistribution: params.balanceSpawnDistribution,
       createEntity: params.createEntity,
       customSpawnIsValidFunc: params.customSpawnIsValidFunc
    };
 }
 
-export function registerNewSpawnInfo(params: EntitySpawnInfoParams, customSpawnDistribution?: SpawnDistribution): void {
-   const spawnInfo = createEntitySpawnInfo(params, customSpawnDistribution);
+export function registerNewSpawnInfo(params: EntitySpawnInfoParams): void {
+   const spawnInfo = createEntitySpawnInfo(params);
    SPAWN_INFOS.push(spawnInfo);
 }
 
@@ -209,67 +318,23 @@ export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
    }
 }
 
-const getDistributionWeightedSampleIndex = (spawnDistribution: SpawnDistribution): number => {
-   // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / spawnDistribution.blockSize;
-
-   const targetWeight = spawnDistribution.totalWeight * Math.random();
-
-   let currentWeight = 0;
-   for (let i = 0; i < BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS; i++) {
-      const chunkSpawnWeight = spawnDistribution.weights[i];
-
-      currentWeight += chunkSpawnWeight;
-      if (currentWeight >= targetWeight) {
-         return i;
-      }
-   }
-
-   throw new Error();
-}
-
-const getRandomSpawnableTileIndex = (blockSize: number, blockIdx: number, spawnInfo: EntitySpawnInfo): number => {
+export function spawnPositionLacksDensity(spawnInfo: EntitySpawnInfo, x: number, y: number): boolean {
+   const spawnDistribution = spawnInfo.spawnDistribution;
+   const blockSize = spawnDistribution.blockSize;
+   
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
-   
-   const blockX = blockIdx % BLOCKS_IN_BOARD_DIMENSIONS;
-   const blockY = Math.floor(blockIdx / BLOCKS_IN_BOARD_DIMENSIONS);
-   
-   const originTileX = blockX * blockSize;
-   const originTileY = blockY * blockSize;
-   
-   const spawnableTileIndexes = new Array<number>();
-   for (let xOffset = 0; xOffset < blockSize; xOffset++) {
-      for (let yOffset = 0; yOffset < blockSize; yOffset++) {
-         const tileX = originTileX + xOffset;
-         const tileY = originTileY + yOffset;
 
-         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         const tileType = spawnInfo.layer.getTileType(tileIndex);
-         if (spawnInfo.spawnableTileTypes.includes(tileType)) {
-            spawnableTileIndexes.push(tileIndex);
-         }
-      }
-   }
+   const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
 
-   assert(spawnableTileIndexes.length > 0);
-   return spawnableTileIndexes[Math.floor(spawnableTileIndexes.length * Math.random())];
+   const currentDensity = spawnDistribution.currentDensities[blockIdx];
+   const targetDensity = spawnDistribution.targetDensities[blockIdx];
+   return currentDensity < targetDensity;
 }
 
-export function getDistributionWeightedSpawnPosition(spawnInfoIdx: number, spawnDistribution: SpawnDistribution): Point {
-   const blockIdx = getDistributionWeightedSampleIndex(spawnDistribution);
-
-   const spawnInfo = SPAWN_INFOS[spawnInfoIdx];
-   const tileIndex = getRandomSpawnableTileIndex(spawnDistribution.blockSize, blockIdx, spawnInfo);
-
-   const tileX = getTileX(tileIndex);
-   const tileY = getTileY(tileIndex);
-   
-   const x = (tileX + Math.random()) * Settings.TILE_SIZE;
-   const y = (tileY + Math.random()) * Settings.TILE_SIZE;
-   return new Point(x, y);
-}
-
+// @Cleanup: won't be necessary once stepping stones are entities (can just use the getentitiesinrange function)
 export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: number): boolean {
    const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);

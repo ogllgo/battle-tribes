@@ -127,7 +127,9 @@ const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, l
          const density = count / numEligibleTiles;
          packet.addNumber(density);
    
-         packet.addNumber(spawnInfo.maxDensity);
+         // @Hack!
+         // packet.addNumber(spawnInfo.maxDensity);
+         packet.addNumber(0);
       } else {
          packet.addNumber(0);
          packet.addNumber(0);
@@ -259,7 +261,7 @@ const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distri
    const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
 
    const numVisibleBlocks = (maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY);
-   return Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
+   return Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
 }
 
 const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
@@ -274,15 +276,15 @@ const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClie
    packet.addNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
    for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
       for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
-         const blockIndex = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
-         const weight = distribution.weights[blockIndex];
+         const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
 
          const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
          const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
 
          packet.addNumber(x);
          packet.addNumber(y);
-         packet.addNumber(weight);
+         packet.addNumber(distribution.currentDensities[blockIdx]);
+         packet.addNumber(distribution.targetDensities[blockIdx]);
       }
    }
 }

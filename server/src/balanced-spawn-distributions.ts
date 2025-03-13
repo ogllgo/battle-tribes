@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { createEmptySpawnDistribution, SPAWN_INFOS, SpawnDistribution } from "./entity-spawn-info";
+import { SpawnDistribution } from "./entity-spawn-info";
 import { getSpawnInfoSpawnableTiles } from "./entity-spawning";
 
 const balancedDistributions = new Set<SpawnDistribution>();
