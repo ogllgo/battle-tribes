@@ -431,7 +431,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
    let config: EntityConfig;
    switch (entityType) {
       case EntityType.cow: {
-         config = createCowConfig(new Point(x, y), rotation);
+         config = createCowConfig(new Point(x, y), rotation, 0);
          break;
       }
       case EntityType.krumblid: {

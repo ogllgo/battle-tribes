@@ -114,7 +114,7 @@ function onHit(entity: Entity): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, position.x, position.y, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnHitbox("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -123,5 +123,5 @@ function onDie(entity: Entity): void {
 
    createBloodParticleFountain(entity, 0.1, 0.8);
    
-   playSoundOnHitbox("fish-die-1.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("fish-die-1.mp3", 0.4, 1, entity, hitbox, false);
 }

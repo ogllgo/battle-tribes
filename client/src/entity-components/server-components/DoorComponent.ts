@@ -96,9 +96,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    const doorComponent = DoorComponentArray.getComponent(entity);
    if (toggleType === DoorToggleType.open && doorComponent.toggleType === DoorToggleType.none) {
-      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, entity, hitbox, false);
    } else if (toggleType === DoorToggleType.close && doorComponent.toggleType === DoorToggleType.none) {
-      playSoundOnHitbox("door-close.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("door-close.mp3", 0.4, 1, entity, hitbox, false);
    }
 
    doorComponent.toggleType = toggleType;
@@ -109,7 +109,7 @@ function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
+   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, entity, hitbox, false);
 
    for (let i = 0; i < 4; i++) {
       createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
@@ -125,7 +125,7 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, entity, hitbox, false);
 
    for (let i = 0; i < 7; i++) {
       createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32 * Math.random());

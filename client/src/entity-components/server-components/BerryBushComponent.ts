@@ -117,7 +117,7 @@ function onHit(entity: Entity): void {
       createLeafSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
    }
 
-   playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -138,5 +138,5 @@ function onDie(entity: Entity): void {
       createLeafSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS * Math.random(), LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH);
    }
 
-   playSoundOnHitbox("berry-bush-destroy-1.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("berry-bush-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

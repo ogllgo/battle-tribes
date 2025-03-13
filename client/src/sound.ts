@@ -2,7 +2,7 @@ import { Settings } from "battletribes-shared/settings";
 import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
-import { getCurrentLayer } from "./world";
+import { getCurrentLayer, getEntityLayer } from "./world";
 import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
@@ -383,10 +383,9 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
 }
 
 // @Cleanup: Make this return the sound info. and make it so that the sound info is guaranteed. so if it starts in wrong layer it still plays if it goes to correct layer
-export function playSoundOnHitbox(filePath: string, volume: number, pitchMultiplier: number, hitbox: Hitbox, isDestroyedWhenEntityIsDestroyed: boolean): SoundInfo | null {
+export function playSoundOnHitbox(filePath: string, volume: number, pitchMultiplier: number, entity: Entity, hitbox: Hitbox, isDestroyedWhenEntityIsDestroyed: boolean): SoundInfo | null {
    // @Incomplete: use render position
-   // @INCOMPLETE: Layer
-   const soundInfo = playSound(filePath, volume, pitchMultiplier, hitbox.box.position.copy(), null);
+   const soundInfo = playSound(filePath, volume, pitchMultiplier, hitbox.box.position.copy(), getEntityLayer(entity));
    
    if (soundInfo !== null) {
       soundToHitboxMap.set(soundInfo.sound, hitbox);
@@ -458,8 +457,8 @@ export function updateSounds(): void {
 }
 
 // @Hack: There should really be unique sounds for each entity type, not one generic sound.
-export function playBuildingHitSound(hitbox: Hitbox): void {
-   playSoundOnHitbox("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, hitbox, false);
+export function playBuildingHitSound(entity: Entity, hitbox: Hitbox): void {
+   playSoundOnHitbox("building-hit-" + randInt(1, 2) + ".mp3", 0.2, 1, entity, hitbox, false);
 }
 
 export function playRiverSounds(): void {

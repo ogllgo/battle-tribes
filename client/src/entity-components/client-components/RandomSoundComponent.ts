@@ -75,6 +75,6 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       const soundSrc = randItem(randomSoundComponent.sounds);
-      playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, hitbox, false);
+      playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, hitbox, false);
    }
 }

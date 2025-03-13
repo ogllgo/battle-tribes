@@ -74,5 +74,5 @@ function onDie(entity: Entity): void {
       createSlurbParticle(pos.x, pos.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
    }
 
-   playSoundOnHitbox("glurb-death.mp3", 0.2, 1, hitbox, false);
+   playSoundOnHitbox("glurb-death.mp3", 0.2, 1, entity, hitbox, false);
 }

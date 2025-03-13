@@ -6,7 +6,11 @@ import { ComponentArray } from "./ComponentArray";
 
 export class MossComponent {
    public readonly size = randInt(0, 2);
-   public readonly colour = randInt(0, 1);
+   public readonly colour: number;
+
+   constructor(colour: number) {
+      this.colour = colour;
+   }
 }
 
 export const MossComponentArray = new ComponentArray<MossComponent>(ServerComponentType.moss, true, getDataLength, addDataToPacket);

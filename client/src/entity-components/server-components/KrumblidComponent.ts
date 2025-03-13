@@ -76,8 +76,8 @@ function onHit(krumblid: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnHitbox("krumblid-hit-shell.mp3", 0.6, randFloat(0.9, 1.1), hitbox, false);
-   playSoundOnHitbox("krumblid-hit-flesh-" + randInt(1, 2) + ".mp3", 0.6, randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("krumblid-hit-shell.mp3", 0.6, randFloat(0.9, 1.1), krumblid, hitbox, false);
+   playSoundOnHitbox("krumblid-hit-flesh-" + randInt(1, 2) + ".mp3", 0.6, randFloat(0.9, 1.1), krumblid, hitbox, false);
 }
 
 function onDie(krumblid: Entity): void {
@@ -97,5 +97,5 @@ function onDie(krumblid: Entity): void {
       createKrumblidChitinParticle(spawnPositionX, spawnPositionY);
    }
 
-   playSoundOnHitbox("krumblid-death.mp3", 0.6, randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("krumblid-death.mp3", 0.6, randFloat(0.9, 1.1), krumblid, hitbox, false);
 }

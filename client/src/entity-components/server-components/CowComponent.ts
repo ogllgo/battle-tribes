@@ -161,7 +161,7 @@ function onTick(entity: Entity): void {
    if (Math.random() < 0.1 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, hitbox, true);
+      playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, hitbox, true);
    }
 
    // @Copynpaste
@@ -214,7 +214,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (isRamming && !cowComponent.isRamming) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("cow-angry.mp3", 0.4, 1, hitbox, true);
+      playSoundOnHitbox("cow-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
    cowComponent.isRamming = isRamming;
 }
@@ -238,7 +238,7 @@ function onHit(entity: Entity, hitData: HitData): void {
       createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
    }
 
-   playSoundOnHitbox("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -251,5 +251,5 @@ function onDie(entity: Entity): void {
 
    createBloodParticleFountain(entity, 0.1, 1.1);
 
-   playSoundOnHitbox("cow-die-1.mp3", 0.2, 1, hitbox, false);
+   playSoundOnHitbox("cow-die-1.mp3", 0.2, 1, entity, hitbox, false);
 }

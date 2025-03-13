@@ -35,13 +35,17 @@ const enum Vars {
 }
 
 export class FishComponent {
-   public readonly colour: FishColour = randInt(0, 3);
+   public readonly colour: FishColour;
 
    public flailTimer = 0;
    public secondsOutOfWater = 0;
 
    public leader: Entity | null = null;
    public attackTargetID = 0;
+
+   constructor(colour: FishColour) {
+      this.colour = colour;
+   }
 }
 
 export const FishComponentArray = new ComponentArray<FishComponent>(ServerComponentType.fish, true, getDataLength, addDataToPacket);

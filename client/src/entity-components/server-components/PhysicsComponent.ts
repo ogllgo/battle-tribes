@@ -227,7 +227,7 @@ function onTick(entity: Entity): void {
       );
       Board.lowTexturedParticles.push(particle);
 
-      playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, hitbox, false);
+      playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, hitbox, false);
    }
 }
 

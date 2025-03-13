@@ -72,7 +72,7 @@ function getMaxRenderParts(): number {
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("guardian-spiky-ball-spawn.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function padData(): void {}
@@ -83,7 +83,7 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox("guardian-spiky-ball-death.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("guardian-spiky-ball-death.mp3", 0.4, 1, entity, hitbox, false);
 
    for (let i = 0; i < 10; i++) {
       const offsetMagnitude = 10 * Math.random();

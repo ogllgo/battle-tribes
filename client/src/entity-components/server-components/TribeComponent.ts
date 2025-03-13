@@ -81,7 +81,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
 
-      playSoundOnHitbox("conversion.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("conversion.mp3", 0.4, 1, entity, hitbox, false);
 
       const radius = getHumanoidRadius(entity);
       for (let i = 0; i < 10; i++) {

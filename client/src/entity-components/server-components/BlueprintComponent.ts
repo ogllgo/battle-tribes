@@ -538,7 +538,7 @@ function onLoad(entity: Entity): void {
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function padData(reader: PacketReader): void {
@@ -591,7 +591,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
 
-      playSoundOnHitbox("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
+      playSoundOnHitbox("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, false);
 
       const progressTexture = getCurrentBlueprintProgressTexture(blueprintComponent.blueprintType, blueprintProgress);
       
@@ -646,8 +646,8 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox("blueprint-work.mp3", 0.4, 1, hitbox, false);
-   playSoundOnHitbox("structure-shaping.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("blueprint-work.mp3", 0.4, 1, entity, hitbox, false);
+   playSoundOnHitbox("structure-shaping.mp3", 0.4, 1, entity, hitbox, false);
 
    // @Cleanup: Copy and pasted from blueprint component
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);

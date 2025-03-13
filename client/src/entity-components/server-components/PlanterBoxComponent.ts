@@ -141,7 +141,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
 
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("fertiliser.mp3", 0.6, 1, hitbox, false);
+      playSoundOnHitbox("fertiliser.mp3", 0.6, 1, entity, hitbox, false);
    }
    planterBoxComponent.isFertilised = isFertilised;
    
@@ -150,7 +150,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       // Plant sound effect
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("plant.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("plant.mp3", 0.4, 1, entity, hitbox, false);
    }
    planterBoxComponent.hasPlant = hasPlant;
 

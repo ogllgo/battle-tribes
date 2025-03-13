@@ -1,6 +1,6 @@
 import { WaterRockData, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { TileType } from "battletribes-shared/tiles";
-import { getTileIndexIncludingEdges, smoothstep } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, Point, randInt, smoothstep } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNoise } from "../perlin-noise";
 import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo } from "./terrain-generation-info";
@@ -18,6 +18,27 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { entityIsTribesman } from "../entities/tribes/tribe-member";
 import { Hitbox } from "../hitboxes";
 import { entityIsStructure } from "../structure-placement";
+import { EntityConfig } from "../components";
+import { createCowConfig } from "../entities/mobs/cow";
+import { ServerComponentType } from "../../../shared/src/components";
+import { createBerryBushConfig } from "../entities/resources/berry-bush";
+import { createTreeConfig } from "../entities/resources/tree";
+import { createTombstoneConfig } from "../entities/tombstone";
+import { createBoulderConfig } from "../entities/resources/boulder";
+import { createCactusConfig } from "../entities/resources/cactus";
+import { createYetiConfig } from "../entities/mobs/yeti";
+import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "../components/YetiComponent";
+import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
+import { createSlimewispConfig } from "../entities/mobs/slimewisp";
+import { createSlimeConfig } from "../entities/mobs/slime";
+import { createKrumblidConfig } from "../entities/mobs/krumblid";
+import { createFrozenYetiConfig } from "../entities/mobs/frozen-yeti";
+import { createFishConfig } from "../entities/mobs/fish";
+import { createLilypadConfig } from "../entities/lilypad";
+import { createGolemConfig } from "../entities/mobs/golem";
+import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
+import Tribe from "../Tribe";
+import { TribeType } from "../../../shared/src/tribes";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -241,6 +262,36 @@ export function generateTileInfo(tileBiomes: Float32Array, tileTypes: Float32Arr
    }
 }
 
+const getTribeType = (layer: Layer, x: number, y: number): TribeType => {
+   const tileX = Math.floor(x / Settings.TILE_SIZE);
+   const tileY = Math.floor(y / Settings.TILE_SIZE);
+   const tileType = layer.getTileXYType(tileX, tileY);
+   switch (tileType) {
+      case TileType.grass: {
+         if (Math.random() < 0.2) {
+            return TribeType.goblins;
+         }
+         return TribeType.plainspeople;
+      }
+      case TileType.sand: {
+         if (Math.random() < 0.2) {
+            return TribeType.goblins;
+         }
+         return TribeType.barbarians;
+      }
+      case TileType.snow:
+      case TileType.ice: {
+         return TribeType.frostlings;
+      }
+      case TileType.rock: {
+         return TribeType.goblins;
+      }
+      default: {
+         return randInt(0, 3);
+      }
+   }
+}
+
 export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    for (let i = 0; i < surfaceLayer.ambientLightFactors.length; i++) {
       surfaceLayer.ambientLightFactors[i] = 1;
@@ -332,7 +383,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
+         return createCowConfig(new Point(x, y), angle, species);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.berryBush,
@@ -343,7 +398,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createBerryBushConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.tree,
@@ -354,31 +412,38 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createTreeConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.tombstone,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      // maxDensity: 0.003,
-      maxDensity: 0,
+      maxDensity: 0.003,
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: true,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createTombstoneConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      // maxDensity: 0.025,
-      maxDensity: 0,
+      maxDensity: 0.025,
       spawnableTileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createBoulderConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.cactus,
@@ -389,7 +454,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createCactusConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.yeti,
@@ -400,7 +468,17 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         const tileX = Math.floor(x / Settings.TILE_SIZE);
+         const tileY = Math.floor(y / Settings.TILE_SIZE);
+         const territory = generateYetiTerritoryTiles(tileX, tileY);
+         if (yetiTerritoryIsValid(territory)) {
+            return createYetiConfig(new Point(x, y), angle, territory);
+         } else {
+            return null;
+         }
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.iceSpikes,
@@ -411,7 +489,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createIceSpikesConfig(new Point(x, y), angle, 0);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.slimewisp,
@@ -422,7 +503,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createSlimewispConfig(new Point(x, y), angle);
+      }
    });
    // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
    // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
@@ -435,7 +519,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createSlimeConfig(new Point(x, y), angle, 0);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.krumblid,
@@ -446,7 +533,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createKrumblidConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
@@ -457,7 +547,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createFrozenYetiConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.fish,
@@ -473,7 +566,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+         const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
+         return createFishConfig(new Point(x, y), angle, colour);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.lilypad,
@@ -492,6 +589,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       balanceSpawnDistribution: false,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
          return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
+      },
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createLilypadConfig(new Point(x, y), angle);
       }
    });
    registerNewSpawnInfo({
@@ -503,7 +603,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createGolemConfig(new Point(x, y), angle);
+      }
    });
    if (OPTIONS.spawnTribes) {
       registerNewSpawnInfo({
@@ -518,6 +621,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          balanceSpawnDistribution: false,
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
+         },
+         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
          }
       });
    }

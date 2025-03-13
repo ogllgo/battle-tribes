@@ -268,7 +268,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("golem-angry.mp3", 0.4, 1, hitbox, true);
+      playSoundOnHitbox("golem-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
    
    golemComponent.wakeProgress = wakeProgress;
@@ -298,5 +298,5 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, hitbox, false);
+   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, hitbox, false);
 }

@@ -86,7 +86,7 @@ function onHit(entity: Entity): void {
       createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }
 
-   playSoundOnHitbox("tree-root-segment-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("tree-root-segment-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -98,5 +98,5 @@ function onDie(entity: Entity): void {
    }
 
    const treeRootSegmentComponent = TreeRootSegmentComponentArray.getComponent(entity);
-   playSoundOnHitbox("tree-root-segment-death-" + (treeRootSegmentComponent.variant % 3 + 1) + ".mp3", 0.5, 1, hitbox, false);
+   playSoundOnHitbox("tree-root-segment-death-" + (treeRootSegmentComponent.variant % 3 + 1) + ".mp3", 0.5, 1, entity, hitbox, false);
 }

@@ -182,7 +182,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (lastDoorSwingTicks === Board.serverTicks) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, entity, hitbox, false);
    }
    
    hutComponent.isRecalling = isRecalling;

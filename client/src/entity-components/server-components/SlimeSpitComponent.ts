@@ -74,7 +74,7 @@ function getMaxRenderParts(): number {
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("slime-spit.mp3", 0.5, 1, hitbox, false);
+   playSoundOnHitbox("slime-spit.mp3", 0.5, 1, entity, hitbox, false);
 }
 
 function onTick(entity: Entity): void {

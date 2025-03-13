@@ -108,11 +108,11 @@ const playFireSound = (entity: Entity): void => {
    
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
-         playSoundOnHitbox("sling-turret-fire.mp3", 0.2, 1, hitbox, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.2, 1, entity, hitbox, false);
          break;
       }
       case EntityType.ballista: {
-         playSoundOnHitbox("sling-turret-fire.mp3", 0.25, 0.7, hitbox, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.25, 0.7, entity, hitbox, false);
          break;
       }
    }

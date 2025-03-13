@@ -50,7 +50,7 @@ function onJoin(entity: Entity): void {
    
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
    
-   spitPoisonAreaComponent.soundInfo = playSoundOnHitbox("acid-burn.mp3", 0.25, 1, hitbox, true);
+   spitPoisonAreaComponent.soundInfo = playSoundOnHitbox("acid-burn.mp3", 0.25, 1, entity, hitbox, true);
    // @Temporary @Bug @Hack: FIX
    if (spitPoisonAreaComponent.soundInfo === null) {
       throw new Error();

@@ -94,36 +94,6 @@ const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo)
    return true;
 }
 
-const getTribeType = (layer: Layer, x: number, y: number): TribeType => {
-   const tileX = Math.floor(x / Settings.TILE_SIZE);
-   const tileY = Math.floor(y / Settings.TILE_SIZE);
-   const tileType = layer.getTileXYType(tileX, tileY);
-   switch (tileType) {
-      case TileType.grass: {
-         if (Math.random() < 0.2) {
-            return TribeType.goblins;
-         }
-         return TribeType.plainspeople;
-      }
-      case TileType.sand: {
-         if (Math.random() < 0.2) {
-            return TribeType.goblins;
-         }
-         return TribeType.barbarians;
-      }
-      case TileType.snow:
-      case TileType.ice: {
-         return TribeType.frostlings;
-      }
-      case TileType.rock: {
-         return TribeType.goblins;
-      }
-      default: {
-         return randInt(0, 3);
-      }
-   }
-}
-
 const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
    // @Copynpaste from transform component resolveWallCollisions
    for (let i = 0; i < transformComponent.children.length; i++) {
@@ -165,63 +135,31 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
    return false;
 }
 
-const attemptToSpawnEntity = (entityType: EntityType, layer: Layer, x: number, y: number): void => {
+const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
    const angle = 2 * Math.PI * Math.random();
    
-   let config: EntityConfig | null;
-   // @Robustness @Modding: shouldn't have to hardcode these, when an entity type is created they should register a way to create it arbitrarily
-   switch (entityType) {
-      case EntityType.cow: config = createCowConfig(new Point(x, y), angle); break;
-      case EntityType.tree: config = createTreeConfig(new Point(x, y), angle); break;
-      case EntityType.berryBush: config = createBerryBushConfig(new Point(x, y), angle); break;
-      case EntityType.tombstone: config = createTombstoneConfig(new Point(x, y), angle); break;
-      case EntityType.boulder: config = createBoulderConfig(new Point(x, y), angle); break;
-      case EntityType.cactus: config = createCactusConfig(new Point(x, y), angle); break;
-      case EntityType.yeti: {
-         const tileX = Math.floor(x / Settings.TILE_SIZE);
-         const tileY = Math.floor(y / Settings.TILE_SIZE);
-         const territory = generateYetiTerritoryTiles(tileX, tileY);
-         if (yetiTerritoryIsValid(territory)) {
-            config = createYetiConfig(new Point(x, y), angle, territory);
-         } else {
-            config = null;
-         }
-         break;
-      }
-      case EntityType.iceSpikes: config = createIceSpikesConfig(new Point(x, y), angle, 0); break;
-      case EntityType.slimewisp: config = createSlimewispConfig(new Point(x, y), angle); break;
-      case EntityType.krumblid: config = createKrumblidConfig(new Point(x, y), angle); break;
-      case EntityType.frozenYeti: config = createFrozenYetiConfig(new Point(x, y), angle); break;
-      case EntityType.fish: config = createFishConfig(new Point(x, y), angle); break;
-      case EntityType.lilypad: config = createLilypadConfig(new Point(x, y), angle); break;
-      case EntityType.golem: config = createGolemConfig(new Point(x, y), angle); break;
-      case EntityType.tribeWorker: config = createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y))); break;
-      case EntityType.glurb: config = createGlurbConfig(x, y, angle); break;
-      case EntityType.moss: config = createMossConfig(new Point(x, y), angle); break;
-      default: {
-         throw new Error(`Couldn't find spawn info for entity type ${EntityTypeString[entityType]}!`);
-      }
-   }
-
+   const config = spawnInfo.createEntity(x, y, angle, firstEntityConfig, spawnInfo.layer);
    if (config === null) {
-      return;
+      return null;
    }
 
    // @Cleanup: should this be done here, or automatically as the hitboxes are created
 
    const transformComponent = config.components[ServerComponentType.transform];
-   if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(layer, transformComponent)) {
-      return;
+   if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
+      return null;
    }
 
    // Create the entity
-   const entity = createEntity(config, layer, 0);
-   addEntityToCensus(entity, entityType);
+   const entity = createEntity(config, spawnInfo.layer, 0);
+   addEntityToCensus(entity, spawnInfo.entityType);
    if (!SERVER.isRunning) {
       pushJoinBuffer(false);
    }
+
+   return config;
 }
 
 const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
@@ -230,7 +168,10 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
    
    // const cowSpecies = randInt(0, 1);
 
-   attemptToSpawnEntity(spawnInfo.entityType, spawnInfo.layer, spawnOriginX, spawnOriginY);
+   const firstEntityConfig = attemptToSpawnEntity(spawnInfo, spawnOriginX, spawnOriginY, null);
+   if (firstEntityConfig === null) {
+      return;
+   }
 
    // Pack spawning
 
@@ -274,7 +215,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
             const x = randInt(minX, maxX);
             const y = randInt(minY, maxY);
    
-            attemptToSpawnEntity(spawnInfo.entityType, spawnInfo.layer, x, y);
+            attemptToSpawnEntity(spawnInfo, x, y, firstEntityConfig);
             
             i++;
          }

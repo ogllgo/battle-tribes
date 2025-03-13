@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { assert, clampToBoardDimensions, distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import { assert, clampToBoardDimensions, distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, randInt, smoothstep, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
@@ -16,6 +16,11 @@ import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
 import { createEmptySpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { EntityConfig } from "../components";
+import { createBoulderConfig } from "../entities/resources/boulder";
+import { createGlurbConfig } from "../entities/mobs/glurb";
+import { createMossConfig } from "../entities/moss";
+import { ServerComponentType } from "../../../shared/src/components";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -261,7 +266,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       onlySpawnsInNight: false,
       minSpawnDistance: 40,
       blockSize: 2,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+         const colour = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
+         return createMossConfig(new Point(x, y), angle, colour);
+      }
    }, mossSpawnDistribution);
 
    generateSpikyBastards(undergroundLayer);
@@ -336,7 +345,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
       blockSize: 4,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createBoulderConfig(new Point(x, y), angle);
+      }
    });
    registerNewSpawnInfo({
       entityType: EntityType.glurb,
@@ -347,7 +359,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       blockSize: 32,
-      balanceSpawnDistribution: true
+      balanceSpawnDistribution: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createGlurbConfig(x, y, angle);
+      }
    });
    // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
@@ -359,6 +374,9 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
       blockSize: 4,
-      balanceSpawnDistribution: false
+      balanceSpawnDistribution: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return null;
+      }
    });
 }

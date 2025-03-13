@@ -1,5 +1,5 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType, FishColour } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
@@ -69,7 +69,7 @@ function tileIsValidCallback(fish: Entity, layer: Layer, x: number, y: number): 
    return true;
 }
 
-export function createFishConfig(position: Point, rotation: number): EntityConfig {
+export function createFishConfig(position: Point, rotation: number, colour: FishColour): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
@@ -90,7 +90,7 @@ export function createFishConfig(position: Point, rotation: number): EntityConfi
 
    const lootComponent = new LootComponent();
    
-   const fishComponent = new FishComponent();
+   const fishComponent = new FishComponent(colour);
 
    return {
       entityType: EntityType.fish,

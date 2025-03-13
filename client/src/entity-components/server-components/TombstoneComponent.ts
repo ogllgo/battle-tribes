@@ -180,7 +180,7 @@ function onHit(entity: Entity): void {
    }
 
    // @Hack @Temporary
-   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, hitbox, false);
+   playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -202,5 +202,5 @@ function onDie(entity: Entity): void {
    }
 
    // @Hack @Temporary
-   playSoundOnHitbox(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, hitbox, false);
+   playSoundOnHitbox(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity, hitbox, false);
 }

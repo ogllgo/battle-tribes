@@ -4,6 +4,7 @@ import { EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
 import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, Point, TileIndex } from "../../shared/src/utils";
+import { EntityConfig } from "./components";
 import Layer from "./Layer";
 import { surfaceLayer } from "./layers";
 
@@ -43,6 +44,7 @@ export interface EntitySpawnInfoParams {
    readonly packSpawning?: PackSpawningInfo;
    readonly blockSize: number;
    readonly balanceSpawnDistribution: boolean;
+   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 
@@ -61,6 +63,7 @@ export interface EntitySpawnInfo {
    readonly packSpawning?: PackSpawningInfo;
    readonly spawnDistribution: SpawnDistribution;
    readonly balanceSpawnDistribution: boolean;
+   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 
@@ -163,6 +166,7 @@ const createEntitySpawnInfo = (params: EntitySpawnInfoParams, customSpawnDistrib
       packSpawning: params.packSpawning,
       spawnDistribution: baseSpawnDistribution,
       balanceSpawnDistribution: params.balanceSpawnDistribution,
+      createEntity: params.createEntity,
       customSpawnIsValidFunc: params.customSpawnIsValidFunc
    };
 }
