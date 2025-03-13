@@ -6,15 +6,17 @@ import { ComponentArray } from "./ComponentArray";
 
 export class MossComponent {
    public readonly size = randInt(0, 2);
+   public readonly colour = randInt(0, 1);
 }
 
 export const MossComponentArray = new ComponentArray<MossComponent>(ServerComponentType.moss, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const mossComponent = MossComponentArray.getComponent(entity);
    packet.addNumber(mossComponent.size);
+   packet.addNumber(mossComponent.colour);
 }

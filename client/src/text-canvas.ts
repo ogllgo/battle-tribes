@@ -60,9 +60,15 @@ let damageTime = 0;
 let damageNumberX = -1;
 let damageNumberY = -1;
 
-let chunkWeights = new Map<number, number>();
+export interface SpawnDistributionBlock {
+   readonly x: number;
+   readonly y: number;
+   readonly weight: number;
+}
 
-export function setChunkWeights(newWeights: Map<number, number>): void {
+let chunkWeights = new Array<SpawnDistributionBlock>();
+
+export function setChunkWeights(newWeights: Array<SpawnDistributionBlock>): void {
    chunkWeights = newWeights;
 }
 
@@ -611,20 +617,12 @@ const renderChunkWeights = (): void => {
    ctx.font = "400 " + fontSize + "px Helvetica";
    ctx.lineJoin = "round";
    ctx.miterLimit = 2;
-   for (const pair of chunkWeights) {
-      const chunkIndex = pair[0];
-      const weight = pair[1];
-
-      const chunkX = chunkIndex % Settings.BOARD_SIZE;
-      const chunkY = Math.floor(chunkIndex / Settings.BOARD_SIZE);
-      const x = (chunkX + 0.5) * Settings.CHUNK_UNITS;
-      const y = (chunkY + 0.5) * Settings.CHUNK_UNITS;
-
-      const left = getXPosInTextCanvas(x);
-      const top = getYPosInTextCanvas(y);
+   for (const block of chunkWeights) {
+      const left = getXPosInTextCanvas(block.x);
+      const top = getYPosInTextCanvas(block.y);
       
       ctx.fillStyle = "#fff";
-      ctx.fillText(weight.toFixed(2).toString(), left, top + fontSize);
+      ctx.fillText(block.weight.toFixed(2).toString(), left, top + fontSize);
    }
 }
 

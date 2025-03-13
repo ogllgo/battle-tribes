@@ -10,6 +10,7 @@ import ServerComponentArray from "../ServerComponentArray";
 
 export interface MossComponentParams {
    readonly size: number;
+   readonly colour: number;
 }
 
 interface IntermediateInfo {}
@@ -27,8 +28,10 @@ export const MossComponentArray = new ServerComponentArray<MossComponent, MossCo
 
 function createParamsFromData(reader: PacketReader): MossComponentParams {
    const size = reader.readNumber();
+   const colour = reader.readNumber();
    return {
-      size: size
+      size: size,
+      colour: colour
    };
 }
 
@@ -38,11 +41,18 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    
    const mossComponentParams = entityParams.serverComponentParams[ServerComponentType.moss]!;
 
+   let colourString: string;
+   switch (mossComponentParams.colour) {
+      case 0: colourString = "light-green"; break;
+      case 1: colourString = "dark-green"; break;
+      default: throw new Error();
+   }
+   
    let textureSource: string;
    switch (mossComponentParams.size) {
-      case 0: textureSource = "entities/moss/moss-small.png"; break;
-      case 1: textureSource = "entities/moss/moss-medium.png"; break;
-      case 2: textureSource = "entities/moss/moss-large.png"; break;
+      case 0: textureSource = "entities/moss/" + colourString + "/moss-small.png"; break;
+      case 1: textureSource = "entities/moss/" + colourString + "/moss-medium.png"; break;
+      case 2: textureSource = "entities/moss/" + colourString + "/moss-large.png"; break;
       default: throw new Error();
    }
 
@@ -68,7 +78,7 @@ function getMaxRenderParts(): number {
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {

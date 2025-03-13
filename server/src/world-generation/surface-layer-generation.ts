@@ -12,7 +12,6 @@ import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils"
 import { Biome } from "../../../shared/src/biomes";
 import { EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType } from "../../../shared/src/entities";
-import { createBalancedSpawnDistribution } from "../balanced-spawn-distributions";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -272,14 +271,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          const humidity = humidityMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
 
-         // @Temporary
-         let biome = getBiome(height, temperature, humidity);
-         // if (biome === Biome.mountains || biome === Biome.desert) {
-         //    biome = Biome.tundra;
-         // }
-         if (biome !== Biome.mountains) {
-            biome = Biome.grasslands;
-         }
+         const biome = getBiome(height, temperature, humidity);
          
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          surfaceLayer.tileBiomes[tileIndex] = biome;
@@ -338,7 +330,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnRange: 200
       },
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.berryBush,
@@ -348,7 +342,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    registerNewSpawnInfo({
       entityType: EntityType.tree,
@@ -358,7 +353,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    registerNewSpawnInfo({
       entityType: EntityType.tombstone,
@@ -368,7 +364,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0,
       spawnableTileTypes: [TileType.grass],
       onlySpawnsInNight: true,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.boulder,
@@ -379,7 +377,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    registerNewSpawnInfo({
       entityType: EntityType.cactus,
@@ -389,7 +388,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    registerNewSpawnInfo({
       entityType: EntityType.yeti,
@@ -398,7 +398,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0.008,
       spawnableTileTypes: [TileType.snow],
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.iceSpikes,
@@ -407,7 +409,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0.06,
       spawnableTileTypes: [TileType.ice, TileType.permafrost],
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.slimewisp,
@@ -416,7 +420,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0.3,
       spawnableTileTypes: [TileType.slime],
       onlySpawnsInNight: false,
-      minSpawnDistance: 50
+      minSpawnDistance: 50,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
    // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
@@ -427,7 +433,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0,
       spawnableTileTypes: [TileType.slime],
       onlySpawnsInNight: false,
-      minSpawnDistance: 50
+      minSpawnDistance: 50,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.krumblid,
@@ -436,7 +444,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0.015,
       spawnableTileTypes: [TileType.sand],
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
@@ -445,7 +455,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       maxDensity: 0.008,
       spawnableTileTypes: [TileType.fimbultur],
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.fish,
@@ -459,7 +471,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnRange: 200
       },
       onlySpawnsInNight: false,
-      minSpawnDistance: 150
+      minSpawnDistance: 150,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
    registerNewSpawnInfo({
       entityType: EntityType.lilypad,
@@ -474,6 +488,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 0,
+      blockSize: 4,
+      balanceSpawnDistribution: false,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
          return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
       }
@@ -486,7 +502,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    if (OPTIONS.spawnTribes) {
       registerNewSpawnInfo({
@@ -497,6 +514,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
          onlySpawnsInNight: false,
          minSpawnDistance: 100,
+         blockSize: 4,
+         balanceSpawnDistribution: false,
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          }

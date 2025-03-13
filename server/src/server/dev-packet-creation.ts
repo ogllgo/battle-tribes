@@ -1,7 +1,7 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
-import { AIPlanType, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
+import { AIPlanType, clamp, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
 import { EntitySpawnInfo, getSpawnInfoForEntityType, SpawnDistribution } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
@@ -243,26 +243,45 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
    const distribution = spawnInfo?.spawnDistribution;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (typeof distribution !== "undefined") {
-      lengthBytes += getViewedSpawnDistributionDataLength(playerClient);
+      lengthBytes += getViewedSpawnDistributionDataLength(playerClient, distribution);
    }
 
    return lengthBytes;
 }
 
-const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient): number => {
-   const numVisibleChunks = (playerClient.maxVisibleChunkX + 1 - playerClient.minVisibleChunkX) * (playerClient.maxVisibleChunkY + 1 - playerClient.minVisibleChunkY);
+const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distribution: SpawnDistribution): number => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
 
-   return Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * numVisibleChunks;
+   const numVisibleBlocks = (maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY);
+   return Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
 }
 
 const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
-   packet.addNumber((playerClient.maxVisibleChunkX + 1 - playerClient.minVisibleChunkX) * (playerClient.maxVisibleChunkY + 1 - playerClient.minVisibleChunkY));
-   for (let chunkX = playerClient.minVisibleChunkX; chunkX <= playerClient.maxVisibleChunkX; chunkX++) {
-      for (let chunkY = playerClient.minVisibleChunkY; chunkY <= playerClient.maxVisibleChunkY; chunkY++) {
-         const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
-         const weight = distribution.weights[chunkIndex];
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   
+   packet.addNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
+   for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
+      for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
+         const blockIndex = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+         const weight = distribution.weights[blockIndex];
 
-         packet.addNumber(chunkIndex);
+         const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+         const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+
+         packet.addNumber(x);
+         packet.addNumber(y);
          packet.addNumber(weight);
       }
    }

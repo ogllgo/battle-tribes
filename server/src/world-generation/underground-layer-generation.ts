@@ -16,7 +16,6 @@ import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
 import { createEmptySpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
-import { createBalancedSpawnDistribution } from "../balanced-spawn-distributions";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -121,7 +120,10 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
 }
 
 const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistribution, waterTileIndex: number): void => {
-   const WEIGHT_SPREAD_DISTANCE = 18;
+   const WEIGHT_SPREAD_DISTANCE = 24;
+
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
 
    const originTileX = getTileX(waterTileIndex);
    const originTileY = getTileY(waterTileIndex);
@@ -132,10 +134,6 @@ const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistributio
    const maxTileY = clampToBoardDimensions(originTileY + WEIGHT_SPREAD_DISTANCE);
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
-         const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
-         const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
-         const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
-         
          const dist = distance(tileX, tileY, originTileX, originTileY);
          if (dist > WEIGHT_SPREAD_DISTANCE) {
             continue;
@@ -145,8 +143,13 @@ const setWaterInMossSpawnDistribution = (mossSpawnDistribution: SpawnDistributio
          assert(weight >= 0 && weight <= 1);
          weight *= weight;
          weight *= weight;
+         weight *= weight;
 
-         mossSpawnDistribution.weights[chunkIndex] += weight;
+         const blockX = Math.floor(tileX / mossSpawnDistribution.blockSize);
+         const blockY = Math.floor(tileY / mossSpawnDistribution.blockSize);
+         const blockIndex = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+         mossSpawnDistribution.weights[blockIndex] += weight;
          mossSpawnDistribution.totalWeight += weight;
       }
    }
@@ -180,7 +183,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   const mossSpawnDistribution = createEmptySpawnDistribution();
+   const mossSpawnDistribution = createEmptySpawnDistribution(2);
    
    const depths = generateDepths(dropdowns);
 
@@ -248,7 +251,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.moss,
       layer: undergroundLayer,
       spawnRate: 0.01,
-      maxDensity: 0.04,
+      maxDensity: 0.08,
       spawnableTileTypes: [TileType.stone],
       packSpawning: {
          minPackSize: 2,
@@ -257,14 +260,16 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 40,
-      spawnDistribution: mossSpawnDistribution
-   });
+      blockSize: 2,
+      balanceSpawnDistribution: false
+   }, mossSpawnDistribution);
 
    generateSpikyBastards(undergroundLayer);
 
    generateMithrilOre(undergroundLayer, true);
 
    // Generate tree roots
+   // @Cleanup: make entity spawning able to do this (will also make the tree roots show up in the spawn info!)
    const numAttempts = Math.floor(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);
    for (let i = 0; i < numAttempts; i++) {
       const tileX = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
@@ -330,7 +335,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 4,
+      balanceSpawnDistribution: true
    });
    registerNewSpawnInfo({
       entityType: EntityType.glurb,
@@ -340,7 +346,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
-      spawnDistribution: createBalancedSpawnDistribution()
+      blockSize: 32,
+      balanceSpawnDistribution: true
    });
    // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
@@ -350,6 +357,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       maxDensity: 0,
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
-      minSpawnDistance: 100
+      minSpawnDistance: 100,
+      blockSize: 4,
+      balanceSpawnDistribution: false
    });
 }
