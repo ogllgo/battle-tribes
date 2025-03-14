@@ -381,7 +381,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
    registerNewSpawnInfo({
       entityType: EntityType.boulder,
-      layer: surfaceLayer,
+      layer: undergroundLayer,
       spawnRate: 0.005,
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,

@@ -56,17 +56,16 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       default: throw new Error();
    }
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
-   new TexturedRenderPart(
-         hitbox,
-         0,
-         0,
-         getTextureArrayIndex(textureSource)
-      )
+   const renderPart = new TexturedRenderPart(
+      hitbox,
+      0,
+      0,
+      getTextureArrayIndex(textureSource)
    );
-   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintR = randFloat(-0.05, 0.05);
-   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintG = randFloat(-0.05, 0.05);
-   (entityIntermediateInfo.renderInfo.renderPartsByZIndex[0] as TexturedRenderPart).tintB = randFloat(-0.05, 0.05);
+   renderPart.tintR = randFloat(-0.04, 0.04);
+   renderPart.tintG = randFloat(-0.04, 0.04);
+   renderPart.tintB = randFloat(-0.04, 0.04);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

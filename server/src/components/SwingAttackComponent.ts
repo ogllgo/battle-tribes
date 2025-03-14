@@ -259,7 +259,8 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
    // @Bug: Happens when a zombie swings !!!
    if (!TribeComponentArray.hasComponent(owner)) {
       console.log(getEntityType(owner));
-      throw new Error();
+      console.warn(getEntityType(owner));
+      return;
    }
    
    // Build blueprints and repair buildings
