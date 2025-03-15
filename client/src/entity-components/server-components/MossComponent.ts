@@ -45,6 +45,9 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    switch (mossComponentParams.colour) {
       case 0: colourString = "light-green"; break;
       case 1: colourString = "dark-green"; break;
+      case 2: colourString = "aqua"; break;
+      case 3: colourString = "red"; break;
+      case 4: colourString = "purple"; break;
       default: throw new Error();
    }
    

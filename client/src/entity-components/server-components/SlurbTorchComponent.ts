@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createLight, Light } from "../../lights";
-import { ITEM_TRAITS_RECORD, ItemType } from "../../../../shared/src/items/items";
+import { ItemType } from "../../../../shared/src/items/items";
 import { Point, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
@@ -62,8 +62,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
-   const torchTrait = ITEM_TRAITS_RECORD[ItemType.slurbTorch].torch!;
-   const light = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
+   const light = createLight(new Point(0, 0), 0.8, 2, 10, 1, 0.4, 1);
    entityIntermediateInfo.lights.push({
       light: light,
       attachedRenderPart: renderPart

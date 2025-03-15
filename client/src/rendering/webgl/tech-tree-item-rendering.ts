@@ -103,6 +103,9 @@ export function createTechTreeItemShaders(): void {
    }
    `;
 
+   // @TEMPORARY
+   if(1+1===2)return;
+
    const gl = getTechTreeGL();
 
    program = createWebGLProgram(gl, vertexShaderText, fragmentShaderText);

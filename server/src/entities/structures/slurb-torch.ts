@@ -12,7 +12,6 @@ import { SlurbTorchComponent } from "../../components/SlurbTorchComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import { createLight } from "../../light-levels";
 import { Point } from "../../../../shared/src/utils";
-import { ITEM_TRAITS_RECORD, ItemType } from "../../../../shared/src/items/items";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -35,9 +34,8 @@ export function createSlurbTorchConfig(position: Point, rotation: number, tribe:
    const tribeComponent = new TribeComponent(tribe);
    
    const slurbTorchComponent = new SlurbTorchComponent();
-   
-   const torchTrait = ITEM_TRAITS_RECORD[ItemType.slurbTorch].torch!;
-   const light = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
+
+   const light = createLight(new Point(0, 0), 0.8, 2, 10, 1, 0.4, 1);
    const lightCreationInfo: LightCreationInfo = {
       light: light,
       attachedHitbox: hitbox

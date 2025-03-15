@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
@@ -16,6 +16,7 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
 import { createHitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
+import { createLight } from "../../light-levels";
 
 export function createFireTorchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -34,6 +35,12 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
    
    const fireTorchComponent = new FireTorchComponent();
    
+   const light = createLight(new Point(0, 0), 1, 2, 10, 1, 0.6, 0.35);
+   const lightCreationInfo: LightCreationInfo = {
+      light: light,
+      attachedHitbox: hitbox
+   };
+
    return {
       entityType: EntityType.fireTorch,
       components: {
@@ -44,6 +51,6 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.fireTorch]: fireTorchComponent
       },
-      lights: []
+      lights: [lightCreationInfo]
    };
 }

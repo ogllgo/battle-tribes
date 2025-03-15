@@ -179,14 +179,19 @@ class GameServer {
 
       // Handle player connections
       this.server.on("connection", (socket: WebSocket) => {
-         let playerClient: PlayerClient;
+         let playerClient: PlayerClient | undefined;
 
          socket.on("close", () => {
-            // @Bug: there are cases where the playerClient is undefined here, which causes the server to crash
-            handlePlayerDisconnect(playerClient);
+            if (typeof playerClient !== "undefined") {
+               handlePlayerDisconnect(playerClient);
+            }
          });
          
          socket.on("message", (message: Buffer) => {
+            if (typeof playerClient === "undefined") {
+               return;
+            }
+            
             const reader = new PacketReader(message.buffer, message.byteOffset);
             const packetType = reader.readNumber() as PacketType;
 

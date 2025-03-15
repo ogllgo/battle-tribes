@@ -311,7 +311,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             size = 2;
          }
          
-         const colour = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
+         const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
          return createMossConfig(new Point(x, y), angle, size, colour);
       }
    });

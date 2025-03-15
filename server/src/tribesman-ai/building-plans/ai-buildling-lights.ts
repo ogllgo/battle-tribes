@@ -1,8 +1,8 @@
 import { EntityType } from "../../../../shared/src/entities";
-import { ITEM_TRAITS_RECORD, ItemType } from "../../../../shared/src/items/items";
 import { LightLevelVars } from "../../../../shared/src/light-levels";
 import { Settings } from "../../../../shared/src/settings";
-import { assert, distance } from "../../../../shared/src/utils";
+import { assert, distance, Point } from "../../../../shared/src/utils";
+import { createSlurbTorchConfig } from "../../entities/structures/slurb-torch";
 import Layer from "../../Layer";
 import { calculateLightRangeNodes, getLightIntensityAtNode, getLightLevelNode } from "../../light-levels";
 import Tribe from "../../Tribe";
@@ -28,8 +28,10 @@ export function generateLightPosition(tribe: Tribe, layer: Layer, x: number, y: 
    // The light level that the light will need to generate
    const requiredLightLevel = Vars.MIN_PLACEABLE_LIGHT_LEVEL - startingLightLevel;
 
-   const torchTrait = ITEM_TRAITS_RECORD[ItemType.slurbTorch].torch!;
-   const range = calculateLightRangeNodes(torchTrait.lightStrength, torchTrait.lightIntensity, torchTrait.lightRadius);
+   // @Supahack @Speed !
+   const slurbTorchConfig = createSlurbTorchConfig(new Point(0, 0), 0, tribe, [], null);
+   const slurbTorchLight = slurbTorchConfig.lights[0].light;
+   const range = calculateLightRangeNodes(slurbTorchLight.strength, slurbTorchLight.intensity, slurbTorchLight.radius);
 
    const buildingLayer = tribe.getBuildingLayer(layer);
    
@@ -45,12 +47,12 @@ export function generateLightPosition(tribe: Tribe, layer: Layer, x: number, y: 
          // @Copynpaste
 
          let dist = distance(nodeX, nodeY, currentNodeX, currentNodeY) * LightLevelVars.LIGHT_NODE_SIZE;
-         dist -= torchTrait.lightRadius;
+         dist -= slurbTorchLight.radius;
          if (dist < 0) {
             dist = 0;
          }
          
-         const intensity = Math.exp(-dist / 64 / torchTrait.lightStrength) * torchTrait.lightIntensity;
+         const intensity = Math.exp(-dist / 64 / slurbTorchLight.strength) * slurbTorchLight.intensity;
 
          if (intensity < requiredLightLevel) {
             continue;

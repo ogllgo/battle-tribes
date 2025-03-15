@@ -20,7 +20,7 @@ function addDataToPacket(): void {}
 
 function onTick(entity: Entity): void {
    const age = getEntityAgeTicks(entity);
-   if (age >= 15 * Settings.TPS) {
+   if (age >= 180 * Settings.TPS) {
       destroyEntity(entity);
    }
 }
