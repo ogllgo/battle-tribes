@@ -21,38 +21,6 @@ import { createGlurbConfig } from "./entities/mobs/glurb";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 
-let spawnInfoSpawnableTilesRecord: Record<number, ReadonlySet<TileIndex>>;
-
-const findSpawnableTiles = (spawnInfo: EntitySpawnInfo): ReadonlySet<TileIndex> => {
-   const spawnableTiles = new Set<TileIndex>();
-   
-   // @Incomplete: accounts for tiles of all layers instead of just the ones from the layer the spawninfo is in
-   for (const tileType of spawnInfo.spawnableTileTypes) {
-      const tileIndexes = getTilesOfType(spawnInfo.layer, tileType);
-      for (const tileIndex of tileIndexes) {
-         if (!spawnInfo.layer.unspawnableTiles.has(tileIndex)) {
-            spawnableTiles.add(tileIndex);
-         }
-      }
-   }
-
-   return spawnableTiles;
-}
-
-/** Creates the spawn info array and fills their spawnable tiles */
-export function noteSpawnableTiles(): void {
-   const tempEntitySpawnableTiles: Partial<Record<number, ReadonlySet<TileIndex>>> = {};
-   for (let i = 0; i < SPAWN_INFOS.length; i++) {
-      const spawnInfo = SPAWN_INFOS[i];
-      tempEntitySpawnableTiles[i] = findSpawnableTiles(spawnInfo);
-   }
-   spawnInfoSpawnableTilesRecord = tempEntitySpawnableTiles as Record<number, ReadonlySet<TileIndex>>;
-}
-
-export function getSpawnInfoSpawnableTiles(spawnInfoIdx: number): ReadonlySet<TileIndex> {
-   return spawnInfoSpawnableTilesRecord[spawnInfoIdx];
-}
-
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
    let isFullyDense = true;
@@ -72,6 +40,11 @@ const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    }
    
    return true;
+}
+
+const tileIsSpawnable = (tileIndex: number, spawnInfo: EntitySpawnInfo): boolean => {
+   const tileType = spawnInfo.layer.getTileType(tileIndex);
+   return spawnInfo.spawnableTileTypes.includes(tileType) && !spawnInfo.layer.unspawnableTiles.has(tileIndex);
 }
 
 const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
@@ -128,7 +101,7 @@ const hitboxTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnInfo): bo
    for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
       for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         if (!spawnInfo.spawnableTileTypes.includes(spawnInfo.layer.getTileType(tileIndex)) && boxIsCollidingWithTile(hitbox.box, tileX, tileY)) {
+         if (!tileIsSpawnable(tileIndex, spawnInfo) && boxIsCollidingWithTile(hitbox.box, tileX, tileY)) {
             return false;
          }
       }
@@ -208,7 +181,7 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    return config;
 }
 
-const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
+const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
    const firstEntityConfig = attemptToSpawnEntity(spawnInfo, spawnOriginX, spawnOriginY, null);
    if (firstEntityConfig === null) {
       return;
@@ -226,7 +199,6 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
    
       const additionalSpawnCount = randInt(spawnInfo.packSpawning.minPackSize, spawnInfo.packSpawning.maxPackSize) - 1;
    
-      const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
       for (let i = 0; i < additionalSpawnCount; i++) {
          if (++totalSpawnAttempts === 100) {
             break;
@@ -242,7 +214,7 @@ const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOr
          const tileX = Math.floor(spawnPositionX / Settings.TILE_SIZE);
          const tileY = Math.floor(spawnPositionY / Settings.TILE_SIZE);
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         if (!spawnableTiles.has(tileIndex)) {
+         if (!tileIsSpawnable(tileIndex, spawnInfo)) {
             continue;
          }
    
@@ -290,7 +262,7 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnInfo, positionX: numb
    return true;
 }
 
-const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void => {
+const runSpawnEvent = (spawnInfo: EntitySpawnInfo): void => {
    const x = Settings.BOARD_UNITS * Math.random();
    const y = Settings.BOARD_UNITS * Math.random();
 
@@ -309,14 +281,12 @@ const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void =
    const tileX = Math.floor(x / Settings.TILE_SIZE);
    const tileY = Math.floor(y / Settings.TILE_SIZE);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-   
-   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   if (!spawnableTiles.has(tileIndex)) {
+   if (!tileIsSpawnable(tileIndex, spawnInfo)) {
       return;
    }
 
    if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
-      spawnEntities(spawnInfoIdx, spawnInfo, x, y);
+      spawnEntities(spawnInfo, x, y);
    }
 }
 
@@ -339,7 +309,7 @@ export function runSpawnAttempt(): void {
          numSpawnEvents = Math.floor(numSpawnEvents);
       }
       for (let j = 0; j < numSpawnEvents; j++) {
-         runSpawnEvent(i, spawnInfo);
+         runSpawnEvent(spawnInfo);
          if (!spawnConditionsAreMet(spawnInfo)) {
             break;
          }
@@ -362,7 +332,7 @@ export function spawnInitialEntities(): void {
       
       numSpawnAttempts = 0;
       while (spawnConditionsAreMet(spawnInfo)) {
-         runSpawnEvent(i, spawnInfo);
+         runSpawnEvent(spawnInfo);
 
          if (++numSpawnAttempts >= 9999) {
             console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");

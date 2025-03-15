@@ -4,11 +4,10 @@ import { TribeType } from "battletribes-shared/tribes";
 import { Point, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
-import { noteSpawnableTiles, runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
+import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
 import Tribe from "../Tribe";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
-import { updateResourceDistributions } from "../balanced-spawn-distributions";
 import { updateGrassBlockers } from "../grass-blockers";
 import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-creation";
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
@@ -17,7 +16,7 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { entityChildIsEntity, TransformComponentArray } from "../components/TransformComponent";
@@ -147,8 +146,6 @@ class GameServer {
       console.log("terrain",performance.now() - a)
       a = performance.now();
 
-      noteSpawnableTiles();
-      updateResourceDistributions();
       console.log("resources",performance.now() - a)
       a = performance.now();
       
@@ -182,51 +179,53 @@ class GameServer {
          let playerClient: PlayerClient | undefined;
 
          socket.on("close", () => {
+            // If the connection closes before the intial player data is sent then the player client will be undefined
             if (typeof playerClient !== "undefined") {
                handlePlayerDisconnect(playerClient);
             }
          });
          
          socket.on("message", (message: Buffer) => {
+            const reader = new PacketReader(message.buffer, message.byteOffset);
+            const packetType = reader.readNumber() as PacketType;
+
+            if (packetType === PacketType.initialPlayerData) {
+               const username = reader.readString();
+               const tribeType = reader.readNumber() as TribeType;
+               const screenWidth = reader.readNumber();
+               const screenHeight = reader.readNumber();
+
+               const isSpectating = reader.readBoolean();
+               reader.padOffset(3);
+
+               const spawnPosition = generatePlayerSpawnPosition(tribeType);
+               // @Incomplete? Unused?
+               const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
+   
+               const tribe = new Tribe(tribeType, false, spawnPosition.copy());
+               // @TEMPORARY @HACK
+               const layer = isSpectating ? undergroundLayer : surfaceLayer;
+   
+               // @Temporary @Incomplete
+               const isDev = true;
+
+               playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, 0, username, isDev);
+   
+               if (!isSpectating) {
+                  const config = createPlayerConfig(spawnPosition, 0, tribe, playerClient);
+                  createEntity(config, layer, 0);
+               }
+               
+               addPlayerClient(playerClient, surfaceLayer, spawnPosition);
+
+               return;
+            }
+
             if (typeof playerClient === "undefined") {
                return;
             }
             
-            const reader = new PacketReader(message.buffer, message.byteOffset);
-            const packetType = reader.readNumber() as PacketType;
-
             switch (packetType) {
-               case PacketType.initialPlayerData: {
-                  const username = reader.readString();
-                  const tribeType = reader.readNumber() as TribeType;
-                  const screenWidth = reader.readNumber();
-                  const screenHeight = reader.readNumber();
-
-                  const isSpectating = reader.readBoolean();
-                  reader.padOffset(3);
-
-                  const spawnPosition = generatePlayerSpawnPosition(tribeType);
-                  // @Incomplete? Unused?
-                  const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
-      
-                  const tribe = new Tribe(tribeType, false, spawnPosition.copy());
-                  // @TEMPORARY @HACK
-                  const layer = isSpectating ? undergroundLayer : surfaceLayer;
-      
-                  // @Temporary @Incomplete
-                  const isDev = true;
-
-                  playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, 0, username, isDev);
-      
-                  if (!isSpectating) {
-                     const config = createPlayerConfig(spawnPosition, 0, tribe, playerClient);
-                     createEntity(config, layer, 0);
-                  }
-                  
-                  addPlayerClient(playerClient, surfaceLayer, spawnPosition);
-
-                  break;
-               }
                case PacketType.playerData: {
                   processPlayerDataPacket(playerClient, reader);
                   break;
@@ -425,7 +424,8 @@ class GameServer {
          }
          
          // if (getGameTicks() % Settings.TPS === 0) {
-            updateResourceDistributions();
+            // @Incomplete
+            // updateResourceDistributions();
             runSpawnAttempt();
          // }
          

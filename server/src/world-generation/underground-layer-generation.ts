@@ -21,6 +21,9 @@ import { createBoulderConfig } from "../entities/resources/boulder";
 import { createGlurbConfig } from "../entities/mobs/glurb";
 import { createMossConfig } from "../entities/moss";
 import { ServerComponentType } from "../../../shared/src/components";
+import PlayerClient from "../server/PlayerClient";
+import { TransformComponentArray } from "../components/TransformComponent";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -100,16 +103,19 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
 
             const dx = dropdownTileX - tileX;
             const dy = dropdownTileY - tileY;
-            const dist = dx * dx + dy + dy;
+            const dist = dx * dx + dy * dy;
             if (dist < distTiles) {
                distTiles = dist;
             }
          }
+         assert(distTiles >= 0);
          distTiles = Math.sqrt(distTiles);
 
          let depth = distTiles / 100;
          
-         const weightFactor = Math.log(distTiles) * 0.07;
+         // The further you travel from a dropdown, the more variation the weights have
+         assert(distTiles + 1 > 0);
+         const weightFactor = Math.log(distTiles + 1) * 0.07;
          const weight = weightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          depth += weight * weightFactor;
          
@@ -286,6 +292,29 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
    
    groupLocalBiomes(undergroundLayer);
 
+   const getMossColour = (x: number, y: number): number => {
+      // Red moss spawns everywhere but fairly rarely
+      if (Math.random() < 1/8) {
+         return 3;
+      }
+
+      const tileX = Math.floor(x / Settings.TILE_SIZE);
+      const tileY = Math.floor(y / Settings.TILE_SIZE);
+      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+      const depth = depths[tileIndex];
+
+      if (depth + randFloat(-0.06, 0.06) <= 0.15) {
+         // Near dropdowns spawn golden moss
+         return 5;
+      } else if (depth + randFloat(-0.08, 0.08) <= 0.38) {
+         // Close to the surface, spawn the green moss variants
+         return Math.random() < 0.5 ? 0 : 1;
+      } else {
+         // Far away from the surface, spawn the darker moss variants
+         return Math.random() < 0.5 ? 2 : 4;
+      }
+   }
+
    // Mose
    registerNewSpawnInfo({
       entityType: EntityType.moss,
@@ -311,7 +340,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             size = 2;
          }
          
-         const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.moss]!.colour;
+         const colour = firstEntityConfig === null ?  getMossColour(x, y): firstEntityConfig.components[ServerComponentType.moss]!.colour;
          return createMossConfig(new Point(x, y), angle, size, colour);
       }
    });
@@ -386,7 +415,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnableTileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.025),
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {

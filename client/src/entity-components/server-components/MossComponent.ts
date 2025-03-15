@@ -48,6 +48,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       case 2: colourString = "aqua"; break;
       case 3: colourString = "red"; break;
       case 4: colourString = "purple"; break;
+      case 5: colourString = "gold"; break;
       default: throw new Error();
    }
    

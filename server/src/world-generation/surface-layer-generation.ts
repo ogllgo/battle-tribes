@@ -369,26 +369,27 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   registerNewSpawnInfo({
-      entityType: EntityType.cow,
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      spawnableTileTypes: [TileType.grass],
-      packSpawning: {
-         minPackSize: 2,
-         maxPackSize: 5,
-         spawnRange: 200
-      },
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
-         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
-         return createCowConfig(new Point(x, y), angle, species);
-      }
-   });
+   // @Temporary: to stop them creating dirt particles underground
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.cow,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    spawnableTileTypes: [TileType.grass],
+   //    packSpawning: {
+   //       minPackSize: 2,
+   //       maxPackSize: 5,
+   //       spawnRange: 200
+   //    },
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
+   //       return createCowConfig(new Point(x, y), angle, species);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.berryBush,
       layer: surfaceLayer,
