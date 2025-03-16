@@ -42,7 +42,7 @@ export function createGlurbTailSegmentConfig(position: Point, rotation: number, 
 
    const lootComponent = new LootComponent();
    
-   const glurbSegmentComponent = new GlurbSegmentComponent(lastHitbox);
+   const glurbSegmentComponent = new GlurbSegmentComponent();
 
    const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{

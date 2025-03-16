@@ -44,7 +44,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
 
    const lootComponent = new LootComponent();
    
-   const glurbSegmentComponent = new GlurbSegmentComponent(lastHitbox);
+   const glurbSegmentComponent = new GlurbSegmentComponent();
 
    const glurbBodySegmentComponent = new GlurbBodySegmentComponent();
 

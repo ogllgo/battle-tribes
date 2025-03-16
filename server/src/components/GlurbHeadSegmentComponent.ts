@@ -30,7 +30,7 @@ import { EntityAttachInfo, entityChildIsEntity, getFirstComponent, getRandomPosi
 const enum Vars {
    // @Temporary
    // STOMACH_EMPTY_TIME_SECONDS = 25
-   STOMACH_EMPTY_TIME_SECONDS = 5
+   STOMACH_EMPTY_TIME_SECONDS = 10
 }
 
 export class GlurbHeadSegmentComponent {
@@ -63,7 +63,8 @@ const move = (head: Entity, targetPosition: Point): void => {
 
    const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
 
-   for (const child of glurbTransformComponent.children) {
+   for (let i = 0; i < glurbTransformComponent.children.length; i++) {
+      const child = glurbTransformComponent.children[i];
       if (!entityChildIsEntity(child)) {
          continue;
       }
@@ -84,8 +85,15 @@ const move = (head: Entity, targetPosition: Point): void => {
          setHitboxIdealAngle(hitbox, targetDirection, Math.PI);
       } else {
          // Move to next hitbox in chain
-         const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(glurbSegment);
-         targetDirection = hitbox.box.position.calculateAngleBetween(glurbSegmentComponent.nextHitbox.box.position);
+
+         const lastChild = glurbTransformComponent.children[i - 1];
+         if (!entityChildIsEntity(lastChild)) {
+            throw new Error();
+         }
+         const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
+         const lastSegmentHitbox = lastSegmentTransformComponent.children[0] as Hitbox;
+         
+         targetDirection = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
       }
       
       const accelerationX = acceleration * Math.sin(targetDirection);

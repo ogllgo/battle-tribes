@@ -53,7 +53,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
    const followAIComponent = new FollowAIComponent(randInt(GlurbHeadVars.MIN_FOLLOW_COOLDOWN, GlurbHeadVars.MAX_FOLLOW_COOLDOWN), 0.2, 35);
 
    // @HACK @TEMPORARY
-   const glurbSegmentComponent = new GlurbSegmentComponent(hitbox);
+   const glurbSegmentComponent = new GlurbSegmentComponent();
 
    const glurbHeadSegmentComponent = new GlurbHeadSegmentComponent();
 
