@@ -106,6 +106,10 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
       if (PhysicsComponentArray.hasComponent(affectedEntity)) {
          const physicsComponent = PhysicsComponentArray.getComponent(affectedEntity);
          if (!physicsComponent.isImmovable) {
+            // @Bug: This isn't right! Should instead keep track of the collision data from the collision detection code, and use it here.
+            // Currently there are issues as one collision pair being resolved can change the push info away from what was used in detection.
+            // Which is extra bad cause sometimes collisions which aren't actually happening can have their push info gotten. previously this has causesd
+            // a nasty to resolve crash, and i put in a hacky solution. would be great to fix
             const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
 
             if (collidingHitbox.collisionType === HitboxCollisionType.hard) {

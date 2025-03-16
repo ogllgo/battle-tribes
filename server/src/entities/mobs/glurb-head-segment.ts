@@ -47,7 +47,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
 
    const healthComponent = new HealthComponent(5);
    
-   const aiHelperComponent = new AIHelperComponent(hitbox, 280);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 350);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, positionIsValidCallback);
 
    const followAIComponent = new FollowAIComponent(randInt(GlurbHeadVars.MIN_FOLLOW_COOLDOWN, GlurbHeadVars.MAX_FOLLOW_COOLDOWN), 0.2, 35);

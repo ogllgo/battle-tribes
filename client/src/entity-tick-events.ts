@@ -61,7 +61,6 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.cowEat: {
-         console.log("Yarrr!!");
          playSoundOnHitbox("cow-eat.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }

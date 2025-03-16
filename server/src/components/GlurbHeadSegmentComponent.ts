@@ -6,17 +6,21 @@ import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { angle, assert, lerp, Point, randInt } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { createItemEntityConfig } from "../entities/item-entity";
+import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
 import { GlurbHeadVars } from "../entities/mobs/glurb-head-segment";
+import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
 import { createEntity } from "../Entity";
 import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { undergroundLayer } from "../layers";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, FollowAIComponent, entityWantsToFollow } from "./FollowAIComponent";
+import { GlurbComponentArray } from "./GlurbComponent";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { hitEntity } from "./HealthComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
@@ -216,16 +220,40 @@ function onTick(glurbHead: Entity): void {
 
             const glurbTransformComponent = TransformComponentArray.getComponent(glurb);
             // @Hack: shite shite shite. what if an entity gets attached to the glurb?
-            const lastChildAttachInfo = glurbTransformComponent.children[glurbTransformComponent.children.length - 1] as EntityAttachInfo;
-            const lastChild = lastChildAttachInfo.attachedEntity;
-            if (getEntityType(lastChild) === EntityType.glurbBodySegment) {
-               const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(lastChild);
+            const finalChildAttachInfo = glurbTransformComponent.children[glurbTransformComponent.children.length - 1] as EntityAttachInfo;
+            const finalChild = finalChildAttachInfo.attachedEntity;
+            if (getEntityType(finalChild) === EntityType.glurbBodySegment) {
+               const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(finalChild);
                glurbSegmentComponent.mossBallCompleteness++;
 
                if (glurbSegmentComponent.mossBallCompleteness === 7) {
                   // Grow new segment
-                  // @Incomplete
+
                   glurbSegmentComponent.mossBallCompleteness = 0;
+
+                  const glurbComponent = GlurbComponentArray.getComponent(glurb);
+                  // @Hack: it isn't guaranteed that children will only be glurb segments...
+                  const currentNumComponents = glurbTransformComponent.children.length;
+                  assert(currentNumComponents < glurbComponent.numSegments);
+
+                  const finalSegmentTransformComponent = TransformComponentArray.getComponent(finalChild);
+                  const finalSegmentHitbox = finalSegmentTransformComponent.children[0] as Hitbox;
+
+                  const spawnOffsetDirection = headHitbox.box.position.calculateAngleBetween(finalSegmentHitbox.box.position);
+                  const spawnOffsetMagnitude = 30;
+                  const x = finalSegmentHitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+                  const y = finalSegmentHitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+                  
+                  let config: EntityConfig;
+                  if (currentNumComponents + 1 === glurbComponent.numSegments) {
+                     // Tail segment
+                     config = createGlurbTailSegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                  } else {
+                     // Body segment
+                     config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                  }
+                  config.attachInfo = createEntityConfigAttachInfo(glurb, null, new Point(0, 0), true);
+                  createEntity(config, getEntityLayer(glurb), 0);
                }
             }
          }

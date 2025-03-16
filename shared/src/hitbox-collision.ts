@@ -111,7 +111,7 @@ export function getCollisionPushInfo(pushedHitbox: Box, pushingHitbox: Box): Col
       
       // @Cleanup: copy and paste
       // @Speed: recomputes the same data twice, since we only call this function if we already know they are colliding, which requires calling this function...
-      
+
       const collisionData = rectanglesAreColliding(pushedHitbox, pushingHitbox);
       if (!collisionData.isColliding) {
          // @HACK @INCOMPLETE

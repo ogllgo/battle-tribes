@@ -307,13 +307,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
             const moveX = newOffsetX - currentOffsetX;
             const moveY = newOffsetY - currentOffsetY;
             translateHitbox(hitbox, moveX, moveY);
-   
-            // {
-            //    const idealDirection = originHitbox.box.angle;
-            //    const tetherDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-            //    const after = cleanAngleNEW(tetherDirection - idealDirection);
-            //    console.log(diff,after,rotationForce);
-            // }
          }
       }
    }

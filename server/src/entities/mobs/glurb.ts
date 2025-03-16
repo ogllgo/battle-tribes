@@ -15,6 +15,7 @@ import { TransformComponent } from "../../components/TransformComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { createGlurbTailSegmentConfig } from "./glurb-tail-segment";
+import { GlurbComponent } from "../../components/GlurbComponent";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -48,13 +49,15 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
 
    const tamingComponent = new TamingComponent();
 
+   const numSegments = randInt(3, 5);
+   const glurbComponent = new GlurbComponent(numSegments);
+   
    const childConfigs = new Array<EntityConfig>();
 
    let currentX = x;
    let currentY = y;
    
    let lastHitbox: Hitbox | undefined;
-   const numSegments = randInt(3, 5);
    for (let i = 0; i < numSegments; i++) {
       currentY -= 30;
       
@@ -79,7 +82,8 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
-         [ServerComponentType.taming]: tamingComponent
+         [ServerComponentType.taming]: tamingComponent,
+         [ServerComponentType.glurb]: glurbComponent
       },
       lights: [],
       childConfigs: childConfigs

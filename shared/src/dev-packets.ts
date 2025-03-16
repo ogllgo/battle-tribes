@@ -87,6 +87,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.furnace]: {},
    [ServerComponentType.fireTorch]: {},
    [ServerComponentType.spikyBastard]: {},
+   [ServerComponentType.glurb]: {},
    [ServerComponentType.glurbSegment]: {},
    [ServerComponentType.glurbBodySegment]: {},
    [ServerComponentType.glurbHeadSegment]: {},

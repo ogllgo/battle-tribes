@@ -119,6 +119,7 @@ import { WarriorHutComponentArray } from "./client-components/WarriorHutComponen
 import { WoodenArrowComponentArray } from "./client-components/WoodenArrowComponent";
 import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
 import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
+import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -225,6 +226,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.furnace]: FurnaceComponentArray,
    [ServerComponentType.fireTorch]: FireTorchComponentArray,
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
+   [ServerComponentType.glurb]: GlurbComponentArray,
    [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.glurbBodySegment]: GlurbBodySegmentComponentArray,
    [ServerComponentType.glurbHeadSegment]: GlurbHeadSegmentComponentArray,
@@ -328,6 +330,7 @@ const ServerComponentRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponent => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponent => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponent => 0 as any,
+   [ServerComponentType.glurb]: (): GlurbComponent => 0 as any,
    [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
    [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponent => 0 as any,
@@ -433,6 +436,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
+   [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
    [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
    [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponentParams => 0 as any,

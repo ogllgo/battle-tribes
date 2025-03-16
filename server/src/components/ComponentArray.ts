@@ -372,6 +372,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.furnace]: ComponentArrayPriority.medium,
       [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurb]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbBodySegment]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbHeadSegment]: ComponentArrayPriority.medium,

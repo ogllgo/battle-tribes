@@ -103,6 +103,7 @@ import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
+import { GlurbComponent } from "./components/GlurbComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -186,6 +187,7 @@ const ComponentClassRecord = {
    [ServerComponentType.furnace]: () => FurnaceComponent,
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
+   [ServerComponentType.glurb]: () => GlurbComponent,
    [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
    [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
    [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
@@ -234,7 +236,7 @@ export interface EntityConfig {
    readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
-   readonly attachInfo?: EntityConfigAttachInfo;
+   attachInfo?: EntityConfigAttachInfo;
    /** Any child entities' configs. */
    readonly childConfigs?: ReadonlyArray<EntityConfig>;
 }
