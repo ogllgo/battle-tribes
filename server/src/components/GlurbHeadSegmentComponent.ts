@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { angle, assert, lerp, Point, randInt } from "../../../shared/src/utils";
@@ -10,6 +11,7 @@ import { GlurbHeadVars } from "../entities/mobs/glurb-head-segment";
 import { createEntity } from "../Entity";
 import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { undergroundLayer } from "../layers";
+import { registerEntityTickEvent } from "../server/player-clients";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
@@ -22,7 +24,9 @@ import { ItemComponentArray } from "./ItemComponent";
 import { EntityAttachInfo, entityChildIsEntity, getFirstComponent, getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
-   STOMACH_EMPTY_TIME_SECONDS = 25
+   // @Temporary
+   // STOMACH_EMPTY_TIME_SECONDS = 25
+   STOMACH_EMPTY_TIME_SECONDS = 5
 }
 
 export class GlurbHeadSegmentComponent {
@@ -140,7 +144,7 @@ function onTick(glurbHead: Entity): void {
    const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurbHead);
    glurbHeadSegmentComponent.food -= 1 / (Vars.STOMACH_EMPTY_TIME_SECONDS * Settings.TPS);
    if (glurbHeadSegmentComponent.food < 0) {
-      if (getEntityAgeTicks(glurbHead) % Settings.TPS === 0) {
+      if (getEntityAgeTicks(glurbHead) % (Settings.TPS * 5) === 0) {
          hitEntity(glurbHead, null, 1, DamageSource.arrow, AttackEffectiveness.effective, getRandomPositionInBox(headHitbox.box), 0);
       }
       
@@ -190,13 +194,21 @@ function onTick(glurbHead: Entity): void {
    }
 
    // Consoom moss when hungry
-   if (glurbHeadSegmentComponent.food < 0.2) {
+   if (glurbHeadSegmentComponent.food < 0.6) {
       const targetMoss = getFoodTarget(headHitbox, aiHelperComponent.visibleEntities);
       if (targetMoss !== null) {
          moveToEntity(glurbHead, targetMoss);
          if (entitiesAreColliding(glurbHead, targetMoss) !== CollisionVars.NO_COLLISION) {
             destroyEntity(targetMoss);
             glurbHeadSegmentComponent.food += 0.5;
+
+            const tickEvent: EntityTickEvent = {
+               entityID: glurbHead,
+               // @Hack
+               type: EntityTickEventType.cowEat,
+               data: 0
+            };
+            registerEntityTickEvent(glurbHead, tickEvent);
 
             const glurb = glurbHeadTransformComponent.parentEntity;
             assert(glurb !== glurbHead);
@@ -209,6 +221,12 @@ function onTick(glurbHead: Entity): void {
             if (getEntityType(lastChild) === EntityType.glurbBodySegment) {
                const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(lastChild);
                glurbSegmentComponent.mossBallCompleteness++;
+
+               if (glurbSegmentComponent.mossBallCompleteness === 7) {
+                  // Grow new segment
+                  // @Incomplete
+                  glurbSegmentComponent.mossBallCompleteness = 0;
+               }
             }
          }
          return;

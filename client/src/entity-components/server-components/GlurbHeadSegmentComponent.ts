@@ -36,7 +36,8 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
 
    const renderPart = new TexturedRenderPart(
       hitbox,
-      0,
+      // @Hack: 0.1 so that the moss ball can be z-index 0
+      0.1,
       0,
       getTextureArrayIndex("entities/glurb/glurb-head-segment.png")
    );

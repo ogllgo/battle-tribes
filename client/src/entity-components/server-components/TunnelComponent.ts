@@ -144,7 +144,7 @@ const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgr
    const doorRenderPart = tunnelComponent.doorRenderParts[doorBit];
    doorRenderPart.offset.x = doorInfo.offsetX;
    doorRenderPart.offset.y = doorInfo.offsetY;
-   doorRenderPart.rotation = doorInfo.rotation;
+   doorRenderPart.angle = doorInfo.rotation;
 }
 
 function padData(reader: PacketReader): void {

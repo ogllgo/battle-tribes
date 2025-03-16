@@ -163,7 +163,7 @@ function updateDoors(hutComponent: HutComponent, entity: Entity): void {
       renderPart.offset.x = offset.x;
       renderPart.offset.y = offset.y;
 
-      renderPart.rotation = lerp(Math.PI/2, 0, hutComponent.doorSwingAmount) * (i === 0 ? 1 : -1);
+      renderPart.angle = lerp(Math.PI/2, 0, hutComponent.doorSwingAmount) * (i === 0 ? 1 : -1);
    }
 }
 

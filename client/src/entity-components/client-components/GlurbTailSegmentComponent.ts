@@ -15,12 +15,12 @@ interface IntermediateInfo {}
 export interface GlurbTailSegmentComponent {}
 
 export const GlurbTailSegmentComponentArray = new ClientComponentArray<GlurbTailSegmentComponent, IntermediateInfo>(ClientComponentType.glurbTailSegment, true, {
-   populateIntermediateInfo: createRenderParts,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts
 });
 
-function createRenderParts(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -30,7 +30,8 @@ function createRenderParts(entityIntermediateInfo: EntityIntermediateInfo, entit
    
    const renderPart = new TexturedRenderPart(
       hitbox,
-      0,
+      // @Hack: 0.1 so that the moss ball can be z-index 0
+      0.1,
       0,
       getTextureArrayIndex(textureSource)
    );

@@ -166,7 +166,7 @@ function onTick(entity: Entity): void {
 
    // @Copynpaste
    if (cowComponent.attackHalo !== null) {
-      cowComponent.attackHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
+      cowComponent.attackHalo.angle += 0.65 * UtilVars.PI * Settings.I_TPS;
    }
 }
 

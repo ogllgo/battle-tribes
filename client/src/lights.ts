@@ -39,6 +39,10 @@ const lightRecord: Record<LightID, Light> = {};
 const lightToRenderPartRecord: Partial<Record<LightID, LightRenderPartInfo>> = {};
 const renderPartToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
 
+export function getNumLights(): number {
+   return Object.keys(lightRecord).length;
+}
+
 const getLightLayer = (light: Light): Layer => {
    const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
    if (typeof attachedRenderPartInfo !== "undefined") {
@@ -63,18 +67,15 @@ export function createLight(offset: Point, intensity: number, strength: number, 
    };
 }
 
-const addLightToLayer = (light: Light, layer: Layer): void => {
+// @Cleanup: the 2 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
+export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity): void {
    // Make sure the light doesn't already exist
    assert(typeof lightRecord[light.id] === "undefined")
+
+   const layer = getEntityLayer(entity);
    
    layer.lights.push(light);
    lightRecord[light.id] = light;
-}
-
-// @Cleanup: the 2 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
-export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity): void {
-   const layer = getEntityLayer(entity);
-   addLightToLayer(light, layer);
    
    lightToRenderPartRecord[light.id] = {
       renderPart: renderPart,
@@ -98,6 +99,7 @@ export function removeLight(light: Light): void {
    }
    
    layer.lights.splice(idx, 1);
+   delete lightRecord[light.id];
 
    const renderPartInfo = lightToRenderPartRecord[light.id];
    delete lightToRenderPartRecord[light.id];

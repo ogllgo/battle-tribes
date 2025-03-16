@@ -10,6 +10,7 @@ import { GameInteractState } from "../GameScreen";
 import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
+import { getNumLights } from "../../../lights";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;
@@ -266,7 +267,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <ul className="area">
          <li>{TransformComponentArray.entities.length} Entities</li>
          <li>{Board.lowMonocolourParticles.length + Board.lowTexturedParticles.length + Board.highMonocolourParticles.length + Board.highTexturedParticles.length} Particles</li>
-         <li>{getCurrentLayer().lights.length} Lights</li>
+         <li>{getCurrentLayer().lights.length} ({getNumLights()}) Lights</li>
       </ul>
 
       <ul className="area">

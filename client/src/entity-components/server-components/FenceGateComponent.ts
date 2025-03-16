@@ -119,7 +119,7 @@ const updateDoor = (fenceGateComponent: FenceGateComponent): void => {
 
    fenceGateComponent.doorRenderPart.offset.x = doorInfo.offsetX;
    fenceGateComponent.doorRenderPart.offset.y = doorInfo.offsetY;
-   fenceGateComponent.doorRenderPart.rotation = doorInfo.rotation;
+   fenceGateComponent.doorRenderPart.angle = doorInfo.rotation;
 }
 
 function padData(reader: PacketReader): void {

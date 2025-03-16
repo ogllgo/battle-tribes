@@ -236,8 +236,11 @@ const removeEntityAttachInfoFromEntity = (transformComponent: TransformComponent
 
    if (attachInfo.parent === null) {
       const idx = transformComponent.rootChildren.indexOf(attachInfo);
-      assert(idx !== -1);
-      transformComponent.rootChildren.splice(idx, 1);
+      if (idx !== -1) {
+         transformComponent.rootChildren.splice(idx, 1);
+      } else {
+         console.warn("Tried to remove a root child from the root children array... but wasn't there!")
+      }
    }
 }
    

@@ -5,13 +5,18 @@ import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
 import { assert, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
 import { EntityConfig } from "./components";
-import { getTransformComponentFirstHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
 import { surfaceLayer } from "./layers";
 
-export interface PackSpawningInfo {
+// @Cleanup: should probably combine this file with entity-spawning...
+
+export interface PackSizeInfo {
    readonly minPackSize: number;
    readonly maxPackSize: number;
+}
+
+export interface PackSpawningInfo {
+   getPackSize(x: number, y: number): PackSizeInfo;
    /** Distance from the original spawn that pack spawns can be made in */
    readonly spawnRange: number;
 }
@@ -265,6 +270,24 @@ export function addEntityToSpawnDistribution(spawnDistribution: SpawnDistributio
    // Affect the current densities
    for (const densityInfo of densityInfos) {
       spawnDistribution.currentDensities[densityInfo.blockIdx] += densityInfo.density;
+   }
+}
+
+export function removeEntityFromSpawnDistributions(entity: Entity): void {
+   // @Hack @Speed
+ 
+   for (const spawnInfo of SPAWN_INFOS) {
+      const spawnDistribution = spawnInfo.spawnDistribution;
+      
+      const densityInfos = spawnDistribution.entityDensityMap.get(entity);
+      if (typeof densityInfos !== "undefined") {
+         // Remove from the current densities
+         // (Note: this will accumulate floating point errors, but that's what the regular distribution updates are for)
+         for (const densityInfo of densityInfos) {
+            spawnDistribution.currentDensities[densityInfo.blockIdx] -= densityInfo.density;
+         }
+         spawnInfo.spawnDistribution.entityDensityMap.delete(entity);
+      }
    }
 }
 

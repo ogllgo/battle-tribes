@@ -197,7 +197,8 @@ const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOr
    
       let totalSpawnAttempts = 0;
    
-      const additionalSpawnCount = randInt(spawnInfo.packSpawning.minPackSize, spawnInfo.packSpawning.maxPackSize) - 1;
+      const packSizeInfo = spawnInfo.packSpawning.getPackSize(spawnOriginX, spawnOriginY);
+      const additionalSpawnCount = randInt(packSizeInfo.minPackSize, packSizeInfo.maxPackSize) - 1;
    
       for (let i = 0; i < additionalSpawnCount; i++) {
          if (++totalSpawnAttempts === 100) {

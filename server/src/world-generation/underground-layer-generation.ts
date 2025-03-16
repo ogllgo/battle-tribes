@@ -15,7 +15,7 @@ import { EntityType } from "../../../shared/src/entities";
 import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
-import { createRawSpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { createRawSpawnDistribution, PackSizeInfo, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
 import { EntityConfig } from "../components";
 import { createBoulderConfig } from "../entities/resources/boulder";
 import { createGlurbConfig } from "../entities/mobs/glurb";
@@ -322,8 +322,13 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnRate: 0.01,
       spawnableTileTypes: [TileType.stone],
       packSpawning: {
-         minPackSize: 2,
-         maxPackSize: 5,
+         getPackSize: (x: number, y: number): PackSizeInfo => {
+            const humidity = getMossHumidity(undergroundLayer, x, y);
+            return {
+               minPackSize: Math.floor(lerp(1, 3, humidity)),
+               maxPackSize: Math.floor(lerp(2, 5, humidity)),
+            }
+         },
          spawnRange: 40
       },
       onlySpawnsInNight: false,

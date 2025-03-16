@@ -298,7 +298,7 @@ const updateLimbStateFromPacket = (reader: PacketReader, limbState: LimbState): 
 const resetThing = (thing: RenderPart): void => {
    thing.offset.x = 0;
    thing.offset.y = 0;
-   thing.rotation = 0;
+   thing.angle = 0;
 }
 
 const setThingToState = (humanoidRadius: number, thing: RenderPart, state: LimbState): void => {
@@ -307,7 +307,7 @@ const setThingToState = (humanoidRadius: number, thing: RenderPart, state: LimbS
 
    thing.offset.x = offset * Math.sin(direction) + state.extraOffsetX;
    thing.offset.y = offset * Math.cos(direction) + state.extraOffsetY;
-   thing.rotation = state.angle;
+   thing.angle = state.angle;
 }
 
 const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
@@ -322,7 +322,7 @@ const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: L
    thing.offset.x = offset * Math.sin(direction) + lerp(startState.extraOffsetX, endState.extraOffsetX, progress);
    thing.offset.y = offset * Math.cos(direction) + lerp(startState.extraOffsetY, endState.extraOffsetY, progress);
    // @Incomplete? Hand mult
-   thing.rotation = lerp(startState.angle, endState.angle, progress);
+   thing.angle = lerp(startState.angle, endState.angle, progress);
    // limb.rotation = attackHandRotation * handMult;
 }
 
@@ -358,7 +358,7 @@ const updateHeldItemRenderPart = (inventoryUseComponent: InventoryUseComponent, 
 
    heldItemRenderPart.offset.x = offsetX;
    heldItemRenderPart.offset.y = offsetY;
-   heldItemRenderPart.rotation = rotation;
+   heldItemRenderPart.angle = rotation;
    
    // Render part texture
    const clientItemInfo = CLIENT_ITEM_INFO_RECORD[heldItemType];
@@ -1309,7 +1309,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const handOffsetAmount = handRestingOffset + 4 - insetAmount;
          attachPoint.offset.x = handOffsetAmount * Math.sin(activeItemDirection);
          attachPoint.offset.y = handOffsetAmount * Math.cos(activeItemDirection);
-         attachPoint.rotation = lerp(HAND_RESTING_ROTATION, HAND_RESTING_ROTATION - Math.PI/5, eatIntervalProgress);
+         attachPoint.angle = lerp(HAND_RESTING_ROTATION, HAND_RESTING_ROTATION - Math.PI/5, eatIntervalProgress);
 
          const activeItemOffsetAmount = itemSize/2 - insetAmount;
          const activeItemOffsetDirection = activeItemDirection - Math.PI/14;

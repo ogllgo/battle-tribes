@@ -367,6 +367,18 @@ const shouldShowDamageNumber = (playerClient: PlayerClient, attackingEntity: Ent
    return false;
 }
 
+const getPlayersViewingEntity = (entity: Entity): ReadonlyArray<PlayerClient> => {
+   const viewingPlayerClients = new Array<PlayerClient>();
+   // @Speed: will probs become a major source of slowness with 50+ players
+   for (let i = 0; i < playerClients.length; i++) {
+      const playerClient = playerClients[i];
+      if (playerClient.clientIsActive && playerClient.visibleEntities.has(entity)) {
+         viewingPlayerClients.push(playerClient);
+      }
+   }
+   return viewingPlayerClients;
+}
+
 const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, maxY: number): ReadonlyArray<PlayerClient> => {
    const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -374,24 +386,21 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
    const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
 
    const viewingPlayerClients = new Array<PlayerClient>();
-
+   // @Speed: will probs become a major source of slowness with 50+ players
    for (let i = 0; i < playerClients.length; i++) {
       const playerClient = playerClients[i];
       if (!playerClient.clientIsActive) {
          continue;
       }
-
       if (minChunkX <= playerClient.maxVisibleChunkX && maxChunkX >= playerClient.minVisibleChunkX && minChunkY <= playerClient.maxVisibleChunkY && maxChunkY >= playerClient.minVisibleChunkY) {
          viewingPlayerClients.push(playerClient);
       }
    }
-
    return viewingPlayerClients;
 }
 
 export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
-   const hitEntityTransformComponent = TransformComponentArray.getComponent(hitEntity);
-   const viewingPlayers = getPlayersViewingPosition(hitEntityTransformComponent.boundingAreaMinX, hitEntityTransformComponent.boundingAreaMaxX, hitEntityTransformComponent.boundingAreaMinY, hitEntityTransformComponent.boundingAreaMaxY);
+   const viewingPlayers = getPlayersViewingEntity(hitEntity);
    if (viewingPlayers.length === 0) {
       return;
    }
@@ -424,14 +433,15 @@ export function registerPlayerKnockback(playerID: number, knockback: number, kno
 }
 
 export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
-   const transformComponent = TransformComponentArray.getComponent(healedEntity);
-   const healedEntityHitbox = transformComponent.children[0] as Hitbox;
-   
-   const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
+   const viewingPlayers = getPlayersViewingEntity(healedEntity);
    if (viewingPlayers.length === 0) {
       return;
    }
 
+   const transformComponent = TransformComponentArray.getComponent(healedEntity);
+   // @Hack
+   const healedEntityHitbox = transformComponent.children[0] as Hitbox;
+   
    const healData: HealData = {
       entityPositionX: healedEntityHitbox.box.position.x,
       entityPositionY: healedEntityHitbox.box.position.y,
@@ -447,8 +457,7 @@ export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmo
 }
 
 export function registerEntityRemoval(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
+   const viewingPlayers = getPlayersViewingEntity(entity);
    if (viewingPlayers.length === 0) {
       return;
    }
@@ -499,8 +508,7 @@ export function registerDirtyEntity(entity: Entity): void {
    }
    dirtyEntities.add(entity);
    
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const viewingPlayers = getPlayersViewingPosition(transformComponent.boundingAreaMinX, transformComponent.boundingAreaMaxX, transformComponent.boundingAreaMinY, transformComponent.boundingAreaMaxY);
+   const viewingPlayers = getPlayersViewingEntity(entity);
 
    for (let i = 0; i < viewingPlayers.length; i++) {
       const playerClient = viewingPlayers[i];

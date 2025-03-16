@@ -10,7 +10,7 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
+import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, PackSizeInfo, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
@@ -559,8 +559,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnRate: 0.015,
       spawnableTileTypes: [TileType.water],
       packSpawning: {
-         minPackSize: 3,
-         maxPackSize: 4,
+         getPackSize: (): PackSizeInfo => {
+            return {
+               minPackSize: 3,
+               maxPackSize: 4
+            };
+         },
          spawnRange: 200
       },
       onlySpawnsInNight: false,
@@ -579,8 +583,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnRate: 0,
       spawnableTileTypes: [TileType.water],
       packSpawning: {
-         minPackSize: 2,
-         maxPackSize: 3,
+         getPackSize: (): PackSizeInfo => {
+            return {
+               minPackSize: 2,
+               maxPackSize: 3
+            };
+         },
          spawnRange: 200
       },
       onlySpawnsInNight: false,
