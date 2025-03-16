@@ -9,6 +9,7 @@ import { createEmbrasureComponentParams, EmbrasureComponentParams } from "./clie
 import { createEquipmentComponentParams, EquipmentComponentParams } from "./client-components/EquipmentComponent";
 import { createFootprintComponentParams, FootprintComponentParams } from "./client-components/FootprintComponent";
 import { createFrostshaperComponentParams, FrostshaperComponentParams } from "./client-components/FrostshaperComponent";
+import { GlurbTailSegmentComponentParams } from "./client-components/GlurbTailSegmentComponent";
 import { createLilypadComponentParams, LilypadComponentParams } from "./client-components/LilypadComponent";
 import { createRandomSoundComponentParams, RandomSoundComponentParams } from "./client-components/RandomSoundComponent";
 import { createRegularSpikesComponentParams, RegularSpikesComponentParams } from "./client-components/RegularSpikesComponent";
@@ -39,6 +40,7 @@ const ClientComponentParamsRecord = {
    [ClientComponentType.ballistaWoodenBolt]: (): BallistaWoodenBoltComponentParams => 0 as any,
    [ClientComponentType.thrownBattleaxe]: (): ThrownBattleaxeComponentParams => 0 as any,
    [ClientComponentType.woodenArrow]: (): WoodenArrowComponentParams => 0 as any,
+   [ClientComponentType.glurbTailSegment]: (): GlurbTailSegmentComponentParams => 0 as any,
 } satisfies Record<ClientComponentType, () => object>;
 
 export type ClientComponentParams<T extends ClientComponentType> = ReturnType<typeof ClientComponentParamsRecord[T]>;
@@ -158,6 +160,11 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
       case EntityType.woodenArrow: {
          return {
             [ClientComponentType.woodenArrow]: createWoodenArrowComponentParams()
+         };
+      }
+      case EntityType.glurbTailSegment: {
+         return {
+            [ClientComponentType.glurbTailSegment]: {}
          };
       }
    }

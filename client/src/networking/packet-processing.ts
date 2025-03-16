@@ -441,6 +441,7 @@ const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
    const layerIdx = reader.readNumber();
+
    const layer = layers[layerIdx];
    const previousLayer = getEntityLayer(entity);
    if (layer !== previousLayer) {

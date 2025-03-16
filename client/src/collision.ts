@@ -37,9 +37,7 @@ const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInf
 const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
-      // Force gets greater the further into each other the entities are
-      const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
+      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / transformComponent.totalMass;
       
       affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
       affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);

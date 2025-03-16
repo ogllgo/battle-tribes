@@ -221,7 +221,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   const mossSpawnDistribution = createRawSpawnDistribution(2, 0.15);
+   const mossSpawnDistribution = createRawSpawnDistribution(2, 0.12);
    // @Copynpaste
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
    const mossHumidityMultipliers = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);

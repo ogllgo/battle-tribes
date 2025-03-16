@@ -99,6 +99,49 @@ import { GlurbSegmentComponent, GlurbSegmentComponentArray, GlurbSegmentComponen
 import { GlurbBodySegmentComponent, GlurbBodySegmentComponentArray, GlurbBodySegmentComponentParams } from "./server-components/GlurbBodySegmentComponent";
 import { FleshSwordComponent, FleshSwordComponentArray, FleshSwordComponentParams } from "./server-components/FleshSwordComponent";
 import { MossComponent, MossComponentArray, MossComponentParams } from "./server-components/MossComponent";
+import { ClientComponentType } from "./client-component-types";
+import { BallistaFrostcicleComponentArray } from "./client-components/BallistaFrostcicleComponent";
+import { BallistaRockComponentArray } from "./client-components/BallistaRockComponent";
+import { BallistaSlimeballComponentArray } from "./client-components/BallistaSlimeballComponent";
+import { BallistaWoodenBoltComponentArray } from "./client-components/BallistaWoodenBoltComponent";
+import { EmbrasureComponentArray } from "./client-components/EmbrasureComponent";
+import { EquipmentComponentArray } from "./client-components/EquipmentComponent";
+import { FootprintComponentArray } from "./client-components/FootprintComponent";
+import { FrostshaperComponentArray } from "./client-components/FrostshaperComponent";
+import { GlurbTailSegmentComponentArray } from "./client-components/GlurbTailSegmentComponent";
+import { LilypadComponentArray } from "./client-components/LilypadComponent";
+import { RandomSoundComponentArray } from "./client-components/RandomSoundComponent";
+import { RegularSpikesComponentArray } from "./client-components/RegularSpikesComponent";
+import { StonecarvingTableComponentArray } from "./client-components/StonecarvingTableComponent";
+import { ThrownBattleaxeComponentArray } from "./client-components/ThrownBattleaxeComponent";
+import { WallComponentArray } from "./client-components/WallComponent";
+import { WarriorHutComponentArray } from "./client-components/WarriorHutComponent";
+import { WoodenArrowComponentArray } from "./client-components/WoodenArrowComponent";
+import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
+import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
+
+// @cleanup: same as below
+const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
+   [ClientComponentType.equipment]: EquipmentComponentArray,
+   [ClientComponentType.footprint]: FootprintComponentArray,
+   [ClientComponentType.randomSound]: RandomSoundComponentArray,
+   [ClientComponentType.embrasure]: EmbrasureComponentArray,
+   [ClientComponentType.frostshaper]: FrostshaperComponentArray,
+   [ClientComponentType.lilypad]: LilypadComponentArray,
+   [ClientComponentType.regularSpikes]: RegularSpikesComponentArray,
+   [ClientComponentType.stonecarvingTable]: StonecarvingTableComponentArray,
+   [ClientComponentType.wall]: WallComponentArray,
+   [ClientComponentType.warriorHut]: WarriorHutComponentArray,
+   [ClientComponentType.workbench]: WorkbenchComponentArray,
+   [ClientComponentType.workerHut]: WorkerHutComponentArray,
+   [ClientComponentType.ballistaFrostcicle]: BallistaFrostcicleComponentArray,
+   [ClientComponentType.ballistaRock]: BallistaRockComponentArray,
+   [ClientComponentType.ballistaSlimeball]: BallistaSlimeballComponentArray,
+   [ClientComponentType.ballistaWoodenBolt]: BallistaWoodenBoltComponentArray,
+   [ClientComponentType.thrownBattleaxe]: ThrownBattleaxeComponentArray,
+   [ClientComponentType.woodenArrow]: WoodenArrowComponentArray,
+   [ClientComponentType.glurbTailSegment]: GlurbTailSegmentComponentArray,
+}
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)

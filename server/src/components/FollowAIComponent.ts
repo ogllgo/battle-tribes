@@ -54,16 +54,18 @@ export function updateFollowAIComponent(entity: Entity, visibleEntities: Readonl
    }
 }
 
-export function startFollowingEntity(entity: Entity, followedEntity: Entity, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number, isForgettable: boolean): void {
+export function followAISetFollowTarget(entity: Entity, followedEntity: Entity, newFollowCooldownTicks: number, isForgettable: boolean): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    followAIComponent.followTargetID = followedEntity;
    followAIComponent.followCooldownTicks = newFollowCooldownTicks;
    followAIComponent.interestTimer = 0;
    followAIComponent.currentTargetIsForgettable = isForgettable;
 
-   const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-   const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
-   moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
+   // @Temporary: now that cow uses custom move func.
+   //    - will want to go through all places which call this and make them handle the movement themselves
+   // const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
+   // const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
+   // moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
 export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {

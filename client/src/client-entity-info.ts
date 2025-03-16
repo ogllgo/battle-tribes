@@ -314,6 +314,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Glurb Head Segment",
       internalName: "glurb-head-segment"
    },
+   [EntityType.glurbTailSegment]: {
+      name: "Glurb Tail Segment",
+      internalName: "glurb-tail-segment"
+   },
    [EntityType.glurb]: {
       name: "Glurb",
       internalName: "glurb"

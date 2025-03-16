@@ -121,7 +121,7 @@ export function computeSideAxis(point1: Point, point2: Point): Point {
 }
 
 function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2max: number) {
-    return Math.min(proj1max, proj2max) - Math.max(proj1min, proj2min);
+   return Math.min(proj1max, proj2max) - Math.max(proj1min, proj2min);
 }
 
 const updateMinOverlap = (collisionData: Mutable<CollisionData>, proj1min: number, proj1max: number, proj2min: number, proj2max: number, axisX: number, axisY: number): void => {
@@ -196,7 +196,7 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
       collisionData.axisX = -collisionData.axisX;
       collisionData.axisY = -collisionData.axisY;
    }
-   
+
    // Is colliding!
    collisionData.isColliding = true;
    return collisionData;

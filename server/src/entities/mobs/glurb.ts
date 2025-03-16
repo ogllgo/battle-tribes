@@ -14,6 +14,7 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { TransformComponent } from "../../components/TransformComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { createGlurbTailSegmentConfig } from "./glurb-tail-segment";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -60,8 +61,10 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
       let config: EntityConfig;
       if (i === 0) {
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
+      } else if (i < numSegments - 1) {
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
       } else {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, i < numSegments - 1);
+         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
       }
       
       const segmentTransformComponent = config.components[ServerComponentType.transform]!;

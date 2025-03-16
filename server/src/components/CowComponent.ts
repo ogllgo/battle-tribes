@@ -15,7 +15,7 @@ import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHer
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
+import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
@@ -610,7 +610,7 @@ function onTick(cow: Entity): void {
       const [followTarget, isHoldingBerry] = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
-         startFollowingEntity(cow, followTarget, 200, Vars.TURN_SPEED, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
+         followAISetFollowTarget(cow, followTarget, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
          return;
       }
    }

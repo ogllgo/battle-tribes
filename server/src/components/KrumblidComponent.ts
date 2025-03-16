@@ -5,7 +5,7 @@ import { randInt, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, startFollowingEntity } from "./FollowAIComponent";
+import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "./FollowAIComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
 import { entityExists, getEntityType } from "../world";
@@ -50,7 +50,7 @@ function onTick(krumblid: Entity): void {
          const entity = aiHelperComponent.visibleEntities[i];
          if (getEntityType(entity) === EntityType.player) {
             // Follow the entity
-            startFollowingEntity(krumblid, entity, 200, Vars.TURN_SPEED, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), true);
+            followAISetFollowTarget(krumblid, entity, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), true);
             return;
          }
       }

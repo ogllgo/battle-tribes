@@ -6,7 +6,6 @@ import { EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig, LightCreationInfo } from "../../components";
-import { GlurbBodySegmentComponent } from "../../components/GlurbBodySegmentComponent";
 import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
@@ -15,20 +14,19 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { createHitbox, Hitbox } from "../../hitboxes";
 import { createLight } from "../../light-levels";
 
-registerEntityLootOnDeath(EntityType.glurbBodySegment, [
+registerEntityLootOnDeath(EntityType.glurbTailSegment, [
    {
       itemType: ItemType.slurb,
       getAmount: () => 1
    }
 ]);
 
-export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox): EntityConfig {
-   // Middle segment
-   const radius = 28;
-   const flags = new Array<HitboxFlag>();
-   const mass = 0.8;
-   const lightIntensity = 0.4;
-   const lightRadius = 8;
+export function createGlurbTailSegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox): EntityConfig {
+   const radius = 20;
+   const flags = [HitboxFlag.GLURB_TAIL_SEGMENT];
+   const mass = 0.4;
+   const lightIntensity = 0.3;
+   const lightRadius = 4;
    
    const transformComponent = new TransformComponent();
    
@@ -46,8 +44,6 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
    
    const glurbSegmentComponent = new GlurbSegmentComponent(lastHitbox);
 
-   const glurbBodySegmentComponent = new GlurbBodySegmentComponent();
-
    const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
       light: light,
@@ -55,14 +51,13 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
    }];
 
    return {
-      entityType: EntityType.glurbBodySegment,
+      entityType: EntityType.glurbTailSegment,
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.glurbSegment]: glurbSegmentComponent,
-         [ServerComponentType.glurbBodySegment]: glurbBodySegmentComponent
+         [ServerComponentType.glurbSegment]: glurbSegmentComponent
       },
       lights: lights
    };

@@ -1,6 +1,7 @@
 import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat, Point } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
@@ -25,7 +26,9 @@ export const GlurbSegmentComponentArray = new ServerComponentArray<GlurbSegmentC
    onDie: onDie
 });
 
-function createParamsFromData(): GlurbSegmentComponentParams {
+function createParamsFromData(reader: PacketReader): GlurbSegmentComponentParams {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   
    return {};
 }
 
@@ -34,12 +37,16 @@ function createComponent(): GlurbSegmentComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 3;
+   return 0;
 }
 
-function padData(): void {}
+function padData(reader: PacketReader): void {
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+}
 
-function updateFromData(): void {}
+function updateFromData(reader: PacketReader, glurbSegment: Entity): void {
+   const mossBallCompleteness = reader.readNumber();
+}
 
 function onTick(glurb: Entity): void {
    // @Hack
@@ -55,7 +62,6 @@ function onTick(glurb: Entity): void {
 }
 
 function onHit(entity: Entity, hitData: HitData): void {
-   console.log("activate");
    for (let i = 0; i < 10; i++) {
       const spawnPositionX = hitData.hitPosition[0];
       const spawnPositionY = hitData.hitPosition[1];

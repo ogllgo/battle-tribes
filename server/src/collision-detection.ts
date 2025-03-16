@@ -1,5 +1,5 @@
 import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/collision-groups";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision-resolution";
@@ -7,6 +7,7 @@ import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./c
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
 import { Box } from "../../shared/src/boxes/boxes";
+import { getEntityType } from "./world";
 
 export const enum CollisionVars {
    NO_COLLISION = 0xFFFF
