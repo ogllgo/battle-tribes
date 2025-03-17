@@ -82,6 +82,9 @@ abstract class Camera {
    public static minVisibleRenderChunkY = -1;
    public static maxVisibleRenderChunkY = -1;
 
+   // @Hack!!!!
+   public static verybadIsTracking = false;
+
    public static applyCameraKinematics(): void {
       // this.lastTickPosition.x += this.velocity.x * Settings.I_TPS;
       // this.lastTickPosition.y += this.velocity.y * Settings.I_TPS;
@@ -140,6 +143,7 @@ abstract class Camera {
    }
 
    public static trackEntity(trackedEntity: Entity): void {
+      console.log("set",trackedEntity);
       // @Hack
       if (entityExists(trackedEntity)) {
          const transformComponent = TransformComponentArray.getComponent(trackedEntity);

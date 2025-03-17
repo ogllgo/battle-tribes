@@ -1,10 +1,9 @@
-import { EntityTypeString } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, distance } from "battletribes-shared/utils";
+import { randInt, randFloat, getTileIndexIncludingEdges, distance } from "battletribes-shared/utils";
 import Layer from "./Layer";
-import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
+import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
-import SRandom from "./SRandom";
 import { createEntity } from "./Entity";
 import { SERVER } from "./server/server";
 import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";

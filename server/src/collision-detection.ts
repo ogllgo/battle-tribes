@@ -1,5 +1,5 @@
 import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/collision-groups";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision-resolution";
@@ -7,7 +7,6 @@ import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./c
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
 import { Box } from "../../shared/src/boxes/boxes";
-import { getEntityType } from "./world";
 
 export const enum CollisionVars {
    NO_COLLISION = 0xFFFF
@@ -75,11 +74,14 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
             continue;
          }
          
+         if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
+            continue;
+         }
+         
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
-            // Check for existing collision info
+         if (box.isColliding(otherBox)) {
             collidingHitboxPairs.push([hitbox, otherHitbox]);
          }
       }

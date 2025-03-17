@@ -319,7 +319,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
    registerNewSpawnInfo({
       entityType: EntityType.moss,
       layer: undergroundLayer,
-      spawnRate: 0.01,
+      spawnRate: 0.05,
       spawnableTileTypes: [TileType.stone],
       packSpawning: {
          getPackSize: (x: number, y: number): PackSizeInfo => {

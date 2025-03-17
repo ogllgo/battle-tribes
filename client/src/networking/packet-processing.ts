@@ -537,7 +537,9 @@ export function processGameDataPacket(reader: PacketReader): void {
    }
 
    // Set the tracked entity after the entities are created so that it can find the first render part of the tracked entity
-   Camera.trackEntity(cameraSubject);
+   if (!Camera.verybadIsTracking) {
+      Camera.trackEntity(cameraSubject);
+   }
 
    const entitiesToRemove = new Set<Entity>();
 
