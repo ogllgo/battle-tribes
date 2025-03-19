@@ -111,6 +111,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.animalStaff]: 1,
    [ItemType.woodenArrow]: 1,
    [ItemType.tamingAlmanac]: 1,
+   [ItemType.floorSign]: 1,
 };
 
 export const enum TribesmanPathType {

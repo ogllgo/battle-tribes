@@ -723,6 +723,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Taming Almanac",
       namePlural: "Taming Almanacs",
       description: "Allows you to see a creature's taming progress."
+   },
+   [ItemType.floorSign]: {
+      entityTextureSource: "items/small/floor-sign.png",
+      textureSource: "items/large/floor-sign.png",
+      toolTextureSource: "",
+      name: "Floor Sign",
+      namePlural: "Floor Signs",
+      description: "Lets you write a message on the ground."
    }
 };
 

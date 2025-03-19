@@ -104,6 +104,7 @@ import { Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
+import { FloorSignComponent } from "./components/FloorSignComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -209,6 +210,7 @@ const ComponentClassRecord = {
    [ServerComponentType.taming]: () => TamingComponent,
    [ServerComponentType.loot]: () => LootComponent,
    [ServerComponentType.moss]: () => MossComponent,
+   [ServerComponentType.floorSign]: () => FloorSignComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

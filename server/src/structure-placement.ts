@@ -26,6 +26,7 @@ import { createEmbrasureConfig } from "./entities/structures/embrasure";
 import { createFenceConfig } from "./entities/structures/fence";
 import { createFenceGateConfig } from "./entities/structures/fence-gate";
 import { createFireTorchConfig } from "./entities/structures/fire-torch";
+import { createFloorSignConfig } from "./entities/structures/floor-sign";
 import { createFrostshaperConfig } from "./entities/structures/frostshaper";
 import { createHealingTotemConfig } from "./entities/structures/healing-totem";
 import { createPlanterBoxConfig } from "./entities/structures/planter-box";
@@ -133,6 +134,7 @@ export function createStructureConfig(tribe: Tribe, entityType: EntityType, posi
       // case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
       case EntityType.automatonAssembler: config = createAutomatonAssemblerConfig(position, angle, tribe, connections, null); break;
       case EntityType.mithrilAnvil: config = createMithrilAnvilConfig(position, angle, tribe, connections, null); break;
+      case EntityType.floorSign: config = createFloorSignConfig(position, angle, tribe, connections, null); break;
       // @Robustness?
       default: {
          throw new Error();

@@ -143,7 +143,6 @@ abstract class Camera {
    }
 
    public static trackEntity(trackedEntity: Entity): void {
-      console.log("set",trackedEntity);
       // @Hack
       if (entityExists(trackedEntity)) {
          const transformComponent = TransformComponentArray.getComponent(trackedEntity);

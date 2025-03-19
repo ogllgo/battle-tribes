@@ -1,4 +1,4 @@
-import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
+import { alignLengthBytes, getStringLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { getSelectedEntityID } from "../entity-selection";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { GameDataPacketOptions } from "battletribes-shared/client-server-types";
@@ -376,5 +376,12 @@ export function sendSetSpectatingPositionPacket(): void {
 export function sendDevSetViewedSpawnDistributionPacket(entityType: EntityType | -1): void {
    const packet = new Packet(PacketType.devSetViewedSpawnDistribution, 2 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entityType);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetSignMessagePacket(entity: Entity, message: string): void {
+   const packet = new Packet(PacketType.setSignMessage, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
+   packet.addNumber(entity);
+   packet.addString(message);
    Client.sendPacket(packet.buffer);
 }

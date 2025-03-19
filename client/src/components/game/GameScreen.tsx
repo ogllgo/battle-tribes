@@ -31,6 +31,7 @@ import { ItemTooltip } from "./inventories/ItemTooltip";
 import AnimalStaffOptions from "./AnimalStaffOptions";
 import { playerInstance } from "../../player";
 import TamingMenu from "./TamingMenu";
+import SignInscribeMenu from "./SignInscribeMenu";
 
 export const enum GameInteractState {
    none,
@@ -236,6 +237,8 @@ const GameScreen = (props: GameScreenProps) => {
       <AnimalStaffOptions setGameInteractState={setInteractState} />
 
       <TamingMenu />
+
+      <SignInscribeMenu />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

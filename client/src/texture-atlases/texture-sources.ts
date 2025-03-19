@@ -385,6 +385,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/glurb/moss-ball/moss-ball-4.png",
    "entities/glurb/moss-ball/moss-ball-5.png",
    "entities/glurb/moss-ball/moss-ball-6.png",
+   "entities/floor-sign/floor-sign.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

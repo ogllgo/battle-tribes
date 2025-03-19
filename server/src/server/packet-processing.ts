@@ -39,6 +39,7 @@ import { getTamingSpec } from "../taming-specs";
 import { getHitboxTile, Hitbox, setHitboxAngularVelocity } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
+import { FloorSignComponentArray } from "../components/FloorSignComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -868,4 +869,12 @@ export function processSetSpectatingPositionPacket(playerClient: PlayerClient, r
 export function processDevSetViewedSpawnDistribution(playerClient: PlayerClient, reader: PacketReader): void {
    const entityType = reader.readNumber();
    playerClient.viewedSpawnDistribution = entityType;
+}
+
+export function processSetSignMessagePacket(reader: PacketReader): void {
+   const entity = reader.readNumber();
+   const message = reader.readString();
+
+   const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+   floorSignComponent.message = message;
 }

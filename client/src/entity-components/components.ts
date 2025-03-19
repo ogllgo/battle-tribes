@@ -120,6 +120,7 @@ import { WoodenArrowComponentArray } from "./client-components/WoodenArrowCompon
 import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
 import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
 import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
+import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams } from "./server-components/FloorSignComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -248,6 +249,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.taming]: TamingComponentArray,
    [ServerComponentType.loot]: LootComponentArray,
    [ServerComponentType.moss]: MossComponentArray,
+   [ServerComponentType.floorSign]: FloorSignComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -352,6 +354,7 @@ const ServerComponentRecord = {
    [ServerComponentType.taming]: (): TamingComponent => 0 as any,
    [ServerComponentType.loot]: (): LootComponent => 0 as any,
    [ServerComponentType.moss]: (): MossComponent => 0 as any,
+   [ServerComponentType.floorSign]: (): FloorSignComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -458,6 +461,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.taming]: (): TamingComponentParams => 0 as any,
    [ServerComponentType.loot]: (): LootComponentParams => 0 as any,
    [ServerComponentType.moss]: (): MossComponentParams => 0 as any,
+   [ServerComponentType.floorSign]: (): FloorSignComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

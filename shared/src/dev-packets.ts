@@ -109,6 +109,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.taming]: {},
    [ServerComponentType.loot]: {},
    [ServerComponentType.moss]: {},
+   [ServerComponentType.floorSign]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

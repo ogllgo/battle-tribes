@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp, randFloat } from "battletribes-shared/utils";
+import { distance, lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
@@ -14,6 +14,9 @@ import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/ent
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 import { Hitbox } from "./hitboxes";
+import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
+import { cursorX, cursorY } from "./mouse";
+import Game from "./Game";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -308,6 +311,33 @@ const renderHealNumbers = (): void => {
    }
 }
 
+const renderName = (x: number, y: number, name: string, colour: string): void => {
+   const cameraX = getXPosInTextCanvas(x);
+   const cameraY = getYPosInTextCanvas(y);
+   
+   const width = ctx.measureText(name).width; // @Speed
+
+   // Bg
+   const bgWidthPadding = 4;
+   const bgHeight = 12;
+   const bgHeightPadding = 4;
+   ctx.globalAlpha = 0.5;
+   ctx.fillStyle = "#000";
+   ctx.beginPath();
+   ctx.rect(cameraX - width / 2 - bgWidthPadding, cameraY - bgHeight - bgHeightPadding, width + bgWidthPadding * 2, bgHeight + bgHeightPadding * 2);
+   ctx.fill();
+   ctx.globalAlpha = 1;
+   
+   // Draw text outline
+   ctx.lineWidth = 6;
+   ctx.strokeStyle = "#000";
+   ctx.strokeText(name, cameraX - width / 2, cameraY);
+   
+   // Draw text
+   ctx.fillStyle = colour;
+   ctx.fillText(name, cameraX - width / 2, cameraY);
+}
+
 // @Speed
 // @Speed
 // @Speed
@@ -328,35 +358,31 @@ const renderNames = (frameProgress: number): void => {
 
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      
-      // Calculate position in camera
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
-      const cameraX = getXPosInTextCanvas(hitboxRenderPosition.x);
-      const cameraY = getYPosInTextCanvas(hitboxRenderPosition.y + getHumanoidRadius(entity) + 4);
       
-      const name = tribeMemberComponent.name;
+      renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + getHumanoidRadius(entity) + 4, tribeMemberComponent.name, getEntityType(entity) === EntityType.player ? "#fff" : "#bbb");
+   }
 
-      const width = ctx.measureText(name).width; // @Speed
-
-      // Bg
-      const bgWidthPadding = 4;
-      const bgHeight = 12;
-      const bgHeightPadding = 4;
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.rect(cameraX - width / 2 - bgWidthPadding, cameraY - bgHeight - bgHeightPadding, width + bgWidthPadding * 2, bgHeight + bgHeightPadding * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      
-      // Draw text outline
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "#000";
-      ctx.strokeText(name, cameraX - width / 2, cameraY);
-      
-      // Draw text
-      ctx.fillStyle = getEntityType(entity) === EntityType.player ? "#fff" : "#bbb";
-      ctx.fillText(name, cameraX - width / 2, cameraY);
+   // Floor signs
+   if (Game.cursorX !== null && Game.cursorY !== null) {
+      for (const entity of FloorSignComponentArray.entities) {
+         const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+         if (floorSignComponent.message === "") {
+            continue;
+         }
+         
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+   
+         const x = hitboxRenderPosition.x;
+         const y = hitboxRenderPosition.y;
+         
+         const cursorDist = distance(x, y, Game.cursorX, Game.cursorY);
+         if (cursorDist < 96) {
+            renderName(x, y, floorSignComponent.message, "#fff");
+         }
+      }
    }
 }
 

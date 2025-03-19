@@ -45,6 +45,7 @@ import { createWorkbenchConfig } from "./entities/workbench";
 import { createWorkerHutConfig } from "./entities/worker-hut";
 import { createFrostshaperConfig } from "./entities/frostshaper";
 import { getEntitiesInRange, getHitboxesCollidingEntities } from "./collision";
+import { createFloorSignConfig } from "./entities/floor-sign";
 
 const enum Vars {
    STRUCTURE_PLACE_DISTANCE = 60,
@@ -141,6 +142,7 @@ export function createStructureConfig(entityType: EntityType, position: Point, r
       // case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
       case EntityType.automatonAssembler: config = createAutomatonAssemblerConfig(position, rotation, tribe); break;
       case EntityType.mithrilAnvil: config = createMithrilAnvilConfig(position, rotation, tribe); break;
+      case EntityType.floorSign: config = createFloorSignConfig(position, rotation, tribe); break;
       // @Robustness?
       default: {
          throw new Error();

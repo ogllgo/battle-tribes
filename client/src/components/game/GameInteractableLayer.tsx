@@ -1529,6 +1529,12 @@ const tickItem = (itemType: ItemType): void => {
                   };
                   break;
                }
+               case ServerComponentType.floorSign: {
+                  components[componentType] = {
+                     message: ""
+                  };
+                  break;
+               }
                default: {
                   throw new Error(ServerComponentType[componentType]);
                }

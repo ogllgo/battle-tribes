@@ -117,7 +117,8 @@ export enum ServerComponentType {
    slingTurretRock,
    taming,
    loot,
-   moss
+   moss,
+   floorSign
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -228,6 +229,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.taming]: "Taming Component",
    [ServerComponentType.loot]: "Loot Component",
    [ServerComponentType.moss]: "Moss Component",
+   [ServerComponentType.floorSign]: "Floor Sign",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -324,6 +326,7 @@ export const EntityComponents = {
    [EntityType.swingAttack]: [],
    [EntityType.blockAttack]: [],
    [EntityType.moss]: [],
+   [EntityType.floorSign]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.floorSign],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

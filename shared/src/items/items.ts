@@ -91,7 +91,8 @@ export const enum ItemType {
    yuriSonichu,
    animalStaff,
    woodenArrow,
-   tamingAlmanac
+   tamingAlmanac,
+   floorSign
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -183,6 +184,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.animalStaff]: "Animal Staff",
    [ItemType.woodenArrow]: "Wooden Arrow",
    [ItemType.tamingAlmanac]: "Taming Almanac",
+   [ItemType.floorSign]: "Floor Sign"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -529,7 +531,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.yuriSonichu]: "material",
    [ItemType.animalStaff]: "animalStaff",
    [ItemType.woodenArrow]: "material",
-   [ItemType.tamingAlmanac]: "tamingAlmanac"
+   [ItemType.tamingAlmanac]: "tamingAlmanac",
+   [ItemType.floorSign]: "placeable"
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -940,6 +943,10 @@ export const ITEM_INFO_RECORD = {
       stackSize: 16
    },
    [ItemType.tamingAlmanac]: {},
+   [ItemType.floorSign]: {
+      stackSize: 99,
+      entityType: EntityType.floorSign
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 // Some typescript wizardry

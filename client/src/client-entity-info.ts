@@ -366,6 +366,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Moss",
       internalName: "moss"
    },
+   [EntityType.floorSign]: {
+      name: "Floor Sign",
+      internalName: "floor-sign"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;
