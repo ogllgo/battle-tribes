@@ -389,6 +389,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/desert-bush-lively/desert-bush-lively.png",
    "entities/desert-bush-sandy/desert-bush-sandy.png",
    "entities/desert-bush-sandy/desert-bush-sandy-large.png",
+   "entities/desert-small-weed/desert-small-weed.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

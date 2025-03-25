@@ -54,7 +54,6 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    renderPart.tintR = randFloat(-0.02, 0.02);
    renderPart.tintG = randFloat(-0.02, 0.02);
    renderPart.tintB = randFloat(-0.02, 0.02);
-   renderPart.addTag("berryBushComponent:renderPart");
    entityIntermediateInfo.renderInfo.attachRenderPart(renderPart)
 
    return {

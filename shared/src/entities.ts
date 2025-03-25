@@ -94,7 +94,8 @@ export const enum EntityType {
    moss,
    floorSign,
    desertBushLively,
-   desertBushSandy
+   desertBushSandy,
+   desertSmallWeed
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -191,6 +192,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.floorSign]: "Floor Sign",
    [EntityType.desertBushLively]: "Desert Bush Lively",
    [EntityType.desertBushSandy]: "Desert Bush Sandy",
+   [EntityType.desertSmallWeed]: "Desert Small Weed",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

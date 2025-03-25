@@ -16,6 +16,7 @@ export enum RenderLayer {
    fish,
    // Everything before this will render under water, everything after will render above
    droppedItems,
+   desertLowestPlants,
    lilypads,
    reeds,
    lowEntities,
@@ -51,7 +52,10 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
    return decorationType === DecorationType.flower1
        || decorationType === DecorationType.flower2
        || decorationType === DecorationType.flower3
-       || decorationType === DecorationType.flower4;
+       || decorationType === DecorationType.flower4
+       || decorationType === DecorationType.sandstoneRock
+       || decorationType === DecorationType.sandstoneRockBig1
+       || decorationType === DecorationType.sandstoneRockBig2;
 }
 
 export function getEntityRenderLayer(entityType: EntityType, entityParams: EntityParams): RenderLayer {
@@ -151,6 +155,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       // @Incomplete: barrel should be shown below player (so that their limbs can go over it)
       case EntityType.barrel: {
          return RenderLayer.ridingEntities;
+      }
+      case EntityType.desertSmallWeed: {
+         return RenderLayer.desertLowestPlants;
       }
       // (default)
       default: {

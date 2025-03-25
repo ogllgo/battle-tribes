@@ -386,11 +386,15 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.desertBushLively]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
    [EntityType.desertBushSandy]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.desertSmallWeed]: {
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
 };

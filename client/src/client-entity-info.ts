@@ -378,6 +378,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Desert Bush Sandy",
       internalName: "desert-bush-sandy"
    },
+   [EntityType.desertSmallWeed]: {
+      name: "Desert Small Weed",
+      internalName: "desert-small-weed"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

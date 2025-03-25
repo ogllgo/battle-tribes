@@ -6,13 +6,13 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface DesertBushLivelyComponentParams {}
+export interface DesertSmallWeedComponentParams {}
 
 interface IntermediateInfo {}
 
-export interface DesertBushLivelyComponent {}
+export interface DesertSmallWeedComponent {}
 
-export const DesertBushLivelyComponentArray = new ServerComponentArray<DesertBushLivelyComponent, DesertBushLivelyComponentParams, IntermediateInfo>(ServerComponentType.desertBushLively, true, {
+export const DesertSmallWeedComponentArray = new ServerComponentArray<DesertSmallWeedComponent, DesertSmallWeedComponentParams, IntermediateInfo>(ServerComponentType.desertSmallWeed, true, {
    createParamsFromData: createParamsFromData,
    populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
@@ -21,7 +21,7 @@ export const DesertBushLivelyComponentArray = new ServerComponentArray<DesertBus
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): DesertBushLivelyComponentParams {
+function createParamsFromData(): DesertSmallWeedComponentParams {
    return {};
 }
 
@@ -33,7 +33,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       hitbox,
       0,
       0,
-      getTextureArrayIndex("entities/desert-bush-lively/desert-bush-lively.png")
+      getTextureArrayIndex("entities/desert-small-weed/desert-small-weed.png")
    );
    renderPart.tintR = randFloat(-0.03, 0.03);
    renderPart.tintG = randFloat(-0.03, 0.03);
@@ -45,7 +45,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    };
 }
 
-function createComponent(): DesertBushLivelyComponent {
+function createComponent(): DesertSmallWeedComponent {
    return {};
 }
 

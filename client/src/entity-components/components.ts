@@ -124,6 +124,7 @@ import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams }
 import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLivelyComponentParams } from "./server-components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
 import { AutoSpawnedComponent, AutoSpawnedComponentArray, AutoSpawnedComponentParams } from "./server-components/AutoSpawnedComponent";
+import { DesertSmallWeedComponent, DesertSmallWeedComponentArray, DesertSmallWeedComponentParams } from "./server-components/DesertSmallWeedComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -256,6 +257,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.desertBushLively]: DesertBushLivelyComponentArray,
    [ServerComponentType.desertBushSandy]: DesertBushSandyComponentArray,
    [ServerComponentType.autoSpawned]: AutoSpawnedComponentArray,
+   [ServerComponentType.desertSmallWeed]: DesertSmallWeedComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -364,6 +366,7 @@ const ServerComponentRecord = {
    [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponent => 0 as any,
    [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponent => 0 as any,
    [ServerComponentType.autoSpawned]: (): AutoSpawnedComponent => 0 as any,
+   [ServerComponentType.desertSmallWeed]: (): DesertSmallWeedComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -474,6 +477,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponentParams => 0 as any,
    [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponentParams => 0 as any,
    [ServerComponentType.autoSpawned]: (): AutoSpawnedComponentParams => 0 as any,
+   [ServerComponentType.desertSmallWeed]: (): DesertSmallWeedComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

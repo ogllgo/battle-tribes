@@ -143,6 +143,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.floorSign]: CollisionGroup.boring,
    [EntityType.desertBushLively]: CollisionGroup.boring,
    [EntityType.desertBushSandy]: CollisionGroup.boring,
+   [EntityType.desertSmallWeed]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {
