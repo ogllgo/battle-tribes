@@ -14,7 +14,7 @@ export class DecorationComponent {
 export const DecorationComponentArray = new ComponentArray<DecorationComponent>(ServerComponentType.decoration, true, getDataLength, addDataToPacket);
 
 function getDataLength(): number {
-   return 2 * Float32Array.BYTES_PER_ELEMENT;
+   return Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

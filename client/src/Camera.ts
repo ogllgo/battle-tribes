@@ -82,6 +82,9 @@ abstract class Camera {
    public static minVisibleRenderChunkY = -1;
    public static maxVisibleRenderChunkY = -1;
 
+   // @Hack!!!!
+   public static verybadIsTracking = false;
+
    public static applyCameraKinematics(): void {
       // this.lastTickPosition.x += this.velocity.x * Settings.I_TPS;
       // this.lastTickPosition.y += this.velocity.y * Settings.I_TPS;

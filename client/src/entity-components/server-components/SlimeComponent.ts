@@ -167,7 +167,7 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.2 / Settings.TPS) {
-      playSoundOnHitbox("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, false);
    }
 
    const slimeComponent = SlimeComponentArray.getComponent(entity);
@@ -249,20 +249,20 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // Update the eye's rotation
    // 
 
-   slimeComponent.eyeRenderPart.rotation = eyeRotation;
+   slimeComponent.eyeRenderPart.angle = eyeRotation;
    if (anger >= 0) {
       const frequency = lerp(EYE_SHAKE_START_FREQUENCY, EYE_SHAKE_END_FREQUENCY, anger);
       slimeComponent.internalTickCounter += frequency;
 
       let amplitude = lerp(EYE_SHAKE_START_AMPLITUDE, EYE_SHAKE_END_AMPLITUDE, anger) * 100;
       amplitude /= Math.PI * SLIME_SIZES[slimeComponent.size];
-      slimeComponent.eyeRenderPart.rotation += amplitude * Math.sin(slimeComponent.internalTickCounter * 3);
+      slimeComponent.eyeRenderPart.angle += amplitude * Math.sin(slimeComponent.internalTickCounter * 3);
    } else {
       slimeComponent.internalTickCounter = 0;
    }
 
-   slimeComponent.eyeRenderPart.offset.x = EYE_OFFSETS[slimeComponent.size] * Math.sin(slimeComponent.eyeRenderPart.rotation);
-   slimeComponent.eyeRenderPart.offset.y = EYE_OFFSETS[slimeComponent.size] * Math.cos(slimeComponent.eyeRenderPart.rotation);
+   slimeComponent.eyeRenderPart.offset.x = EYE_OFFSETS[slimeComponent.size] * Math.sin(slimeComponent.eyeRenderPart.angle);
+   slimeComponent.eyeRenderPart.offset.y = EYE_OFFSETS[slimeComponent.size] * Math.cos(slimeComponent.eyeRenderPart.angle);
 
    if (anger === -1) {
       slimeComponent.bodyRenderPart.shakeAmount = 0;
@@ -301,7 +301,7 @@ function onHit(entity: Entity): void {
       createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 
-   playSoundOnHitbox("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("slime-hit-" + randInt(1, 2) + ".mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -320,5 +320,5 @@ function onDie(entity: Entity): void {
       createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 
-   playSoundOnHitbox("slime-death.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("slime-death.mp3", 0.4, 1, entity, hitbox, false);
 }

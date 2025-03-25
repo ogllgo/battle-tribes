@@ -6,7 +6,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName } from "../../../shared/src/items/items";
 import { Point } from "../../../shared/src/utils";
-import { createEntityConfig, createEntityConfigAttachInfo, EntityConfig } from "../components";
+import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import { setHitboxToState, SwingAttackComponent } from "../components/SwingAttackComponent";
@@ -39,14 +39,14 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
 
    const swingAttackComponent = new SwingAttackComponent(owner, limb);
    
-   return createEntityConfig(
-      EntityType.swingAttack,
-      {
+   return {
+      entityType: EntityType.swingAttack,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.swingAttack]: swingAttackComponent
       },
-      [],
-      createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
-   );
+      lights: [],
+      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
+   };
 }

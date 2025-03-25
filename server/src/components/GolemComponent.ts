@@ -158,9 +158,9 @@ const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: E
       
       const config = createPebblumConfig(new Point(x, y), 2 * Math.PI * Math.random());
       config.components[ServerComponentType.pebblum]!.targetEntityID = target;
-      createEntity(config, layer, 0);
+      const pebblum = createEntity(config, layer, 0);
       
-      golemComponent.summonedPebblumIDs.push(config.entity);
+      golemComponent.summonedPebblumIDs.push(pebblum);
    }
 }
 
@@ -271,7 +271,7 @@ function onTick(golem: Entity): void {
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

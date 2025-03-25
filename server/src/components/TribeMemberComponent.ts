@@ -138,11 +138,7 @@ function onRemove(entity: Entity): void {
 
 function getDataLength(entity: Entity): number {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
-
-   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += getStringLengthBytes(tribeMemberComponent.name);
-
-   return lengthBytes;
+   return getStringLengthBytes(tribeMemberComponent.name);
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

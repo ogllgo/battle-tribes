@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { Point } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
@@ -23,14 +23,14 @@ export function createSpikyBastardConfig(position: Point, rotation: number): Ent
 
    const spikyBastardComponent = new SpikyBastardComponent();
    
-   return createEntityConfig(
-      EntityType.spikyBastard,
-      {
+   return {
+      entityType: EntityType.spikyBastard,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.spikyBastard]: spikyBastardComponent
       },
-      []
-   );
+      lights: []
+   };
 }

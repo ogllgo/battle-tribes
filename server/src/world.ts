@@ -22,6 +22,7 @@ const enum Vars {
 }
 
 interface EntityJoinInfo {
+   readonly entity: Entity;
    readonly entityConfig: EntityConfig;
    readonly layer: Layer;
    readonly entityComponentTypes: ReadonlyArray<ServerComponentType>;
@@ -179,14 +180,14 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
       if (joinInfo.ticksRemaining === 0) {
-         entityTypes[joinInfo.entityConfig.entity] = joinInfo.entityConfig.entityType;
-         entityLayers[joinInfo.entityConfig.entity] = joinInfo.layer;
-         entityComponentTypes[joinInfo.entityConfig.entity] = joinInfo.entityComponentTypes;
-         entitySpawnTicks[joinInfo.entityConfig.entity] = ticks;
+         entityTypes[joinInfo.entity] = joinInfo.entityConfig.entityType;
+         entityLayers[joinInfo.entity] = joinInfo.layer;
+         entityComponentTypes[joinInfo.entity] = joinInfo.entityComponentTypes;
+         entitySpawnTicks[joinInfo.entity] = ticks;
 
          // Add lights
          for (const lightCreationInfo of joinInfo.entityConfig.lights) {
-            attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, joinInfo.entityConfig.entity)
+            attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, joinInfo.entity);
          }
 
          finalPushedIdx = i;
@@ -210,6 +211,42 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
       }
    }
 
+   // Do this before the onJoin function so that child configs get registered to the parent transformComponetns in time for the onJoin functions
+   if (typeof finalPushedIdx !== "undefined") {
+      // Check if there are any entities which are immediately being carried or have children
+      for (let i = 0; i <= finalPushedIdx; i++) {
+         const joinInfo = entityJoinBuffer[i];
+
+         const attachInfo = joinInfo.entityConfig.attachInfo;
+         if (typeof attachInfo !== "undefined") {
+            attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.offset.x, attachInfo.offset.y, attachInfo.destroyWhenParentIsDestroyed);
+         }
+
+         const childConfigs = joinInfo.entityConfig.childConfigs;
+         if (typeof childConfigs !== "undefined") {
+            for (const childConfig of childConfigs) {
+               // Find the join info for the child
+               // @Speed !
+               let childJoinInfo: EntityJoinInfo | undefined;
+               for (let j = 0; j <= finalPushedIdx; j++) {
+                  const currentJoinInfo = entityJoinBuffer[j];
+                  if (currentJoinInfo.entityConfig === childConfig) {
+                     childJoinInfo = currentJoinInfo
+                     break;
+                  }
+               }
+               assert(typeof childJoinInfo !== "undefined");
+               
+               attachEntity(childJoinInfo.entity, joinInfo.entity, null, 0, 0, true);
+            }
+         }
+      }
+
+      // Clear pushed entities from queue
+      const numPushedEntities = finalPushedIdx + 1;
+      entityJoinBuffer.splice(0, numPushedEntities);
+   }
+
    // Once all new components are added, call on join functions and clear buffers
    for (let i = 0; i < ComponentArrays.length; i++) {
       const componentArray = ComponentArrays[i];
@@ -230,22 +267,6 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
       }
 
       componentArray.clearJoinedComponents(finalJoiningIdx);
-   }
-
-   if (typeof finalPushedIdx !== "undefined") {
-      // Check if there are any entities which are immediately being carried
-      for (let i = 0; i <= finalPushedIdx; i++) {
-         const joinInfo = entityJoinBuffer[i];
-
-         const attachInfo = joinInfo.entityConfig.attachInfo;
-         if (typeof attachInfo !== "undefined") {
-            attachEntity(joinInfo.entityConfig.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.offset.x, attachInfo.offset.y, attachInfo.destroyWhenParentIsDestroyed);
-         }
-      }
-      
-      // Clear pushed entities from queue
-      const numPushedEntities = finalPushedIdx + 1;
-      entityJoinBuffer.splice(0, numPushedEntities);
    }
 }
 
@@ -306,7 +327,7 @@ export function destroyEntity(entity: Entity): void {
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       const joinInfo = entityJoinBuffer[i];
 
-      if (joinInfo.entityConfig.entity === entity) {
+      if (joinInfo.entity === entity) {
          entityJoinBuffer.splice(i, 1);
          break;
       }
@@ -323,10 +344,11 @@ export function destroyEntity(entity: Entity): void {
    }
 }
 
-export function addEntityToJoinBuffer(entityConfig: EntityConfig, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
+export function addEntityToJoinBuffer(entity: Entity, entityConfig: EntityConfig, layer: Layer, entityComponentTypes: ReadonlyArray<ServerComponentType>, joinDelayTicks: number): void {
    // Find a spot for the entity
    
    const joinInfo: EntityJoinInfo = {
+      entity: entity,
       entityConfig: entityConfig,
       layer: layer,
       entityComponentTypes: entityComponentTypes,

@@ -107,7 +107,7 @@ function onRemove(entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const structureComponent = StructureComponentArray.getComponent(entity);
    
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * structureComponent.connections.length;
    return lengthBytes;
 }

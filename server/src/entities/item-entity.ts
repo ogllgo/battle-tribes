@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig, LightCreationInfo } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -15,6 +15,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getEntityLayer } from "../world";
 import { createEntity } from "../Entity";
 import { createHitbox } from "../hitboxes";
+import { createLight } from "../light-levels";
 
 export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -26,16 +27,26 @@ export function createItemEntityConfig(position: Point, rotation: number, itemTy
    const physicsComponent = new PhysicsComponent();
 
    const itemComponent = new ItemComponent(itemType, amount, throwingEntity);
+
+   const lights = new Array<LightCreationInfo>();
+   if (itemType === ItemType.slurb) {
+      const light = createLight(new Point(0, 0), 0.6, 0.5, 4, 1, 0.1, 1);
+      const lightCreationInfo: LightCreationInfo = {
+         light: light,
+         attachedHitbox: hitbox
+      };
+      lights.push(lightCreationInfo);
+   }
    
-   return createEntityConfig(
-      EntityType.itemEntity,
-      {
+   return {
+      entityType: EntityType.itemEntity,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent
       },
-      []
-   );
+      lights: lights
+   };
 }
 
 const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {

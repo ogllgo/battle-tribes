@@ -1,91 +1,36 @@
-import { EntityType, EntityTypeString, SlimeSize } from "battletribes-shared/entities";
+import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex, Point, getTileIndexIncludingEdges } from "battletribes-shared/utils";
+import { randInt, randFloat, getTileIndexIncludingEdges, distance, assert } from "battletribes-shared/utils";
 import Layer from "./Layer";
-import { addEntityToCensus, getEntityCount, getTilesOfType } from "./census";
+import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
-import SRandom from "./SRandom";
 import { createEntity } from "./Entity";
 import { SERVER } from "./server/server";
-import { getDistributionWeightedSpawnPosition } from "./resource-distributions";
 import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
-import { createCowConfig } from "./entities/mobs/cow";
-import { createBerryBushConfig } from "./entities/resources/berry-bush";
-import { createTombstoneConfig } from "./entities/tombstone";
-import { createBoulderConfig } from "./entities/resources/boulder";
-import { createCactusConfig } from "./entities/resources/cactus";
-import { createYetiConfig } from "./entities/mobs/yeti";
-import { createIceSpikesConfig } from "./entities/resources/ice-spikes";
-import { createKrumblidConfig } from "./entities/mobs/krumblid";
-import { createFrozenYetiConfig } from "./entities/mobs/frozen-yeti";
-import { createFishConfig } from "./entities/mobs/fish";
-import { createLilypadConfig } from "./entities/lilypad";
-import { createGolemConfig } from "./entities/mobs/golem";
-import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
-import { TribeType } from "battletribes-shared/tribes";
-import Tribe from "./Tribe";
-import { createTreeConfig } from "./entities/resources/tree";
-import { EntitySpawnInfo, SPAWN_INFOS, SpawningEntityType } from "./entity-spawn-info";
+import { EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
-import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
+import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
 import { createGlurbConfig } from "./entities/mobs/glurb";
-import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "./components/YetiComponent";
-import { createSlimewispConfig } from "./entities/mobs/slimewisp";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
-import { createSlimeConfig } from "./entities/mobs/slime";
 import { Hitbox } from "./hitboxes";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 
-const PACK_SPAWN_RANGE = 200;
-
-let spawnInfoSpawnableTilesRecord: Record<number, ReadonlySet<TileIndex>>;
-
-const findSpawnableTiles = (spawnInfo: EntitySpawnInfo): ReadonlySet<TileIndex> => {
-   const spawnableTiles = new Set<TileIndex>();
-   
-   // @Incomplete: accounts for tiles of all layers instead of just the ones from the layer the spawninfo is in
-   for (const tileType of spawnInfo.spawnableTileTypes) {
-      const tileIndexes = getTilesOfType(spawnInfo.layer, tileType);
-      for (const tileIndex of tileIndexes) {
-         if (!spawnInfo.layer.unspawnableTiles.has(tileIndex)) {
-            spawnableTiles.add(tileIndex);
-         }
+const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
+   // Make sure there is a block which lacks density
+   let isFullyDense = true;
+   for (let i = 0; i < spawnInfo.spawnDistribution.targetDensities.length; i++) {
+      if (spawnInfo.spawnDistribution.currentDensities[i] < spawnInfo.spawnDistribution.targetDensities[i]) {
+         isFullyDense = false;
+         break;
       }
    }
-
-   return spawnableTiles;
-}
-
-/** Creates the spawn info array and fills their spawnable tiles */
-export function noteSpawnableTiles(): void {
-   const tempEntitySpawnableTiles: Partial<Record<number, ReadonlySet<TileIndex>>> = {};
-   for (let i = 0; i < SPAWN_INFOS.length; i++) {
-      const spawnInfo = SPAWN_INFOS[i];
-      tempEntitySpawnableTiles[i] = findSpawnableTiles(spawnInfo);
-   }
-   spawnInfoSpawnableTilesRecord = tempEntitySpawnableTiles as Record<number, ReadonlySet<TileIndex>>;
-}
-
-export function getSpawnInfoSpawnableTiles(spawnInfoIdx: number): ReadonlySet<TileIndex> {
-   return spawnInfoSpawnableTilesRecord[spawnInfoIdx];
-}
-
-const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): boolean => {
-   // If there are no tiles upon which the entity is able to be spawned, the spawn conditions aren't valid
-   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   const numEligibleTiles = spawnableTiles.size;
-   if (numEligibleTiles === 0) return false;
-   
-   // Check if the entity density is right
-   const entityCount = getEntityCount(spawnInfo.entityType);
-   const density = entityCount / numEligibleTiles;
-   if (density >= spawnInfo.maxDensity) {
+   if (isFullyDense) {
       return false;
    }
 
@@ -97,34 +42,9 @@ const spawnConditionsAreMet = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo)
    return true;
 }
 
-const getTribeType = (layer: Layer, x: number, y: number): TribeType => {
-   const tileX = Math.floor(x / Settings.TILE_SIZE);
-   const tileY = Math.floor(y / Settings.TILE_SIZE);
-   const tileType = layer.getTileXYType(tileX, tileY);
-   switch (tileType) {
-      case TileType.grass: {
-         if (Math.random() < 0.2) {
-            return TribeType.goblins;
-         }
-         return TribeType.plainspeople;
-      }
-      case TileType.sand: {
-         if (Math.random() < 0.2) {
-            return TribeType.goblins;
-         }
-         return TribeType.barbarians;
-      }
-      case TileType.snow:
-      case TileType.ice: {
-         return TribeType.frostlings;
-      }
-      case TileType.rock: {
-         return TribeType.goblins;
-      }
-      default: {
-         return randInt(0, 3);
-      }
-   }
+const tileIsSpawnable = (tileIndex: number, spawnInfo: EntitySpawnInfo): boolean => {
+   const tileType = spawnInfo.layer.getTileType(tileIndex);
+   return spawnInfo.spawnableTileTypes.includes(tileType) && !spawnInfo.layer.unspawnableTiles.has(tileIndex);
 }
 
 const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
@@ -168,125 +88,148 @@ const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformCompo
    return false;
 }
 
-const attemptToSpawnEntity = (entityType: SpawningEntityType, layer: Layer, x: number, y: number): void => {
+const hitboxTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnInfo): boolean => {
+   const minX = hitbox.box.calculateBoundsMinX();
+   const maxX = hitbox.box.calculateBoundsMaxX();
+   const minY = hitbox.box.calculateBoundsMinY();
+   const maxY = hitbox.box.calculateBoundsMaxY();
+
+   const minTileX = Math.floor(minX / Settings.TILE_SIZE);
+   const maxTileX = Math.floor(maxX / Settings.TILE_SIZE);
+   const minTileY = Math.floor(minY / Settings.TILE_SIZE);
+   const maxTileY = Math.floor(maxY / Settings.TILE_SIZE);
+   for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+      for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (!tileIsSpawnable(tileIndex, spawnInfo) && boxIsCollidingWithTile(hitbox.box, tileX, tileY)) {
+            return false;
+         }
+      }
+   }
+
+   return true;
+}
+
+// @Hack
+const nodeIsEntityConfig = (node: EntityConfig | Hitbox): node is EntityConfig => {
+   return typeof (node as EntityConfig).components !== "undefined";
+}
+
+const entityTileTypesAreValid = (node: EntityConfig | Hitbox, spawnInfo: EntitySpawnInfo): boolean => {
+   if (nodeIsEntityConfig(node)) {
+      const entityConfig = node;
+
+      const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+      for (const child of transformComponent.children) {
+         if (entityChildIsEntity(child)) {
+            // @Hack! would this actually be the preferrable way of doing it as opposed to having a whole ass child configs thing?
+            throw new Error();
+         } else {
+            if (!entityTileTypesAreValid(child, spawnInfo)) {
+               return false;
+            }
+         }
+      }
+      
+      if (typeof entityConfig.childConfigs !== "undefined") {
+         for (const childEntityConfig of entityConfig.childConfigs) {
+            if (!entityTileTypesAreValid(childEntityConfig, spawnInfo)) {
+               return false;
+            }
+         }
+      }
+   } else {
+      const hitbox = node;
+      if (!hitboxTileTypesAreValid(hitbox, spawnInfo)) {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
    const angle = 2 * Math.PI * Math.random();
    
-   let configs: ReadonlyArray<EntityConfig> | null;
-   switch (entityType) {
-      case EntityType.cow: configs = [createCowConfig(new Point(x, y), angle)]; break;
-      case EntityType.tree: configs = [createTreeConfig(new Point(x, y), angle)]; break;
-      case EntityType.berryBush: configs = [createBerryBushConfig(new Point(x, y), angle)]; break;
-      case EntityType.tombstone: configs = [createTombstoneConfig(new Point(x, y), angle)]; break;
-      case EntityType.boulder: configs = [createBoulderConfig(new Point(x, y), angle)]; break;
-      case EntityType.cactus: configs = [createCactusConfig(new Point(x, y), angle)]; break;
-      case EntityType.yeti: {
-         const tileX = Math.floor(x / Settings.TILE_SIZE);
-         const tileY = Math.floor(y / Settings.TILE_SIZE);
-         const territory = generateYetiTerritoryTiles(tileX, tileY);
-         if (yetiTerritoryIsValid(territory)) {
-            configs = [createYetiConfig(new Point(x, y), angle, territory)];
-         } else {
-            configs = null;
-         }
-         break;
-      }
-      case EntityType.iceSpikes: configs = [createIceSpikesConfig(new Point(x, y), angle, 0)]; break;
-      case EntityType.slimewisp: configs = [createSlimewispConfig(new Point(x, y), angle)]; break;
-      // @TEMPORARY
-      case EntityType.slime: configs = [createSlimeConfig(new Point(x, y), angle, SlimeSize.small)]; break;
-      case EntityType.krumblid: configs = [createKrumblidConfig(new Point(x, y), angle)]; break;
-      case EntityType.frozenYeti: configs = [createFrozenYetiConfig(new Point(x, y), angle)]; break;
-      case EntityType.fish: configs = [createFishConfig(new Point(x, y), angle)]; break;
-      case EntityType.lilypad: configs = [createLilypadConfig(new Point(x, y), angle)]; break;
-      case EntityType.golem: configs = [createGolemConfig(new Point(x, y), angle)]; break;
-      case EntityType.tribeWorker: configs = [createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)))]; break;
-      case EntityType.glurb: configs = createGlurbConfig(x, y, angle); break;
-      // @TEMPORARY
-      case EntityType.mithrilOreNode: configs = createGlurbConfig(x, y, angle); break;
+   const config = spawnInfo.createEntity(x, y, angle, firstEntityConfig, spawnInfo.layer);
+   if (config === null) {
+      return null;
    }
 
-   if (configs === null) {
-      return;
-   }
+   assert(typeof config.components[ServerComponentType.autoSpawned] === "undefined");
+   const autoSpawnedComponent = new AutoSpawnedComponent(spawnInfo);
+   config.components[ServerComponentType.autoSpawned] = autoSpawnedComponent;
 
    // @Cleanup: should this be done here, or automatically as the hitboxes are created
 
-   for (const config of configs) {
-      const transformComponent = config.components[ServerComponentType.transform];
-      if (typeof transformComponent !== "undefined" && entityWouldSpawnInWall(layer, transformComponent)) {
-         return;
-      }
+   const transformComponent = config.components[ServerComponentType.transform];
+   if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
+      return null;
    }
 
-   for (const config of configs) {
-      // Create the entity
-      createEntity(config, layer, 0);
-      addEntityToCensus(config.entity, entityType);
-      if (!SERVER.isRunning) {
-         pushJoinBuffer(false);
-      }
+   // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
+   // @Bug: this seems to be a bit brokey... if enabled with cactus sandy dirt, almost no cacti spawn, which should not be the case.
+   // - this may be crippling entity counts that i jhust haven't noticed... or will cripple them in the future. @Investigate
+   if (spawnInfo.doStrictTileTypeCheck && !entityTileTypesAreValid(config, spawnInfo)) {
+      return null;
    }
+
+   // Create the entity
+   const entity = createEntity(config, spawnInfo.layer, 0);
+   addEntityToCensus(entity, spawnInfo.entityType);
+   if (!SERVER.isRunning) {
+      pushJoinBuffer(false);
+   }
+
+   return config;
 }
 
-const spawnEntities = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
-   // @Incomplete @Cleanup: Make all cows spawn with the same type,
-   // and make fish spawn with the same colour
-   
-   // const cowSpecies = randInt(0, 1);
-
-   attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, spawnInfo.layer, spawnOriginX, spawnOriginY);
-
-   // Pack spawning
- 
-   const minX = Math.max(spawnOriginX - PACK_SPAWN_RANGE, 0);
-   const maxX = Math.min(spawnOriginX + PACK_SPAWN_RANGE, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
-   const minY = Math.max(spawnOriginY - PACK_SPAWN_RANGE, 0);
-   const maxY = Math.min(spawnOriginY + PACK_SPAWN_RANGE, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
-
-   let totalSpawnAttempts = 0;
-
-   let spawnCount: number;
-   if (OPTIONS.inBenchmarkMode) {
-      spawnCount = SRandom.randInt(spawnInfo.minPackSize, spawnInfo.maxPackSize) - 1;
-   } else {
-      spawnCount = randInt(spawnInfo.minPackSize, spawnInfo.maxPackSize) - 1;
+const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number): void => {
+   const firstEntityConfig = attemptToSpawnEntity(spawnInfo, spawnOriginX, spawnOriginY, null);
+   if (firstEntityConfig === null) {
+      return;
    }
 
-   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   for (let i = 0; i < spawnCount - 1;) {
-      if (++totalSpawnAttempts === 100) {
-         break;
-      }
+   // Pack spawning
 
-      // @Speed: Garbage collection, and doing a whole bunch of unnecessary continues here
-      
-      // Generate a spawn position near the spawn origin
-      let spawnPositionX: number;
-      let spawnPositionY: number;
-      if (OPTIONS.inBenchmarkMode) {
-         spawnPositionX = SRandom.randFloat(minX, maxX);
-         spawnPositionY = SRandom.randFloat(minY, maxY);
-      } else {
-         spawnPositionX = randFloat(minX, maxX);
-         spawnPositionY = randFloat(minY, maxY);
-      }
-
-      const tileX = Math.floor(spawnPositionX / Settings.TILE_SIZE);
-      const tileY = Math.floor(spawnPositionY / Settings.TILE_SIZE);
-      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-      if (!spawnableTiles.has(tileIndex)) {
-         continue;
-      }
-
-      if (spawnPositionIsClear(spawnInfo, spawnPositionX, spawnPositionY)) {
-         const x = randInt(minX, maxX);
-         const y = randInt(minY, maxY);
-
-         attemptToSpawnEntity(spawnInfo.entityType as SpawningEntityType, spawnInfo.layer, x, y);
-         
-         i++;
+   if (typeof spawnInfo.packSpawning !== "undefined") {
+      const minX = Math.max(spawnOriginX - spawnInfo.packSpawning.spawnRange, 0);
+      const maxX = Math.min(spawnOriginX + spawnInfo.packSpawning.spawnRange, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
+      const minY = Math.max(spawnOriginY - spawnInfo.packSpawning.spawnRange, 0);
+      const maxY = Math.min(spawnOriginY + spawnInfo.packSpawning.spawnRange, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
+   
+      let totalSpawnAttempts = 0;
+   
+      const packSizeInfo = spawnInfo.packSpawning.getPackSize(spawnOriginX, spawnOriginY);
+      const additionalSpawnCount = randInt(packSizeInfo.minPackSize, packSizeInfo.maxPackSize) - 1;
+   
+      for (let i = 0; i < additionalSpawnCount; i++) {
+         if (++totalSpawnAttempts === 100) {
+            break;
+         }
+   
+         const spawnPositionX = randFloat(minX, maxX);
+         const spawnPositionY = randFloat(minY, maxY);
+         const dist = distance(spawnPositionX, spawnPositionY, spawnOriginX, spawnOriginY);
+         if (dist > spawnInfo.packSpawning.spawnRange) {
+            continue;
+         }
+   
+         const tileX = Math.floor(spawnPositionX / Settings.TILE_SIZE);
+         const tileY = Math.floor(spawnPositionY / Settings.TILE_SIZE);
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (!tileIsSpawnable(tileIndex, spawnInfo)) {
+            continue;
+         }
+   
+         if (spawnPositionIsClear(spawnInfo, spawnPositionX, spawnPositionY)) {
+            const x = randInt(minX, maxX);
+            const y = randInt(minY, maxY);
+   
+            attemptToSpawnEntity(spawnInfo, x, y, firstEntityConfig);
+         }
       }
    }
 }
@@ -325,32 +268,31 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnInfo, positionX: numb
    return true;
 }
 
-const runSpawnEvent = (spawnInfoIdx: number, spawnInfo: EntitySpawnInfo): void => {
-   // Pick a random tile to spawn at
-   // @Speed: Instead of randomly picking a tile until it matches the spawnable, pick a random tile from the spawnable tiles
-   const tileX = randInt(0, Settings.BOARD_DIMENSIONS - 1);
-   const tileY = randInt(0, Settings.BOARD_DIMENSIONS - 1);
-   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+const runSpawnEvent = (spawnInfo: EntitySpawnInfo): void => {
+   const x = Settings.BOARD_UNITS * Math.random();
+   const y = Settings.BOARD_UNITS * Math.random();
 
-   // (This is just to uphold the spawn attempt frequency)
-   // If the tile is a valid tile for the spawn info, continue with the spawn event
-   const spawnableTiles = getSpawnInfoSpawnableTiles(spawnInfoIdx);
-   if (spawnableTiles.has(tileIndex)) {
-      // Calculate a random position in that tile to run the spawn at
-      let x: number;
-      let y: number;
-      if (spawnInfo.usesSpawnDistribution) {
-         const position = getDistributionWeightedSpawnPosition(spawnInfoIdx);
-         x = position.x;
-         y = position.y;
-      } else {
-         x = (tileX + Math.random()) * Settings.TILE_SIZE;
-         y = (tileY + Math.random()) * Settings.TILE_SIZE;
-      }
-      
-      if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
-         spawnEntities(spawnInfoIdx, spawnInfo, x, y);
-      }
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / spawnInfo.spawnDistribution.blockSize;
+
+   const blockX = Math.floor(x / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+   // Don't spawn entities in places which already have the target density
+   if (spawnInfo.spawnDistribution.currentDensities[blockIdx] >= spawnInfo.spawnDistribution.targetDensities[blockIdx]) {
+      return;
+   }
+   
+   const tileX = Math.floor(x / Settings.TILE_SIZE);
+   const tileY = Math.floor(y / Settings.TILE_SIZE);
+   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   if (!tileIsSpawnable(tileIndex, spawnInfo)) {
+      return;
+   }
+
+   if (spawnPositionIsClear(spawnInfo, x, y) && (typeof spawnInfo.customSpawnIsValidFunc === "undefined" || spawnInfo.customSpawnIsValidFunc(spawnInfo, x, y))) {
+      spawnEntities(spawnInfo, x, y);
    }
 }
 
@@ -362,7 +304,7 @@ export function runSpawnAttempt(): void {
    // Regular spawning
    for (let i = 0; i < SPAWN_INFOS.length; i++) {
       const spawnInfo = SPAWN_INFOS[i];
-      if (!spawnConditionsAreMet(i, spawnInfo)) {
+      if (!spawnConditionsAreMet(spawnInfo)) {
          continue;
       }
 
@@ -373,8 +315,8 @@ export function runSpawnAttempt(): void {
          numSpawnEvents = Math.floor(numSpawnEvents);
       }
       for (let j = 0; j < numSpawnEvents; j++) {
-         runSpawnEvent(i, spawnInfo);
-         if (!spawnConditionsAreMet(i, spawnInfo)) {
+         runSpawnEvent(spawnInfo);
+         if (!spawnConditionsAreMet(spawnInfo)) {
             break;
          }
       }
@@ -395,10 +337,10 @@ export function spawnInitialEntities(): void {
       const spawnInfo = SPAWN_INFOS[i];
       
       numSpawnAttempts = 0;
-      while (spawnConditionsAreMet(i, spawnInfo)) {
-         runSpawnEvent(i, spawnInfo);
+      while (spawnConditionsAreMet(spawnInfo)) {
+         runSpawnEvent(spawnInfo);
 
-         if (++numSpawnAttempts >= 9999) {
+         if (++numSpawnAttempts >= 39999) {
             console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
             break;
          }
@@ -407,14 +349,11 @@ export function spawnInitialEntities(): void {
 
    // @Temporary
    setTimeout(() => {
-      const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
+      // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
+      // createEntity(config, surfaceLayer, 0);
+      if(1+1===2)return;
+      const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
       createEntity(config, surfaceLayer, 0);
-      // if(1+1===2)return;
-      // const configs = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
-      // // // @Hack
-      // for (const config of configs) {
-      //    createEntity(config, surfaceLayer, 0);
-      // }
 
       if(1+1===2)return;
       

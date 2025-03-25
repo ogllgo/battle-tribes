@@ -13,7 +13,7 @@ export const SpikyBastardComponentArray = new ComponentArray<SpikyBastardCompone
 SpikyBastardComponentArray.onHitboxCollision = onHitboxCollision;
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

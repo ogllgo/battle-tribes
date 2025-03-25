@@ -2,7 +2,7 @@ import { ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays } from "../components/ComponentArray";
-import { HealthComponentArray } from "../components/HealthComponent";
+import { HealthComponentArray, removeDefence } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
 import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
 import { SERVER } from "./server";
@@ -54,6 +54,7 @@ export function getEntityDataLength(entity: Entity, player: Entity | null): numb
       const componentArray = ComponentArrays[i];
 
       if (componentArray.hasComponent(entity)) {
+         lengthBytes += Float32Array.BYTES_PER_ELEMENT; // Component type
          lengthBytes += componentArray.getDataLength(entity, player);
       }
    }
@@ -91,8 +92,8 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
          componentArray.addDataToPacket(packet, entity, player);
 
          // @Speed
-         if (packet.currentByteOffset - start !== componentArray.getDataLength(entity, player)) {
-            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
+         if (packet.currentByteOffset - start !== (Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player))) {
+            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
          }
       }
    }
@@ -143,7 +144,7 @@ const getVisibleMinedSubtiles = (playerClient: PlayerClient): ReadonlyArray<numb
    return minedSubtiles;
 }
 
-export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<Entity>): ArrayBuffer {
+export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend: Set<Entity>, removedEntities: Array<Entity>): ArrayBuffer {
    // @Cleanup: The mined subtile system here exists really only to send particles. Can be entirely encompassed in a server particles system!
 
    const player = entityExists(playerClient.instance) ? playerClient.instance : null;
@@ -196,7 +197,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
 
    // Removed entity IDs
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * playerClient.visibleEntityDeathIDs.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * removedEntities.length;
 
    // Visible hits
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 7 * Float32Array.BYTES_PER_ELEMENT * playerClient.visibleHits.length;
@@ -290,10 +291,14 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
 
    // Removed entity IDs
-   packet.addNumber(playerClient.visibleEntityDeathIDs.length);
-   for (const entity of playerClient.visibleEntityDeathIDs) {
+   packet.addNumber(removedEntities.length);
+   for (const entity of removedEntities) {
       packet.addNumber(entity);
    }
+   // packet.addNumber(playerClient.visibleEntityDeathIDs.length);
+   // for (const entity of playerClient.visibleEntityDeathIDs) {
+   //    packet.addNumber(entity);
+   // }
    
    // Add visible hits
    packet.addNumber(playerClient.visibleHits.length);

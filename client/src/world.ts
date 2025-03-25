@@ -1,5 +1,5 @@
-import { ServerComponentType, ServerComponentTypeString } from "../../shared/src/components";
-import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
+import { ServerComponentType } from "../../shared/src/components";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
 import { EntityRenderInfo } from "./EntityRenderInfo";
@@ -11,7 +11,7 @@ import { attachLightToRenderPart, LightIntermediateInfo, removeAllAttachedLights
 import { registerDirtyRenderInfo, undirtyRenderInfo } from "./rendering/render-part-matrices";
 import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
-import { ClientComponentParams, getEntityClientComponentConfigs } from "./entity-components/client-components";
+import { ClientComponentParams } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
 
 export const layers = new Array<Layer>();
@@ -247,10 +247,10 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
       }
    }
    
-   undirtyRenderInfo(renderInfo);
-
    removeEntitySounds(entity);
+   
    removeAllAttachedLights(renderInfo);
+   undirtyRenderInfo(renderInfo);
 
    const componentArrays = getComponentArrays();
 

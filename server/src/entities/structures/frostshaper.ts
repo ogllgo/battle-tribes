@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -35,9 +35,9 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
    
    const craftingStationComponent = new CraftingStationComponent(CraftingStation.frostshaper);
    
-   return createEntityConfig(
-      EntityType.frostshaper,
-      {
+   return {
+      entityType: EntityType.frostshaper,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -45,6 +45,6 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
       },
-      []
-   );
+      lights: []
+   };
 }

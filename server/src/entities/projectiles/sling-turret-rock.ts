@@ -4,7 +4,7 @@ import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -29,15 +29,15 @@ export function createSlingTurretRockConfig(position: Point, rotation: number, o
    
    const slingTurretRockComponent = new SlingTurretRockComponent();
    
-   return createEntityConfig(
-      EntityType.slingTurretRock,
-      {
+   return {
+      entityType: EntityType.slingTurretRock,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.slingTurretRock]: slingTurretRockComponent
       },
-      []
-   );
+      lights: []
+   };
 }

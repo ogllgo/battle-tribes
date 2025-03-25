@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../../components";
+import { EntityConfig } from "../../../components";
 import { CraftingStationComponent } from "../../../components/CraftingStationComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
@@ -38,9 +38,9 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
    
    const automatonAssemblerComponent = new AutomatonAssemblerComponent();
    
-   return createEntityConfig(
-      EntityType.automatonAssembler,
-      {
+   return {
+      entityType: EntityType.automatonAssembler,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -49,6 +49,6 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
          [ServerComponentType.craftingStation]: craftingStationComponent,
          [ServerComponentType.automatonAssembler]: automatonAssemblerComponent,
       },
-      []
-   );
+      lights: []
+   };
 }

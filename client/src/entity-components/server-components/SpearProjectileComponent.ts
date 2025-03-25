@@ -56,7 +56,7 @@ function getMaxRenderParts(): number {
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("spear-throw.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("spear-throw.mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function padData(): void {}
@@ -66,5 +66,5 @@ function updateFromData(): void {}
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("spear-hit.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("spear-hit.mp3", 0.4, 1, entity, hitbox, false);
 }

@@ -15,7 +15,7 @@ export const TribeWarriorComponentArray = new ComponentArray<TribeWarriorCompone
 
 function getDataLength(entity: Entity): number {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * tribeWarriorComponent.scars.length;
+   return Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * tribeWarriorComponent.scars.length;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

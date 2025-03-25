@@ -4,10 +4,11 @@ import { ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert } from "../../../shared/src/utils";
 import { createItemsOverEntity } from "../entities/item-entity";
+import { getHitboxTile, Hitbox } from "../hitboxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 
 export interface LootEntry {
    readonly itemType: ItemType;
@@ -59,25 +60,29 @@ export function registerEntityLootOnDeath(entityType: EntityType, lootEntries: R
 }
 
 const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
-   if (lootComponent.localBiome !== null) {
-      const census = lootComponent.localBiome.entityCensus
-      const entityType = getEntityType(entity);
-      
-      const previousCount = census.get(entityType);
-      assert(typeof previousCount !== "undefined");
+   if (lootComponent.localBiome === null) {
+      return;
+   }
 
-      census.set(entityType, previousCount - 1);
-      if (previousCount === 1) {
-         census.delete(entityType);
-      }
+   const census = lootComponent.localBiome.entityCensus;
+   const entityType = getEntityType(entity);
+   
+   const previousCount = census.get(entityType);
+   assert(typeof previousCount !== "undefined");
+
+   census.set(entityType, previousCount - 1);
+   if (previousCount === 1) {
+      census.delete(entityType);
    }
 }
 
 const addToNewLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-
+   const hitbox = getTransformComponentFirstHitbox(transformComponent);
+   assert(hitbox !== null);
+   
    const layer = getEntityLayer(entity);
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(hitbox);
    const localBiome = layer.getTileLocalBiome(tileIndex);
 
    lootComponent.localBiome = localBiome;
@@ -192,7 +197,7 @@ export function entityDropsFoodItem(entity: Entity): boolean {
 }
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

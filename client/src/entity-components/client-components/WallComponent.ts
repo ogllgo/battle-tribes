@@ -114,7 +114,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, hitbox, false);
+   playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, entity, hitbox, false);
 
    for (let i = 0; i < 6; i++) {
       createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
@@ -153,7 +153,7 @@ function onDie(entity: Entity): void {
       }
    }
 
-   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, entity, hitbox, false);
 
    for (let i = 0; i < 16; i++) {
       createLightWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 32 * Math.random());

@@ -71,7 +71,8 @@ const createFootstepSound = (entity: Entity): void => {
    
    const tile = getEntityTile(layer, transformComponent);
    switch (tile.type) {
-      case TileType.grass: {
+      case TileType.grass:
+      case TileType.sandyDirt: {
          playSound("grass-walk-" + randInt(1, 4) + ".mp3", 0.04, 1, hitbox.box.position, layer);
          break;
       }

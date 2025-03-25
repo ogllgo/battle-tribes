@@ -26,6 +26,7 @@ import { createEmbrasureConfig } from "./entities/structures/embrasure";
 import { createFenceConfig } from "./entities/structures/fence";
 import { createFenceGateConfig } from "./entities/structures/fence-gate";
 import { createFireTorchConfig } from "./entities/structures/fire-torch";
+import { createFloorSignConfig } from "./entities/structures/floor-sign";
 import { createFrostshaperConfig } from "./entities/structures/frostshaper";
 import { createHealingTotemConfig } from "./entities/structures/healing-totem";
 import { createPlanterBoxConfig } from "./entities/structures/planter-box";
@@ -133,6 +134,7 @@ export function createStructureConfig(tribe: Tribe, entityType: EntityType, posi
       // case EntityType.cogwalker: config = createBlueprintEntityConfig(tribe, BlueprintType.cogwalker, 0, null); break;
       case EntityType.automatonAssembler: config = createAutomatonAssemblerConfig(position, angle, tribe, connections, null); break;
       case EntityType.mithrilAnvil: config = createMithrilAnvilConfig(position, angle, tribe, connections, null); break;
+      case EntityType.floorSign: config = createFloorSignConfig(position, angle, tribe, connections, null); break;
       // @Robustness?
       default: {
          throw new Error();
@@ -171,27 +173,15 @@ const structureIntersectsWithBuildingBlockingTiles = (layer: Layer, hitboxes: Re
    return false;
 }
 
-const structurePlaceIsValid = (entityType: EntityType, layer: Layer, x: number, y: number, angle: number): boolean => {
+const structurePlaceIsValid = (hitboxes: ReadonlyArray<Hitbox>, layer: Layer): boolean => {
    // @Investigate: Why is this only called for structure placements which don't snap?
    
-   // @Speed @Copynpaste: already done for candidates
-   // @HACK
-   const tribe = getTribes()[0];
-   const entityConfig = createStructureConfig(tribe, entityType, new Point(x, y), angle, []);
-   const transformComponent = entityConfig.components[ServerComponentType.transform]!;
-   const testHitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
-   
-   for (let i = 0; i < testHitboxes.length; i++) {
-      const hitbox = testHitboxes[i];
-      updateBox(hitbox.box, x, y, angle);
-   }
-   
-   if (structureIntersectsWithBuildingBlockingTiles(layer, testHitboxes)) {
+   if (structureIntersectsWithBuildingBlockingTiles(layer, hitboxes)) {
       return false;
    }
 
    // Make sure the structure wouldn't be in any walls
-   for (const hitbox of testHitboxes) {
+   for (const hitbox of hitboxes) {
       const box = hitbox.box;
 
       const minSubtileX = Math.floor(box.calculateBoundsMinX() / Settings.SUBTILE_SIZE);
@@ -210,7 +200,7 @@ const structurePlaceIsValid = (entityType: EntityType, layer: Layer, x: number, 
       }
    }
    
-   const collidingEntities = getHitboxesCollidingEntities(layer, testHitboxes, Vars.COLLISION_EPSILON);
+   const collidingEntities = getHitboxesCollidingEntities(layer, hitboxes, Vars.COLLISION_EPSILON);
 
    for (let i = 0; i < collidingEntities.length; i++) {
       const entity = collidingEntities[i];
@@ -355,10 +345,10 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
          }
 
          // Add snap positions for each direction off the connecting entity hitbox
-         for (let k = 0; k < 4; k++) {
-            const offsetDirection = connectingEntityHitbox.box.angle + k * Math.PI / 2;
+         for (let i = 0; i < 4; i++) {
+            const offsetDirection = connectingEntityHitbox.box.angle + i * Math.PI / 2;
       
-            const connectingEntityOffset = k % 2 === 0 ? hitboxHalfHeight : hitboxHalfWidth;
+            const connectingEntityOffset = i % 2 === 0 ? hitboxHalfHeight : hitboxHalfWidth;
    
             const placingEntityAngle = alignAngleToClosestAxis(desiredPlaceAngle, connectingEntityHitbox.box.angle);
             
@@ -372,13 +362,33 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
                // Left or right is being connected
                placingEntityOffset = placingEntityHitboxHalfWidth;
             }
-      
-            const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
-            position.add(snapOrigin);
+
+            const maxLength = Math.max(placingEntityHitboxHalfWidth * 2, (i % 2 === 0 ? hitboxHalfWidth : hitboxHalfHeight) * 2);
+            const minLength = Math.min(placingEntityHitboxHalfWidth * 2, (i % 2 === 0 ? hitboxHalfWidth : hitboxHalfHeight) * 2);
+            const positions = new Array<Point>();
+            for (let xi = -1; xi <= 1; xi++) {
+               const sideOffset = (maxLength - minLength) * 0.5 * xi;
+               
+               const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
+               position.add(snapOrigin);
+               position.x += sideOffset * Math.sin(offsetDirection + Math.PI * 0.5);
+               position.y += sideOffset * Math.cos(offsetDirection + Math.PI * 0.5);
+               positions.push(position);
+            }
+
+            let position!: Point;
+            let minDist = Number.MAX_SAFE_INTEGER;
+            for (const currentPosition of positions) {
+               const dist = currentPosition.calculateDistanceBetween(desiredPlacePosition);
+               if (dist < minDist) {
+                  minDist = dist;
+                  position = currentPosition;
+               }
+            }
 
             // @SUPAHACK
             const tribe = getTribes()[0];
-            const entityConfig = createStructureConfig(tribe, entityType, new Point(0, 0), 0, []);
+            const entityConfig = createStructureConfig(tribe, entityType, position.copy(), placingEntityAngle, []);
             const transformComponent = entityConfig.components[ServerComponentType.transform]!;
             const hitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
             
@@ -539,9 +549,7 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: E
          connections: connections,
          entityType: entityType,
          hitboxes: [],
-         // @INCOMPLETE
-         isValid: true,
-         // isValid: structurePlaceIsValid(entityType, firstTransform.position.x, firstTransform.position.y, firstTransform.rotation, worldInfo)
+         isValid: structurePlaceIsValid(firstTransform.hitboxes, layer)
       };
       placeInfos.push(placeInfo);
    }
@@ -705,6 +713,13 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceAngle: numb
    
    const placeInfos = groupTransforms(snapCandidates, entityType, layer);
    if (placeInfos.length === 0) {
+      // @Speed @Copynpaste: already done for candidates
+      // @HACK
+      const tribe = getTribes()[0];
+      const entityConfig = createStructureConfig(tribe, entityType, desiredPlacePosition.copy(), desiredPlaceAngle, []);
+      const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+      const hitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+
       // If no connections are found, use the regular place position
       return {
          position: desiredPlacePosition,
@@ -712,7 +727,7 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceAngle: numb
          connections: [],
          entityType: entityType,
          hitboxes: [],
-         isValid: structurePlaceIsValid(entityType, layer, desiredPlacePosition.x, desiredPlacePosition.y, desiredPlaceAngle)
+         isValid: structurePlaceIsValid(hitboxes, layer)
       };
    } else {
       // @Incomplete:

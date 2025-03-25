@@ -74,7 +74,6 @@ function getDataLength(entity: Entity): number {
 
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * tribesmanComponent.titles.length;
 
    return lengthBytes;

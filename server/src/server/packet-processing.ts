@@ -6,7 +6,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { changeEntityLayer, getEntityTile, TransformComponentArray } from "../components/TransformComponent";
+import { changeEntityLayer, getFirstComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
@@ -36,9 +36,10 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { Hitbox, setHitboxAngularVelocity } from "../hitboxes";
+import { getHitboxTile, Hitbox, setHitboxAngularVelocity } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
+import { FloorSignComponentArray } from "../components/FloorSignComponent";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -52,12 +53,17 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       return;
    }
 
+   const playerComponent = PlayerComponentArray.getComponent(player);
+
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
    const angle = reader.readNumber();
 
    const velocityX = reader.readNumber();
    const velocityY = reader.readNumber();
+
+   playerComponent.movementIntention.x = reader.readNumber();
+   playerComponent.movementIntention.y = reader.readNumber();
 
    const angularVelocity = reader.readNumber();
 
@@ -112,7 +118,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       registerDirtyEntity(player);
    }
 
-   const playerComponent = PlayerComponentArray.getComponent(player);
    playerComponent.interactingEntityID = interactingEntityID;
 
    // @Bug: won't work for using medicine in offhand
@@ -427,7 +432,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
    let config: EntityConfig;
    switch (entityType) {
       case EntityType.cow: {
-         config = createCowConfig(new Point(x, y), rotation);
+         config = createCowConfig(new Point(x, y), rotation, 0);
          break;
       }
       case EntityType.krumblid: {
@@ -508,7 +513,8 @@ export function processAscendPacket(playerClient: PlayerClient): void {
    const currentLayer = getEntityLayer(player);
    if (currentLayer === undergroundLayer) {
       const transformComponent = TransformComponentArray.getComponent(player);
-      const tileAbove = getEntityTile(transformComponent);
+      const playerHitbox = transformComponent.children[0] as Hitbox;
+      const tileAbove = getHitboxTile(playerHitbox);
       if (surfaceLayer.getTileType(tileAbove) === TileType.dropdown) {
          changeEntityLayer(player, surfaceLayer);
       }
@@ -687,7 +693,7 @@ export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient
       return;
    }
 
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    // Toggle the follow target
    if (!entityExists(tamingComponent.followTarget)) {
       tamingComponent.followTarget = playerClient.instance;
@@ -777,7 +783,7 @@ export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    const carryTarget = reader.readNumber();
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    tamingComponent.carryTarget = carryTarget;
 }
 
@@ -799,7 +805,7 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
 
    // @Hack
    const foodRequired: number | undefined = getTamingSpec(entity).tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
@@ -817,7 +823,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    // @Cleanup @Copynpaste
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
@@ -832,7 +838,7 @@ export function processAcquireTamingSkillPacket(playerClient: PlayerClient, read
    const entity = reader.readNumber() as Entity;
    const skillID = reader.readNumber() as TamingSkillID;
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    const skillLearning = getTamingSkillLearning(tamingComponent, skillID);
    if (skillLearning !== null && skillLearningIsComplete(skillLearning)) {
       const skill = getTamingSkill(skillID);
@@ -850,7 +856,7 @@ export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient,
    
    const skill = getTamingSkill(skillID);
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    tamingComponent.acquiredSkills.push(skill);
 }
 
@@ -858,4 +864,17 @@ export function processSetSpectatingPositionPacket(playerClient: PlayerClient, r
    const x = reader.readNumber() as Entity;
    const y = reader.readNumber() as TamingSkillID;
    playerClient.updatePosition(x, y);
+}
+
+export function processDevSetViewedSpawnDistribution(playerClient: PlayerClient, reader: PacketReader): void {
+   const entityType = reader.readNumber();
+   playerClient.viewedSpawnDistribution = entityType;
+}
+
+export function processSetSignMessagePacket(reader: PacketReader): void {
+   const entity = reader.readNumber();
+   const message = reader.readString();
+
+   const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+   floorSignComponent.message = message;
 }

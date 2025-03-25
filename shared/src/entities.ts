@@ -79,6 +79,7 @@ export const enum EntityType {
    spikyBastard,
    glurbBodySegment,
    glurbHeadSegment,
+   glurbTailSegment,
    glurb,
    slurbTorch,
    treeRootBase,
@@ -90,6 +91,10 @@ export const enum EntityType {
    mithrilAnvil,
    swingAttack,
    blockAttack,
+   moss,
+   floorSign,
+   desertBushLively,
+   desertBushSandy
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -171,6 +176,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.glurb]: "glurb",
    [EntityType.glurbBodySegment]: "Glurb Body Segment",
    [EntityType.glurbHeadSegment]: "Glurb Head Segment",
+   [EntityType.glurbTailSegment]: "Glurb Tail Segment",
    [EntityType.slurbTorch]: "slurbTorch",
    [EntityType.treeRootBase]: "treeRootBase",
    [EntityType.treeRootSegment]: "treeRootSegment",
@@ -181,6 +187,10 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.mithrilAnvil]: "Mithril Anvil",
    [EntityType.swingAttack]: "Swing Attack",
    [EntityType.blockAttack]: "Block Attack",
+   [EntityType.moss]: "Moss",
+   [EntityType.floorSign]: "Floor Sign",
+   [EntityType.desertBushLively]: "Desert Bush Lively",
+   [EntityType.desertBushSandy]: "Desert Bush Sandy",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

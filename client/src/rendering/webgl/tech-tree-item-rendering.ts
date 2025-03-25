@@ -103,6 +103,9 @@ export function createTechTreeItemShaders(): void {
    }
    `;
 
+   // @TEMPORARY: if this runs it crashes cuz too many uniforms or something
+   if(1+1===2)return;
+
    const gl = getTechTreeGL();
 
    program = createWebGLProgram(gl, vertexShaderText, fragmentShaderText);

@@ -15,7 +15,7 @@ import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
-import { clearTribesmanPath, getBestToolItemSlot, getTribesmanAcceleration, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
+import { clearTribesmanPath, getBestHammerItemSlot, getTribesmanAcceleration, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { escapeFromEnemies, tribeMemberShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
@@ -531,7 +531,7 @@ export function tickTribesman(tribesman: Entity): void {
    }
 
    // @Incomplete: Doesn't work if hammer is in offhand
-   const hammerItemSlot = getBestToolItemSlot(hotbarInventory, "hammer");
+   const hammerItemSlot = getBestHammerItemSlot(hotbarInventory);
    if (hammerItemSlot !== null) {
       const isRepairing = attemptToRepairBuildings(tribesman, hammerItemSlot);
       if (isRepairing) {

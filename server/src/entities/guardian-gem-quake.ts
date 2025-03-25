@@ -4,7 +4,7 @@ import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { GuardianGemQuakeComponent } from "../components/GuardianGemQuakeComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
@@ -21,13 +21,13 @@ export function createGuardianGemQuakeConfig(position: Point, rotation: number):
 
    const guardianGemQuakeComponent = new GuardianGemQuakeComponent();
    
-   return createEntityConfig(
-      EntityType.guardianGemQuake,
-      {
+   return {
+      entityType: EntityType.guardianGemQuake,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.guardianGemQuake]: guardianGemQuakeComponent
       },
-      []
-   );
+      lights: []
+   };
 }

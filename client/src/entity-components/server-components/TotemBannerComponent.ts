@@ -208,11 +208,11 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playBuildingHitSound(hitbox);
+   playBuildingHitSound(entity, hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

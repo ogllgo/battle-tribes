@@ -96,6 +96,7 @@ export enum ServerComponentType {
    furnace,
    fireTorch,
    spikyBastard,
+   glurb,
    glurbSegment,
    glurbBodySegment,
    glurbHeadSegment,
@@ -115,7 +116,12 @@ export enum ServerComponentType {
    blockAttack,
    slingTurretRock,
    taming,
-   loot
+   loot,
+   moss,
+   floorSign,
+   desertBushLively,
+   desertBushSandy,
+   autoSpawned,
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -204,6 +210,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.furnace]: "Furnace Component",
    [ServerComponentType.fireTorch]: "Fire Torch Component",
    [ServerComponentType.spikyBastard]: "Spiky Bastard Component",
+   [ServerComponentType.glurb]: "Glurb Component",
    [ServerComponentType.glurbSegment]: "Glurb Segment Component",
    [ServerComponentType.glurbBodySegment]: "Glurb Body Segment Component",
    [ServerComponentType.glurbHeadSegment]: "Glurb Head Segment Component",
@@ -223,7 +230,12 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.blockAttack]: "Block Attack Component",
    [ServerComponentType.slingTurretRock]: "Sling Turret Rock Component",
    [ServerComponentType.taming]: "Taming Component",
-   [ServerComponentType.loot]: "Loot Component"
+   [ServerComponentType.loot]: "Loot Component",
+   [ServerComponentType.moss]: "Moss Component",
+   [ServerComponentType.floorSign]: "Floor Sign",
+   [ServerComponentType.desertBushLively]: "Desert Bush Lively Component",
+   [ServerComponentType.desertBushSandy]: "Desert Bush Sandy",
+   [ServerComponentType.autoSpawned]: "Auto Spawned Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -307,6 +319,7 @@ export const EntityComponents = {
    [EntityType.spikyBastard]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.spikyBastard],
    [EntityType.glurbBodySegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.glurbHeadSegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
+   [EntityType.glurbTailSegment]: [],
    [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
    [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
@@ -318,6 +331,10 @@ export const EntityComponents = {
    [EntityType.mithrilAnvil]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.craftingStation, ServerComponentType.mithrilAnvil],
    [EntityType.swingAttack]: [],
    [EntityType.blockAttack]: [],
+   [EntityType.moss]: [],
+   [EntityType.floorSign]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.floorSign],
+   [EntityType.desertBushLively]: [],
+   [EntityType.desertBushSandy]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

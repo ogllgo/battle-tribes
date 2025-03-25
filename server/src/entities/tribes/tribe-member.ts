@@ -305,7 +305,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const offset = Point.fromVectorForm(35, tribeMemberHitbox.box.angle);
          spawnPosition.add(offset);
 
-         const rotation = tribeMemberHitbox.box.angle;
+         const angle = tribeMemberHitbox.box.angle;
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
@@ -313,11 +313,11 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          switch (item.type) {
             case ItemType.wooden_bow:
             case ItemType.reinforced_bow: {
-               config = createWoodenArrowConfig(spawnPosition, rotation, tribeComponent.tribe, tribeMember);
+               config = createWoodenArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
                break;
             }
             case ItemType.ice_bow: {
-               config = createIceArrowConfig(spawnPosition, rotation, tribeComponent.tribe, tribeMember);
+               config = createIceArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
                break;
             }
             // @Robustness
@@ -325,8 +325,8 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
                throw new Error("No case for bow type " + item.type);
             }
          }
-         (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = tribeMemberHitbox.velocity.x + itemInfo.projectileSpeed * Math.sin(rotation);
-         (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = tribeMemberHitbox.velocity.y + itemInfo.projectileSpeed * Math.cos(rotation);
+         (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = tribeMemberHitbox.velocity.x + itemInfo.projectileSpeed * Math.sin(angle);
+         (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = tribeMemberHitbox.velocity.y + itemInfo.projectileSpeed * Math.cos(angle);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          for (let i = 0; i < 2; i++) {

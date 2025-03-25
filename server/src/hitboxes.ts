@@ -1,11 +1,12 @@
 import { Box, cloneBox, HitboxCollisionType, HitboxFlag } from "../../shared/src/boxes/boxes";
+import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
 import { HitboxCollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, Point } from "../../shared/src/utils";
+import { assert, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { EntityAttachInfo, entityChildIsEntity, getHitboxTile, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { getEntityLayer, getEntityType } from "./world";
 
@@ -165,9 +166,6 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
 export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
-   // @Speed: Just for inRiver...
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -177,7 +175,7 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    let moveSpeedMultiplier: number;
    if (physicsComponent.overrideMoveSpeedMultiplier || !physicsComponent.isAffectedByGroundFriction) {
       moveSpeedMultiplier = 1;
-   } else if (tileType === TileType.water && !transformComponent.isInRiver) {
+   } else if (tileType === TileType.water && !hitboxIsInRiver(entity, hitbox)) {
       moveSpeedMultiplier = physicsComponent.moveSpeedMultiplier;
    } else {
       moveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tileType] * physicsComponent.moveSpeedMultiplier;
@@ -207,4 +205,46 @@ export function stopHitboxTurning(hitbox: Hitbox): void {
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
    hitbox.idealAngle = -999;
    hitbox.angleTurnSpeed = angularVelocity;
+}
+
+// @Location?
+export function getHitboxTile(hitbox: Hitbox): TileIndex {
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
+   return getTileIndexIncludingEdges(tileX, tileY);
+}
+
+// @Cleanup: having to pass in entity is SHIT!
+export function hitboxIsInRiver(entity: Entity, hitbox: Hitbox): boolean {
+   const tileIndex = getHitboxTile(hitbox);
+   const layer = getEntityLayer(entity);
+
+   const tileType = layer.tileTypes[tileIndex];
+   if (tileType !== TileType.water) {
+      return false;
+   }
+
+   if (PhysicsComponentArray.hasComponent(entity)) {
+      const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      if (!physicsComponent.isAffectedByGroundFriction) {
+         return false;
+      }
+   }
+
+   // If the entity is standing on a stepping stone they aren't in a river
+   // @Speed: we only need to check the chunks the hitbox is in
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const chunk of transformComponent.chunks) {
+      for (const steppingStone of chunk.riverSteppingStones) {
+         const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
+         
+         const distX = hitbox.box.position.x - steppingStone.positionX;
+         const distY = hitbox.box.position.y - steppingStone.positionY;
+         if (distX * distX + distY * distY <= size * size / 4) {
+            return false;
+         }
+      }
+   }
+
+   return true;
 }

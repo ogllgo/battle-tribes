@@ -14,11 +14,11 @@ import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, hitEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
-import { TransformComponentArray, getEntityTile } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
-import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -72,7 +72,8 @@ const shouldTargetEntity = (layer: Layer, entity: Entity): boolean => {
    }
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityTileIndex = getEntityTile(entityTransformComponent);
+   const hitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityTileIndex = getHitboxTile(hitbox);
 
    const entityType = getEntityType(entity);
    return layer.tileBiomes[entityTileIndex] === Biome.tundra && entityType !== EntityType.itemEntity && entityType !== EntityType.frozenYeti && entityType !== EntityType.yeti && entityType !== EntityType.iceSpikes && entityType !== EntityType.snowball
@@ -657,8 +658,8 @@ function onTick(frozenYeti: Entity): void {
 function getDataLength(entity: Entity): number {
    const frozenYetiComponent = FrozenYetiComponentArray.getComponent(entity);
 
-   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += 2 *Float32Array.BYTES_PER_ELEMENT * frozenYetiComponent.rockSpikeInfoArray.length;
+   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT * frozenYetiComponent.rockSpikeInfoArray.length;
 
    return lengthBytes;
 }

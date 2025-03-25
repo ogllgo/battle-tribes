@@ -1,19 +1,14 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
-import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
+import { ServerComponentType } from "battletribes-shared/components";
+import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, hitEntity } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
-import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
-import { ItemType } from "battletribes-shared/items/items";
+import { TribeComponent } from "../../components/TribeComponent";
+import { EntityConfig } from "../../components";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
+import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { destroyEntity, getEntityType, validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 import { createHitbox } from "../../hitboxes";
 
@@ -31,16 +26,16 @@ export function createBallistaWoodenBoltConfig(position: Point, rotation: number
 
    const projectileComponent = new ProjectileComponent(creator);
    
-   return createEntityConfig(
-      EntityType.ballistaWoodenBolt,
-      {
+   return {
+      entityType: EntityType.ballistaWoodenBolt,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 // @Cleanup: Copy and paste

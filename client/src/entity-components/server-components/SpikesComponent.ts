@@ -150,10 +150,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       if (spikesComponent.isCovered) {
          // When covering trap
-         playSoundOnHitbox("trap-cover.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("trap-cover.mp3", 0.4, 1, entity, hitbox, false);
       } else {
          // When trap is sprung
-         playSoundOnHitbox("trap-spring.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("trap-spring.mp3", 0.4, 1, entity, hitbox, false);
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {

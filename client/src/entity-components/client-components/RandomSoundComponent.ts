@@ -1,8 +1,10 @@
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
+import { Hitbox } from "../../hitboxes";
 import { playSoundOnHitbox } from "../../sound";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
+import { TransformComponentArray } from "../server-components/TransformComponent";
 
 export interface RandomSoundComponentParams {}
 
@@ -69,7 +71,10 @@ function onTick(entity: Entity): void {
    if (randomSoundComponent.soundTimerTicks <= 0) {
       randomSoundComponent.soundTimerTicks = randFloat(randomSoundComponent.minSoundIntervalTicks, randomSoundComponent.maxSoundIntervalTicks);
 
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.children[0] as Hitbox;
+      
       const soundSrc = randItem(randomSoundComponent.sounds);
-      playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, false);
+      playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, hitbox, false);
    }
 }

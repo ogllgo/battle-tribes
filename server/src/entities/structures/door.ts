@@ -1,6 +1,6 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -46,9 +46,9 @@ export function createDoorConfig(position: Point, rotation: number, tribe: Tribe
 
    const doorComponent = new DoorComponent();
    
-   return createEntityConfig(
-      EntityType.door,
-      {
+   return {
+      entityType: EntityType.door,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -58,6 +58,6 @@ export function createDoorConfig(position: Point, rotation: number, tribe: Tribe
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
          [ServerComponentType.door]: doorComponent
       },
-      []
-   );
+      lights: []
+   };
 }

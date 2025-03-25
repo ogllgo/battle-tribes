@@ -59,7 +59,7 @@ export function renderDebugImages(): void {
       const transformComponent = TransformComponentArray.components[i];
 
       for (const tether of transformComponent.tethers) {
-         const direction = tether.hitbox.box.position.calculateAngleBetween(tether.otherHitbox.box.position);
+         const direction = tether.hitbox.box.position.calculateAngleBetween(tether.originHitbox.box.position);
          const perpDirection = direction + Math.PI * 0.5;
          
          const x1 = tether.hitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
@@ -68,11 +68,11 @@ export function renderDebugImages(): void {
          const x2 = tether.hitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
          const y2 = tether.hitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
          
-         const x3 = tether.otherHitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y3 = tether.otherHitbox.box.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+         const x3 = tether.originHitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+         const y3 = tether.originHitbox.box.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
          
-         const x4 = tether.otherHitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y4 = tether.otherHitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+         const x4 = tether.originHitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+         const y4 = tether.originHitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
 
          vertices.push(
             x1, y1, 0, 0,

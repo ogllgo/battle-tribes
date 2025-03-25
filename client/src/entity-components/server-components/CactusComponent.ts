@@ -148,7 +148,7 @@ function onHit(entity: Entity): void {
       createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
    }
 
-   playSoundOnHitbox("cactus-hit.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("cactus-hit.mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -157,7 +157,7 @@ function onDie(entity: Entity): void {
 
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
-   playSoundOnHitbox("cactus-destroy.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("cactus-destroy.mp3", 0.4, 1, entity, hitbox, false);
    
    for (const flower of cactusComponent.flowers) {
       const spawnPositionX = hitbox.box.position.x + flower.offsetX;

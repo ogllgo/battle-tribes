@@ -90,11 +90,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnHitbox(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, hitbox, true);
+                  playSoundOnHitbox(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, entity, hitbox, true);
                   break;
                }
                case TribeType.barbarians: {
-                  playSoundOnHitbox("barbarian-angry-1.mp3", 0.4, 1, hitbox, true);
+                  playSoundOnHitbox("barbarian-angry-1.mp3", 0.4, 1, entity, hitbox, true);
                   break;
                }
             }
@@ -105,7 +105,7 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnHitbox(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, hitbox, true);
+                  playSoundOnHitbox(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, entity, hitbox, true);
                   break;
                }
             }
@@ -116,11 +116,11 @@ function onTick(entity: Entity): void {
          if (Math.random() < 0.2 / Settings.TPS) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
-                  playSoundOnHitbox(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, hitbox, true);
+                  playSoundOnHitbox(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, entity, hitbox, true);
                   break;
                }
                case TribeType.barbarians: {
-                  playSoundOnHitbox("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, hitbox, true);
+                  playSoundOnHitbox("barbarian-ambient-" + randInt(1, 2) + ".mp3", 0.4, 1, entity, hitbox, true);
                   break;
                }
             }

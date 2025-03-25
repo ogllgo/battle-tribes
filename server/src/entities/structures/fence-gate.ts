@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import Tribe from "../../Tribe";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -34,9 +34,9 @@ export function createFenceGateConfig(position: Point, rotation: number, tribe: 
    
    const fenceGateComponent = new FenceGateComponent();
    
-   return createEntityConfig(
-      EntityType.fenceGate,
-      {
+   return {
+      entityType: EntityType.fenceGate,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createFenceGateConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.fenceGate]: fenceGateComponent
       },
-      []
-   );
+      lights: []
+   };
 }

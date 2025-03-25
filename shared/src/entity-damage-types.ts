@@ -326,11 +326,15 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.glurbBodySegment]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
    [EntityType.glurbHeadSegment]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.glurbTailSegment]: {
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
    [EntityType.slurbTorch]: {
@@ -370,6 +374,22 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.blockAttack]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.moss]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.floorSign]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.desertBushLively]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.desertBushSandy]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },

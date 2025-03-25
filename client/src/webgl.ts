@@ -21,17 +21,17 @@ export const tempFloat32ArrayLength2 = new Float32Array(2);
 export const tempFloat32ArrayLength3 = new Float32Array(3);
 
 export function resizeCanvas(): void {
-   if (typeof canvas === "undefined") return;
-
-   // Update the size of the canvas
-   canvas.width = window.innerWidth;
-   canvas.height = window.innerHeight;
-
    windowWidth = window.innerWidth;
    windowHeight = window.innerHeight;
 
    halfWindowWidth = windowWidth / 2;
    halfWindowHeight = windowHeight / 2;
+
+   if (typeof canvas === "undefined") return;
+
+   // Update the size of the canvas
+   canvas.width = window.innerWidth;
+   canvas.height = window.innerHeight;
 
    gl.viewport(0, 0, windowWidth, windowHeight);
 

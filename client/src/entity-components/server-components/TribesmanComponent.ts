@@ -827,19 +827,19 @@ function onHit(entity: Entity, hitData: HitData): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnHitbox(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, hitbox, true);
+         playSoundOnHitbox(randItem(GOBLIN_HURT_SOUNDS), 0.4, 1, entity, hitbox, true);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnHitbox("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, true);
+         playSoundOnHitbox("plainsperson-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, true);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnHitbox("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, true);
+         playSoundOnHitbox("barbarian-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, true);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnHitbox("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, hitbox, true);
+         playSoundOnHitbox("frostling-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, true);
          break;
       }
    }
@@ -871,19 +871,19 @@ function onDie(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    switch (tribeComponent.tribeType) {
       case TribeType.goblins: {
-         playSoundOnHitbox(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, hitbox, false);
+         playSoundOnHitbox(randItem(GOBLIN_DIE_SOUNDS), 0.4, 1, entity, hitbox, false);
          break;
       }
       case TribeType.plainspeople: {
-         playSoundOnHitbox("plainsperson-die-1.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("plainsperson-die-1.mp3", 0.4, 1, entity, hitbox, false);
          break;
       }
       case TribeType.barbarians: {
-         playSoundOnHitbox("barbarian-die-1.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("barbarian-die-1.mp3", 0.4, 1, entity, hitbox, false);
          break;
       }
       case TribeType.frostlings: {
-         playSoundOnHitbox("frostling-die.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("frostling-die.mp3", 0.4, 1, entity, hitbox, false);
          break;
       }
    }

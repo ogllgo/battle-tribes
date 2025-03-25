@@ -9,7 +9,8 @@ import { StructureComponentArray } from "./StructureComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityType } from "../world";
 import { PlantedComponentArray } from "./PlantedComponent";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, Hitbox } from "../hitboxes";
 
 /** Relationships a tribe member can have, in increasing order of threat */
 export const enum EntityRelationship {
@@ -122,7 +123,9 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.slime:
       case EntityType.guardian: {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const tileIndex = getEntityTile(transformComponent);
+         // @Hack
+         const hitbox = transformComponent.children[0] as Hitbox;
+         const tileIndex = getHitboxTile(hitbox);
 
          const tribeComponent = TribeComponentArray.getComponent(entity);
          return tribeComponent.tribe.tileIsInArea(tileIndex) || tribeComponent.tribe.attackingEntities[comparingEntity] !== undefined ? EntityRelationship.hostileMob : EntityRelationship.neutral;
@@ -156,7 +159,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

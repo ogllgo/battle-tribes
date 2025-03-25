@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point } from "../../../../shared/src/utils";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { MithrilOreNodeComponent } from "../../components/MithrilOreNodeComponent";
@@ -34,15 +34,15 @@ export function createMithrilOreNodeConfig(position: Point, rotation: number, si
    
    const mithrilOreNodeComponent = new MithrilOreNodeComponent(size, variant, children, renderHeight);
    
-   return createEntityConfig(
-      EntityType.mithrilOreNode,
-      {
+   return {
+      entityType: EntityType.mithrilOreNode,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.mithrilOreNode]: mithrilOreNodeComponent
       },
-      []
-   );
+      lights: []
+   };
 }

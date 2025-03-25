@@ -4,10 +4,13 @@ import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-creation";
+import { sendDevSetViewedSpawnDistributionPacket, sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-creation";
 import { getCurrentLayer } from "../../../world";
 import { GameInteractState } from "../GameScreen";
 import { playerInstance } from "../../../player";
+import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
+import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
+import { getNumLights } from "../../../lights";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;
@@ -187,6 +190,12 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
          sendToggleSimulationPacket(false);
       }
    }, [isPaused]);
+
+   const onChange = (e: Event): void => {
+      const target = e.target as HTMLSelectElement;
+      const entityType = Number(target.options[target.selectedIndex].value);
+      sendDevSetViewedSpawnDistributionPacket(entityType);
+   }
    
    return <div id="game-info-display" className="devmode-container">
       <p>Time: {currentTime.toFixed(2)}</p>
@@ -258,7 +267,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <ul className="area">
          <li>{TransformComponentArray.entities.length} Entities</li>
          <li>{Board.lowMonocolourParticles.length + Board.lowTexturedParticles.length + Board.highMonocolourParticles.length + Board.highTexturedParticles.length} Particles</li>
-         <li>{getCurrentLayer().lights.length} Lights</li>
+         <li>{getCurrentLayer().lights.length} ({getNumLights()}) Lights</li>
       </ul>
 
       <ul className="area">
@@ -268,6 +277,26 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
                <br></br>Zoom ({zoom})
             </label>
          </li>
+      </ul>
+
+      <ul className="area">
+         <select onChange={e => onChange(e.nativeEvent)}>
+            {(() => {
+               const elems = new Array<JSX.Element>();
+
+               elems.push(
+                  <option key={0} value={-1}>None</option>
+               )
+               
+               for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
+                  const clientEntityInfo = CLIENT_ENTITY_INFO_RECORD[entityType];
+                  elems.push(
+                     <option key={entityType + 1} value={entityType}>{clientEntityInfo.name}</option>
+                  );
+               }
+               return elems;
+            })()}
+         </select>
       </ul>
 
       <div className="area">

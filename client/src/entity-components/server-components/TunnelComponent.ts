@@ -135,7 +135,7 @@ const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: numb
    renderInfo.attachRenderPart(renderPart);
 
    // @Temporary
-   playSoundOnHitbox("spike-place.mp3", 0.5, 1, hitbox, false);
+   playSoundOnHitbox("spike-place.mp3", 0.5, 1, entity, hitbox, false);
 }
 
 const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgress: number): void => {
@@ -144,7 +144,7 @@ const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgr
    const doorRenderPart = tunnelComponent.doorRenderParts[doorBit];
    doorRenderPart.offset.x = doorInfo.offsetX;
    doorRenderPart.offset.y = doorInfo.offsetY;
-   doorRenderPart.rotation = doorInfo.rotation;
+   doorRenderPart.angle = doorInfo.rotation;
 }
 
 function padData(reader: PacketReader): void {
@@ -170,10 +170,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {
-      playSoundOnHitbox("door-open.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("door-open.mp3", 0.4, 1, entity, hitbox, false);
    }
    if ((topDoorOpenProgress < 1 && tunnelComponent.topDoorOpenProgress === 1) || (bottomDoorOpenProgress < 1 && tunnelComponent.bottomDoorOpenProgress === 1)) {
-      playSoundOnHitbox("door-close.mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("door-close.mp3", 0.4, 1, entity, hitbox, false);
    }
    
    tunnelComponent.doorBitset = doorBitset;

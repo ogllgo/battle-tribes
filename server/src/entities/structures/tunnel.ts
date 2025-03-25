@@ -1,7 +1,7 @@
 import { BuildingMaterial, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import Tribe from "../../Tribe";
@@ -51,9 +51,9 @@ export function createTunnelConfig(position: Point, rotation: number, tribe: Tri
    
    const tunnelComponent = new TunnelComponent();
    
-   return createEntityConfig(
-      EntityType.tunnel,
-      {
+   return {
+      entityType: EntityType.tunnel,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -62,6 +62,6 @@ export function createTunnelConfig(position: Point, rotation: number, tribe: Tri
          [ServerComponentType.buildingMaterial]: materialComponent,
          [ServerComponentType.tunnel]: tunnelComponent
       },
-      []
-   );
+      lights: []
+   };
 }

@@ -48,6 +48,7 @@ class RectangularBox extends BaseBox {
          
          const width1Squared = this.width * this.scale * this.width * this.scale;
          const height1Squared = this.height * this.scale * this.height * this.scale;
+         // @Incomplete: doesn't account for scale?
          const width2Squared = otherHitbox.width * otherHitbox.width;
          const height2Squared = otherHitbox.height * otherHitbox.height;
 

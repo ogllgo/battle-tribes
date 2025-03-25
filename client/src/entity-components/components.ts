@@ -98,6 +98,55 @@ import { LootComponent, LootComponentArray, LootComponentParams } from "./server
 import { GlurbSegmentComponent, GlurbSegmentComponentArray, GlurbSegmentComponentParams } from "./server-components/GlurbSegmentComponent";
 import { GlurbBodySegmentComponent, GlurbBodySegmentComponentArray, GlurbBodySegmentComponentParams } from "./server-components/GlurbBodySegmentComponent";
 import { FleshSwordComponent, FleshSwordComponentArray, FleshSwordComponentParams } from "./server-components/FleshSwordComponent";
+import { MossComponent, MossComponentArray, MossComponentParams } from "./server-components/MossComponent";
+import { ClientComponentType } from "./client-component-types";
+import { BallistaFrostcicleComponentArray } from "./client-components/BallistaFrostcicleComponent";
+import { BallistaRockComponentArray } from "./client-components/BallistaRockComponent";
+import { BallistaSlimeballComponentArray } from "./client-components/BallistaSlimeballComponent";
+import { BallistaWoodenBoltComponentArray } from "./client-components/BallistaWoodenBoltComponent";
+import { EmbrasureComponentArray } from "./client-components/EmbrasureComponent";
+import { EquipmentComponentArray } from "./client-components/EquipmentComponent";
+import { FootprintComponentArray } from "./client-components/FootprintComponent";
+import { FrostshaperComponentArray } from "./client-components/FrostshaperComponent";
+import { GlurbTailSegmentComponentArray } from "./client-components/GlurbTailSegmentComponent";
+import { LilypadComponentArray } from "./client-components/LilypadComponent";
+import { RandomSoundComponentArray } from "./client-components/RandomSoundComponent";
+import { RegularSpikesComponentArray } from "./client-components/RegularSpikesComponent";
+import { StonecarvingTableComponentArray } from "./client-components/StonecarvingTableComponent";
+import { ThrownBattleaxeComponentArray } from "./client-components/ThrownBattleaxeComponent";
+import { WallComponentArray } from "./client-components/WallComponent";
+import { WarriorHutComponentArray } from "./client-components/WarriorHutComponent";
+import { WoodenArrowComponentArray } from "./client-components/WoodenArrowComponent";
+import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
+import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
+import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
+import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams } from "./server-components/FloorSignComponent";
+import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLivelyComponentParams } from "./server-components/DesertBushLivelyComponent";
+import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
+import { AutoSpawnedComponent, AutoSpawnedComponentArray, AutoSpawnedComponentParams } from "./server-components/AutoSpawnedComponent";
+
+// @cleanup: same as below
+const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
+   [ClientComponentType.equipment]: EquipmentComponentArray,
+   [ClientComponentType.footprint]: FootprintComponentArray,
+   [ClientComponentType.randomSound]: RandomSoundComponentArray,
+   [ClientComponentType.embrasure]: EmbrasureComponentArray,
+   [ClientComponentType.frostshaper]: FrostshaperComponentArray,
+   [ClientComponentType.lilypad]: LilypadComponentArray,
+   [ClientComponentType.regularSpikes]: RegularSpikesComponentArray,
+   [ClientComponentType.stonecarvingTable]: StonecarvingTableComponentArray,
+   [ClientComponentType.wall]: WallComponentArray,
+   [ClientComponentType.warriorHut]: WarriorHutComponentArray,
+   [ClientComponentType.workbench]: WorkbenchComponentArray,
+   [ClientComponentType.workerHut]: WorkerHutComponentArray,
+   [ClientComponentType.ballistaFrostcicle]: BallistaFrostcicleComponentArray,
+   [ClientComponentType.ballistaRock]: BallistaRockComponentArray,
+   [ClientComponentType.ballistaSlimeball]: BallistaSlimeballComponentArray,
+   [ClientComponentType.ballistaWoodenBolt]: BallistaWoodenBoltComponentArray,
+   [ClientComponentType.thrownBattleaxe]: ThrownBattleaxeComponentArray,
+   [ClientComponentType.woodenArrow]: WoodenArrowComponentArray,
+   [ClientComponentType.glurbTailSegment]: GlurbTailSegmentComponentArray,
+}
 
 // @Cleanup: make this use ServerComponentArray instead 
 // Just used to make sure all the components are properly imported (so they aren't removed by webpack)
@@ -181,6 +230,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.furnace]: FurnaceComponentArray,
    [ServerComponentType.fireTorch]: FireTorchComponentArray,
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
+   [ServerComponentType.glurb]: GlurbComponentArray,
    [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.glurbBodySegment]: GlurbBodySegmentComponentArray,
    [ServerComponentType.glurbHeadSegment]: GlurbHeadSegmentComponentArray,
@@ -201,6 +251,11 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.slingTurretRock]: SlingTurretRockComponentArray,
    [ServerComponentType.taming]: TamingComponentArray,
    [ServerComponentType.loot]: LootComponentArray,
+   [ServerComponentType.moss]: MossComponentArray,
+   [ServerComponentType.floorSign]: FloorSignComponentArray,
+   [ServerComponentType.desertBushLively]: DesertBushLivelyComponentArray,
+   [ServerComponentType.desertBushSandy]: DesertBushSandyComponentArray,
+   [ServerComponentType.autoSpawned]: AutoSpawnedComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -283,6 +338,7 @@ const ServerComponentRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponent => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponent => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponent => 0 as any,
+   [ServerComponentType.glurb]: (): GlurbComponent => 0 as any,
    [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
    [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponent => 0 as any,
@@ -303,6 +359,11 @@ const ServerComponentRecord = {
    [ServerComponentType.slingTurretRock]: (): SlingTurretRockComponent => 0 as any,
    [ServerComponentType.taming]: (): TamingComponent => 0 as any,
    [ServerComponentType.loot]: (): LootComponent => 0 as any,
+   [ServerComponentType.moss]: (): MossComponent => 0 as any,
+   [ServerComponentType.floorSign]: (): FloorSignComponent => 0 as any,
+   [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponent => 0 as any,
+   [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponent => 0 as any,
+   [ServerComponentType.autoSpawned]: (): AutoSpawnedComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -387,6 +448,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
+   [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
    [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
    [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponentParams => 0 as any,
@@ -407,6 +469,11 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.slingTurretRock]: (): SlingTurretRockComponentParams => 0 as any,
    [ServerComponentType.taming]: (): TamingComponentParams => 0 as any,
    [ServerComponentType.loot]: (): LootComponentParams => 0 as any,
+   [ServerComponentType.moss]: (): MossComponentParams => 0 as any,
+   [ServerComponentType.floorSign]: (): FloorSignComponentParams => 0 as any,
+   [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponentParams => 0 as any,
+   [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponentParams => 0 as any,
+   [ServerComponentType.autoSpawned]: (): AutoSpawnedComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

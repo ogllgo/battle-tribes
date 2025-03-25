@@ -459,7 +459,7 @@ function getDataLength(entity: Entity, player: Entity | null): number {
    // @Hack: when the player is null, whatever relationships the entity would have had with the player should be preserved.
    const relationship = player !== null ? getEntityRelationship(entity, player) : EntityRelationship.neutral;
 
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {
       const isSentToEnemyPlayers = inventoryComponent.inventoryIsSentToEnemyPlayersArray[i];
       const inventory = inventoryComponent.inventories[i];

@@ -1,4 +1,4 @@
-import { Box, updateBox } from "./boxes/boxes";
+import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
 import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
@@ -15,6 +15,8 @@ export const COLLISION_BITS = {
 
 export const DEFAULT_COLLISION_MASK = COLLISION_BITS.default | COLLISION_BITS.cactus | COLLISION_BITS.iceSpikes | COLLISION_BITS.plants | COLLISION_BITS.planterBox;
 
+// @Cleanup: this used to be for per-hitbox collision bits when collision bits were per-entity... but now they are just per hitbox... so this is redundant
+
 export const enum HitboxCollisionBit {
    DEFAULT = 1 << 0,
    ARROW_PASSABLE = 1 << 1
@@ -30,8 +32,8 @@ export interface CollisionData {
    readonly collisionPoint: Point;
 }
 
-const getDot = (vertexX: number, vertexY: number, x: number, y: number, axisX: number, axisY: number): number => {
-   return axisX * (vertexX + x) + axisY * (vertexY + y);
+const getDot = (x: number, y: number, axisX: number, axisY: number): number => {
+   return axisX * x + axisY * y;
 }
 
 const findMinWithOffset = (box: RectangularBox, x: number, y: number, axisX: number, axisY: number): number => {
@@ -39,19 +41,19 @@ const findMinWithOffset = (box: RectangularBox, x: number, y: number, axisX: num
 
    // Top left and bottom right
    const topLeftVertex = box.topLeftVertexOffset;
-   let min = getDot(topLeftVertex.x, topLeftVertex.y, x, y, axisX, axisY);
-   const bottomRight = getDot(-topLeftVertex.x, -topLeftVertex.y, x, y, axisX, axisY);
+   let min = getDot(x + topLeftVertex.x, y + topLeftVertex.y, axisX, axisY);
+   const bottomRight = getDot(x - topLeftVertex.x, y - topLeftVertex.y, axisX, axisY);
    if (bottomRight < min) {
       min = bottomRight;
    }
 
    // Top right and bottom left
    const topRightVertex = box.topRightVertexOffset;
-   const topRight = getDot(topRightVertex.x, topRightVertex.y, x, y, axisX, axisY);
+   const topRight = getDot(x + topRightVertex.x, y + topRightVertex.y, axisX, axisY);
    if (topRight < min) {
       min = topRight;
    }
-   const bottomLeft = getDot(-topRightVertex.x, -topRightVertex.y, x, y, axisX, axisY);
+   const bottomLeft = getDot(x - topRightVertex.x, y - topRightVertex.y, axisX, axisY);
    if (bottomLeft < min) {
       min = bottomLeft;
    }
@@ -64,19 +66,19 @@ const findMaxWithOffset = (box: RectangularBox, x: number, y: number, axisX: num
 
    // Top left and bottom right
    const topLeftVertex = box.topLeftVertexOffset;
-   let max = getDot(topLeftVertex.x, topLeftVertex.y, x, y, axisX, axisY);
-   const bottomRight = getDot(-topLeftVertex.x, -topLeftVertex.y, x, y, axisX, axisY);
+   let max = getDot(x + topLeftVertex.x, y + topLeftVertex.y, axisX, axisY);
+   const bottomRight = getDot(x - topLeftVertex.x, y - topLeftVertex.y, axisX, axisY);
    if (bottomRight > max) {
       max = bottomRight;
    }
 
    // Top right and bottom left
    const topRightVertex = box.topRightVertexOffset;
-   const topRight = getDot(topRightVertex.x, topRightVertex.y, x, y, axisX, axisY);
+   const topRight = getDot(x + topRightVertex.x, y + topRightVertex.y, axisX, axisY);
    if (topRight > max) {
       max = topRight;
    }
-   const bottomLeft = getDot(-topRightVertex.x, -topRightVertex.y, x, y, axisX, axisY);
+   const bottomLeft = getDot(x - topRightVertex.x, y - topRightVertex.y, axisX, axisY);
    if (bottomLeft > max) {
       max = bottomLeft;
    }
@@ -121,7 +123,7 @@ export function computeSideAxis(point1: Point, point2: Point): Point {
 }
 
 function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2max: number) {
-    return Math.min(proj1max, proj2max) - Math.max(proj1min, proj2min);
+   return Math.min(proj1max, proj2max) - Math.max(proj1min, proj2min);
 }
 
 const updateMinOverlap = (collisionData: Mutable<CollisionData>, proj1min: number, proj1max: number, proj2min: number, proj2max: number, axisX: number, axisY: number): void => {
@@ -159,7 +161,7 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
    }
    updateMinOverlap(collisionData, axis1min1, axis1max1, axis1min2, axis1max2, box1.axisX, box1.axisY);
    
-   // Axis 1 complement
+   // Axis 1 + 90deg
    const axis1ComplementMin1 = findMinWithOffset(box1, hitbox1x, hitbox1y, -box1.axisY, box1.axisX);
    const axis1ComplementMax1 = findMaxWithOffset(box1, hitbox1x, hitbox1y, -box1.axisY, box1.axisX);
    const axis1ComplementMin2 = findMinWithOffset(box2, hitbox2x, hitbox2y, -box1.axisY, box1.axisX);
@@ -179,7 +181,7 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
    }
    updateMinOverlap(collisionData, axis2min1, axis2max1, axis2min2, axis2max2, box2.axisX, box2.axisY);
 
-   // Axis 2 complement
+   // Axis 2 + 90deg
    const axis2ComplementMin1 = findMinWithOffset(box1, hitbox1x, hitbox1y, -box2.axisY, box2.axisX);
    const axis2ComplementMax1 = findMaxWithOffset(box1, hitbox1x, hitbox1y, -box2.axisY, box2.axisX);
    const axis2ComplementMin2 = findMinWithOffset(box2, hitbox2x, hitbox2y, -box2.axisY, box2.axisX);
@@ -196,7 +198,7 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
       collisionData.axisX = -collisionData.axisX;
       collisionData.axisY = -collisionData.axisY;
    }
-   
+
    // Is colliding!
    collisionData.isColliding = true;
    return collisionData;
@@ -206,6 +208,14 @@ export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: 
    // @Speed
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
+   
+   return box.isColliding(tileBox);
+}
+
+export function boxIsCollidingWithTile(box: Box, tileX: number, tileY: number): boolean {
+   // @Speed
+   const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
+   const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
    
    return box.isColliding(tileBox);
 }

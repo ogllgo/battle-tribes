@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { lerp, randFloat } from "battletribes-shared/utils";
+import { distance, lerp, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
@@ -14,6 +14,9 @@ import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/ent
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 import { Hitbox } from "./hitboxes";
+import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
+import { cursorX, cursorY } from "./mouse";
+import Game from "./Game";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -59,6 +62,19 @@ let accumulatedDamage = 0;
 let damageTime = 0;
 let damageNumberX = -1;
 let damageNumberY = -1;
+
+export interface SpawnDistributionBlock {
+   readonly x: number;
+   readonly y: number;
+   readonly currentDensity: number;
+   readonly targetDensity: number;
+}
+
+let spawnDistributionBlocks = new Array<SpawnDistributionBlock>();
+
+export function setSpawnDistributionBlocks(newSpawnDistributionBlocks: Array<SpawnDistributionBlock>): void {
+   spawnDistributionBlocks = newSpawnDistributionBlocks;
+}
 
 export function createTextCanvasContext(): void {
    const textCanvas = document.getElementById("text-canvas") as HTMLCanvasElement;
@@ -181,7 +197,7 @@ const getDamageNumberColour = (damage: number): string => {
 }
 
 const renderDamageNumbers = (): void => {
-   if (accumulatedDamage === 0||1+1===2) {
+   if (accumulatedDamage === 0) {
       return;
    }
    
@@ -295,6 +311,33 @@ const renderHealNumbers = (): void => {
    }
 }
 
+const renderName = (x: number, y: number, name: string, colour: string): void => {
+   const cameraX = getXPosInTextCanvas(x);
+   const cameraY = getYPosInTextCanvas(y);
+   
+   const width = ctx.measureText(name).width; // @Speed
+
+   // Bg
+   const bgWidthPadding = 4;
+   const bgHeight = 12;
+   const bgHeightPadding = 4;
+   ctx.globalAlpha = 0.5;
+   ctx.fillStyle = "#000";
+   ctx.beginPath();
+   ctx.rect(cameraX - width / 2 - bgWidthPadding, cameraY - bgHeight - bgHeightPadding, width + bgWidthPadding * 2, bgHeight + bgHeightPadding * 2);
+   ctx.fill();
+   ctx.globalAlpha = 1;
+   
+   // Draw text outline
+   ctx.lineWidth = 6;
+   ctx.strokeStyle = "#000";
+   ctx.strokeText(name, cameraX - width / 2, cameraY);
+   
+   // Draw text
+   ctx.fillStyle = colour;
+   ctx.fillText(name, cameraX - width / 2, cameraY);
+}
+
 // @Speed
 // @Speed
 // @Speed
@@ -315,35 +358,31 @@ const renderNames = (frameProgress: number): void => {
 
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      
-      // Calculate position in camera
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
-      const cameraX = getXPosInTextCanvas(hitboxRenderPosition.x);
-      const cameraY = getYPosInTextCanvas(hitboxRenderPosition.y + getHumanoidRadius(entity) + 4);
       
-      const name = tribeMemberComponent.name;
+      renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + getHumanoidRadius(entity) + 4, tribeMemberComponent.name, getEntityType(entity) === EntityType.player ? "#fff" : "#bbb");
+   }
 
-      const width = ctx.measureText(name).width; // @Speed
-
-      // Bg
-      const bgWidthPadding = 4;
-      const bgHeight = 12;
-      const bgHeightPadding = 4;
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.rect(cameraX - width / 2 - bgWidthPadding, cameraY - bgHeight - bgHeightPadding, width + bgWidthPadding * 2, bgHeight + bgHeightPadding * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      
-      // Draw text outline
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "#000";
-      ctx.strokeText(name, cameraX - width / 2, cameraY);
-      
-      // Draw text
-      ctx.fillStyle = getEntityType(entity) === EntityType.player ? "#fff" : "#bbb";
-      ctx.fillText(name, cameraX - width / 2, cameraY);
+   // Floor signs
+   if (Game.cursorX !== null && Game.cursorY !== null) {
+      for (const entity of FloorSignComponentArray.entities) {
+         const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+         if (floorSignComponent.message === "") {
+            continue;
+         }
+         
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+   
+         const x = hitboxRenderPosition.x;
+         const y = hitboxRenderPosition.y;
+         
+         const cursorDist = distance(x, y, Game.cursorX, Game.cursorY);
+         if (cursorDist < 96) {
+            renderName(x, y, floorSignComponent.message, "#fff");
+         }
+      }
    }
 }
 
@@ -599,6 +638,28 @@ const renderBuildingSafetys = (): void => {
    }
 }
 
+const renderChunkWeights = (): void => {
+   const fontSize = 18;
+   
+   ctx.font = "400 " + fontSize + "px Helvetica";
+   ctx.lineJoin = "round";
+   ctx.miterLimit = 2;
+   for (const block of spawnDistributionBlocks) {
+      const left = getXPosInTextCanvas(block.x);
+      const top = getYPosInTextCanvas(block.y);
+      
+      ctx.fillStyle = "#fff";
+      ctx.fillText(block.currentDensity.toFixed(2).toString(), left, top + fontSize);
+      ctx.fillText(block.targetDensity.toFixed(2).toString(), left, top + fontSize + fontSize + 4);
+
+      const mult = block.currentDensity / block.targetDensity
+      if (mult >= 1) {
+         ctx.fillStyle = "#f00";
+      }
+      ctx.fillText(mult.toFixed(1) + "x", left, top + fontSize + fontSize + fontSize + 8);
+   }
+}
+
 export function renderText(frameProgress: number): void {
    clearTextCanvas();
    renderNames(frameProgress);
@@ -615,4 +676,6 @@ export function renderText(frameProgress: number): void {
       // @Temporary @Incomplete
       // renderHoveredPotentialPlanInfo();
    // }
+
+   renderChunkWeights();
 }

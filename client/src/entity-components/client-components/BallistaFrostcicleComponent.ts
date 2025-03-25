@@ -60,5 +60,5 @@ function onDie(entity: Entity): void {
       createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, hitbox.velocity.x, hitbox.velocity.y);
    }
 
-   playSoundOnHitbox("ice-break.mp3", 0.4, 1, hitbox, false);
+   playSoundOnHitbox("ice-break.mp3", 0.4, 1, entity, hitbox, false);
 }

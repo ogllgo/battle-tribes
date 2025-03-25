@@ -2,11 +2,11 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
 import { ComponentArray } from "./ComponentArray";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { entityExists } from "../world";
-import { Hitbox } from "../hitboxes";
+import { entityExists, getEntityType } from "../world";
+import { applyAcceleration, Hitbox } from "../hitboxes";
 
 export class FollowAIComponent {
    /** ID of the followed entity */
@@ -54,16 +54,18 @@ export function updateFollowAIComponent(entity: Entity, visibleEntities: Readonl
    }
 }
 
-export function startFollowingEntity(entity: Entity, followedEntity: Entity, acceleration: number, turnSpeed: number, newFollowCooldownTicks: number, isForgettable: boolean): void {
+export function followAISetFollowTarget(entity: Entity, followedEntity: Entity, newFollowCooldownTicks: number, isForgettable: boolean): void {
    const followAIComponent = FollowAIComponentArray.getComponent(entity);
    followAIComponent.followTargetID = followedEntity;
    followAIComponent.followCooldownTicks = newFollowCooldownTicks;
    followAIComponent.interestTimer = 0;
    followAIComponent.currentTargetIsForgettable = isForgettable;
 
-   const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-   const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
-   moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
+   // @Temporary: now that cow uses custom move func.
+   //    - will want to go through all places which call this and make them handle the movement themselves
+   // const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
+   // const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
+   // moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
 export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
@@ -77,7 +79,23 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
    
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
-   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - 32;
+   // @Hack: This so asssss, should call a function to find the distance between entities instead
+   let radius: number;
+   if (getEntityType(entity) === EntityType.krumblid) {
+      radius = 12;
+   } else {
+      radius = 32;
+   }
+   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
+   if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance - 4)) {
+      // Too close, move backwards!
+      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
+
+      const moveDirection = entityHitbox.box.position.calculateAngleBetween(followTargetHitbox.box.position) + Math.PI;
+      const accelerationX = acceleration * Math.sin(moveDirection);
+      const accelerationY = acceleration * Math.cos(moveDirection);
+      applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+   }
    if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance)) {
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {
@@ -90,7 +108,7 @@ export function entityWantsToFollow(followAIComponent: FollowAIComponent): boole
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

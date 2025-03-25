@@ -5,7 +5,7 @@ import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-sha
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
 import { getAbsAngleDiff, getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
@@ -28,7 +28,7 @@ import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
-import { applyAbsoluteKnockback, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 
 const enum Vars {
@@ -237,8 +237,9 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
    }
 
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-
-   const entityTileIndex = getEntityTile(entityTransformComponent);
+   // @Hack
+   const hitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityTileIndex = getHitboxTile(hitbox);
 
    // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
    if (!attackingEntitiesComponent.attackingEntities.has(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
@@ -308,7 +309,7 @@ function onTick(yeti: Entity): void {
    const yetiComponent = YetiComponentArray.getComponent(yeti);
 
    const layer = getEntityLayer(yeti);
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(yetiBodyHitbox);
    if (layer.getTileBiome(tileIndex) !== Biome.tundra) {
       applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
    }
@@ -498,7 +499,7 @@ function onRemove(yeti: Entity): void {
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

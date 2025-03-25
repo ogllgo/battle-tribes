@@ -8,6 +8,7 @@ import { TribeType } from "../../../../shared/src/tribes";
 import { UtilVars } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -15,7 +16,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
 import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
+import { EntityAttachInfo, entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -150,10 +151,14 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const tamingComponentParams = entityParams.serverComponentParams[ServerComponentType.taming]!;
    const tamingTier = tamingComponentParams.tamingTier;
 
-   const tamingTierRenderPart = tamingTier > 0 ? createTamingTierRenderPart(tamingTier, hitbox) : null;
-   // @Speed: 2nd comparison
-   if (tamingTierRenderPart !== null) {
-      entityIntermediateInfo.renderInfo.attachRenderPart(tamingTierRenderPart);
+   // @HACK @TEMPORARY: the entity intermediate info's render info is the wrong one to use for glurbs, sooo... we don't set it and let the updateFromData figure it out.
+   const tamingTierRenderPart = null;
+   if (1+1===3) {
+      const tamingTierRenderPart = tamingTier > 0 ? createTamingTierRenderPart(tamingTier, hitbox) : null;
+      // @Speed: 2nd comparison
+      if (tamingTierRenderPart !== null) {
+         entityIntermediateInfo.renderInfo.attachRenderPart(tamingTierRenderPart);
+      }
    }
    
    // Follow halo
@@ -187,7 +192,8 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
 }
 
 function getMaxRenderParts(): number {
-   return 2;
+   // @Hack: shoudl be lower
+   return 5;
 }
 
 function padData(reader: PacketReader): void {
@@ -231,7 +237,35 @@ function onTick(entity: Entity): void {
    // @Speed
    // @Bug: Will look jittery for low TPS values.
    if (tamingComponent.followHalo !== null) {
-      tamingComponent.followHalo.rotation += 0.65 * UtilVars.PI * Settings.I_TPS;
+      tamingComponent.followHalo.angle += 0.65 * UtilVars.PI * Settings.I_TPS;
+   }
+}
+
+// @Hack
+const getHeadHitbox = (entity: Entity): Hitbox => {
+   // @HACK!!!
+   if (getEntityType(entity) === EntityType.glurb) {
+      const glurbTransformComponent = TransformComponentArray.getComponent(entity);
+      const headChild = (glurbTransformComponent.children[0] as EntityAttachInfo).attachedEntity;
+
+      const headTransformComponent = TransformComponentArray.getComponent(headChild);
+      return headTransformComponent.children[0] as Hitbox;
+   } else {
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      return transformComponent.children[0] as Hitbox;
+   }
+}
+
+// @Hack
+const getHeadRenderInfo = (entity: Entity): EntityRenderInfo => {
+   // @HACK!!!
+   if (getEntityType(entity) === EntityType.glurb) {
+      const glurbTransformComponent = TransformComponentArray.getComponent(entity);
+      const headChild = (glurbTransformComponent.children[0] as EntityAttachInfo).attachedEntity;
+
+      return getEntityRenderInfo(headChild);
+   } else {
+      return getEntityRenderInfo(entity);
    }
 }
 
@@ -241,11 +275,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const tamingTier = reader.readNumber();
    if (tamingTier !== tamingComponent.tamingTier) {
       if (tamingComponent.tamingTierRenderPart === null) {
-         const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+          const hitbox = getHeadHitbox(entity);
          
          tamingComponent.tamingTierRenderPart = createTamingTierRenderPart(tamingTier, hitbox);
-         const renderInfo = getEntityRenderInfo(entity);
+         const renderInfo = getHeadRenderInfo(entity);
          renderInfo.attachRenderPart(tamingComponent.tamingTierRenderPart);
       } else {
          tamingComponent.tamingTierRenderPart.textureArrayIndex = getTextureArrayIndex(TAMING_TIER_TEXTURE_SOURCES[tamingTier]);
@@ -311,14 +344,13 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    if (tamingComponent.isFollowing) {
       if (tamingComponent.followHalo === null) {
-         const renderInfo = getEntityRenderInfo(entity);
-         // @Copynpaste
-         const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
+         const renderInfo = getHeadRenderInfo(entity);
+         const headRenderPart = renderInfo.getRenderThing("tamingComponent:head")
          tamingComponent.followHalo = createFollowHalo(headRenderPart);
          renderInfo.attachRenderPart(tamingComponent.followHalo);
       }
    } else if (tamingComponent.followHalo !== null) {
-      const renderInfo = getEntityRenderInfo(entity);
+      const renderInfo = getHeadRenderInfo(entity);
       renderInfo.removeRenderPart(tamingComponent.followHalo);
       tamingComponent.followHalo = null;
    }

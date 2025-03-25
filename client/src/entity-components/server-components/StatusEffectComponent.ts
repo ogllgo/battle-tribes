@@ -316,7 +316,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             case StatusEffect.freezing: {
                const transformComponent = TransformComponentArray.getComponent(entity);
                const hitbox = transformComponent.children[0] as Hitbox;
-               playSoundOnHitbox("freezing.mp3", 0.4, 1, hitbox, false);
+               playSoundOnHitbox("freezing.mp3", 0.4, 1, entity, hitbox, false);
                break;
             }
          }

@@ -1,5 +1,5 @@
 import { DecorationType, ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../components";
+import { EntityConfig } from "../components";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
@@ -17,12 +17,12 @@ export function createDecorationConfig(position: Point, rotation: number, decora
    
    const decorationComponent = new DecorationComponent(decorationType);
    
-   return createEntityConfig(
-      EntityType.decoration,
-      {
+   return {
+      entityType: EntityType.decoration,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.decoration]: decorationComponent
       },
-      []
-   );
+      lights: []
+   };
 }

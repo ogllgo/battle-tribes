@@ -1,21 +1,58 @@
 import { Biome } from "../../shared/src/biomes";
 import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
-import { EntityType } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import { entityIsStructure } from "../../shared/src/structures";
 import { TileType } from "../../shared/src/tiles";
-import { distance } from "../../shared/src/utils";
-import { getEntitiesInRange } from "./ai-shared";
-import { TransformComponentArray } from "./components/TransformComponent";
-import { entityIsTribesman } from "./entities/tribes/tribe-member";
-import { Hitbox } from "./hitboxes";
+import { assert, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
+import { EntityConfig } from "./components";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import Layer from "./Layer";
-import { surfaceLayer, undergroundLayer } from "./layers";
-import OPTIONS from "./options";
-import { getEntityType } from "./world";
+import { surfaceLayer } from "./layers";
 
-const enum Vars {
-   TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
+// @Cleanup: should probably combine this file with entity-spawning...
+
+export interface PackSizeInfo {
+   readonly minPackSize: number;
+   readonly maxPackSize: number;
+}
+
+export interface PackSpawningInfo {
+   getPackSize(x: number, y: number): PackSizeInfo;
+   /** Distance from the original spawn that pack spawns can be made in */
+   readonly spawnRange: number;
+}
+
+interface EntityBlockDensityInfo {
+   readonly blockIdx: number;
+   readonly density: number;
+}
+
+export interface SpawnDistribution {
+   readonly currentDensities: Float32Array;
+   readonly targetDensities: Float32Array;
+   readonly blockSize: number;
+   readonly entityDensityMap: Map<Entity, Array<EntityBlockDensityInfo>>;
+}
+
+// @Cleanup: shouldn't be params and then actual info: should just be 1! perhaps created with function
+
+export interface EntitySpawnInfoParams {
+   /** The type of entity to spawn */
+   readonly entityType: EntityType;
+   readonly layer: Layer;
+   /** Average number of spawn attempts that happen each second per chunk. */
+   readonly spawnRate: number;
+   readonly spawnableTileTypes: ReadonlyArray<TileType>;
+   readonly onlySpawnsInNight: boolean;
+   /** Minimum distance a spawn event can occur from another entity */
+   readonly minSpawnDistance: number;
+   readonly packSpawning?: PackSpawningInfo;
+   readonly rawSpawnDistribution: SpawnDistribution;
+   readonly balanceSpawnDistribution: boolean;
+   /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
+   readonly doStrictTileTypeCheck: boolean;
+   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
+   readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 
 export interface EntitySpawnInfo {
@@ -24,56 +61,20 @@ export interface EntitySpawnInfo {
    readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
-   /** Maximum global density per tile the entity type can have. */
-   readonly maxDensity: number;
    readonly spawnableTileTypes: ReadonlyArray<TileType>;
-   readonly minPackSize: number;
-   readonly maxPackSize: number;
    readonly onlySpawnsInNight: boolean;
    /** Minimum distance a spawn event can occur from another entity */
    readonly minSpawnDistance: number;
-   readonly usesSpawnDistribution: boolean;
+   readonly packSpawning?: PackSpawningInfo;
+   readonly spawnDistribution: SpawnDistribution;
+   readonly balanceSpawnDistribution: boolean;
+   /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
+   readonly doStrictTileTypeCheck: boolean;
+   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 
-export const SPAWN_INFOS = [
-   {
-      entityType: EntityType.cow,
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      // maxDensity: 0.004,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.grass],
-      minPackSize: 2,
-      maxPackSize: 5,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.berryBush,
-      layer: surfaceLayer,
-      spawnRate: 0.001,
-      maxDensity: 0.0025,
-      spawnableTileTypes: [TileType.grass],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: true
-   },
-   {
-      entityType: EntityType.tree,
-      layer: surfaceLayer,
-      spawnRate: 0.013,
-      maxDensity: 0.02,
-      spawnableTileTypes: [TileType.grass],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 75,
-      usesSpawnDistribution: true
-   },
+// @Incomplete!
    // {
    //    entityType: EntityType.fibrePlant,
    //    spawnRate: 0.001,
@@ -84,214 +85,235 @@ export const SPAWN_INFOS = [
    //    minSpawnDistance: 45,
    //    usesSpawnDistribution: true
    // },
-   {
-      entityType: EntityType.tombstone,
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      // maxDensity: 0.003,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.grass],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: true,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.boulder,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      // maxDensity: 0.025,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.rock],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 60,
-      usesSpawnDistribution: true
-   },
-   {
-      entityType: EntityType.boulder,
-      layer: undergroundLayer,
-      spawnRate: 0.005,
-      maxDensity: 0.025,
-      spawnableTileTypes: [TileType.stone],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 60,
-      usesSpawnDistribution: true
-   },
-   {
-      entityType: EntityType.cactus,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      maxDensity: 0.03,
-      spawnableTileTypes: [TileType.sand],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 75,
-      usesSpawnDistribution: true
-   },
-   {
-      entityType: EntityType.yeti,
-      layer: surfaceLayer,
-      spawnRate: 0.004,
-      maxDensity: 0.008,
-      spawnableTileTypes: [TileType.snow],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.iceSpikes,
-      layer: surfaceLayer,
-      spawnRate: 0.015,
-      maxDensity: 0.06,
-      spawnableTileTypes: [TileType.ice, TileType.permafrost],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.slimewisp,
-      layer: surfaceLayer,
-      spawnRate: 0.2,
-      maxDensity: 0.3,
-      spawnableTileTypes: [TileType.slime],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 50,
-      usesSpawnDistribution: false
-   },
-   // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
-   // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
-   {
-      entityType: EntityType.slime,
-      layer: surfaceLayer,
-      spawnRate: 0,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.slime],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 50,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.krumblid,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      maxDensity: 0.015,
-      spawnableTileTypes: [TileType.sand],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.frozenYeti,
-      layer: surfaceLayer,
-      spawnRate: 0.004,
-      maxDensity: 0.008,
-      spawnableTileTypes: [TileType.fimbultur],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.fish,
-      layer: surfaceLayer,
-      spawnRate: 0.015,
-      maxDensity: 0.03,
-      spawnableTileTypes: [TileType.water],
-      minPackSize: 3,
-      maxPackSize: 4,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: false
-   },
-   {
-      entityType: EntityType.lilypad,
-      layer: surfaceLayer,
-      spawnRate: 0,
-      maxDensity: 0.03,
-      spawnableTileTypes: [TileType.water],
-      minPackSize: 2,
-      maxPackSize: 3,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 0,
-      usesSpawnDistribution: false,
-      customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
-         return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
+   
+export const SPAWN_INFOS = new Array<EntitySpawnInfo>();
+
+const countNumSpawnableTiles = (params: EntitySpawnInfoParams, blockX: number, blockY: number): number => {
+   const blockSize = params.rawSpawnDistribution.blockSize;
+
+   const originTileX = blockX * blockSize;
+   const originTileY = blockY * blockSize;
+   
+   // @Incomplete: doesn't account for layer
+   let count = 0;
+   for (let tileX = originTileX; tileX < originTileX + blockSize; tileX++) {
+      for (let tileY = originTileY; tileY < originTileY + blockSize; tileY++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         const tileType = params.layer.getTileType(tileIndex);
+         if (params.spawnableTileTypes.includes(tileType)) {
+            count++;
+         }
       }
-   },
-   {
-      entityType: EntityType.golem,
-      layer: surfaceLayer,
-      spawnRate: 0.002,
-      maxDensity: 0.004,
-      spawnableTileTypes: [TileType.rock],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      usesSpawnDistribution: true
-   },
-   {
-      entityType: EntityType.tribeWorker,
-      layer: surfaceLayer,
-      spawnRate: 0.002,
-      maxDensity: 0.002,
-      spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 100,
-      usesSpawnDistribution: false,
-      customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
-         return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
-      }
-   },
-   {
-      entityType: EntityType.glurb,
-      layer: undergroundLayer,
-      spawnRate: 0.0025,
-      // maxDensity: 0.004,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.stone],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 100,
-      usesSpawnDistribution: true
-   },
-   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
-   {
-      entityType: EntityType.mithrilOreNode,
-      layer: undergroundLayer,
-      spawnRate: 0.0025,
-      maxDensity: 0,
-      spawnableTileTypes: [TileType.stone],
-      minPackSize: 1,
-      maxPackSize: 1,
-      onlySpawnsInNight: false,
-      minSpawnDistance: 100,
-      usesSpawnDistribution: true
    }
-] satisfies ReadonlyArray<EntitySpawnInfo>;
 
-export type SpawningEntityType = (typeof SPAWN_INFOS)[number]["entityType"];
+   return count;
+}
 
+/** Max density is the target number of entities per tile */
+export function createRawSpawnDistribution(blockSize: number, maxDensity: number): SpawnDistribution {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
+
+   const densityPerBlock = maxDensity * blockSize * blockSize;
+
+   const currentDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+   const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+
+   for (let i = 0; i < targetDensities.length; i++) {
+      targetDensities[i] = densityPerBlock;
+   }
+   
+   return {
+      currentDensities: currentDensities,
+      targetDensities: targetDensities,
+      blockSize: blockSize,
+      entityDensityMap: new Map()
+   };
+}
+
+/** Takes into account the spawnable tiles into the raw spawn distribution */
+const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): void => {
+   const blockSize = params.rawSpawnDistribution.blockSize;
+   
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
+   
+   const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+   let i = 0;
+   for (let blockY = 0; blockY < BLOCKS_IN_BOARD_DIMENSIONS; blockY++) {
+      for (let blockX = 0; blockX < BLOCKS_IN_BOARD_DIMENSIONS; blockX++) {
+         const numSpawnableTiles = countNumSpawnableTiles(params, blockX, blockY);
+
+         const targetDensity = numSpawnableTiles / (blockSize * blockSize);
+         targetDensities[i] = targetDensity;
+         i++;
+      }
+   }
+
+   for (let i = 0; i < params.rawSpawnDistribution.targetDensities.length; i++) {
+      params.rawSpawnDistribution.targetDensities[i] *= targetDensities[i];
+   }
+}
+
+export function addEntityToSpawnDistribution(spawnDistribution: SpawnDistribution, entity: Entity, x: number, y: number): void {
+   // Distribute a density of 1 amongst the blocks in a diamond-shaped expansion
+   // @Correctness: Instead of adding from just the position of the entity, it should add from all blocks in the bounding area
+   
+   const blockSize = spawnDistribution.blockSize;
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   
+   const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
+   
+   let remainingDensity = 1;
+   const densityInfos = new Array<EntityBlockDensityInfo>();
+   
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+   const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+
+   const usedDensity = Math.min(remainingDensity, blockTargetDensity);
+
+   // This can sometimes not be the case due to pack spawning causing an entity to spawn in a block with 0 target density
+   if (usedDensity > 0) {
+      remainingDensity -= usedDensity;
+      densityInfos.push({
+         blockIdx: blockIdx,
+         density: usedDensity
+      });
+   }
+
+   for (let dist = 1; remainingDensity > 0; dist++) {
+      // Count the total density in the pass
+      let totalPassDensity = 0;
+      for (let i = 0; i <= dist; i++) {
+         // Top right
+         if (blockX + i >= 0 && blockX + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Bottom right
+         if (blockX + dist - i >= 0 && blockX + dist - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + dist - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Bottom left
+         if (blockX - dist + i >= 0 && blockX - dist + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - dist + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+         // Top left
+         if (blockX - i >= 0 && blockX - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            totalPassDensity += blockTargetDensity;
+         }
+      }
+
+      const totalUsedDensity = Math.min(remainingDensity, totalPassDensity);
+      if (totalUsedDensity === 0) {
+         // Empty passes should stop the search
+         break;
+      }
+
+      for (let i = 0; i <= dist; i++) {
+         // Top right
+         if (blockX + i >= 0 && blockX + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Bottom right
+         if (blockX + dist - i >= 0 && blockX + dist - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX + dist - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Bottom left
+         if (blockX - dist + i >= 0 && blockX - dist + i < BLOCKS_IN_BOARD_DIMENSIONS && blockY + i >= 0 && blockY + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - dist + i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+         // Top left
+         if (blockX - i >= 0 && blockX - i < BLOCKS_IN_BOARD_DIMENSIONS && blockY - dist + i >= 0 && blockY - dist + i < BLOCKS_IN_BOARD_DIMENSIONS) {
+            const blockIdx = (blockY - dist + i) * BLOCKS_IN_BOARD_DIMENSIONS + blockX - i;
+            const blockTargetDensity = spawnDistribution.targetDensities[blockIdx];
+            const usedDensity = totalUsedDensity * blockTargetDensity / totalPassDensity;
+            densityInfos.push({
+               blockIdx: blockIdx,
+               density: usedDensity
+            });
+         }
+      }
+
+      remainingDensity -= totalUsedDensity;
+   }
+
+   spawnDistribution.entityDensityMap.set(entity, densityInfos);
+
+   // Affect the current densities
+   for (const densityInfo of densityInfos) {
+      spawnDistribution.currentDensities[densityInfo.blockIdx] += densityInfo.density;
+   }
+}
+
+export function removeEntityFromSpawnDistributions(entity: Entity, autoSpawnedComponent: AutoSpawnedComponent): void {
+   const spawnInfo = autoSpawnedComponent.spawnInfo;
+   const spawnDistribution = spawnInfo.spawnDistribution;
+   
+   const densityInfos = spawnDistribution.entityDensityMap.get(entity);
+   if (typeof densityInfos !== "undefined") {
+      // Remove from the current densities
+      // (Note: this will accumulate floating point errors, but that's what the regular distribution updates are for)
+      for (const densityInfo of densityInfos) {
+         spawnDistribution.currentDensities[densityInfo.blockIdx] -= densityInfo.density;
+      }
+      spawnInfo.spawnDistribution.entityDensityMap.delete(entity);
+   }
+}
+
+const createEntitySpawnInfo = (params: EntitySpawnInfoParams): EntitySpawnInfo => {
+   createBaseSpawnDistribution(params);
+
+   return {
+      entityType: params.entityType,
+      layer: params.layer,
+      spawnRate: params.spawnRate,
+      spawnableTileTypes: params.spawnableTileTypes,
+      onlySpawnsInNight: params.onlySpawnsInNight,
+      minSpawnDistance: params.minSpawnDistance,
+      packSpawning: params.packSpawning,
+      spawnDistribution: params.rawSpawnDistribution,
+      balanceSpawnDistribution: params.balanceSpawnDistribution,
+      doStrictTileTypeCheck: params.doStrictTileTypeCheck,
+      createEntity: params.createEntity,
+      customSpawnIsValidFunc: params.customSpawnIsValidFunc
+   };
+}
+
+export function registerNewSpawnInfo(params: EntitySpawnInfoParams): void {
+   const spawnInfo = createEntitySpawnInfo(params);
+   SPAWN_INFOS.push(spawnInfo);
+}
+
+// @HACK: there are sometimes multiple spawn infos per entity... this is ass
 export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnInfo | null {
    for (const spawnInfo of SPAWN_INFOS) {
       if (spawnInfo.entityType === entityType) {
@@ -304,6 +326,7 @@ export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnIn
 
 export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
    // @HACK @HACK @HACK
+   // @Robustness
    const tileType = spawnInfo.spawnableTileTypes[0];
    switch (tileType) {
       case TileType.grass: return Biome.grasslands;
@@ -312,6 +335,7 @@ export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
       case TileType.sludge: return Biome.swamp;
       case TileType.slime: return Biome.swamp;
       case TileType.rock: return Biome.mountains;
+      case TileType.sandyDirt: return Biome.desert;
       case TileType.sand: return Biome.desert;
       case TileType.snow: return Biome.tundra;
       case TileType.ice: return Biome.tundra;
@@ -325,43 +349,23 @@ export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
    }
 }
 
-const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): boolean => {
-   if (!OPTIONS.spawnTribes) {
-      return false;
-   }
+export function spawnPositionLacksDensity(spawnInfo: EntitySpawnInfo, x: number, y: number): boolean {
+   const spawnDistribution = spawnInfo.spawnDistribution;
+   const blockSize = spawnDistribution.blockSize;
    
-   // @Cleanup: copy and paste
-   
-   const minChunkX = Math.max(Math.min(Math.floor((x - Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((x + Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((y - Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((y + Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
 
-   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
-         for (const entity of chunk.entities) {
-            const entityType = getEntityType(entity);
-            if (!entityIsStructure(entityType) && !entityIsTribesman(entityType)) {
-               continue;
-            }
+   const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
+   const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
+   const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
 
-            // @HACK
-            
-            const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.children[0] as Hitbox;
-            
-            const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
-            if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {
-               return false;
-            }
-         }
-      }
-   }
-
-   return true;
+   const currentDensity = spawnDistribution.currentDensities[blockIdx];
+   const targetDensity = spawnDistribution.targetDensities[blockIdx];
+   return currentDensity < targetDensity;
 }
 
+// @Cleanup: won't be necessary once stepping stones are entities (can just use the getentitiesinrange function)
 export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: number): boolean {
    const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
    const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
@@ -379,28 +383,6 @@ export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: num
                return true;
             }
          }
-      }
-   }
-
-   return false;
-}
-
-const isTooCloseToReedOrLilypad = (layer: Layer, x: number, y: number): boolean => {
-   // Don't overlap with reeds at all
-   let entities = getEntitiesInRange(layer, x, y, 24);
-   for (let i = 0; i < entities.length; i++) {
-      const entity = entities[i];
-      if (getEntityType(entity) === EntityType.reed) {
-         return true;
-      }
-   }
-
-   // Only allow overlapping slightly with other lilypads
-   entities = getEntitiesInRange(layer, x, y, 24 - 6);
-   for (let i = 0; i < entities.length; i++) {
-      const entity = entities[i];
-      if (getEntityType(entity) === EntityType.lilypad) {
-         return true;
       }
    }
 

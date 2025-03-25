@@ -127,6 +127,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.spikyBastard]: CollisionGroup.exclusiveDamaging,
    [EntityType.glurbBodySegment]: CollisionGroup.default,
    [EntityType.glurbHeadSegment]: CollisionGroup.default,
+   [EntityType.glurbTailSegment]: CollisionGroup.default,
    [EntityType.glurb]: CollisionGroup.default,
    [EntityType.slurbTorch]: CollisionGroup.default,
    [EntityType.treeRootBase]: CollisionGroup.boring,
@@ -138,6 +139,10 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.mithrilAnvil]: CollisionGroup.boring,
    [EntityType.swingAttack]: CollisionGroup.exclusiveDamaging,
    [EntityType.blockAttack]: CollisionGroup.default,
+   [EntityType.moss]: CollisionGroup.decoration,
+   [EntityType.floorSign]: CollisionGroup.boring,
+   [EntityType.desertBushLively]: CollisionGroup.boring,
+   [EntityType.desertBushSandy]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

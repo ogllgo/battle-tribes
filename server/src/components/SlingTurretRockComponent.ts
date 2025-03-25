@@ -15,7 +15,7 @@ export const SlingTurretRockComponentArray = new ComponentArray<SlingTurretRockC
 SlingTurretRockComponentArray.onHitboxCollision = onHitboxCollision;
 
 function getDataLength(): number {
-   return 1 * Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

@@ -67,7 +67,7 @@ function onHit(entity: Entity): void {
       createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }
 
-   playSoundOnHitbox("tree-root-base-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("tree-root-base-hit.mp3", randFloat(0.47, 0.53), randFloat(0.9, 1.1), entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -78,5 +78,5 @@ function onDie(entity: Entity): void {
       createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }
 
-   playSoundOnHitbox("tree-root-base-death.mp3", 0.5, 1, hitbox, false);
+   playSoundOnHitbox("tree-root-base-death.mp3", 0.5, 1, entity, hitbox, false);
 }

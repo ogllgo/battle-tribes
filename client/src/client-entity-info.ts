@@ -314,6 +314,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Glurb Head Segment",
       internalName: "glurb-head-segment"
    },
+   [EntityType.glurbTailSegment]: {
+      name: "Glurb Tail Segment",
+      internalName: "glurb-tail-segment"
+   },
    [EntityType.glurb]: {
       name: "Glurb",
       internalName: "glurb"
@@ -357,6 +361,22 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.blockAttack]: {
       name: "Block Attack",
       internalName: "block-attack"
+   },
+   [EntityType.moss]: {
+      name: "Moss",
+      internalName: "moss"
+   },
+   [EntityType.floorSign]: {
+      name: "Floor Sign",
+      internalName: "floor-sign"
+   },
+   [EntityType.desertBushLively]: {
+      name: "Desert Bush Lively",
+      internalName: "desert-bush-lively"
+   },
+   [EntityType.desertBushSandy]: {
+      name: "Desert Bush Sandy",
+      internalName: "desert-bush-sandy"
    },
 };
 

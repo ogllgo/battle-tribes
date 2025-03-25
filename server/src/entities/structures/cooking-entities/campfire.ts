@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../../components";
+import { EntityConfig } from "../../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../../components/TransformComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
@@ -54,9 +54,9 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
 
    const campfireComponent = new CampfireComponent();
    
-   return createEntityConfig(
-      EntityType.campfire,
-      {
+   return {
+      entityType: EntityType.campfire,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -66,6 +66,6 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
          [ServerComponentType.cooking]: cookingComponent,
          [ServerComponentType.campfire]: campfireComponent
       },
-      []
-   );
+      lights: []
+   };
 }

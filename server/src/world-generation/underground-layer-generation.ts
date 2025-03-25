@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, smoothstep, TileIndex } from "battletribes-shared/utils";
+import { assert, clampToBoardDimensions, distance, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randFloat, randInt, smoothstep, TileIndex } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { generateOctavePerlinNoise, generatePerlinNoise } from "../perlin-noise";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
@@ -15,6 +15,15 @@ import { EntityType } from "../../../shared/src/entities";
 import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
+import { createRawSpawnDistribution, PackSizeInfo, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { EntityConfig } from "../components";
+import { createBoulderConfig } from "../entities/resources/boulder";
+import { createGlurbConfig } from "../entities/mobs/glurb";
+import { createMossConfig } from "../entities/moss";
+import { ServerComponentType } from "../../../shared/src/components";
+import PlayerClient from "../server/PlayerClient";
+import { TransformComponentArray } from "../components/TransformComponent";
+import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -94,16 +103,19 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
 
             const dx = dropdownTileX - tileX;
             const dy = dropdownTileY - tileY;
-            const dist = dx * dx + dy + dy;
+            const dist = dx * dx + dy * dy;
             if (dist < distTiles) {
                distTiles = dist;
             }
          }
+         assert(distTiles >= 0);
          distTiles = Math.sqrt(distTiles);
 
          let depth = distTiles / 100;
          
-         const weightFactor = Math.log(distTiles) * 0.07;
+         // The further you travel from a dropdown, the more variation the weights have
+         assert(distTiles + 1 > 0);
+         const weightFactor = Math.log(distTiles + 1) * 0.07;
          const weight = weightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          depth += weight * weightFactor;
          
@@ -116,6 +128,69 @@ const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<numb
    }
 
    return depths;
+}
+
+const WEIGHT_SPREAD_DISTANCE = 20;
+
+const getMossHumidity = (layer: Layer, x: number, y: number): number => {
+   const originTileX = Math.floor(x / Settings.TILE_SIZE);
+   const originTileY = Math.floor(y / Settings.TILE_SIZE);
+
+   const minTileX = clampToBoardDimensions(originTileX - WEIGHT_SPREAD_DISTANCE);
+   const maxTileX = clampToBoardDimensions(originTileX + WEIGHT_SPREAD_DISTANCE);
+   const minTileY = clampToBoardDimensions(originTileY - WEIGHT_SPREAD_DISTANCE);
+   const maxTileY = clampToBoardDimensions(originTileY + WEIGHT_SPREAD_DISTANCE);
+
+   let minDistToWaterTile = WEIGHT_SPREAD_DISTANCE;
+   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (layer.getTileType(tileIndex) === TileType.water) {
+            const dist = distance(tileX, tileY, originTileX, originTileY);
+            if (dist < minDistToWaterTile) {
+               minDistToWaterTile = dist;
+            }
+         }
+      }
+   }
+
+   let humidity = 1 - minDistToWaterTile / WEIGHT_SPREAD_DISTANCE;
+   humidity *= humidity;
+   return humidity;
+}
+
+const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<SpawnDistribution>, mossHumidityMultipliers: Float32Array, waterTileIndex: number): void => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
+
+   const originTileX = getTileX(waterTileIndex);
+   const originTileY = getTileY(waterTileIndex);
+
+   const minTileX = clampToBoardDimensions(originTileX - WEIGHT_SPREAD_DISTANCE);
+   const maxTileX = clampToBoardDimensions(originTileX + WEIGHT_SPREAD_DISTANCE);
+   const minTileY = clampToBoardDimensions(originTileY - WEIGHT_SPREAD_DISTANCE);
+   const maxTileY = clampToBoardDimensions(originTileY + WEIGHT_SPREAD_DISTANCE);
+   for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
+      for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
+         const dist = distance(tileX, tileY, originTileX, originTileY);
+         if (dist > WEIGHT_SPREAD_DISTANCE) {
+            continue;
+         }
+
+         let weight = (WEIGHT_SPREAD_DISTANCE - dist) / WEIGHT_SPREAD_DISTANCE;
+         assert(weight >= 0 && weight <= 1);
+         weight *= weight;
+         weight *= weight;
+         weight *= weight;
+         weight *= weight;
+
+         const blockX = Math.floor(tileX / mossSpawnDistribution.blockSize);
+         const blockY = Math.floor(tileY / mossSpawnDistribution.blockSize);
+         const blockIndex = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+         mossHumidityMultipliers[blockIndex] += weight;
+      }
+   }
 }
 
 export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
@@ -146,6 +221,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
+   const mossSpawnDistribution = createRawSpawnDistribution(2, 0.12);
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
+   const mossHumidityMultipliers = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
+   
    const depths = generateDepths(dropdowns);
 
    const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
@@ -190,6 +270,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             waterGenerationWeight *= lerp(0.5, 1, 1 - depth);
             if (weight > 0.44 && weight < 0.51 && waterGenerationWeight > 0.65) {
                undergroundLayer.tileTypes[tileIndex] = TileType.water;
+               setWaterInMossHumidityMultipliers(mossSpawnDistribution, mossHumidityMultipliers, tileIndex);
             } else {
                undergroundLayer.tileTypes[tileIndex] = TileType.stone;
             }
@@ -203,14 +284,78 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          }
       }
    }
+
+   // @Copynpaste
+   for (let i = 0; i < mossHumidityMultipliers.length; i++) {
+      mossSpawnDistribution.targetDensities[i] *= mossHumidityMultipliers[i];
+   }
    
    groupLocalBiomes(undergroundLayer);
+
+   const getMossColour = (x: number, y: number): number => {
+      // Red moss spawns everywhere but fairly rarely
+      if (Math.random() < 1/8) {
+         return 3;
+      }
+
+      const tileX = Math.floor(x / Settings.TILE_SIZE);
+      const tileY = Math.floor(y / Settings.TILE_SIZE);
+      const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+      const depth = depths[tileIndex];
+
+      if (depth + randFloat(-0.06, 0.06) <= 0.15) {
+         // Near dropdowns spawn golden moss
+         return 5;
+      } else if (depth + randFloat(-0.08, 0.08) <= 0.38) {
+         // Close to the surface, spawn the green moss variants
+         return Math.random() < 0.5 ? 0 : 1;
+      } else {
+         // Far away from the surface, spawn the darker moss variants
+         return Math.random() < 0.5 ? 2 : 4;
+      }
+   }
+
+   // Mose
+   registerNewSpawnInfo({
+      entityType: EntityType.moss,
+      layer: undergroundLayer,
+      spawnRate: 0.05,
+      spawnableTileTypes: [TileType.stone],
+      packSpawning: {
+         getPackSize: (x: number, y: number): PackSizeInfo => {
+            const humidity = getMossHumidity(undergroundLayer, x, y);
+            return {
+               minPackSize: Math.floor(lerp(1, 3, humidity)),
+               maxPackSize: Math.floor(lerp(2, 5, humidity)),
+            }
+         },
+         spawnRange: 40
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      rawSpawnDistribution: mossSpawnDistribution,
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+         const humidity = getMossHumidity(layer, x, y);
+         const minSize = lerp(0, 1, humidity);
+         const maxSize = lerp(0, 3, humidity);
+         let size = Math.floor(lerp(minSize, maxSize, Math.random()));
+         if (size > 2) {
+            size = 2;
+         }
+         
+         const colour = firstEntityConfig === null ?  getMossColour(x, y): firstEntityConfig.components[ServerComponentType.moss]!.colour;
+         return createMossConfig(new Point(x, y), angle, size, colour);
+      }
+   });
 
    generateSpikyBastards(undergroundLayer);
 
    generateMithrilOre(undergroundLayer, true);
 
    // Generate tree roots
+   // @Cleanup: make entity spawning able to do this (will also make the tree roots show up in the spawn info!)
    const numAttempts = Math.floor(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);
    for (let i = 0; i < numAttempts; i++) {
       const tileX = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
@@ -267,4 +412,48 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
       pushJoinBuffer(false);
    }
+
+   registerNewSpawnInfo({
+      entityType: EntityType.boulder,
+      layer: undergroundLayer,
+      spawnRate: 0.005,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 60,
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.025),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createBoulderConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.glurb,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      rawSpawnDistribution: createRawSpawnDistribution(32, 0.004),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createGlurbConfig(x, y, angle);
+      }
+   });
+   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
+   registerNewSpawnInfo({
+      entityType: EntityType.mithrilOreNode,
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      spawnableTileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return null;
+      }
+   });
 }

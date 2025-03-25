@@ -37,6 +37,7 @@ export const enum PacketType {
    setMoveTargetPosition,
    setAttackTarget,
    completeTamingTier,
+   setSignMessage,
    // @Hack
    setSpectatingPosition,
    forceCompleteTamingTier, // ((DEV))
@@ -46,6 +47,7 @@ export const enum PacketType {
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))
    devSetAutogiveBaseResource, // ((DEV))
+   devSetViewedSpawnDistribution, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
    // -----------------

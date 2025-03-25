@@ -1,8 +1,8 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Point, randInt } from "battletribes-shared/utils";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
 import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
@@ -12,7 +12,10 @@ import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { TransformComponent } from "../../components/TransformComponent";
-import { HealthComponent } from "../../components/HealthComponent";
+import { Settings } from "../../../../shared/src/settings";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { createGlurbTailSegmentConfig } from "./glurb-tail-segment";
+import { GlurbComponent } from "../../components/GlurbComponent";
 
 registerEntityTamingSpec(EntityType.glurb, {
    maxTamingTier: 1,
@@ -35,64 +38,58 @@ registerEntityTamingSpec(EntityType.glurb, {
    }
 });
 
-export function createGlurbConfig(x: number, y: number, rotation: number): ReadonlyArray<EntityConfig> {
+export function createGlurbConfig(x: number, y: number, rotation: number): EntityConfig {
    // @Incomplete: Will always have same offset shape! Straight, going upwards!
 
-   const configs = new Array<EntityConfig>();
-   
-   // just so that the glurb can have the childEntities propperty
    const transformComponent = new TransformComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
-   // @TEMPORARY
-   const healthComponent = new HealthComponent(10);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 6);
 
-   const tamingComponent = new TamingComponent()
+   const tamingComponent = new TamingComponent();
+
+   const numSegments = randInt(3, 5);
+   const glurbComponent = new GlurbComponent(numSegments);
    
-   const rootEntityConfig = createEntityConfig(
-      EntityType.glurb,
-      {
-         [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.health]: healthComponent,
-         [ServerComponentType.taming]: tamingComponent,
-      },
-      []
-   );
-   configs.push(rootEntityConfig);
+   const childConfigs = new Array<EntityConfig>();
 
    let currentX = x;
    let currentY = y;
    
-   let headConfig!: EntityConfig;
    let lastHitbox: Hitbox | undefined;
-   let lastEntity: Entity | undefined;
-   const numSegments = randInt(3, 5);
    for (let i = 0; i < numSegments; i++) {
       currentY -= 30;
       
       let config: EntityConfig;
       if (i === 0) {
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
-         headConfig = config;
+      } else if (i < numSegments - 1) {
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
       } else {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastEntity!, lastHitbox!, i < numSegments - 1);
+         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
       }
       
-      const transformComponent = config.components[ServerComponentType.transform]!;
-      transformComponent.rootEntity = rootEntityConfig.entity;
-      lastHitbox = transformComponent.children[0] as Hitbox;
+      const segmentTransformComponent = config.components[ServerComponentType.transform]!;
+      lastHitbox = segmentTransformComponent.children[0] as Hitbox;
 
-      lastEntity = config.entity;
-
-      configs.push(config);
-
-      const headSegmentComponent = headConfig.components[ServerComponentType.glurbHeadSegment]!;
-      headSegmentComponent.allSegments.push(config.entity);
+      childConfigs.push(config);
    }
+   
+   const rootEntityConfig: EntityConfig = {
+      entityType: EntityType.glurb,
+      components: {
+         [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.taming]: tamingComponent,
+         [ServerComponentType.glurb]: glurbComponent
+      },
+      lights: [],
+      childConfigs: childConfigs
+   };
 
-   return configs;
+   return rootEntityConfig;
 }
 
 

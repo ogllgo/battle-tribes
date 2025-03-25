@@ -9,7 +9,7 @@ import Particle from "../../Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer } from "../../rendering/webgl/particle-rendering";
 import { animateLimb, createCraftingAnimationParticles, createMedicineAnimationParticles, generateRandomLimbPosition, updateBandageRenderPart, updateCustomItemRenderPart } from "../../limb-animations";
 import { createBlockParticle, createDeepFrostHeartBloodParticles, createEmberParticle, createSlurbParticle, createSmokeParticle } from "../../particles";
-import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool, ITEM_TRAITS_RECORD } from "battletribes-shared/items/items";
+import { InventoryName, ItemType, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, itemInfoIsTool } from "battletribes-shared/items/items";
 import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
@@ -298,7 +298,7 @@ const updateLimbStateFromPacket = (reader: PacketReader, limbState: LimbState): 
 const resetThing = (thing: RenderPart): void => {
    thing.offset.x = 0;
    thing.offset.y = 0;
-   thing.rotation = 0;
+   thing.angle = 0;
 }
 
 const setThingToState = (humanoidRadius: number, thing: RenderPart, state: LimbState): void => {
@@ -307,7 +307,7 @@ const setThingToState = (humanoidRadius: number, thing: RenderPart, state: LimbS
 
    thing.offset.x = offset * Math.sin(direction) + state.extraOffsetX;
    thing.offset.y = offset * Math.cos(direction) + state.extraOffsetY;
-   thing.rotation = state.angle;
+   thing.angle = state.angle;
 }
 
 const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: LimbState, endState: LimbState, progress: number): void => {
@@ -322,7 +322,7 @@ const lerpThingBetweenStates = (entity: Entity, thing: RenderPart, startState: L
    thing.offset.x = offset * Math.sin(direction) + lerp(startState.extraOffsetX, endState.extraOffsetX, progress);
    thing.offset.y = offset * Math.cos(direction) + lerp(startState.extraOffsetY, endState.extraOffsetY, progress);
    // @Incomplete? Hand mult
-   thing.rotation = lerp(startState.angle, endState.angle, progress);
+   thing.angle = lerp(startState.angle, endState.angle, progress);
    // limb.rotation = attackHandRotation * handMult;
 }
 
@@ -358,7 +358,7 @@ const updateHeldItemRenderPart = (inventoryUseComponent: InventoryUseComponent, 
 
    heldItemRenderPart.offset.x = offsetX;
    heldItemRenderPart.offset.y = offsetY;
-   heldItemRenderPart.rotation = rotation;
+   heldItemRenderPart.angle = rotation;
    
    // Render part texture
    const clientItemInfo = CLIENT_ITEM_INFO_RECORD[heldItemType];
@@ -810,25 +810,71 @@ function onTick(entity: Entity): void {
 // }
 
 const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity: Entity, heldItemType: ItemType | null): void => {
+   // @Cleanup: this is all garbaaarge. lots o copy and paste. Should instead just attach item entity to limb??
+   
+   
+   
    // If selecting an item with a torch trait, create a light
    // @Hack: The check for undefined
    if (heldItemType !== null && typeof heldItemRenderPart !== "undefined") {
-      const torchTrait = ITEM_TRAITS_RECORD[heldItemType].torch;
-      if (typeof torchTrait !== "undefined") {
+      let hasLight: boolean;
+      let lightIntensity!: number;
+      let lightStrength!: number;
+      let lightRadius!: number;
+      let lightR!: number;
+      let lightG!: number;
+      let lightB!: number;
+      switch (heldItemType) {
+         case ItemType.slurb: {
+            hasLight = true;
+            lightIntensity = 0.6;
+            lightStrength = 0.5;
+            lightRadius = 4;
+            lightR = 1;
+            lightG = 0.1;
+            lightB = 1;
+            break;
+         }
+         case ItemType.slurbTorch: {
+            hasLight = true;
+            lightIntensity = 0.8;
+            lightStrength = 2;
+            lightRadius = 10;
+            lightR = 1;
+            lightG = 0.4;
+            lightB = 1;
+            break;
+         }
+         case ItemType.fireTorch: {
+            hasLight = true;
+            lightIntensity = 1;
+            lightStrength = 2;
+            lightRadius = 10;
+            lightR = 1;
+            lightG = 0.6;
+            lightB = 0.35;
+            break;
+         }
+         default: {
+            hasLight = false;
+         }
+      }
+      
+      if (hasLight) {
          if (limb.torchLight === null) {
-            limb.torchLight = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
+            limb.torchLight = createLight(new Point(0, 0), lightIntensity, lightStrength, lightRadius, lightR, lightG, lightB);
             attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
          } else {
-            limb.torchLight.intensity = torchTrait.lightIntensity;
-            limb.torchLight.strength = torchTrait.lightStrength;
-            limb.torchLight.radius = torchTrait.lightRadius;
-            limb.torchLight.r = torchTrait.lightR;
-            limb.torchLight.g = torchTrait.lightG;
-            limb.torchLight.b = torchTrait.lightB;
+            limb.torchLight.intensity = lightIntensity;
+            limb.torchLight.strength = lightStrength;
+            limb.torchLight.radius = lightRadius;
+            limb.torchLight.r = lightR;
+            limb.torchLight.g = lightG;
+            limb.torchLight.b = lightB;
          }
 
          if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
-            limb.torchLight.radius = torchTrait.lightRadius + randFloat(-7, 7);
+            limb.torchLight.radius = lightRadius + randFloat(-7, 7);
          }
          
          return;
@@ -1263,7 +1309,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          const handOffsetAmount = handRestingOffset + 4 - insetAmount;
          attachPoint.offset.x = handOffsetAmount * Math.sin(activeItemDirection);
          attachPoint.offset.y = handOffsetAmount * Math.cos(activeItemDirection);
-         attachPoint.rotation = lerp(HAND_RESTING_ROTATION, HAND_RESTING_ROTATION - Math.PI/5, eatIntervalProgress);
+         attachPoint.angle = lerp(HAND_RESTING_ROTATION, HAND_RESTING_ROTATION - Math.PI/5, eatIntervalProgress);
 
          const activeItemOffsetAmount = itemSize/2 - insetAmount;
          const activeItemOffsetDirection = activeItemDirection - Math.PI/14;

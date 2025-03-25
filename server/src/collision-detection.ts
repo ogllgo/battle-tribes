@@ -74,11 +74,14 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
             continue;
          }
          
+         if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
+            continue;
+         }
+         
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
-            // Check for existing collision info
+         if (box.isColliding(otherBox)) {
             collidingHitboxPairs.push([hitbox, otherHitbox]);
          }
       }

@@ -13,10 +13,10 @@ import { getHitboxConnectedMass, Hitbox } from "./hitboxes";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
    for (const tether of transformComponent.tethers) {
-      if (tether.hitbox === hitbox1 && tether.otherHitbox === hitbox2) {
+      if (tether.hitbox === hitbox1 && tether.originHitbox === hitbox2) {
          return true;
       }
-      if (tether.hitbox === hitbox2 && tether.otherHitbox === hitbox1) {
+      if (tether.hitbox === hitbox2 && tether.originHitbox === hitbox1) {
          return true;
       }
    }
@@ -59,11 +59,9 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: Collision
 }
 
 const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
-   const totalMass = getHitboxConnectedMass(affectedHitbox);
-   if (totalMass !== 0) {
-      // Force gets greater the further into each other the entities are
-      const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / totalMass;
+   const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
+   if (totalAffectedMass !== 0) {
+      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
       
       affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
       affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);
@@ -108,6 +106,10 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
       if (PhysicsComponentArray.hasComponent(affectedEntity)) {
          const physicsComponent = PhysicsComponentArray.getComponent(affectedEntity);
          if (!physicsComponent.isImmovable) {
+            // @Bug: This isn't right! Should instead keep track of the collision data from the collision detection code, and use it here.
+            // Currently there are issues as one collision pair being resolved can change the push info away from what was used in detection.
+            // Which is extra bad cause sometimes collisions which aren't actually happening can have their push info gotten. previously this has causesd
+            // a nasty to resolve crash, and i put in a hacky solution. would be great to fix
             const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
 
             if (collidingHitbox.collisionType === HitboxCollisionType.hard) {

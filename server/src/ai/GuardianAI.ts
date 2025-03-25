@@ -4,8 +4,8 @@ import { AIHelperComponent, AIHelperComponentArray } from "../components/AIHelpe
 import { GuardianComponent, GuardianComponentArray } from "../components/GuardianComponent";
 import { GuardianSpikyBallComponentArray } from "../components/GuardianSpikyBallComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
-import { getEntityTile, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
-import { Hitbox } from "../hitboxes";
+import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { getHitboxTile, Hitbox } from "../hitboxes";
 
 const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity, targetTransformComponent: TransformComponent): boolean => {
    if (!HealthComponentArray.hasComponent(target)) {
@@ -22,7 +22,9 @@ const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity,
       return false;
    }
    
-   const entityTile = getEntityTile(targetTransformComponent);
+   // @Hack
+   const hitbox = targetTransformComponent.children[0] as Hitbox;
+   const entityTile = getHitboxTile(hitbox);
    return guardianComponent.homeTiles.includes(entityTile);
 }
 

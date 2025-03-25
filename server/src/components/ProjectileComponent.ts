@@ -51,7 +51,7 @@ function onTick(projectile: Entity): void {
 }
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

@@ -132,15 +132,15 @@ function onHit(entity: Entity, hitData: HitData): void {
          createWoodSpeckParticle(spawnPositionX, spawnPositionY, 3);
       }
       
-      playSoundOnHitbox(randItem(TREE_HIT_SOUNDS), 0.4, 1, hitbox, false);
+      playSoundOnHitbox(randItem(TREE_HIT_SOUNDS), 0.4, 1, entity, hitbox, false);
    } else {
       // @Temporary
-      playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, hitbox, false);
+      playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, hitbox, false);
+   playSoundOnHitbox(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity, hitbox, false);
 }

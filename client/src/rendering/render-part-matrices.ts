@@ -130,7 +130,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    const matrix = thing.modelMatrix;
 
    // Rotation
-   overrideWithRotationMatrix(matrix, thing.rotation);
+   overrideWithRotationMatrix(matrix, thing.angle);
    
    // Scale
    const scale = thing.scale;
@@ -199,7 +199,7 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: numbe
       parentRotation = renderPart.parent.box.angle;
    } else {
       parentModelMatrix = renderPart.parent.modelMatrix;
-      parentRotation = renderPart.parent.rotation;
+      parentRotation = renderPart.parent.angle;
    }
 
    // @Speed: If the thing doesn't inherit its' parents rotation, undo the rotation before the matrix is applied.

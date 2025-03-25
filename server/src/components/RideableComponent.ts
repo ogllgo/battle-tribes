@@ -5,7 +5,7 @@ import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/ut
 import { Hitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachEntity, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -36,7 +36,7 @@ export function createCarrySlot(parentHitbox: Hitbox, offsetX: number, offsetY: 
 
 function getDataLength(entity: Entity): number {
    const rideableComponent = RideableComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
+   return Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * rideableComponent.carrySlots.length;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -53,7 +53,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   attachEntity(entity, mount, carrySlot.parentHitbox, carrySlot.offsetX, carrySlot.offsetY, false);
+   attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false, false);
    carrySlot.occupiedEntity = entity;
 }
 

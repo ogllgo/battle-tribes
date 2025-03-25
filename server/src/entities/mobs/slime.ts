@@ -8,7 +8,7 @@ import { SlimeComponent, SlimeComponentArray } from "../../components/SlimeCompo
 import Layer from "../../Layer";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -81,9 +81,9 @@ export function createSlimeConfig(position: Point, rotation: number, size: Slime
 
    const craftingStationComponent = new CraftingStationComponent(CraftingStation.slime);
    
-   return createEntityConfig(
-      EntityType.slime,
-      {
+   return {
+      entityType: EntityType.slime,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -92,6 +92,6 @@ export function createSlimeConfig(position: Point, rotation: number, size: Slime
          [ServerComponentType.slime]: slimeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
       },
-      []
-   );
+      lights: []
+   };
 }

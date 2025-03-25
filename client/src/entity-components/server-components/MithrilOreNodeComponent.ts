@@ -107,7 +107,7 @@ function onHit(entity: Entity): void {
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
    
-   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
@@ -120,6 +120,6 @@ function onDie(entity: Entity): void {
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
 
-   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
-   playSoundOnHitbox("mithril-death.mp3", 0.4, randFloat(0.9, 1.1), hitbox, false);
+   playSoundOnHitbox("mithril-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, false);
+   playSoundOnHitbox("mithril-death.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, false);
 }

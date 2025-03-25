@@ -15,15 +15,15 @@ export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): v
 
    switch (bowItemType) {
       case ItemType.wooden_bow: {
-         playSoundOnHitbox("bow-fire.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
          break;
       }
       case ItemType.reinforced_bow: {
-         playSoundOnHitbox("reinforced-bow-fire.mp3", 0.2, 1, hitbox, false);
+         playSoundOnHitbox("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity, hitbox, false);
          break;
       }
       case ItemType.ice_bow: {
-         playSoundOnHitbox("ice-bow-fire.mp3", 0.4, 1, hitbox, false);
+         playSoundOnHitbox("ice-bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
          break;
       }
    }
@@ -36,7 +36,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
 
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {
-         playSoundOnHitbox("fart.mp3", 0.3, randFloat(0.9, 1.2), hitbox, false);
+         playSoundOnHitbox("fart.mp3", 0.3, randFloat(0.9, 1.2), entity, hitbox, false);
          break;
       }
       case EntityTickEventType.fireBow: {
@@ -45,7 +45,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.automatonAccident: {
-         playSoundOnHitbox("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), hitbox, false);
+         playSoundOnHitbox("automaton-accident-" + randInt(1, 2) + ".mp3", 0.3, randFloat(0.9, 1.2), entity, hitbox, false);
 
          // Make sparks fly off
          const position = getRandomPositionOnBoxEdge(hitbox.box);
@@ -61,7 +61,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.cowEat: {
-         playSoundOnHitbox("cow-eat.mp3", 0.4, randFloat(0.9, 1.1), hitbox, true);
+         playSoundOnHitbox("cow-eat.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }
    }

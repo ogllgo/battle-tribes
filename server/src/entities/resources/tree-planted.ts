@@ -7,7 +7,7 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { PlantedComponent } from "../../components/PlantedComponent";
 import { plantedTreeIsFullyGrown, TreePlantedComponent } from "../../components/TreePlantedComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -47,9 +47,9 @@ export function createTreePlantedConfig(position: Point, rotation: number, plant
    
    const treePlantedComponent = new TreePlantedComponent();
    
-   return createEntityConfig(
-      EntityType.treePlanted,
-      {
+   return {
+      entityType: EntityType.treePlanted,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -57,6 +57,6 @@ export function createTreePlantedConfig(position: Point, rotation: number, plant
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.treePlanted]: treePlantedComponent
       },
-      []
-   );
+      lights: []
+   };
 }

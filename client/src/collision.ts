@@ -37,9 +37,7 @@ const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInf
 const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
-      // Force gets greater the further into each other the entities are
-      const distMultiplier = Math.pow(pushInfo.amountIn, 1.1);
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * distMultiplier * pushingHitbox.mass / transformComponent.totalMass;
+      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / transformComponent.totalMass;
       
       affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
       affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);
@@ -94,8 +92,12 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
          }
          const otherBox = otherHitbox.box;
 
+         if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
+            continue;
+         }
+         
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
+         if (box.isColliding(otherBox)) {
             entity1InvolvedHitboxes.push(hitbox);
             entity2InvolvedHitboxes.push(otherHitbox);
          }

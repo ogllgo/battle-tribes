@@ -74,15 +74,15 @@ function getMaxRenderParts(): number {
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   playSoundOnHitbox("slime-spit.mp3", 0.5, 1, hitbox, false);
+   playSoundOnHitbox("slime-spit.mp3", 0.5, 1, entity, hitbox, false);
 }
 
 function onTick(entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
    const rotatingRenderPart = renderInfo.renderPartsByZIndex[0];
    
-   rotatingRenderPart.rotation += 1.5 * Math.PI / Settings.TPS;
-   rotatingRenderPart.rotation -= 1.5 * Math.PI / Settings.TPS;
+   rotatingRenderPart.angle += 1.5 * Math.PI / Settings.TPS;
+   rotatingRenderPart.angle -= 1.5 * Math.PI / Settings.TPS;
 
    if (Board.tickIntervalHasPassed(0.2)) {
       for (let i = 0; i < 5; i++) {

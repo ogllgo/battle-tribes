@@ -111,6 +111,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.animalStaff]: 1,
    [ItemType.woodenArrow]: 1,
    [ItemType.tamingAlmanac]: 1,
+   [ItemType.floorSign]: 1,
 };
 
 export const enum TribesmanPathType {
@@ -173,7 +174,7 @@ function onJoin(entity: Entity): void {
 }
 
 function getDataLength(): number {
-   return 5 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {

@@ -59,6 +59,8 @@ class PlayerClient {
    public visibleDirtiedEntities = new Array<Entity>();
    public visibleRemovedEntities = new Array<Entity>();
 
+   public viewedSpawnDistribution = -1;
+
    constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string, isDev: boolean) {
       this.socket = socket;
       this.tribe = tribe;

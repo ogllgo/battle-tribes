@@ -9,10 +9,10 @@ import { createSlimeConfig } from "../entities/mobs/slime";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { TransformComponentArray, getEntityTile } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { Hitbox } from "../hitboxes";
+import { getHitboxTile, Hitbox } from "../hitboxes";
 
 const enum Vars {
    ACCELERATION = 100,
@@ -32,8 +32,9 @@ SlimewispComponentArray.onTick = {
 
 function onTick(slimewisp: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);
+   const slimewispHitbox = transformComponent.children[0] as Hitbox;
 
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(slimewispHitbox);
    const layer = getEntityLayer(slimewisp);
    const tileType = layer.tileTypes[tileIndex];
    
@@ -57,8 +58,6 @@ function onTick(slimewisp: Entity): void {
          if (entitiesAreColliding(slimewisp, mergingSlimewisp) !== CollisionVars.NO_COLLISION) {
             slimewispComponent.mergeTimer -= Settings.I_TPS;
             if (slimewispComponent.mergeTimer <= 0 && !entityIsFlaggedForDestruction(mergingSlimewisp)) {
-               const slimewispHitbox = transformComponent.children[0] as Hitbox;
-               
                const x = (slimewispHitbox.box.position.x + mergingSlimewispHitbox.box.position.x) / 2;
                const y = (slimewispHitbox.box.position.y + mergingSlimewispHitbox.box.position.y) / 2;
                
@@ -83,7 +82,7 @@ function onTick(slimewisp: Entity): void {
 }
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 0;
 }
 
 function addDataToPacket(): void {}

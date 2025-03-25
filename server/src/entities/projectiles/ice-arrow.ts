@@ -5,7 +5,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { HealthComponentArray } from "../../components/HealthComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -34,17 +34,17 @@ export function createIceArrowConfig(position: Point, rotation: number, tribe: T
 
    const iceArrowComponent = new IceArrowComponent();
    
-   return createEntityConfig(
-      EntityType.iceArrow,
-      {
+   return {
+      entityType: EntityType.iceArrow,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.iceArrow]: iceArrowComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function onIceArrowCollision(arrow: Entity, collidingEntity: Entity): void {

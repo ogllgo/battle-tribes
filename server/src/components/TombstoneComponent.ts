@@ -141,7 +141,7 @@ function preRemove(tombstone: Entity): void {
 function getDataLength(entity: Entity): number {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    
-   let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
    if (tombstoneComponent.deathInfo !== null) {
       lengthBytes += getStringLengthBytes(tombstoneComponent.deathInfo.username);
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;

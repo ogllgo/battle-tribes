@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -11,11 +11,11 @@ import { TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, startFollowingEntity, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
+import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
@@ -24,11 +24,12 @@ import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEnti
 import { getEntitiesAtPosition } from "../layer-utils";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray } from "./TamingComponent";
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle, stopHitboxTurning } from "../hitboxes";
+import { translateHitbox } from "./PhysicsComponent";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -61,7 +62,7 @@ const enum Vars {
 }
 
 export class CowComponent {
-   public readonly species: CowSpecies = randInt(0, 1);
+   public readonly species: CowSpecies;
    public grazeProgressTicks = 0;
    public grazeCooldownTicks = randInt(CowVars.MIN_GRAZE_COOLDOWN, CowVars.MAX_GRAZE_COOLDOWN);
 
@@ -91,7 +92,8 @@ export class CowComponent {
    /** Remaining amount of ticks that the cow has to rest after doing a ram attack. */
    public ramRestTicks: number;
 
-   constructor() {
+   constructor(species: CowSpecies) {
+      this.species = species;
       this.ramCooldownTicks = Vars.RAM_COOLDOWN_TICKS;
       this.ramRemainingChargeTicks = Vars.RAM_CHARGE_TICKS;
       this.ramRestTicks = Vars.RAM_REST_TICKS;
@@ -185,6 +187,8 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
          cowComponent.targetGrass = 0;
       }
    // }
+      
+   stopCow(cow);
 }
 
 const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyArray<Entity>): ReadonlyArray<Entity> => {
@@ -199,6 +203,15 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
       }
    }
    return herdMembers;
+}
+
+const stopCow = (cow: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const headHitbox = transformComponent.children[1] as Hitbox;
+
+   stopHitboxTurning(bodyHitbox);
+   stopHitboxTurning(headHitbox);
 }
 
 const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTargetDirection: number, acceleration: number): void => {
@@ -226,27 +239,18 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headTargetDirection = angle(turnTargetX - headHitbox.box.position.x, turnTargetY - headHitbox.box.position.y);
 
-   const parentAngle = headHitbox.parent!.box.angle;
-   
    // @Hack
-   const headForce = 40 * accelerationMultiplier;
+   const headForce = 30;
    const moveX = headForce * Settings.I_TPS * Math.sin(headTargetDirection);
    const moveY = headForce * Settings.I_TPS * Math.cos(headTargetDirection);
-
-   // Counteract the body's angle
-   const rotatedMoveX = rotateXAroundOrigin(moveX, moveY, -parentAngle);
-   const rotatedMoveY = rotateYAroundOrigin(moveX, moveY, -parentAngle);
-   
-   headHitbox.box.offset.x += rotatedMoveX;
-   headHitbox.box.offset.y += rotatedMoveY;
-
-   // Rotate the head to the target
+   translateHitbox(headHitbox, moveX, moveY);
 
    // Turn the head to face the target
-   headHitbox.box.relativeAngle = turnAngle(headHitbox.box.relativeAngle, headTargetDirection - parentAngle, Vars.HEAD_TURN_SPEED);
-   // @Cleanup: should really be done in the turnAngle func
+
+   setHitboxIdealAngle(headHitbox, headTargetDirection, Vars.HEAD_TURN_SPEED);
+
+   // Restrict how far the neck can turn
    headHitbox.box.relativeAngle = cleanAngleNEW(headHitbox.box.relativeAngle);
-   // Clamp the head's relative angle (purely for visuals)
    if (headHitbox.box.relativeAngle < -0.5) {
       headHitbox.box.relativeAngle = -0.5;
    } else if (headHitbox.box.relativeAngle > 0.5) {
@@ -263,7 +267,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
 
    // if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
    //    // Force is in the direction which will get head offset direction back towards 0
-   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY * Math.sign(headOffsetDirection));
+   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY) * Math.sign(headOffsetDirection) * Settings.I_TPS;
 
    //    cowBodyHitbox.box.relativeAngle += rotationForce;
 
@@ -364,33 +368,23 @@ function onTick(cow: Entity): void {
    // If the cow is recovering after doing a ram, just stand still and do nothing else
    if (cowComponent.ramRestTicks > 0) {
       cowComponent.ramRestTicks--;
+      stopCow(cow);
       return;
    }
 
-   // @INCOMPLETE: This used to rely on the acceleration of the carried entity, but that's gone now.
-   // What will need to be done to return this to a functional state is to make all AI components report
-   // what their current movement target is. (Use AIHelperComponent for now but add @Hack comment?)
-
-   // // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
-   // //   entity isn't exactly on the thing being accelerated.
-   // // When something is riding the cow, that entity controls the cow's movement
-   // const rideableComponent = RideableComponentArray.getComponent(cow);
-   // const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   // // @Hack: the physics component check for the rider
-   // if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
-   //    const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
-   //    const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
-   //    if (accelerationMagnitude > 0) {
-   //       const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
-   //       const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
-
-   //       const targetX = cowBodyHitbox.box.position.x + 400 * normalisedAccelerationX;
-   //       const targetY = cowBodyHitbox.box.position.y + 400 * normalisedAccelerationY;
-   //       const targetDirection = angle(normalisedAccelerationX, normalisedAccelerationY);
-   //       moveCow(cow, targetX, targetY, targetDirection, Vars.FAST_ACCELERATION);
-   //       return;
-   //    }
-   // }
+   // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
+   //   entity isn't exactly on the thing being accelerated.
+   // When something is riding the cow, that entity controls the cow's movement
+   const rideableComponent = RideableComponentArray.getComponent(cow);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   if (entityExists(rider)) {
+      const targetPosition = getRiderTargetPosition(rider);
+      if (targetPosition !== null) {
+         const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetPosition);
+         moveCow(cow, targetPosition.x, targetPosition.y, targetDirection, Vars.FAST_ACCELERATION);
+         return;
+      }
+   }
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 
@@ -617,13 +611,13 @@ function onTick(cow: Entity): void {
       const [followTarget, isHoldingBerry] = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
-         startFollowingEntity(cow, followTarget, 200, Vars.TURN_SPEED, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
+         followAISetFollowTarget(cow, followTarget, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
          return;
       }
    }
 
    // Herd AI
-   // @Incomplete: Steer the herd away from non-grasslands biomes
+   // @Incomplete: Steer the herd away from non-plains biomes
    const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
@@ -632,6 +626,7 @@ function onTick(cow: Entity): void {
       const accelerationX = 200 * Math.sin(cowBodyHitbox.box.angle);
       const accelerationY = 200 * Math.cos(cowBodyHitbox.box.angle);
       applyAcceleration(cow, cowBodyHitbox, accelerationX, accelerationY);
+      stopCow(cow);
       return;
    }
 
@@ -641,11 +636,13 @@ function onTick(cow: Entity): void {
    if (wanderAI.targetPositionX !== -1) {
       const targetDirection = angle(wanderAI.targetPositionX - cowBodyHitbox.box.position.x, wanderAI.targetPositionY - cowBodyHitbox.box.position.y);
       moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, targetDirection, Vars.SLOW_ACCELERATION);
+   } else {
+      stopCow(cow);
    }
 }
 
 function getDataLength(): number {
-   return 5 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

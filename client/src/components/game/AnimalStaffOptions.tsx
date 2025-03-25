@@ -11,10 +11,10 @@ import { getMatrixPosition } from "../../rendering/render-part-matrices";
 import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/matrices";
 import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
-import { setShittyCarrier } from "./GameInteractableLayer";
 import { playerInstance } from "../../player";
 import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { Hitbox } from "../../hitboxes";
+import { setShittyCarrier } from "./GameInteractableLayer";
 
 export const enum AnimalStaffCommandType {
    follow,

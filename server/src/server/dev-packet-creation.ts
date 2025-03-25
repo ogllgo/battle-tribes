@@ -1,15 +1,15 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
-import { AIPlanType, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
+import { AIPlanType, clamp, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
-import { getSpawnInfoForEntityType } from "../entity-spawn-info";
+import { EntitySpawnInfo, getSpawnInfoForEntityType, SpawnDistribution } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../light-levels";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, addTribeBuildingSafetyData, getTribeAssignmentDataLength, getTribeBuildingSafetyDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
-import { getTribes } from "../world";
+import { getEntitySpawnTicks, getTribes } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import PlayerClient from "./PlayerClient";
 
@@ -127,7 +127,9 @@ const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, l
          const density = count / numEligibleTiles;
          packet.addNumber(density);
    
-         packet.addNumber(spawnInfo.maxDensity);
+         // @Hack!
+         // packet.addNumber(spawnInfo.maxDensity);
+         packet.addNumber(0);
       } else {
          packet.addNumber(0);
          packet.addNumber(0);
@@ -238,8 +240,53 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
    for (const localBiome of info.visibleLocalBiomes) {
       lengthBytes += getLocalBiomeDataLength(playerClient, localBiome);
    }
+   
+   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
+   const distribution = spawnInfo?.spawnDistribution;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   if (typeof distribution !== "undefined") {
+      lengthBytes += getViewedSpawnDistributionDataLength(playerClient, distribution);
+   }
 
    return lengthBytes;
+}
+
+const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distribution: SpawnDistribution): number => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+
+   const numVisibleBlocks = (maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY);
+   return Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
+}
+
+const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   
+   packet.addNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
+   for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
+      for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
+         const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+         const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+         const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+
+         packet.addNumber(x);
+         packet.addNumber(y);
+         packet.addNumber(distribution.currentDensities[blockIdx]);
+         packet.addNumber(distribution.targetDensities[blockIdx]);
+      }
+   }
 }
 
 export function addDevPacketData(packet: Packet, playerClient: PlayerClient): void {
@@ -320,5 +367,13 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
    packet.addNumber(info.visibleLocalBiomes.length);
    for (const localBiome of info.visibleLocalBiomes) {
       addLocalBiomeDataToPacket(packet, playerClient, localBiome);
+   }
+
+   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
+   const distribution = spawnInfo?.spawnDistribution;
+   packet.addBoolean(typeof distribution !== "undefined");
+   packet.padOffset(3);
+   if (typeof distribution !== "undefined") {
+      addViewedSpawnDistributionData(packet, playerClient, distribution);
    }
 }

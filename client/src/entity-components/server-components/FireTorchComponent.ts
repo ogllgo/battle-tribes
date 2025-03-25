@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createLight, Light } from "../../lights";
-import { ITEM_TRAITS_RECORD, ItemType } from "../../../../shared/src/items/items";
+import { ItemType } from "../../../../shared/src/items/items";
 import { Point, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
@@ -44,7 +44,7 @@ function createParamsFromData(): FireTorchComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -54,11 +54,13 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/fire-torch/fire-torch.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(renderPart);
+   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
-   const torchTrait = ITEM_TRAITS_RECORD[ItemType.fireTorch].torch!;
-   const light = createLight(new Point(0, 0), torchTrait.lightIntensity, torchTrait.lightStrength, torchTrait.lightRadius, torchTrait.lightR, torchTrait.lightG, torchTrait.lightB);
-
+   const light = createLight(new Point(0, 0), 1, 2, 10, 1, 0.6, 0.35);
+   entityIntermediateInfo.lights.push({
+      light: light,
+      attachedRenderPart: renderPart
+   });
    return {
       light: light
    };
@@ -85,9 +87,10 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.children[0] as Hitbox;
 
    if (Board.tickIntervalHasPassed(0.15)) {
-      const fireTorchComponent = FireTorchComponentArray.getComponent(entity);
-      const torchTrait = ITEM_TRAITS_RECORD[ItemType.fireTorch].torch!;
-      fireTorchComponent.light.radius = torchTrait.lightRadius + randFloat(-7, 7);
+      // @Incomplete: not done in the server!
+      // const fireTorchComponent = FireTorchComponentArray.getComponent(entity);
+      // const torchTrait = ITEM_TRAITS_RECORD[ItemType.fireTorch].torch!;
+      // fireTorchComponent.light.radius = torchTrait.lightRadius + randFloat(-7, 7);
    }
    
    // Ember particles

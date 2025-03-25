@@ -1,10 +1,14 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { getStringLengthBytes, Packet } from "../../../shared/src/packets";
+import { Point } from "../../../shared/src/utils";
 import Tribe from "../Tribe";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
+import { PlayerComponentArray } from "./PlayerComponent";
+import { TransformComponentArray } from "./TransformComponent";
+import { Hitbox } from "../hitboxes";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -34,7 +38,7 @@ export const TamingComponentArray = new ComponentArray<TamingComponent>(ServerCo
 
 function getDataLength(entity: Entity): number {
    const tamingComponent = TamingComponentArray.getComponent(entity);
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(tamingComponent.name);
+   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(tamingComponent.name);
 
    // Acquired skills
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * tamingComponent.acquiredSkills.length;
@@ -122,4 +126,25 @@ export function addSkillLearningProgress(tamingComponent: TamingComponent, skill
       skillLearning.requirementProgressArray[0] = amount;
       tamingComponent.skillLearningArray.push(skillLearning);
    }
+}
+
+export function getRiderTargetPosition(rider: Entity): Point | null {
+   // @INCOMPLETE: This used to rely on the acceleration of the carried entity, but that's gone now.
+   // What will need to be done to return this to a functional state is to make all AI components report
+   // what their current movement target is. (Use AIHelperComponent for now but add @Hack comment?)
+
+   if (PlayerComponentArray.hasComponent(rider)) {
+      const playerComponent = PlayerComponentArray.getComponent(rider);
+      
+      if (playerComponent.movementIntention.x !== 0 || playerComponent.movementIntention.y !== 0) {
+         const transformComponent = TransformComponentArray.getComponent(rider);
+         const playerHitbox = transformComponent.children[0] as Hitbox;
+   
+         const x = playerHitbox.box.position.x + 400 * playerComponent.movementIntention.x;
+         const y = playerHitbox.box.position.y + 400 * playerComponent.movementIntention.y;
+         return new Point(x, y);
+      }
+   }
+
+   return null;
 }

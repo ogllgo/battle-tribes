@@ -17,7 +17,7 @@ export default abstract class BaseRenderPart {
 
    public readonly offset = new Point(0, 0);
 
-   public rotation: number;
+   public angle: number;
    // @Cleanup: change to total rotation
    public totalParentRotation = 0;
    
@@ -42,7 +42,7 @@ export default abstract class BaseRenderPart {
    constructor(parent: RenderPartParent, zIndex: number, rotation: number) {
       this.parent = parent;
       this.zIndex = zIndex;
-      this.rotation = rotation;
+      this.angle = rotation;
    }
 
    // @Cleanup: unused?

@@ -7,7 +7,7 @@ import { YetiComponent, YetiComponentArray } from "../../components/YetiComponen
 import Layer from "../../Layer";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
@@ -123,9 +123,9 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    
    const yetiComponent = new YetiComponent(territory);
    
-   return createEntityConfig(
-      EntityType.yeti,
-      {
+   return {
+      entityType: EntityType.yeti,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -137,6 +137,6 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.yeti]: yetiComponent
       },
-      []
-   );
+      lights: []
+   };
 }

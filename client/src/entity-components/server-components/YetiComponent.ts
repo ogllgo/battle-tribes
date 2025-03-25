@@ -162,7 +162,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox(randItem(HURT_SOUNDS), 0.7, 1, hitbox, false);
+   playSoundOnHitbox(randItem(HURT_SOUNDS), 0.7, 1, entity, hitbox, false);
 
    // Blood pool particle
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, BLOOD_POOL_SIZE);
@@ -182,7 +182,7 @@ function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   playSoundOnHitbox(randItem(DEATH_SOUNDS), 0.7, 1, hitbox, false);
+   playSoundOnHitbox(randItem(DEATH_SOUNDS), 0.7, 1, entity, hitbox, false);
 
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, BLOOD_POOL_SIZE);
 

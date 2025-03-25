@@ -108,11 +108,11 @@ const playFireSound = (entity: Entity): void => {
    
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {
-         playSoundOnHitbox("sling-turret-fire.mp3", 0.2, 1, hitbox, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.2, 1, entity, hitbox, false);
          break;
       }
       case EntityType.ballista: {
-         playSoundOnHitbox("sling-turret-fire.mp3", 0.25, 0.7, hitbox, false);
+         playSoundOnHitbox("sling-turret-fire.mp3", 0.25, 0.7, entity, hitbox, false);
          break;
       }
    }
@@ -182,11 +182,11 @@ function getMaxRenderParts(): number {
 }
 
 const updateAimDirection = (turretComponent: TurretComponent, aimDirection: number, chargeProgress: number): void => {
-   turretComponent.pivotingRenderPart.rotation = aimDirection;
+   turretComponent.pivotingRenderPart.angle = aimDirection;
 
    for (let i = 0; i < turretComponent.gearRenderParts.length; i++) {
       const gearRenderPart = turretComponent.gearRenderParts[i];
-      gearRenderPart.rotation = lerp(0, Math.PI * 2, chargeProgress) * (i === 0 ? 1 : -1);
+      gearRenderPart.angle = lerp(0, Math.PI * 2, chargeProgress) * (i === 0 ? 1 : -1);
    }
 }
 
@@ -228,7 +228,7 @@ const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: En
          );
 
          if (projectileHasRandomRotation(entity)) {
-            turretComponent.projectileRenderPart.rotation = 2 * Math.PI * Math.random();
+            turretComponent.projectileRenderPart.angle = 2 * Math.PI * Math.random();
          }
 
          const renderInfo = getEntityRenderInfo(entity);

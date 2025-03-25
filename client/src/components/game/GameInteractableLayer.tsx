@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import AttackChargeBar from "./AttackChargeBar";
 import { Entity, LimbAction } from "../../../../shared/src/entities";
-import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, ITEM_TRAITS_RECORD, QUIVER_PULL_TIME_TICKS, QUIVER_ACCESS_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "../../../../shared/src/items/items";
+import { Item, InventoryName, getItemAttackInfo, ITEM_TYPE_RECORD, ItemType, ITEM_INFO_RECORD, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, PlaceableItemInfo, Inventory, QUIVER_PULL_TIME_TICKS, QUIVER_ACCESS_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../../shared/src/titles";
@@ -9,7 +9,7 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetCarryTargetPacket, sendSetMoveTargetPositionPacket } from "../../networking/packet-creation";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetMoveTargetPositionPacket } from "../../networking/packet-creation";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
@@ -55,7 +55,7 @@ import { playerInstance } from "../../player";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
 import Game from "../../Game";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
-import { assert } from "../../../../shared/src/utils";
+import { assert, Point } from "../../../../shared/src/utils";
 import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
 
 export interface ItemRestTime {
@@ -138,6 +138,12 @@ let placeableEntityGhostRenderInfo: EntityRenderInfo | null = null;
 let carrier: Entity = 0;
 export function setShittyCarrier(entity: Entity): void {
    carrier = entity;
+}
+
+let playerMoveIntention = new Point(0, 0);
+
+export function getPlayerMoveIntention(): Point {
+   return playerMoveIntention;
 }
 
 // @Copynpaste
@@ -886,6 +892,9 @@ export function updatePlayerMovement(): void {
    Camera.velocity.y = 0;
 
    if (moveDirection !== null) {
+      playerMoveIntention.x = Math.sin(moveDirection);
+      playerMoveIntention.y = Math.cos(moveDirection);
+
       if (playerInstance !== null) {
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
          
@@ -921,6 +930,9 @@ export function updatePlayerMovement(): void {
          Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);
          Camera.velocity.y = MOVE_SPEED * Math.cos(moveDirection);
       }
+   } else {
+      playerMoveIntention.x = 0;
+      playerMoveIntention.y = 0;
    }
 }
 
@@ -928,8 +940,8 @@ export function onItemSelect(itemType: ItemType): void {
    const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "placeable": {
-         const torchTrait = ITEM_TRAITS_RECORD[itemType].torch;
-         if (typeof torchTrait === "undefined") {
+         // @Hack
+         if (itemType !== ItemType.slurbTorch && itemType !== ItemType.fireTorch) {
             latencyGameState.playerIsPlacingEntity = true;
          }
          break;
@@ -1514,6 +1526,12 @@ const tickItem = (itemType: ItemType): void => {
                case ServerComponentType.totemBanner: {
                   components[componentType] = {
                      banners: []
+                  };
+                  break;
+               }
+               case ServerComponentType.floorSign: {
+                  components[componentType] = {
+                     message: ""
                   };
                   break;
                }

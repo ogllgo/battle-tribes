@@ -139,6 +139,7 @@ const Terminal = ({ startingIsVisible }: TerminalParams) => {
             if (!Number.isNaN(trackedEntityID)) {
                const id = Number(trackedEntityID);
                if (entityExists(id)) {
+                  Camera.verybadIsTracking = true;
                   Camera.trackEntity(id);
                }
             }

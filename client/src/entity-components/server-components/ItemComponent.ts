@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { createDeepFrostHeartBloodParticles } from "../../particles";
-import { ITEM_TRAITS_RECORD, ItemType } from "battletribes-shared/items/items";
+import { ItemType } from "battletribes-shared/items/items";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
@@ -55,8 +55,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
 
    if (itemComponentParams.itemType === ItemType.slurb) {
-      const torch = ITEM_TRAITS_RECORD[ItemType.slurb].torch!;
-      const light = createLight(new Point(0, 0), torch.lightIntensity, torch.lightStrength, torch.lightRadius, torch.lightR, torch.lightG, torch.lightB);
+      const light = createLight(new Point(0, 0), 0.6, 0.5, 4, 1, 0.1, 1);
       entityIntermediateInfo.lights.push({
          light: light,
          attachedRenderPart: renderPart

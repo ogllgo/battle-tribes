@@ -38,6 +38,8 @@ import { entityIsTameableByPlayer } from "./entity-components/server-components/
 import { createHitbox, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
+import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
+import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -57,7 +59,8 @@ const enum InteractActionType {
    pickUpArrow,
    setCarryTarget,
    selectAttackTarget,
-   openTamingMenu
+   openTamingMenu,
+   inscribeFloorSign
 }
 
 interface BaseInteractAction {
@@ -126,7 +129,11 @@ interface OpenTamingMenuAction extends BaseInteractAction {
    readonly type: InteractActionType.openTamingMenu;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction;
+interface InscribeFloorSignAction extends BaseInteractAction {
+   readonly type: InteractActionType.inscribeFloorSign;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -324,6 +331,15 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       }
    }
 
+   // Inscribe signs
+if (FloorSignComponentArray.hasComponent(entity)) {
+   return {
+      type: InteractActionType.inscribeFloorSign,
+      interactEntity: entity,
+      interactRange: Vars.DEFAULT_INTERACT_RANGE
+   };
+}
+
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
       return {
@@ -351,7 +367,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.pickUpArrow:
       case InteractActionType.setCarryTarget:
       case InteractActionType.selectAttackTarget:
-      case InteractActionType.openTamingMenu: {
+      case InteractActionType.openTamingMenu:
+      case InteractActionType.inscribeFloorSign: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {
@@ -491,6 +508,15 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          });
          break;
       }
+      case InteractActionType.inscribeFloorSign: {
+         selectedEntityID = entity;
+         SignInscribeMenu_setEntity(entity);
+         addMenuCloseFunction(() => {
+            deselectSelectedEntity();
+            SignInscribeMenu_setEntity(null);
+         });
+         break;
+      }
       default: {
          const unreachable: never = action;
          return unreachable;
@@ -573,8 +599,9 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
 
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck && doCanSelectCheck) {
-               // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from center
-               if (playerHitbox.box.position.calculateDistanceBetween(playerHitbox.box.position) > interactAction!.interactRange) {
+               const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+               // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from player center
+               if (playerHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position) > interactAction!.interactRange) {
                   continue;
                }
             }

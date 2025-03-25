@@ -1,4 +1,4 @@
-import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
+import { alignLengthBytes, getStringLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
 import { getSelectedEntityID } from "../entity-selection";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { GameDataPacketOptions } from "battletribes-shared/client-server-types";
@@ -6,7 +6,7 @@ import OPTIONS from "../options";
 import { windowHeight, windowWidth } from "../webgl";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import Client from "./Client";
-import { getHotbarSelectedItemSlot, getInstancePlayerAction } from "../components/game/GameInteractableLayer";
+import { getHotbarSelectedItemSlot, getInstancePlayerAction, getPlayerMoveIntention } from "../components/game/GameInteractableLayer";
 import { entityExists, getEntityType } from "../world";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { BlueprintType } from "../../../shared/src/components";
@@ -20,6 +20,8 @@ export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
    // Velocity
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   // Movement intention
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // angular velocity
    lengthBytes += 1 * Float32Array.BYTES_PER_ELEMENT;
@@ -42,6 +44,10 @@ export function createPlayerDataPacket(): ArrayBuffer {
 
    packet.addNumber(playerHitbox.velocity.x);
    packet.addNumber(playerHitbox.velocity.y);
+
+   const movementIntention = getPlayerMoveIntention();
+   packet.addNumber(movementIntention.x);
+   packet.addNumber(movementIntention.y);
 
    packet.addNumber(playerHitbox.angleTurnSpeed);
 
@@ -364,5 +370,18 @@ export function sendSetSpectatingPositionPacket(): void {
    const packet = new Packet(PacketType.setSpectatingPosition, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(Camera.position.x);
    packet.addNumber(Camera.position.y);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendDevSetViewedSpawnDistributionPacket(entityType: EntityType | -1): void {
+   const packet = new Packet(PacketType.devSetViewedSpawnDistribution, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entityType);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendSetSignMessagePacket(entity: Entity, message: string): void {
+   const packet = new Packet(PacketType.setSignMessage, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
+   packet.addNumber(entity);
+   packet.addString(message);
    Client.sendPacket(packet.buffer);
 }

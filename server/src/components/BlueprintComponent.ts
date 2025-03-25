@@ -167,7 +167,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          // Transfer the worker to the warrior hut
          const hutComponent = HutComponentArray.getComponent(blueprintComponent.associatedEntityID);
          if (hutComponent.hasTribesman) {
-            tribeComponent.tribe.instantRespawnTribesman(config.entity);
+            tribeComponent.tribe.instantRespawnTribesman(hut);
          }
 
          return;
@@ -203,7 +203,7 @@ export function doBlueprintWork(blueprintEntity: Entity, itemType: HammerItemTyp
 }
 
 function getDataLength(): number {
-   return 4 * Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

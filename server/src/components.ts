@@ -102,6 +102,12 @@ import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
+import { MossComponent } from "./components/MossComponent";
+import { GlurbComponent } from "./components/GlurbComponent";
+import { FloorSignComponent } from "./components/FloorSignComponent";
+import { DesertBushLivelyComponent } from "./components/DesertBushLivelyComponent";
+import { DesertBushSandyComponent } from "./components/DesertBushSandyComponent";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -185,6 +191,7 @@ const ComponentClassRecord = {
    [ServerComponentType.furnace]: () => FurnaceComponent,
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
+   [ServerComponentType.glurb]: () => GlurbComponent,
    [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
    [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
    [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
@@ -205,6 +212,11 @@ const ComponentClassRecord = {
    [ServerComponentType.slingTurretRock]: () => SlingTurretRockComponent,
    [ServerComponentType.taming]: () => TamingComponent,
    [ServerComponentType.loot]: () => LootComponent,
+   [ServerComponentType.moss]: () => MossComponent,
+   [ServerComponentType.floorSign]: () => FloorSignComponent,
+   [ServerComponentType.desertBushLively]: () => DesertBushLivelyComponent,
+   [ServerComponentType.desertBushSandy]: () => DesertBushSandyComponent,
+   [ServerComponentType.autoSpawned]: () => AutoSpawnedComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
@@ -228,16 +240,14 @@ export interface EntityConfigAttachInfo {
 }
 
 export interface EntityConfig {
-   readonly entity: Entity;
    readonly entityType: EntityType;
    readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
-   readonly attachInfo?: EntityConfigAttachInfo;
+   attachInfo?: EntityConfigAttachInfo;
+   /** Any child entities' configs. */
+   readonly childConfigs?: ReadonlyArray<EntityConfig>;
 }
-
-// We skip 0 as that is reserved for being a no-entity marker
-let idCounter = 1;
 
 export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, offset: Point, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
    return {
@@ -245,15 +255,5 @@ export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbo
       parentHitbox: parentHitbox,
       offset: offset,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
-   };
-}
-
-export function createEntityConfig(entityType: EntityType, components: EntityComponents, lights: ReadonlyArray<LightCreationInfo>, attachInfo?: EntityConfigAttachInfo): EntityConfig {
-   return {
-      entity: idCounter++,
-      entityType: entityType,
-      components: components,
-      lights: lights,
-      attachInfo: attachInfo
    };
 }

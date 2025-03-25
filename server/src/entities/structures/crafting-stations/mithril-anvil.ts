@@ -2,7 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../../components";
+import { EntityConfig } from "../../../components";
 import { CraftingStationComponent } from "../../../components/CraftingStationComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
@@ -55,9 +55,9 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    
    const mithrilAnvilComponent = new MithrilAnvilComponent();
    
-   return createEntityConfig(
-      EntityType.mithrilAnvil,
-      {
+   return {
+      entityType: EntityType.mithrilAnvil,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -66,6 +66,6 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
          [ServerComponentType.craftingStation]: craftingStationComponent,
          [ServerComponentType.mithrilAnvil]: mithrilAnvilComponent,
       },
-      []
-   );
+      lights: []
+   };
 }

@@ -30,7 +30,7 @@ CactusComponentArray.onHitboxCollision = onHitboxCollision;
 
 function getDataLength(entity: Entity): number {
    const cactusComponent = CactusComponentArray.getComponent(entity);
-   return 2 * Float32Array.BYTES_PER_ELEMENT + cactusComponent.flowers.length * 6 * Float32Array.BYTES_PER_ELEMENT;
+   return Float32Array.BYTES_PER_ELEMENT + cactusComponent.flowers.length * 6 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {

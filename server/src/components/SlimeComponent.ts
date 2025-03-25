@@ -12,11 +12,11 @@ import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity, getEntityHealth, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { TransformComponentArray, getEntityTile } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { Biome } from "../../../shared/src/biomes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -138,7 +138,7 @@ const getEnemyChaseTargetID = (slime: Entity): number => {
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.children[0] as Hitbox;
 
-      const tileIndex = getEntityTile(entityTransformComponent);
+      const tileIndex = getHitboxTile(entityHitbox);
       
       const entityType = getEntityType(entity);
       if (entityType === EntityType.slime || entityType === EntityType.slimewisp || layer.tileBiomes[tileIndex] !== Biome.swamp || !HealthComponentArray.hasComponent(entity)) {
@@ -183,7 +183,7 @@ const getChaseTargetID = (slime: Entity): number => {
             closestMergerID = entity;
          }
       } else {
-         const tileIndex = getEntityTile(otherTransformComponent);
+         const tileIndex = getHitboxTile(otherHitbox);
          
          if (getEntityType(entity) === EntityType.slimewisp || layer.tileBiomes[tileIndex] !== Biome.swamp || !HealthComponentArray.hasComponent(entity)) {
             continue;
@@ -214,7 +214,7 @@ function onTick(slime: Entity): void {
 
    const layer = getEntityLayer(slime);
 
-   const tileIndex = getEntityTile(transformComponent);
+   const tileIndex = getHitboxTile(slimeHitbox);
    const tileType = layer.tileTypes[tileIndex];
    
    // Slimes move at normal speed on slime and sludge blocks
@@ -304,7 +304,7 @@ function onTick(slime: Entity): void {
 function getDataLength(entity: Entity): number {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
-   let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT * slimeComponent.orbSizes.length;
 

@@ -185,6 +185,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.animalStaff]: null,
    [ItemType.woodenArrow]: null,
    [ItemType.tamingAlmanac]: null,
+   [ItemType.floorSign]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {

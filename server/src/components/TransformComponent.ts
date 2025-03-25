@@ -1,15 +1,14 @@
-import { PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
-import { assert, getTileIndexIncludingEdges, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin, TileIndex } from "battletribes-shared/utils";
+import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
-import { TileType } from "battletribes-shared/tiles";
-import { PhysicsComponentArray } from "./PhysicsComponent";
+import { tickEntityPhysics } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
@@ -22,18 +21,29 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
 import { Hitbox } from "../hitboxes";
+import { EntityConfig } from "../components";
+
+interface AngularTetherInfo {
+   readonly springConstant: number;
+   readonly angularDamping: number;
+   /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
+   readonly padding: number;
+}
 
 interface HitboxTether {
    readonly hitbox: Hitbox;
-   /** If null, the tether is between the same entity */
-   readonly otherEntity: Entity | null;
-   readonly otherHitbox: Hitbox;
+   readonly originHitbox: Hitbox;
    
    readonly idealDistance: number;
    readonly springConstant: number;
    readonly damping: number;
 
+   readonly affectsOriginHitbox: boolean;
+
+   readonly angularTether?: AngularTetherInfo;
+
    // Used for verlet integration
+   // @Cleanup: unused?
    previousPositionX: number;
    previousPositionY: number;
 }
@@ -42,8 +52,6 @@ export interface EntityAttachInfo {
    readonly attachedEntity: Entity;
    /** Parented to a hitbox of the parent entity, or just the parent entity itself */
    readonly parent: Hitbox | null;
-   /** Offset from the parent hitbox */
-   // readonly offset: Point;
    /** If true, when the parent entity is destroyed, the child will be destroyed as well. */
    readonly destroyWhenParentIsDestroyed: boolean;
 }
@@ -65,8 +73,6 @@ export class TransformComponent {
  
    /** All chunks the entity is contained in */
    public readonly chunks = new Array<Chunk>();
-
-   public isInRiver = false;
 
    public rootEntity: Entity = 0;
    public parentEntity: Entity = 0;
@@ -99,53 +105,17 @@ export class TransformComponent {
 
    public nextHitboxLocalID = 1;
 
-   public updateIsInRiver(entity: Entity): void {
-      const tileIndex = getEntityTile(this);
-      const layer = getEntityLayer(entity);
-      
-      const tileType = layer.tileTypes[tileIndex];
-      if (tileType !== TileType.water) {
-         this.isInRiver = false;
-         return;
-      }
-
-      if (PhysicsComponentArray.hasComponent(entity)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(entity);
-         if (!physicsComponent.isAffectedByGroundFriction) {
-            this.isInRiver = false;
-            return;
-         }
-      }
-
-      // If the game object is standing on a stepping stone they aren't in a river
-      // @Hack
-      const hitbox = this.children[0] as Hitbox;
-      for (const chunk of this.chunks) {
-         for (const steppingStone of chunk.riverSteppingStones) {
-            const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
-            
-            const distX = hitbox.box.position.x - steppingStone.positionX;
-            const distY = hitbox.box.position.y - steppingStone.positionY;
-            if (distX * distX + distY * distY <= size * size / 4) {
-               this.isInRiver = false;
-               return;
-            }
-         }
-      }
-
-      this.isInRiver = true;
-   }
-
-   public addHitboxTether(hitbox: Hitbox, otherEntity: Entity | null, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number): void {
+   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, angularTether?: AngularTetherInfo): void {
       const tether: HitboxTether = {
          hitbox: hitbox,
-         otherEntity: otherEntity,
-         otherHitbox: otherHitbox,
+         originHitbox: otherHitbox,
          idealDistance: idealDistance,
          springConstant: springConstant,
          damping: damping,
+         affectsOriginHitbox: affectsOriginHitbox,
          previousPositionX: hitbox.box.position.x,
-         previousPositionY: hitbox.box.position.y
+         previousPositionY: hitbox.box.position.y,
+         angularTether: angularTether
       };
       this.tethers.push(tether);
    }
@@ -207,6 +177,17 @@ export function addHitboxToTransformComponent(transformComponent: TransformCompo
    } else {
       hitbox.parent.children.push(hitbox);
    }
+}
+
+export function addEntityToTransformComponent(transformComponent: TransformComponent, entity: Entity, destroyWhenParentIsDestroyed: boolean): void {
+   const attachInfo: EntityAttachInfo = {
+      attachedEntity: entity,
+      parent: null,
+      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+   };
+
+   transformComponent.children.push(attachInfo);
+   transformComponent.rootChildren.push(attachInfo);
 }
 
 /** Should only be called after an entity is created */
@@ -417,48 +398,63 @@ export function cleanTransform(node: Hitbox | Entity): void {
       // An object only changes their chunks if a hitboxes' bounds change chunks.
       let hitboxChunkBoundsHaveChanged = false;
       for (let i = 0; i < transformComponent.children.length; i++) {
-         const hitbox = transformComponent.children[i];
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
-         const box = hitbox.box;
-   
-         const boundsMinX = box.calculateBoundsMinX();
-         const boundsMaxX = box.calculateBoundsMaxX();
-         const boundsMinY = box.calculateBoundsMinY();
-         const boundsMaxY = box.calculateBoundsMaxY();
-   
-         // Update bounding area
-         if (boundsMinX < transformComponent.boundingAreaMinX) {
-            transformComponent.boundingAreaMinX = boundsMinX;
-         }
-         if (boundsMaxX > transformComponent.boundingAreaMaxX) {
-            transformComponent.boundingAreaMaxX = boundsMaxX;
-         }
-         if (boundsMinY < transformComponent.boundingAreaMinY) {
-            transformComponent.boundingAreaMinY = boundsMinY;
-         }
-         if (boundsMaxY > transformComponent.boundingAreaMaxY) {
-            transformComponent.boundingAreaMaxY = boundsMaxY;
-         }
-   
-         // Check if the hitboxes' chunk bounds have changed
-         // @Speed
-         // @Speed
-         // @Speed
-         if (!hitboxChunkBoundsHaveChanged) {
-            if (Math.floor(boundsMinX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinX / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMaxX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxX / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMinY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinY / Settings.CHUNK_UNITS) ||
-                  Math.floor(boundsMaxY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxY / Settings.CHUNK_UNITS)) {
-               hitboxChunkBoundsHaveChanged = true;
+         const child = transformComponent.children[i];
+         if (entityChildIsEntity(child)) {
+            const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+            // We can do this as earlier in the code we guaranteed that all children of the hitbox have their bounding area updated.
+            if (childTransformComponent.boundingAreaMinX < transformComponent.boundingAreaMinX) {
+               transformComponent.boundingAreaMinX = childTransformComponent.boundingAreaMinX;
             }
+            if (childTransformComponent.boundingAreaMaxX < transformComponent.boundingAreaMaxX) {
+               transformComponent.boundingAreaMaxX = childTransformComponent.boundingAreaMaxX;
+            }
+            if (childTransformComponent.boundingAreaMinY < transformComponent.boundingAreaMinY) {
+               transformComponent.boundingAreaMinY = childTransformComponent.boundingAreaMinY;
+            }
+            if (childTransformComponent.boundingAreaMaxY < transformComponent.boundingAreaMaxY) {
+               transformComponent.boundingAreaMaxY = childTransformComponent.boundingAreaMaxY;
+            }
+         } else {
+            const hitbox = child;
+            const box = hitbox.box;
+      
+            const boundsMinX = box.calculateBoundsMinX();
+            const boundsMaxX = box.calculateBoundsMaxX();
+            const boundsMinY = box.calculateBoundsMinY();
+            const boundsMaxY = box.calculateBoundsMaxY();
+      
+            // Update bounding area
+            if (boundsMinX < transformComponent.boundingAreaMinX) {
+               transformComponent.boundingAreaMinX = boundsMinX;
+            }
+            if (boundsMaxX > transformComponent.boundingAreaMaxX) {
+               transformComponent.boundingAreaMaxX = boundsMaxX;
+            }
+            if (boundsMinY < transformComponent.boundingAreaMinY) {
+               transformComponent.boundingAreaMinY = boundsMinY;
+            }
+            if (boundsMaxY > transformComponent.boundingAreaMaxY) {
+               transformComponent.boundingAreaMaxY = boundsMaxY;
+            }
+      
+            // Check if the hitboxes' chunk bounds have changed
+            // @Speed
+            // @Speed
+            // @Speed
+            if (!hitboxChunkBoundsHaveChanged) {
+               if (Math.floor(boundsMinX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinX / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMaxX / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxX / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMinY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMinY / Settings.CHUNK_UNITS) ||
+                     Math.floor(boundsMaxY / Settings.CHUNK_UNITS) !== Math.floor(hitbox.boundsMaxY / Settings.CHUNK_UNITS)) {
+                  hitboxChunkBoundsHaveChanged = true;
+               }
+            }
+      
+            hitbox.boundsMinX = boundsMinX;
+            hitbox.boundsMaxX = boundsMaxX;
+            hitbox.boundsMinY = boundsMinY;
+            hitbox.boundsMaxY = boundsMaxY;
          }
-   
-         hitbox.boundsMinX = boundsMinX;
-         hitbox.boundsMaxX = boundsMaxX;
-         hitbox.boundsMinY = boundsMinY;
-         hitbox.boundsMaxY = boundsMaxY;
       }
    
       transformComponent.isDirty = false;
@@ -470,7 +466,12 @@ export function cleanTransform(node: Hitbox | Entity): void {
 }
 
 export const TransformComponentArray = new ComponentArray<TransformComponent>(ServerComponentType.transform, true, getDataLength, addDataToPacket);
+TransformComponentArray.onInitialise = onInitialise;
 TransformComponentArray.onJoin = onJoin;
+TransformComponentArray.onTick = {
+   tickInterval: 1,
+   func: onTick
+};
 TransformComponentArray.preRemove = preRemove;
 TransformComponentArray.onRemove = onRemove;
 
@@ -524,12 +525,17 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 }
 
-function onJoin(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+function onInitialise(config: EntityConfig, entity: Entity): void {
+   // This used to be done in the onJoin function, but since entities can now be attached just before the onJoin functions
+   // are called, we have to initialise the root entity before that.
+   const transformComponent = config.components[ServerComponentType.transform]!;
    if (transformComponent.rootEntity === 0) {
       transformComponent.rootEntity = entity;
    }
+}
+
+function onJoin(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
    
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
@@ -548,8 +554,6 @@ function onJoin(entity: Entity): void {
       cleanTransform(entity);
    }
 
-   transformComponent.updateIsInRiver(entity);
-   
    // Add to chunks
    updateContainingChunks(transformComponent, entity);
 
@@ -559,6 +563,13 @@ function onJoin(entity: Entity): void {
    }
 
    updateEntityLights(entity);
+}
+
+function onTick(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.rootEntity === entity) {
+      tickEntityPhysics(entity);
+   }
 }
 
 function preRemove(entity: Entity): void {
@@ -647,9 +658,10 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
             packet.addBoolean(true);
             packet.padOffset(3);
    
-            // Other hitbox
-            packet.addNumber(tether.otherEntity !== null ? tether.otherEntity : 0);
-            packet.addNumber(tether.otherHitbox.localID);
+            addHitboxDataToPacket(packet, tether.originHitbox);
+            packet.addNumber(tether.idealDistance);
+            packet.addNumber(tether.springConstant);
+            packet.addNumber(tether.damping);
          } else {
             packet.addBoolean(false);
             packet.padOffset(3);
@@ -661,7 +673,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 6 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 5 * Float32Array.BYTES_PER_ELEMENT;
    
    for (const child of transformComponent.children) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -684,7 +696,8 @@ function getDataLength(entity: Entity): number {
          }
    
          if (typeof tether !== "undefined") {
-            lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+            lengthBytes += getHitboxDataLength(tether.originHitbox);
+            lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
          }
       }
    }
@@ -704,7 +717,6 @@ const propagateRootEntityChange = (entity: Entity, rootEntity: Entity): void => 
    }
 }
 
-/** Must be called after putting a hitbox as the child of another entity's hitbox.  */
 export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, offsetX: number, offsetY: number, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
    
@@ -716,13 +728,42 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
 
    if (parentHitbox !== null) {
       // Attach all root hitboxes to the parent hitbox
-      for (let i = 0; i < entityTransformComponent.rootChildren.length; i++) {
-         const child = entityTransformComponent.rootChildren[i];
+      for (const child of entityTransformComponent.rootChildren) {
          if (entityChildIsHitbox(child)) {
             // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
             child.parent = parentHitbox;
             child.box.offset.x = offsetX;
             child.box.offset.y = offsetY;
+         }
+      }
+   }
+   
+   const attachInfo: EntityAttachInfo = {
+      attachedEntity: entity,
+      parent: parentHitbox,
+      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+   };
+   parentTransformComponent.children.push(attachInfo);
+
+   registerDirtyEntity(entity);
+   registerDirtyEntity(parent);
+}
+
+// @Copynpaste !
+export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean): void {
+   assert(entity !== parent);
+   
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   const parentTransformComponent = TransformComponentArray.getComponent(parent);
+   
+   entityTransformComponent.rootEntity = parentTransformComponent.rootEntity;
+   entityTransformComponent.parentEntity = parent;
+
+   if (parentHitbox !== null) {
+      // Attach all root hitboxes to the parent hitbox
+      for (const rootHitbox of entityTransformComponent.rootChildren) {
+         if (entityChildIsHitbox(rootHitbox)) {
+            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
          }
       }
    }
@@ -754,6 +795,17 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    assert(typeof idx !== "undefined" && typeof entityAttachInfo !== "undefined");
 
    parentTransformComponent.children.splice(idx, 1);
+
+   // Remove from the parent's root children
+   const idx2 = parentTransformComponent.rootChildren.indexOf(entityAttachInfo);
+   if (idx2 !== -1) {
+      parentTransformComponent.rootChildren.splice(idx2, 1);
+   }
+
+   // If the parent has no children left, destroy the parent
+   if (parentTransformComponent.children.length === 0) {
+      destroyEntity(parent);
+   }
    
    const childTransformComponent = TransformComponentArray.getComponent(child);
    childTransformComponent.parentEntity = 0;
@@ -762,6 +814,15 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    for (const child of childTransformComponent.rootChildren) {
       if (entityChildIsHitbox(child)) {
          child.parent = null;
+
+         // Remove any tethers to the parent hitbox
+         for (let i = 0; i < childTransformComponent.tethers.length; i++) {
+            const tether = childTransformComponent.tethers[i];
+            if (tether.originHitbox === entityAttachInfo.parent) {
+               childTransformComponent.tethers.splice(i, 1);
+               break;
+            }
+         }
       }
    }
    
@@ -769,22 +830,6 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    registerDirtyEntity(child);
    
    propagateRootEntityChange(child, child);
-}
-
-export function getEntityTile(transformComponent: TransformComponent): TileIndex {
-   // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
-
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
-}
-
-// @Location?
-export function getHitboxTile(hitbox: Hitbox): TileIndex {
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   return getTileIndexIncludingEdges(tileX, tileY);
 }
 
 export function getRandomPositionInBox(box: Box): Point {
@@ -823,7 +868,7 @@ const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: nu
          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
          const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
          if (typeof result === "number") {
-            newI = i;
+            newI = result;
          } else {
             return result;
          }
@@ -896,7 +941,7 @@ export function getFirstEntityWithComponent<T extends object>(componentArray: Co
 
 // @Copynpaste
 /** For a given entity, gets the first component up its entity tree. Returns null if none was found. */
-export function getFirstComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): T | null {
+export function getFirstComponent<T extends object>(componentArray: ComponentArray<T>, entity: Entity): T {
    if (componentArray.hasComponent(entity)) {
       return componentArray.getComponent(entity);
    }
@@ -908,7 +953,7 @@ export function getFirstComponent<T extends object>(componentArray: ComponentArr
       return componentArray.getComponent(transformComponent.rootEntity);
    }
 
-   return null;
+   throw new Error();
 }
 
 export function entityTreeHasComponent(componentArray: ComponentArray, entity: Entity): boolean {
@@ -929,4 +974,21 @@ export function entityTreeHasComponent(componentArray: ComponentArray, entity: E
 export function getRootEntity(entity: Entity): Entity {
    const transformComponent = TransformComponentArray.getComponent(entity);
    return transformComponent.rootEntity;
+}
+
+/** Attempts to return the first hitbox which can be found in the transform component or any of its parents */
+export function getTransformComponentFirstHitbox(transformComponent: TransformComponent): Hitbox | null {
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child)) {
+         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+         const childFirstHitbox = getTransformComponentFirstHitbox(childTransformComponent);
+         if (childFirstHitbox !== null) {
+            return childFirstHitbox;
+         }
+      } else {
+         return child;
+      }
+   }
+
+   return null;
 }

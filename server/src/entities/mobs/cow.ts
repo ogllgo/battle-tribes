@@ -1,9 +1,9 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import WanderAI from "../../ai/WanderAI";
@@ -26,6 +26,8 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
+import { AutoSpawnedComponent } from "../../components/AutoSpawnedComponent";
+import { EntitySpawnInfo } from "../../entity-spawn-info";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
@@ -92,17 +94,21 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-export function createCowConfig(position: Point, rotation: number): EntityConfig {
+export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
    const transformComponent = new TransformComponent();
 
    // Body hitbox
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), rotation, 50, 80), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
    // Head hitbox
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
-   transformComponent.addHitboxTether(headHitbox, null, bodyHitbox, 50, 5, 0.4);
+   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, {
+      springConstant: 5,
+      angularDamping: 0,
+      padding: Math.PI * 0.1
+   });
 
    const physicsComponent = new PhysicsComponent();
 
@@ -126,11 +132,11 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
    
    const tamingComponent = new TamingComponent();
    
-   const cowComponent = new CowComponent();
+   const cowComponent = new CowComponent(species);
    
-   return createEntityConfig(
-      EntityType.cow,
-      {
+   return {
+      entityType: EntityType.cow,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
@@ -144,6 +150,6 @@ export function createCowConfig(position: Point, rotation: number): EntityConfig
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.cow]: cowComponent
       },
-      []
-   );
+      lights: []
+   };
 }

@@ -51,7 +51,7 @@ function onTick(entity: Entity): void {
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToComponent(packet: Packet, entity: Entity): void {
@@ -91,9 +91,8 @@ export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: Pl
          break;
       }
    }
-   createEntity(config, getEntityLayer(planterBox), 0);
-
-   planterBoxComponent.plant = config.entity;
+   planterBoxComponent.plant = createEntity(config, getEntityLayer(planterBox), 0);
+   
    planterBoxComponent.replantEntityType = plantedEntityType;
 }
 

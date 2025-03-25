@@ -7,7 +7,7 @@ import { StatusEffectComponent, StatusEffectComponentArray, applyStatusEffect } 
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -40,9 +40,9 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
    
    const punjiSticksComponent = new PunjiSticksComponent();
    
-   return createEntityConfig(
-      EntityType.floorPunjiSticks,
-      {
+   return {
+      entityType: EntityType.floorPunjiSticks,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -51,8 +51,8 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
          [ServerComponentType.spikes]: spikesComponent,
          [ServerComponentType.punjiSticks]: punjiSticksComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function createWallPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
@@ -74,9 +74,9 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
    
    const punjiSticksComponent = new PunjiSticksComponent();
    
-   return createEntityConfig(
-      EntityType.wallPunjiSticks,
-      {
+   return {
+      entityType: EntityType.wallPunjiSticks,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -85,8 +85,8 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
          [ServerComponentType.spikes]: spikesComponent,
          [ServerComponentType.punjiSticks]: punjiSticksComponent
       },
-      []
-   );
+      lights: []
+   };
 }
 
 export function onPunjiSticksCollision(punjiSticks: Entity, collidingEntity: Entity, collisionPoint: Point): void {

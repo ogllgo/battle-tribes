@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import Tribe from "../../Tribe";
 import { TribeComponent } from "../../components/TribeComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -34,9 +34,9 @@ export function createResearchBenchConfig(position: Point, rotation: number, tri
 
    const researchBenchComponent = new ResearchBenchComponent();
    
-   return createEntityConfig(
-      EntityType.researchBench,
-      {
+   return {
+      entityType: EntityType.researchBench,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -44,6 +44,6 @@ export function createResearchBenchConfig(position: Point, rotation: number, tri
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.researchBench]: researchBenchComponent
       },
-      []
-   );
+      lights: []
+   };
 }

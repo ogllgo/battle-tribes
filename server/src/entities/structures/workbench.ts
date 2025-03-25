@@ -1,7 +1,7 @@
 import { EntityType } from "battletribes-shared/entities";
 import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntityConfig, EntityConfig } from "../../components";
+import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -21,11 +21,15 @@ import { StructureConnection } from "../../structure-placement";
 export function createWorkbenchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   addHitboxToTransformComponent(transformComponent, hitbox1);
+   // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
-   addHitboxToTransformComponent(transformComponent, hitbox2);
+   // const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // addHitboxToTransformComponent(transformComponent, hitbox1);
+   
+   // const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(15);
    
@@ -37,9 +41,9 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    
    const craftingStationComponent = new CraftingStationComponent(CraftingStation.workbench);
    
-   return createEntityConfig(
-      EntityType.workbench,
-      {
+   return {
+      entityType: EntityType.workbench,
+      components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
@@ -47,6 +51,6 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.craftingStation]: craftingStationComponent
       },
-      []
-   );
+      lights: []
+   };
 }

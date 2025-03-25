@@ -1,11 +1,12 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { DamageSource, Entity } from "battletribes-shared/entities";
+import { DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
 import { Packet } from "battletribes-shared/packets";
 import { assert, Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import { HitboxCollisionPair } from "../collision-detection";
 import { Hitbox } from "../hitboxes";
+import { getEntityType } from "../world";
 
 const enum ComponentArrayPriority {
    low,
@@ -148,7 +149,10 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
          this.components.push(component);
          
          if (this.isActiveByDefault) {
-            this.activateComponent(entity);
+            // @HACK: so that grass doesn't bring the server to 1tps by updating transforms for grass every tick
+            if (this.componentType !== ServerComponentType.transform || getEntityType(entity) !== EntityType.grassStrand) {
+               this.activateComponent(entity);
+            }
          }
       }
    }
@@ -211,7 +215,10 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.components.pop();
 
       if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
-         this.deactivateComponent(entity);
+         // @HACK: so that grass doesn't bring the server to 1tps by updating transforms for grass every tick
+         if (this.componentType !== ServerComponentType.transform || getEntityType(entity) !== EntityType.grassStrand) {
+            this.deactivateComponent(entity);
+         }
       }
    }
 
@@ -365,6 +372,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.furnace]: ComponentArrayPriority.medium,
       [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurb]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbBodySegment]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbHeadSegment]: ComponentArrayPriority.medium,
@@ -384,7 +392,12 @@ export function sortComponentArrays(): void {
       [ServerComponentType.blockAttack]: ComponentArrayPriority.medium,
       [ServerComponentType.slingTurretRock]: ComponentArrayPriority.medium,
       [ServerComponentType.taming]: ComponentArrayPriority.medium,
-      [ServerComponentType.loot]: ComponentArrayPriority.medium,
+      [ServerComponentType.loot]: ComponentArrayPriority.medium,  
+      [ServerComponentType.moss]: ComponentArrayPriority.medium,
+      [ServerComponentType.floorSign]: ComponentArrayPriority.medium,
+      [ServerComponentType.desertBushLively]: ComponentArrayPriority.medium,
+      [ServerComponentType.desertBushSandy]: ComponentArrayPriority.medium,
+      [ServerComponentType.autoSpawned]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high
