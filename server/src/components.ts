@@ -105,6 +105,9 @@ import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
 import { FloorSignComponent } from "./components/FloorSignComponent";
+import { DesertBushLivelyComponent } from "./components/DesertBushLivelyComponent";
+import { DesertBushSandyComponent } from "./components/DesertBushSandyComponent";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -211,6 +214,9 @@ const ComponentClassRecord = {
    [ServerComponentType.loot]: () => LootComponent,
    [ServerComponentType.moss]: () => MossComponent,
    [ServerComponentType.floorSign]: () => FloorSignComponent,
+   [ServerComponentType.desertBushLively]: () => DesertBushLivelyComponent,
+   [ServerComponentType.desertBushSandy]: () => DesertBushSandyComponent,
+   [ServerComponentType.autoSpawned]: () => AutoSpawnedComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

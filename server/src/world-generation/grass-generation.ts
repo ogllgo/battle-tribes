@@ -2,7 +2,6 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import Layer from "../Layer";
 import { createGrassStrandConfig } from "../entities/grass-strand";
-import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity } from "../Entity";
 import { distance, getTileIndexIncludingEdges, Point, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
 import { pushJoinBuffer } from "../world";
@@ -14,8 +13,12 @@ const enum Vars {
 }
 
 const getGrassDensityMultiplier = (layer: Layer, tileIndex: TileIndex): number => {
-   const humidity = layer.tileHumidities[tileIndex];
-   return humidity * 0.7 + 0.3;
+   if (layer.getTileType(tileIndex) === TileType.sandyDirt) {
+      return 0.5;
+   } else {
+      const humidity = layer.tileHumidities[tileIndex];
+      return humidity * 0.7 + 0.3;
+   }
 }
 
 /** Calculates the distance in tiles of a position from a water tile */
@@ -81,7 +84,8 @@ export function generateGrassStrands(): void {
    for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
       for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         if (surfaceLayer.tileTypes[tileIndex] !== TileType.grass) {
+         const tileType = surfaceLayer.getTileType(tileIndex);
+         if (tileType !== TileType.grass && tileType !== TileType.sandyDirt) {
             continue;
          }
 
@@ -102,7 +106,7 @@ export function generateGrassStrands(): void {
                continue;
             }
 
-            const config = createGrassStrandConfig(new Point(x, y), 0);
+            const config = createGrassStrandConfig(new Point(x, y), 0, tileType);
             createEntity(config, surfaceLayer, 0);
 
             // Since the entity spawning has to find a place to insert the entity, we force push it to prevent it from taking forever

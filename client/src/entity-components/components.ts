@@ -121,6 +121,9 @@ import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent"
 import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
 import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
 import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams } from "./server-components/FloorSignComponent";
+import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLivelyComponentParams } from "./server-components/DesertBushLivelyComponent";
+import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
+import { AutoSpawnedComponent, AutoSpawnedComponentArray, AutoSpawnedComponentParams } from "./server-components/AutoSpawnedComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -250,6 +253,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.loot]: LootComponentArray,
    [ServerComponentType.moss]: MossComponentArray,
    [ServerComponentType.floorSign]: FloorSignComponentArray,
+   [ServerComponentType.desertBushLively]: DesertBushLivelyComponentArray,
+   [ServerComponentType.desertBushSandy]: DesertBushSandyComponentArray,
+   [ServerComponentType.autoSpawned]: AutoSpawnedComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -355,6 +361,9 @@ const ServerComponentRecord = {
    [ServerComponentType.loot]: (): LootComponent => 0 as any,
    [ServerComponentType.moss]: (): MossComponent => 0 as any,
    [ServerComponentType.floorSign]: (): FloorSignComponent => 0 as any,
+   [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponent => 0 as any,
+   [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponent => 0 as any,
+   [ServerComponentType.autoSpawned]: (): AutoSpawnedComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -462,6 +471,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.loot]: (): LootComponentParams => 0 as any,
    [ServerComponentType.moss]: (): MossComponentParams => 0 as any,
    [ServerComponentType.floorSign]: (): FloorSignComponentParams => 0 as any,
+   [ServerComponentType.desertBushLively]: (): DesertBushLivelyComponentParams => 0 as any,
+   [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponentParams => 0 as any,
+   [ServerComponentType.autoSpawned]: (): AutoSpawnedComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

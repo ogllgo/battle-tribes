@@ -80,6 +80,11 @@ function onTick(swingAttack: Entity): void {
    
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const limb = swingAttackComponent.limb;
+
+   // @HACK @TEMPORARY! here cuz somtimes ownerTransformComponent is undefined (???) which crashes the server
+   if (!entityExists(swingAttackComponent.owner)) {
+      return;
+   }
    
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    const swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
@@ -253,7 +258,8 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
    const owner = swingAttackComponent.owner;
    // @Temporary: remove when bug is fixed
    if (!entityExists(owner)) {
-      throw new Error();
+      console.warn("OUSEOFJHOSJFOISDJF bad")
+      return;
    }
    // @Temporary: remove when bug is fixed
    // @Bug: Happens when a zombie swings !!!

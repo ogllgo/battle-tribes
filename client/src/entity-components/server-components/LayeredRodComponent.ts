@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ColouredRenderPart, { RenderPartColour } from "../../render-parts/ColouredRenderPart";
-import { Colour, hueShift, lerp, multiColourLerp } from "battletribes-shared/utils";
+import { Colour, getTileIndexIncludingEdges, hueShift, lerp, multiColourLerp } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity, EntityType } from "battletribes-shared/entities";
@@ -8,6 +8,7 @@ import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityTyp
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { Hitbox } from "../../hitboxes";
+import { TileType } from "../../../../shared/src/tiles";
 
 const enum Vars {
    NATURAL_DRIFT = 20 / Settings.TPS
@@ -84,13 +85,10 @@ const getLayerColour = (entityParams: EntityParams, r: number, g: number, b: num
    
          const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
          const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         const tileType = surfaceLayer.getTile(tileIndex).type;
    
          const grassInfo = surfaceLayer.grassInfo[tileX][tileY];
-   
-         let humidity = grassInfo.humidity;
-         if (grassInfo.temperature <= 0.5) {
-            humidity = lerp(humidity, 0, 1 - grassInfo.temperature * 2);
-         }
 
          // Lower layers are darker
          // let brightnessMultiplier = layer / data.numLayers;
@@ -98,13 +96,24 @@ const getLayerColour = (entityParams: EntityParams, r: number, g: number, b: num
          // Minimum brighness
          brightnessMultiplier = lerp(brightnessMultiplier, 1, 0.915);
 
+         // Desert grass has slightly more consistent colours
+         if (tileType === TileType.sandyDirt) {
+            brightnessMultiplier = lerp(brightnessMultiplier, 1, 0.5);
+         }
+
          const colour: RenderPartColour = {
             r: r * brightnessMultiplier,
             g: g * brightnessMultiplier,
             b: b * brightnessMultiplier,
             a: 1
          };
-         if (grassInfo.temperature > 0) {
+         // @Hack: the temperature check seems pointless
+         if (grassInfo.temperature > 0 && tileType === TileType.grass) {
+            let humidity = grassInfo.humidity;
+            if (grassInfo.temperature <= 0.5) {
+               humidity = lerp(humidity, 0, 1 - grassInfo.temperature * 2);
+            }
+
             const humidityMultiplier = (humidity - 0.5) * -0.7;
             if (humidityMultiplier > 0) {
                colour.r = lerp(colour.r, 1, humidityMultiplier * 0.7);

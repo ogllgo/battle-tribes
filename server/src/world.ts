@@ -16,7 +16,6 @@ import { generateUndergroundTerrain } from "./world-generation/underground-layer
 import { EntityConfig } from "./components";
 import { attachLightToHitbox } from "./light-levels";
 import { attachEntity } from "./components/TransformComponent";
-import { removeEntityFromSpawnDistributions } from "./entity-spawn-info";
 
 const enum Vars {
    START_TIME = 6
@@ -295,7 +294,6 @@ export function destroyFlaggedEntities(): void {
       }
 
       removeEntityFromCensus(entity);
-      removeEntityFromSpawnDistributions(entity);
 
       delete entityTypes[entity];
       delete entityLayers[entity];

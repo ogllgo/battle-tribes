@@ -6,7 +6,7 @@ import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
 import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { changeEntityLayer, TransformComponentArray } from "../components/TransformComponent";
+import { changeEntityLayer, getFirstComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
@@ -693,7 +693,7 @@ export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient
       return;
    }
 
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    // Toggle the follow target
    if (!entityExists(tamingComponent.followTarget)) {
       tamingComponent.followTarget = playerClient.instance;
@@ -783,7 +783,7 @@ export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    const carryTarget = reader.readNumber();
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    tamingComponent.carryTarget = carryTarget;
 }
 
@@ -805,7 +805,7 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
 
    // @Hack
    const foodRequired: number | undefined = getTamingSpec(entity).tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
@@ -823,7 +823,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    // @Cleanup @Copynpaste
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
@@ -838,7 +838,7 @@ export function processAcquireTamingSkillPacket(playerClient: PlayerClient, read
    const entity = reader.readNumber() as Entity;
    const skillID = reader.readNumber() as TamingSkillID;
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    const skillLearning = getTamingSkillLearning(tamingComponent, skillID);
    if (skillLearning !== null && skillLearningIsComplete(skillLearning)) {
       const skill = getTamingSkill(skillID);
@@ -856,7 +856,7 @@ export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient,
    
    const skill = getTamingSkill(skillID);
    
-   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
    tamingComponent.acquiredSkills.push(skill);
 }
 

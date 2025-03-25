@@ -41,6 +41,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/glurb/glurb-head-segment.png")
    );
+   renderPart.addTag("tamingComponent:head");
    entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
       
    // Attach light to the render part

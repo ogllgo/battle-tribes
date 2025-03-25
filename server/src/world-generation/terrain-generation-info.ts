@@ -11,6 +11,12 @@ export interface TileGenerationRequirements {
    readonly minDist?: number;
    /** The maximum number of tiles from the end of the biome */
    readonly maxDist?: number;
+   readonly minHeight?: number;
+   readonly maxHeight?: number;
+   readonly minTemperature?: number;
+   readonly maxTemperature?: number;
+   readonly minHumidity?: number;
+   readonly maxHumidity?: number;
 }
 
 export interface FloorTileGenerationInfo {
@@ -85,8 +91,7 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
 
    [Biome.tundra]: {
       spawnRequirements: {
-         maxTemperature: 0.4,
-         maxHumidity: 0.8
+         maxTemperature: 0.3
       },
       floorTiles: [
          {
@@ -148,10 +153,19 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
 
    [Biome.desert]: {
       spawnRequirements: {
-         minTemperature: 0.6,
-         maxHumidity: 0.4
+         minTemperature: 0.7
       },
       floorTiles: [
+         {
+            tileType: TileType.sandyDirt,
+            requirements: {
+               noise: {
+                  scale: 6,
+                  minWeight: 0.45
+               },
+               maxTemperature: 0.97
+            }
+         },
          {
             tileType: TileType.sand
          }

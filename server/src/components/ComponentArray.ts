@@ -392,9 +392,12 @@ export function sortComponentArrays(): void {
       [ServerComponentType.blockAttack]: ComponentArrayPriority.medium,
       [ServerComponentType.slingTurretRock]: ComponentArrayPriority.medium,
       [ServerComponentType.taming]: ComponentArrayPriority.medium,
-      [ServerComponentType.loot]: ComponentArrayPriority.medium,
+      [ServerComponentType.loot]: ComponentArrayPriority.medium,  
       [ServerComponentType.moss]: ComponentArrayPriority.medium,
       [ServerComponentType.floorSign]: ComponentArrayPriority.medium,
+      [ServerComponentType.desertBushLively]: ComponentArrayPriority.medium,
+      [ServerComponentType.desertBushSandy]: ComponentArrayPriority.medium,
+      [ServerComponentType.autoSpawned]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

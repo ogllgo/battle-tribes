@@ -5,6 +5,7 @@ import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
 import { assert, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
 import { EntityConfig } from "./components";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import Layer from "./Layer";
 import { surfaceLayer } from "./layers";
 
@@ -273,21 +274,18 @@ export function addEntityToSpawnDistribution(spawnDistribution: SpawnDistributio
    }
 }
 
-export function removeEntityFromSpawnDistributions(entity: Entity): void {
-   // @Hack @Speed
- 
-   for (const spawnInfo of SPAWN_INFOS) {
-      const spawnDistribution = spawnInfo.spawnDistribution;
-      
-      const densityInfos = spawnDistribution.entityDensityMap.get(entity);
-      if (typeof densityInfos !== "undefined") {
-         // Remove from the current densities
-         // (Note: this will accumulate floating point errors, but that's what the regular distribution updates are for)
-         for (const densityInfo of densityInfos) {
-            spawnDistribution.currentDensities[densityInfo.blockIdx] -= densityInfo.density;
-         }
-         spawnInfo.spawnDistribution.entityDensityMap.delete(entity);
+export function removeEntityFromSpawnDistributions(entity: Entity, autoSpawnedComponent: AutoSpawnedComponent): void {
+   const spawnInfo = autoSpawnedComponent.spawnInfo;
+   const spawnDistribution = spawnInfo.spawnDistribution;
+   
+   const densityInfos = spawnDistribution.entityDensityMap.get(entity);
+   if (typeof densityInfos !== "undefined") {
+      // Remove from the current densities
+      // (Note: this will accumulate floating point errors, but that's what the regular distribution updates are for)
+      for (const densityInfo of densityInfos) {
+         spawnDistribution.currentDensities[densityInfo.blockIdx] -= densityInfo.density;
       }
+      spawnInfo.spawnDistribution.entityDensityMap.delete(entity);
    }
 }
 
@@ -315,6 +313,7 @@ export function registerNewSpawnInfo(params: EntitySpawnInfoParams): void {
    SPAWN_INFOS.push(spawnInfo);
 }
 
+// @HACK: there are sometimes multiple spawn infos per entity... this is ass
 export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnInfo | null {
    for (const spawnInfo of SPAWN_INFOS) {
       if (spawnInfo.entityType === entityType) {
@@ -327,6 +326,7 @@ export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnIn
 
 export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
    // @HACK @HACK @HACK
+   // @Robustness
    const tileType = spawnInfo.spawnableTileTypes[0];
    switch (tileType) {
       case TileType.grass: return Biome.grasslands;
@@ -335,6 +335,7 @@ export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
       case TileType.sludge: return Biome.swamp;
       case TileType.slime: return Biome.swamp;
       case TileType.rock: return Biome.mountains;
+      case TileType.sandyDirt: return Biome.desert;
       case TileType.sand: return Biome.desert;
       case TileType.snow: return Biome.tundra;
       case TileType.ice: return Biome.tundra;

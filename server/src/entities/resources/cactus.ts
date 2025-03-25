@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -30,7 +30,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    transformComponent.collisionBit = COLLISION_BITS.cactus;
 
    // Root hitbox
-   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, COLLISION_BITS.cactus, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, rootHitbox);
 
    const flowers = new Array<CactusFlower>();

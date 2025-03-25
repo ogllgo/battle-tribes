@@ -2,11 +2,11 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
 import { ComponentArray } from "./ComponentArray";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { entityExists } from "../world";
-import { Hitbox } from "../hitboxes";
+import { entityExists, getEntityType } from "../world";
+import { applyAcceleration, Hitbox } from "../hitboxes";
 
 export class FollowAIComponent {
    /** ID of the followed entity */
@@ -79,7 +79,23 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
    
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
-   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - 32;
+   // @Hack: This so asssss, should call a function to find the distance between entities instead
+   let radius: number;
+   if (getEntityType(entity) === EntityType.krumblid) {
+      radius = 12;
+   } else {
+      radius = 32;
+   }
+   const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
+   if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance - 4)) {
+      // Too close, move backwards!
+      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
+
+      const moveDirection = entityHitbox.box.position.calculateAngleBetween(followTargetHitbox.box.position) + Math.PI;
+      const accelerationX = acceleration * Math.sin(moveDirection);
+      const accelerationY = acceleration * Math.cos(moveDirection);
+      applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+   }
    if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance)) {
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {

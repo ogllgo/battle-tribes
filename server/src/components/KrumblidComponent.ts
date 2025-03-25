@@ -1,15 +1,18 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { randInt, UtilVars } from "battletribes-shared/utils";
+import { assert, randInt, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "./FollowAIComponent";
-import { TransformComponentArray } from "./TransformComponent";
+import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
-import { entityExists, getEntityType } from "../world";
-import { Hitbox } from "../hitboxes";
+import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { getHitboxTile, Hitbox } from "../hitboxes";
+import { HealthComponentArray } from "./HealthComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -22,6 +25,46 @@ KrumblidComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
+
+const entityIsFollowable = (entity: Entity): boolean => {
+   // Try to hide in cacti!
+   if (getEntityType(entity) === EntityType.cactus) {
+      return true;
+   }
+   
+   if (!HealthComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   // Krumblids aren't interesting to krumblids!
+   if (getEntityType(entity) === EntityType.krumblid) {
+      return false;
+   }
+    
+   if (!PhysicsComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   if (physicsComponent.isImmovable) {
+      // So it isn't interested in trees n shit
+      // @Incomplete: what about mobs which don't move? those should be interesting
+      return false;
+   }
+   
+   // Not interested in entities outside of the desert
+   // @Incomplete: should be interested in entities oustide of the desert, just won't walk out of the desert!
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = getTransformComponentFirstHitbox(transformComponent);
+   assert(hitbox !== null);
+   const entityTile = getHitboxTile(hitbox);
+   const layer = getEntityLayer(entity);
+   if (layer.getTileBiome(entityTile) !== Biome.desert) {
+      return false;
+   }
+   
+   return true;
+}
 
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
@@ -48,9 +91,10 @@ function onTick(krumblid: Entity): void {
    } else if (entityWantsToFollow(followAIComponent)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
          const entity = aiHelperComponent.visibleEntities[i];
-         if (getEntityType(entity) === EntityType.player) {
+         if (entityIsFollowable(entity)) {
             // Follow the entity
             followAISetFollowTarget(krumblid, entity, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), true);
+            // @Incomplete: movement isn't accounted for!
             return;
          }
       }

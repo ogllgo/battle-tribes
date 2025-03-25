@@ -370,6 +370,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Floor Sign",
       internalName: "floor-sign"
    },
+   [EntityType.desertBushLively]: {
+      name: "Desert Bush Lively",
+      internalName: "desert-bush-lively"
+   },
+   [EntityType.desertBushSandy]: {
+      name: "Desert Bush Sandy",
+      internalName: "desert-bush-sandy"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

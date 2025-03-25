@@ -92,8 +92,12 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
          }
          const otherBox = otherHitbox.box;
 
+         if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
+            continue;
+         }
+         
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherBox)) {
+         if (box.isColliding(otherBox)) {
             entity1InvolvedHitboxes.push(hitbox);
             entity2InvolvedHitboxes.push(otherHitbox);
          }

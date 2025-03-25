@@ -1,4 +1,4 @@
-import { Box, updateBox } from "./boxes/boxes";
+import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
 import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
@@ -14,6 +14,8 @@ export const COLLISION_BITS = {
 };
 
 export const DEFAULT_COLLISION_MASK = COLLISION_BITS.default | COLLISION_BITS.cactus | COLLISION_BITS.iceSpikes | COLLISION_BITS.plants | COLLISION_BITS.planterBox;
+
+// @Cleanup: this used to be for per-hitbox collision bits when collision bits were per-entity... but now they are just per hitbox... so this is redundant
 
 export const enum HitboxCollisionBit {
    DEFAULT = 1 << 0,

@@ -5,6 +5,7 @@ export const enum TileType {
    sludge,
    slime,
    rock,
+   sandyDirt,
    sand,
    snow,
    ice,
@@ -33,6 +34,7 @@ export const TileTypeString = {
    [TileType.sludge]: "sludge",
    [TileType.slime]: "slime",
    [TileType.rock]: "rock",
+   [TileType.sandyDirt]: "sandyDirt",
    [TileType.sand]: "sand",
    [TileType.snow]: "snow",
    [TileType.ice]: "ice",
@@ -47,6 +49,6 @@ export const TileTypeString = {
 
 export const NUM_TILE_TYPES = Object.keys(TileTypeString).length;
 
-//                                                                 grass dirt  water sludge slime rock  darkRock sand  sandstone snow  ice  permafrost magma lava  frost dropdown stone stoneWallFloor
-export const TILE_FRICTIONS: ReadonlyArray<number>              = [0.65, 0.65, 1,    0.9,   1,    0.65, 0.65,    0.65, 0.65,     0.9,  0.2, 0.65,      0.65, 0.85, 0.65, 0.65,    0.65, 0.65];
-export const TILE_MOVE_SPEED_MULTIPLIERS: ReadonlyArray<number> = [1,    1,    0.6,  0.6,   0.3,  1,    1,       1,    1,        0.65, 1.5, 1,         1,    1,    1,    1,       1,    1];
+//                                                                 grass dirt  water sludge slime rock  darkRock sandyDirt sand  sandstone snow  ice  permafrost magma lava  frost dropdown stone stoneWallFloor
+export const TILE_FRICTIONS: ReadonlyArray<number>              = [0.65, 0.65, 1,    0.9,   1,    0.65, 0.65,    0.65,     0.65, 0.65,     0.9,  0.2, 0.65,      0.65, 0.85, 0.65, 0.65,    0.65, 0.65];
+export const TILE_MOVE_SPEED_MULTIPLIERS: ReadonlyArray<number> = [1,    1,    0.6,  0.6,   0.3,  1,    1,       1,        1,    1,        0.65, 1.5, 1,         1,    1,    1,    1,       1,    1];

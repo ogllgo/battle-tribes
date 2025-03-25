@@ -385,6 +385,14 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
+   [EntityType.desertBushLively]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.desertBushSandy]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

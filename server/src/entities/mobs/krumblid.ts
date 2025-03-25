@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -23,8 +23,8 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
 
 export const enum KrumblidVars {
-   MIN_FOLLOW_COOLDOWN = 7,
-   MAX_FOLLOW_COOLDOWN = 9
+   MIN_FOLLOW_COOLDOWN = 8,
+   MAX_FOLLOW_COOLDOWN = 16
 }
 
 registerEntityLootOnDeath(EntityType.krumblid, [
@@ -41,7 +41,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 export function createKrumblidConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 24), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 24), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK & ~COLLISION_BITS.cactus, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -57,7 +57,7 @@ export function createKrumblidConfig(position: Point, rotation: number): EntityC
    
    const escapeAIComponent = new EscapeAIComponent(700, 2 * Math.PI);
    
-   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), 0.3, 50);
+   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), 0.3, 34);
    
    const lootComponent = new LootComponent();
    

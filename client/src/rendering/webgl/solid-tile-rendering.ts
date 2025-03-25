@@ -15,6 +15,7 @@ export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string |
    [TileType.ice]: "tiles/ice.png",
    [TileType.permafrost]: "tiles/permafrost.png",
    [TileType.fimbultur]: "tiles/fimbultur.png",
+   [TileType.sandyDirt]: "tiles/sandy-dirt.png",
    [TileType.sand]: "tiles/sand.png",
    [TileType.sludge]: "tiles/sludge.png",
    [TileType.slime]: "tiles/slime.png",

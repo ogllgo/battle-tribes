@@ -204,7 +204,8 @@ class GameServer {
    
                const tribe = new Tribe(tribeType, false, spawnPosition.copy());
                // @TEMPORARY @HACK
-               const layer = isSpectating ? undergroundLayer : surfaceLayer;
+               // const layer = isSpectating ? undergroundLayer : surfaceLayer;
+               const layer = surfaceLayer;
    
                // @Temporary @Incomplete
                const isDev = true;

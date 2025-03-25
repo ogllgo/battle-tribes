@@ -22,10 +22,10 @@ import { ComponentArray } from "./ComponentArray";
 import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, FollowAIComponent, entityWantsToFollow } from "./FollowAIComponent";
 import { GlurbComponentArray } from "./GlurbComponent";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
-import { hitEntity } from "./HealthComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { EntityAttachInfo, entityChildIsEntity, getFirstComponent, getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
+import { TamingComponentArray } from "./TamingComponent";
+import { EntityAttachInfo, entityChildIsEntity, getFirstComponent, TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
    // @Temporary
@@ -156,11 +156,20 @@ function onTick(glurbHead: Entity): void {
    const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurbHead);
    glurbHeadSegmentComponent.food -= 1 / (Vars.STOMACH_EMPTY_TIME_SECONDS * Settings.TPS);
    if (glurbHeadSegmentComponent.food < 0) {
-      if (getEntityAgeTicks(glurbHead) % (Settings.TPS * 5) === 0) {
-         hitEntity(glurbHead, null, 1, DamageSource.arrow, AttackEffectiveness.effective, getRandomPositionInBox(headHitbox.box), 0);
-      }
+      // @Temporary @Hack: glurbs are kinda shite right now at both spawning on moss and finding moss, so this is temp hack
+      // if (getEntityAgeTicks(glurbHead) % (Settings.TPS * 5) === 0) {
+      //    hitEntity(glurbHead, null, 1, DamageSource.arrow, AttackEffectiveness.effective, getRandomPositionInBox(headHitbox.box), 0);
+      // }
       
       glurbHeadSegmentComponent.food = 0;
+   }
+   
+   // Go to follow target if possible
+   // @Copynpaste
+   const tamingComponent = getFirstComponent(TamingComponentArray, glurbHead);
+   if (entityExists(tamingComponent.followTarget)) {
+      moveToEntity(glurbHead, tamingComponent.followTarget);
+      return;
    }
    
    const attackingEntitiesComponent = getFirstComponent(AttackingEntitiesComponentArray, glurbHead);
@@ -190,15 +199,6 @@ function onTick(glurbHead: Entity): void {
 
          if (entitiesAreColliding(glurbHead, entity) !== CollisionVars.NO_COLLISION) {
             destroyEntity(entity);
-
-            const x = headHitbox.box.position.x + 10 * Math.sin(headHitbox.box.angle);
-            const y = headHitbox.box.position.y + 10 * Math.cos(headHitbox.box.angle);
-            
-            const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.slurb, 1, null);
-            const itemEntityHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-            itemEntityHitbox.velocity.x = 50 * Math.sin(headHitbox.box.angle);
-            itemEntityHitbox.velocity.y = 50 * Math.cos(headHitbox.box.angle);
-            createEntity(config, undergroundLayer, 0);
          }
          
          return;

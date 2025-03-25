@@ -26,6 +26,8 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
+import { AutoSpawnedComponent } from "../../components/AutoSpawnedComponent";
+import { EntitySpawnInfo } from "../../entity-spawn-info";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
@@ -130,7 +132,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    
    const tamingComponent = new TamingComponent();
    
-   const cowComponent = new CowComponent();
+   const cowComponent = new CowComponent(species);
    
    return {
       entityType: EntityType.cow,

@@ -691,7 +691,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "The Evoker's Cold Touch | Alex's Awakening",
       namePlural: "The Evoker's Cold Touch | Alex's Awakening",
       description: "Alex's thoughts keep drifting back to that encounter in the woodland mansion, as much as she wills herself not to. She can't put the cold shivers out of her mind, the cold shivers which make her feel so warm. Perhaps the Illager's intentions weren't hostile..."
-   },
+   },  
    [ItemType.yuriSonichu]: {
       entityTextureSource: "items/small/cogwalker.png",
       textureSource: "items/large/sonichu.png",

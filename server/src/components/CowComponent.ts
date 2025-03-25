@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, rotateXAroundOrigin, rotateYAroundOrigin, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -11,7 +11,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, turnAngle, willStopAtDesiredDistance } from "../ai-shared";
+import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { getEscapeTarget } from "./EscapeAIComponent";
@@ -62,7 +62,7 @@ const enum Vars {
 }
 
 export class CowComponent {
-   public readonly species: CowSpecies = randInt(0, 1);
+   public readonly species: CowSpecies;
    public grazeProgressTicks = 0;
    public grazeCooldownTicks = randInt(CowVars.MIN_GRAZE_COOLDOWN, CowVars.MAX_GRAZE_COOLDOWN);
 
@@ -92,7 +92,8 @@ export class CowComponent {
    /** Remaining amount of ticks that the cow has to rest after doing a ram attack. */
    public ramRestTicks: number;
 
-   constructor() {
+   constructor(species: CowSpecies) {
+      this.species = species;
       this.ramCooldownTicks = Vars.RAM_COOLDOWN_TICKS;
       this.ramRemainingChargeTicks = Vars.RAM_CHARGE_TICKS;
       this.ramRestTicks = Vars.RAM_REST_TICKS;

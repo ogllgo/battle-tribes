@@ -1,6 +1,6 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randInt, randFloat, getTileIndexIncludingEdges, distance } from "battletribes-shared/utils";
+import { randInt, randFloat, getTileIndexIncludingEdges, distance, assert } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
@@ -10,7 +10,7 @@ import { entityChildIsEntity, TransformComponent, TransformComponentArray } from
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
-import { addEntityToSpawnDistribution, EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
+import { EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
 import { surfaceLayer, undergroundLayer } from "./layers";
@@ -19,6 +19,7 @@ import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/
 import { createGlurbConfig } from "./entities/mobs/glurb";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
+import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -157,6 +158,10 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
       return null;
    }
 
+   assert(typeof config.components[ServerComponentType.autoSpawned] === "undefined");
+   const autoSpawnedComponent = new AutoSpawnedComponent(spawnInfo);
+   config.components[ServerComponentType.autoSpawned] = autoSpawnedComponent;
+
    // @Cleanup: should this be done here, or automatically as the hitboxes are created
 
    const transformComponent = config.components[ServerComponentType.transform];
@@ -165,6 +170,8 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    }
 
    // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
+   // @Bug: this seems to be a bit brokey... if enabled with cactus sandy dirt, almost no cacti spawn, which should not be the case.
+   // - this may be crippling entity counts that i jhust haven't noticed... or will cripple them in the future. @Investigate
    if (spawnInfo.doStrictTileTypeCheck && !entityTileTypesAreValid(config, spawnInfo)) {
       return null;
    }
@@ -172,7 +179,6 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    // Create the entity
    const entity = createEntity(config, spawnInfo.layer, 0);
    addEntityToCensus(entity, spawnInfo.entityType);
-   addEntityToSpawnDistribution(spawnInfo.spawnDistribution, entity, x, y);
    if (!SERVER.isRunning) {
       pushJoinBuffer(false);
    }
@@ -334,7 +340,7 @@ export function spawnInitialEntities(): void {
       while (spawnConditionsAreMet(spawnInfo)) {
          runSpawnEvent(spawnInfo);
 
-         if (++numSpawnAttempts >= 9999) {
+         if (++numSpawnAttempts >= 39999) {
             console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
             break;
          }
