@@ -335,8 +335,9 @@ export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
       case TileType.sludge: return Biome.swamp;
       case TileType.slime: return Biome.swamp;
       case TileType.rock: return Biome.mountains;
-      case TileType.sandyDirt: return Biome.desert;
       case TileType.sand: return Biome.desert;
+      case TileType.sandyDirt: return Biome.desert;
+      case TileType.sandyDirtDark: return Biome.desert;
       case TileType.snow: return Biome.tundra;
       case TileType.ice: return Biome.tundra;
       case TileType.permafrost: return Biome.tundra;

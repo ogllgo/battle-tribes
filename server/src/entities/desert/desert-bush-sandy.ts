@@ -18,7 +18,8 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
    const transformComponent = new TransformComponent();
 
    const radius = size === 0 ? 32 : 40;
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), 0.5, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const mass = size === 0 ? 0.6 : 0.8;
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);

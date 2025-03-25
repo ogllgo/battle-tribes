@@ -107,11 +107,20 @@ export function generateDecorations(): void {
          hasUniformGroups: false
       },
       {
-         decorationTypes: [DecorationType.sandstoneRockBig1, DecorationType.sandstoneRockBig2],
+         decorationTypes: [DecorationType.sandstoneRockDark],
+         spawnableTileTypes: [TileType.sandyDirt],
+         spawnChancePerTile: 0.06,
+         minGroupSize: 3,
+         maxGroupSize: 5,
+         isAffectedByTemperature: false,
+         hasUniformGroups: false
+      },
+      {
+         decorationTypes: [DecorationType.sandstoneRockDarkBig1, DecorationType.sandstoneRockDarkBig2],
          spawnableTileTypes: [TileType.sandyDirt],
          spawnChancePerTile: 0.04,
          minGroupSize: 2,
-         maxGroupSize: 5,
+         maxGroupSize: 4,
          isAffectedByTemperature: false,
          hasUniformGroups: false
       },

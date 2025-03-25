@@ -13,8 +13,8 @@ const enum Vars {
 }
 
 const getGrassDensityMultiplier = (layer: Layer, tileIndex: TileIndex): number => {
-   if (layer.getTileType(tileIndex) === TileType.sandyDirt) {
-      return 0.8;
+   if (layer.getTileType(tileIndex) === TileType.sandyDirt || layer.getTileType(tileIndex) === TileType.sandyDirtDark) {
+      return 1;
    } else {
       const humidity = layer.tileHumidities[tileIndex];
       return humidity * 0.7 + 0.3;
@@ -85,7 +85,7 @@ export function generateGrassStrands(): void {
       for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tileType = surfaceLayer.getTileType(tileIndex);
-         if (tileType !== TileType.grass && tileType !== TileType.sandyDirt) {
+         if (tileType !== TileType.grass && tileType !== TileType.sandyDirt && tileType !== TileType.sandyDirtDark) {
             continue;
          }
 

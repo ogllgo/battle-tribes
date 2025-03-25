@@ -55,7 +55,10 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
        || decorationType === DecorationType.flower4
        || decorationType === DecorationType.sandstoneRock
        || decorationType === DecorationType.sandstoneRockBig1
-       || decorationType === DecorationType.sandstoneRockBig2;
+       || decorationType === DecorationType.sandstoneRockBig2
+       || decorationType === DecorationType.sandstoneRockDark
+       || decorationType === DecorationType.sandstoneRockDarkBig1
+       || decorationType === DecorationType.sandstoneRockDarkBig2;
 }
 
 export function getEntityRenderLayer(entityType: EntityType, entityParams: EntityParams): RenderLayer {

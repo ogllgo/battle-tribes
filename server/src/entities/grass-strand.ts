@@ -28,11 +28,16 @@ export function createGrassStrandConfig(position: Point, rotation: number, tileT
    } else {
       numLayers = randInt(2, 3);
       colour = {
-         r: randFloat(223/255, 239/255),
-         g: randFloat(201/255, 225/255),
-         b: randFloat(111/255, 135/255),
+         r: randFloat(229/255, 245/255),
+         g: randFloat(212/255, 230/255),
+         b: randFloat(137/255, 161/255),
          a: 1
       };
+      if (tileType === TileType.sandyDirtDark) {
+         colour.r -= 0.085;
+         colour.g -= 0.085;
+         colour.b -= 0.085;
+      }
    }
 
    const layeredRodComponent = new LayeredRodComponent(numLayers, colour);

@@ -157,6 +157,16 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
       },
       floorTiles: [
          {
+            tileType: TileType.sandyDirtDark,
+            requirements: {
+               noise: {
+                  scale: 6,
+                  minWeight: 0.8
+               },
+               maxTemperature: 0.97
+            }
+         },
+         {
             tileType: TileType.sandyDirt,
             requirements: {
                noise: {

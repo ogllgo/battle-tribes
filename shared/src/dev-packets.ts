@@ -113,6 +113,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.desertBushLively]: {},
    [ServerComponentType.desertBushSandy]: {},
    [ServerComponentType.autoSpawned]: {},
+   [ServerComponentType.desertSmallWeed]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];
