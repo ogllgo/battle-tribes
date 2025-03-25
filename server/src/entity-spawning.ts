@@ -20,6 +20,7 @@ import { createGlurbConfig } from "./entities/mobs/glurb";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
+import { TileType } from "../../shared/src/tiles";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -210,24 +211,21 @@ const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOr
             break;
          }
    
-         const spawnPositionX = randFloat(minX, maxX);
-         const spawnPositionY = randFloat(minY, maxY);
-         const dist = distance(spawnPositionX, spawnPositionY, spawnOriginX, spawnOriginY);
+         const x = randFloat(minX, maxX);
+         const y = randFloat(minY, maxY);
+         const dist = distance(x, y, spawnOriginX, spawnOriginY);
          if (dist > spawnInfo.packSpawning.spawnRange) {
             continue;
          }
    
-         const tileX = Math.floor(spawnPositionX / Settings.TILE_SIZE);
-         const tileY = Math.floor(spawnPositionY / Settings.TILE_SIZE);
+         const tileX = Math.floor(x / Settings.TILE_SIZE);
+         const tileY = Math.floor(y / Settings.TILE_SIZE);
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          if (!tileIsSpawnable(tileIndex, spawnInfo)) {
             continue;
          }
-   
-         if (spawnPositionIsClear(spawnInfo, spawnPositionX, spawnPositionY)) {
-            const x = randInt(minX, maxX);
-            const y = randInt(minY, maxY);
-   
+
+         if (spawnPositionIsClear(spawnInfo, x, y)) {
             attemptToSpawnEntity(spawnInfo, x, y, firstEntityConfig);
          }
       }

@@ -40,6 +40,7 @@ import Tribe from "../Tribe";
 import { TribeType } from "../../../shared/src/tribes";
 import { createDesertBushSandyConfig } from "../entities/desert/desert-bush-sandy";
 import { createDesertBushLivelyConfig } from "../entities/desert/desert-bush-lively";
+import { createDesertSmallWeedConfig } from "../entities/desert/desert-small-weed";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -537,29 +538,29 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createBoulderConfig(new Point(x, y), angle);
       }
    });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.cactus,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    spawnableTileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 75,
-   //    rawSpawnDistribution: createRawSpawnDistribution(16, 0.015),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: true,
-   //    packSpawning: {
-   //       getPackSize: () => {
-   //          return {
-   //             minPackSize: 1,
-   //             maxPackSize: 2
-   //          }
-   //       },
-   //       spawnRange: 80
-   //    },
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createCactusConfig(new Point(x, y), angle);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityType: EntityType.cactus,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      spawnableTileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 75,
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.015),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      packSpawning: {
+         getPackSize: () => {
+            return {
+               minPackSize: 1,
+               maxPackSize: 2
+            }
+         },
+         spawnRange: 80
+      },
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createCactusConfig(new Point(x, y), angle);
+      }
+   });
    registerNewSpawnInfo({
       entityType: EntityType.yeti,
       layer: surfaceLayer,
@@ -767,6 +768,20 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createDesertBushSandyConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.desertSmallWeed,
+      layer: surfaceLayer,
+      spawnRate: 0.23,
+      spawnableTileTypes: [TileType.sandyDirt],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 20,
+      rawSpawnDistribution: createRawSpawnDistribution(4, 0.16),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDesertSmallWeedConfig(new Point(x, y), angle);
       }
    });
    if (OPTIONS.spawnTribes) {

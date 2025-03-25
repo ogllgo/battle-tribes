@@ -28,9 +28,9 @@ export function createGrassStrandConfig(position: Point, rotation: number, tileT
    } else {
       numLayers = randInt(2, 3);
       colour = {
-         r: randFloat(230/255, 238/255),
-         g: randFloat(220/255, 232/255),
-         b: randFloat(156/255, 161/255),
+         r: randFloat(223/255, 239/255),
+         g: randFloat(201/255, 225/255),
+         b: randFloat(111/255, 135/255),
          a: 1
       };
    }

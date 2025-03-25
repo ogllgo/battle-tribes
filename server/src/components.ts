@@ -108,6 +108,7 @@ import { FloorSignComponent } from "./components/FloorSignComponent";
 import { DesertBushLivelyComponent } from "./components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent } from "./components/DesertBushSandyComponent";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
+import { DesertSmallWeedComponent } from "./components/DesertSmallWeedComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -217,6 +218,7 @@ const ComponentClassRecord = {
    [ServerComponentType.desertBushLively]: () => DesertBushLivelyComponent,
    [ServerComponentType.desertBushSandy]: () => DesertBushSandyComponent,
    [ServerComponentType.autoSpawned]: () => AutoSpawnedComponent,
+   [ServerComponentType.desertSmallWeed]: () => DesertSmallWeedComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

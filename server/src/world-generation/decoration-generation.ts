@@ -107,6 +107,15 @@ export function generateDecorations(): void {
          hasUniformGroups: false
       },
       {
+         decorationTypes: [DecorationType.sandstoneRockBig1, DecorationType.sandstoneRockBig2],
+         spawnableTileTypes: [TileType.sandyDirt],
+         spawnChancePerTile: 0.04,
+         minGroupSize: 2,
+         maxGroupSize: 5,
+         isAffectedByTemperature: false,
+         hasUniformGroups: false
+      },
+      {
          decorationTypes: [DecorationType.blackRockSmall],
          spawnableTileTypes: [TileType.snow, TileType.permafrost],
          spawnChancePerTile: 0.02,

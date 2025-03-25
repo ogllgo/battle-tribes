@@ -14,7 +14,7 @@ const enum Vars {
 
 const getGrassDensityMultiplier = (layer: Layer, tileIndex: TileIndex): number => {
    if (layer.getTileType(tileIndex) === TileType.sandyDirt) {
-      return 0.5;
+      return 0.8;
    } else {
       const humidity = layer.tileHumidities[tileIndex];
       return humidity * 0.7 + 0.3;
