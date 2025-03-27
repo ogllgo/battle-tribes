@@ -123,17 +123,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
 
    // Lodge the arrow in the entity when it's slow enough
    if (affectedHitbox.velocity.lengthSquared() < 50) {
-      // Once the arrow gets attached, it's going to have the colliding hitboxes' angle added to it, so subtract it now.
-      // Adjust the arrow's relative rotation so that it stays pointed in the same direction relative to the colliding entity
-      affectedHitbox.box.relativeAngle -= collidingHitbox.box.angle;
-
-      const diffX = affectedHitbox.box.position.x - collidingHitbox.box.position.x;
-      const diffY = affectedHitbox.box.position.y - collidingHitbox.box.position.y;
-
-      const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -collidingHitbox.box.angle);
-      const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -collidingHitbox.box.angle);
-      
-      attachEntity(arrow, collidingEntity, collidingHitbox, rotatedDiffX, rotatedDiffY, false);
+      attachEntity(arrow, collidingEntity, collidingHitbox, false);
 
       // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
       // This is because this "fix carried entity position" code only runs on physics components, and if

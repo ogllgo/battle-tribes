@@ -16,7 +16,8 @@ import { calculateItemDamage } from "../entities/tribes/tribe-member";
 import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { createEntity } from "../Entity";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { registerDirtyEntity } from "../server/player-clients";
+import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
@@ -48,30 +49,30 @@ SwingAttackComponentArray.onTick = {
 };
 SwingAttackComponentArray.onEntityCollision = onEntityCollision;
 
-const setHitbox = (transformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbAngle: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+const setHitbox = (ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbAngle: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
    const flipMultiplier = isFlipped ? -1 : 1;
 
-   const offset = extraOffset + getHumanoidRadius(transformComponent) + 2;
+   const offset = extraOffset + getHumanoidRadius(ownerTransformComponent) + 2;
 
    const box = hitbox.box;
    box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
    box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
    box.relativeAngle = limbAngle * flipMultiplier;
 
-   transformComponent.isDirty = true;
+   hitboxTransformComponent.isDirty = true;
 }
 
-export function lerpHitboxBetweenStates(transformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
+export function lerpHitboxBetweenStates(ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
    const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
    const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
    const angle = lerp(startingLimbState.angle, targetLimbState.angle, progress);
    const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
    const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
-   setHitbox(transformComponent, hitbox, direction, extraOffset, angle, extraOffsetX, extraOffsetY, isFlipped);
+   setHitbox(ownerTransformComponent, hitboxTransformComponent, hitbox, direction, extraOffset, angle, extraOffsetX, extraOffsetY, isFlipped);
 }
 
-export function setHitboxToState(transformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
-   setHitbox(transformComponent, hitbox, state.direction, state.extraOffset, state.angle, state.extraOffsetX, state.extraOffsetY, isFlipped);
+export function setHitboxToState(transformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
+   setHitbox(transformComponent, hitboxTransformComponent, hitbox, state.direction, state.extraOffset, state.angle, state.extraOffsetX, state.extraOffsetY, isFlipped);
 }
 
 function onTick(swingAttack: Entity): void {
@@ -89,7 +90,7 @@ function onTick(swingAttack: Entity): void {
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    const swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
    const ownerTransformComponent = TransformComponentArray.getComponent(swingAttackComponent.owner);
-   lerpHitboxBetweenStates(ownerTransformComponent, limbHitbox, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
+   lerpHitboxBetweenStates(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
 }
 
 function getDataLength(): number {
@@ -254,6 +255,11 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
 }
 
 function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
+   // If the swing attack is finished, don't attack anymore
+   if (entityIsFlaggedForDestruction(swingAttack)) {
+      return;
+   }
+   
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const owner = swingAttackComponent.owner;
    // @Temporary: remove when bug is fixed

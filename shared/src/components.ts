@@ -123,6 +123,9 @@ export enum ServerComponentType {
    desertBushSandy,
    autoSpawned,
    desertSmallWeed,
+   desertShrub,
+   tumbleweedLive,
+   tumbleweedDead
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -238,6 +241,9 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.desertBushSandy]: "Desert Bush Sandy",
    [ServerComponentType.autoSpawned]: "Auto Spawned Component",
    [ServerComponentType.desertSmallWeed]: "Desert Small Weed",
+   [ServerComponentType.desertShrub]: "Desert Shrub",
+   [ServerComponentType.tumbleweedLive]: "Tumbleweed Live",
+   [ServerComponentType.tumbleweedDead]: "Tumbleweed Dead",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -338,6 +344,9 @@ export const EntityComponents = {
    [EntityType.desertBushLively]: [],
    [EntityType.desertBushSandy]: [],
    [EntityType.desertSmallWeed]: [],
+   [EntityType.desertShrub]: [],
+   [EntityType.tumbleweedLive]: [],
+   [EntityType.tumbleweedDead]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

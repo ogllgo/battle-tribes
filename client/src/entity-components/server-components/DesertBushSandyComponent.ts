@@ -1,11 +1,14 @@
 import { ServerComponentType } from "../../../../shared/src/components";
+import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface DesertBushSandyComponentParams {
    readonly size: number;
@@ -21,7 +24,9 @@ export const DesertBushSandyComponentArray = new ServerComponentArray<DesertBush
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(reader: PacketReader): DesertBushSandyComponentParams {
@@ -75,4 +80,18 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader): void {
    padData(reader);
+}
+
+function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);
+}
+
+function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);
 }

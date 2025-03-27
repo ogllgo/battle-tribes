@@ -9,13 +9,13 @@ import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface DesertSmallWeedComponentParams {}
+export interface DesertShrubComponentParams {}
 
 interface IntermediateInfo {}
 
-export interface DesertSmallWeedComponent {}
+export interface DesertShrubComponent {}
 
-export const DesertSmallWeedComponentArray = new ServerComponentArray<DesertSmallWeedComponent, DesertSmallWeedComponentParams, IntermediateInfo>(ServerComponentType.desertSmallWeed, true, {
+export const DesertShrubComponentArray = new ServerComponentArray<DesertShrubComponent, DesertShrubComponentParams, IntermediateInfo>(ServerComponentType.desertShrub, true, {
    createParamsFromData: createParamsFromData,
    populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
@@ -26,7 +26,7 @@ export const DesertSmallWeedComponentArray = new ServerComponentArray<DesertSmal
    onDie: onDie
 });
 
-function createParamsFromData(): DesertSmallWeedComponentParams {
+function createParamsFromData(): DesertShrubComponentParams {
    return {};
 }
 
@@ -38,7 +38,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       hitbox,
       0,
       0,
-      getTextureArrayIndex("entities/desert-small-weed/desert-small-weed.png")
+      getTextureArrayIndex("entities/desert-shrub/desert-shrub.png")
    );
    renderPart.tintR = randFloat(-0.03, 0.03);
    renderPart.tintG = randFloat(-0.03, 0.03);
@@ -50,7 +50,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    };
 }
 
-function createComponent(): DesertSmallWeedComponent {
+function createComponent(): DesertShrubComponent {
    return {};
 }
 

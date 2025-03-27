@@ -717,12 +717,14 @@ const propagateRootEntityChange = (entity: Entity, rootEntity: Entity): void => 
    }
 }
 
-export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, offsetX: number, offsetY: number, destroyWhenParentIsDestroyed: boolean): void {
+export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
    const parentTransformComponent = TransformComponentArray.getComponent(parent);
-   
+
+   assert(entityTransformComponent.rootEntity !== parentTransformComponent.rootEntity);
+
    entityTransformComponent.rootEntity = parentTransformComponent.rootEntity;
    entityTransformComponent.parentEntity = parent;
 
@@ -732,8 +734,17 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
          if (entityChildIsHitbox(child)) {
             // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
             child.parent = parentHitbox;
-            child.box.offset.x = offsetX;
-            child.box.offset.y = offsetY;
+
+            // Once the entity gets attached, it's going to have the parent hitboxes' angle added to it, so subtract it now.
+            // Adjust the child's relative rotation so that it stays pointed in the same direction relative to the parent
+            child.box.relativeAngle -= parentHitbox.box.angle;
+            const diffX = child.box.position.x - parentHitbox.box.position.x;
+            const diffY = child.box.position.y - parentHitbox.box.position.y;
+         
+            const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
+            const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
+            child.box.offset.x = rotatedDiffX;
+            child.box.offset.y = rotatedDiffY;
          }
       }
    }

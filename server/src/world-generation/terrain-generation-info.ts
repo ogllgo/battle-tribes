@@ -185,10 +185,11 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
             subtileType: SubtileType.sandstoneWall,
             requirements: {
                noise: {
-                  scale: 7,
-                  minWeight: 0.7
+                  scale: 13,
+                  minWeight: 0.45,
+                  maxWeight: 0.55
                },
-               minDist: 2
+               minDist: 10
             }
          }
       ]

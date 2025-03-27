@@ -19,7 +19,6 @@ import { entityIsTribesman } from "../entities/tribes/tribe-member";
 import { Hitbox } from "../hitboxes";
 import { entityIsStructure } from "../structure-placement";
 import { EntityConfig } from "../components";
-import { createCowConfig } from "../entities/mobs/cow";
 import { ServerComponentType } from "../../../shared/src/components";
 import { createBerryBushConfig } from "../entities/resources/berry-bush";
 import { createTreeConfig } from "../entities/resources/tree";
@@ -41,6 +40,9 @@ import { TribeType } from "../../../shared/src/tribes";
 import { createDesertBushSandyConfig } from "../entities/desert/desert-bush-sandy";
 import { createDesertBushLivelyConfig } from "../entities/desert/desert-bush-lively";
 import { createDesertSmallWeedConfig } from "../entities/desert/desert-small-weed";
+import { createDesertShrubConfig } from "../entities/desert/desert-shrub";
+import { createTumbleweedLiveConfig } from "../entities/desert/tumbleweed-live";
+import { createTumbleweedDeadConfig } from "../entities/desert/tumbleweed-dead";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -545,7 +547,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      rawSpawnDistribution: createRawSpawnDistribution(16, 0.015),
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.01),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       packSpawning: {
@@ -726,7 +728,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 35,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.075),
+      rawSpawnDistribution: createRawSpawnDistribution(8, 0.055),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -745,6 +747,20 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createDesertBushLivelyConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.desertShrub,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 40,
+      rawSpawnDistribution: createRawSpawnDistribution(8, 0.028),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDesertShrubConfig(new Point(x, y), angle);
       }
    });
    registerNewSpawnInfo({
@@ -773,7 +789,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityType: EntityType.desertSmallWeed,
       layer: surfaceLayer,
-      spawnRate: 0.23,
+      spawnRate: 0.002,
       spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 20,
@@ -782,6 +798,34 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createDesertSmallWeedConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.tumbleweedLive,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      spawnableTileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 60,
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.0025),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createTumbleweedLiveConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.tumbleweedDead,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      spawnableTileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 60,
+      rawSpawnDistribution: createRawSpawnDistribution(16, 0.008),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createTumbleweedDeadConfig(new Point(x, y), angle);
       }
    });
    if (OPTIONS.spawnTribes) {

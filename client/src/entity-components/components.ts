@@ -125,6 +125,9 @@ import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLi
 import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
 import { AutoSpawnedComponent, AutoSpawnedComponentArray, AutoSpawnedComponentParams } from "./server-components/AutoSpawnedComponent";
 import { DesertSmallWeedComponent, DesertSmallWeedComponentArray, DesertSmallWeedComponentParams } from "./server-components/DesertSmallWeedComponent";
+import { DesertShrubComponent, DesertShrubComponentArray, DesertShrubComponentParams } from "./server-components/DesertShrubComponent";
+import { TumbleweedLiveComponent, TumbleweedLiveComponentArray, TumbleweedLiveComponentParams } from "./server-components/TumbleweedLiveComponent";
+import { TumbleweedDeadComponent, TumbleweedDeadComponentArray, TumbleweedDeadComponentParams } from "./server-components/TumbleweedDeadComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -258,6 +261,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.desertBushSandy]: DesertBushSandyComponentArray,
    [ServerComponentType.autoSpawned]: AutoSpawnedComponentArray,
    [ServerComponentType.desertSmallWeed]: DesertSmallWeedComponentArray,
+   [ServerComponentType.desertShrub]: DesertShrubComponentArray,
+   [ServerComponentType.tumbleweedLive]: TumbleweedLiveComponentArray,
+   [ServerComponentType.tumbleweedDead]: TumbleweedDeadComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -367,6 +373,9 @@ const ServerComponentRecord = {
    [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponent => 0 as any,
    [ServerComponentType.autoSpawned]: (): AutoSpawnedComponent => 0 as any,
    [ServerComponentType.desertSmallWeed]: (): DesertSmallWeedComponent => 0 as any,
+   [ServerComponentType.desertShrub]: (): DesertShrubComponent => 0 as any,
+   [ServerComponentType.tumbleweedLive]: (): TumbleweedLiveComponent => 0 as any,
+   [ServerComponentType.tumbleweedDead]: (): TumbleweedDeadComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -478,6 +487,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.desertBushSandy]: (): DesertBushSandyComponentParams => 0 as any,
    [ServerComponentType.autoSpawned]: (): AutoSpawnedComponentParams => 0 as any,
    [ServerComponentType.desertSmallWeed]: (): DesertSmallWeedComponentParams => 0 as any,
+   [ServerComponentType.desertShrub]: (): DesertShrubComponentParams => 0 as any,
+   [ServerComponentType.tumbleweedLive]: (): TumbleweedLiveComponentParams => 0 as any,
+   [ServerComponentType.tumbleweedDead]: (): TumbleweedDeadComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

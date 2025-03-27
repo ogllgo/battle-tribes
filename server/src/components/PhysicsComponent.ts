@@ -143,8 +143,6 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
       hitbox.velocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
    }
 
-   let shouldUpdate = false;
-   
    // Apply friction to velocity
    if (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) {
       const friction = TILE_FRICTIONS[tileType];
@@ -166,10 +164,6 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
          }
       }
 
-      shouldUpdate = true;
-   }
-
-   if (shouldUpdate) {
       // Update position based on the sum of self-velocity and external velocity
       hitbox.box.position.x += hitbox.velocity.x * Settings.I_TPS;
       hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;

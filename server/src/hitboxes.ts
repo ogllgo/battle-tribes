@@ -170,7 +170,7 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    
    const tileIndex = getHitboxTile(hitbox);
    const tileType = getEntityLayer(entity).tileTypes[tileIndex];
-      
+   
    // @Speed: very complicated logic
    let moveSpeedMultiplier: number;
    if (physicsComponent.overrideMoveSpeedMultiplier || !physicsComponent.isAffectedByGroundFriction) {
@@ -190,6 +190,17 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    // Apply velocity with traction (blend towards desired velocity)
    hitbox.velocity.x += (desiredVelocityX - hitbox.velocity.x) * physicsComponent.traction * Settings.I_TPS;
    hitbox.velocity.y += (desiredVelocityY - hitbox.velocity.y) * physicsComponent.traction * Settings.I_TPS;
+}
+
+export function applyForce(entity: Entity, hitbox: Hitbox, forceX: number, forceY: number): void {
+   const connectedMass = getHitboxConnectedMass(hitbox);
+   if (connectedMass === 0) {
+      return;
+   }
+   
+   const accelerationX = forceX / connectedMass;
+   const accelerationY = forceY / connectedMass;
+   applyAcceleration(entity, hitbox, accelerationX, accelerationY);
 }
 
 export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number): void {

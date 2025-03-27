@@ -281,7 +281,8 @@ export async function loadSoundEffects(): Promise<void> {
       "dismount.mp3",
       "quiver-pull.mp3",
       "cow-angry.mp3",
-      "cow-eat.mp3"
+      "cow-eat.mp3",
+      "desert-plant-hit.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

@@ -382,6 +382,18 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Desert Small Weed",
       internalName: "desert-small-weed"
    },
+   [EntityType.desertShrub]: {
+      name: "Desert Shrub",
+      internalName: "desert-shrub"
+   },
+   [EntityType.tumbleweedLive]: {
+      name: "Tumbleweed Live",
+      internalName: "tumbleweed-live"
+   },
+   [EntityType.tumbleweedDead]: {
+      name: "Tumbleweed Dead",
+      internalName: "tumbleweed-dead"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

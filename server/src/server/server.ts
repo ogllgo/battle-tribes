@@ -32,6 +32,7 @@ import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { Hitbox } from "../hitboxes";
 import OPTIONS from "../options";
+import { updateWind } from "../wind";
 
 /*
 
@@ -421,6 +422,8 @@ class GameServer {
          
          updateGrassBlockers();
          runCollapses();
+
+         updateWind();
          
          tickEntities();
          updateDynamicPathfindingNodes();

@@ -133,7 +133,7 @@ export function createTileShadowShaders(): void {
 
       edgeCloseness *= edgeCloseness;
       
-      float alpha = edgeCloseness * 0.4;
+      float alpha = edgeCloseness * 0.28;
       outputColour = vec4(0.0, 0.0, 0.0, alpha);
    }
    `;

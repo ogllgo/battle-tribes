@@ -1,10 +1,13 @@
 import { ServerComponentType } from "../../../../shared/src/components";
+import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface DesertBushLivelyComponentParams {}
 
@@ -18,7 +21,9 @@ export const DesertBushLivelyComponentArray = new ServerComponentArray<DesertBus
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit,
+   onDie: onDie
 });
 
 function createParamsFromData(): DesertBushLivelyComponentParams {
@@ -56,3 +61,17 @@ function getMaxRenderParts(): number {
 function padData(): void {}
 
 function updateFromData(): void {}
+
+function onHit(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);
+}
+
+function onDie(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);
+}

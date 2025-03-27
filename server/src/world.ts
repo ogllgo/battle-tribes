@@ -219,7 +219,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
 
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
-            attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.offset.x, attachInfo.offset.y, attachInfo.destroyWhenParentIsDestroyed);
+            attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
          }
 
          const childConfigs = joinInfo.entityConfig.childConfigs;
@@ -237,7 +237,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                }
                assert(typeof childJoinInfo !== "undefined");
                
-               attachEntity(childJoinInfo.entity, joinInfo.entity, null, 0, 0, true);
+               attachEntity(childJoinInfo.entity, joinInfo.entity, null, true);
             }
          }
       }

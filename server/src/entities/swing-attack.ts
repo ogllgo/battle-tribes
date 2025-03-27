@@ -1,4 +1,4 @@
-import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
+import { HitboxCollisionType, updateBox } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
@@ -17,7 +17,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    
    const ownerTransformComponent = TransformComponentArray.getComponent(owner);
-      const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
+   const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
    
    const heldItem = getHeldItem(limb);
    const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
@@ -28,7 +28,9 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    const limbHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 12), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, limbHitbox);
 
-   setHitboxToState(ownerTransformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
+   setHitboxToState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
+   // @hack ? Should probably set all hitbox positions when they are added from the join buffer.
+   updateBox(limbHitbox.box, ownerHitbox.box.position.x, ownerHitbox.box.position.y, ownerHitbox.box.angle);
 
    if (damageBoxInfo !== null) {
       const heldItemHitbox = createHitbox(transformComponent, limbHitbox, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);

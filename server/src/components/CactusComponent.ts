@@ -54,7 +54,7 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   if (getEntityType(collidingEntity) === EntityType.krumblid) {
+   if (getEntityType(collidingEntity) === EntityType.tumbleweedDead) {
       return;
    }
    
