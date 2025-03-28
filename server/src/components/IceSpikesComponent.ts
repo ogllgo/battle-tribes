@@ -128,7 +128,7 @@ const forceMaxGrowIceSpike = (iceSpikes: Entity): void => {
    
    const connectedIceSpikes = [iceSpikes];
 
-   while (rootIceSpikesComponent.numChildrenIceSpikes < rootIceSpikesComponent.maxChildren) {
+   for (let attempts = 0; rootIceSpikesComponent.numChildrenIceSpikes < rootIceSpikesComponent.maxChildren && attempts < 99; attempts++) {
       const growingIceSpikes = connectedIceSpikes[Math.floor(connectedIceSpikes.length * Math.random())];
       grow(growingIceSpikes);
    }

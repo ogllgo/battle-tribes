@@ -3,16 +3,19 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { assert, randInt, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
-import { AIHelperComponentArray } from "./AIHelperComponent";
+import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
 import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "./FollowAIComponent";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { KrumblidVars } from "../entities/mobs/krumblid";
-import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { getHitboxTile, Hitbox } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { addHungerEnergy, getEntityFullness } from "./HungerComponent";
+import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -26,6 +29,30 @@ KrumblidComponentArray.onTick = {
    func: onTick
 };
 
+const getTargetPricklyPear = (krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(krumblid);
+   const hitbox = transformComponent.children[0] as Hitbox;
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let target: Entity | null = null;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (getEntityType(entity) !== EntityType.pricklyPear) {
+         continue;
+      }
+      
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+
+      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         target = entity;
+      }
+   }
+
+   return target;
+}
+
 const entityIsFollowable = (entity: Entity): boolean => {
    // Try to hide in cacti!
    if (getEntityType(entity) === EntityType.cactus) {
@@ -36,8 +63,11 @@ const entityIsFollowable = (entity: Entity): boolean => {
       return false;
    }
 
-   // Krumblids aren't interesting to krumblids!
    if (getEntityType(entity) === EntityType.krumblid) {
+      return false;
+   }
+
+   if (!AIHelperComponentArray.hasComponent(entity)) {
       return false;
    }
     
@@ -74,6 +104,26 @@ function onTick(krumblid: Entity): void {
       runEscapeAI(krumblid, escapeTarget);
       return;
    }
+
+   // Eat prickly pears
+   const fullness = getEntityFullness(krumblid);
+   if (fullness < 0.5) {
+      const targetPricklyPear = getTargetPricklyPear(krumblid, aiHelperComponent);
+      if (targetPricklyPear !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(targetPricklyPear);
+         // @Hack
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         
+         moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED);
+   
+         if (entitiesAreColliding(krumblid, targetPricklyPear) !== CollisionVars.NO_COLLISION) {
+            const energyStoreComponent = EnergyStoreComponentArray.getComponent(targetPricklyPear);
+            addHungerEnergy(krumblid, energyStoreComponent.energyAmount);
+            destroyEntity(targetPricklyPear);
+         }
+         return;
+      }
+   }
    
    // Follow AI: Make the krumblid like to hide in cacti
    const followAIComponent = FollowAIComponentArray.getComponent(krumblid);
@@ -86,7 +136,7 @@ function onTick(krumblid: Entity): void {
       const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
       
       // Continue following the entity
-      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 200, Vars.TURN_SPEED);
+      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED);
       return;
    } else if (entityWantsToFollow(followAIComponent)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -104,7 +154,7 @@ function onTick(krumblid: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(krumblid);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 2 * Math.PI);
+      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI);
    }
 }
 

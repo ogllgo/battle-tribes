@@ -456,7 +456,7 @@ export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmo
    }
 }
 
-export function registerEntityRemoval(entity: Entity): void {
+export function registerEntityDestruction(entity: Entity): void {
    const viewingPlayers = getPlayersViewingEntity(entity);
    if (viewingPlayers.length === 0) {
       return;
@@ -464,7 +464,7 @@ export function registerEntityRemoval(entity: Entity): void {
 
    for (let i = 0; i < viewingPlayers.length; i++) {
       const playerClient = viewingPlayers[i];
-      playerClient.visibleEntityDeathIDs.push(entity);
+      playerClient.visibleDestroyedEntities.push(entity);
    }
 }
 

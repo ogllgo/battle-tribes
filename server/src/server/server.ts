@@ -16,22 +16,21 @@ import { createPlayerConfig } from "../entities/tribes/player";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { entityChildIsEntity, TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
-import { surfaceLayer, layers, undergroundLayer } from "../layers";
+import { surfaceLayer, layers } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { Hitbox } from "../hitboxes";
-import OPTIONS from "../options";
 import { updateWind } from "../wind";
 
 /*
@@ -415,6 +414,7 @@ class GameServer {
    private async tick(): Promise<void> {
       // These are done before each tick to account for player packets causing entities to be removed/added between ticks.
       pushJoinBuffer(false);
+      preDestroyFlaggedEntities();
       destroyFlaggedEntities();
 
       if (SERVER.isSimulating) {
@@ -437,14 +437,17 @@ class GameServer {
             // updateResourceDistributions();
             runSpawnAttempt();
          // }
-         
-         pushJoinBuffer(true);
-         destroyFlaggedEntities();
+
          // @Bug @Incomplete: Called twice!!!!
          updateTribes();
+         
+         pushJoinBuffer(true);
       }
+      preDestroyFlaggedEntities();
 
       SERVER.sendGameDataPackets();
+
+      destroyFlaggedEntities();
 
       // Update server ticks and time
       // This is done at the end of the tick so that information sent by players is associated with the next tick to run
@@ -479,6 +482,10 @@ class GameServer {
          const visibleEntities = getPlayerVisibleEntities(playerClient);
          
          const entitiesToSend = new Set<Entity>();
+         // Always send the viewed entity (if alive)
+         if (entityExists(viewedEntity)) {
+            entitiesToSend.add(viewedEntity);
+         }
          const removedEntities = new Array<Entity>();
 
          // Add newly visible entities
@@ -501,11 +508,6 @@ class GameServer {
             if (entityExists(entity)) {
                entitiesToSend.add(entity);
             }
-         }
-
-         // Always send the viewed entity (if alive)
-         if (entityExists(viewedEntity)) {
-            entitiesToSend.add(viewedEntity);
          }
          
          // Send the game data to the player

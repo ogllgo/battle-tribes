@@ -128,6 +128,11 @@ import { DesertSmallWeedComponent, DesertSmallWeedComponentArray, DesertSmallWee
 import { DesertShrubComponent, DesertShrubComponentArray, DesertShrubComponentParams } from "./server-components/DesertShrubComponent";
 import { TumbleweedLiveComponent, TumbleweedLiveComponentArray, TumbleweedLiveComponentParams } from "./server-components/TumbleweedLiveComponent";
 import { TumbleweedDeadComponent, TumbleweedDeadComponentArray, TumbleweedDeadComponentParams } from "./server-components/TumbleweedDeadComponent";
+import { PalmTreeComponent, PalmTreeComponentArray, PalmTreeComponentParams } from "./server-components/PalmTreeComponent";
+import { PricklyPearComponent, PricklyPearComponentArray, PricklyPearComponentParams } from "./server-components/PricklyPearComponent";
+import { PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentArray, PricklyPearFragmentProjectileComponentParams } from "./server-components/PricklyPearFragmentProjectileComponent";
+import { HungerComponent, HungerComponentArray, HungerComponentParams } from "./server-components/HungerComponent";
+import { EnergyStoreComponent, EnergyStoreComponentArray, EnergyStoreComponentParams } from "./server-components/EnergyStoreComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -264,6 +269,11 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.desertShrub]: DesertShrubComponentArray,
    [ServerComponentType.tumbleweedLive]: TumbleweedLiveComponentArray,
    [ServerComponentType.tumbleweedDead]: TumbleweedDeadComponentArray,
+   [ServerComponentType.palmTree]: PalmTreeComponentArray,
+   [ServerComponentType.pricklyPear]: PricklyPearComponentArray,
+   [ServerComponentType.pricklyPearFragmentProjectile]: PricklyPearFragmentProjectileComponentArray,
+   [ServerComponentType.hunger]: HungerComponentArray,
+   [ServerComponentType.energyStore]: EnergyStoreComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -376,6 +386,11 @@ const ServerComponentRecord = {
    [ServerComponentType.desertShrub]: (): DesertShrubComponent => 0 as any,
    [ServerComponentType.tumbleweedLive]: (): TumbleweedLiveComponent => 0 as any,
    [ServerComponentType.tumbleweedDead]: (): TumbleweedDeadComponent => 0 as any,
+   [ServerComponentType.palmTree]: (): PalmTreeComponent => 0 as any,
+   [ServerComponentType.pricklyPear]: (): PricklyPearComponent => 0 as any,
+   [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponent => 0 as any,
+   [ServerComponentType.hunger]: (): HungerComponent => 0 as any,
+   [ServerComponentType.energyStore]: (): EnergyStoreComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -490,6 +505,11 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.desertShrub]: (): DesertShrubComponentParams => 0 as any,
    [ServerComponentType.tumbleweedLive]: (): TumbleweedLiveComponentParams => 0 as any,
    [ServerComponentType.tumbleweedDead]: (): TumbleweedDeadComponentParams => 0 as any,
+   [ServerComponentType.palmTree]: (): PalmTreeComponentParams => 0 as any,
+   [ServerComponentType.pricklyPear]: (): PricklyPearComponentParams => 0 as any,
+   [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponentParams => 0 as any,
+   [ServerComponentType.hunger]: (): HungerComponentParams => 0 as any,
+   [ServerComponentType.energyStore]: (): EnergyStoreComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

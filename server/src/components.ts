@@ -112,6 +112,11 @@ import { DesertSmallWeedComponent } from "./components/DesertSmallWeedComponent"
 import { DesertShrubComponent } from "./components/DesertShrubComponent";
 import { TumbleweedLiveComponent } from "./components/TumbleweedLiveComponent";
 import { TumbleweedDeadComponent } from "./components/TumbleweedDeadComponent";
+import { PalmTreeComponent } from "./components/PalmTreeComponent";
+import { PricklyPearComponent } from "./components/PricklyPearComponent";
+import { PricklyPearFragmentProjectileComponent } from "./components/PricklyPearFragmentComponent";
+import { HungerComponent } from "./components/HungerComponent";
+import { EnergyStoreComponent } from "./components/EnergyStoreComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -225,6 +230,11 @@ const ComponentClassRecord = {
    [ServerComponentType.desertShrub]: () => DesertShrubComponent,
    [ServerComponentType.tumbleweedLive]: () => TumbleweedLiveComponent,
    [ServerComponentType.tumbleweedDead]: () => TumbleweedDeadComponent,
+   [ServerComponentType.palmTree]: () => PalmTreeComponent,
+   [ServerComponentType.pricklyPear]: () => PricklyPearComponent,
+   [ServerComponentType.pricklyPearFragmentProjectile]: () => PricklyPearFragmentProjectileComponent,
+   [ServerComponentType.hunger]: () => HungerComponent,
+   [ServerComponentType.energyStore]: () => EnergyStoreComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

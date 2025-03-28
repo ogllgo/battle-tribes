@@ -731,6 +731,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Floor Sign",
       namePlural: "Floor Signs",
       description: "Lets you write a message on the ground."
+   },
+   [ItemType.pricklyPear]: {
+      entityTextureSource: "items/small/prickly-pear.png",
+      textureSource: "items/large/prickly-pear.png",
+      toolTextureSource: "",
+      name: "Prickly Pear",
+      namePlural: "Prickly Pears",
+      description: "Berries laced with acupuncture needles."
    }
 };
 

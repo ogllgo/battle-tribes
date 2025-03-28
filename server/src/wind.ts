@@ -25,11 +25,14 @@ export function getWindVector(x: number, y: number): Readonly<Point> {
 
 export function updateWind(): void {
    const gameTicks = getGameTicks();
+   if (gameTicks % 4 !== 0) {
+      return;
+   }
 
    for (let cellY = 0; cellY < Vars.CELLS_IN_WORLD_WIDTH; cellY++) {
       for (let cellX = 0; cellX < Vars.CELLS_IN_WORLD_WIDTH; cellX++) {
-         const x = cellX + gameTicks / Settings.TPS * 0.76345983;
-         const y = cellY + gameTicks / Settings.TPS * 0.52735804;
+         const x = cellX + gameTicks / Settings.TPS * 1.16345983;
+         const y = cellY + gameTicks / Settings.TPS * 1.16345983;
          
          const noiseX = generatePointPerlinNoise(x, y, 8, "wind");
          const noiseY = generatePointPerlinNoise(x + 50, y + 100, 8, "wind");

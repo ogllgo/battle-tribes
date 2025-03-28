@@ -395,6 +395,10 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/desert-shrub/desert-shrub.png",
    "entities/tumbleweed-live/tumbleweed-live.png",
    "entities/tumbleweed-dead/tumbleweed-dead.png",
+   "entities/palm-tree/palm-tree.png",
+   "entities/prickly-pear/prickly-pear.png",
+   "entities/prickly-pear-fragment-projectile/fragment-1.png",
+   "entities/prickly-pear-fragment-projectile/fragment-2.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

@@ -33,9 +33,10 @@ TumbleweedDeadComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(tumbleweed: Entity): void {
    const tumbleweedDeadComponent = TumbleweedDeadComponentArray.getComponent(tumbleweed);
-   if (Math.random() < 0.04 / Settings.TPS) {
-      tumbleweedDeadComponent.isRooted = false;
-   }
+   // @Incomplete: never gets unrooted!
+   // if (Math.random() < 0.04 / Settings.TPS) {
+   //    tumbleweedDeadComponent.isRooted = false;
+   // }
    
    if (!tumbleweedDeadComponent.isRooted) {
       const transformComponent = TransformComponentArray.getComponent(tumbleweed);

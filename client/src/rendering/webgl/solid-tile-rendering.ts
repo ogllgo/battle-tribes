@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { NUM_TILE_TYPES, SubtileType, TileType } from "battletribes-shared/tiles";
+import { NUM_TILE_TYPES, SubtileType, TileType, TileTypeString } from "battletribes-shared/tiles";
 import Camera from "../../Camera";
 import { gl, createWebGLProgram, createTextureArray } from "../../webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, RenderChunkSolidTileInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkIndex, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY } from "../render-chunks";
@@ -275,7 +275,7 @@ const updateFloorVertexData = (data: Float32Array, layer: Layer, renderChunkX: n
 
          const textureIndex = FLOOR_TILE_TO_TEXTURE_ARRAY_INDEX_RECORD[tile.type];
          if (typeof textureIndex === "undefined") {
-            throw new Error(tile.type.toString());
+            throw new Error(TileTypeString[tile.type]);
          }
          if (textureIndex === null) {
             continue;

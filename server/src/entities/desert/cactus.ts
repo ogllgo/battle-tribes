@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
 import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -13,6 +13,7 @@ import { CactusComponent, CactusFlower } from "../../components/CactusComponent"
 import { ItemType } from "../../../../shared/src/items/items";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
+import { createPricklyPearConfig } from "./prickly-pear";
 
 const RADIUS = 40;
 /** Amount the hitbox is brought in. */
@@ -66,7 +67,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    // Limbs
    for (let i = 0; i < numLimbs; i++) {
       const box = new CircularBox(new Point(0, 0), Point.fromVectorForm(37, Math.random()), 0, 18);
-      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, COLLISION_BITS.cactus, DEFAULT_HITBOX_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (Math.random() < 0.45) {
@@ -92,6 +93,21 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    
    const cactusComponent = new CactusComponent(flowers);
 
+   const childConfigs = new Array<EntityConfig>();
+   if (Math.random() < 0.4) {
+      const offsetDirection = 2 * Math.PI * Math.random();
+      const cactusRadius = (rootHitbox.box as CircularBox).radius;
+      const offsetX = cactusRadius * Math.sin(offsetDirection);
+      const offsetY = cactusRadius * Math.cos(offsetDirection);
+
+      const x = rootHitbox.box.position.x + offsetX;
+      const y = rootHitbox.box.position.y + offsetY;
+      const position = new Point(x, y);
+      
+      const config = createPricklyPearConfig(position, 2 * Math.PI * Math.random());
+      childConfigs.push(config);
+   }
+
    return {
       entityType: EntityType.cactus,
       components: {
@@ -101,6 +117,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.cactus]: cactusComponent
       },
-      lights: []
+      lights: [],
+      childConfigs: childConfigs
    };
 }

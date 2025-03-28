@@ -19,7 +19,7 @@ import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randI
 import { runPatrolAI } from "../../../components/PatrolAIComponent";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { entityDropsFoodItem, entityDropsItem, getEntityTypesWhichDropItem, LootComponentArray } from "../../../components/LootComponent";
-import { getSpawnInfoBiome, getSpawnInfoForEntityType } from "../../../entity-spawn-info";
+import { getSpawnInfoForEntityType } from "../../../entity-spawn-info";
 import { Biome } from "../../../../../shared/src/biomes";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
 import Layer from "../../../Layer";
@@ -330,15 +330,12 @@ export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan
          continue;
       }
 
-      // @Hack
-      const biome = getSpawnInfoBiome(spawnInfo);
-   
       // If the entity isn't in the right biome, go to the right biome
       const transformComponent = TransformComponentArray.getComponent(tribesman);
       const tribesmanHitbox = transformComponent.children[0] as Hitbox;
       const currentTile = getHitboxTile(tribesmanHitbox);
-      if (layer.getTileBiome(currentTile) !== biome) {
-         moveTribesmanToBiome(tribesman, spawnInfo.layer, biome);
+      if (layer.getTileBiome(currentTile) !== spawnInfo.biome) {
+         moveTribesmanToBiome(tribesman, spawnInfo.layer, spawnInfo.biome);
          return;
       }
    

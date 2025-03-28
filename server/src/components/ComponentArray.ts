@@ -402,6 +402,11 @@ export function sortComponentArrays(): void {
       [ServerComponentType.desertShrub]: ComponentArrayPriority.medium,
       [ServerComponentType.tumbleweedLive]: ComponentArrayPriority.medium,
       [ServerComponentType.tumbleweedDead]: ComponentArrayPriority.medium,
+      [ServerComponentType.palmTree]: ComponentArrayPriority.medium,
+      [ServerComponentType.pricklyPear]: ComponentArrayPriority.medium,
+      [ServerComponentType.pricklyPearFragmentProjectile]: ComponentArrayPriority.medium,
+      [ServerComponentType.hunger]: ComponentArrayPriority.medium,
+      [ServerComponentType.energyStore]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

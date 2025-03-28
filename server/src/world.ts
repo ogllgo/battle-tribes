@@ -3,7 +3,7 @@ import { Settings } from "battletribes-shared/settings";
 import Layer from "./Layer";
 import { removeEntityFromCensus, runTileCensuses } from "./census";
 import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
-import { registerEntityRemoval } from "./server/player-clients";
+import { registerEntityDestruction } from "./server/player-clients";
 import Tribe from "./Tribe";
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert } from "../../shared/src/utils";
@@ -270,11 +270,15 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    }
 }
 
+export function preDestroyFlaggedEntities(): void {
+   for (const entity of entityRemoveBuffer) {
+      registerEntityDestruction(entity);
+   }
+}
+
 /** Removes game objects flagged for deletion */
 export function destroyFlaggedEntities(): void {
    for (const entity of entityRemoveBuffer) {
-      registerEntityRemoval(entity);
-
       // @Speed: don't do per entity, do per component array
       // Call remove functions
       for (let i = 0; i < ComponentArrays.length; i++) {

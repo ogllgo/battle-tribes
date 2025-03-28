@@ -15,7 +15,7 @@ import Camera from "../Camera";
 import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime, registerServerTick } from "../components/game/dev/GameInfoDisplay";
 import { Tile } from "../Tile";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
-import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, removeEntity, setCurrentLayer, EntityParams, surfaceLayer, addEntityToWorld } from "../world";
+import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, removeEntity, setCurrentLayer, EntityParams, surfaceLayer, addEntityToWorld, getEntityType } from "../world";
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";

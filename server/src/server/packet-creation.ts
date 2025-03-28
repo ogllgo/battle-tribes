@@ -206,7 +206,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    // Player heals
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * playerClient.heals.length;
    // Visible entity deaths
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * playerClient.visibleEntityDeathIDs.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * playerClient.visibleDestroyedEntities.length;
    // Orb completes
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * playerClient.orbCompletes.length;
    // Tile updates
@@ -334,9 +334,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
 
    // Visible entity deaths
-   packet.addNumber(playerClient.visibleEntityDeathIDs.length);
-   for (let i = 0; i < playerClient.visibleEntityDeathIDs.length; i++) {
-      const entity = playerClient.visibleEntityDeathIDs[i];
+   packet.addNumber(playerClient.visibleDestroyedEntities.length);
+   for (let i = 0; i < playerClient.visibleDestroyedEntities.length; i++) {
+      const entity = playerClient.visibleDestroyedEntities[i];
       packet.addNumber(entity);
    }
 

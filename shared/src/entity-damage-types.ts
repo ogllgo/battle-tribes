@@ -409,6 +409,18 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
+   [EntityType.palmTree]: {
+      effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.pricklyPear]: {
+      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.pricklyPearFragmentProjectile]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

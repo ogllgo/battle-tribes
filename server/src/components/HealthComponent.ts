@@ -85,10 +85,11 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
       }
    }
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (entityExists(transformComponent.parentEntity)) {
-      callOnDeathCallbacks(transformComponent.parentEntity, attackingEntity, damageSource);
-   }
+   // @???
+   // const transformComponent = TransformComponentArray.getComponent(entity);
+   // if (entityExists(transformComponent.parentEntity)) {
+   //    callOnDeathCallbacks(transformComponent.parentEntity, attackingEntity, damageSource);
+   // }
 }
 
 /**
@@ -182,7 +183,7 @@ export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage
 
 /** Basically every effect of hitEntity, but doesn't reduce the entity's health. */
 export function hitEntityWithoutDamage(entity: Entity, attackingEntity: Entity | null, hitPosition: Point, hitFlags: number): void {
-
+   // @Incomplete
 }
 
 export function healEntity(entity: Entity, healAmount: number, healer: Entity): void {

@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -405,13 +405,13 @@ export function cleanTransform(node: Hitbox | Entity): void {
             if (childTransformComponent.boundingAreaMinX < transformComponent.boundingAreaMinX) {
                transformComponent.boundingAreaMinX = childTransformComponent.boundingAreaMinX;
             }
-            if (childTransformComponent.boundingAreaMaxX < transformComponent.boundingAreaMaxX) {
+            if (childTransformComponent.boundingAreaMaxX > transformComponent.boundingAreaMaxX) {
                transformComponent.boundingAreaMaxX = childTransformComponent.boundingAreaMaxX;
             }
             if (childTransformComponent.boundingAreaMinY < transformComponent.boundingAreaMinY) {
                transformComponent.boundingAreaMinY = childTransformComponent.boundingAreaMinY;
             }
-            if (childTransformComponent.boundingAreaMaxY < transformComponent.boundingAreaMaxY) {
+            if (childTransformComponent.boundingAreaMaxY > transformComponent.boundingAreaMaxY) {
                transformComponent.boundingAreaMaxY = childTransformComponent.boundingAreaMaxY;
             }
          } else {

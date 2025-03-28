@@ -98,7 +98,10 @@ export const enum EntityType {
    desertSmallWeed,
    desertShrub,
    tumbleweedLive,
-   tumbleweedDead
+   tumbleweedDead,
+   palmTree,
+   pricklyPear,
+   pricklyPearFragmentProjectile
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -199,6 +202,9 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.desertShrub]: "Desert Shrub",
    [EntityType.tumbleweedLive]: "Tumbleweed Live",
    [EntityType.tumbleweedDead]: "Tumbleweed Dead",
+   [EntityType.palmTree]: "Palm Tree",
+   [EntityType.pricklyPear]: "Prickly Pear",
+   [EntityType.pricklyPearFragmentProjectile]: "Prickly Pear Fragment Projectile"
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

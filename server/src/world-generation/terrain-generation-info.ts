@@ -1,12 +1,14 @@
 import { TileType, SubtileType } from "battletribes-shared/tiles";
 import { Biome } from "../../../shared/src/biomes";
 
+export interface CustomTileNoiseInfo {
+   readonly scale: number;
+   readonly minWeight?: number;
+   readonly maxWeight?: number;
+}
+
 export interface TileGenerationRequirements {
-   readonly noise?: {
-      readonly scale: number;
-      readonly minWeight?: number;
-      readonly maxWeight?: number;
-   }
+   readonly customNoise?: ReadonlyArray<CustomTileNoiseInfo>;
    /** The minimum number of tiles from the end of the biome */
    readonly minDist?: number;
    /** The maximum number of tiles from the end of the biome */
@@ -43,53 +45,47 @@ export interface BiomeSpawnRequirements {
 }
 
 export interface BiomeGenerationInfo {
-   readonly spawnRequirements: BiomeSpawnRequirements | null;
+   readonly biome: Biome;
+   readonly spawnRequirements: BiomeSpawnRequirements;
    readonly floorTiles: ReadonlyArray<FloorTileGenerationInfo>;
    readonly wallTiles: ReadonlyArray<WallTileGenerationInfo>;
 }
 
-export const BIOME_GENERATION_PRIORITY = [
-   Biome.magmaFields,
-   Biome.river,
-   Biome.tundra,
-   Biome.desert,
-   Biome.mountains,
-   Biome.swamp,
-   Biome.grasslands
-];
-
-const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
-   [Biome.magmaFields]: {
-      spawnRequirements: null,
-      floorTiles: [
-         {
-            tileType: TileType.lava,
-            requirements: {
-               noise: {
-                  scale: 7,
-                  minWeight: 0.2
-               },
-               minDist: 3
-            }
-         },
-         {
-            tileType: TileType.magma
-         }
-      ],
-      wallTiles: []
-   },
-
-   [Biome.river]: {
-      spawnRequirements: null,
-      floorTiles: [
-         {
-            tileType: TileType.water
-         }
-      ],
-      wallTiles: []
-   },
-
-   [Biome.tundra]: {
+const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
+   // {
+   //    biome: Biome.magmaFields,
+   //    spawnRequirements: null,
+   //    floorTiles: [
+   //       {
+   //          tileType: TileType.lava,
+   //          requirements: {
+   //             customNoise: [
+   //                {
+   //                   scale: 7,
+   //                   minWeight: 0.2
+   //                }
+   //             ],
+   //             minDist: 3
+   //          }
+   //       },
+   //       {
+   //          tileType: TileType.magma
+   //       }
+   //    ],
+   //    wallTiles: []
+   // },
+   // {
+   //    biome: Biome.river,
+   //    spawnRequirements: null,
+   //    floorTiles: [
+   //       {
+   //          tileType: TileType.water
+   //       }
+   //    ],
+   //    wallTiles: []
+   // },
+   {
+      biome: Biome.tundra,
       spawnRequirements: {
          maxTemperature: 0.3
       },
@@ -97,50 +93,60 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
          {
             tileType: TileType.ice,
             requirements: {
-               noise: {
-                  scale: 5,
-                  minWeight: 0.8,
-               },
+               customNoise: [
+                  {
+                     scale: 5,
+                     minWeight: 0.8,
+                  }
+               ],
                minDist: 8
             }
          },
          {
             tileType: TileType.fimbultur,
             requirements: {
-               noise: {
-                  scale: 8,
-                  minWeight: 0.2
-               },
+               customNoise: [
+                  {
+                     scale: 8,
+                     minWeight: 0.2
+                  }
+               ],
                minDist: 20
             }
          },
          {
             tileType: TileType.permafrost,
             requirements: {
-               noise: {
-                  scale: 7,
-                  minWeight: 0.2,
-               },
+               customNoise: [
+                  {
+                     scale: 7,
+                     minWeight: 0.2,
+                  }
+               ],
                minDist: 12
             }
          },
          {
             tileType: TileType.permafrost,
             requirements: {
-               noise: {
-                  scale: 7,
-                  minWeight: 0.65,
-               },
+               customNoise: [
+                  {
+                     scale: 7,
+                     minWeight: 0.65,
+                  }
+               ],
                minDist: 8
             }
          },
          {
             tileType: TileType.ice,
             requirements: {
-               noise: {
-                  scale: 7,
-                  minWeight: 0.65,
-               },
+               customNoise: [
+                  {
+                     scale: 7,
+                     minWeight: 0.65,
+                  }
+               ],
                minDist: 1
             }
          },
@@ -150,8 +156,26 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
       ],
       wallTiles: []
    },
-
-   [Biome.desert]: {
+   {
+      biome: Biome.desertOasis,
+      spawnRequirements: {
+         minTemperature: 0.95,
+      },
+      floorTiles: [
+         {
+            tileType: TileType.water,
+            requirements: {
+               minDist: 3
+            }
+         },
+         {
+            tileType: TileType.sandyDirt
+         }
+      ],
+      wallTiles: []
+   },
+   {
+      biome: Biome.desert,
       spawnRequirements: {
          minTemperature: 0.7
       },
@@ -159,21 +183,25 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
          {
             tileType: TileType.sandyDirtDark,
             requirements: {
-               noise: {
-                  scale: 6,
-                  minWeight: 0.8
-               },
+               customNoise: [
+                  {
+                     scale: 6,
+                     minWeight: 0.8
+                  }
+               ],
                maxTemperature: 0.97
             }
          },
          {
             tileType: TileType.sandyDirt,
             requirements: {
-               noise: {
-                  scale: 6,
-                  minWeight: 0.45
-               },
-               maxTemperature: 0.97
+               customNoise: [
+                  {
+                     scale: 6,
+                     minWeight: 0.45
+                  }
+               ],
+               maxTemperature: 0.95
             }
          },
          {
@@ -184,18 +212,27 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
          {
             subtileType: SubtileType.sandstoneWall,
             requirements: {
-               noise: {
-                  scale: 13,
-                  minWeight: 0.45,
-                  maxWeight: 0.55
-               },
+               customNoise: [
+                  {
+                     scale: 9,
+                     minWeight: 0.41,
+                     maxWeight: 0.59
+                     // scale: 13,
+                     // minWeight: 0.59,
+                     // maxWeight: 0.68
+                  },
+                  {
+                     scale: 17,
+                     minWeight: 0.6
+                  }
+               ],
                minDist: 10
             }
          }
       ]
    },
-
-   [Biome.mountains]: {
+   {
+      biome: Biome.mountains,
       spawnRequirements: {
          minHeight: 0.7
       },
@@ -208,17 +245,19 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
          {
             subtileType: SubtileType.rockWall,
             requirements: {
-               noise: {
-                  scale: 7,
-                  minWeight: 0.8,
-               },
+               customNoise: [
+                  {
+                     scale: 7,
+                     minWeight: 0.8,
+                  }
+               ],
                minDist: 4
             }
          }
       ]
    },
-   
-   [Biome.swamp]: {
+   {
+      biome: Biome.swamp,
       spawnRequirements: {
          minTemperature: 0.55,
          minHumidity: 0.8
@@ -227,20 +266,24 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
          {
             tileType: TileType.slime,
             requirements: {
-               noise: {
-                  scale: 2.5,
-                  minWeight: 0.2
-               },
+               customNoise: [
+                  {
+                     scale: 2.5,
+                     minWeight: 0.2
+                  }
+               ],
                minDist: 4
             }
          },
          {
             tileType: TileType.slime,
             requirements: {
-               noise: {
-                  scale: 2.5,
-                  minWeight: 0.6
-               },
+               customNoise: [
+                  {
+                     scale: 2.5,
+                     minWeight: 0.6
+                  }
+               ],
                minDist: 2
             }
          },
@@ -251,7 +294,8 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
       wallTiles: []
    },
 
-   [Biome.grasslands]: {
+   {
+      biome: Biome.grasslands,
       spawnRequirements: {},
       floorTiles: [
          {
@@ -260,6 +304,6 @@ const BIOME_GENERATION_INFO: Partial<Record<Biome, BiomeGenerationInfo>> = {
       ],
       wallTiles: []
    }
-};
+];
 
 export default BIOME_GENERATION_INFO;

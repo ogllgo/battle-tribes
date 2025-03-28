@@ -3,7 +3,7 @@ import { TileType } from "battletribes-shared/tiles";
 import { getTileIndexIncludingEdges, lerp, Point, randInt, smoothstep } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { generateOctavePerlinNoise, generatePerlinNoise, generatePointPerlinNoise } from "../perlin-noise";
-import BIOME_GENERATION_INFO, { BIOME_GENERATION_PRIORITY, BiomeSpawnRequirements, TileGenerationInfo } from "./terrain-generation-info";
+import BIOME_GENERATION_INFO, { BiomeGenerationInfo, BiomeSpawnRequirements, TileGenerationInfo } from "./terrain-generation-info";
 import { WaterTileGenerationInfo, generateRiverFeatures, generateRiverTiles } from "./river-generation";
 import OPTIONS from "../options";
 import Layer from "../Layer";
@@ -24,7 +24,7 @@ import { createBerryBushConfig } from "../entities/resources/berry-bush";
 import { createTreeConfig } from "../entities/resources/tree";
 import { createTombstoneConfig } from "../entities/tombstone";
 import { createBoulderConfig } from "../entities/resources/boulder";
-import { createCactusConfig } from "../entities/resources/cactus";
+import { createCactusConfig } from "../entities/desert/cactus";
 import { createYetiConfig } from "../entities/mobs/yeti";
 import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "../components/YetiComponent";
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
@@ -43,6 +43,8 @@ import { createDesertSmallWeedConfig } from "../entities/desert/desert-small-wee
 import { createDesertShrubConfig } from "../entities/desert/desert-shrub";
 import { createTumbleweedLiveConfig } from "../entities/desert/tumbleweed-live";
 import { createTumbleweedDeadConfig } from "../entities/desert/tumbleweed-dead";
+import { createPalmTreeConfig } from "../entities/desert/palm-tree";
+import { createKrumblidConfig } from "../entities/mobs/krumblid";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -142,15 +144,9 @@ const matchesBiomeRequirements = (generationInfo: BiomeSpawnRequirements, height
 }
 
 const getBiome = (height: number, temperature: number, humidity: number): Biome => {
-   // @Speed
-   const numBiomes = Object.keys(BIOME_GENERATION_INFO).length;
-
-   for (let i = 0; i < numBiomes; i++) {
-      const biome = BIOME_GENERATION_PRIORITY[i];
-      
-      const generationInfo = BIOME_GENERATION_INFO[biome];
-      if (typeof generationInfo !== "undefined" && generationInfo.spawnRequirements !== null && matchesBiomeRequirements(generationInfo.spawnRequirements, height, temperature, humidity)) {
-         return biome;
+   for (const biomeGenerationInfo of BIOME_GENERATION_INFO) {
+      if (matchesBiomeRequirements(biomeGenerationInfo.spawnRequirements, height, temperature, humidity)) {
+         return biomeGenerationInfo.biome;
       }
    }
    
@@ -197,10 +193,19 @@ export function getTileDist(tileBiomes: Float32Array, tileX: number, tileY: numb
    return maxSearchDist;
 }
 
+const getBiomeGenerationInfo = (biome: Biome): BiomeGenerationInfo => {
+   for (const biomeGenerationInfo of BIOME_GENERATION_INFO) {
+      if (biomeGenerationInfo.biome === biome) {
+         return biomeGenerationInfo;
+      }
+   }
+   throw new Error();
+}
+
 const getMinPossibleTemperature = (biome: Biome, tileGenerationInfo: TileGenerationInfo): number => {
    let min = 0;
 
-   const biomeGenerationInfo = BIOME_GENERATION_INFO[biome];
+   const biomeGenerationInfo = getBiomeGenerationInfo(biome);
    if (typeof biomeGenerationInfo !== "undefined" && biomeGenerationInfo.spawnRequirements !== null) {
       const biomeMinTemperature = biomeGenerationInfo.spawnRequirements.minTemperature;
       if (typeof biomeMinTemperature !== "undefined" && biomeMinTemperature > min) {
@@ -223,7 +228,7 @@ const getMinPossibleTemperature = (biome: Biome, tileGenerationInfo: TileGenerat
 const getMaxPossibleTemperature = (biome: Biome, tileGenerationInfo: TileGenerationInfo): number => {
    let max = 1;
 
-   const biomeGenerationInfo = BIOME_GENERATION_INFO[biome];
+   const biomeGenerationInfo = getBiomeGenerationInfo(biome);
    if (typeof biomeGenerationInfo !== "undefined" && biomeGenerationInfo.spawnRequirements !== null) {
       const biomeMaxTemperature = biomeGenerationInfo.spawnRequirements.maxTemperature;
       if (typeof biomeMaxTemperature !== "undefined" && biomeMaxTemperature < max) {
@@ -267,48 +272,66 @@ const getTileGenerationInfo = <T extends TileGenerationInfo>(tileBiomes: Float32
       if (typeof requirements === "undefined") {
          return tileGenerationInfo;
       }
-
-      // If greater than 1, then the tile generation info will be valid
-      let currentWeight = 1;
-      let minWeight = 1;
-      let maxWeight = 1;
       
       // Check requirements
-      if (typeof requirements.noise !== "undefined") {
-         // @Speed @Garbage
-         currentWeight *= generatePointPerlinNoise(tileX, tileY, requirements.noise.scale, biome + "-" + requirements.noise.scale);
+      if (typeof requirements.customNoise !== "undefined") {
+         let noiseIsValid = true;
+         for (const noise of requirements.customNoise) {
+            // If greater than 1, then the tile generation info will be valid
+            let currentWeight = 1;
+            let minWeight = 1;
+            let maxWeight = 1;
 
-         if (typeof requirements.noise.minWeight !== "undefined") {
-            minWeight *= requirements.noise.minWeight;
+            // @Speed @Garbage
+            currentWeight *= generatePointPerlinNoise(tileX, tileY, noise.scale, biome + "-" + noise.scale);
+   
+            if (typeof noise.minWeight !== "undefined") {
+               minWeight *= noise.minWeight;
+            }
+            if (typeof noise.maxWeight !== "undefined") {
+               maxWeight *= noise.maxWeight;
+            }
+            // if (typeof requirements.noise.minWeight !== "undefined" && weight < requirements.noise.minWeight) continue;
+            // if (typeof requirements.noise.maxWeight !== "undefined" && weight > requirements.noise.maxWeight) continue;
+   
+            // @HACK
+            // Narrow the window
+            if (typeof requirements.minTemperature !== "undefined" || typeof requirements.maxTemperature !== "undefined") {
+               // currentWeight *= temperature;
+   
+               if (typeof requirements.minTemperature !== "undefined" && temperature < requirements.minTemperature) {
+                  noiseIsValid = false;
+                  break;
+               }
+               if (typeof requirements.maxTemperature !== "undefined" && temperature > requirements.maxTemperature) {
+                  noiseIsValid = false;
+                  break;
+               }
+   
+               const minPossibleTemperature = getMinPossibleTemperature(biome, tileGenerationInfo);
+               const maxPossibleTemperature = getMaxPossibleTemperature(biome, tileGenerationInfo);
+               let temperaturePlacement = (temperature - minPossibleTemperature) / (maxPossibleTemperature - minPossibleTemperature);
+               temperaturePlacement = smoothstep(temperaturePlacement);
+   
+               // move the min weight to the max according to the placement
+               minWeight = lerp(minWeight, maxWeight, temperaturePlacement);
+            }
+            // if (typeof requirements.minTemperature !== "undefined") {
+            //    minWeight *= getMinPossibleTemperature(biome, tileGenerationInfo);
+            // }
+            // if (typeof requirements.maxTemperature !== "undefined") {
+            //    maxWeight *= getMaxPossibleTemperature(biome, tileGenerationInfo);
+            // }
+
+            if (currentWeight < minWeight || currentWeight > maxWeight) {
+               noiseIsValid = false;
+               break;
+            }
          }
-         if (typeof requirements.noise.maxWeight !== "undefined") {
-            maxWeight *= requirements.noise.maxWeight;
+
+         if (!noiseIsValid) {
+            continue;
          }
-         // if (typeof requirements.noise.minWeight !== "undefined" && weight < requirements.noise.minWeight) continue;
-         // if (typeof requirements.noise.maxWeight !== "undefined" && weight > requirements.noise.maxWeight) continue;
-
-         // @HACK
-         // Narrow the window
-         if (typeof requirements.minTemperature !== "undefined" || typeof requirements.maxTemperature !== "undefined") {
-            // currentWeight *= temperature;
-
-            if (typeof requirements.minTemperature !== "undefined" && temperature < requirements.minTemperature) continue;
-            if (typeof requirements.maxTemperature !== "undefined" && temperature > requirements.maxTemperature) continue;
-
-            const minPossibleTemperature = getMinPossibleTemperature(biome, tileGenerationInfo);
-            const maxPossibleTemperature = getMaxPossibleTemperature(biome, tileGenerationInfo);
-            let temperaturePlacement = (temperature - minPossibleTemperature) / (maxPossibleTemperature - minPossibleTemperature);
-            temperaturePlacement = smoothstep(temperaturePlacement);
-
-            // move the min weight to the max according to the placement
-            minWeight = lerp(minWeight, maxWeight, temperaturePlacement);
-         }
-         // if (typeof requirements.minTemperature !== "undefined") {
-         //    minWeight *= getMinPossibleTemperature(biome, tileGenerationInfo);
-         // }
-         // if (typeof requirements.maxTemperature !== "undefined") {
-         //    maxWeight *= getMaxPossibleTemperature(biome, tileGenerationInfo);
-         // }
       }
 
       if (typeof requirements.minDist !== "undefined" && dist < requirements.minDist) continue;
@@ -323,9 +346,7 @@ const getTileGenerationInfo = <T extends TileGenerationInfo>(tileBiomes: Float32
       if (typeof requirements.minHumidity !== "undefined" && humidity < requirements.minHumidity) continue;
       if (typeof requirements.maxHumidity !== "undefined" && humidity > requirements.maxHumidity) continue;
       
-      if (currentWeight >= minWeight && currentWeight <= maxWeight) {
-         return tileGenerationInfo;
-      }
+      return tileGenerationInfo;
    }
 }
 
@@ -336,7 +357,7 @@ const generateTileInfo = (tileBiomes: Float32Array, tileTypes: Float32Array, sub
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          
          const biome = tileBiomes[tileIndex] as Biome;
-         const biomeGenerationInfo = BIOME_GENERATION_INFO[biome]!;
+         const biomeGenerationInfo = getBiomeGenerationInfo(biome);
 
          const height = heightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
@@ -488,10 +509,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.berryBush,
       layer: surfaceLayer,
       spawnRate: 0.001,
-      spawnableTileTypes: [TileType.grass],
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.0025),
+      spawnDistribution: createRawSpawnDistribution(4, 0.0025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -502,10 +524,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tree,
       layer: surfaceLayer,
       spawnRate: 0.013,
-      spawnableTileTypes: [TileType.grass],
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.02),
+      spawnDistribution: createRawSpawnDistribution(8, 0.02),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -516,10 +539,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tombstone,
       layer: surfaceLayer,
       spawnRate: 0.01,
-      spawnableTileTypes: [TileType.grass],
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
       onlySpawnsInNight: true,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.003),
+      spawnDistribution: createRawSpawnDistribution(4, 0.003),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -530,10 +554,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.boulder,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      spawnableTileTypes: [TileType.rock],
+      biome: Biome.mountains,
+      tileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.025),
+      spawnDistribution: createRawSpawnDistribution(8, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -544,10 +569,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.cactus,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      spawnableTileTypes: [TileType.sand],
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 75,
-      rawSpawnDistribution: createRawSpawnDistribution(16, 0.01),
+      spawnDistribution: createRawSpawnDistribution(16, 0.01),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       packSpawning: {
@@ -567,10 +593,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.yeti,
       layer: surfaceLayer,
       spawnRate: 0.004,
-      spawnableTileTypes: [TileType.snow],
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
+      spawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -588,10 +615,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.iceSpikes,
       layer: surfaceLayer,
       spawnRate: 0.015,
-      spawnableTileTypes: [TileType.ice, TileType.permafrost],
+      biome: Biome.tundra,
+      tileTypes: [TileType.ice, TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.06),
+      spawnDistribution: createRawSpawnDistribution(4, 0.06),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -602,10 +630,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.slimewisp,
       layer: surfaceLayer,
       spawnRate: 0.2,
-      spawnableTileTypes: [TileType.slime],
+      biome: Biome.swamp,
+      tileTypes: [TileType.slime],
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.3),
+      spawnDistribution: createRawSpawnDistribution(4, 0.3),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -618,39 +647,41 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.slime,
       layer: surfaceLayer,
       spawnRate: 0,
-      spawnableTileTypes: [TileType.slime],
+      biome: Biome.swamp,
+      tileTypes: [TileType.slime],
       onlySpawnsInNight: false,
       minSpawnDistance: 50,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0),
+      spawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimeConfig(new Point(x, y), angle, 0);
       }
    });
-   // @Temporary
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.krumblid,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    spawnableTileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    rawSpawnDistribution: createRawSpawnDistribution(4, 0.015),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createKrumblidConfig(new Point(x, y), angle);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityType: EntityType.krumblid,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.015),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createKrumblidConfig(new Point(x, y), angle);
+      }
+   });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,
       spawnRate: 0.004,
-      spawnableTileTypes: [TileType.fimbultur],
+      biome: Biome.tundra,
+      tileTypes: [TileType.fimbultur],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.008),
+      spawnDistribution: createRawSpawnDistribution(4, 0.008),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -661,7 +692,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.fish,
       layer: surfaceLayer,
       spawnRate: 0.015,
-      spawnableTileTypes: [TileType.water],
+      biome: Biome.river,
+      tileTypes: [TileType.water],
       packSpawning: {
          getPackSize: (): PackSizeInfo => {
             return {
@@ -673,7 +705,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
+      spawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
@@ -685,7 +717,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.lilypad,
       layer: surfaceLayer,
       spawnRate: 0,
-      spawnableTileTypes: [TileType.water],
+      biome: Biome.river,
+      tileTypes: [TileType.water],
       packSpawning: {
          getPackSize: (): PackSizeInfo => {
             return {
@@ -697,7 +730,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 0,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.03),
+      spawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
@@ -711,10 +744,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.golem,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.rock],
+      biome: Biome.mountains,
+      tileTypes: [TileType.rock],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.004),
+      spawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -725,10 +759,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.cactus,
       layer: surfaceLayer,
       spawnRate: 0.005,
-      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      biome: Biome.desert,
+      tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 35,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.055),
+      spawnDistribution: createRawSpawnDistribution(8, 0.055),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -739,10 +774,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.desertBushLively,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      biome: Biome.desert,
+      tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 40,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.05),
+      spawnDistribution: createRawSpawnDistribution(8, 0.05),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -753,10 +789,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.desertShrub,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      biome: Biome.desert,
+      tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 40,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.028),
+      spawnDistribution: createRawSpawnDistribution(8, 0.028),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -767,10 +804,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.desertBushSandy,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      biome: Biome.desert,
+      tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
-      rawSpawnDistribution: createRawSpawnDistribution(8, 0.13),
+      spawnDistribution: createRawSpawnDistribution(8, 0.13),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       packSpawning: {
@@ -790,10 +828,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.desertSmallWeed,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
+      biome: Biome.desert,
+      tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 20,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0.12),
+      spawnDistribution: createRawSpawnDistribution(4, 0.12),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -804,10 +843,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tumbleweedLive,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sand],
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      rawSpawnDistribution: createRawSpawnDistribution(16, 0.0025),
+      spawnDistribution: createRawSpawnDistribution(16, 0.0025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -818,25 +858,166 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       entityType: EntityType.tumbleweedDead,
       layer: surfaceLayer,
       spawnRate: 0.002,
-      spawnableTileTypes: [TileType.sand],
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      rawSpawnDistribution: createRawSpawnDistribution(16, 0.008),
+      spawnDistribution: createRawSpawnDistribution(16, 0.008),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTumbleweedDeadConfig(new Point(x, y), angle);
       }
    });
+
+   // 
+   // Oasis
+   // 
+   registerNewSpawnInfo({
+      entityType: EntityType.palmTree,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.desertOasis,
+      tileTypes: [TileType.sandyDirt],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 20,
+      spawnDistribution: createRawSpawnDistribution(16, 0.05),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createPalmTreeConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.desertBushLively,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.desertOasis,
+      tileTypes: [TileType.sandyDirt],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 40,
+      spawnDistribution: createRawSpawnDistribution(8, 0.15),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDesertBushLivelyConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.desertShrub,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.desertOasis,
+      tileTypes: [TileType.sandyDirt],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 40,
+      spawnDistribution: createRawSpawnDistribution(8, 0.08),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDesertShrubConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.desertSmallWeed,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.desertOasis,
+      tileTypes: [TileType.sandyDirt],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 20,
+      spawnDistribution: createRawSpawnDistribution(4, 0.19),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDesertSmallWeedConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.fish,
+      layer: surfaceLayer,
+      spawnRate: 0.015,
+      biome: Biome.desertOasis,
+      tileTypes: [TileType.water],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.06),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+         const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
+         return createFishConfig(new Point(x, y), angle, colour);
+      }
+   });
+
    if (OPTIONS.spawnTribes) {
+      // Grasslands
       registerNewSpawnInfo({
          entityType: EntityType.tribeWorker,
          layer: surfaceLayer,
          spawnRate: 0.002,
-         spawnableTileTypes: [TileType.grass, TileType.rock, TileType.sand, TileType.snow, TileType.ice],
+         biome: Biome.grasslands,
+         tileTypes: [TileType.grass],
          onlySpawnsInNight: false,
          minSpawnDistance: 100,
-         rawSpawnDistribution: createRawSpawnDistribution(4, 0.002),
+         spawnDistribution: createRawSpawnDistribution(4, 0.002),
+         balanceSpawnDistribution: false,
+         doStrictTileTypeCheck: true,
+         customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
+            return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
+         },
+         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         }
+      });
+      // Mountains
+      registerNewSpawnInfo({
+         entityType: EntityType.tribeWorker,
+         layer: surfaceLayer,
+         spawnRate: 0.002,
+         biome: Biome.mountains,
+         tileTypes: [TileType.rock],
+         onlySpawnsInNight: false,
+         minSpawnDistance: 100,
+         spawnDistribution: createRawSpawnDistribution(4, 0.002),
+         balanceSpawnDistribution: false,
+         doStrictTileTypeCheck: true,
+         customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
+            return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
+         },
+         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         }
+      });
+      // Desert
+      registerNewSpawnInfo({
+         entityType: EntityType.tribeWorker,
+         layer: surfaceLayer,
+         spawnRate: 0.002,
+         biome: Biome.desert,
+         tileTypes: [TileType.sand],
+         onlySpawnsInNight: false,
+         minSpawnDistance: 100,
+         spawnDistribution: createRawSpawnDistribution(4, 0.002),
+         balanceSpawnDistribution: false,
+         doStrictTileTypeCheck: true,
+         customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
+            return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
+         },
+         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         }
+      });
+      // Tundra
+      registerNewSpawnInfo({
+         entityType: EntityType.tribeWorker,
+         layer: surfaceLayer,
+         spawnRate: 0.002,
+         biome: Biome.tundra,
+         tileTypes: [TileType.ice],
+         onlySpawnsInNight: false,
+         minSpawnDistance: 100,
+         spawnDistribution: createRawSpawnDistribution(4, 0.002),
          balanceSpawnDistribution: false,
          doStrictTileTypeCheck: true,
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {

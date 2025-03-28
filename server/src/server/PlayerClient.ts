@@ -50,7 +50,7 @@ class PlayerClient {
    /** All entity tick events visible to the player */
    public entityTickEvents = new Array<EntityTickEvent>();
    
-   public visibleEntityDeathIDs = new Array<number>();
+   public visibleDestroyedEntities = new Array<number>();
    public orbCompletes = new Array<ResearchOrbCompleteData>();
    public hasPickedUpItem = false;
    public gameDataOptions = 0;

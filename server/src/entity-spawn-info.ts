@@ -34,34 +34,14 @@ export interface SpawnDistribution {
    readonly entityDensityMap: Map<Entity, Array<EntityBlockDensityInfo>>;
 }
 
-// @Cleanup: shouldn't be params and then actual info: should just be 1! perhaps created with function
-
-export interface EntitySpawnInfoParams {
-   /** The type of entity to spawn */
-   readonly entityType: EntityType;
-   readonly layer: Layer;
-   /** Average number of spawn attempts that happen each second per chunk. */
-   readonly spawnRate: number;
-   readonly spawnableTileTypes: ReadonlyArray<TileType>;
-   readonly onlySpawnsInNight: boolean;
-   /** Minimum distance a spawn event can occur from another entity */
-   readonly minSpawnDistance: number;
-   readonly packSpawning?: PackSpawningInfo;
-   readonly rawSpawnDistribution: SpawnDistribution;
-   readonly balanceSpawnDistribution: boolean;
-   /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
-   readonly doStrictTileTypeCheck: boolean;
-   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
-   readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
-}
-
 export interface EntitySpawnInfo {
    /** The type of entity to spawn */
    readonly entityType: EntityType;
    readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
-   readonly spawnableTileTypes: ReadonlyArray<TileType>;
+   readonly biome: Biome;
+   readonly tileTypes: ReadonlyArray<TileType>;
    readonly onlySpawnsInNight: boolean;
    /** Minimum distance a spawn event can occur from another entity */
    readonly minSpawnDistance: number;
@@ -88,8 +68,8 @@ export interface EntitySpawnInfo {
    
 export const SPAWN_INFOS = new Array<EntitySpawnInfo>();
 
-const countNumSpawnableTiles = (params: EntitySpawnInfoParams, blockX: number, blockY: number): number => {
-   const blockSize = params.rawSpawnDistribution.blockSize;
+const countNumSpawnableTiles = (spawnInfo: EntitySpawnInfo, blockX: number, blockY: number): number => {
+   const blockSize = spawnInfo.spawnDistribution.blockSize;
 
    const originTileX = blockX * blockSize;
    const originTileY = blockY * blockSize;
@@ -99,8 +79,8 @@ const countNumSpawnableTiles = (params: EntitySpawnInfoParams, blockX: number, b
    for (let tileX = originTileX; tileX < originTileX + blockSize; tileX++) {
       for (let tileY = originTileY; tileY < originTileY + blockSize; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         const tileType = params.layer.getTileType(tileIndex);
-         if (params.spawnableTileTypes.includes(tileType)) {
+         const tileType = spawnInfo.layer.getTileType(tileIndex);
+         if (spawnInfo.tileTypes.includes(tileType)) {
             count++;
          }
       }
@@ -133,8 +113,8 @@ export function createRawSpawnDistribution(blockSize: number, maxDensity: number
 }
 
 /** Takes into account the spawnable tiles into the raw spawn distribution */
-const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): void => {
-   const blockSize = params.rawSpawnDistribution.blockSize;
+const createBaseSpawnDistribution = (spawnInfo: EntitySpawnInfo): void => {
+   const blockSize = spawnInfo.spawnDistribution.blockSize;
    
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
@@ -143,7 +123,7 @@ const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): void => {
    let i = 0;
    for (let blockY = 0; blockY < BLOCKS_IN_BOARD_DIMENSIONS; blockY++) {
       for (let blockX = 0; blockX < BLOCKS_IN_BOARD_DIMENSIONS; blockX++) {
-         const numSpawnableTiles = countNumSpawnableTiles(params, blockX, blockY);
+         const numSpawnableTiles = countNumSpawnableTiles(spawnInfo, blockX, blockY);
 
          const targetDensity = numSpawnableTiles / (blockSize * blockSize);
          targetDensities[i] = targetDensity;
@@ -151,8 +131,8 @@ const createBaseSpawnDistribution = (params: EntitySpawnInfoParams): void => {
       }
    }
 
-   for (let i = 0; i < params.rawSpawnDistribution.targetDensities.length; i++) {
-      params.rawSpawnDistribution.targetDensities[i] *= targetDensities[i];
+   for (let i = 0; i < spawnInfo.spawnDistribution.targetDensities.length; i++) {
+      spawnInfo.spawnDistribution.targetDensities[i] *= targetDensities[i];
    }
 }
 
@@ -289,27 +269,8 @@ export function removeEntityFromSpawnDistributions(entity: Entity, autoSpawnedCo
    }
 }
 
-const createEntitySpawnInfo = (params: EntitySpawnInfoParams): EntitySpawnInfo => {
-   createBaseSpawnDistribution(params);
-
-   return {
-      entityType: params.entityType,
-      layer: params.layer,
-      spawnRate: params.spawnRate,
-      spawnableTileTypes: params.spawnableTileTypes,
-      onlySpawnsInNight: params.onlySpawnsInNight,
-      minSpawnDistance: params.minSpawnDistance,
-      packSpawning: params.packSpawning,
-      spawnDistribution: params.rawSpawnDistribution,
-      balanceSpawnDistribution: params.balanceSpawnDistribution,
-      doStrictTileTypeCheck: params.doStrictTileTypeCheck,
-      createEntity: params.createEntity,
-      customSpawnIsValidFunc: params.customSpawnIsValidFunc
-   };
-}
-
-export function registerNewSpawnInfo(params: EntitySpawnInfoParams): void {
-   const spawnInfo = createEntitySpawnInfo(params);
+export function registerNewSpawnInfo(spawnInfo: EntitySpawnInfo): void {
+   createBaseSpawnDistribution(spawnInfo);
    SPAWN_INFOS.push(spawnInfo);
 }
 
@@ -322,32 +283,6 @@ export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnIn
    }
 
    return null;
-}
-
-export function getSpawnInfoBiome(spawnInfo: EntitySpawnInfo): Biome {
-   // @HACK @HACK @HACK
-   // @Robustness
-   const tileType = spawnInfo.spawnableTileTypes[0];
-   switch (tileType) {
-      case TileType.grass: return Biome.grasslands;
-      case TileType.dirt: return Biome.grasslands;
-      case TileType.water: return Biome.grasslands;
-      case TileType.sludge: return Biome.swamp;
-      case TileType.slime: return Biome.swamp;
-      case TileType.rock: return Biome.mountains;
-      case TileType.sand: return Biome.desert;
-      case TileType.sandyDirt: return Biome.desert;
-      case TileType.sandyDirtDark: return Biome.desert;
-      case TileType.snow: return Biome.tundra;
-      case TileType.ice: return Biome.tundra;
-      case TileType.permafrost: return Biome.tundra;
-      case TileType.magma: return Biome.grasslands;
-      case TileType.lava: return Biome.grasslands;
-      case TileType.fimbultur: return Biome.tundra;
-      case TileType.dropdown: return Biome.grasslands;
-      case TileType.stone: return Biome.caves;
-      case TileType.stoneWallFloor: return Biome.caves;
-   }
 }
 
 export function spawnPositionLacksDensity(spawnInfo: EntitySpawnInfo, x: number, y: number): boolean {

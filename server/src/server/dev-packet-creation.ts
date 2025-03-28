@@ -120,7 +120,7 @@ const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, l
       const spawnInfo = getSpawnInfoForEntityType(entityType);
       if (spawnInfo !== null) {
          let numEligibleTiles = 0;
-         for (const tileType of spawnInfo.spawnableTileTypes) {
+         for (const tileType of spawnInfo.tileTypes) {
             numEligibleTiles += localBiome.tileCensus[tileType] || 0;
          }
    

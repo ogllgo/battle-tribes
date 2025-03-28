@@ -199,6 +199,15 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [159/255, 124/255, 86/255],
       [164/255, 131/255, 96/255]
    ],
+   [ItemType.pricklyPear]: [
+      [117/255, 25/255, 40/255],
+      [153/255, 29/255, 37/255],
+      [217/255, 41/255, 41/255],
+      [222/255, 58/255, 58/255],
+      [222/255, 87/255, 87/255],
+      [217/255, 124/255, 124/255],
+      [217/255, 173/255, 173/255]
+   ],
 };
 
 const BOW_CHARGE_DOMINANT_START_LIMB_STATE: LimbState = {

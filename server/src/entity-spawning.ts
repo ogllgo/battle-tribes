@@ -1,6 +1,6 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randInt, randFloat, getTileIndexIncludingEdges, distance, assert } from "battletribes-shared/utils";
+import { randInt, randFloat, getTileIndexIncludingEdges, distance, assert, Point } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
@@ -21,6 +21,7 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collis
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { TileType } from "../../shared/src/tiles";
+import { createCactusConfig } from "./entities/desert/cactus";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -44,8 +45,7 @@ const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
 }
 
 const tileIsSpawnable = (tileIndex: number, spawnInfo: EntitySpawnInfo): boolean => {
-   const tileType = spawnInfo.layer.getTileType(tileIndex);
-   return spawnInfo.spawnableTileTypes.includes(tileType) && !spawnInfo.layer.unspawnableTiles.has(tileIndex);
+   return spawnInfo.tileTypes.includes(spawnInfo.layer.getTileType(tileIndex)) && spawnInfo.layer.getTileBiome(tileIndex) === spawnInfo.biome && !spawnInfo.layer.unspawnableTiles.has(tileIndex);
 }
 
 const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
@@ -324,34 +324,13 @@ export function runSpawnAttempt(): void {
 }
 
 export function spawnInitialEntities(): void {
-   if (!OPTIONS.spawnEntities) {
-      return;
-   }
-
-   let numSpawnAttempts: number;
-
-   // For each spawn info object, spawn entities until no more can be spawned
-   for (let i = 0; i < SPAWN_INFOS.length; i++) {
-      const spawnInfo = SPAWN_INFOS[i];
-      
-      numSpawnAttempts = 0;
-      while (spawnConditionsAreMet(spawnInfo)) {
-         runSpawnEvent(spawnInfo);
-
-         if (++numSpawnAttempts >= 39999) {
-            console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
-            break;
-         }
-      }
-   }
-
    // @Temporary
    setTimeout(() => {
-      // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 + 400, Settings.BOARD_UNITS * 0.5), 0);
+      // const config = createCactusConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5), 0);
       // createEntity(config, surfaceLayer, 0);
       if(1+1===2)return;
-      const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
-      createEntity(config, surfaceLayer, 0);
+      // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
+      // createEntity(config, surfaceLayer, 0);
 
       if(1+1===2)return;
       
@@ -376,5 +355,26 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
       // }
-   }, 1100);
+   }, 9100);
+
+   if (!OPTIONS.spawnEntities) {
+      return;
+   }
+
+   let numSpawnAttempts: number;
+
+   // For each spawn info object, spawn entities until no more can be spawned
+   for (let i = 0; i < SPAWN_INFOS.length; i++) {
+      const spawnInfo = SPAWN_INFOS[i];
+      
+      numSpawnAttempts = 0;
+      while (spawnConditionsAreMet(spawnInfo)) {
+         runSpawnEvent(spawnInfo);
+
+         if (++numSpawnAttempts >= 39999) {
+            console.warn("Exceeded maximum number of spawn attempts for " + EntityTypeString[spawnInfo.entityType] + " with " + getEntityCount(spawnInfo.entityType) + " entities.");
+            break;
+         }
+      }
+   }
 }

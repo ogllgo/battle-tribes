@@ -394,6 +394,18 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tumbleweed Dead",
       internalName: "tumbleweed-dead"
    },
+   [EntityType.palmTree]: {
+      name: "Palm Tree",
+      internalName: "palm-tree"
+   },
+   [EntityType.pricklyPear]: {
+      name: "Prickly Pear",
+      internalName: "prickly-pear"
+   },
+   [EntityType.pricklyPearFragmentProjectile]: {
+      name: "Prickly Pear Fragment Projectile",
+      internalName: "prickly-pear-fragment-projectile"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

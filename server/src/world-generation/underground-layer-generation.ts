@@ -21,9 +21,6 @@ import { createBoulderConfig } from "../entities/resources/boulder";
 import { createGlurbConfig } from "../entities/mobs/glurb";
 import { createMossConfig } from "../entities/moss";
 import { ServerComponentType } from "../../../shared/src/components";
-import PlayerClient from "../server/PlayerClient";
-import { TransformComponentArray } from "../components/TransformComponent";
-import { Hitbox } from "../hitboxes";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,
@@ -320,7 +317,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.moss,
       layer: undergroundLayer,
       spawnRate: 0.05,
-      spawnableTileTypes: [TileType.stone],
+      biome: Biome.caves,
+      tileTypes: [TileType.stone],
       packSpawning: {
          getPackSize: (x: number, y: number): PackSizeInfo => {
             const humidity = getMossHumidity(undergroundLayer, x, y);
@@ -333,7 +331,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
-      rawSpawnDistribution: mossSpawnDistribution,
+      spawnDistribution: mossSpawnDistribution,
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
@@ -417,10 +415,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.boulder,
       layer: undergroundLayer,
       spawnRate: 0.005,
-      spawnableTileTypes: [TileType.stone],
+      biome: Biome.caves,
+      tileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      rawSpawnDistribution: createRawSpawnDistribution(16, 0.025),
+      spawnDistribution: createRawSpawnDistribution(16, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -431,10 +430,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.glurb,
       layer: undergroundLayer,
       spawnRate: 0.0025,
-      spawnableTileTypes: [TileType.stone],
+      biome: Biome.caves,
+      tileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
-      rawSpawnDistribution: createRawSpawnDistribution(32, 0.004),
+      spawnDistribution: createRawSpawnDistribution(32, 0.004),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -446,10 +446,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       entityType: EntityType.mithrilOreNode,
       layer: undergroundLayer,
       spawnRate: 0.0025,
-      spawnableTileTypes: [TileType.stone],
+      biome: Biome.caves,
+      tileTypes: [TileType.stone],
       onlySpawnsInNight: false,
       minSpawnDistance: 100,
-      rawSpawnDistribution: createRawSpawnDistribution(4, 0),
+      spawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {

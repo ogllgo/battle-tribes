@@ -21,6 +21,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
+import { HungerComponent } from "../../components/HungerComponent";
 
 export const enum KrumblidVars {
    MIN_FOLLOW_COOLDOWN = 8,
@@ -57,9 +58,11 @@ export function createKrumblidConfig(position: Point, rotation: number): EntityC
    
    const escapeAIComponent = new EscapeAIComponent(700, 2 * Math.PI);
    
-   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), 0.3, 34);
+   const followAIComponent = new FollowAIComponent(randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), 0.05, 34);
    
    const lootComponent = new LootComponent();
+
+   const hungerComponent = new HungerComponent(300, 1);
    
    const krumblidComponent = new KrumblidComponent();
    
@@ -75,6 +78,7 @@ export function createKrumblidConfig(position: Point, rotation: number): EntityC
          [ServerComponentType.escapeAI]: escapeAIComponent,
          [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.loot]: lootComponent,
+         [ServerComponentType.hunger]: hungerComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       },
       lights: []

@@ -125,7 +125,12 @@ export enum ServerComponentType {
    desertSmallWeed,
    desertShrub,
    tumbleweedLive,
-   tumbleweedDead
+   tumbleweedDead,
+   palmTree,
+   pricklyPear,
+   pricklyPearFragmentProjectile,
+   hunger,
+   energyStore
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -238,12 +243,17 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.moss]: "Moss Component",
    [ServerComponentType.floorSign]: "Floor Sign",
    [ServerComponentType.desertBushLively]: "Desert Bush Lively Component",
-   [ServerComponentType.desertBushSandy]: "Desert Bush Sandy",
+   [ServerComponentType.desertBushSandy]: "Desert Bush Sandy Component",
    [ServerComponentType.autoSpawned]: "Auto Spawned Component",
-   [ServerComponentType.desertSmallWeed]: "Desert Small Weed",
-   [ServerComponentType.desertShrub]: "Desert Shrub",
-   [ServerComponentType.tumbleweedLive]: "Tumbleweed Live",
-   [ServerComponentType.tumbleweedDead]: "Tumbleweed Dead",
+   [ServerComponentType.desertSmallWeed]: "Desert Small Weed Component",
+   [ServerComponentType.desertShrub]: "Desert Shrub Component",
+   [ServerComponentType.tumbleweedLive]: "Tumbleweed Live Component",
+   [ServerComponentType.tumbleweedDead]: "Tumbleweed Dead Component",
+   [ServerComponentType.palmTree]: "Palm Tree Component",
+   [ServerComponentType.pricklyPear]: "Prickly Pear Component",
+   [ServerComponentType.pricklyPearFragmentProjectile]: "Prickly Pear Fragment Projectile Component",
+   [ServerComponentType.hunger]: "Hunger Component",
+   [ServerComponentType.energyStore]: "Energy Store",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -347,6 +357,9 @@ export const EntityComponents = {
    [EntityType.desertShrub]: [],
    [EntityType.tumbleweedLive]: [],
    [EntityType.tumbleweedDead]: [],
+   [EntityType.palmTree]: [],
+   [EntityType.pricklyPear]: [],
+   [EntityType.pricklyPearFragmentProjectile]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

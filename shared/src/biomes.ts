@@ -1,6 +1,7 @@
 export const enum Biome {
    grasslands,
    desert,
+   desertOasis,
    tundra,
    swamp,
    mountains,

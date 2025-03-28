@@ -4,11 +4,12 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { createReedConfig } from "../entities/reed";
 import { createEntity } from "../Entity";
 import { WaterTileGenerationInfo } from "./river-generation";
-import { distance, Point } from "battletribes-shared/utils";
+import { distance, getTileIndexIncludingEdges, Point } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
 import { isTooCloseToSteppingStone } from "../entity-spawn-info";
 import { pushJoinBuffer } from "../world";
 import Layer from "../Layer";
+import { Biome } from "../../../shared/src/biomes";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35
@@ -36,9 +37,10 @@ export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray
    const probabilityWeightMap1 = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 5, 3, 1.5, 0.75);
    
    // @Incomplete: generate in edges
-   for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
-         if (surfaceLayer.getTileXYType(tileX, tileY) !== TileType.water) {
+   for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+      for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+         if (surfaceLayer.getTileType(tileIndex) !== TileType.water || surfaceLayer.getTileBiome(tileIndex) !== Biome.river) {
             continue;
          }
 
