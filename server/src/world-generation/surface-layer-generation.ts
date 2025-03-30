@@ -10,7 +10,7 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, PackSizeInfo, registerNewSpawnInfo } from "../entity-spawn-info";
+import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
@@ -45,6 +45,9 @@ import { createTumbleweedLiveConfig } from "../entities/desert/tumbleweed-live";
 import { createTumbleweedDeadConfig } from "../entities/desert/tumbleweed-dead";
 import { createPalmTreeConfig } from "../entities/desert/palm-tree";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
+import { createDustfleaConfig } from "../entities/desert/dustflea";
+import { createSandstoneRockConfig } from "../entities/desert/sandstone-rock";
+import { createOkrenConfig } from "../entities/desert/okren";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -577,12 +580,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       packSpawning: {
-         getPackSize: () => {
-            return {
-               minPackSize: 1,
-               maxPackSize: 2
-            }
-         },
+         getPackSize: () => randInt(1, 2),
          spawnRange: 80
       },
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -658,19 +656,34 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createSlimeConfig(new Point(x, y), angle, 0);
       }
    });
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.krumblid,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.015),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createKrumblidConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
-      entityType: EntityType.krumblid,
+      entityType: EntityType.okren,
       layer: surfaceLayer,
       spawnRate: 0.005,
       biome: Biome.desert,
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.015),
+      spawnDistribution: createRawSpawnDistribution(4, 0.0012),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createKrumblidConfig(new Point(x, y), angle);
+         return createOkrenConfig(new Point(x, y), angle);
       }
    });
    registerNewSpawnInfo({
@@ -695,12 +708,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       biome: Biome.river,
       tileTypes: [TileType.water],
       packSpawning: {
-         getPackSize: (): PackSizeInfo => {
-            return {
-               minPackSize: 3,
-               maxPackSize: 4
-            };
-         },
+         getPackSize: () => randInt(3, 4),
          spawnRange: 200
       },
       onlySpawnsInNight: false,
@@ -720,12 +728,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       biome: Biome.river,
       tileTypes: [TileType.water],
       packSpawning: {
-         getPackSize: (): PackSizeInfo => {
-            return {
-               minPackSize: 2,
-               maxPackSize: 3
-            };
-         },
+         getPackSize: (): number => randInt(2, 3),
          spawnRange: 200
       },
       onlySpawnsInNight: false,
@@ -763,7 +766,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.sandyDirt, TileType.sandyDirtDark],
       onlySpawnsInNight: false,
       minSpawnDistance: 35,
-      spawnDistribution: createRawSpawnDistribution(8, 0.055),
+      spawnDistribution: createRawSpawnDistribution(8, 0.045),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -812,12 +815,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       packSpawning: {
-         getPackSize: () => {
-            return {
-               minPackSize: 2,
-               maxPackSize: 3
-            };
-         },
+         getPackSize: () => randInt(2, 3),
          spawnRange: 80
       },
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -847,7 +845,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      spawnDistribution: createRawSpawnDistribution(16, 0.0025),
+      spawnDistribution: createRawSpawnDistribution(32, 0.002),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
@@ -862,11 +860,40 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 60,
-      spawnDistribution: createRawSpawnDistribution(16, 0.008),
+      spawnDistribution: createRawSpawnDistribution(32, 0.006),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createTumbleweedDeadConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.sandstoneRock,
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(16, 0.029),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => randInt(3, 9),
+         spawnRange: 80
+      },
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         let size: number;
+         if (Math.random() < 0.4) {
+            size = 0;
+         } else if (Math.random() < 0.75) {
+            size = 1;
+         } else {
+            size = 2;
+         }
+         
+         return createSandstoneRockConfig(new Point(x, y), angle, size);
       }
    });
 

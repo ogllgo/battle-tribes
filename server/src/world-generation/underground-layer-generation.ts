@@ -15,7 +15,7 @@ import { EntityType } from "../../../shared/src/entities";
 import { getLightLevelNode } from "../light-levels";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
-import { createRawSpawnDistribution, PackSizeInfo, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
+import { createRawSpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
 import { EntityConfig } from "../components";
 import { createBoulderConfig } from "../entities/resources/boulder";
 import { createGlurbConfig } from "../entities/mobs/glurb";
@@ -312,7 +312,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   // Mose
+   // Moses
    registerNewSpawnInfo({
       entityType: EntityType.moss,
       layer: undergroundLayer,
@@ -320,12 +320,11 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       biome: Biome.caves,
       tileTypes: [TileType.stone],
       packSpawning: {
-         getPackSize: (x: number, y: number): PackSizeInfo => {
+         getPackSize: (x: number, y: number): number => {
             const humidity = getMossHumidity(undergroundLayer, x, y);
-            return {
-               minPackSize: Math.floor(lerp(1, 3, humidity)),
-               maxPackSize: Math.floor(lerp(2, 5, humidity)),
-            }
+            const minPackSize = Math.floor(lerp(1, 3, humidity));
+            const maxPackSize = Math.floor(lerp(2, 5, humidity));
+            return randInt(minPackSize, maxPackSize);
          },
          spawnRange: 40
       },

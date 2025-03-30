@@ -117,6 +117,9 @@ import { PricklyPearComponent } from "./components/PricklyPearComponent";
 import { PricklyPearFragmentProjectileComponent } from "./components/PricklyPearFragmentComponent";
 import { HungerComponent } from "./components/HungerComponent";
 import { EnergyStoreComponent } from "./components/EnergyStoreComponent";
+import { DustfleaComponent } from "./components/DustfleaComponent";
+import { SandstoneRockComponent } from "./components/SandstoneRockComponent";
+import { OkrenComponent } from "./components/OkrenComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -235,6 +238,9 @@ const ComponentClassRecord = {
    [ServerComponentType.pricklyPearFragmentProjectile]: () => PricklyPearFragmentProjectileComponent,
    [ServerComponentType.hunger]: () => HungerComponent,
    [ServerComponentType.energyStore]: () => EnergyStoreComponent,
+   [ServerComponentType.dustflea]: () => DustfleaComponent,
+   [ServerComponentType.sandstoneRock]: () => SandstoneRockComponent,
+   [ServerComponentType.okren]: () => OkrenComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

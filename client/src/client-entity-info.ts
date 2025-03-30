@@ -406,6 +406,18 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Prickly Pear Fragment Projectile",
       internalName: "prickly-pear-fragment-projectile"
    },
+   [EntityType.dustflea]: {
+      name: "Dustflea",
+      internalName: "dustflea"
+   },
+   [EntityType.sandstoneRock]: {
+      name: "Sandstone Rock",
+      internalName: "sandstone-rock"
+   },
+   [EntityType.okren]: {
+      name: "Okren",
+      internalName: "okren"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

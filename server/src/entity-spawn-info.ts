@@ -11,13 +11,8 @@ import { surfaceLayer } from "./layers";
 
 // @Cleanup: should probably combine this file with entity-spawning...
 
-export interface PackSizeInfo {
-   readonly minPackSize: number;
-   readonly maxPackSize: number;
-}
-
 export interface PackSpawningInfo {
-   getPackSize(x: number, y: number): PackSizeInfo;
+   getPackSize(x: number, y: number): number;
    /** Distance from the original spawn that pack spawns can be made in */
    readonly spawnRange: number;
 }
@@ -50,6 +45,8 @@ export interface EntitySpawnInfo {
    readonly balanceSpawnDistribution: boolean;
    /** If true, all tiles that the entity's hitboxes are overlapping with must match the spawnable entity types. */
    readonly doStrictTileTypeCheck: boolean;
+   /** If true, the entity must not be overlapping with any other collideable entities. */
+   readonly doStrictCollisionCheck?: boolean;
    readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
 }

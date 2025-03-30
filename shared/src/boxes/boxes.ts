@@ -1,4 +1,4 @@
-import { circlesDoIntersect, circleAndRectangleDoIntersect, HitboxCollisionBit } from "../collision";
+import { circlesDoIntersect, circleAndRectangleDoIntersect } from "../collision";
 import { Point } from "../utils";
 import { CircularBox } from "./CircularBox";
 import RectangularBox from "./RectangularBox";
@@ -12,7 +12,12 @@ export const enum HitboxFlag {
    COW_BODY,
    COW_HEAD,
    YETI_BODY,
-   YETI_HEAD
+   YETI_HEAD,
+   OKREN_BODY,
+   OKREN_BIG_ARM_SEGMENT,
+   OKREN_MEDIUM_ARM_SEGMENT,
+   OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION,
+   OKREN_EYE,
 }
 
 export const enum HitboxCollisionType {

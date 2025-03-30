@@ -399,6 +399,14 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/prickly-pear/prickly-pear.png",
    "entities/prickly-pear-fragment-projectile/fragment-1.png",
    "entities/prickly-pear-fragment-projectile/fragment-2.png",
+   "entities/dustflea/dustflea.png",
+   "entities/sandstone-rock/sandstone-rock-small.png",
+   "entities/sandstone-rock/sandstone-rock-medium.png",
+   "entities/sandstone-rock/sandstone-rock-large.png",
+   "entities/okren/body.png",
+   "entities/okren/big-arm-segment.png",
+   "entities/okren/medium-arm-segment.png",
+   "entities/okren/arm-segment-of-slashing-and-destruction.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

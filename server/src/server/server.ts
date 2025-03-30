@@ -32,6 +32,7 @@ import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { Hitbox } from "../hitboxes";
 import { updateWind } from "../wind";
+import OPTIONS from "../options";
 
 /*
 
@@ -132,7 +133,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(3983477598);
+      SRandom.seed(4702759986);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();

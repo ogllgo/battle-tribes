@@ -1,27 +1,25 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randInt, randFloat, getTileIndexIncludingEdges, distance, assert, Point } from "battletribes-shared/utils";
+import { randFloat, getTileIndexIncludingEdges, distance, assert, Point } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
 import { createEntity } from "./Entity";
 import { SERVER } from "./server/server";
-import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType, isNight, pushJoinBuffer } from "./world";
 import { EntityConfig } from "./components";
 import { EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
-import { surfaceLayer, undergroundLayer } from "./layers";
+import { undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
-import { createGlurbConfig } from "./entities/mobs/glurb";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
-import { TileType } from "../../shared/src/tiles";
-import { createCactusConfig } from "./entities/desert/cactus";
+import { getHitboxesCollidingEntities } from "./collision-detection";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -177,6 +175,15 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
       return null;
    }
 
+   if (spawnInfo.doStrictCollisionCheck) {
+      // @Speed @Garbage
+      const hitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+      const collidingEntities = getHitboxesCollidingEntities(spawnInfo.layer, hitboxes);
+      if (collidingEntities.length > 0) {
+         return null;
+      }
+   }
+
    // Create the entity
    const entity = createEntity(config, spawnInfo.layer, 0);
    addEntityToCensus(entity, spawnInfo.entityType);
@@ -203,14 +210,10 @@ const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOr
    
       let totalSpawnAttempts = 0;
    
-      const packSizeInfo = spawnInfo.packSpawning.getPackSize(spawnOriginX, spawnOriginY);
-      const additionalSpawnCount = randInt(packSizeInfo.minPackSize, packSizeInfo.maxPackSize) - 1;
+      const packSize = spawnInfo.packSpawning.getPackSize(spawnOriginX, spawnOriginY);
+      const additionalSpawnCount = packSize - 1;
    
-      for (let i = 0; i < additionalSpawnCount; i++) {
-         if (++totalSpawnAttempts === 100) {
-            break;
-         }
-   
+      for (let numSpawned = 0; numSpawned < additionalSpawnCount && totalSpawnAttempts < 100;) {
          const x = randFloat(minX, maxX);
          const y = randFloat(minY, maxY);
          const dist = distance(x, y, spawnOriginX, spawnOriginY);
@@ -227,6 +230,7 @@ const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOr
 
          if (spawnPositionIsClear(spawnInfo, x, y)) {
             attemptToSpawnEntity(spawnInfo, x, y, firstEntityConfig);
+            numSpawned++;
          }
       }
    }

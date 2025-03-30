@@ -101,7 +101,10 @@ export const enum EntityType {
    tumbleweedDead,
    palmTree,
    pricklyPear,
-   pricklyPearFragmentProjectile
+   pricklyPearFragmentProjectile,
+   dustflea,
+   sandstoneRock,
+   okren
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -204,7 +207,10 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.tumbleweedDead]: "Tumbleweed Dead",
    [EntityType.palmTree]: "Palm Tree",
    [EntityType.pricklyPear]: "Prickly Pear",
-   [EntityType.pricklyPearFragmentProjectile]: "Prickly Pear Fragment Projectile"
+   [EntityType.pricklyPearFragmentProjectile]: "Prickly Pear Fragment Projectile",
+   [EntityType.dustflea]: "Dustflea",
+   [EntityType.sandstoneRock]: "Sandstone Rock",
+   [EntityType.okren]: "Okren"
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

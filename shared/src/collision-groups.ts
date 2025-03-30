@@ -150,6 +150,9 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.palmTree]: CollisionGroup.boring,
    [EntityType.pricklyPear]: CollisionGroup.boring,
    [EntityType.pricklyPearFragmentProjectile]: CollisionGroup.default,
+   [EntityType.dustflea]: CollisionGroup.default,
+   [EntityType.sandstoneRock]: CollisionGroup.boring,
+   [EntityType.okren]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

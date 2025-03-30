@@ -133,6 +133,9 @@ import { PricklyPearComponent, PricklyPearComponentArray, PricklyPearComponentPa
 import { PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentArray, PricklyPearFragmentProjectileComponentParams } from "./server-components/PricklyPearFragmentProjectileComponent";
 import { HungerComponent, HungerComponentArray, HungerComponentParams } from "./server-components/HungerComponent";
 import { EnergyStoreComponent, EnergyStoreComponentArray, EnergyStoreComponentParams } from "./server-components/EnergyStoreComponent";
+import { DustfleaComponent, DustfleaComponentArray, DustfleaComponentParams } from "./server-components/DustfleaComponent";
+import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockComponentParams } from "./server-components/SandstoneRockComponent";
+import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./server-components/OkrenComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -274,6 +277,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.pricklyPearFragmentProjectile]: PricklyPearFragmentProjectileComponentArray,
    [ServerComponentType.hunger]: HungerComponentArray,
    [ServerComponentType.energyStore]: EnergyStoreComponentArray,
+   [ServerComponentType.dustflea]: DustfleaComponentArray,
+   [ServerComponentType.sandstoneRock]: SandstoneRockComponentArray,
+   [ServerComponentType.okren]: OkrenComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -391,6 +397,9 @@ const ServerComponentRecord = {
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponent => 0 as any,
    [ServerComponentType.hunger]: (): HungerComponent => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponent => 0 as any,
+   [ServerComponentType.dustflea]: (): DustfleaComponent => 0 as any,
+   [ServerComponentType.sandstoneRock]: (): SandstoneRockComponent => 0 as any,
+   [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -510,6 +519,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponentParams => 0 as any,
    [ServerComponentType.hunger]: (): HungerComponentParams => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponentParams => 0 as any,
+   [ServerComponentType.dustflea]: (): DustfleaComponentParams => 0 as any,
+   [ServerComponentType.sandstoneRock]: (): SandstoneRockComponentParams => 0 as any,
+   [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;
