@@ -404,6 +404,8 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/sandstone-rock/sandstone-rock-medium.png",
    "entities/sandstone-rock/sandstone-rock-large.png",
    "entities/okren/body.png",
+   "entities/okren/eye.png",
+   "entities/okren/mandible.png",
    "entities/okren/big-arm-segment.png",
    "entities/okren/medium-arm-segment.png",
    "entities/okren/arm-segment-of-slashing-and-destruction.png",

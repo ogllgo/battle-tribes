@@ -44,6 +44,24 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
                getTextureArrayIndex("entities/okren/body.png")
             )
          );
+      } else if (hitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
+         entityIntermediateInfo.renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               5,
+               0,
+               getTextureArrayIndex("entities/okren/eye.png")
+            )
+         );
+      } else if (hitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
+         entityIntermediateInfo.renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               2,
+               0,
+               getTextureArrayIndex("entities/okren/mandible.png")
+            )
+         );
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
          entityIntermediateInfo.renderInfo.attachRenderPart(
             new TexturedRenderPart(
@@ -82,7 +100,7 @@ function createComponent(): OkrenComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 7;
+   return 11;
 }
    
 function padData(reader: PacketReader): void {}

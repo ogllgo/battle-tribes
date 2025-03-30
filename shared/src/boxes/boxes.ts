@@ -18,6 +18,7 @@ export const enum HitboxFlag {
    OKREN_MEDIUM_ARM_SEGMENT,
    OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION,
    OKREN_EYE,
+   OKREN_MANDIBLE
 }
 
 export const enum HitboxCollisionType {

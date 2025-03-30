@@ -20,19 +20,35 @@ export function createOkrenConfig(position: Point, angle: number): EntityConfig 
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    for (let i = 0; i < 2; i++) {
-      const bigArmSegmentOffset = Point.fromVectorForm(140, Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      const eyeOffset = new Point(44 * (i === 0 ? 1 : -1), 84);
+      const eyePosition = bodyHitbox.box.position.copy();
+      eyePosition.add(eyeOffset);
+      const eyeHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(eyePosition, eyeOffset, 0, 20, 20), 0.1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_EYE]);
+      addHitboxToTransformComponent(transformComponent, eyeHitbox);
+
+      const mandibleOffset = new Point(24 * (i === 0 ? 1 : -1), 92);
+      const mandiblePosition = bodyHitbox.box.position.copy();
+      mandiblePosition.add(mandibleOffset);
+      const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(mandiblePosition, mandibleOffset, 0, 20, 20), 0.1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MANDIBLE]);
+      addHitboxToTransformComponent(transformComponent, mandibleHitbox);
+      
+      const bigArmSegmentOffset = Point.fromVectorForm(136, Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      bigArmSegmentOffset.x += 12 * (i === 0 ? 1 : -1);
+      bigArmSegmentOffset.y -= 12;
       const bigArmSegmentPosition = bodyHitbox.box.position.copy();
       bigArmSegmentPosition.add(bigArmSegmentOffset);
       const bigArmSegmentHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3 * (i === 0 ? 1 : -1), 20, 40), 1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
       addHitboxToTransformComponent(transformComponent, bigArmSegmentHitbox);
 
-      const mediumArmSegmentOffset = Point.fromVectorForm(90, -Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      const mediumArmSegmentOffset = Point.fromVectorForm(40, -Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      mediumArmSegmentOffset.y += 36;
       const mediumArmSegmentPosition = bigArmSegmentHitbox.box.position.copy();
       mediumArmSegmentPosition.add(mediumArmSegmentOffset);
       const mediumArmSegmentHitbox = createHitbox(transformComponent, bigArmSegmentHitbox, new RectangularBox(mediumArmSegmentPosition, mediumArmSegmentOffset, -Math.PI * 0.3 * (i === 0 ? 1 : -1), 20, 40), 0.8, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT]);
       addHitboxToTransformComponent(transformComponent, mediumArmSegmentHitbox);
       
-      const slashingArmSegmentOffset = Point.fromVectorForm(65, -Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      const slashingArmSegmentOffset = Point.fromVectorForm(48, -Math.PI * 0.3 * (i === 0 ? 1 : -1));
+      slashingArmSegmentOffset.y += 20;
       const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
       slashingArmSegmentPosition.add(slashingArmSegmentOffset);
       const slashingArmSegmentHitbox = createHitbox(transformComponent, mediumArmSegmentHitbox, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3 * (i === 0 ? 1 : -1), 20, 40), 0.6, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
