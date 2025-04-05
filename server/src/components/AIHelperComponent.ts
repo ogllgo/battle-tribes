@@ -14,21 +14,33 @@ import GuardianCrystalSlamAI from "../ai/GuardianCrystalSlamAI";
 import GuardianCrystalBurstAI from "../ai/GuardianCrystalBurstAI";
 import GuardianSpikyBallSummonAI from "../ai/GuardianSpikyBallSummonAI";
 import { Hitbox } from "../hitboxes";
+import { FollowAI } from "../ai/FollowAI";
+import { PatrolAI } from "../ai/PatrolAI";
+import { EscapeAI } from "../ai/EscapeAI";
+import { DustfleaHibernateAI } from "../ai/DustfleaHibernateAI";
 
 export const enum AIType {
    wander,
+   follow,
+   patrol,
+   escape,
    guardian,
    guardianCrystalSlam,
    guardianCrystalBurst,
-   guardianSpikyBallSummon
+   guardianSpikyBallSummon,
+   dustfleaHibernate
 }
 
 const _AIClasses = {
    [AIType.wander]: (): WanderAI => 0 as any,
+   [AIType.follow]: (): FollowAI => 0 as any,
+   [AIType.patrol]: (): PatrolAI => 0 as any,
+   [AIType.escape]: (): EscapeAI => 0 as any,
    [AIType.guardian]: (): GuardianAI => 0 as any,
    [AIType.guardianCrystalSlam]: (): GuardianCrystalSlamAI => 0 as any,
    [AIType.guardianCrystalBurst]: (): GuardianCrystalBurstAI => 0 as any,
-   [AIType.guardianSpikyBallSummon]: (): GuardianSpikyBallSummonAI => 0 as any
+   [AIType.guardianSpikyBallSummon]: (): GuardianSpikyBallSummonAI => 0 as any,
+   [AIType.dustfleaHibernate]: (): DustfleaHibernateAI => 0 as any,
 } satisfies Record<AIType, object>;
 type AIClasses = typeof _AIClasses;
 type AIClass<T extends AIType> = ReturnType<AIClasses[T]>;
@@ -36,6 +48,8 @@ type AIClass<T extends AIType> = ReturnType<AIClasses[T]>;
 type AIRecord = Partial<{
    [T in AIType]: AIClass<T>;
 }>;
+
+type MoveEntityFunction = (entity: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => void;
 
 export class AIHelperComponent {
    public readonly seeingHitbox: Hitbox;
@@ -55,13 +69,30 @@ export class AIHelperComponent {
 
    public currentAIType: AIType | null = null;
 
-   constructor(seeingHitbox: Hitbox, visionRange: number) {
+   public readonly move: MoveEntityFunction;
+
+   constructor(seeingHitbox: Hitbox, visionRange: number, moveEntity: MoveEntityFunction) {
       this.seeingHitbox = seeingHitbox;
       this.visionRange = visionRange;
+      this.move = moveEntity;
    }
+
+   // @Cleanup: this is shite.
 
    public getWanderAI(): WanderAI {
       return this.ais[AIType.wander]!;
+   }
+
+   public getFollowAI(): FollowAI {
+      return this.ais[AIType.follow]!;
+   }
+
+   public getEscapeAI(): EscapeAI {
+      return this.ais[AIType.escape]!;
+   }
+
+   public getPatrolAI(): PatrolAI {
+      return this.ais[AIType.patrol]!;
    }
 
    public getGuardianAI(): GuardianAI {
@@ -78,6 +109,10 @@ export class AIHelperComponent {
 
    public getSpikyBallSummonAI(): GuardianSpikyBallSummonAI {
       return this.ais[AIType.guardianSpikyBallSummon]!;
+   }
+
+   public getDustfleaHibernateAI(): DustfleaHibernateAI {
+      return this.ais[AIType.dustfleaHibernate]!;
    }
 }
 

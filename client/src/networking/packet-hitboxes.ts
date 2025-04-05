@@ -15,16 +15,19 @@ const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const offsetX = reader.readNumber();
    const offsetY = reader.readNumber();
    const scale = reader.readNumber();
+   const flipX = reader.readBoolean();
+   reader.padOffset(3);
 
    const radius = reader.readNumber();
 
    const box = new CircularBox(new Point(x, y), new Point(offsetX, offsetY), relativeAngle, radius);
    box.angle = angle;
    box.scale = scale;
+   box.flipX = flipX;
    return box;
 }
 const padCircularBoxData = (reader: PacketReader): void => {
-   reader.padOffset(8 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 const readRectangularBoxFromData = (reader: PacketReader): RectangularBox => {
@@ -35,6 +38,8 @@ const readRectangularBoxFromData = (reader: PacketReader): RectangularBox => {
    const offsetX = reader.readNumber();
    const offsetY = reader.readNumber();
    const scale = reader.readNumber();
+   const flipX = reader.readBoolean();
+   reader.padOffset(3);
 
    const width = reader.readNumber();
    const height = reader.readNumber();
@@ -42,10 +47,11 @@ const readRectangularBoxFromData = (reader: PacketReader): RectangularBox => {
    const box = new RectangularBox(new Point(x, y), new Point(offsetX, offsetY), relativeAngle, width, height);
    box.angle = angle;
    box.scale = scale;
+   box.flipX = flipX;
    return box;
 }
 const padRectangularBoxData = (reader: PacketReader): void => {
-   reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 export function readBoxFromData(reader: PacketReader): Box {
@@ -120,6 +126,8 @@ const updateCircularBoxFromData = (box: CircularBox, reader: PacketReader): void
    box.offset.x = reader.readNumber();
    box.offset.y = reader.readNumber();
    box.scale = reader.readNumber();
+   box.flipX = reader.readBoolean();
+   reader.padOffset(3);
    box.radius = reader.readNumber();
 }
 
@@ -131,6 +139,8 @@ const updateRectangularBoxFromData = (box: RectangularBox, reader: PacketReader)
    box.offset.x = reader.readNumber();
    box.offset.y = reader.readNumber();
    box.scale = reader.readNumber();
+   box.flipX = reader.readBoolean();
+   reader.padOffset(3);
    box.width = reader.readNumber();
    box.height = reader.readNumber();
    

@@ -85,6 +85,10 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
+            // @Hack @Temporary
+            if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
+               continue;
+            }
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
                addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
@@ -133,7 +137,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(4702759986);
+      SRandom.seed(3520905774);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();

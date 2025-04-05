@@ -16,6 +16,7 @@ import WanderAI from "../../ai/WanderAI";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { createHitbox } from "../../hitboxes";
+import { moveEntityToPosition } from "../../ai-shared";
 
 export const enum FrozenYetiVars {
    VISION_RANGE = 350,
@@ -40,7 +41,11 @@ export interface FrozenYetiRockSpikeInfo {
 }
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return !layer.positionHasWall(x, y) && layer.getTileTypeAtPosition(x, y) === TileType.fimbultur;
+   return layer.getTileTypeAtPosition(x, y) === TileType.fimbultur;
+}
+
+const move = (frozenYeti: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
+   moveEntityToPosition(frozenYeti, x, y, acceleration, turnSpeed);
 }
 
 export function createFrozenYetiConfig(position: Point, rotation: number): EntityConfig {
@@ -65,7 +70,7 @@ export function createFrozenYetiConfig(position: Point, rotation: number): Entit
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
-   const aiHelperComponent = new AIHelperComponent(headHitbox, FrozenYetiVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, FrozenYetiVars.VISION_RANGE, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI * 0.7, 0.6, positionIsValidCallback);
    
    const frozenYetiComponent = new FrozenYetiComponent();

@@ -21,6 +21,7 @@ import { CraftingStationComponent } from "../../components/CraftingStationCompon
 import { registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
+import { moveEntityToPosition } from "../../ai-shared";
 
 export interface SlimeEntityAnger {
    angerAmount: number;
@@ -59,7 +60,12 @@ registerEntityLootOnDeath(EntityType.slime, [
 ]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.swamp;
+   return layer.getBiomeAtPosition(x, y) === Biome.swamp;
+}
+
+const move = (slime: Entity, x: number, y: number): void => {
+   const slimeComponent = SlimeComponentArray.getComponent(slime);
+   moveEntityToPosition(slime, x, y, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI);
 }
 
 export function createSlimeConfig(position: Point, rotation: number, size: SlimeSize): EntityConfig {
@@ -74,7 +80,7 @@ export function createSlimeConfig(position: Point, rotation: number, size: Slime
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
    
-   const aiHelperComponent = new AIHelperComponent(hitbox, VISION_RANGES[size])
+   const aiHelperComponent = new AIHelperComponent(hitbox, VISION_RANGES[size], move)
    aiHelperComponent.ais[AIType.wander] = new WanderAI(150 * SLIME_SPEED_MULTIPLIERS[size], 2 * Math.PI, 0.5, positionIsValidCallback)
    
    const slimeComponent = new SlimeComponent(size);

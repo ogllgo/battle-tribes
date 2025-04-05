@@ -163,7 +163,6 @@ export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: n
    // @Speed
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
-   updateBox(tileBox, position.x, position.y, 0);
    
    if (!hitbox.box.isColliding(tileBox)) {
       return;

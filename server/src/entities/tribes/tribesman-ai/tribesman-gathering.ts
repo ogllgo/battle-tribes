@@ -16,7 +16,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { entityExists, getEntityLayer, getEntityType } from "../../../world";
 import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randItem } from "../../../../../shared/src/utils";
-import { runPatrolAI } from "../../../components/PatrolAIComponent";
+import { runPatrolAI } from "../../../ai/PatrolAI";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { entityDropsFoodItem, entityDropsItem, getEntityTypesWhichDropItem, LootComponentArray } from "../../../components/LootComponent";
 import { getSpawnInfoForEntityType } from "../../../entity-spawn-info";
@@ -341,7 +341,8 @@ export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan
    
       // Explore the biome for things to harvest
       const localBiome = layer.getTileLocalBiome(currentTile);
-      runPatrolAI(tribesman, localBiome.tilesInBorder);
+      const patrolAI = aiHelperComponent.getPatrolAI();
+      runPatrolAI(tribesman, patrolAI, localBiome.tilesInBorder);
       return;
    }
 

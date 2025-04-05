@@ -672,20 +672,35 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    }
    // });
    registerNewSpawnInfo({
-      entityType: EntityType.okren,
+      entityType: EntityType.dustflea,
       layer: surfaceLayer,
       spawnRate: 0.005,
       biome: Biome.desert,
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.0012),
+      spawnDistribution: createRawSpawnDistribution(4, 0.004),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createOkrenConfig(new Point(x, y), angle);
+         return createDustfleaConfig(new Point(x, y), angle);
       }
    });
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.krumblid,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.0007),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createKrumblidConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,
@@ -852,21 +867,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createTumbleweedLiveConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.tumbleweedDead,
-      layer: surfaceLayer,
-      spawnRate: 0.002,
-      biome: Biome.desert,
-      tileTypes: [TileType.sand],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 60,
-      spawnDistribution: createRawSpawnDistribution(32, 0.006),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createTumbleweedDeadConfig(new Point(x, y), angle);
-      }
-   });
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.tumbleweedDead,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.002,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 60,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.006),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createTumbleweedDeadConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.sandstoneRock,
       layer: surfaceLayer,
@@ -884,6 +899,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnRange: 80
       },
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         const tileX = Math.floor(x / Settings.TILE_SIZE);
+         const tileY = Math.floor(y / Settings.TILE_SIZE);
+         const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+         if (temperature < 0.82) {
+            return null;
+         }
+         
          let size: number;
          if (Math.random() < 0.4) {
             size = 0;

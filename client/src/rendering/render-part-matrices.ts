@@ -154,12 +154,17 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
 const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2 => {
    const matrix = createIdentityMatrix();
 
+   const scale = hitbox.box.scale;
+   overrideWithScaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
+
    // Rotation
-   overrideWithRotationMatrix(matrix, hitbox.box.angle);
+   rotateMatrix(matrix, hitbox.box.angle)
+   // overrideWithRotationMatrix(matrix, hitbox.box.angle);
    
    // Scale
-   const scale = hitbox.box.scale;
-   scaleMatrix(matrix, scale, scale);
+   // const scale = hitbox.box.scale;
+   // scaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
+   // scaleMatrix(matrix, scale, scale);
    
    const tx = hitbox.box.position.x + hitbox.velocity.x * frameProgress * Settings.I_TPS;
    const ty = hitbox.box.position.y + hitbox.velocity.y * frameProgress * Settings.I_TPS;

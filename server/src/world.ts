@@ -128,6 +128,10 @@ export function tickGameTime(): void {
    }
 }
 
+export function ticksToGameHours(ticks: number): number {
+   return ticks * (Settings.TIME_PASS_RATE / Settings.TPS / 3600);
+}
+
 export function getEntityType(entity: Entity): EntityType {
    const entityType = entityTypes[entity];
    assert(typeof entityType !== "undefined");

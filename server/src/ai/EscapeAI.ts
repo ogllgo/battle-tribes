@@ -1,12 +1,10 @@
-import { ServerComponentType } from "battletribes-shared/components";
-import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
-import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
-import { TransformComponentArray } from "./TransformComponent";
-import { AIHelperComponentArray } from "./AIHelperComponent";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { AttackingEntitiesComponentArray } from "../components/AttackingEntitiesComponent";
+import { TransformComponentArray } from "../components/TransformComponent";
+import { AIHelperComponentArray } from "../components/AIHelperComponent";
+import { Hitbox } from "../hitboxes";
 
-export class EscapeAIComponent {
+export class EscapeAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
 
@@ -15,8 +13,6 @@ export class EscapeAIComponent {
       this.turnSpeed = turnSpeed;
    }
 }
-
-export const EscapeAIComponentArray = new ComponentArray<EscapeAIComponent>(ServerComponentType.escapeAI, true, getDataLength, addDataToPacket);
 
 export function shouldRunEscapeAI(entity: Entity): boolean {
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
@@ -56,25 +52,17 @@ export function getEscapeTarget(entity: Entity): Entity | null {
 }
 
 export function runEscapeAI(entity: Entity, escapeTarget: Entity): void {
+   const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
+   const escapeAI = aiHelperComponent.getEscapeAI();
+
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.children[0] as Hitbox;
-
-   const escapeAIComponent = EscapeAIComponentArray.getComponent(entity);
-
+   const hitbox = transformComponent.children[0] as Hitbox;
+   
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
    const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
 
-   const direction = escapeTargetHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
+   const targetX = hitbox.box.position.x * 2 - escapeTargetHitbox.box.position.x;
+   const targetY = hitbox.box.position.y * 2 - escapeTargetHitbox.box.position.y;
 
-   const accelerationX = escapeAIComponent.acceleration * Math.sin(direction);
-   const accelerationY = escapeAIComponent.acceleration * Math.cos(direction);
-   applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
-
-   setHitboxIdealAngle(entityHitbox, direction, escapeAIComponent.turnSpeed);
+   aiHelperComponent.move(entity, escapeAI.acceleration, escapeAI.turnSpeed, targetX, targetY);
 }
-
-function getDataLength(): number {
-   return 0;
-}
-
-function addDataToPacket(): void {}

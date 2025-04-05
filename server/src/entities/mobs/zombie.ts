@@ -34,7 +34,11 @@ registerEntityLootOnDeath(EntityType.zombie, [
 ]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
+   return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
+}
+
+const move = () => {
+   throw new Error();
 }
 
 export function createZombieConfig(position: Point, rotation: number, isGolden: boolean, tombstone: Entity): EntityConfig {
@@ -53,7 +57,7 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
 
    const zombieComponent = new ZombieComponent(zombieType, tombstone);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE);
+   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(150, Math.PI * 3, 0.4, positionIsValidCallback);
    
    const inventoryComponent = new InventoryComponent();

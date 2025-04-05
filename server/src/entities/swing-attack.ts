@@ -30,7 +30,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
 
    setHitboxToState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
    // @hack ? Should probably set all hitbox positions when they are added from the join buffer.
-   updateBox(limbHitbox.box, ownerHitbox.box.position.x, ownerHitbox.box.position.y, ownerHitbox.box.angle);
+   updateBox(limbHitbox.box, ownerHitbox.box);
 
    if (damageBoxInfo !== null) {
       const heldItemHitbox = createHitbox(transformComponent, limbHitbox, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);

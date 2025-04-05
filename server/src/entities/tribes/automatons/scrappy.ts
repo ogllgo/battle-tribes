@@ -6,11 +6,11 @@ import { EntityType } from "../../../../../shared/src/entities";
 import { Point } from "../../../../../shared/src/utils";
 import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
-import { AIHelperComponent } from "../../../components/AIHelperComponent";
+import { AIHelperComponent, AIType } from "../../../components/AIHelperComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { InventoryComponent } from "../../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../../components/InventoryUseComponent";
-import { PatrolAIComponent } from "../../../components/PatrolAIComponent";
+import { PatrolAI } from "../../../ai/PatrolAI";
 import { PhysicsComponent } from "../../../components/PhysicsComponent";
 import { ScrappyComponent } from "../../../components/ScrappyComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
@@ -22,6 +22,10 @@ import { createHitbox, Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
+
+const move = () => {
+   throw new Error();
+}
 
 export function createScrappyConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -42,11 +46,10 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
 
    const tribesmanAIComponent = new TribesmanAIComponent();
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300, move);
+   aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
-
-   const patrolAIComponent = new PatrolAIComponent();
 
    const inventoryComponent = new InventoryComponent();
 
@@ -68,7 +71,6 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
-         [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.scrappy]: scrappyComponent

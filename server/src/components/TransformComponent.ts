@@ -363,7 +363,7 @@ export function cleanTransform(node: Hitbox | Entity): void {
       if (hitbox.parent === null) {
          hitbox.box.angle = hitbox.box.relativeAngle;
       } else {
-         updateBox(hitbox.box, hitbox.parent.box.position.x, hitbox.parent.box.position.y, hitbox.parent.box.angle);
+         updateBox(hitbox.box, hitbox.parent.box);
          // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
          hitbox.velocity.x = hitbox.parent.velocity.x;
          hitbox.velocity.y = hitbox.parent.velocity.y;

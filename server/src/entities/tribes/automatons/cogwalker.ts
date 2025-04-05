@@ -6,12 +6,12 @@ import { EntityType } from "../../../../../shared/src/entities";
 import { Point } from "../../../../../shared/src/utils";
 import { EntityConfig } from "../../../components";
 import { AIAssignmentComponent } from "../../../components/AIAssignmentComponent";
-import { AIHelperComponent } from "../../../components/AIHelperComponent";
+import { AIHelperComponent, AIType } from "../../../components/AIHelperComponent";
 import { CogwalkerComponent } from "../../../components/CogwalkerComponent";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { InventoryComponent } from "../../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../../components/InventoryUseComponent";
-import { PatrolAIComponent } from "../../../components/PatrolAIComponent";
+import { PatrolAI } from "../../../ai/PatrolAI";
 import { PhysicsComponent } from "../../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../../components/TransformComponent";
@@ -22,6 +22,10 @@ import { createHitbox, Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateCogwalkerName } from "../../../tribesman-names";
+
+const move = () => {
+   throw new Error();
+}
 
 export function createCogwalkerConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -43,11 +47,10 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
    // @Hack @Temporary?
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, move);
+   aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
-
-   const patrolAIComponent = new PatrolAIComponent();
 
    const inventoryComponent = new InventoryComponent();
 
@@ -69,7 +72,6 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
-         [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.cogwalker]: cogwalkerComponent

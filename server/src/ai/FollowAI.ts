@@ -1,14 +1,15 @@
-import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
-import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { TransformComponentArray } from "./TransformComponent";
-import { Packet } from "battletribes-shared/packets";
+import { TransformComponentArray } from "../components/TransformComponent";
 import { entityExists, getEntityType } from "../world";
 import { applyAcceleration, Hitbox } from "../hitboxes";
+import { randInt } from "../../../shared/src/utils";
 
-export class FollowAIComponent {
+export class FollowAI {
+   public readonly minFollowCooldownTicks: number;
+   public readonly maxFollowCooldownTicks: number;
+
    /** ID of the followed entity */
    public followTargetID = 0;
    public followCooldownTicks: number;
@@ -19,47 +20,44 @@ export class FollowAIComponent {
    public readonly followChancePerSecond: number;
    public readonly followDistance: number;
 
-   constructor(followCooldownTicks: number, followChancePerSecond: number, followDistance: number) {
-      this.followCooldownTicks = followCooldownTicks;
+   constructor(minFollowCooldownTicks: number, maxFollowCooldownTicks: number, followChancePerSecond: number, followDistance: number) {
+      this.minFollowCooldownTicks = minFollowCooldownTicks;
+      this.maxFollowCooldownTicks = maxFollowCooldownTicks;
+      this.followCooldownTicks = randInt(minFollowCooldownTicks, maxFollowCooldownTicks);
       this.followChancePerSecond = followChancePerSecond;
       this.followDistance = followDistance;
    }
 }
 
-export const FollowAIComponentArray = new ComponentArray<FollowAIComponent>(ServerComponentType.followAI, true, getDataLength, addDataToPacket);
-
-export function updateFollowAIComponent(entity: Entity, visibleEntities: ReadonlyArray<Entity>, interestDuration: number): void {
-   const followAIComponent = FollowAIComponentArray.getComponent(entity);
-
-   if (followAIComponent.followCooldownTicks > 0) {
-      followAIComponent.followCooldownTicks--;
+export function updateFollowAIComponent(followAI: FollowAI, visibleEntities: ReadonlyArray<Entity>, interestDuration: number): void {
+   if (followAI.followCooldownTicks > 0) {
+      followAI.followCooldownTicks--;
    }
 
-   if (!entityExists(followAIComponent.followTargetID)) {
+   if (!entityExists(followAI.followTargetID)) {
       return;
    }
    
    // Make sure the follow target is still within the vision range
-   if (!visibleEntities.includes(followAIComponent.followTargetID)) {
-      followAIComponent.followTargetID = 0;
-      followAIComponent.interestTimer = 0;
+   if (!visibleEntities.includes(followAI.followTargetID)) {
+      followAI.followTargetID = 0;
+      followAI.interestTimer = 0;
       return;
    }
    
-   if (followAIComponent.currentTargetIsForgettable) {
-      followAIComponent.interestTimer += Settings.I_TPS;
-      if (followAIComponent.interestTimer >= interestDuration) {
-         followAIComponent.followTargetID = 0;
+   if (followAI.currentTargetIsForgettable) {
+      followAI.interestTimer += Settings.I_TPS;
+      if (followAI.interestTimer >= interestDuration) {
+         followAI.followTargetID = 0;
       }
    }
 }
 
-export function followAISetFollowTarget(entity: Entity, followedEntity: Entity, newFollowCooldownTicks: number, isForgettable: boolean): void {
-   const followAIComponent = FollowAIComponentArray.getComponent(entity);
-   followAIComponent.followTargetID = followedEntity;
-   followAIComponent.followCooldownTicks = newFollowCooldownTicks;
-   followAIComponent.interestTimer = 0;
-   followAIComponent.currentTargetIsForgettable = isForgettable;
+export function followAISetFollowTarget(followAI: FollowAI, followedEntity: Entity, isForgettable: boolean): void {
+   followAI.followTargetID = followedEntity;
+   followAI.followCooldownTicks = randInt(followAI.minFollowCooldownTicks, followAI.maxFollowCooldownTicks);
+   followAI.interestTimer = 0;
+   followAI.currentTargetIsForgettable = isForgettable;
 
    // @Temporary: now that cow uses custom move func.
    //    - will want to go through all places which call this and make them handle the movement themselves
@@ -68,9 +66,8 @@ export function followAISetFollowTarget(entity: Entity, followedEntity: Entity, 
    // moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
-export function continueFollowingEntity(entity: Entity, followTarget: Entity, acceleration: number, turnSpeed: number): void {
+export function continueFollowingEntity(entity: Entity, followAI: FollowAI, followTarget: Entity, acceleration: number, turnSpeed: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const followAIComponent = FollowAIComponentArray.getComponent(entity);
 
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
@@ -87,7 +84,7 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
       radius = 32;
    }
    const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
-   if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance - 4)) {
+   if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance - 4)) {
       // Too close, move backwards!
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
 
@@ -96,25 +93,13 @@ export function continueFollowingEntity(entity: Entity, followTarget: Entity, ac
       const accelerationY = acceleration * Math.cos(moveDirection);
       applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
    }
-   if (willStopAtDesiredDistance(entityHitbox, followAIComponent.followDistance, distance)) {
+   if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {
       moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed);
    }
 }
 
-export function entityWantsToFollow(followAIComponent: FollowAIComponent): boolean {
+export function entityWantsToFollow(followAIComponent: FollowAI): boolean {
    return followAIComponent.followCooldownTicks === 0 && Math.random() < followAIComponent.followChancePerSecond / Settings.TPS;
-}
-
-function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
-}
-
-function addDataToPacket(packet: Packet, entity: Entity): void {
-   const followAIComponent = FollowAIComponentArray.getComponent(entity);
-
-   packet.addNumber(followAIComponent.followTargetID);
-   packet.addNumber(followAIComponent.followCooldownTicks);
-   packet.addNumber(followAIComponent.interestTimer);
 }

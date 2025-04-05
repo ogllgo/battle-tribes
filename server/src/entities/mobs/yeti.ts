@@ -23,6 +23,7 @@ import { registerEntityTamingSpec } from "../../taming-specs";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
+import { moveEntityToPosition } from "../../ai-shared";
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
 
@@ -85,13 +86,17 @@ registerEntityLootOnDeath(EntityType.yeti, [
    }
 ]);
 
-function positionIsValidCallback(entity: Entity, layer: Layer, x: number, y: number): boolean {
+function wanderPositionIsValid(entity: Entity, layer: Layer, x: number, y: number): boolean {
    const tileX = Math.floor(x / Settings.TILE_SIZE);
    const tileY = Math.floor(y / Settings.TILE_SIZE);
    const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
 
    const yetiComponent = YetiComponentArray.getComponent(entity);
-   return !layer.positionHasWall(x, y) && layer.getTileBiome(tileIndex) === Biome.tundra && yetiComponent.territory.includes(tileIndex);
+   return layer.getTileBiome(tileIndex) === Biome.tundra && yetiComponent.territory.includes(tileIndex);
+}
+
+const move = (slimewisp: Entity, x: number, y: number, acceleration: number, turnSpeed: number): void => {
+   moveEntityToPosition(slimewisp, x, y, acceleration, turnSpeed);
 }
 
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {
@@ -109,8 +114,8 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    
    const statusEffectComponent = new StatusEffectComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 500);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 0.6, positionIsValidCallback);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 500, move);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 0.6, wanderPositionIsValid);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

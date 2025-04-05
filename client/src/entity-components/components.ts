@@ -21,12 +21,10 @@ import { CowComponent, CowComponentArray, CowComponentParams } from "./server-co
 import { CraftingStationComponent, CraftingStationComponentArray, CraftingStationComponentParams } from "./server-components/CraftingStationComponent";
 import { DecorationComponent, DecorationComponentArray, DecorationComponentParams } from "./server-components/DecorationComponent";
 import { DoorComponent, DoorComponentArray, DoorComponentParams } from "./server-components/DoorComponent";
-import { EscapeAIComponent, EscapeAIComponentArray, EscapeAIComponentParams } from "./server-components/EscapeAIComponent";
 import { FenceComponent, FenceComponentArray, FenceComponentParams } from "./server-components/FenceComponent";
 import { FenceGateComponent, FenceGateComponentArray, FenceGateComponentParams } from "./server-components/FenceGateComponent";
 import { FireTorchComponent, FireTorchComponentArray, FireTorchComponentParams } from "./server-components/FireTorchComponent";
 import { FishComponent, FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
-import { FollowAIComponent, FollowAIComponentArray, FollowAIComponentParams } from "./server-components/FollowAIComponent";
 import { FrozenYetiComponent, FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
 import { FurnaceComponent, FurnaceComponentArray, FurnaceComponentParams } from "./server-components/FurnaceComponent";
 import { GlurbHeadSegmentComponent, GlurbHeadSegmentComponentArray, GlurbHeadSegmentComponentParams } from "./server-components/GlurbHeadSegmentComponent";
@@ -48,7 +46,6 @@ import { ItemComponent, ItemComponentArray, ItemComponentParams } from "./server
 import { KrumblidComponent, KrumblidComponentArray, KrumblidComponentParams } from "./server-components/KrumblidComponent";
 import { LayeredRodComponent, LayeredRodComponentArray, LayeredRodComponentParams } from "./server-components/LayeredRodComponent";
 import { MithrilOreNodeComponent, MithrilOreNodeComponentArray, MithrilOreNodeComponentParams } from "./server-components/MithrilOreNodeComponent";
-import { PatrolAIComponent, PatrolAIComponentArray, PatrolAIComponentParams } from "./server-components/PatrolAIComponent";
 import { PebblumComponent, PebblumComponentArray, PebblumComponentParams } from "./server-components/PebblumComponent";
 import { PhysicsComponent, PhysicsComponentArray, PhysicsComponentParams } from "./server-components/PhysicsComponent";
 import { PlantedComponent, PlantedComponentArray, PlantedComponentParams } from "./server-components/PlantedComponent";
@@ -136,6 +133,7 @@ import { EnergyStoreComponent, EnergyStoreComponentArray, EnergyStoreComponentPa
 import { DustfleaComponent, DustfleaComponentArray, DustfleaComponentParams } from "./server-components/DustfleaComponent";
 import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockComponentParams } from "./server-components/SandstoneRockComponent";
 import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./server-components/OkrenComponent";
+import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -221,8 +219,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.pebblum]: PebblumComponentArray,
    [ServerComponentType.slimewisp]: SlimewispComponentArray,
    [ServerComponentType.throwingProjectile]: ThrowingProjectileComponentArray,
-   [ServerComponentType.escapeAI]: EscapeAIComponentArray,
-   [ServerComponentType.followAI]: FollowAIComponentArray,
    [ServerComponentType.tribeWarrior]: TribeWarriorComponentArray,
    [ServerComponentType.layeredRod]: LayeredRodComponentArray,
    [ServerComponentType.decoration]: DecorationComponentArray,
@@ -248,7 +244,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.glurbHeadSegment]: GlurbHeadSegmentComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
-   [ServerComponentType.patrolAI]: PatrolAIComponentArray,
    [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
    [ServerComponentType.treeRootBase]: TreeRootBaseComponentArray,
    [ServerComponentType.treeRootSegment]: TreeRootSegmentComponentArray,
@@ -280,6 +275,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.dustflea]: DustfleaComponentArray,
    [ServerComponentType.sandstoneRock]: SandstoneRockComponentArray,
    [ServerComponentType.okren]: OkrenComponentArray,
+   [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -341,8 +337,6 @@ const ServerComponentRecord = {
    [ServerComponentType.pebblum]: (): PebblumComponent => 0 as any,
    [ServerComponentType.slimewisp]: (): SlimewispComponent => 0 as any,
    [ServerComponentType.throwingProjectile]: (): ThrowingProjectileComponent => 0 as any,
-   [ServerComponentType.escapeAI]: (): EscapeAIComponent => 0 as any,
-   [ServerComponentType.followAI]: (): FollowAIComponent => 0 as any,
    [ServerComponentType.tribeWarrior]: (): TribeWarriorComponent => 0 as any,
    [ServerComponentType.layeredRod]: (): LayeredRodComponent => 0 as any,
    [ServerComponentType.decoration]: (): DecorationComponent => 0 as any,
@@ -368,7 +362,6 @@ const ServerComponentRecord = {
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponent => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponent => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponent => 0 as any,
-   [ServerComponentType.patrolAI]: (): PatrolAIComponent => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponent => 0 as any,
    [ServerComponentType.treeRootBase]: (): TreeRootBaseComponent => 0 as any,
    [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponent => 0 as any,
@@ -400,6 +393,7 @@ const ServerComponentRecord = {
    [ServerComponentType.dustflea]: (): DustfleaComponent => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponent => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
+   [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -463,8 +457,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.pebblum]: (): PebblumComponentParams => 0 as any,
    [ServerComponentType.slimewisp]: (): SlimewispComponentParams => 0 as any,
    [ServerComponentType.throwingProjectile]: (): ThrowingProjectileComponentParams => 0 as any,
-   [ServerComponentType.escapeAI]: (): EscapeAIComponentParams => 0 as any,
-   [ServerComponentType.followAI]: (): FollowAIComponentParams => 0 as any,
    [ServerComponentType.tribeWarrior]: (): TribeWarriorComponentParams => 0 as any,
    [ServerComponentType.layeredRod]: (): LayeredRodComponentParams => 0 as any,
    [ServerComponentType.decoration]: (): DecorationComponentParams => 0 as any,
@@ -490,7 +482,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
-   [ServerComponentType.patrolAI]: (): PatrolAIComponentParams => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,
    [ServerComponentType.treeRootBase]: (): TreeRootBaseComponentParams => 0 as any,
    [ServerComponentType.treeRootSegment]: (): TreeRootSegmentComponentParams => 0 as any,
@@ -522,6 +513,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.dustflea]: (): DustfleaComponentParams => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponentParams => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
+   [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

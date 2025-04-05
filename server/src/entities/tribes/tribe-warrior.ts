@@ -17,12 +17,16 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
 import Tribe from "../../Tribe";
 import { TribeWarriorComponent } from "../../components/TribeWarriorComponent";
-import { AIHelperComponent } from "../../components/AIHelperComponent";
+import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
-import { PatrolAIComponent } from "../../components/PatrolAIComponent";
+import { PatrolAI } from "../../ai/PatrolAI";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
+
+const move = () => {
+   throw new Error();
+}
 
 const generateScars = (): ReadonlyArray<ScarInfo> => {
    let numScars = 1;
@@ -80,11 +84,10 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, move);
+   aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
-   
-   const patrolAIComponent = new PatrolAIComponent();
    
    const inventoryComponent = new InventoryComponent();
 
@@ -105,7 +108,6 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
-         [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
          [ServerComponentType.tribeWarrior]: tribeWarriorComponent

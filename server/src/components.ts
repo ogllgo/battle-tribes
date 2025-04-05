@@ -44,8 +44,8 @@ import { IceSpikesComponent } from "./components/IceSpikesComponent";
 import { PebblumComponent } from "./components/PebblumComponent";
 import { SlimewispComponent } from "./components/SlimewispComponent";
 import { ThrowingProjectileComponent } from "./components/ThrowingProjectileComponent";
-import { EscapeAIComponent } from "./components/EscapeAIComponent";
-import { FollowAIComponent } from "./components/FollowAIComponent";
+import { EscapeAI } from "./ai/EscapeAI";
+import { FollowAI } from "./ai/FollowAI";
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
@@ -79,7 +79,7 @@ import { AttackingEntitiesComponent } from "./components/AttackingEntitiesCompon
 import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
 import { TreeRootSegmentComponent } from "./components/TreeRootSegmentComponent";
 import { AIAssignmentComponent } from "./components/AIAssignmentComponent";
-import { PatrolAIComponent } from "./components/PatrolAIComponent";
+import { PatrolAI } from "./ai/PatrolAI";
 import { PlantedComponent } from "./components/PlantedComponent";
 import { TreePlantedComponent } from "./components/TreePlantedComponent";
 import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
@@ -120,6 +120,7 @@ import { EnergyStoreComponent } from "./components/EnergyStoreComponent";
 import { DustfleaComponent } from "./components/DustfleaComponent";
 import { SandstoneRockComponent } from "./components/SandstoneRockComponent";
 import { OkrenComponent } from "./components/OkrenComponent";
+import { DustfleaMorphCocoonComponent } from "./components/DustfleaMorphCocoonComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -178,8 +179,6 @@ const ComponentClassRecord = {
    [ServerComponentType.pebblum]: () => PebblumComponent,
    [ServerComponentType.slimewisp]: () => SlimewispComponent,
    [ServerComponentType.throwingProjectile]: () => ThrowingProjectileComponent,
-   [ServerComponentType.escapeAI]: () => EscapeAIComponent,
-   [ServerComponentType.followAI]: () => FollowAIComponent,
    [ServerComponentType.tribeWarrior]: () => TribeWarriorComponent,
    [ServerComponentType.craftingStation]: () => CraftingStationComponent,
    [ServerComponentType.transform]: () => TransformComponent,
@@ -209,7 +208,6 @@ const ComponentClassRecord = {
    [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
    [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
    [ServerComponentType.attackingEntities]: () => AttackingEntitiesComponent,
-   [ServerComponentType.patrolAI]: () => PatrolAIComponent,
    [ServerComponentType.aiAssignment]: () => AIAssignmentComponent,
    [ServerComponentType.treeRootBase]: () => TreeRootBaseComponent,
    [ServerComponentType.treeRootSegment]: () => TreeRootSegmentComponent,
@@ -241,6 +239,7 @@ const ComponentClassRecord = {
    [ServerComponentType.dustflea]: () => DustfleaComponent,
    [ServerComponentType.sandstoneRock]: () => SandstoneRockComponent,
    [ServerComponentType.okren]: () => OkrenComponent,
+   [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

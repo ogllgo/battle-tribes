@@ -1,4 +1,4 @@
-import { ServerComponentType, TribesmanAIType } from "../../../shared/src/components";
+import { TribesmanAIType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { distance, getTileX, getTileY, Point, TileIndex } from "../../../shared/src/utils";
@@ -6,25 +6,16 @@ import { getHumanoidRadius, pathfindTribesman, clearTribesmanPath } from "../ent
 import { Hitbox } from "../hitboxes";
 import { getEntityFootprint, PathfindFailureDefault, findSingleLayerPath, PathfindOptions } from "../pathfinding";
 import { getEntityLayer, getGameTicks } from "../world";
-import { ComponentArray } from "./ComponentArray";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { TribeComponentArray } from "./TribeComponent";
-import { TribesmanAIComponentArray, TribesmanPathType } from "./TribesmanAIComponent";
+import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { TribeComponentArray } from "../components/TribeComponent";
+import { TribesmanAIComponentArray, TribesmanPathType } from "../components/TribesmanAIComponent";
 
-export class PatrolAIComponent {
+export class PatrolAI {
    public targetPatrolPosition: Readonly<Point> | null = null;
 
    /** The last tick timestamp for when the patrol AI was run. */
    public lastActiveTicks = 0;
 }
-
-export const PatrolAIComponentArray = new ComponentArray<PatrolAIComponent>(ServerComponentType.patrolAI, true, getDataLength, addDataToPacket);
-
-function getDataLength(): number {
-   return 0;
-}
-
-function addDataToPacket(): void {}
 
 const getTargetTileHeuristic = (transformComponent: TransformComponent, tileIndex: TileIndex): number => {
    const IDEAL_DIST = 1000;
@@ -93,22 +84,20 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
    return null;
 }
 
-export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileIndex>): void {
-   const patrolAIComponent = PatrolAIComponentArray.getComponent(tribeMember);
-
+export function runPatrolAI(tribeMember: Entity, patrolAI: PatrolAI, patrolArea: ReadonlyArray<TileIndex>): void {
    const currentTicks = getGameTicks();
-   if (currentTicks > patrolAIComponent.lastActiveTicks + 1) {
+   if (currentTicks > patrolAI.lastActiveTicks + 1) {
       // If more than 1 tick has passed between successive runs of the patrol AI, reset the target patrol position
-      patrolAIComponent.targetPatrolPosition = null;
+      patrolAI.targetPatrolPosition = null;
    }
-   patrolAIComponent.lastActiveTicks = currentTicks;
+   patrolAI.lastActiveTicks = currentTicks;
    
-   if (patrolAIComponent.targetPatrolPosition === null && Math.random() < 0.4 / Settings.TPS) {
-      patrolAIComponent.targetPatrolPosition = generatePatrolTarget(tribeMember, patrolArea);
+   if (patrolAI.targetPatrolPosition === null && Math.random() < 0.4 / Settings.TPS) {
+      patrolAI.targetPatrolPosition = generatePatrolTarget(tribeMember, patrolArea);
    }
    
-   if (patrolAIComponent.targetPatrolPosition !== null) {
-      const isFinished = pathfindTribesman(tribeMember, patrolAIComponent.targetPatrolPosition.x, patrolAIComponent.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
+   if (patrolAI.targetPatrolPosition !== null) {
+      const isFinished = pathfindTribesman(tribeMember, patrolAI.targetPatrolPosition.x, patrolAI.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
       if (!isFinished) {
          // @Hack
          if (TribesmanAIComponentArray.hasComponent(tribeMember)) {
@@ -127,6 +116,6 @@ export function runPatrolAI(tribeMember: Entity, patrolArea: ReadonlyArray<TileI
       tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
    }
 
-   patrolAIComponent.targetPatrolPosition = null;
+   patrolAI.targetPatrolPosition = null;
    clearTribesmanPath(tribeMember);
 }

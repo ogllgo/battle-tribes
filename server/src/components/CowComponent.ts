@@ -14,8 +14,6 @@ import { Packet } from "battletribes-shared/packets";
 import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
-import { getEscapeTarget } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, entityWantsToFollow, FollowAIComponent } from "./FollowAIComponent";
 import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
@@ -30,6 +28,8 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle, stopHitboxTurning } from "../hitboxes";
 import { translateHitbox } from "./PhysicsComponent";
+import { getEscapeTarget } from "../ai/EscapeAI";
+import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -313,8 +313,8 @@ const entityIsHoldingBerry = (entity: Entity): boolean => {
    return false;
 }
 
-const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
-   const wantsToFollow = entityWantsToFollow(followAIComponent);
+const getFollowTarget = (followAI: FollowAI, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
+   const wantsToFollow = entityWantsToFollow(followAI);
 
    let currentTargetIsHoldingBerry = false;
    let target: Entity | null = null;
@@ -597,21 +597,21 @@ function onTick(cow: Entity): void {
    }
 
    // Follow AI
-   const followAIComponent = FollowAIComponentArray.getComponent(cow);
-   updateFollowAIComponent(cow, aiHelperComponent.visibleEntities, 7);
+   const followAI = aiHelperComponent.getFollowAI();
+   updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 7);
 
-   if (entityExists(followAIComponent.followTargetID)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(followAIComponent.followTargetID);
+   if (entityExists(followAI.followTargetID)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(followAI.followTargetID);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
       const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOW_ACCELERATION);
       return;
    } else {
-      const [followTarget, isHoldingBerry] = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
+      const [followTarget, isHoldingBerry] = getFollowTarget(followAI, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
-         followAISetFollowTarget(cow, followTarget, randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), !isHoldingBerry);
+         followAISetFollowTarget(followAI, followTarget, !isHoldingBerry);
          return;
       }
    }

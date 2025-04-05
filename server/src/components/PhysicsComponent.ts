@@ -243,7 +243,7 @@ export function translateHitbox(hitbox: Hitbox, pushX: number, pushY: number): v
 
       hitbox.box.offset.x += rotatedSpringForceX;
       hitbox.box.offset.y += rotatedSpringForceY;
-      updateBox(hitbox.box, hitbox.parent.box.position.x, hitbox.parent.box.position.y, hitbox.parent.box.angle);
+      updateBox(hitbox.box, hitbox.parent.box);
    }
 }
 

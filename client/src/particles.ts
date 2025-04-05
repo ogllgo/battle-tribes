@@ -2105,3 +2105,44 @@ export function createPricklyPearParticle(spawnPositionX: number, spawnPositionY
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createCocoonAmbientParticle(spawnPositionX: number, spawnPositionY: number, moveDirection: number): void {
+   const lifetime = randFloat(0.5, 0.7);
+   
+   const moveSpeed = randFloat(65, 90);
+   const velocityX = moveSpeed * Math.sin(moveDirection);
+   const velocityY = moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+
+   const lowR = 148/255;
+   const lowG = 137/255;
+   const lowB = 78/255;
+   const highR = 199/255;
+   const highG = 193/255;
+   const highB = 122/255;
+
+   const u = Math.random();
+   const r = lerp(lowR, highR, u);
+   const g = lerp(lowG, highG, u);
+   const b= lerp(lowB, highB, u);
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      8, 8,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}

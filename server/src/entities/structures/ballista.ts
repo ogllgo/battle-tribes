@@ -22,6 +22,10 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
+const move = () => {
+   throw new Error();
+}
+
 export function createBallistaConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
@@ -39,7 +43,7 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
 
    const turretComponent = new TurretComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 550);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 550, move);
    
    const ammoBoxComponent = new AmmoBoxComponent();
 

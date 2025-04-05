@@ -13,13 +13,16 @@ import { EntityConfig } from "./components";
 import { EntitySpawnInfo, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
-import { undergroundLayer } from "./layers";
+import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
+import { createDustfleaConfig } from "./entities/desert/dustflea";
+import { createKrumblidConfig } from "./entities/mobs/krumblid";
+import { createOkrenConfig } from "./entities/desert/okren";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -330,8 +333,12 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      // const config = createCactusConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5), 0);
-      // createEntity(config, surfaceLayer, 0);
+      // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // createEntity(dustfleaConfig, surfaceLayer, 0);
+      // const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // createEntity(krumblidConfig, surfaceLayer, 0);
+      // const okrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // createEntity(okrenConfig, surfaceLayer, 0);
       if(1+1===2)return;
       // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
       // createEntity(config, surfaceLayer, 0);

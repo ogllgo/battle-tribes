@@ -1,7 +1,7 @@
 import { ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
-import { ComponentArrays } from "../components/ComponentArray";
+import { ComponentArrays, getComponentArrayRecord } from "../components/ComponentArray";
 import { HealthComponentArray, removeDefence } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
 import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
@@ -13,7 +13,7 @@ import { PlayerComponentArray } from "../components/PlayerComponent";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { alignLengthBytes, Packet, PacketType } from "battletribes-shared/packets";
-import { entityExists, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes } from "../world";
+import { entityExists, getEntityComponentTypes, getEntityLayer, getEntitySpawnTicks, getEntityType, getGameTicks, getGameTime, getTribes } from "../world";
 import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from "../collapses";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
@@ -70,30 +70,25 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
    packet.addNumber(getEntitySpawnTicks(entity));
    packet.addNumber(layers.indexOf(getEntityLayer(entity)));
 
-   // @Speed
-   let numComponents = 0;
-   for (let i = 0; i < ComponentArrays.length; i++) {
-      const componentArray = ComponentArrays[i];
-      if (componentArray.hasComponent(entity)) {
-         numComponents++;
-      }
-   }
+   const componentTypes = getEntityComponentTypes(entity);
+   const componentArrayRecord = getComponentArrayRecord();
 
    // Components
-   packet.addNumber(numComponents);
-   for (let i = 0; i < ComponentArrays.length; i++) {
-      const componentArray = ComponentArrays[i];
+   packet.addNumber(componentTypes.length);
+   for (let i = 0; i < componentTypes.length; i++) {
+      const componentType = componentTypes[i];
+      const componentArray = componentArrayRecord[componentType];
 
       // @Speed
       if (componentArray.hasComponent(entity)) {
          const start = packet.currentByteOffset;
          
-         packet.addNumber(componentArray.componentType);
+         packet.addNumber(componentType);
          componentArray.addDataToPacket(packet, entity, player);
 
          // @Speed
          if (packet.currentByteOffset - start !== (Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player))) {
-            throw new Error(`Component type '${ServerComponentTypeString[componentArray.componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
+            throw new Error(`Component type '${ServerComponentTypeString[componentType]}' has wrong data length for entity type '${EntityTypeString[getEntityType(entity)]}'. (getDataLength returned ${Float32Array.BYTES_PER_ELEMENT + componentArray.getDataLength(entity, player)}, while the length of the added data was ${packet.currentByteOffset - start})`)
          }
       }
    }

@@ -5,11 +5,6 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { Packet } from "../../../shared/src/packets";
 import { Hitbox } from "../hitboxes";
 
-// @Cleanup
-export function addHitboxReferenceToData(packet: Packet): void {
-   
-}
-
 const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
    packet.addNumber(box.position.x);
    packet.addNumber(box.position.y);
@@ -18,9 +13,11 @@ const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
    packet.addNumber(box.offset.x);
    packet.addNumber(box.offset.y);
    packet.addNumber(box.scale);
+   packet.addBoolean(box.totalFlipXMultiplier === -1 ? true : false);
+   packet.padOffset(3);
 }
 const getBaseBoxDataLength = (): number => {
-   return 7 * Float32Array.BYTES_PER_ELEMENT;
+   return 8 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addCircularBoxData = (packet: Packet, box: CircularBox): void => {

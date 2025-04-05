@@ -333,8 +333,6 @@ export function sortComponentArrays(): void {
       [ServerComponentType.yeti]: ComponentArrayPriority.medium,
       [ServerComponentType.zombie]: ComponentArrayPriority.medium,
       [ServerComponentType.ammoBox]: ComponentArrayPriority.medium,
-      [ServerComponentType.escapeAI]: ComponentArrayPriority.medium,
-      [ServerComponentType.followAI]: ComponentArrayPriority.medium,
       [ServerComponentType.researchBench]: ComponentArrayPriority.medium,
       [ServerComponentType.tunnel]: ComponentArrayPriority.medium,
       [ServerComponentType.buildingMaterial]: ComponentArrayPriority.medium,
@@ -378,7 +376,6 @@ export function sortComponentArrays(): void {
       [ServerComponentType.glurbHeadSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.attackingEntities]: ComponentArrayPriority.medium,
-      [ServerComponentType.patrolAI]: ComponentArrayPriority.medium,
       [ServerComponentType.aiAssignment]: ComponentArrayPriority.medium,
       [ServerComponentType.treeRootBase]: ComponentArrayPriority.medium,
       [ServerComponentType.treeRootSegment]: ComponentArrayPriority.medium,
@@ -410,6 +407,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.dustflea]: ComponentArrayPriority.medium,
       [ServerComponentType.sandstoneRock]: ComponentArrayPriority.medium,
       [ServerComponentType.okren]: ComponentArrayPriority.medium,
+      [ServerComponentType.dustfleaMorphCocoon]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

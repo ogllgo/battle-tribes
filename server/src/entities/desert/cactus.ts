@@ -90,8 +90,6 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const lootComponent = new LootComponent();
-   
-   const cactusComponent = new CactusComponent(flowers);
 
    const childConfigs = new Array<EntityConfig>();
    if (Math.random() < 0.4) {
@@ -107,6 +105,8 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       const config = createPricklyPearConfig(position, 2 * Math.PI * Math.random());
       childConfigs.push(config);
    }
+   
+   const cactusComponent = new CactusComponent(flowers, childConfigs.length > 0);
 
    return {
       entityType: EntityType.cactus,

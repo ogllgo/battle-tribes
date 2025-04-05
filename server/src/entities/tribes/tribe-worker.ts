@@ -9,7 +9,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { AIHelperComponent } from "../../components/AIHelperComponent";
+import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
@@ -17,11 +17,15 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
-import { PatrolAIComponent } from "../../components/PatrolAIComponent";
+import { PatrolAI } from "../../ai/PatrolAI";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
 import { createHitbox } from "../../hitboxes";
+
+const move = () => {
+   throw new Error();
+}
 
 const getHitboxRadius = (tribeType: TribeType): number => {
    switch (tribeType) {
@@ -59,11 +63,10 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 500);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 500, move);
+   aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
-   
-   const patrolAIComponent = new PatrolAIComponent();
    
    const inventoryComponent = new InventoryComponent();
 
@@ -82,7 +85,6 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
-         [ServerComponentType.patrolAI]: patrolAIComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent
       },

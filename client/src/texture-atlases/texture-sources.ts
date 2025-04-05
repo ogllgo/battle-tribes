@@ -109,6 +109,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/campfire/campfire.png",
    "entities/furnace/furnace.png",
    "entities/krumblid/krumblid.png",
+   "entities/krumblid/mandible.png",
    "entities/frozen-yeti/frozen-yeti.png",
    "entities/frozen-yeti/frozen-yeti-head.png",
    "entities/frozen-yeti/frozen-yeti-paw.png",
@@ -405,10 +406,15 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/sandstone-rock/sandstone-rock-large.png",
    "entities/okren/body.png",
    "entities/okren/eye.png",
+   "entities/okren/eye-crust.png",
    "entities/okren/mandible.png",
    "entities/okren/big-arm-segment.png",
    "entities/okren/medium-arm-segment.png",
    "entities/okren/arm-segment-of-slashing-and-destruction.png",
+   "entities/dustflea-morph-cocoon/stage-1.png",
+   "entities/dustflea-morph-cocoon/stage-2.png",
+   "entities/dustflea-morph-cocoon/stage-3.png",
+   "entities/dustflea-morph-cocoon/stage-4.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

@@ -23,6 +23,8 @@ export enum RenderLayer {
    defaultEntities,
    // @Hack So that these will be shown above the default entities which they are carried on
    ridingEntities,
+   // so they are rendered above players
+   dustfleas,
    mithril,
    projectiles,
    highEntities,
@@ -158,6 +160,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       // @Incomplete: barrel should be shown below player (so that their limbs can go over it)
       case EntityType.barrel: {
          return RenderLayer.ridingEntities;
+      }
+      case EntityType.dustflea: {
+         return RenderLayer.dustfleas;
       }
       case EntityType.desertSmallWeed: {
          return RenderLayer.desertLowestPlants;

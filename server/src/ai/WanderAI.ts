@@ -14,6 +14,10 @@ const enum Vars {
 
 export type WanderAITileIsValidCallback = (entity: Entity, layer: Layer, x: number, y: number) => boolean;
 
+const positionIsValid = (layer: Layer, x: number, y: number): boolean => {
+   return !layer.positionHasWall(x, y);
+}
+
 export default class WanderAI {
    public acceleration: number;
    private readonly turnSpeed: number;
@@ -92,7 +96,7 @@ export default class WanderAI {
             x = (tileX + Math.random()) * Settings.TILE_SIZE;
             y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
-            if (this.positionIsValidCallback(entity, layer, x, y)) {
+            if (positionIsValid(layer, x, y) && this.positionIsValidCallback(entity, layer, x, y)) {
                isValid = true;
                break;
             }

@@ -16,9 +16,14 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { SlimewispComponent } from "../../components/SlimewispComponent";
 import { createHitbox } from "../../hitboxes";
+import { moveEntityToPosition } from "../../ai-shared";
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.swamp;
+   return layer.getBiomeAtPosition(x, y) === Biome.swamp;
+}
+
+const move = (slimewisp: Entity, x: number, y: number): void => {
+   moveEntityToPosition(slimewisp, x, y, 100, Math.PI);
 }
 
 export function createSlimewispConfig(position: Point, rotation: number): EntityConfig {
@@ -33,7 +38,7 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
    
-   const aiHelperComponent = new AIHelperComponent(hitbox, 100);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 100, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI, 99999, positionIsValidCallback);
    
    const slimewispComponent = new SlimewispComponent();

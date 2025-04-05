@@ -1,13 +1,12 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { assert, randInt, UtilVars } from "battletribes-shared/utils";
+import { assert, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
-import { FollowAIComponentArray, updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "./FollowAIComponent";
+import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
-import { KrumblidVars } from "../entities/mobs/krumblid";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { getHitboxTile, Hitbox } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
@@ -126,10 +125,10 @@ function onTick(krumblid: Entity): void {
    }
    
    // Follow AI: Make the krumblid like to hide in cacti
-   const followAIComponent = FollowAIComponentArray.getComponent(krumblid);
-   updateFollowAIComponent(krumblid, aiHelperComponent.visibleEntities, 5);
+   const followAI = aiHelperComponent.getFollowAI();
+   updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 5);
 
-   const followedEntity = followAIComponent.followTargetID;
+   const followedEntity = followAI.followTargetID;
    if (entityExists(followedEntity)) {
       const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
       // @Hack
@@ -138,12 +137,12 @@ function onTick(krumblid: Entity): void {
       // Continue following the entity
       moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED);
       return;
-   } else if (entityWantsToFollow(followAIComponent)) {
+   } else if (entityWantsToFollow(followAI)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
          const entity = aiHelperComponent.visibleEntities[i];
          if (entityIsFollowable(entity)) {
             // Follow the entity
-            followAISetFollowTarget(krumblid, entity, randInt(KrumblidVars.MIN_FOLLOW_COOLDOWN, KrumblidVars.MAX_FOLLOW_COOLDOWN), true);
+            followAISetFollowTarget(followAI, entity, true);
             // @Incomplete: movement isn't accounted for!
             return;
          }

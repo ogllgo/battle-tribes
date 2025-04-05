@@ -22,7 +22,7 @@ import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-hea
 import { InventoryName, Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ConsumableItemInfo } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../../../world";
-import { runPatrolAI } from "../../../components/PatrolAIComponent";
+import { runPatrolAI } from "../../../ai/PatrolAI";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 import { getAbsAngleDiff } from "../../../../../shared/src/utils";
@@ -765,7 +765,8 @@ export function tickTribesman(tribesman: Entity): void {
    // If there's nothing else to do, patrol the tribe area
    const tribeArea = tribeComponent.tribe.getArea();
    if (tribeArea.length > 0) {
-      runPatrolAI(tribesman, tribeArea);
+      const patrolAI = aiHelperComponent.getPatrolAI();
+      runPatrolAI(tribesman, patrolAI, tribeArea);
       return;
    }
 }

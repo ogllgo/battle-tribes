@@ -5,6 +5,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { Entity } from "../../../../shared/src/entities";
+import { playSoundOnHitbox } from "../../sound";
+import { TransformComponentArray } from "./TransformComponent";
+import { randFloat } from "../../../../shared/src/utils";
 
 export interface DustfleaComponentParams {}
 
@@ -19,6 +23,7 @@ export const DustfleaComponentArray = new ServerComponentArray<DustfleaComponent
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
+   onDie: onDie
 });
 
 function createParamsFromData(): DustfleaComponentParams {
@@ -52,3 +57,9 @@ function getMaxRenderParts(): number {
 function padData(reader: PacketReader): void {}
 
 function updateFromData(reader: PacketReader): void {}
+
+function onDie(dustflea: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(dustflea);
+   const hitbox = transformComponent.children[0] as Hitbox;
+   playSoundOnHitbox("dustflea-explosion.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
+}

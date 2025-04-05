@@ -24,6 +24,10 @@ function tileIsValidCallback(entity: Entity, _layer: Layer, tileIndex: TileIndex
    return guardianComponent.homeTiles.includes(tileIndex);
 }
 
+const move = () => {
+   throw new Error();
+}
+
 export function createGuardianConfig(position: Point, rotation: number, homeTiles: ReadonlyArray<TileIndex>): EntityConfig {
    const transformComponent = new TransformComponent();
 
@@ -44,7 +48,7 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
    
    const statusEffectComponent = new StatusEffectComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 300);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 300, move);
    aiHelperComponent.ais[AIType.wander] =                  new WanderAI(200, Math.PI * 0.5, 0.6, tileIsValidCallback),
    aiHelperComponent.ais[AIType.guardian] =                new GuardianAI(280, Math.PI * 0.5),
    aiHelperComponent.ais[AIType.guardianCrystalSlam] =     new GuardianCrystalSlamAI(200, Math.PI * 0.3),

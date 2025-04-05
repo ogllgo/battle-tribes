@@ -6,10 +6,11 @@ import { HitData } from "../../../../shared/src/client-server-types";
 import { Entity } from "../../../../shared/src/entities";
 import { angle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
-import { TransformComponentArray } from "./TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
 export interface KrumblidComponentParams {}
 
@@ -34,16 +35,31 @@ function createParamsFromData(): KrumblidComponentParams {
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
-   
-   entityIntermediateInfo.renderInfo.attachRenderPart(
-      new TexturedRenderPart(
-         hitbox,
-         0,
-         0,
-         getTextureArrayIndex("entities/krumblid/krumblid.png")
-      )
-   );
+   for (const hitbox of transformComponentParams.children) {
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+
+      if (hitbox.flags.includes(HitboxFlag.KRUMBLID_BODY)) {
+         entityIntermediateInfo.renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               1,
+               0,
+               getTextureArrayIndex("entities/krumblid/krumblid.png")
+            )
+         );
+      } else {
+         entityIntermediateInfo.renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               0,
+               0,
+               getTextureArrayIndex("entities/krumblid/mandible.png")
+            )
+         );
+      }
+   }
 
    return {};
 }
@@ -53,7 +69,7 @@ function createComponent(): KrumblidComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 1;
+   return 3;
 }
 
 function padData(): void {}

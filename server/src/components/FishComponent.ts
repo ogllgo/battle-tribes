@@ -9,7 +9,7 @@ import { TileType } from "battletribes-shared/tiles";
 import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { getEscapeTarget, runEscapeAI } from "./EscapeAIComponent";
+import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { hitEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -28,10 +28,7 @@ const enum Vars {
    SEPARATION_INFLUENCE = 0.7,
    ALIGNMENT_INFLUENCE = 0.5,
    COHESION_INFLUENCE = 0.3,
-   MIN_SEPARATION_DISTANCE = 40,
-
-   LUNGE_FORCE = 200,
-   LUNGE_INTERVAL = 1
+   MIN_SEPARATION_DISTANCE = 40
 }
 
 export class FishComponent {
@@ -54,38 +51,6 @@ FishComponentArray.onTick = {
    func: onTick
 };
 FishComponentArray.onRemove = onRemove;
-
-const move = (fish: Entity, direction: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
-
-   const layer = getEntityLayer(fish);
-   
-   const tileIndex = getHitboxTile(fishHitbox);
-   if (layer.tileTypes[tileIndex] === TileType.water) {
-      // Swim on water
-      const accelerationX = 40 * Math.sin(direction);
-      const accelerationY = 40 * Math.cos(direction);
-      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
-
-      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED);
-   } else {
-      // 
-      // Lunge on land
-      // 
-
-      const fishComponent = FishComponentArray.getComponent(fish);
-      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         
-         fishHitbox.velocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
-         fishHitbox.velocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
-         if (direction !== fishHitbox.box.angle) {
-            fishHitbox.box.angle = direction;
-            transformComponent.isDirty = true;
-         }
-      }
-   }
-}
 
 const followLeader = (fish: Entity, leader: Entity): void => {
    const tribesmanComponent = TribesmanComponentArray.getComponent(leader);
@@ -168,13 +133,13 @@ function onTick(fish: Entity): void {
          const leaderHitbox = leaderTransformComponent.children[0] as Hitbox;
          
          // Follow leader
-         move(fish, fishHitbox.box.position.calculateAngleBetween(leaderHitbox.box.position));
+         aiHelperComponent.move(fish, 0, 0, leaderHitbox.box.position.x, leaderHitbox.box.position.y);
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
          // Attack the target
-         move(fish, fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position));
+         aiHelperComponent.move(fish, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
 
          if (entitiesAreColliding(fish, target) !== CollisionVars.NO_COLLISION) {
             const healthComponent = HealthComponentArray.getComponent(target);

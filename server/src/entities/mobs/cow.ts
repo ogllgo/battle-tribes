@@ -1,7 +1,7 @@
 import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -10,13 +10,13 @@ import WanderAI from "../../ai/WanderAI";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
-import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { PhysicsComponent, translateHitbox } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { EscapeAIComponent } from "../../components/EscapeAIComponent";
+import { EscapeAI } from "../../ai/EscapeAI";
 import { CowComponent } from "../../components/CowComponent";
-import { FollowAIComponent } from "../../components/FollowAIComponent";
+import { FollowAI } from "../../ai/FollowAI";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
@@ -25,15 +25,16 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
-import { AutoSpawnedComponent } from "../../components/AutoSpawnedComponent";
-import { EntitySpawnInfo } from "../../entity-spawn-info";
+import { applyAcceleration, createHitbox, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
+
+const enum Vars {
+   HEAD_TURN_SPEED = 0.75 * UtilVars.PI
+}
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS,
-   MIN_FOLLOW_COOLDOWN = 15 * Settings.TPS,
-   MAX_FOLLOW_COOLDOWN = 30 * Settings.TPS
+   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS
 }
 
 registerEntityTamingSpec(EntityType.cow, {
@@ -91,7 +92,11 @@ registerEntityLootOnDeath(EntityType.cow, [
 ]);
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return !layer.positionHasWall(x, y) && layer.getBiomeAtPosition(x, y) === Biome.grasslands;
+   return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
+}
+
+const move = (cow: Entity, acceleration: number, _turnSpeed: number, turnTargetX: number, turnTargetY: number): void => {
+   throw new Error();
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
@@ -116,14 +121,12 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 320);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 320, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TPS, 30 * Settings.TPS, 0.2, 60);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
-   
-   const escapeAIComponent = new EscapeAIComponent(650, Math.PI);
-
-   const followAIComponent = new FollowAIComponent(randInt(CowVars.MIN_FOLLOW_COOLDOWN, CowVars.MAX_FOLLOW_COOLDOWN), 0.2, 60);
    
    const rideableComponent = new RideableComponent();
    rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -14, 48, 0));
@@ -143,8 +146,6 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
-         [ServerComponentType.escapeAI]: escapeAIComponent,
-         [ServerComponentType.followAI]: followAIComponent,
          [ServerComponentType.rideable]: rideableComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,

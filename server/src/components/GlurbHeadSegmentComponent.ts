@@ -1,31 +1,27 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
-import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
-import { angle, assert, lerp, Point, randInt } from "../../../shared/src/utils";
+import { assert, Point } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
-import { createItemEntityConfig } from "../entities/item-entity";
 import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
-import { GlurbHeadVars } from "../entities/mobs/glurb-head-segment";
 import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
 import { createEntity } from "../Entity";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../hitboxes";
-import { undergroundLayer } from "../layers";
+import { Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
-import { FollowAIComponentArray, updateFollowAIComponent, followAISetFollowTarget, FollowAIComponent, entityWantsToFollow } from "./FollowAIComponent";
+import { updateFollowAIComponent, followAISetFollowTarget, FollowAI, entityWantsToFollow } from "../ai/FollowAI";
 import { GlurbComponentArray } from "./GlurbComponent";
 import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { TamingComponentArray } from "./TamingComponent";
-import { EntityAttachInfo, entityChildIsEntity, getFirstComponent, TransformComponentArray } from "./TransformComponent";
+import { EntityAttachInfo, getFirstComponent, TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
    // @Temporary
@@ -49,66 +45,15 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-const getAcceleration = (glurb: Entity): number => {
-   const age = getEntityAgeTicks(glurb);
-   
-   const u = (Math.sin(age * Settings.I_TPS * 6.5) + 1) * 0.5;
-   return lerp(200, 450, u);
-}
-
-const move = (head: Entity, targetPosition: Point): void => {
-   const acceleration = getAcceleration(head);
-
-   const headTransformComponent = TransformComponentArray.getComponent(head);
-
-   const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
-
-   for (let i = 0; i < glurbTransformComponent.children.length; i++) {
-      const child = glurbTransformComponent.children[i];
-      if (!entityChildIsEntity(child)) {
-         continue;
-      }
-
-      const glurbSegment = child.attachedEntity;
-      if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
-         continue;
-      }
-
-      const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-      const hitbox = transformComponent.children[0] as Hitbox;
-   
-      let targetDirection: number;
-      
-      if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-         targetDirection = angle(targetPosition.x - hitbox.box.position.x, targetPosition.y - hitbox.box.position.y);
-
-         setHitboxIdealAngle(hitbox, targetDirection, Math.PI);
-      } else {
-         // Move to next hitbox in chain
-
-         const lastChild = glurbTransformComponent.children[i - 1];
-         if (!entityChildIsEntity(lastChild)) {
-            throw new Error();
-         }
-         const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
-         const lastSegmentHitbox = lastSegmentTransformComponent.children[0] as Hitbox;
-         
-         targetDirection = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
-      }
-      
-      const accelerationX = acceleration * Math.sin(targetDirection);
-      const accelerationY = acceleration * Math.cos(targetDirection);
-      applyAcceleration(glurbSegment, hitbox, accelerationX, accelerationY);
-   }
-}
-
 const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {
+   const aiHelperComponent = AIHelperComponentArray.getComponent(glurb);
+   
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   move(glurb, targetHitbox.box.position);
+   aiHelperComponent.move(glurb, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
 }
 
-const getFollowTarget = (followAIComponent: FollowAIComponent, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
+const getFollowTarget = (followAIComponent: FollowAI, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const wantsToFollow = entityWantsToFollow(followAIComponent);
 
    let target: Entity | null = null;
@@ -172,6 +117,8 @@ function onTick(glurbHead: Entity): void {
       return;
    }
    
+   const aiHelperComponent = AIHelperComponentArray.getComponent(glurbHead);
+   
    const attackingEntitiesComponent = getFirstComponent(AttackingEntitiesComponentArray, glurbHead);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const attacker = pair[0];
@@ -181,12 +128,10 @@ function onTick(glurbHead: Entity): void {
       // Run away!!
       const targetX = headHitbox.box.position.x * 2 - attackerHitbox.box.position.x;
       const targetY = headHitbox.box.position.y * 2 - attackerHitbox.box.position.y;
-      move(glurbHead, new Point(targetX, targetY));
+      aiHelperComponent.move(glurbHead, 0, 0, targetX, targetY);
       return;
    }
    
-   const aiHelperComponent = AIHelperComponentArray.getComponent(glurbHead);
-
    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
       const entity = aiHelperComponent.visibleEntities[i];
       if (getEntityType(entity) === EntityType.itemEntity) {
@@ -270,17 +215,17 @@ function onTick(glurbHead: Entity): void {
    }
 
    // Follow AI
-   const followAIComponent = FollowAIComponentArray.getComponent(glurbHead);
-   updateFollowAIComponent(glurbHead, aiHelperComponent.visibleEntities, 7);
+   const followAI = aiHelperComponent.getFollowAI();
+   updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 7);
 
-   if (entityExists(followAIComponent.followTargetID)) {
-      moveToEntity(glurbHead, followAIComponent.followTargetID);
+   if (entityExists(followAI.followTargetID)) {
+      moveToEntity(glurbHead, followAI.followTargetID);
       return;
    } else {
-      const followTarget = getFollowTarget(followAIComponent, aiHelperComponent.visibleEntities);
+      const followTarget = getFollowTarget(followAI, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
-         followAISetFollowTarget(glurbHead, followTarget, randInt(GlurbHeadVars.MIN_FOLLOW_COOLDOWN, GlurbHeadVars.MAX_FOLLOW_COOLDOWN), true);
+         followAISetFollowTarget(followAI, followTarget, true);
          return;
       }
    }
@@ -289,6 +234,6 @@ function onTick(glurbHead: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(glurbHead);
    if (wanderAI.targetPositionX !== -1) {
-      move(glurbHead, new Point(wanderAI.targetPositionX, wanderAI.targetPositionY));
+      aiHelperComponent.move(glurbHead, 0, 0, wanderAI.targetPositionX, wanderAI.targetPositionY);
    }
 }

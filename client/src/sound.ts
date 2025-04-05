@@ -286,6 +286,8 @@ export async function loadSoundEffects(): Promise<void> {
       "prickly-pear-explode.mp3",
       "prickly-pear-fragment-projectile-explode.mp3",
       "prickly-pear-snap.mp3",
+      "dustflea-latch.mp3",
+      "dustflea-explosion.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
