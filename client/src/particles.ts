@@ -2176,3 +2176,44 @@ export function createCocoonFragmentParticle(spawnPositionX: number, spawnPositi
    );
    Board.lowTexturedParticles.push(particle);
 }
+
+export function createSandParticle(spawnPositionX: number, spawnPositionY: number, vx: number, vy: number, moveDirection: number): void {
+   const lifetime = randFloat(0.3, 0.4);
+   
+   const moveSpeed = randFloat(40, 60);
+   const velocityX = vx + moveSpeed * Math.sin(moveDirection);
+   const velocityY = vy + moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+
+   const lowR = 227/255;
+   const lowG = 219/255;
+   const lowB = 127/255;
+   const highR = 239/255;
+   const highG = 237/255;
+   const highB = 137/255;
+
+   const u = Math.random();
+   const r = lerp(lowR, highR, u) - 0.23;
+   const g = lerp(lowG, highG, u) - 0.23;
+   const b = lerp(lowB, highB, u) - 0.23;
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      4, 4,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}

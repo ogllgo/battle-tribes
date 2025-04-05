@@ -1,7 +1,11 @@
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
+import { Settings } from "../../../../shared/src/settings";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
+import { createSandParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
@@ -28,6 +32,7 @@ export const SandBallComponentArray = new ServerComponentArray<SandBallComponent
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
+   onTick: onTick
 });
 
 const getTextureSource = (size: number): string => {
@@ -76,6 +81,23 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
 
 function getMaxRenderParts(): number {
    return 1;
+}
+
+function onTick(sandBall: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(sandBall);
+   if (transformComponent.rootEntity !== sandBall) {
+      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitboxRadius = (hitbox.box as CircularBox).radius;
+
+      let particleChance = hitboxRadius / Settings.TPS * 0.8;
+      while (Math.random() < particleChance--) {
+         const offsetDirection = randAngle();
+         const offsetAmount = hitboxRadius * randFloat(0.7, 1);
+         const x = hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection);
+         const y = hitbox.box.position.y + offsetAmount * Math.sin(offsetDirection);
+         createSandParticle(x, y, hitbox.velocity.x, hitbox.velocity.y, offsetDirection + randFloat(-0.3, 0.3));
+      }
+   }
 }
 
 function padData(reader: PacketReader): void {

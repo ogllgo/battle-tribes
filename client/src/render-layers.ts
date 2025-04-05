@@ -115,6 +115,10 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       case EntityType.floorPunjiSticks: {
          return RenderLayer.lowEntities;
       }
+      // Sand balls are rendered below krumblids so that their mandables wriggle about them when balling them up
+      case EntityType.sandBall: {
+         return RenderLayer.lowEntities;
+      }
       case EntityType.wallSpikes:
       case EntityType.wallPunjiSticks: {
          return RenderLayer.highEntities;

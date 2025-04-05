@@ -25,6 +25,7 @@ import { HungerComponent } from "../../components/HungerComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { moveEntityToPosition } from "../../ai-shared";
 import { SandBallingAI } from "../../ai/SandBallingAI";
+import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -52,13 +53,14 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 1;
       
-      const offset = new Point(12, 27);
+      const offset = new Point(12, 28);
       const position = bodyHitbox.box.position.copy();
       position.add(offset);
       const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(position, offset, Math.PI * 0.1, 12, 16), 0.1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK & ~COLLISION_BITS.cactus, [HitboxFlag.KRUMBLID_MANDIBLE]);
       mandibleHitbox.box.flipX = sideIsFlipped;
       // @Hack
       mandibleHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
+      mandibleHitbox.box.pivot = createNormalisedPivotPoint(-0.5, -0.5);
       addHitboxToTransformComponent(transformComponent, mandibleHitbox);
    }
    

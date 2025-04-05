@@ -671,36 +671,36 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return createKrumblidConfig(new Point(x, y), angle);
    //    }
    // });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.dustflea,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.004),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createDustfleaConfig(new Point(x, y), angle);
-   //    }
-   // });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.krumblid,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.003),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createKrumblidConfig(new Point(x, y), angle);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityType: EntityType.dustflea,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.004),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDustfleaConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.krumblid,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.003),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createKrumblidConfig(new Point(x, y), angle);
+      }
+   });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,

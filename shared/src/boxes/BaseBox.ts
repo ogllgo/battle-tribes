@@ -1,10 +1,38 @@
 import { Point } from "../utils";
 import { Box } from "./boxes";
 
+export const enum PivotPointType {
+   /** Coordinates normalised to the hitboxes' size. (-0.5, -0.5) = bottom left, (0, 0) = middle, (0.5, 0.5) = top right */
+   normalised,
+   /** Coordinates taken as an offset from the hitboxes' position. */
+   absolute
+}
+
+export interface PivotPoint {
+   readonly type: PivotPointType;
+   readonly pos: Point;
+}
+
+export function createNormalisedPivotPoint(normalisedX: number, normalisedY: number): PivotPoint {
+   return {
+      type: PivotPointType.normalised,
+      pos: new Point(normalisedX, normalisedY)
+   };
+}
+
+export function createAbsolutePivotPoint(offsetX: number, offsetY: number): PivotPoint {
+   return {
+      type: PivotPointType.absolute,
+      pos: new Point(offsetX, offsetY)
+   };
+}
+
 abstract class BaseBox {
    public readonly position: Point;
    /** Offset of the box from its parent. If on a root hitbox of a base entity, does nothing. */
    public readonly offset: Point;
+   /** Point from which rotation is applied relative to. */
+   public pivot = createAbsolutePivotPoint(0, 0);
 
    public relativeAngle: number;
    /** Angle the hitbox is facing, taken counterclockwise from the positive x axis (radians) */

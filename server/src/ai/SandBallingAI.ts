@@ -90,10 +90,10 @@ export function runSandBallingAI(entity: Entity, sandBallingAI: SandBallingAI): 
       // switche
       if (sandBallingAI.isTurningClockwise) {
          setHitboxAngularVelocity(entityHitbox, 1);
-         setHitboxAngularVelocity(sandBallHitbox, 0.5);
+         setHitboxAngularVelocity(sandBallHitbox, 1);
       } else {
          setHitboxAngularVelocity(entityHitbox, -1);
-         setHitboxAngularVelocity(sandBallHitbox, -0.5);
+         setHitboxAngularVelocity(sandBallHitbox, -1);
       }
 
       // move forwards
@@ -126,8 +126,8 @@ export function runSandBallingAI(entity: Entity, sandBallingAI: SandBallingAI): 
       for (let i = 0; i < 2; i++) {
          // @Hack
          const mandibleHitbox = entityTransformComponent.children[i + 1] as Hitbox;
-         const idealAngle = ((getEntityAgeTicks(entity) * 2 + (i === 0 ? Settings.TPS * 0.25 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
-         setHitboxIdealAngle(mandibleHitbox, idealAngle, 1.5 * Math.PI, true);
+         const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
+         setHitboxIdealAngle(mandibleHitbox, idealAngle, 3 * Math.PI, true);
       }
    } else {
       // Start a new ball
