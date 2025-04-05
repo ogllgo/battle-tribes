@@ -18,7 +18,9 @@ export const enum HitboxFlag {
    OKREN_MEDIUM_ARM_SEGMENT,
    OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION,
    OKREN_EYE,
-   OKREN_MANDIBLE
+   OKREN_MANDIBLE,
+   KRUMBLID_BODY,
+   KRUMBLID_MANDIBLE
 }
 
 export const enum HitboxCollisionType {
@@ -75,16 +77,21 @@ export function updateVertexPositionsAndSideAxes(box: RectangularBox): void {
    box.axisY = -sinRotation;
 }
 
-export function updateBox(box: Box, parentX: number, parentY: number, parentRotation: number): void {
-   const cosRotation = Math.cos(parentRotation);
-   const sinRotation = Math.sin(parentRotation);
+export function updateBox(box: Box, parent: Box): void {
+   const cosRotation = Math.cos(parent.angle);
+   const sinRotation = Math.sin(parent.angle);
    
-   const offsetX = box.offset.x * box.scale;
+   box.totalFlipXMultiplier = (box.flipX ? -1 : 1) * parent.totalFlipXMultiplier;
+   
+   let offsetX = box.offset.x * box.scale;
+   if (box.totalFlipXMultiplier === -1) {
+      offsetX *= -1;
+   }
    const offsetY = box.offset.y * box.scale;
-   box.position.x = parentX + cosRotation * offsetX + sinRotation * offsetY;
-   box.position.y = parentY + cosRotation * offsetY - sinRotation * offsetX;
+   box.position.x = parent.position.x + cosRotation * offsetX + sinRotation * offsetY;
+   box.position.y = parent.position.y + cosRotation * offsetY - sinRotation * offsetX;
 
-   box.angle = box.relativeAngle + parentRotation;
+   box.angle = box.relativeAngle * box.totalFlipXMultiplier + parent.angle;
 
    if (!boxIsCircular(box)) {
       updateVertexPositionsAndSideAxes(box);

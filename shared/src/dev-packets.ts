@@ -48,8 +48,6 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.yeti]: {},
    [ServerComponentType.zombie]: {},
    [ServerComponentType.ammoBox]: {},
-   [ServerComponentType.escapeAI]: {},
-   [ServerComponentType.followAI]: {},
    [ServerComponentType.researchBench]: {},
    [ServerComponentType.tunnel]: {},
    [ServerComponentType.buildingMaterial]: {},
@@ -93,7 +91,6 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.glurbHeadSegment]: {},
    [ServerComponentType.slurbTorch]: {},
    [ServerComponentType.attackingEntities]: {},
-   [ServerComponentType.patrolAI]: {},
    [ServerComponentType.aiAssignment]: {},
    [ServerComponentType.treeRootBase]: {},
    [ServerComponentType.treeRootSegment]: {},
@@ -125,6 +122,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.dustflea]: {},
    [ServerComponentType.sandstoneRock]: {},
    [ServerComponentType.okren]: {},
+   [ServerComponentType.dustfleaMorphCocoon]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

@@ -11,6 +11,8 @@ abstract class BaseBox {
    public angle: number;
 
    public scale = 1;
+   public flipX = false;
+   public totalFlipXMultiplier = 1;
 
    constructor(position: Point, offset: Point, rotation: number) {
       this.position = position;

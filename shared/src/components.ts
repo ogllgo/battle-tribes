@@ -57,8 +57,6 @@ export enum ServerComponentType {
    yeti,
    zombie,
    ammoBox,
-   escapeAI,
-   followAI,
    researchBench,
    tunnel,
    buildingMaterial,
@@ -102,7 +100,6 @@ export enum ServerComponentType {
    glurbHeadSegment,
    slurbTorch,
    attackingEntities,
-   patrolAI,
    aiAssignment,
    treeRootBase,
    treeRootSegment,
@@ -133,7 +130,8 @@ export enum ServerComponentType {
    energyStore,
    dustflea,
    sandstoneRock,
-   okren
+   okren,
+   dustfleaMorphCocoon
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -177,8 +175,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.yeti]: "Yeti Component",
    [ServerComponentType.zombie]: "Zombie Component",
    [ServerComponentType.ammoBox]: "Ammo Box Component",
-   [ServerComponentType.escapeAI]: "Escape AI Component",
-   [ServerComponentType.followAI]: "Follow AI Component",
    [ServerComponentType.researchBench]: "Research Bench Component",
    [ServerComponentType.tunnel]: "Tunnel Component",
    [ServerComponentType.buildingMaterial]: "Building Material Component",
@@ -228,7 +224,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.glurbHeadSegment]: "Glurb Head Segment Component",
    [ServerComponentType.slurbTorch]: "Slurb Torch Component",
    [ServerComponentType.attackingEntities]: "Attacking Entities Component",
-   [ServerComponentType.patrolAI]: "Patrol AI Component",
    [ServerComponentType.aiAssignment]: "AI Assignment Component",
    [ServerComponentType.treeRootBase]: "Tree Root Base Component",
    [ServerComponentType.treeRootSegment]: "Tree Root Segment Component",
@@ -260,13 +255,14 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.dustflea]: "Dustflea Component",
    [ServerComponentType.sandstoneRock]: "Sandstone Rock Component",
    [ServerComponentType.okren]: "Okren Component",
+   [ServerComponentType.dustfleaMorphCocoon]: "Dustflea Morph Cocoon Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
 
 // @Hack @Robustness: shouldn't be hardcoded
 export const EntityComponents = {
-   [EntityType.cow]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.escapeAI, ServerComponentType.followAI, ServerComponentType.cow] as const,
+   [EntityType.cow]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.cow] as const,
    [EntityType.zombie]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.zombie, ServerComponentType.aiHelper, ServerComponentType.inventory, ServerComponentType.inventoryUse] as const,
    [EntityType.tombstone]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tombstone] as const,
    [EntityType.tree]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.tree] as const,
@@ -288,9 +284,9 @@ export const EntityComponents = {
    [EntityType.campfire]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.inventory, ServerComponentType.cooking, ServerComponentType.campfire] as const,
    [EntityType.furnace]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.inventory, ServerComponentType.cooking, ServerComponentType.furnace] as const,
    [EntityType.snowball]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.snowball] as const,
-   [EntityType.krumblid]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.followAI, ServerComponentType.escapeAI, ServerComponentType.aiHelper, ServerComponentType.krumblid] as const,
+   [EntityType.krumblid]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.krumblid] as const,
    [EntityType.frozenYeti]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.frozenYeti, ServerComponentType.aiHelper] as const,
-   [EntityType.fish]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.escapeAI, ServerComponentType.aiHelper, ServerComponentType.fish] as const,
+   [EntityType.fish]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.fish] as const,
    [EntityType.itemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
    [EntityType.fleshSwordItemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
    [EntityType.woodenArrow]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
@@ -369,6 +365,7 @@ export const EntityComponents = {
    [EntityType.dustflea]: [],
    [EntityType.sandstoneRock]: [],
    [EntityType.okren]: [],
+   [EntityType.dustfleaMorphCocoon]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -703,26 +700,6 @@ export interface AmmoBoxComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.ammoBox;
    readonly ammoType: TurretAmmoType;
    readonly ammoRemaining: number;
-}
-
-/* Escape AI Component */
-
-export interface EscapeAIComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.escapeAI;
-   /** IDs of all entities attacking the entity */
-   readonly attackingEntityIDs: Array<number>;
-   readonly attackEntityTicksSinceLastAttack: Array<number>;
-}
-
-/* Follow AI Component */
-
-export interface FollowAIComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.followAI;
-   /** ID of the followed entity */
-   readonly followTargetID: number;
-   readonly followCooldownTicks: number;
-   /** Keeps track of how long the mob has been interested in its target */
-   readonly interestTimer: number;
 }
 
 /* Research Bench Component */

@@ -469,3 +469,7 @@ export function unitsToChunksClamped(a: number): number {
    }
    return aChunks;
 }
+
+export function randAngle(): number {
+   return 2 * Math.PI * Math.random();
+}

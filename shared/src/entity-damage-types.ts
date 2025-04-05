@@ -433,6 +433,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
+   [EntityType.dustfleaMorphCocoon]: {
+      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

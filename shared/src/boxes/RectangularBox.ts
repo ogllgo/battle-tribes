@@ -14,8 +14,8 @@ class RectangularBox extends BaseBox {
    public axisY = 0;
 
    // @Cleanup: move rotation to just after offset
-   constructor(position: Point, offset: Point, rotation: number, width: number, height: number) {
-      super(position, offset, rotation);
+   constructor(position: Point, offset: Point, angle: number, width: number, height: number) {
+      super(position, offset, angle);
 
       this.width = width;
       this.height = height;
