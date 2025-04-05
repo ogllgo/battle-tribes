@@ -24,6 +24,7 @@ export interface Hitbox {
    /** Angle the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI)
     *  Exception: when set to -999, the hitbox will take angleTurnSpeed as an angular velocity value instead. */
    idealAngle: number;
+   idealAngleIsRelative: boolean;
    angleTurnSpeed: number;
    
    mass: number;
@@ -49,6 +50,7 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       box: box,
       velocity: new Point(0, 0),
       idealAngle: -999,
+      idealAngleIsRelative: false,
       angleTurnSpeed: 0,
       mass: mass,
       collisionType: collisionType,
@@ -203,8 +205,9 @@ export function applyForce(entity: Entity, hitbox: Hitbox, forceX: number, force
    applyAcceleration(entity, hitbox, accelerationX, accelerationY);
 }
 
-export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number): void {
+export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number, idealAngleIsRelative: boolean): void {
    hitbox.idealAngle = idealAngle;
+   hitbox.idealAngleIsRelative = idealAngleIsRelative;
    hitbox.angleTurnSpeed = angleTurnSpeed;
 }
 

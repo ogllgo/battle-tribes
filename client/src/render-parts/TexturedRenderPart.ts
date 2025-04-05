@@ -13,6 +13,7 @@ class TexturedRenderPart extends VisualRenderPart {
 
    public switchTextureSource(textureSource: string): void {
       this.textureArrayIndex = getTextureArrayIndex(textureSource);
+      // @Incomplete: should dirty the render part here??
    }
 }
 

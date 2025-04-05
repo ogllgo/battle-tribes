@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -33,6 +33,8 @@ import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { Hitbox } from "../hitboxes";
 import { updateWind } from "../wind";
 import OPTIONS from "../options";
+import { createDustfleaConfig } from "../entities/desert/dustflea";
+import { createKrumblidConfig } from "../entities/mobs/krumblid";
 
 /*
 
@@ -222,6 +224,11 @@ class GameServer {
                   const config = createPlayerConfig(spawnPosition, 0, tribe, playerClient);
                   createEntity(config, layer, 0);
                }
+
+               setTimeout(() => {
+                  const config = createKrumblidConfig(new Point(spawnPosition.x + 100, spawnPosition.y), randAngle());
+                  createEntity(config,surfaceLayer,0);
+               }, 2000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 

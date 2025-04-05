@@ -24,6 +24,7 @@ import { createHitbox } from "../../hitboxes";
 import { HungerComponent } from "../../components/HungerComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { moveEntityToPosition } from "../../ai-shared";
+import { SandBallingAI } from "../../ai/SandBallingAI";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -71,6 +72,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(700, 2 * Math.PI);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
+   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(200, 2 * Math.PI);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

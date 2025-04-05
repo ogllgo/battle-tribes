@@ -120,7 +120,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
          applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
+         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -145,7 +145,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          useInfo.lastAttackTicks = getGameTicks();
          return true;
       } else {
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
+         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
 
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -200,7 +200,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
       if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetAngle)) < 0.1) {
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
@@ -268,7 +268,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
       if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetAngle) < 0.1) {
          doMeleeAttack(tribesman, hammerItemSlot);

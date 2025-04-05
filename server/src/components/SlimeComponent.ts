@@ -239,7 +239,7 @@ function onTick(slime: Entity): void {
       const targetDirection = slimeHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
 
-      setHitboxIdealAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED);
+      setHitboxIdealAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, false);
 
       if (slimeComponent.size > SlimeSize.small) {
          // If it has been more than one tick since the slime has been angry, reset the charge progress
@@ -288,7 +288,7 @@ function onTick(slime: Entity): void {
       const accelerationY = Vars.ACCELERATION * speedMultiplier * Math.cos(slimeHitbox.box.angle);
       applyAcceleration(slime, slimeHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED);
+      setHitboxIdealAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, false);
       return;
    }
 

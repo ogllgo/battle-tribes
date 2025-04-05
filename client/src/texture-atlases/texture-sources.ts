@@ -415,6 +415,12 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/dustflea-morph-cocoon/stage-2.png",
    "entities/dustflea-morph-cocoon/stage-3.png",
    "entities/dustflea-morph-cocoon/stage-4.png",
+   "entities/sand-ball/size-1.png",
+   "entities/sand-ball/size-2.png",
+   "entities/sand-ball/size-3.png",
+   "entities/sand-ball/size-4.png",
+   "entities/sand-ball/size-5.png",
+   "entities/sand-ball/size-6.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

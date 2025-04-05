@@ -312,6 +312,16 @@ export function clampToBoardDimensions(tileCoord: number): number {
    return tileCoord;
 }
 
+export function clampToSubtileBoardDimensions(subtileCoord: number): number {
+   if (subtileCoord < 0) {
+      return 0;
+   }
+   if (subtileCoord >= Settings.BOARD_DIMENSIONS * 4) {
+      return Settings.BOARD_DIMENSIONS * 4 - 1;
+   }
+   return subtileCoord;
+}
+
 export function clamp(num: number, min: number, max: number): number {
    if (num < min) {
       return min;
@@ -404,7 +414,7 @@ export function distBetweenPointAndRectangularBox(pointX: number, pointY: number
 
 export function assertUnreachable(x: never): never {
    console.warn(x);
-   throw new Error("Why must I exist?"); 
+   throw new Error("Why must I exist?");
 }
 
 export function assert(condition: unknown, errorMessage?: string): asserts condition {

@@ -91,7 +91,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
       const accelerationY = 40 * Math.cos(direction);
       applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED);
+      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED, false);
    } else {
       // 
       // Lunge on land

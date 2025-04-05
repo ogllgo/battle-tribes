@@ -248,7 +248,7 @@ function onTick(golem: Entity): void {
       
       golemComponent.wakeTimerTicks++;
 
-      setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 4);
+      setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 4, false);
       return;
    }
 
@@ -267,7 +267,7 @@ function onTick(golem: Entity): void {
    const accelerationY = 350 * Math.cos(angleToTarget);
    applyAcceleration(golem, golemHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 1.5);
+   setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 1.5, false);
 }
 
 function getDataLength(): number {

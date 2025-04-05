@@ -18,7 +18,7 @@ import { attachLightToHitbox } from "./light-levels";
 import { attachEntity } from "./components/TransformComponent";
 
 const enum Vars {
-   START_TIME = 6
+   START_TIME = 12
 }
 
 interface EntityJoinInfo {

@@ -440,7 +440,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          return createGlurbConfig(x, y, angle);
       }
    });
-   // @HACK @TEMPORARY: Just so that mithril ore nodes get registered so tribesman know how to gather them
+   // @HACK: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
       entityType: EntityType.mithrilOreNode,
       layer: undergroundLayer,

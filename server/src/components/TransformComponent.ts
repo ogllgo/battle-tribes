@@ -23,7 +23,7 @@ import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hit
 import { Hitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
 
-interface AngularTetherInfo {
+export interface AngularTetherInfo {
    readonly springConstant: number;
    readonly angularDamping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
@@ -761,7 +761,7 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
 }
 
 // @Copynpaste !
-export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean): void {
+export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: AngularTetherInfo): void {
    assert(entity !== parent);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
@@ -771,10 +771,19 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
    entityTransformComponent.parentEntity = parent;
 
    if (parentHitbox !== null) {
+      if (entityTransformComponent.rootChildren.length > 1) {
+         // don't want the same angular tether to be referenced in multiple hitboxes.
+         throw new Error();
+      }
       // Attach all root hitboxes to the parent hitbox
       for (const rootHitbox of entityTransformComponent.rootChildren) {
          if (entityChildIsHitbox(rootHitbox)) {
-            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
+            // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
+            rootHitbox.parent = parentHitbox;
+
+            // @Incomplete: why don't we set the offset here like in the non-tether function??
+
+            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox, angularTether);
          }
       }
    }
@@ -788,6 +797,12 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 
    registerDirtyEntity(entity);
    registerDirtyEntity(parent);
+}
+
+export function entityIsTethered(entity: Entity): boolean {
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   // @Hack
+   return entityTransformComponent.tethers.length > 0;
 }
 
 export function removeAttachedEntity(parent: Entity, child: Entity): void {

@@ -140,7 +140,7 @@ function onTick(dustflea: Entity): void {
 
    const ageTicks = getEntityAgeTicks(dustflea);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 0.1) {
+   if (ageHours >= 0.5) {
       const hibernateAI = aiHelperComponent.getDustfleaHibernateAI();
       runHibernateAI(dustflea, aiHelperComponent, hibernateAI);
       return;

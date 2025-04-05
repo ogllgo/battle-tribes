@@ -76,32 +76,40 @@ const turnHitbox = (entity: Entity, hitbox: Hitbox, transformComponent: Transfor
       cleanRelativeAngle(hitbox);
 
       const previousRelativeAngle = hitbox.box.relativeAngle;
+
+      let idealAngle: number;
+      if (hitbox.idealAngleIsRelative) {
+         idealAngle = hitbox.idealAngle;
+      } else {
+         const parentAngle = hitbox.box.angle - hitbox.box.relativeAngle;
+         idealAngle = hitbox.idealAngle - parentAngle;
+      }
+
+      // From here on we only work in terms of the relative angle of the hitbox.
       
-      let clockwiseDist = hitbox.idealAngle - hitbox.box.angle;
-      if (clockwiseDist < 0) {
+      let clockwiseDist = idealAngle - hitbox.box.relativeAngle;
+      while (clockwiseDist < 0) {
          clockwiseDist += 2 * Math.PI;
-      } else if (clockwiseDist >= 2 * Math.PI) {
+      }
+      while (clockwiseDist >= 2 * Math.PI) {
          clockwiseDist -= 2 * Math.PI;
       }
 
       if (clockwiseDist <= Math.PI) {  
-         // (Must record it before the relative angle is increased)
-         const parentAngle = (hitbox.box.angle - hitbox.box.relativeAngle);
-         
-         hitbox.box.relativeAngle += hitbox.angleTurnSpeed * Settings.I_TPS;
          // If the entity would turn past the target direction, snap back to the target direction
-         if (hitbox.angleTurnSpeed * Settings.I_TPS > clockwiseDist) {
-            hitbox.box.relativeAngle = hitbox.idealAngle - parentAngle;
+         if (hitbox.angleTurnSpeed / Settings.TPS > clockwiseDist) {
+            hitbox.box.relativeAngle = idealAngle;
+         } else {
+            hitbox.box.relativeAngle += hitbox.angleTurnSpeed / Settings.TPS;
          }
       } else {
          const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
-         // (Must record it before the relative angle is decreased)
-         const parentAngle = (hitbox.box.angle - hitbox.box.relativeAngle);
          
-         hitbox.box.relativeAngle -= hitbox.angleTurnSpeed * Settings.I_TPS
          // If the entity would turn past the target direction, snap back to the target direction
-         if (hitbox.angleTurnSpeed * Settings.I_TPS > anticlockwiseDist) {
-            hitbox.box.relativeAngle = hitbox.idealAngle - parentAngle;
+         if (hitbox.angleTurnSpeed / Settings.TPS > anticlockwiseDist) {
+            hitbox.box.relativeAngle = idealAngle;
+         } else {
+            hitbox.box.relativeAngle -= hitbox.angleTurnSpeed / Settings.TPS;
          }
       }
 
@@ -111,8 +119,9 @@ const turnHitbox = (entity: Entity, hitbox: Hitbox, transformComponent: Transfor
          registerDirtyEntity(entity);
       }
 
-      if (getAbsAngleDiff(previousRelativeAngle, hitbox.box.relativeAngle) > hitbox.angleTurnSpeed + 0.001) {
-         throw new Error("Hitbox turned more than it should have!");
+      const amountTurned = getAbsAngleDiff(previousRelativeAngle, hitbox.box.relativeAngle);
+      if (amountTurned > (hitbox.angleTurnSpeed / Settings.TPS) + 0.001) {
+         throw new Error("Hitbox turned more than it should have! Turned " + amountTurned + " while max turn should be " + (hitbox.angleTurnSpeed / Settings.TPS));
       }
    }
 }

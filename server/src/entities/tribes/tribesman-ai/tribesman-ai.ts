@@ -440,7 +440,7 @@ export function tickTribesman(tribesman: Entity): void {
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
-         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
@@ -584,7 +584,7 @@ export function tickTribesman(tribesman: Entity): void {
             applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
+         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
 
          // Select the hammer item slot
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);

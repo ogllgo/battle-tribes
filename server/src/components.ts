@@ -121,6 +121,7 @@ import { DustfleaComponent } from "./components/DustfleaComponent";
 import { SandstoneRockComponent } from "./components/SandstoneRockComponent";
 import { OkrenComponent } from "./components/OkrenComponent";
 import { DustfleaMorphCocoonComponent } from "./components/DustfleaMorphCocoonComponent";
+import { SandBallComponent } from "./components/SandBallComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -240,6 +241,7 @@ const ComponentClassRecord = {
    [ServerComponentType.sandstoneRock]: () => SandstoneRockComponent,
    [ServerComponentType.okren]: () => OkrenComponent,
    [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
+   [ServerComponentType.sandBall]: () => SandBallComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

@@ -15,6 +15,7 @@ import { Biome } from "../../../shared/src/biomes";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHungerEnergy, getEntityFullness } from "./HungerComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
+import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -143,10 +144,18 @@ function onTick(krumblid: Entity): void {
          if (entityIsFollowable(entity)) {
             // Follow the entity
             followAISetFollowTarget(followAI, entity, true);
-            // @Incomplete: movement isn't accounted for!
+            // @Incomplete: movement isn't accounted for!sd
             return;
          }
       }
+   }
+
+   // Sand balling AI
+   const sandBallingAI = aiHelperComponent.getSandBallingAI();
+   updateSandBallingAI(sandBallingAI);
+   if (shouldRunSandBallingAI(sandBallingAI)) {
+      runSandBallingAI(krumblid, sandBallingAI);
+      return;
    }
 
    // Wander AI

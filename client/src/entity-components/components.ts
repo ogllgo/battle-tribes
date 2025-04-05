@@ -134,6 +134,7 @@ import { DustfleaComponent, DustfleaComponentArray, DustfleaComponentParams } fr
 import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockComponentParams } from "./server-components/SandstoneRockComponent";
 import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./server-components/OkrenComponent";
 import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
+import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } from "./server-components/SandBallComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -276,6 +277,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.sandstoneRock]: SandstoneRockComponentArray,
    [ServerComponentType.okren]: OkrenComponentArray,
    [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
+   [ServerComponentType.sandBall]: SandBallComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -394,6 +396,7 @@ const ServerComponentRecord = {
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponent => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
+   [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -514,6 +517,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponentParams => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
+   [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

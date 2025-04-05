@@ -230,7 +230,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
 
    const targetFaceDirection = angle(turnTargetX - cowBodyHitbox.box.position.x, turnTargetY - cowBodyHitbox.box.position.y);
    const turnSpeed = getAbsAngleDiff(cowBodyHitbox.box.angle, targetFaceDirection) > 0.3 ? 1 : 0.15;
-   setHitboxIdealAngle(cowBodyHitbox, targetFaceDirection, turnSpeed);
+   setHitboxIdealAngle(cowBodyHitbox, targetFaceDirection, turnSpeed, false);
    
    // 
    // Move head to the target
@@ -247,7 +247,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
 
    // Turn the head to face the target
 
-   setHitboxIdealAngle(headHitbox, headTargetDirection, Vars.HEAD_TURN_SPEED);
+   setHitboxIdealAngle(headHitbox, headTargetDirection, Vars.HEAD_TURN_SPEED, false);
 
    // Restrict how far the neck can turn
    headHitbox.box.relativeAngle = cleanAngleNEW(headHitbox.box.relativeAngle);

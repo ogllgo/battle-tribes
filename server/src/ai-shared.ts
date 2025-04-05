@@ -67,7 +67,7 @@ export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: 
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
-   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed);
+   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed, false);
 }
 
 export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number): void {
@@ -81,7 +81,7 @@ export function moveEntityToPosition(entity: Entity, positionX: number, position
    const accelerationY = acceleration * Math.cos(targetDirection);
    applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed);
+   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed, false);
 }
 export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);

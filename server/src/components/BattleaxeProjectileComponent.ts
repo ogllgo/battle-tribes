@@ -57,7 +57,7 @@ function onTick(battleaxe: Entity): void {
       transformComponent.isDirty = true;
 
       // Turn to face the owner
-      setHitboxIdealAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI);
+      setHitboxIdealAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI, false);
    }
 }
 

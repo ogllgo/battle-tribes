@@ -422,6 +422,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Dustflea Morph Cocoon",
       internalName: "dustflea-morph-cocoon"
    },
+   [EntityType.sandBall]: {
+      name: "Sand Ball",
+      internalName: "sand-ball"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

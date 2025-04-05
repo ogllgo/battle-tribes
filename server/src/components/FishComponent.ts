@@ -17,7 +17,7 @@ import { TransformComponentArray, getRandomPositionInEntity } from "./TransformC
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, applyKnockback, getHitboxTile, Hitbox } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,

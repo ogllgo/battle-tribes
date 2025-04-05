@@ -2,11 +2,10 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
-import { Settings } from "../../../shared/src/settings";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer } from "../world";
+import { destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -21,7 +20,8 @@ DustfleaMorphCocoonComponentArray.onTick = {
 };
 
 const getStage = (ageTicks: number): number => {
-   return 1 + Math.floor(ageTicks / Settings.TPS / 5);
+   const ageHours = ticksToGameHours(ageTicks);
+   return 1 + Math.floor(ageHours / 12 * 4);
 }
 
 function onTick(cocoon: Entity): void {

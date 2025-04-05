@@ -390,7 +390,7 @@ function onTick(yeti: Entity): void {
                }
 
                const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED);
+               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED, false);
                return;
             }
             case SnowThrowStage.hold: {
@@ -400,7 +400,7 @@ function onTick(yeti: Entity): void {
                }
 
                const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED);
+               setHitboxIdealAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED, false);
                return;
             }
             case SnowThrowStage.return: {

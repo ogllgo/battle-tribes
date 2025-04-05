@@ -79,7 +79,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const accelerationY = slowAcceleration * Math.cos(targetDirection);
       applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED);
+      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
       
       continueResearching(occupiedBench, tribesman, tech);
       

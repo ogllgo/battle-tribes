@@ -25,7 +25,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, createHitbox, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAcceleration, createHitbox, Hitbox } from "../../hitboxes";
 import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
 
 const enum Vars {

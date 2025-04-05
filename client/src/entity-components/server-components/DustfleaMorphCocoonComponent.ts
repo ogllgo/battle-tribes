@@ -10,7 +10,8 @@ import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { Settings } from "../../../../shared/src/settings";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
-import { createCocoonAmbientParticle } from "../../particles";
+import { createCocoonAmbientParticle, createCocoonFragmentParticle } from "../../particles";
+import { playSoundOnHitbox } from "../../sound";
 
 export interface DustfleaMorphCocoonComponentParams {
    readonly stage: number;
@@ -121,7 +122,15 @@ function onHit(entity: Entity): void {
 }
 
 function onDie(entity: Entity): void {
-   // const transformComponent = TransformComponentArray.getComponent(entity);
-   // const hitbox = transformComponent.children[0] as Hitbox;
-   // playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+   playSoundOnHitbox("cocoon-break.mp3", 0.4, 1, entity, hitbox, false);
+   
+   const hitboxRadius = (hitbox.box as CircularBox).radius;
+   for (let i = 0; i < 7; i++) {
+      const offsetDirection = randAngle();
+      const x = hitbox.box.position.x + hitboxRadius * Math.sin(offsetDirection);
+      const y = hitbox.box.position.y + hitboxRadius * Math.cos(offsetDirection);
+      createCocoonFragmentParticle(x, y, offsetDirection + randFloat(-0.2, 0.2));
+   }
 }

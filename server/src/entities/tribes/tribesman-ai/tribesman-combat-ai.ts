@@ -173,7 +173,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       if (weaponCategory === "spear" && selectedItem.count > 1) {
          // Rotate to face the target
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
          const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
          if (distance > 250) {
@@ -241,7 +241,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
             // @Incomplete!
             // if (hotbarUseInfo.action !== LimbAction.chargeBow) {
@@ -266,7 +266,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             // If reached goal, turn towards the enemy
             if (isFinished) {
                const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-               setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+               setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
             }
          }
 
@@ -282,7 +282,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
 
             if (distance > Vars.BATTLEAXE_IDEAL_USE_RANGE + 10) {
                // Move closer
@@ -355,7 +355,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED);
+      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
    
       // If in melee range, try to do a melee attack
       doMeleeAttack(tribesman, mostDamagingItemSlot);

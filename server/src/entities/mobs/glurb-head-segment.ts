@@ -70,7 +70,7 @@ const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number
       if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
          targetDirection = angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
 
-         setHitboxIdealAngle(hitbox, targetDirection, Math.PI);
+         setHitboxIdealAngle(hitbox, targetDirection, Math.PI, false);
       } else {
          // Move to next hitbox in chain
 

@@ -94,7 +94,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
    const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(runDirection);
    applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED);
+   setHitboxIdealAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, false);
 
    clearTribesmanPath(tribesman);
 }

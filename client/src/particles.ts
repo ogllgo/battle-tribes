@@ -2146,3 +2146,33 @@ export function createCocoonAmbientParticle(spawnPositionX: number, spawnPositio
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createCocoonFragmentParticle(spawnPositionX: number, spawnPositionY: number, moveDirection: number): void {
+   const lifetime = randFloat(0.5, 0.7);
+   
+   const moveSpeed = randFloat(65, 90);
+   const velocityX = moveSpeed * Math.sin(moveDirection);
+   const velocityY = moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+
+   addTexturedParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.low,
+      64, 64,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      85,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      5 * 8 + randInt(3, 7),
+      0, 0, 0
+   );
+   Board.lowTexturedParticles.push(particle);
+}
