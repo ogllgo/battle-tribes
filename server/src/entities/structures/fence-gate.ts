@@ -13,7 +13,7 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 import { Point } from "../../../../shared/src/utils";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { createHitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 
@@ -21,7 +21,7 @@ export function createFenceGateConfig(position: Point, rotation: number, tribe: 
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 16);
-   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(5);

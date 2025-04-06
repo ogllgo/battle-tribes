@@ -17,7 +17,7 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { createHitbox } from "../../hitboxes";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
 const HEALTHS = [15, 45];
@@ -26,7 +26,7 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
@@ -60,7 +60,7 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);

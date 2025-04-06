@@ -15,7 +15,7 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 import { Point } from "../../../../shared/src/utils";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { createHitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 
@@ -23,7 +23,7 @@ export function createBarrelConfig(position: Point, rotation: number, tribe: Tri
    const transformComponent = new TransformComponent();
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 40);
-   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(20);

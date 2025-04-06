@@ -14,7 +14,7 @@ import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType, setEntityLayer } from "../world";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -96,9 +96,7 @@ export class TransformComponent {
    
    public lastValidLayer = surfaceLayer;
 
-   // @Deprecated: Only used by client
-   public collisionBit = COLLISION_BITS.default;
-   // @Deprecated: Only used by client
+   public collisionBit = CollisionBit.default;
    public collisionMask = DEFAULT_COLLISION_MASK;
    
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();

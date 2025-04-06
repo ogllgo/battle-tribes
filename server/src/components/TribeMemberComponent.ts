@@ -15,7 +15,7 @@ import { getInventory, hasInventory, InventoryComponentArray, pickupItemEntity }
 import { adjustTribesmanRelationsAfterGift } from "./TribesmanAIComponent";
 import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { addDefence, HealthComponentArray, removeDefence } from "./HealthComponent";
-import { COLLISION_BITS } from "../../../shared/src/collision";
+import { CollisionBit } from "../../../shared/src/collision";
 import { Hitbox } from "../hitboxes";
 
 const enum Vars {
@@ -102,9 +102,9 @@ function onTick(tribeMember: Entity): void {
          addDefence(healthComponent, itemInfo.defence, "armour");
    
          if (armour.type === ItemType.leaf_suit) {
-            transformComponent.collisionMask &= ~COLLISION_BITS.plants;
+            transformComponent.collisionMask &= ~CollisionBit.plants;
          } else {
-            transformComponent.collisionMask |= COLLISION_BITS.plants;
+            transformComponent.collisionMask |= CollisionBit.plants;
          }
       } else {
          removeDefence(healthComponent, "armour");

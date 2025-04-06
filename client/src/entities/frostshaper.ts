@@ -1,6 +1,6 @@
 import { HitboxCollisionType, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
@@ -20,7 +20,7 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 120, 80);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
 
    return {

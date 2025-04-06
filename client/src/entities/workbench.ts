@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
@@ -20,12 +20,12 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    let hitboxLocalID = 0;
    
    // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
-   const hitbox = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
-   // const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    // hitboxes.push(hitbox1);
-   // const hitbox2 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), new Point(0, 0), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // const hitbox2 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), new Point(0, 0), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    // hitboxes.push(hitbox2);
    
    return {

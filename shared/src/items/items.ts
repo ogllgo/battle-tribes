@@ -93,7 +93,9 @@ export const enum ItemType {
    woodenArrow,
    tamingAlmanac,
    floorSign,
-   pricklyPear
+   pricklyPear,
+   rawCrabMeat,
+   cookedCrabMeat
 }
 
 export const ItemTypeString: Record<ItemType, string> = {
@@ -186,7 +188,9 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.woodenArrow]: "Wooden Arrow",
    [ItemType.tamingAlmanac]: "Taming Almanac",
    [ItemType.floorSign]: "Floor Sign",
-   [ItemType.pricklyPear]: "Prickly Pear"
+   [ItemType.pricklyPear]: "Prickly Pear",
+   [ItemType.rawCrabMeat]: "Raw Crab Meat",
+   [ItemType.cookedCrabMeat]: "Cooked Crab Meat"
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -535,7 +539,9 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.woodenArrow]: "material",
    [ItemType.tamingAlmanac]: "tamingAlmanac",
    [ItemType.floorSign]: "placeable",
-   [ItemType.pricklyPear]: "healing"
+   [ItemType.pricklyPear]: "healing",
+   [ItemType.rawCrabMeat]: "healing",
+   [ItemType.cookedCrabMeat]: "healing",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -954,6 +960,18 @@ export const ITEM_INFO_RECORD = {
       stackSize: 99,
       consumeTime: 5,
       healAmount: 1,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.rawCrabMeat]: {
+      stackSize: 99,
+      consumeTime: 3,
+      healAmount: 1,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.cookedCrabMeat]: {
+      stackSize: 99,
+      consumeTime: 3,
+      healAmount: 5,
       consumableItemCategory: ConsumableItemCategory.food
    },
 } satisfies { [T in ItemType]: ItemInfo<T> };

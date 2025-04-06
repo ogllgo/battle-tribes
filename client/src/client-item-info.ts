@@ -738,7 +738,23 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       toolTextureSource: "",
       name: "Prickly Pear",
       namePlural: "Prickly Pears",
-      description: "Berries laced with acupuncture needles."
+      description: "Takes a very long time to eat."
+   },
+   [ItemType.rawCrabMeat]: {
+      entityTextureSource: "items/small/raw-crab-meat.png",
+      textureSource: "items/large/raw-crab-meat.png",
+      toolTextureSource: "",
+      name: "Raw Crab Meat",
+      namePlural: "Raw Crab Meats",
+      description: ""
+   },
+   [ItemType.cookedCrabMeat]: {
+      entityTextureSource: "items/small/cooked-crab-meat.png",
+      textureSource: "items/large/cooked-crab-meat.png",
+      toolTextureSource: "",
+      name: "Cooked Crab Meat",
+      namePlural: "Cooked Crab Meats",
+      description: ""
    }
 };
 

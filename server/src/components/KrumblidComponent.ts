@@ -2,13 +2,13 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { assert, UtilVars } from "battletribes-shared/utils";
-import { moveEntityToPosition } from "../ai-shared";
+import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
-import { getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -182,12 +182,32 @@ function onTick(krumblid: Entity): void {
 
    // Sand balling AI
    // something they do for fun
-   // const sandBallingAI = aiHelperComponent.getSandBallingAI();
-   // updateSandBallingAI(sandBallingAI);
-   // if (shouldRunSandBallingAI(sandBallingAI)) {
-   //    runSandBallingAI(krumblid, aiHelperComponent, sandBallingAI);
-   //    return;
-   // }
+   const sandBallingAI = aiHelperComponent.getSandBallingAI();
+   updateSandBallingAI(sandBallingAI);
+   if (shouldRunSandBallingAI(sandBallingAI)) {
+      runSandBallingAI(krumblid, aiHelperComponent, sandBallingAI);
+      return;
+   }
+
+   // Herd AI
+   // @Incomplete: Steer the herd away from non-plains biomes
+   let herdMembers = new Array<Entity>();
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (getEntityType(entity) === EntityType.krumblid) {
+         herdMembers.push(entity);
+      }
+   }
+   if (herdMembers.length >= 2 && herdMembers.length <= 6) {
+      runHerdAI(krumblid, herdMembers, aiHelperComponent.visionRange, 2 * Math.PI, 50, 0.7, 0.5, 0.3);
+
+      const hitbox = transformComponent.children[0] as Hitbox;
+      
+      // @Incomplete: use new move func
+      const accelerationX = 200 * Math.sin(hitbox.box.angle);
+      const accelerationY = 200 * Math.cos(hitbox.box.angle);
+      applyAcceleration(krumblid, hitbox, accelerationX, accelerationY);
+      return;
+   }
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();

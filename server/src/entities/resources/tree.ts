@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType, TreeSize } from "battletribes-shared/entities";
 import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -49,9 +49,9 @@ export function createTreeConfig(position: Point, rotation: number): EntityConfi
    
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionBit = COLLISION_BITS.plants;
+   transformComponent.collisionBit = CollisionBit.plants;
    
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);
    

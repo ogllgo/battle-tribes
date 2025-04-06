@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { HitboxCollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
@@ -18,7 +18,7 @@ export function createFloorSignConfig(position: Point, angle: number, tribe: Tri
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), angle, 56, 40);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
    
    return {

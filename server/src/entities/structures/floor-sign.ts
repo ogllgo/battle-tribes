@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
@@ -20,7 +20,7 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 export function createFloorSignConfig(position: Point, angle: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructrue: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 56, 40), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 56, 40), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);

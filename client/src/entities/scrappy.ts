@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
@@ -19,7 +19,7 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
-   const hitbox = createHitbox(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 20), new Point(0, 0), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 20), new Point(0, 0), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { SlimeSize, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -71,7 +71,7 @@ const move = (slime: Entity, x: number, y: number): void => {
 export function createSlimeConfig(position: Point, rotation: number, size: SlimeSize): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

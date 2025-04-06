@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { BlockType, ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
@@ -21,7 +21,7 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
    const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo!;
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

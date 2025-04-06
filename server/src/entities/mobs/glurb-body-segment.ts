@@ -1,6 +1,6 @@
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
@@ -32,7 +32,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
    
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, flags);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;

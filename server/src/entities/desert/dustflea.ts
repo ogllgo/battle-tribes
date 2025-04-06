@@ -1,7 +1,7 @@
 import { Biome } from "../../../../shared/src/biomes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
@@ -60,7 +60,7 @@ const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean =
 export function createDustfleaConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 8), 0.2, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 8), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

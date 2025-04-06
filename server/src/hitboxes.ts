@@ -1,6 +1,6 @@
 import { Box, cloneBox, HitboxCollisionType, HitboxFlag } from "../../shared/src/boxes/boxes";
 import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
-import { HitboxCollisionBit } from "../../shared/src/collision";
+import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
@@ -29,7 +29,7 @@ export interface Hitbox {
    
    mass: number;
    collisionType: HitboxCollisionType;
-   readonly collisionBit: HitboxCollisionBit;
+   readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
    readonly flags: ReadonlyArray<HitboxFlag>;
 
@@ -40,7 +40,7 @@ export interface Hitbox {
    boundsMaxY: number;
 }
 
-export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    const localID = transformComponent.nextHitboxLocalID++;
    
    return {

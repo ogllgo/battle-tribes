@@ -29,8 +29,8 @@ export class SandBallingAI {
    }
 }
 
-const MIN_BALLING_COOLDOWN_TICKS = 6.5 * Settings.TPS;
-const MAX_BALLING_COOLDOWN_TICKS = 10 * Settings.TPS;
+const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
+const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;
 
 const MIN_BALL_TIME_TICKS = 6.5 * Settings.TPS;
 const MAX_BALL_TIME_TICKS = 10 * Settings.TPS;

@@ -1,4 +1,4 @@
-import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../shared/src/components";
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
@@ -93,7 +93,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             const transformComponentParams = createTransformComponentParams(
                // @HACK
                boxes.map(box => {
-                  return createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, [])
+                  return createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
                }),
             );
 

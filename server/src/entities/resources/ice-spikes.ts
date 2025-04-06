@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -23,9 +23,9 @@ registerEntityLootOnDeath(EntityType.iceSpikes, [
 
 export function createIceSpikesConfig(position: Point, rotation: number, rootIceSpikes: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~COLLISION_BITS.iceSpikes;
+   transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.iceSpikes;
    
    const healthComponent = new HealthComponent(5);
    

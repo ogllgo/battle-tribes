@@ -14,7 +14,7 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 import { Point } from "../../../../shared/src/utils";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { createHitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 
@@ -22,13 +22,13 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    const transformComponent = new TransformComponent();
 
    // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   // const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    // addHitboxToTransformComponent(transformComponent, hitbox1);
    
-   // const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   // const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    // addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(15);

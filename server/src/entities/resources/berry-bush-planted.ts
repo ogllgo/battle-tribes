@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
@@ -37,9 +37,9 @@ registerEntityLootOnHit(EntityType.berryBushPlanted, [
 export function createBerryBushPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionBit = COLLISION_BITS.plants;
+   transformComponent.collisionBit = CollisionBit.plants;
 
    const healthComponent = new HealthComponent(10);
 

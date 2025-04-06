@@ -1,5 +1,4 @@
 import { BuildingPlanData, TribeWallData, WallConnectionData } from "./ai-building-types";
-import { HitboxCollisionBit } from "./collision";
 import { BlueprintType } from "./components";
 import { EntitySummonPacket } from "./dev-packets";
 import { LimbAction } from "./entities";
@@ -17,29 +16,6 @@ export type ServerTileUpdateData = {
    readonly layerIdx: number;
    readonly tileIndex: number;
    readonly type: TileType;
-}
-
-// @Cleanup: Remove these
-export interface BaseHitboxData {
-   readonly mass: number;
-   readonly offsetX: number;
-   readonly offsetY: number;
-   readonly scale: number;
-   readonly collisionType: HitboxCollisionType;
-   readonly collisionBit: HitboxCollisionBit;
-   readonly collisionMask: number;
-   readonly localID: number;
-   readonly flags: ReadonlyArray<HitboxFlag>;
-}
-
-export interface CircularHitboxData extends BaseHitboxData {
-   readonly radius: number;
-}
-
-export interface RectangularHitboxData extends BaseHitboxData {
-   readonly width: number;
-   readonly height: number;
-   readonly rotation: number;
 }
 
 export interface StatusEffectData {

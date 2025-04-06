@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../components";
 import { Colour, Point, randFloat, randInt } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
@@ -12,7 +12,7 @@ import { TileType } from "../../../shared/src/tiles";
    
 export function createGrassStrandConfig(position: Point, rotation: number, tileType: TileType): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 4, 4), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 4, 4), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    let numLayers: number;

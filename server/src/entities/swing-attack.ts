@@ -1,7 +1,7 @@
 import { HitboxCollisionType, updateBox } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName } from "../../../shared/src/items/items";
@@ -25,7 +25,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    
    const transformComponent = new TransformComponent();
 
-   const limbHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 12), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const limbHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, limbHitbox);
 
    setHitboxToState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
@@ -33,7 +33,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    updateBox(limbHitbox.box, ownerHitbox.box);
 
    if (damageBoxInfo !== null) {
-      const heldItemHitbox = createHitbox(transformComponent, limbHitbox, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+      const heldItemHitbox = createHitbox(transformComponent, limbHitbox, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, heldItemHitbox);
    }
 

@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Point, angle, lerp } from "battletribes-shared/utils";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { ComponentArray } from "./ComponentArray";
 import { addHitboxToEntity, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -60,7 +60,7 @@ const updateDoorOpenProgress = (tunnel: Entity, tunnelComponent: TunnelComponent
       const alreadyExists = doorBit === tunnelComponent.firstHitboxDoorBit ? (transformComponent.children.length > 5 && (transformComponent.children[5] as Hitbox).collisionType === HitboxCollisionType.hard) : (transformComponent.children[transformComponent.children.length - 1] as Hitbox).collisionType === HitboxCollisionType.hard;
       if (!alreadyExists) {
          // @HACK @BUG: Position
-         const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(0, 0), 0, DOOR_HITBOX_WIDTH, THIN_HITBOX_HEIGHT), 0.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+         const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(0, 0), 0, DOOR_HITBOX_WIDTH, THIN_HITBOX_HEIGHT), 0.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
          addHitboxToEntity(tunnel, hitbox);
          
          // @Hack!!! Wouldn't be needed if we had a hitbox awake/asleep system
@@ -205,7 +205,7 @@ export function updateTunnelDoorBitset(tunnel: Entity, doorBitset: number): void
    // @HACK @INCOMPLETE
    // if ((tunnelComponent.doorBitset & 0b01) !== (doorBitset & 0b01)) {
    //    // Add top door hitbox
-   //    transformComponent.addHitbox(createHitbox(new RectangularBox(null, new Point(0, DOOR_HITBOX_OFFSET), DOOR_HITBOX_WIDTH, DOOR_HITBOX_HEIGHT, 0), DOOR_HITBOX_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), tunnel);
+   //    transformComponent.addHitbox(createHitbox(new RectangularBox(null, new Point(0, DOOR_HITBOX_OFFSET), DOOR_HITBOX_WIDTH, DOOR_HITBOX_HEIGHT, 0), DOOR_HITBOX_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []), tunnel);
    //    if (transformComponent.children.length === 5) {
    //       tunnelComponent.firstHitboxDoorBit = 0b01;
    //    }
@@ -213,7 +213,7 @@ export function updateTunnelDoorBitset(tunnel: Entity, doorBitset: number): void
    // }
    // if ((tunnelComponent.doorBitset & 0b10) !== (doorBitset & 0b10)) {
    //    // Add bottom door hitbox
-   //    transformComponent.addHitbox(createHitbox(new RectangularBox(null, new Point(0, -DOOR_HITBOX_OFFSET), DOOR_HITBOX_WIDTH, DOOR_HITBOX_HEIGHT, 0), DOOR_HITBOX_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []), tunnel);
+   //    transformComponent.addHitbox(createHitbox(new RectangularBox(null, new Point(0, -DOOR_HITBOX_OFFSET), DOOR_HITBOX_WIDTH, DOOR_HITBOX_HEIGHT, 0), DOOR_HITBOX_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []), tunnel);
    //    if (transformComponent.children.length === 5) {
    //       tunnelComponent.firstHitboxDoorBit = 0b10;
    //    }

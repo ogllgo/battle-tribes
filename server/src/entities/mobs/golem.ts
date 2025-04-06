@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -70,11 +70,11 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    const transformComponent = new TransformComponent();
    
    // Create core hitbox
-   const coreHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const coreHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), ROCK_MASSIVE_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, coreHitbox);
 
    // Create head hitbox
-   addHitboxToTransformComponent(transformComponent, createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []));
+   addHitboxToTransformComponent(transformComponent, createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []));
    
    // Create body hitboxes
    let i = 0;
@@ -100,7 +100,7 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
       }
 
       const mass = size === 0 ? ROCK_SMALL_MASS : ROCK_MEDIUM_MASS;
-      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(x, y), 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       i++;
@@ -109,12 +109,12 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    // Create hand hitboxes
    for (let j = 0; j < 2; j++) {
       const offsetX = 60 * (j === 0 ? -1 : 1);
-      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX, 50), 0, 20), ROCK_MEDIUM_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       // Wrist
       const inFactor = 0.75;
-      const wristHitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const wristHitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(offsetX * inFactor, 50 * inFactor), 0, 12), ROCK_TINY_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, wristHitbox);
    }
    

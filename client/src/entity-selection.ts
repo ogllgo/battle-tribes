@@ -37,7 +37,7 @@ import { addMenuCloseFunction } from "./menus";
 import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
 import { createHitbox, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
-import { DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
 
@@ -382,7 +382,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
 
          // @HACK
          const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
-         const hitbox = createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK, []);
+         const hitbox = createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
 
          const renderPart = new TexturedRenderPart(
             hitbox,

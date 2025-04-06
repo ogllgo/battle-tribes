@@ -16,7 +16,7 @@ import { Point } from "../../../../shared/src/utils";
 import { createHitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
 const HEALTHS = [15, 45];
@@ -25,7 +25,7 @@ export function createDoorConfig(position: Point, rotation: number, tribe: Tribe
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 16);
-   const hitbox = createHitbox(transformComponent, null, box, 0.5, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, box, 0.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    // @Hack: Shouldn't need!

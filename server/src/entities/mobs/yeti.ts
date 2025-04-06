@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { EntityType, Entity } from "battletribes-shared/entities";
 import { getTileIndexIncludingEdges, Point, randInt, TileIndex } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
@@ -102,10 +102,10 @@ const move = (slimewisp: Entity, x: number, y: number, acceleration: number, tur
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 64), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 64), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 36), 0, 28), 3, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
+   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 36), 0, 28), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
    
    const physicsComponent = new PhysicsComponent();

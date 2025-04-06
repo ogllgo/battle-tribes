@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
@@ -103,11 +103,11 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const transformComponent = new TransformComponent();
 
    // Body hitbox
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
    // Head hitbox
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
    transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, {
       springConstant: 5,

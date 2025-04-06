@@ -13,7 +13,7 @@ import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityR
 import Board from "../../Board";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "../../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
 import { Hitbox } from "../../hitboxes";
@@ -47,7 +47,7 @@ export interface TransformComponentParams {
    readonly parentEntity: Entity;
    readonly children: Array<TransformNode>;
    readonly tethers: Array<HitboxTether>;
-   readonly collisionBit: HitboxCollisionBit;
+   readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
 }
 
@@ -74,7 +74,7 @@ export interface TransformComponent {
    parentEntity: Entity;
 }
 
-const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, children: Array<TransformNode>, tethers: Array<HitboxTether>, collisionBit: HitboxCollisionBit, collisionMask: number): TransformComponentParams => {
+const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, children: Array<TransformNode>, tethers: Array<HitboxTether>, collisionBit: CollisionBit, collisionMask: number): TransformComponentParams => {
    return {
       children: children,
       tethers: tethers,
@@ -89,7 +89,7 @@ export function createTransformComponentParams(children: Array<TransformNode>): 
    return {
       children: children,
       tethers: [],
-      collisionBit: COLLISION_BITS.default,
+      collisionBit: CollisionBit.default,
       collisionMask: DEFAULT_COLLISION_MASK,
       rootEntity: 0,
       parentEntity: 0

@@ -1,6 +1,6 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, randInt, UtilVars } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -31,7 +31,7 @@ import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
-      itemType: ItemType.leather,
+      itemType: ItemType.rawCrabMeat,
       getAmount: () => randInt(2, 3)
    }
 ]);
@@ -48,7 +48,7 @@ const move = (krumblid: Entity, acceleration: number, turnSpeed: number, x: numb
 export function createKrumblidConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.75, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_COLLISION_MASK & ~COLLISION_BITS.cactus, [HitboxFlag.KRUMBLID_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
    
    // Mandibles
@@ -58,7 +58,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
       const offset = new Point(12, 28);
       const position = bodyHitbox.box.position.copy();
       position.add(offset);
-      const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(position, offset, Math.PI * 0.1, 12, 16), 0.1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK & ~COLLISION_BITS.cactus, [HitboxFlag.KRUMBLID_MANDIBLE]);
+      const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(position, offset, Math.PI * 0.1, 12, 16), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_MANDIBLE]);
       mandibleHitbox.box.flipX = sideIsFlipped;
       // @Hack
       mandibleHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;

@@ -18,14 +18,14 @@ import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildin
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { createHitbox } from "../../hitboxes";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
 export function createFloorPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);
@@ -59,7 +59,7 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 32);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);

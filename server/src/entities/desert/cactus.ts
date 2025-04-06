@@ -1,4 +1,4 @@
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -28,10 +28,10 @@ registerEntityLootOnDeath(EntityType.cactus, [
 
 export function createCactusConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
-   transformComponent.collisionBit = COLLISION_BITS.cactus;
+   transformComponent.collisionBit = CollisionBit.cactus;
 
    // Root hitbox
-   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, COLLISION_BITS.cactus, DEFAULT_COLLISION_MASK, []);
+   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, rootHitbox);
 
    const flowers = new Array<CactusFlower>();
@@ -67,7 +67,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    // Limbs
    for (let i = 0; i < numLimbs; i++) {
       const box = new CircularBox(new Point(0, 0), Point.fromVectorForm(37, Math.random()), 0, 18);
-      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, COLLISION_BITS.cactus, DEFAULT_HITBOX_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (Math.random() < 0.45) {

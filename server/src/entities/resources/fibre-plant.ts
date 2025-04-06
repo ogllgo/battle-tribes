@@ -1,4 +1,4 @@
-import { COLLISION_BITS, HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
+import { CollisionBit, CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -14,9 +14,9 @@ import { createHitbox } from "../../hitboxes";
 export function createFibrePlantConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), 1, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 36), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionBit = COLLISION_BITS.plants;
+   transformComponent.collisionBit = CollisionBit.plants;
    
    const healthComponent = new HealthComponent(10);
    

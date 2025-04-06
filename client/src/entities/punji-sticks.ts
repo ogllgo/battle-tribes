@@ -1,6 +1,6 @@
 import { HitboxCollisionType, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
@@ -20,7 +20,7 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
 
    return {
@@ -43,7 +43,7 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 32);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
 
    return {

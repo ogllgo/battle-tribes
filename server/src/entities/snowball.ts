@@ -1,4 +1,4 @@
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { SnowballSize, EntityType, Entity, SNOWBALL_SIZES } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, randFloat, randSign } from "battletribes-shared/utils";
@@ -18,7 +18,7 @@ const MAX_HEALTHS: ReadonlyArray<number> = [1, 3];
 export function createSnowballConfig(position: Point, rotation: number, yeti: Entity, size: SnowballSize): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, SNOWBALL_SIZES[size] / 2), size === SnowballSize.small ? 1 : 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    setHitboxAngularVelocity(hitbox, randFloat(1, 2) * Math.PI * randSign());
    addHitboxToTransformComponent(transformComponent, hitbox);
    

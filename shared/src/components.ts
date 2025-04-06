@@ -1,4 +1,4 @@
-import { CircularHitboxData, RectangularHitboxData, StatusEffectData } from "./client-server-types";
+import { StatusEffectData } from "./client-server-types";
 import { CraftingStation } from "./items/crafting-recipes";
 import { CowSpecies, DeathInfo, DoorToggleType, FishColour, FrozenYetiAttackType, RockSpikeProjectileSize, SlimeSize, SnowballSize, TreeSize, LimbAction, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
@@ -808,19 +808,6 @@ export interface FenceGateComponentData extends BaseComponentData {
 export interface CraftingStationComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.craftingStation;
    readonly craftingStation: CraftingStation;
-}
-
-/* Transform Component Data */
-
-export interface TransformComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.transform;
-   readonly position: [number, number];
-   readonly rotation: number;
-   readonly rectangularHitboxes: ReadonlyArray<RectangularHitboxData>;
-   readonly circularHitboxes: ReadonlyArray<CircularHitboxData>;
-   readonly ageTicks: number;
-   readonly collisionBit: number;
-   readonly collisionMask: number;
 }
 
 /* Projectile Component Data */

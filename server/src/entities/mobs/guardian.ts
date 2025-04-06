@@ -1,6 +1,6 @@
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { DEFAULT_HITBOX_COLLISION_MASK, HitboxCollisionBit } from "battletribes-shared/collision";
+import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point, TileIndex } from "battletribes-shared/utils";
@@ -32,13 +32,13 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
    const transformComponent = new TransformComponent();
 
    // Head
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1.5, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
    // Limbs
    const limbOrbitRadius = getGuardianLimbOrbitRadius();
    for (let i = 0; i < 2; i++) {
-      const hitbox = createHitbox(transformComponent, headHitbox, new CircularBox(new Point(0, 0), new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
+      const hitbox = createHitbox(transformComponent, headHitbox, new CircularBox(new Point(0, 0), new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
    

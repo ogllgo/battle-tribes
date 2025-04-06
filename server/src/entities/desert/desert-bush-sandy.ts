@@ -1,6 +1,6 @@
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
@@ -20,7 +20,7 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
 
    const radius = size === 0 ? 32 : 40;
    const mass = size === 0 ? 1.2 : 1.6;
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);

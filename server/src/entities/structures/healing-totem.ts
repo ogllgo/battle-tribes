@@ -15,7 +15,7 @@ import { AIHelperComponent } from "../../components/AIHelperComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { createHitbox, Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "../../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
 const move = () => {
@@ -26,7 +26,7 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
    const transformComponent = new TransformComponent();
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 48);
-   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(50);

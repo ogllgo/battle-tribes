@@ -113,6 +113,8 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.tamingAlmanac]: 1,
    [ItemType.floorSign]: 1,
    [ItemType.pricklyPear]: 1,
+   [ItemType.rawCrabMeat]: 1,
+   [ItemType.cookedCrabMeat]: 1,
 };
 
 export const enum TribesmanPathType {

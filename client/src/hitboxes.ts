@@ -1,5 +1,5 @@
 import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import { HitboxCollisionBit } from "../../shared/src/collision";
+import { CollisionBit } from "../../shared/src/collision";
 import Board from "./Board";
 import { Entity } from "../../shared/src/entities";
 import { Point } from "../../shared/src/utils";
@@ -30,14 +30,14 @@ export interface Hitbox {
 
    mass: number;
    collisionType: HitboxCollisionType;
-   readonly collisionBit: HitboxCollisionBit;
+   readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
    readonly flags: ReadonlyArray<HitboxFlag>;
 
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, parent: Hitbox | null, box: Box, velocity: Point, mass: number, collisionType: HitboxCollisionType, collisionBit: HitboxCollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, parent: Hitbox | null, box: Box, velocity: Point, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
       parent: parent,

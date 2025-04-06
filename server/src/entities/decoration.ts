@@ -1,6 +1,6 @@
 import { DecorationType, ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../components";
-import { HitboxCollisionBit, DEFAULT_HITBOX_COLLISION_MASK } from "battletribes-shared/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -12,7 +12,7 @@ import { createHitbox } from "../hitboxes";
 export function createDecorationConfig(position: Point, rotation: number, decorationType: DecorationType): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0, HitboxCollisionType.soft, HitboxCollisionBit.DEFAULT, DEFAULT_HITBOX_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const decorationComponent = new DecorationComponent(decorationType);
