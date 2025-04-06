@@ -19,6 +19,8 @@ import { PatrolAI } from "../ai/PatrolAI";
 import { EscapeAI } from "../ai/EscapeAI";
 import { DustfleaHibernateAI } from "../ai/DustfleaHibernateAI";
 import { SandBallingAI } from "../ai/SandBallingAI";
+import { VegetationConsumeAI } from "../ai/VegetationConsumeAI";
+import { KrumblidCombatAI } from "../ai/KrumblidCombatAI";
 
 export const enum AIType {
    wander,
@@ -30,7 +32,9 @@ export const enum AIType {
    guardianCrystalBurst,
    guardianSpikyBallSummon,
    dustfleaHibernate,
-   sandBalling
+   sandBalling,
+   vegetationConsume,
+   krumblidCombat
 }
 
 const _AIClasses = {
@@ -44,6 +48,8 @@ const _AIClasses = {
    [AIType.guardianSpikyBallSummon]: (): GuardianSpikyBallSummonAI => 0 as any,
    [AIType.dustfleaHibernate]: (): DustfleaHibernateAI => 0 as any,
    [AIType.sandBalling]: (): SandBallingAI => 0 as any,
+   [AIType.vegetationConsume]: (): VegetationConsumeAI => 0 as any,
+   [AIType.krumblidCombat]: (): KrumblidCombatAI => 0 as any,
 } satisfies Record<AIType, object>;
 type AIClasses = typeof _AIClasses;
 type AIClass<T extends AIType> = ReturnType<AIClasses[T]>;
@@ -120,6 +126,14 @@ export class AIHelperComponent {
 
    public getSandBallingAI(): SandBallingAI {
       return this.ais[AIType.sandBalling]!;
+   }
+
+   public getVegetationConsumeAI(): VegetationConsumeAI {
+      return this.ais[AIType.vegetationConsume]!;
+   }
+
+   public getKrumblidCombatAI(): KrumblidCombatAI {
+      return this.ais[AIType.krumblidCombat]!;
    }
 }
 

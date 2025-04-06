@@ -388,7 +388,8 @@ function onTick(cow: Entity): void {
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 
-   const escapeTarget = getEscapeTarget(cow);
+   const escapeAI = aiHelperComponent.getEscapeAI();
+   const escapeTarget = getEscapeTarget(cow, escapeAI);
    if (escapeTarget !== null) {
       const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
       const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;

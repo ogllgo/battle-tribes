@@ -1,16 +1,21 @@
 import { Entity } from "battletribes-shared/entities";
 import { AttackingEntitiesComponentArray } from "../components/AttackingEntitiesComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { AIHelperComponentArray } from "../components/AIHelperComponent";
+import { AIHelperComponentArray, AIType } from "../components/AIHelperComponent";
 import { Hitbox } from "../hitboxes";
+
+export type ExtraEscapeCondition = (entity: Entity, escapeTarget: Entity) => boolean;
 
 export class EscapeAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   public readonly extraEscapeCondition?: ExtraEscapeCondition;
+
+   constructor(acceleration: number, turnSpeed: number, extraEscapeCondition?: ExtraEscapeCondition) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.extraEscapeCondition = extraEscapeCondition;
    }
 }
 
@@ -19,7 +24,7 @@ export function shouldRunEscapeAI(entity: Entity): boolean {
    return attackingEntitiesComponent.attackingEntities.size > 0;
 }
 
-export function getEscapeTarget(entity: Entity): Entity | null {
+export function getEscapeTarget(entity: Entity, escapeAI: EscapeAI): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
    const entityHitbox = transformComponent.children[0] as Hitbox;
@@ -29,6 +34,7 @@ export function getEscapeTarget(entity: Entity): Entity | null {
    
    let minDistance = Number.MAX_SAFE_INTEGER;
    let escapeEntity: Entity | null = null;
+
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const attackingEntity = pair[0];
 
@@ -48,12 +54,32 @@ export function getEscapeTarget(entity: Entity): Entity | null {
       }
    }
 
+   if (typeof escapeAI.extraEscapeCondition !== "undefined") {
+      for (const escapeTarget of aiHelperComponent.visibleEntities) {
+         if (!escapeAI.extraEscapeCondition(entity, escapeTarget)) {
+            continue;
+         }
+      
+         const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
+         // @Hack
+         const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+         
+         const distance = entityHitbox.box.position.calculateDistanceBetween(escapeTargetHitbox.box.position);
+         if (distance < minDistance) {
+            minDistance = distance;
+            escapeEntity = escapeTarget;
+         }
+      }
+   }
+
    return escapeEntity;
 }
 
 export function runEscapeAI(entity: Entity, escapeTarget: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    const escapeAI = aiHelperComponent.getEscapeAI();
+
+   aiHelperComponent.currentAIType = AIType.escape;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;

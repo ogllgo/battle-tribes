@@ -824,3 +824,11 @@ export function clearEntityPathfindingNodes(entity: Entity): void {
       markPathfindingNodeClearance(layer, node, groupID);
    }
 }
+
+export function convertEntityPathfindingGroupID(entity: Entity, oldGroupID: number, newGroupID: number): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const layer = getEntityLayer(entity);
+   for (const node of transformComponent.occupiedPathfindingNodes) {
+      replacePathfindingNodeGroupID(layer, node, oldGroupID, newGroupID);
+   }
+}

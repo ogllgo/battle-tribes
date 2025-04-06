@@ -5,7 +5,7 @@ import { COLLISION_BITS, DEFAULT_COLLISION_MASK } from "../../../../shared/src/c
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
-import { angle, Point } from "../../../../shared/src/utils";
+import { angle, getAbsAngleDiff, Point } from "../../../../shared/src/utils";
 import { turnToPosition } from "../../ai-shared";
 import { DustfleaHibernateAI } from "../../ai/DustfleaHibernateAI";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -21,7 +21,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAbsoluteKnockback, createHitbox, Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
-import { getEntityAgeTicks } from "../../world";
+import { getEntityAgeTicks, getEntityType } from "../../world";
 
 function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    const biome = layer.getBiomeAtPosition(x, y);
@@ -41,6 +41,22 @@ const move = (dustflea: Entity, acceleration: number, turnSpeed: number, x: numb
    }
 }
 
+const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean => {
+   if (getEntityType(escapeTarget) !== EntityType.krumblid) {
+      return false;
+   }
+
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+
+   const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
+   const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+
+   const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(dustfleaHitbox.box.position);
+
+   return getAbsAngleDiff(angleFromEscapeTarget, escapeTargetHitbox.box.angle) < 0.4;
+}
+
 export function createDustfleaConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
@@ -56,7 +72,7 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
    const aiHelperComponent = new AIHelperComponent(hitbox, 180, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 99999, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(4 * Settings.TPS, 6 * Settings.TPS, 1, 80);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 2 * Math.PI, extraEscapeCondition);
    aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 2 * Math.PI);
    // aiHelperComponent.ais[AIType.hoppingMovementAI] = new HoppingMovementAI();
    

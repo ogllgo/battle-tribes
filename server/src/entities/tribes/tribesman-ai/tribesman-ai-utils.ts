@@ -3,7 +3,7 @@ import Tribe from "../../../Tribe";
 import { getEntitiesInRange, willStopAtDesiredDistance } from "../../../ai-shared";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
 import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
-import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getDistanceToNode, findMultiLayerPath, Path } from "../../../pathfinding";
+import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getDistanceToNode, findMultiLayerPath, Path, convertEntityPathfindingGroupID } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { distance, assert } from "battletribes-shared/utils";
@@ -281,14 +281,6 @@ const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity>
       }
    }
    return blockingTribesmen;
-}
-
-const convertEntityPathfindingGroupID = (entity: Entity, oldGroupID: number, newGroupID: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const layer = getEntityLayer(entity);
-   for (const node of transformComponent.occupiedPathfindingNodes) {
-      replacePathfindingNodeGroupID(layer, node, oldGroupID, newGroupID);
-   }
 }
 
 const preparePathfinding = (targetEntity: Entity, tribe: Tribe, blockingTribesman: ReadonlyArray<Entity>): void => {

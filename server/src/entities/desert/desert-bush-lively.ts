@@ -7,6 +7,7 @@ import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { DesertBushLivelyComponent } from "../../components/DesertBushLivelyComponent";
+import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -15,12 +16,14 @@ import { createHitbox } from "../../hitboxes";
 export function createDesertBushLivelyConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.5, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 1, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const healthComponent = new HealthComponent(3);
+   
+   const energyStoreComponent = new EnergyStoreComponent(200);
    
    const desertBushLivelyComponent = new DesertBushLivelyComponent();
    
@@ -30,6 +33,7 @@ export function createDesertBushLivelyConfig(position: Point, angle: number): En
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.energyStore]: energyStoreComponent,
          [ServerComponentType.desertBushLively]: desertBushLivelyComponent
       },
       lights: []

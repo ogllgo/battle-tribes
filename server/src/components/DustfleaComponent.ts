@@ -130,13 +130,14 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
 }
 
 function onTick(dustflea: Entity): void {
-   const escapeTarget = getEscapeTarget(dustflea);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
+
+   const escapeAI = aiHelperComponent.getEscapeAI();
+   const escapeTarget = getEscapeTarget(dustflea, escapeAI);
    if (escapeTarget !== null) {
       runEscapeAI(dustflea, escapeTarget);
       return;
    }
-
-   const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
 
    const ageTicks = getEntityAgeTicks(dustflea);
    const ageHours = ticksToGameHours(ageTicks);

@@ -178,7 +178,8 @@ function onTick(fish: Entity): void {
    }
 
    // Escape AI
-   const escapeTarget = getEscapeTarget(fish);
+   const escapeAI = aiHelperComponent.getEscapeAI();
+   const escapeTarget = getEscapeTarget(fish, escapeAI);
    if (escapeTarget !== null) {
       runEscapeAI(fish, escapeTarget);
       return;

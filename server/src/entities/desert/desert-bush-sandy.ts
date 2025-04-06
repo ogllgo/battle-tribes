@@ -7,6 +7,7 @@ import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point, randInt } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { DesertBushSandyComponent } from "../../components/DesertBushSandyComponent";
+import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -18,13 +19,15 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
    const transformComponent = new TransformComponent();
 
    const radius = size === 0 ? 32 : 40;
-   const mass = size === 0 ? 0.6 : 0.8;
+   const mass = size === 0 ? 1.2 : 1.6;
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, COLLISION_BITS.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const healthComponent = new HealthComponent(size === 0 ? 3 : 5);
+      
+   const energyStoreComponent = new EnergyStoreComponent(150);
 
    const desertBushSandyComponent = new DesertBushSandyComponent(size);
    
@@ -34,6 +37,7 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.energyStore]: energyStoreComponent,
          [ServerComponentType.desertBushSandy]: desertBushSandyComponent
       },
       lights: []

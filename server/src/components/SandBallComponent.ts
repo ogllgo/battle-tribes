@@ -2,9 +2,8 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { assert } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
-import { AIHelperComponentArray } from "./AIHelperComponent";
+import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 
@@ -25,8 +24,7 @@ function onTick(sandBall: Entity): void {
       assert(getEntityType(transformComponent.rootEntity) === EntityType.krumblid);
 
       const aiHelperComponent = AIHelperComponentArray.getComponent(transformComponent.rootEntity);
-      const sandBallingAI = aiHelperComponent.getSandBallingAI();
-      if (sandBallingAI.currentSandBall !== sandBall) {
+      if (aiHelperComponent.currentAIType !== AIType.sandBalling) {
          removeAttachedEntity(transformComponent.rootEntity, sandBall);
       }
    }

@@ -49,6 +49,6 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
          [ServerComponentType.swingAttack]: swingAttackComponent
       },
       lights: [],
-      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
+      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, true)
    };
 }

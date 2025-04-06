@@ -40,6 +40,6 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
          [ServerComponentType.blockAttack]: blockAttackComponent
       },
       lights: [],
-      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, new Point(0, 0), true)
+      attachInfo: createEntityConfigAttachInfo(owner, ownerHitbox, true)
    };
 }

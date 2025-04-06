@@ -26,7 +26,7 @@ HungerComponentArray.onTick = {
 
 function onTick(entity: Entity): void {
    const hungerComponent = HungerComponentArray.getComponent(entity);
-   hungerComponent.energy -= hungerComponent.metabolism / Settings.TPS;
+   hungerComponent.energy -= hungerComponent.metabolism / Settings.TPS * 60;
    // @Incomplete: make the entity take damage or something?
    if (hungerComponent.energy < 0) {
       hungerComponent.energy = 0;

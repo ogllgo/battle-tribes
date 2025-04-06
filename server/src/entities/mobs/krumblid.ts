@@ -26,6 +26,8 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { moveEntityToPosition } from "../../ai-shared";
 import { SandBallingAI } from "../../ai/SandBallingAI";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
+import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";
+import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -65,16 +67,19 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    }
    
    const physicsComponent = new PhysicsComponent();
+   physicsComponent.traction = 1.5;
    
    const healthComponent = new HealthComponent(15);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 224, move);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 280, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(700, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 2 * Math.PI);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(200, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(300, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 2 * Math.PI);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

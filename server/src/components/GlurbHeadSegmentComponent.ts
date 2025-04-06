@@ -205,7 +205,7 @@ function onTick(glurbHead: Entity): void {
                      // Body segment
                      config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
                   }
-                  config.attachInfo = createEntityConfigAttachInfo(glurb, null, new Point(0, 0), true);
+                  config.attachInfo = createEntityConfigAttachInfo(glurb, null, true);
                   createEntity(config, getEntityLayer(glurb), 0);
                }
             }

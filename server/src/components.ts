@@ -49,7 +49,7 @@ import { FollowAI } from "./ai/FollowAI";
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
-import { TransformComponent } from "./components/TransformComponent";
+import { AngularTetherInfo, TransformComponent } from "./components/TransformComponent";
 import { BoulderComponent } from "./components/BoulderComponent";
 import { ProjectileComponent } from "./components/ProjectileComponent";
 import { LayeredRodComponent } from "./components/LayeredRodComponent";
@@ -260,8 +260,18 @@ type EntityComponents = Partial<{
 export interface EntityConfigAttachInfo {
    readonly parent: Entity;
    readonly parentHitbox: Hitbox | null;
-   readonly offset: Point;
    readonly destroyWhenParentIsDestroyed: boolean;
+}
+
+export interface EntityConfigAttachInfoWithTether {
+   readonly parent: Entity;
+   readonly parentHitbox: Hitbox | null;
+   readonly destroyWhenParentIsDestroyed: boolean;
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
+   readonly affectsOriginHitbox: boolean;
+   readonly angularTether?: AngularTetherInfo;
 }
 
 export interface EntityConfig {
@@ -269,16 +279,32 @@ export interface EntityConfig {
    readonly components: EntityComponents;
    readonly lights: ReadonlyArray<LightCreationInfo>;
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
-   attachInfo?: EntityConfigAttachInfo;
+   attachInfo?: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether;
    /** Any child entities' configs. */
    readonly childConfigs?: ReadonlyArray<EntityConfig>;
 }
 
-export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, offset: Point, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
+export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
    return {
       parent: parent,
       parentHitbox: parentHitbox,
-      offset: offset,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
    };
+}
+
+export function createEntityConfigAttachInfoWithTether(parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: AngularTetherInfo): EntityConfigAttachInfoWithTether {
+   return {
+      parent: parent,
+      parentHitbox: parentHitbox,
+      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed,
+      idealDistance: idealDistance,
+      springConstant: springConstant,
+      damping: damping,
+      affectsOriginHitbox: affectsOriginHitbox,
+      angularTether: angularTether
+   };
+}
+
+export function entityConfigAttachInfoIsTethered(attachInfo: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether): attachInfo is EntityConfigAttachInfoWithTether {
+   return typeof (attachInfo as EntityConfigAttachInfoWithTether).angularTether !== "undefined";
 }

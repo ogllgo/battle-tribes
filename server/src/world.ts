@@ -13,9 +13,9 @@ import { tileHasWallSubtile } from "./world-generation/terrain-generation-utils"
 import { markWallTileInPathfinding } from "./pathfinding";
 import { generateSurfaceTerrain } from "./world-generation/surface-layer-generation";
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
-import { EntityConfig } from "./components";
+import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./light-levels";
-import { attachEntity } from "./components/TransformComponent";
+import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
 
 const enum Vars {
    START_TIME = 12
@@ -223,7 +223,11 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
 
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
-            attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
+            if (entityConfigAttachInfoIsTethered(attachInfo)) {
+               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.affectsOriginHitbox, attachInfo.destroyWhenParentIsDestroyed, attachInfo.angularTether);
+            } else {
+               attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
+            }
          }
 
          const childConfigs = joinInfo.entityConfig.childConfigs;

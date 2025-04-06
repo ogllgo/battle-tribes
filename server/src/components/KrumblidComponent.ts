@@ -7,8 +7,8 @@ import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
-import { getHitboxTile, Hitbox } from "../hitboxes";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -16,6 +16,9 @@ import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHungerEnergy, getEntityFullness } from "./HungerComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
 import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
+import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
+import { Settings } from "../../../shared/src/settings";
+import { runKrumblidCombatAI, shouldRunKrumblidCombatAI, updateKrumblidCombatAI } from "../ai/KrumblidCombatAI";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -98,8 +101,16 @@ const entityIsFollowable = (entity: Entity): boolean => {
 
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
+
+   // By default, move the krumblids' mandibles back to their resting position
+   const transformComponent = TransformComponentArray.getComponent(krumblid);
+   for (let i = 0; i < 2; i++) {
+      const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
+      setHitboxIdealAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, true);
+   }
    
-   const escapeTarget = getEscapeTarget(krumblid);
+   const escapeAI = aiHelperComponent.getEscapeAI();
+   const escapeTarget = getEscapeTarget(krumblid, escapeAI);
    if (escapeTarget !== null) {
       runEscapeAI(krumblid, escapeTarget);
       return;
@@ -121,6 +132,15 @@ function onTick(krumblid: Entity): void {
             addHungerEnergy(krumblid, energyStoreComponent.energyAmount);
             destroyEntity(targetPricklyPear);
          }
+         return;
+      }
+   }
+
+   if (getEntityFullness(krumblid) < 0.5) {
+      const krumblidCombatAI = aiHelperComponent.getKrumblidCombatAI();
+      updateKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI);
+      if (shouldRunKrumblidCombatAI(krumblidCombatAI)) {
+         runKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI);
          return;
       }
    }
@@ -150,13 +170,24 @@ function onTick(krumblid: Entity): void {
       }
    }
 
-   // Sand balling AI
-   const sandBallingAI = aiHelperComponent.getSandBallingAI();
-   updateSandBallingAI(sandBallingAI);
-   if (shouldRunSandBallingAI(sandBallingAI)) {
-      runSandBallingAI(krumblid, sandBallingAI);
-      return;
+   // Vegetation consume AI
+   if (getEntityFullness(krumblid) < 0.5) {
+      const vegetationConsumeAI = aiHelperComponent.getVegetationConsumeAI();
+      updateVegetationConsumeAI(krumblid, aiHelperComponent, vegetationConsumeAI);
+      if (shouldRunVegetationConsumeAI(vegetationConsumeAI)) {
+         runVegetationConsumeAI(krumblid, aiHelperComponent, vegetationConsumeAI);
+         return;
+      }
    }
+
+   // Sand balling AI
+   // something they do for fun
+   // const sandBallingAI = aiHelperComponent.getSandBallingAI();
+   // updateSandBallingAI(sandBallingAI);
+   // if (shouldRunSandBallingAI(sandBallingAI)) {
+   //    runSandBallingAI(krumblid, aiHelperComponent, sandBallingAI);
+   //    return;
+   // }
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
