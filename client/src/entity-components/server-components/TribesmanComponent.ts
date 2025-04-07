@@ -14,7 +14,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
@@ -720,7 +720,7 @@ function onTick(entity: Entity): void {
    resetIgnoredTileSpeedMultipliers(physicsComponent);
    if (typeof armour !== "undefined") {
       const layer = getEntityLayer(entity);
-      const tile = getEntityTile(layer, transformComponent);
+      const tile = getHitboxTile(layer, entityHitbox);
 
       // If frost armour is equipped, move at normal speed on snow tiles
       if ((armour.type === ItemType.frostArmour) && tile.type === TileType.snow) {

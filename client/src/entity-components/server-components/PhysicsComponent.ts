@@ -12,7 +12,7 @@ import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
 import { entityExists, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
-import { EntityAttachInfo, entityChildIsEntity, entityChildIsHitbox, entityIsInRiver, getEntityTile, TransformComponent, TransformComponentArray, cleanTransform } from "./TransformComponent";
+import { EntityAttachInfo, entityChildIsEntity, entityChildIsHitbox, entityIsInRiver, getHitboxTile, TransformComponent, TransformComponentArray, cleanTransform } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
@@ -49,7 +49,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    }
 
    const layer = getEntityLayer(entity);
-   const tile = getEntityTile(layer, transformComponent);
+   const tile = getHitboxTile(layer, hitbox);
 
    if (isNaN(hitbox.box.position.x)) {
       throw new Error("Position was NaN.");
@@ -304,6 +304,8 @@ const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInf
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+
+   applyHitboxTethers(transformComponent);
    
    // If the entity isn't being carried, update its' physics
    if (transformComponent.rootEntity === entity) {
@@ -336,8 +338,6 @@ function onUpdate(entity: Entity): void {
       //    }
       // }
    } else {
-      applyHitboxTethers(transformComponent);
-
       // The player is attached to a parent: need to snap them to the parent!
       for (const child of transformComponent.children) {
          if (entityChildIsEntity(child)) {

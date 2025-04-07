@@ -338,6 +338,9 @@ export function spawnInitialEntities(): void {
       // const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(krumblidConfig, surfaceLayer, 0);
 
+      const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      createEntity(ancientOkrenConfig, surfaceLayer, 0);
+
       // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 940, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
       // createEntity(juvenileOkrenConfig, surfaceLayer, 0);
       // const youthOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 580, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 1);

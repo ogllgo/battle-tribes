@@ -8,7 +8,7 @@ import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
-import { entityChildIsHitbox, getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { entityChildIsHitbox, getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -183,9 +183,10 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // When the cow has finished grazing, create a bunch of dirt particles
    if (grazeProgress < cowComponent.grazeProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.children[0] as Hitbox;
       const layer = getEntityLayer(entity);
       
-      const tile = getEntityTile(layer, transformComponent);
+      const tile = getHitboxTile(layer, hitbox);
       for (let i = 0; i < 15; i++) {
          const x = (tile.x + Math.random()) * Settings.TILE_SIZE;
          const y = (tile.y + Math.random()) * Settings.TILE_SIZE;

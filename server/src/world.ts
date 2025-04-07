@@ -15,7 +15,8 @@ import { generateSurfaceTerrain } from "./world-generation/surface-layer-generat
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./light-levels";
-import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
+import { AngularTetherInfo, attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./components/TransformComponent";
+import { Hitbox } from "./hitboxes";
 
 const enum Vars {
    START_TIME = 12
@@ -246,6 +247,31 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                assert(typeof childJoinInfo !== "undefined");
                
                attachEntity(childJoinInfo.entity, joinInfo.entity, null, true);
+            }
+         }
+
+         const childEntities = joinInfo.entityConfig.childEntities;
+         if (typeof childEntities !== "undefined") {
+            for (const childInfo of childEntities) {
+               const childTransformComponent = TransformComponentArray.getComponent(childInfo.entity);
+               // Remove from previous parent if it exists
+               if (childTransformComponent.rootEntity !== childInfo.entity) {
+                  removeAttachedEntity(childTransformComponent.parentEntity, childInfo.entity);
+               }
+               
+               // @HACK!
+               attachEntity(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, childInfo.attachInfo.destroyWhenParentIsDestroyed);
+               // const angularTether: AngularTetherInfo = {
+               //    springConstant: 10,
+               //    angularDamping: 5,
+               //    padding: 4
+               // }
+               // const angularTether = undefined;
+               // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parent, 24, 10, 0.5, false, true, angularTether)
+
+               // @HACK only for static
+               (childTransformComponent.children[0] as Hitbox).box.relativeAngle = 0;
+               (childTransformComponent.children[0] as Hitbox).box.angle = 0;
             }
          }
       }

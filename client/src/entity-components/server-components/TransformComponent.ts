@@ -151,17 +151,6 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
    return fillTransformComponentParams(rootEntity, parentEntity, children, tethers, collisionBit, collisionMask);
 }
 
-export function getEntityTile(layer: Layer, transformComponent: TransformComponent): Tile {
-   // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   
-   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-   return layer.getTile(tileIndex);
-}
-
 // @Location
 export function getHitboxTile(layer: Layer, hitbox: Hitbox): Tile {
    const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
@@ -257,13 +246,18 @@ export function removeHitboxFromEntity(transformComponent: TransformComponent, h
 
 export function entityIsInRiver(transformComponent: TransformComponent, entity: Entity): boolean {
    const layer = getEntityLayer(entity);
-   const tile = getEntityTile(layer, transformComponent);
+
+   // @Hack
+   const hitbox = transformComponent.children[0];
+   if (!entityChildIsHitbox(hitbox)) {
+      return false;
+   }
+   
+   const tile = getHitboxTile(layer, hitbox);
    if (tile.type !== TileType.water) {
       return false;
    }
 
-   // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
    
    // If the game object is standing on a stepping stone they aren't in a river
    for (const chunk of transformComponent.chunks) {

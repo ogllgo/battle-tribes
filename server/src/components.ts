@@ -44,12 +44,10 @@ import { IceSpikesComponent } from "./components/IceSpikesComponent";
 import { PebblumComponent } from "./components/PebblumComponent";
 import { SlimewispComponent } from "./components/SlimewispComponent";
 import { ThrowingProjectileComponent } from "./components/ThrowingProjectileComponent";
-import { EscapeAI } from "./ai/EscapeAI";
-import { FollowAI } from "./ai/FollowAI";
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
-import { AngularTetherInfo, TransformComponent } from "./components/TransformComponent";
+import { AngularTetherInfo, EntityAttachInfo, TransformComponent } from "./components/TransformComponent";
 import { BoulderComponent } from "./components/BoulderComponent";
 import { ProjectileComponent } from "./components/ProjectileComponent";
 import { LayeredRodComponent } from "./components/LayeredRodComponent";
@@ -123,6 +121,8 @@ import { OkrenComponent } from "./components/OkrenComponent";
 import { DustfleaMorphCocoonComponent } from "./components/DustfleaMorphCocoonComponent";
 import { SandBallComponent } from "./components/SandBallComponent";
 import { KrumblidMorphCocoonComponent } from "./components/KrumblidMorphCocoonComponent";
+import { OkrenTongueSegmentComponent } from "./components/OkrenTongueSegmentComponent";
+import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -244,6 +244,8 @@ const ComponentClassRecord = {
    [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
    [ServerComponentType.sandBall]: () => SandBallComponent,
    [ServerComponentType.krumblidMorphCocoon]: () => KrumblidMorphCocoonComponent,
+   [ServerComponentType.okrenTongueSegment]: () => OkrenTongueSegmentComponent,
+   [ServerComponentType.okrenTongueTip]: () => OkrenTongueTipComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
@@ -283,7 +285,12 @@ export interface EntityConfig {
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
    attachInfo?: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether;
    /** Any child entities' configs. */
-   readonly childConfigs?: ReadonlyArray<EntityConfig>;
+   childConfigs?: ReadonlyArray<EntityConfig>;
+   /** Any existing entities for which, upon the entity spawns, they will all be childed to the entity and removed from their existing parents. */
+   childEntities?: ReadonlyArray<{
+      entity: Entity,
+      attachInfo: EntityAttachInfo;
+   }>;
 }
 
 export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {

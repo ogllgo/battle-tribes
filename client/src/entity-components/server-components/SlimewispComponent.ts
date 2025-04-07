@@ -4,7 +4,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
@@ -63,11 +63,12 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
    
    const layer = getEntityLayer(entity);
 
    // Slimes move at normal speed on slime tiles
-   const tile = getEntityTile(layer, transformComponent);
+   const tile = getHitboxTile(layer, hitbox);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    if (tile.type === TileType.slime) {
       physicsComponent.ignoredTileSpeedMultipliers = IGNORED_TILE_SPEED_MULTIPLIERS;

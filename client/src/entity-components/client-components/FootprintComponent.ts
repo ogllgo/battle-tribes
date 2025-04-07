@@ -5,7 +5,7 @@ import { playSound } from "../../sound";
 import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
 import { EntityParams, getEntityLayer } from "../../world";
-import { entityIsInRiver, getEntityTile, TransformComponentArray } from "../server-components/TransformComponent";
+import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "../server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
@@ -69,7 +69,7 @@ const createFootstepSound = (entity: Entity): void => {
    const hitbox = transformComponent.children[0] as Hitbox;
    const layer = getEntityLayer(entity);
    
-   const tile = getEntityTile(layer, transformComponent);
+   const tile = getHitboxTile(layer, hitbox);
    switch (tile.type) {
       case TileType.grass:
       case TileType.sandyDirt: {

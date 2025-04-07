@@ -7,7 +7,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { playSoundOnHitbox } from "../../sound";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
@@ -158,7 +158,7 @@ function onTick(entity: Entity): void {
    const layer = getEntityLayer(entity);
 
    // Slimes move at normal speed on slime tiles
-   const tile = getEntityTile(layer, transformComponent);
+   const tile = getHitboxTile(layer, hitbox);
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    if (tile.type === TileType.slime) {
       physicsComponent.ignoredTileSpeedMultipliers = IGNORED_TILE_SPEED_MULTIPLIERS;

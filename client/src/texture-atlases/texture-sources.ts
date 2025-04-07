@@ -439,6 +439,8 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/okren/ancient/big-arm-segment.png",
    "entities/okren/ancient/medium-arm-segment.png",
    "entities/okren/ancient/arm-segment-of-slashing-and-destruction.png",
+   "entities/okren/tongue-segment.png",
+   "entities/okren/tongue-tip.png",
    "entities/dustflea-morph-cocoon/stage-1.png",
    "entities/dustflea-morph-cocoon/stage-2.png",
    "entities/dustflea-morph-cocoon/stage-3.png",

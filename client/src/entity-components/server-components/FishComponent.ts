@@ -6,7 +6,7 @@ import { TileType } from "battletribes-shared/tiles";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createWaterSplashParticle } from "../../particles";
 import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
-import { getEntityTile, TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -84,7 +84,7 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.children[0] as Hitbox;
    const layer = getEntityLayer(entity);
    
-   const tile = getEntityTile(layer, transformComponent);
+   const tile = getHitboxTile(layer, hitbox);
    if (tile.type !== TileType.water && Board.tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 8; i++) {
          const spawnOffsetDirection = 2 * Math.PI * Math.random();

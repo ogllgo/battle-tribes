@@ -51,7 +51,7 @@ interface HitboxTether {
 export interface EntityAttachInfo {
    readonly attachedEntity: Entity;
    /** Parented to a hitbox of the parent entity, or just the parent entity itself */
-   readonly parent: Hitbox | null;
+   readonly parentHitbox: Hitbox | null;
    /** If true, when the parent entity is destroyed, the child will be destroyed as well. */
    readonly destroyWhenParentIsDestroyed: boolean;
 }
@@ -180,7 +180,7 @@ export function addHitboxToTransformComponent(transformComponent: TransformCompo
 export function addEntityToTransformComponent(transformComponent: TransformComponent, entity: Entity, destroyWhenParentIsDestroyed: boolean): void {
    const attachInfo: EntityAttachInfo = {
       attachedEntity: entity,
-      parent: null,
+      parentHitbox: null,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
    };
 
@@ -380,7 +380,7 @@ export function cleanTransform(node: Hitbox | Entity): void {
       
       assert(transformComponent.children.length > 0);
    
-      for (const child of transformComponent.rootChildren) {
+      for (const child of transformComponent.children) {
          if (entityChildIsHitbox(child)) {
             cleanTransform(child);
          } else {
@@ -616,8 +616,8 @@ function onRemove(entity: Entity): void {
 const addEntityAttachInfoToPacket = (packet: Packet, attachInfo: EntityAttachInfo): void => {
    packet.addNumber(attachInfo.attachedEntity);
 
-   if (attachInfo.parent !== null) {
-      packet.addNumber(attachInfo.parent.localID);
+   if (attachInfo.parentHitbox !== null) {
+      packet.addNumber(attachInfo.parentHitbox.localID);
    } else {
       packet.addNumber(-1);
    }
@@ -749,7 +749,7 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
    
    const attachInfo: EntityAttachInfo = {
       attachedEntity: entity,
-      parent: parentHitbox,
+      parentHitbox: parentHitbox,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
    };
    parentTransformComponent.children.push(attachInfo);
@@ -788,7 +788,7 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
    
    const attachInfo: EntityAttachInfo = {
       attachedEntity: entity,
-      parent: parentHitbox,
+      parentHitbox: parentHitbox,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
    };
    parentTransformComponent.children.push(attachInfo);
@@ -805,6 +805,7 @@ export function entityIsTethered(entity: Entity): boolean {
 
 export function removeAttachedEntity(parent: Entity, child: Entity): void {
    const parentTransformComponent = TransformComponentArray.getComponent(parent);
+   const childTransformComponent = TransformComponentArray.getComponent(child);
    
    let idx: number | undefined;
    let entityAttachInfo: EntityAttachInfo | undefined;
@@ -817,7 +818,7 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
       }
    }
    assert(typeof idx !== "undefined" && typeof entityAttachInfo !== "undefined");
-
+   
    parentTransformComponent.children.splice(idx, 1);
 
    // Remove from the parent's root children
@@ -831,20 +832,24 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
       destroyEntity(parent);
    }
    
-   const childTransformComponent = TransformComponentArray.getComponent(child);
    childTransformComponent.parentEntity = 0;
 
    // Unset the parent hitbox
-   for (const child of childTransformComponent.rootChildren) {
-      if (entityChildIsHitbox(child)) {
-         child.parent = null;
-
-         // Remove any tethers to the parent hitbox
-         for (let i = 0; i < childTransformComponent.tethers.length; i++) {
-            const tether = childTransformComponent.tethers[i];
-            if (tether.originHitbox === entityAttachInfo.parent) {
-               childTransformComponent.tethers.splice(i, 1);
-               break;
+   const parentHitbox = entityAttachInfo.parentHitbox;
+   if (parentHitbox !== null) {
+      for (const child of childTransformComponent.rootChildren) {
+         if (entityChildIsHitbox(child)) {
+            child.parent = null;
+            
+            child.box.relativeAngle += parentHitbox.box.angle;
+   
+            // Remove any tethers to the parent hitbox
+            for (let i = 0; i < childTransformComponent.tethers.length; i++) {
+               const tether = childTransformComponent.tethers[i];
+               if (tether.originHitbox === entityAttachInfo.parentHitbox) {
+                  childTransformComponent.tethers.splice(i, 1);
+                  break;
+               }
             }
          }
       }

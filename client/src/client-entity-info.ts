@@ -430,6 +430,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Krumblid Morph Cocoon",
       internalName: "krumblid-morph-cocoon"
    },
+   [EntityType.okrenTongueSegment]: {
+      name: "Okren Tongue Segment",
+      internalName: "okren-tongue-segment"
+   },
+   [EntityType.okrenTongueTip]: {
+      name: "Okren Tongue Tip",
+      internalName: "okren-tongue-tip"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

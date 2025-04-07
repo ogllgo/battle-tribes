@@ -702,21 +702,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createKrumblidConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.okren,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      biome: Biome.desert,
-      tileTypes: [TileType.sand],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.0007),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createOkrenConfig(new Point(x, y), angle, 4);
-      }
-   });
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.okren,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.0007),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createOkrenConfig(new Point(x, y), angle, 4);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,

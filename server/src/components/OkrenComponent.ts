@@ -155,7 +155,7 @@ export function getOkrenMandibleHitbox(okren: Entity, side: OkrenSide): Hitbox {
 
 function onTick(okren: Entity): void {
    // @Temporary
-   if(1+1===2)return;
+   // if(1+1===2)return;
    const okrenComponent = OkrenComponentArray.getComponent(okren);
 
    for (const side of OKREN_SIDES) {

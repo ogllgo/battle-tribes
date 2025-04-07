@@ -1,6 +1,8 @@
 import { EntityType } from "./entities";
 import { ITEM_TYPE_RECORD as ITEM_CATEGORY_RECORD, Item } from "./items/items";
 
+// @Cleanup KILL THISSS
+
 const enum DamageType {
    basic,
    weapon,
@@ -442,6 +444,14 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.krumblidMorphCocoon]: {
+      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.okrenTongueSegment]: {
+      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.okrenTongueTip]: {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
    },
