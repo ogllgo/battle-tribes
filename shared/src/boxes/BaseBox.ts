@@ -9,7 +9,7 @@ export const enum PivotPointType {
 }
 
 export interface PivotPoint {
-   readonly type: PivotPointType;
+   type: PivotPointType;
    readonly pos: Point;
 }
 

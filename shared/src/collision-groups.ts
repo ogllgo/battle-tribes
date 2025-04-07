@@ -153,8 +153,9 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.dustflea]: CollisionGroup.default,
    [EntityType.sandstoneRock]: CollisionGroup.boring,
    [EntityType.okren]: CollisionGroup.default,
-   [EntityType.dustfleaMorphCocoon]: CollisionGroup.default,
+   [EntityType.dustfleaMorphCocoon]: CollisionGroup.boring,
    [EntityType.sandBall]: CollisionGroup.default,
+   [EntityType.krumblidMorphCocoon]: CollisionGroup.boring,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

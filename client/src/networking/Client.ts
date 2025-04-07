@@ -419,7 +419,6 @@ abstract class Client {
          const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 5 + getStringLengthBytes(username));
          packet.addString(username);
          packet.addNumber(tribeType);
-         console.log(windowWidth, windowHeight);
          packet.addNumber(windowWidth);
          packet.addNumber(windowHeight);
          packet.addBoolean(isSpectating);

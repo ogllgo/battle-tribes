@@ -42,7 +42,7 @@ function onTick(cocoon: Entity): void {
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
       const hitbox = transformComponent.children[0] as Hitbox;
-      (hitbox.box as CircularBox).radius = 12 + 4 * (stage - 1);
+      (hitbox.box as CircularBox).radius += 4;
       transformComponent.isDirty = true;
    }
 }

@@ -1,6 +1,6 @@
 import { circlesDoIntersect, circleAndRectangleDoIntersect } from "../collision";
 import { Point, rotateXAroundOrigin, rotateXAroundPoint, rotateYAroundOrigin, rotateYAroundPoint } from "../utils";
-import { PivotPointType } from "./BaseBox";
+import { PivotPoint, PivotPointType } from "./BaseBox";
 import { CircularBox } from "./CircularBox";
 import RectangularBox from "./RectangularBox";
 
@@ -78,31 +78,7 @@ export function updateVertexPositionsAndSideAxes(box: RectangularBox): void {
    box.axisY = -sinRotation;
 }
 
-// @Cleanup: just remove the second parameter and access it through the box's parent property.
-export function updateBox(box: Box, parent: Box): void {
-   box.totalFlipXMultiplier = (box.flipX ? -1 : 1) * parent.totalFlipXMultiplier;
-
-   box.position.x = parent.position.x;
-   box.position.y = parent.position.y;
-   
-   // Now offset from the parent's position based on the hitboxes' offset.
-   
-   const cosRotation = Math.cos(parent.angle);
-   const sinRotation = Math.sin(parent.angle);
-   
-   let offsetX = box.offset.x * box.scale;
-   if (box.totalFlipXMultiplier === -1) {
-      offsetX *= -1;
-   }
-   const offsetY = box.offset.y * box.scale;
-   box.position.x += cosRotation * offsetX + sinRotation * offsetY;
-   box.position.y += cosRotation * offsetY - sinRotation * offsetX;
-   
-   // Update the box's angle
-   box.angle = box.relativeAngle * box.totalFlipXMultiplier + parent.angle;
-
-   // Now pivot the hitbox around the pivot point based on its relative rotation
-
+export function getRelativePivotPos(box: Box, angle: number): Point {
    let relativePivotX: number;
    let relativePivotY: number;
    if (box.pivot.type === PivotPointType.absolute) {
@@ -125,16 +101,56 @@ export function updateBox(box: Box, parent: Box): void {
       relativePivotX = box.pivot.pos.x * width;
       relativePivotY = box.pivot.pos.y * height;
    }
-   if (box.totalFlipXMultiplier === -1) {
-      relativePivotX *= -1;
-   }
-   const pivotPointX = box.position.x + rotateXAroundOrigin(relativePivotX, relativePivotY, box.angle);
-   const pivotPointY = box.position.y + rotateYAroundOrigin(relativePivotX, relativePivotY, box.angle);
 
-   const preX = box.position.x;
-   const preY = box.position.y;
-   box.position.x = rotateXAroundPoint(preX, preY, pivotPointX, pivotPointY, box.relativeAngle * box.totalFlipXMultiplier);
-   box.position.y = rotateYAroundPoint(preX, preY, pivotPointX, pivotPointY, box.relativeAngle * box.totalFlipXMultiplier);
+   let rotatedX = rotateXAroundOrigin(relativePivotX, relativePivotY, angle);
+   let rotatedY = rotateYAroundOrigin(relativePivotX, relativePivotY, angle);
+
+   if (box.totalFlipXMultiplier === -1) {
+      rotatedX *= -1;
+   }
+
+   return new Point(rotatedX, rotatedY);
+}
+
+// @Cleanup: just remove the second parameter and access it through the box's parent property.
+export function updateBox(box: Box, parent: Box): void {
+   box.totalFlipXMultiplier = (box.flipX ? -1 : 1) * parent.totalFlipXMultiplier;
+
+   box.position.x = parent.position.x;
+   box.position.y = parent.position.y;
+   
+   // Now offset from the parent's position based on the hitboxes' offset.
+   
+   const cosRotation = Math.cos(parent.angle);
+   const sinRotation = Math.sin(parent.angle);
+
+   // @Speed: the base offset and pivot offset both scale by flipX independently when they could both be done at once after
+   
+   let offsetX = box.offset.x * box.scale;
+   if (box.totalFlipXMultiplier === -1) {
+      offsetX *= -1;
+   }
+   let offsetY = box.offset.y * box.scale;
+
+   // Now pivot the hitbox around the pivot point based on its relative rotation
+   const relativePivotPos = getRelativePivotPos(box, box.relativeAngle);
+   const unrotatedRelativePivotPos = getRelativePivotPos(box, 0);
+   offsetX -= relativePivotPos.x - unrotatedRelativePivotPos.x;
+   offsetY -= relativePivotPos.y - unrotatedRelativePivotPos.y;
+
+   box.position.x += cosRotation * offsetX + sinRotation * offsetY;
+   box.position.y += cosRotation * offsetY - sinRotation * offsetX;
+   
+   // Update the box's angle
+   box.angle = box.relativeAngle * box.totalFlipXMultiplier + parent.angle;
+
+   // const pivotPointX = box.position.x + relativePivotPos.x - unrotatedRelativePivotPos.x;
+   // const pivotPointY = box.position.y + relativePivotPos.y - unrotatedRelativePivotPos.y;
+
+   // const preX = box.position.x;
+   // const preY = box.position.y;
+   // box.position.x = rotateXAroundPoint(preX, preY, pivotPointX, pivotPointY, box.relativeAngle * box.totalFlipXMultiplier);
+   // box.position.y = rotateYAroundPoint(preX, preY, pivotPointX, pivotPointY, box.relativeAngle * box.totalFlipXMultiplier);
 
    if (!boxIsCircular(box)) {
       updateVertexPositionsAndSideAxes(box);

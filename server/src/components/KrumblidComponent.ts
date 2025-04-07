@@ -7,7 +7,7 @@ import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
 import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -17,8 +17,8 @@ import { addHungerEnergy, getEntityFullness } from "./HungerComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
 import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
-import { Settings } from "../../../shared/src/settings";
 import { runKrumblidCombatAI, shouldRunKrumblidCombatAI, updateKrumblidCombatAI } from "../ai/KrumblidCombatAI";
+import { runKrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -115,6 +115,14 @@ function onTick(krumblid: Entity): void {
       runEscapeAI(krumblid, escapeTarget);
       return;
    }
+   
+   const ageTicks = getEntityAgeTicks(krumblid);
+   const ageHours = ticksToGameHours(ageTicks);
+   if (ageHours >= 0.5) {
+      const hibernateAI = aiHelperComponent.getKrumblidHibernateAI();
+      runKrumblidHibernateAI(krumblid, aiHelperComponent, hibernateAI);
+      return;
+   }
 
    // Eat prickly pears
    const fullness = getEntityFullness(krumblid);
@@ -164,7 +172,7 @@ function onTick(krumblid: Entity): void {
          if (entityIsFollowable(entity)) {
             // Follow the entity
             followAISetFollowTarget(followAI, entity, true);
-            // @Incomplete: movement isn't accounted for!sd
+            // @Incomplete: movement isn't accounted for!
             return;
          }
       }

@@ -47,16 +47,6 @@ export function shouldRunSandBallingAI(sandBallingAI: SandBallingAI): boolean {
    return sandBallingAI.ballingInterestCooldownTicks === 0;
 }
 
-const sandBallIsInvalid = (entity: Entity, sandBall: Entity): boolean => {
-   const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
-
-   const sandBallTransformComponent = TransformComponentArray.getComponent(sandBall);
-
-   const distance = getDistanceFromPointToEntity(entityHitbox.box.position, sandBallTransformComponent);
-   return distance > 50;
-}
-
 export function getSandBallMass(sizeInteger: number): number {
    return 0.2 * sizeInteger;
 }

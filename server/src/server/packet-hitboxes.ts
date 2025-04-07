@@ -12,12 +12,18 @@ const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
    packet.addNumber(box.angle);
    packet.addNumber(box.offset.x);
    packet.addNumber(box.offset.y);
+
+   // Pivot
+   packet.addNumber(box.pivot.type);
+   packet.addNumber(box.pivot.pos.x);
+   packet.addNumber(box.pivot.pos.y);
+   
    packet.addNumber(box.scale);
    packet.addBoolean(box.totalFlipXMultiplier === -1 ? true : false);
    packet.padOffset(3);
 }
 const getBaseBoxDataLength = (): number => {
-   return 8 * Float32Array.BYTES_PER_ELEMENT;
+   return 11 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addCircularBoxData = (packet: Packet, box: CircularBox): void => {

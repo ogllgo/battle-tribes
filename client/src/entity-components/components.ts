@@ -135,6 +135,7 @@ import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockCompo
 import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./server-components/OkrenComponent";
 import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
 import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } from "./server-components/SandBallComponent";
+import { KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentArray, KrumblidMorphCocoonComponentParams } from "./server-components/KrumblidMorphCocoonComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -278,6 +279,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.okren]: OkrenComponentArray,
    [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
    [ServerComponentType.sandBall]: SandBallComponentArray,
+   [ServerComponentType.krumblidMorphCocoon]: KrumblidMorphCocoonComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -397,6 +399,7 @@ const ServerComponentRecord = {
    [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
+   [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -518,6 +521,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
+   [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

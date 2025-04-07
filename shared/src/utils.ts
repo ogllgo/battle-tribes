@@ -415,7 +415,7 @@ export function distBetweenPointAndRectangularBox(pointX: number, pointY: number
 export function assertUnreachable(x: never): never {
    console.warn(x);
    throw new Error("Why must I exist?");
-}
+} 
 
 export function assert(condition: unknown, errorMessage?: string): asserts condition {
    if (!condition) {

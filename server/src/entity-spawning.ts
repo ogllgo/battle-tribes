@@ -337,8 +337,18 @@ export function spawnInitialEntities(): void {
       // createEntity(dustfleaConfig, surfaceLayer, 0);
       // const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(krumblidConfig, surfaceLayer, 0);
-      // const okrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
-      // createEntity(okrenConfig, surfaceLayer, 0);
+
+      // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 940, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
+      // createEntity(juvenileOkrenConfig, surfaceLayer, 0);
+      // const youthOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 580, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 1);
+      // createEntity(youthOkrenConfig, surfaceLayer, 0);
+      // const adultOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 220, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 2);
+      // createEntity(adultOkrenConfig, surfaceLayer, 0);
+      // const elderOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
+      // createEntity(elderOkrenConfig, surfaceLayer, 0);
+      // const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      // createEntity(ancientOkrenConfig, surfaceLayer, 0);
+      
       if(1+1===2)return;
       // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
       // createEntity(config, surfaceLayer, 0);

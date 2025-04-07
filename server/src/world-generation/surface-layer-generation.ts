@@ -568,25 +568,26 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createBoulderConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.cactus,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      biome: Biome.desert,
-      tileTypes: [TileType.sand],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 75,
-      spawnDistribution: createRawSpawnDistribution(16, 0.01),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      packSpawning: {
-         getPackSize: () => randInt(1, 2),
-         spawnRange: 80
-      },
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createCactusConfig(new Point(x, y), angle);
-      }
-   });
+   // @Temporary
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.cactus,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 75,
+   //    spawnDistribution: createRawSpawnDistribution(16, 0.01),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    packSpawning: {
+   //       getPackSize: () => randInt(1, 2),
+   //       spawnRange: 80
+   //    },
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createCactusConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.yeti,
       layer: surfaceLayer,
@@ -671,21 +672,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return createKrumblidConfig(new Point(x, y), angle);
    //    }
    // });
-   registerNewSpawnInfo({
-      entityType: EntityType.dustflea,
-      layer: surfaceLayer,
-      spawnRate: 0.005,
-      biome: Biome.desert,
-      tileTypes: [TileType.sand],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.004),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDustfleaConfig(new Point(x, y), angle);
-      }
-   });
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.dustflea,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.004),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createDustfleaConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.krumblid,
       layer: surfaceLayer,
@@ -699,6 +700,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createKrumblidConfig(new Point(x, y), angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityType: EntityType.okren,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.0007),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createOkrenConfig(new Point(x, y), angle, 4);
       }
    });
    registerNewSpawnInfo({
@@ -867,6 +883,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createTumbleweedLiveConfig(new Point(x, y), angle);
       }
    });
+   // @Temporary @Hack: tumbleweeds crash the server like fuck rn
    // registerNewSpawnInfo({
    //    entityType: EntityType.tumbleweedDead,
    //    layer: surfaceLayer,
@@ -882,6 +899,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return createTumbleweedDeadConfig(new Point(x, y), angle);
    //    }
    // });
+   // @Temporary
    registerNewSpawnInfo({
       entityType: EntityType.sandstoneRock,
       layer: surfaceLayer,

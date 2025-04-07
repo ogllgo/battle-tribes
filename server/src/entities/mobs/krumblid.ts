@@ -28,6 +28,7 @@ import { SandBallingAI } from "../../ai/SandBallingAI";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
+import { KrumblidHibernateAI } from "../../ai/KrumblidHibernateAI";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -80,6 +81,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(200, 2 * Math.PI);
    aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(300, 2 * Math.PI);
    aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(200, 2 * Math.PI);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

@@ -224,11 +224,6 @@ class GameServer {
                   const config = createPlayerConfig(spawnPosition, 0, tribe, playerClient);
                   createEntity(config, layer, 0);
                }
-
-               setTimeout(() => {
-                  const config = createKrumblidConfig(new Point(spawnPosition.x + 100, spawnPosition.y), randAngle());
-                  createEntity(config,surfaceLayer,0);
-               }, 2000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 

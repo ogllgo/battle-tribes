@@ -21,6 +21,8 @@ import { DustfleaHibernateAI } from "../ai/DustfleaHibernateAI";
 import { SandBallingAI } from "../ai/SandBallingAI";
 import { VegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../ai/KrumblidCombatAI";
+import { KrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
+import { OkrenCombatAI } from "../ai/OkrenCombatAI";
 
 export const enum AIType {
    wander,
@@ -34,7 +36,9 @@ export const enum AIType {
    dustfleaHibernate,
    sandBalling,
    vegetationConsume,
-   krumblidCombat
+   krumblidCombat,
+   krumblidHibernate,
+   okrenCombat
 }
 
 const _AIClasses = {
@@ -50,6 +54,8 @@ const _AIClasses = {
    [AIType.sandBalling]: (): SandBallingAI => 0 as any,
    [AIType.vegetationConsume]: (): VegetationConsumeAI => 0 as any,
    [AIType.krumblidCombat]: (): KrumblidCombatAI => 0 as any,
+   [AIType.krumblidHibernate]: (): KrumblidHibernateAI => 0 as any,
+   [AIType.okrenCombat]: (): OkrenCombatAI => 0 as any,
 } satisfies Record<AIType, object>;
 type AIClasses = typeof _AIClasses;
 type AIClass<T extends AIType> = ReturnType<AIClasses[T]>;
@@ -134,6 +140,14 @@ export class AIHelperComponent {
 
    public getKrumblidCombatAI(): KrumblidCombatAI {
       return this.ais[AIType.krumblidCombat]!;
+   }
+
+   public getKrumblidHibernateAI(): KrumblidHibernateAI {
+      return this.ais[AIType.krumblidHibernate]!;
+   }
+
+   public getOkrenCombatAI(): OkrenCombatAI {
+      return this.ais[AIType.okrenCombat]!;
    }
 }
 

@@ -426,6 +426,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Sand Ball",
       internalName: "sand-ball"
    },
+   [EntityType.krumblidMorphCocoon]: {
+      name: "Krumblid Morph Cocoon",
+      internalName: "krumblid-morph-cocoon"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;
