@@ -16,7 +16,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { Biome } from "../../../shared/src/biomes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, setHitboxIdealAngle, setHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = 2 * UtilVars.PI,
@@ -116,8 +116,10 @@ const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    const y = slimeHitbox.box.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(slimeHitbox.box.angle);
 
    const config = createSlimeSpitConfig(new Point(x, y), 2 * Math.PI * Math.random(), slimeComponent.size === SlimeSize.large ? 1 : 0);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = 500 * Math.sin(slimeHitbox.box.angle);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = 500 * Math.cos(slimeHitbox.box.angle);
+
+   const spitHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   setHitboxVelocity(spitHitbox, 500 * Math.sin(slimeHitbox.box.angle), 500 * Math.cos(slimeHitbox.box.angle));
+
    createEntity(config, getEntityLayer(slime), 0);
 }
 
@@ -263,7 +265,7 @@ function onTick(slime: Entity): void {
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
       const accelerationX = Vars.ACCELERATION * speedMultiplier * Math.sin(slimeHitbox.box.angle);
       const accelerationY = Vars.ACCELERATION * speedMultiplier * Math.cos(slimeHitbox.box.angle);
-      applyAcceleration(slime, slimeHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(slime, slimeHitbox, accelerationX, accelerationY);
       return;
    }
 
@@ -286,7 +288,7 @@ function onTick(slime: Entity): void {
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
       const accelerationX = Vars.ACCELERATION * speedMultiplier * Math.sin(slimeHitbox.box.angle);
       const accelerationY = Vars.ACCELERATION * speedMultiplier * Math.cos(slimeHitbox.box.angle);
-      applyAcceleration(slime, slimeHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(slime, slimeHitbox, accelerationX, accelerationY);
 
       setHitboxIdealAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, false);
       return;

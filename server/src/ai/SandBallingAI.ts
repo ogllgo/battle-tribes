@@ -10,7 +10,7 @@ import { SandBallComponentArray } from "../components/SandBallComponent";
 import { AngularTetherInfo, attachEntityWithTether, entityChildIsEntity, entityIsTethered, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
 import { createEntity } from "../Entity";
-import { applyAcceleration, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
 import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class SandBallingAI {
@@ -91,7 +91,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       // move forwards
       const accelerationX = sandBallingAI.acceleration * Math.sin(entityHitbox.box.angle);
       const accelerationY = sandBallingAI.acceleration * Math.cos(entityHitbox.box.angle);
-      applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
 
       const sandBallComponent = SandBallComponentArray.getComponent(sandBall);
 

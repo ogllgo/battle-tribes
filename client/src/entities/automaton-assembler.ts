@@ -21,7 +21,7 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 160, 80);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
    
    return {

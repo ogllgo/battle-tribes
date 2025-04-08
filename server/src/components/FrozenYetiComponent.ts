@@ -18,7 +18,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
-import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, setHitboxIdealAngle, setHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -306,8 +306,10 @@ const spawnSnowball = (frozenYeti: Entity, size: SnowballSize): void => {
    const velocityMagnitude = randFloat(Vars.SNOWBALL_THROW_SPEED_MIN, Vars.SNOWBALL_THROW_SPEED_MAX);
 
    const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), frozenYeti, size);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x = velocityMagnitude * Math.sin(angle);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y = velocityMagnitude * Math.cos(angle);
+
+   const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   setHitboxVelocity(snowballHitbox, velocityMagnitude * Math.sin(angle), velocityMagnitude * Math.cos(angle));
+
    createEntity(config, getEntityLayer(frozenYeti), 0);
 }
 
@@ -345,8 +347,7 @@ const duringRoar = (frozenYeti: Entity, targets: ReadonlyArray<Entity>): void =>
       const angle = frozenYetiHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       const angleDifference = getAngleDifference(frozenYetiHitbox.box.angle, angle);
       if (Math.abs(angleDifference) <= Vars.ROAR_ARC / 2) {
-         frozenYetiHitbox.velocity.x += 1500 / Settings.TPS * Math.sin(angle);
-         frozenYetiHitbox.velocity.y += 1500 / Settings.TPS * Math.cos(angle);
+         addHitboxVelocity(targetHitbox, 1500 / Settings.TPS * Math.sin(angle), 1500 / Settings.TPS * Math.cos(angle));
 
          if (StatusEffectComponentArray.hasComponent(entity)) {
             applyStatusEffect(entity, StatusEffect.freezing, 5 * Settings.TPS);
@@ -611,7 +612,7 @@ function onTick(frozenYeti: Entity): void {
             case 1: {
                const accelerationX = Vars.ACCELERATION * Math.sin(angleToTarget);
                const accelerationY = Vars.ACCELERATION * Math.cos(angleToTarget);
-               applyAcceleration(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
 
                // Lunge forwards at the beginning of this stage
                if (frozenYetiComponent.stageProgress === 0) {
@@ -631,7 +632,7 @@ function onTick(frozenYeti: Entity): void {
             case 2: {
                const accelerationX = Vars.ACCELERATION * Math.sin(angleToTarget);
                const accelerationY = Vars.ACCELERATION * Math.cos(angleToTarget);
-               applyAcceleration(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
 
                setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 1.3, false);
 
@@ -646,7 +647,7 @@ function onTick(frozenYeti: Entity): void {
          // Move towards the target
          const accelerationX = Vars.ACCELERATION * Math.sin(angleToTarget);
          const accelerationY = Vars.ACCELERATION * Math.cos(angleToTarget);
-         applyAcceleration(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
 
          setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, Math.PI, false);
          

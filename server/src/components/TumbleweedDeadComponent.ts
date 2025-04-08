@@ -2,8 +2,8 @@ import { Biome } from "../../../shared/src/biomes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { distance, Point } from "../../../shared/src/utils";
-import { applyForce, getHitboxTile, Hitbox } from "../hitboxes";
+import { Point } from "../../../shared/src/utils";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox } from "../hitboxes";
 import { getWindVector } from "../wind";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -43,7 +43,7 @@ function onTick(tumbleweed: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
    
       const wind = getWindVector(hitbox.box.position.x, hitbox.box.position.y);
-      applyForce(tumbleweed, hitbox, wind.x, wind.y);
+      applyAccelerationFromGround(tumbleweed, hitbox, wind.x, wind.y);
 
       tumbleweedDeadComponent.ticksUnrooted++;
 

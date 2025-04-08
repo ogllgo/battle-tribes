@@ -3,7 +3,7 @@ import { Entity, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Packet } from "../../../shared/src/packets";
 import { Point, randInt } from "../../../shared/src/utils";
-import { Hitbox, applyKnockback } from "../hitboxes";
+import { Hitbox, applyKnockback, getHitboxVelocity } from "../hitboxes";
 import { destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { addLocalInvulnerabilityHash, canDamageEntity, HealthComponentArray, hitEntity } from "./HealthComponent";
@@ -29,7 +29,7 @@ function onTick(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   if (hitbox.velocity.length() < 200) {
+   if (getHitboxVelocity(hitbox).length() < 200) {
       destroyEntity(fragment);
    }
 }

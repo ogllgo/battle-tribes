@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { applyAcceleration, createHitbox, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, setHitboxIdealAngle } from "../../hitboxes";
 import { getEntityLayer } from "../../world";
 
 const enum Vars {
@@ -89,7 +89,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
       // Swim on water
       const accelerationX = 40 * Math.sin(direction);
       const accelerationY = 40 * Math.cos(direction);
-      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
 
       setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED, false);
    } else {
@@ -99,9 +99,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         
-         fishHitbox.velocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
-         fishHitbox.velocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
+         addHitboxVelocity(fishHitbox, Vars.LUNGE_FORCE * Math.sin(direction), Vars.LUNGE_FORCE * Math.cos(direction));
          if (direction !== fishHitbox.box.angle) {
             fishHitbox.box.angle = direction;
             transformComponent.isDirty = true;

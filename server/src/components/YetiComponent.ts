@@ -28,7 +28,7 @@ import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
 import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
-import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, setHitboxIdealAngle } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 
 const enum Vars {
@@ -191,8 +191,10 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
    }
 
    const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), yeti, size);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x += velocityMagnitude * Math.sin(angle);
-   (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y += velocityMagnitude * Math.cos(angle);
+
+   const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   addHitboxVelocity(snowballHitbox, velocityMagnitude * Math.sin(angle), velocityMagnitude * Math.cos(angle));
+
    createEntity(config, getEntityLayer(yeti), 0);
 }
 

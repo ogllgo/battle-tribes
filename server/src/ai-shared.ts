@@ -10,7 +10,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "./world";
-import { applyAcceleration, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "./hitboxes";
+import { applyAccelerationFromGround, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "./hitboxes";
 
 const TURN_CONSTANT = Math.PI / Settings.TPS;
 const WALL_AVOIDANCE_MULTIPLIER = 1.5;
@@ -46,7 +46,7 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
 
 /** Estimates the distance it will take for the hitbox to stop */
 const estimateStopDistance = (hitbox: Hitbox): number => {
-   const totalVelocityMagnitude = hitbox.velocity.length();
+   const totalVelocityMagnitude = getHitboxVelocity(hitbox).length();
    
    // @Incomplete: Hard-coded
    // Estimate time it will take for the entity to stop
@@ -79,7 +79,7 @@ export function moveEntityToPosition(entity: Entity, positionX: number, position
 
    const accelerationX = acceleration * Math.sin(targetDirection);
    const accelerationY = acceleration * Math.cos(targetDirection);
-   applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
 
    setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed, false);
 }
@@ -106,9 +106,8 @@ export function entityHasReachedPosition(entity: Entity, positionX: number, posi
    const relativeX = entityHitbox.box.position.x - positionX;
    const relativeY = entityHitbox.box.position.y - positionY;
 
-   const vx = entityHitbox.velocity.x;
-   const vy = entityHitbox.velocity.y;
-   const dotProduct = vx * relativeX + vy * relativeY;
+   const velocity = getHitboxVelocity(entityHitbox);
+   const dotProduct = velocity.x * relativeX + velocity.y * relativeY;
    
    return dotProduct > 0;
 }

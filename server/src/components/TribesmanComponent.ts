@@ -9,7 +9,7 @@ import { randInt } from "../../../shared/src/utils";
 import { EntityConfig } from "../components";
 import { onFishLeaderHurt } from "../entities/mobs/fish";
 import { useItem } from "../entities/tribes/tribe-member";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { addHumanoidInventories } from "../inventories";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { getEntityType, getGameTicks } from "../world";
@@ -251,13 +251,10 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
-   if (tribeMemberHitbox.velocity.x !== 0 || tribeMemberHitbox.velocity.y !== 0) {
-      const velocityMagnitude = tribeMemberHitbox.velocity.length();
       
-      const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * velocityMagnitude;
-      if (Math.random() < chance / Settings.TPS) {
-         awardTitle(tribeMember, TribesmanTitle.sprinter);
-      }
+   const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).length();
+   if (Math.random() < chance / Settings.TPS) {
+      awardTitle(tribeMember, TribesmanTitle.sprinter);
    }
 
    const inventoryComponent = InventoryComponentArray.getComponent(tribeMember);

@@ -16,7 +16,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, entityChildIsEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { applyAcceleration, createHitbox, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
 import Layer from "../../Layer";
 import { createLight } from "../../light-levels";
 import { getEntityAgeTicks } from "../../world";
@@ -86,7 +86,7 @@ const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number
       
       const accelerationX = acceleration * Math.sin(targetDirection);
       const accelerationY = acceleration * Math.cos(targetDirection);
-      applyAcceleration(glurbSegment, hitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(glurbSegment, hitbox, accelerationX, accelerationY);
    }
 }
 

@@ -11,7 +11,7 @@ import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
-import { Hitbox } from "./hitboxes";
+import { getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 
 interface EntityPairCollisionInfo {
@@ -23,24 +23,24 @@ type CollisionPairs = Record<number, Record<number, EntityPairCollisionInfo | nu
 
 const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
-   affectedHitbox.box.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
-   affectedHitbox.box.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
+   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
 
+   const previousVelocity = getHitboxVelocity(affectedHitbox);
+   
    // Kill all the velocity going into the hitbox
    const bx = Math.sin(pushInfo.direction + Math.PI/2);
    const by = Math.cos(pushInfo.direction + Math.PI/2);
-   const velocityProjectionCoeff = affectedHitbox.velocity.x * bx + affectedHitbox.velocity.y * by;
-   affectedHitbox.velocity.x = bx * velocityProjectionCoeff;
-   affectedHitbox.velocity.y = by * velocityProjectionCoeff;
+   const velocityProjectionCoeff = previousVelocity.x * bx + previousVelocity.y * by;
+   const vx = bx * velocityProjectionCoeff;
+   const vy = by * velocityProjectionCoeff;
+   setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
 const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / transformComponent.totalMass;
-      
-      affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
-      affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);
+      addHitboxVelocity(affectedHitbox, pushForce * Math.sin(pushInfo.direction), pushForce * Math.cos(pushInfo.direction));
    }
 }
 

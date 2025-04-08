@@ -22,7 +22,7 @@ import { destroyEntity, entityExists, getEntityType, getGameTicks, isNight } fro
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { TombstoneComponentArray } from "./TombstoneComponent";
 import { entityIsStructure } from "../../../shared/src/structures";
-import { applyAbsoluteKnockback, applyAcceleration, applyKnockback, Hitbox } from "../hitboxes";
+import { applyAbsoluteKnockback, applyAccelerationFromGround, applyKnockback, Hitbox } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 
 const enum Vars {
@@ -321,7 +321,7 @@ function onTick(zombie: Entity): void {
 
          const accelerationX = Vars.ACCELERATION_SLOW * Math.sin(zombieHitbox.box.angle);
          const accelerationY = Vars.ACCELERATION_SLOW * Math.cos(zombieHitbox.box.angle);
-         applyAcceleration(zombie, zombieHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(zombie, zombieHitbox, accelerationX, accelerationY);
          return;
       }
    }

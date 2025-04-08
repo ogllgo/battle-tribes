@@ -9,7 +9,7 @@ import { runHibernateAI } from "../ai/DustfleaHibernateAI";
 import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { getHitboxTile, Hitbox, setHitboxAngularVelocity, stopHitboxTurning } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, stopHitboxTurning } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
@@ -160,11 +160,7 @@ function onTick(dustflea: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
-         if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && dustfleaHitbox.velocity.calculateDistanceBetween(targetHitbox.velocity) < 125) {
-            // @Hack: not doing this causes the parents to jitter..... for some reason???
-            dustfleaHitbox.velocity.x = 0;
-            dustfleaHitbox.velocity.y = 0;
-            
+         if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
             attachEntity(dustflea, suckTarget, targetHitbox, false);
 
             const tickEvent: EntityTickEvent = {
@@ -206,10 +202,6 @@ function onTick(dustflea: Entity): void {
             const targetHitbox = targetTransformComponent.children[0] as Hitbox;
             aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
             if (entitiesAreColliding(dustflea, sitTarget) !== CollisionVars.NO_COLLISION) {
-               // @Hack: not doing this causes the parents to jitter..... for some reason???
-               dustfleaHitbox.velocity.x = 0;
-               dustfleaHitbox.velocity.y = 0;
-               
                attachEntity(dustflea, sitTarget, targetHitbox, false);
             }
             return;

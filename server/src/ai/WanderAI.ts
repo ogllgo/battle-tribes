@@ -6,7 +6,7 @@ import { AIHelperComponentArray } from "../components/AIHelperComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import Layer from "../Layer";
 import { getEntityAgeTicks, getEntityLayer } from "../world";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../hitboxes";
 
 const enum Vars {
    POSITION_RECORD_INTERVAL = Settings.TPS
@@ -40,7 +40,8 @@ export default class WanderAI {
    }
 
    private shouldTryAndWander(hitbox: Hitbox): boolean {
-      return hitbox.velocity.x === 0 && hitbox.velocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
+      const velocity = getHitboxVelocity(hitbox);
+      return velocity.x === 0 && velocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
    }
 
    public update(entity: Entity): void {

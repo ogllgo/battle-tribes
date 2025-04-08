@@ -27,7 +27,7 @@ import { getBoxesCollidingEntities } from "../../../collision-detection";
 import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
 import { StructureType } from "../../../../../shared/src/structures";
 import { createEntity } from "../../../Entity";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -118,7 +118,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          const acceleration = getTribesmanSlowAcceleration(tribesman);
          const accelerationX = acceleration * Math.sin(targetDirection + Math.PI);
          const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
          setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
          
@@ -196,7 +196,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
          const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
@@ -264,7 +264,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
          const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);

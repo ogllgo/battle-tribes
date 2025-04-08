@@ -36,7 +36,7 @@ import { createHealingParticle, createSlimePoolParticle, createSparkParticle } f
 import Board from "../Board";
 import { resolvePlayerCollisions } from "../collision";
 import { setPlayerInstance, playerInstance } from "../player";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity } from "../hitboxes";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -335,11 +335,10 @@ abstract class Client {
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];
             
-            playerHitbox.velocity.x *= 0.5;
-            playerHitbox.velocity.y *= 0.5;
+            const previousVelocity = getHitboxVelocity(playerHitbox);
+            setHitboxVelocity(playerHitbox, previousVelocity.x * 0.5, previousVelocity.y * 0.5);
    
-            playerHitbox.velocity.x += knockbackData.knockback * Math.sin(knockbackData.knockbackDirection);
-            playerHitbox.velocity.y += knockbackData.knockback * Math.cos(knockbackData.knockbackDirection);
+            addHitboxVelocity(playerHitbox, knockbackData.knockback * Math.sin(knockbackData.knockbackDirection), knockbackData.knockback * Math.cos(knockbackData.knockbackDirection));
          }
       }
 

@@ -13,10 +13,10 @@ import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
 import { getInventory, hasInventory, InventoryComponentArray, pickupItemEntity } from "./InventoryComponent";
 import { adjustTribesmanRelationsAfterGift } from "./TribesmanAIComponent";
-import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
+import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ItemType } from "../../../shared/src/items/items";
 import { addDefence, HealthComponentArray, removeDefence } from "./HealthComponent";
 import { CollisionBit } from "../../../shared/src/collision";
-import { Hitbox } from "../hitboxes";
+import { Hitbox, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -81,8 +81,7 @@ function onTick(tribeMember: Entity): void {
                forceMult = lerp(0.5, 1, forceMult);
 
                const vacuumDirection = itemEntityHitbox.box.position.calculateAngleBetween(tribeMemberHitbox.box.position);
-               itemEntityHitbox.velocity.x += Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection);
-               itemEntityHitbox.velocity.y += Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection);
+               addHitboxVelocity(itemEntityHitbox, Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection), Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection));
             }
          }
       }

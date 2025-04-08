@@ -9,7 +9,7 @@ import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "../serv
 import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export interface FootprintComponentParams {
    readonly footstepParticleIntervalSeconds: number;
@@ -103,13 +103,14 @@ function onTick(entity: Entity): void {
 
    if (transformComponent.rootEntity === entity) {
       const hitbox = transformComponent.children[0] as Hitbox;
+      const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps
-      if (hitbox.velocity.lengthSquared() >= 2500 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+      if (velocity.length() >= 50 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
          createFootprintParticle(entity, footprintComponent.numFootstepsTaken, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
          footprintComponent.numFootstepsTaken++;
       }
-      footprintComponent.distanceTracker += hitbox.velocity.length() / Settings.TPS;
+      footprintComponent.distanceTracker += velocity.length() / Settings.TPS;
       if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
          footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
          createFootstepSound(entity);

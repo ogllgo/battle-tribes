@@ -27,7 +27,7 @@ import { TribeComponentArray } from "./TribeComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export interface TribesmanComponentParams {
    readonly warpaintType: number | null;
@@ -732,8 +732,9 @@ function onTick(entity: Entity): void {
    }
 
    // Sprinter particles
-   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && entityHitbox.velocity.length() > 100) {
-      const sprintParticleSpawnRate = Math.sqrt(entityHitbox.velocity.length() * 0.8);
+   const velocity = getHitboxVelocity(entityHitbox);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && velocity.length() > 100) {
+      const sprintParticleSpawnRate = Math.sqrt(velocity.length() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
          const offsetDirection = 2 * Math.PI * Math.random();
@@ -757,8 +758,8 @@ function onTick(entity: Entity): void {
       
       const velocityMagnitude = randFloat(45, 75);
       const velocityDirection = offsetDirection + Math.PI * 0.5;
-      const vx = entityHitbox.velocity.x + velocityMagnitude * Math.sin(velocityDirection);
-      const vy = entityHitbox.velocity.y + velocityMagnitude * Math.cos(velocityDirection);
+      const vx = velocity.x + velocityMagnitude * Math.sin(velocityDirection);
+      const vy = velocity.y + velocityMagnitude * Math.cos(velocityDirection);
       
       createSprintParticle(x, y, vx, vy);
    }

@@ -8,7 +8,9 @@ import { PhysicsComponentArray } from "../entity-components/server-components/Ph
 import { Point } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../hitboxes";
+
+// @Cleanup: file name
 
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 
@@ -166,8 +168,9 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    // scaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
    // scaleMatrix(matrix, scale, scale);
    
-   const tx = hitbox.box.position.x + hitbox.velocity.x * frameProgress * Settings.I_TPS;
-   const ty = hitbox.box.position.y + hitbox.velocity.y * frameProgress * Settings.I_TPS;
+   const velocity = getHitboxVelocity(hitbox);
+   const tx = hitbox.box.position.x + velocity.x * frameProgress / Settings.TPS;
+   const ty = hitbox.box.position.y + velocity.y * frameProgress / Settings.TPS;
 
    // Translation
    translateMatrix(matrix, tx, ty);

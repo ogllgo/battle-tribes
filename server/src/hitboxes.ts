@@ -18,7 +18,8 @@ export interface Hitbox {
    
    readonly box: Box;
    
-   readonly velocity: Point;
+   readonly previousPosition: Point;
+   readonly acceleration: Point;
 
    // @Memory: So many hitboxes don't use these 2!
    /** Angle the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI)
@@ -48,7 +49,8 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       parent: parent,
       children: [],
       box: box,
-      velocity: new Point(0, 0),
+      previousPosition: box.position.copy(),
+      acceleration: new Point(0, 0),
       idealAngle: -999,
       idealAngleIsRelative: false,
       angleTurnSpeed: 0,
@@ -69,23 +71,45 @@ export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitb
    return createHitbox(transformComponent, hitbox.parent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
 }
 
-export function slowVelocity(hitbox: Hitbox, slowUnits: number): void {
-   const velocityMagnitude = hitbox.velocity.length();
-
-   if (velocityMagnitude > 0) {
-      const reduction = Math.min(slowUnits, velocityMagnitude);
-      hitbox.velocity.x -= reduction * hitbox.velocity.x / velocityMagnitude;
-      hitbox.velocity.y -= reduction * hitbox.velocity.y / velocityMagnitude;
-   }
+export function getHitboxVelocity(hitbox: Hitbox): Point {
+   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TPS;
+   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TPS;
+   return new Point(vx, vy);
 }
 
-/** Gets the root hitbox of an attached hitbox */
+export function setHitboxVelocityX(hitbox: Hitbox, vx: number): void {
+   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+}
+
+export function setHitboxVelocityY(hitbox: Hitbox, vy: number): void {
+   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+}
+
+export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void {
+   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+}
+
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
    let currentHitbox = hitbox;
    while (currentHitbox.parent !== null) {
       currentHitbox = currentHitbox.parent;
    }
    return currentHitbox;
+}
+
+export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x += pushX / Settings.TPS;
+   pushedHitbox.box.position.y += pushY / Settings.TPS;
+}
+
+export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x += translationX;
+   pushedHitbox.box.position.y += translationY;
+   hitbox.previousPosition.x += translationX;
+   hitbox.previousPosition.y += translationY;
 }
 
 export function getTotalMass(node: Hitbox | Entity): number {
@@ -136,8 +160,7 @@ export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number
    const knockbackForce = knockback / totalMass;
 
    const rootHitbox = getRootHitbox(hitbox);
-   rootHitbox.velocity.x += knockbackForce * Math.sin(knockbackDirection);
-   rootHitbox.velocity.y += knockbackForce * Math.cos(knockbackDirection);
+   addHitboxVelocity(rootHitbox, knockbackForce * Math.sin(knockbackDirection), knockbackForce * Math.cos(knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -157,8 +180,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
    
    const rootHitbox = getRootHitbox(hitbox);
-   rootHitbox.velocity.x += knockback * Math.sin(knockbackDirection);
-   rootHitbox.velocity.y += knockback * Math.cos(knockbackDirection);
+   addHitboxVelocity(rootHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -167,7 +189,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
+export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -189,20 +211,15 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    const desiredVelocityX = accelerationX * tileFriction * moveSpeedMultiplier;
    const desiredVelocityY = accelerationY * tileFriction * moveSpeedMultiplier;
 
-   // Apply velocity with traction (blend towards desired velocity)
-   hitbox.velocity.x += (desiredVelocityX - hitbox.velocity.x) * physicsComponent.traction * Settings.I_TPS;
-   hitbox.velocity.y += (desiredVelocityY - hitbox.velocity.y) * physicsComponent.traction * Settings.I_TPS;
+   const currentVelocity = getHitboxVelocity(hitbox);
+
+   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * physicsComponent.traction;
+   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
 }
 
-export function applyForce(entity: Entity, hitbox: Hitbox, forceX: number, forceY: number): void {
-   const connectedMass = getHitboxConnectedMass(hitbox);
-   if (connectedMass === 0) {
-      return;
-   }
-   
-   const accelerationX = forceX / connectedMass;
-   const accelerationY = forceY / connectedMass;
-   applyAcceleration(entity, hitbox, accelerationX, accelerationY);
+export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): void {
+   hitbox.acceleration.x += accX;
+   hitbox.acceleration.y += accY;
 }
 
 export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number, idealAngleIsRelative: boolean): void {

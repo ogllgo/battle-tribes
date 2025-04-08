@@ -93,7 +93,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             const transformComponentParams = createTransformComponentParams(
                // @HACK
                boxes.map(box => {
-                  return createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+                  return createHitbox(0, null, box, new Point(0, 0), new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
                }),
             );
 

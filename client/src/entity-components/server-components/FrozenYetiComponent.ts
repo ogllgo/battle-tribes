@@ -15,7 +15,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import { HitData } from "../../../../shared/src/client-server-types";
 import { playerInstance } from "../../player";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { Hitbox, addHitboxVelocity } from "../../hitboxes";
 
 export interface FrozenYetiComponentParams {
    readonly attackType: FrozenYetiAttackType;
@@ -342,8 +342,7 @@ function onTick(entity: Entity): void {
                   angleDifference += Math.PI * 2;
                }
                if (Math.abs(angleDifference) <= ROAR_ARC / 2 && distanceToPlayer <= ROAR_REACH) {
-                  playerHitbox.velocity.x += 50 * Math.sin(angleToPlayer);
-                  playerHitbox.velocity.y += 50 * Math.cos(angleToPlayer);
+                  addHitboxVelocity(playerHitbox, 50 * Math.sin(angleToPlayer), 50 * Math.cos(angleToPlayer));
                }
                
                break;

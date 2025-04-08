@@ -20,7 +20,7 @@ import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
-import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -119,8 +119,9 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
-   const vx = tribesmanHitbox.velocity.x;
-   const vy = tribesmanHitbox.velocity.y;
+   const tribesmanVelocity = getHitboxVelocity(tribesmanHitbox);
+   const vx = tribesmanVelocity.x;
+   const vy = tribesmanVelocity.y;
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);
@@ -220,7 +221,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
          const accelerationMagnitude = getTribesmanAcceleration(tribesman);
          const accelerationX = accelerationMagnitude * Math.sin(tribesmanHitbox.box.angle);
          const accelerationY = accelerationMagnitude * Math.cos(tribesmanHitbox.box.angle);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       // @Speed: only do this if we know the path has a door in it

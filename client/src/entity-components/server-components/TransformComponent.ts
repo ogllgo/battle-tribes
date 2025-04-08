@@ -16,7 +16,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox, setHitboxVelocity } from "../../hitboxes";
 import { padBoxData, padHitboxDataExceptLocalID, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
 import { ComponentArray } from "../ComponentArray";
 
@@ -329,8 +329,8 @@ export function cleanTransform(node: Hitbox | Entity): void {
       } else {
          updateBox(hitbox.box, hitbox.parent.box);
          // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
-         hitbox.velocity.x = hitbox.parent.velocity.x;
-         hitbox.velocity.y = hitbox.parent.velocity.y;
+         const parentVelocity = getHitboxVelocity(hitbox.parent);
+         setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
       }
       
       for (const child of node.children) {
@@ -688,7 +688,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader: PacketReader): void => {
    padBoxData(reader);
 
-   reader.padOffset(8 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(10 * Float32Array.BYTES_PER_ELEMENT);
    
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);

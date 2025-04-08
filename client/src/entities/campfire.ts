@@ -21,7 +21,7 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
    let hitboxLocalID = 0;
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 52);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), new Point(0, 0), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
 
    return {

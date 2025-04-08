@@ -260,14 +260,17 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                }
                
                // @HACK!
-               attachEntity(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, childInfo.attachInfo.destroyWhenParentIsDestroyed);
-               // const angularTether: AngularTetherInfo = {
-               //    springConstant: 10,
-               //    angularDamping: 5,
-               //    padding: 4
-               // }
+               // attachEntity(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, childInfo.attachInfo.destroyWhenParentIsDestroyed);
+               const angularTether: AngularTetherInfo = {
+                  springConstant: 10,
+                  angularDamping: 5,
+                  padding: 4
+               };
                // const angularTether = undefined;
-               // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parent, 24, 10, 0.5, false, true, angularTether)
+               // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, true, angularTether);
+               if (childInfo.attachInfo.parentHitbox !== null) {
+                  childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, angularTether);
+               }
 
                // @HACK only for static
                (childTransformComponent.children[0] as Hitbox).box.relativeAngle = 0;

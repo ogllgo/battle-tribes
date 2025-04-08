@@ -3,7 +3,7 @@ import { Box, boxIsCircular } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { Packet } from "../../../shared/src/packets";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../hitboxes";
 
 const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
    packet.addNumber(box.position.x);
@@ -73,8 +73,10 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
 
    addBoxDataToPacket(packet, hitbox.box);
 
-   packet.addNumber(hitbox.velocity.x);
-   packet.addNumber(hitbox.velocity.y);
+   packet.addNumber(hitbox.previousPosition.x);
+   packet.addNumber(hitbox.previousPosition.y);
+   packet.addNumber(hitbox.acceleration.x);
+   packet.addNumber(hitbox.acceleration.y);
 
    packet.addNumber(hitbox.idealAngle);
    packet.addNumber(hitbox.angleTurnSpeed);
@@ -95,7 +97,7 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
 export function getHitboxDataLength(hitbox: Hitbox): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += getBoxDataLength(hitbox.box);
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
    // angle shit
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;

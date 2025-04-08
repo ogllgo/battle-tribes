@@ -17,7 +17,7 @@ import { TransformComponentArray, getRandomPositionInEntity } from "./TransformC
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, getHitboxTile, Hitbox } from "../hitboxes";
+import { applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -168,8 +168,7 @@ function onTick(fish: Entity): void {
          fishHitbox.box.relativeAngle = flailDirection + randFloat(-0.5, 0.5);
          transformComponent.isDirty = true;
          
-         fishHitbox.velocity.x += 200 * Math.sin(flailDirection);
-         fishHitbox.velocity.y += 200 * Math.cos(flailDirection);
+         addHitboxVelocity(fishHitbox, 200 * Math.sin(flailDirection), 200 * Math.cos(flailDirection));
    
          fishComponent.flailTimer = 0;
       }
@@ -199,7 +198,7 @@ function onTick(fish: Entity): void {
 
       const accelerationX = 100 * Math.sin(fishHitbox.box.angle);
       const accelerationY = 100 * Math.cos(fishHitbox.box.angle);
-      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
       return;
    }
 

@@ -19,7 +19,7 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
-   const hitbox = createHitbox(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 28), new Point(0, 0), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 28), new Point(0, 0), new Point(0, 0), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

@@ -18,9 +18,9 @@ import { generateMithrilOre } from "./mithril-ore-generation";
 import { createRawSpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";
 import { EntityConfig } from "../components";
 import { createBoulderConfig } from "../entities/resources/boulder";
-import { createGlurbConfig } from "../entities/mobs/glurb";
 import { createMossConfig } from "../entities/moss";
 import { ServerComponentType } from "../../../shared/src/components";
+import { createGlurbConfig } from "../entities/mobs/glurb";
 
 const enum Vars {
    DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE = 9,

@@ -759,21 +759,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createLilypadConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.golem,
-      layer: surfaceLayer,
-      spawnRate: 0.002,
-      biome: Biome.mountains,
-      tileTypes: [TileType.rock],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.004),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createGolemConfig(new Point(x, y), angle);
-      }
-   });
+   // @TEMPORARY: crashes fo some reason...
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.golem,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.002,
+   //    biome: Biome.mountains,
+   //    tileTypes: [TileType.rock],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.004),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createGolemConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.cactus,
       layer: surfaceLayer,

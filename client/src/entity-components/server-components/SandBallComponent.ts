@@ -4,7 +4,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createSandParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -88,6 +88,7 @@ function onTick(sandBall: Entity): void {
    if (transformComponent.rootEntity !== sandBall) {
       const hitbox = transformComponent.children[0] as Hitbox;
       const hitboxRadius = (hitbox.box as CircularBox).radius;
+      const hitboxVelocity = getHitboxVelocity(hitbox);
 
       let particleChance = hitboxRadius / Settings.TPS * 0.8;
       while (Math.random() < particleChance--) {
@@ -95,7 +96,7 @@ function onTick(sandBall: Entity): void {
          const offsetAmount = hitboxRadius * randFloat(0.7, 1);
          const x = hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection);
          const y = hitbox.box.position.y + offsetAmount * Math.sin(offsetDirection);
-         createSandParticle(x, y, hitbox.velocity.x, hitbox.velocity.y, offsetDirection + randFloat(-0.3, 0.3));
+         createSandParticle(x, y, hitboxVelocity.x, hitboxVelocity.y, offsetDirection + randFloat(-0.3, 0.3));
       }
    }
 }

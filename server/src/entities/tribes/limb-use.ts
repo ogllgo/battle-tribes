@@ -3,7 +3,7 @@ import { getItemAttackInfo, InventoryName, Item, ITEM_INFO_RECORD, itemInfoIsToo
 import { getHeldItem, getLimbConfiguration, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TransformComponentArray } from "../../components/TransformComponent";
 import { AttackVars, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 const enum Vars {
    DEFAULT_ATTACK_KNOCKBACK = 125
@@ -89,15 +89,13 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    const attackingEntityHitbox = transformComponent.children[0] as Hitbox;
 
    // Add extra range for moving attacks
-   const vx = attackingEntityHitbox.velocity.x;
-   const vy = attackingEntityHitbox.velocity.y;
-   if (vx !== 0 || vy !== 0) {
-      const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-      const attackAlignment = (vx * Math.sin(attackingEntityHitbox.box.angle) + vy * Math.cos(attackingEntityHitbox.box.angle)) / velocityMagnitude;
-      if (attackAlignment > 0) {
-         const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
-         limb.currentActionEndLimbState.extraOffsetY += extraAmount;
-      }
+   const velocity = getHitboxVelocity(attackingEntityHitbox);
+   const velocityMagnitude = velocity.length();
+
+   const attackAlignment = (velocity.x * Math.sin(attackingEntityHitbox.box.angle) + velocity.y * Math.cos(attackingEntityHitbox.box.angle)) / velocityMagnitude;
+   if (attackAlignment > 0) {
+      const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
+      limb.currentActionEndLimbState.extraOffsetY += extraAmount;
    }
 
    // Swing was successful

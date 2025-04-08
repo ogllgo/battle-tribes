@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -20,7 +20,7 @@ import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
 
 export interface AngularTetherInfo {
@@ -358,13 +358,14 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
 export function cleanTransform(node: Hitbox | Entity): void {
    if (typeof node !== "number") {
       const hitbox = node;
+
       if (hitbox.parent === null) {
          hitbox.box.angle = hitbox.box.relativeAngle;
       } else {
          updateBox(hitbox.box, hitbox.parent.box);
          // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
-         hitbox.velocity.x = hitbox.parent.velocity.x;
-         hitbox.velocity.y = hitbox.parent.velocity.y;
+         const parentVelocity = getHitboxVelocity(hitbox.parent);
+         setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
       }
       
       for (const child of node.children) {
@@ -476,8 +477,8 @@ TransformComponentArray.onRemove = onRemove;
 const collideWithVerticalWorldBorder = (transformComponent: TransformComponent, tx: number): void => {
    for (const rootHitbox of transformComponent.children) {
       if (entityChildIsHitbox(rootHitbox)) {
-         rootHitbox.box.position.x += tx;
-         rootHitbox.velocity.x = 0;
+         translateHitbox(rootHitbox, tx, 0);
+         setHitboxVelocityX(rootHitbox, 0);
       }
    }
 
@@ -487,8 +488,8 @@ const collideWithVerticalWorldBorder = (transformComponent: TransformComponent, 
 const collideWithHorizontalWorldBorder = (transformComponent: TransformComponent, ty: number): void => {
    for (const rootHitbox of transformComponent.children) {
       if (entityChildIsHitbox(rootHitbox)) {
-         rootHitbox.box.position.y += ty;
-         rootHitbox.velocity.y = 0;
+         translateHitbox(rootHitbox, 0, ty);
+         setHitboxVelocityY(rootHitbox, 0);
       }
    }
 
@@ -727,22 +728,25 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
    entityTransformComponent.parentEntity = parent;
 
    if (parentHitbox !== null) {
+      const parentVelocity = getHitboxVelocity(parentHitbox);
       // Attach all root hitboxes to the parent hitbox
-      for (const child of entityTransformComponent.rootChildren) {
-         if (entityChildIsHitbox(child)) {
+      for (const childHitbox of entityTransformComponent.rootChildren) {
+         if (entityChildIsHitbox(childHitbox)) {
             // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
-            child.parent = parentHitbox;
+            childHitbox.parent = parentHitbox;
 
             // Once the entity gets attached, it's going to have the parent hitboxes' angle added to it, so subtract it now.
             // Adjust the child's relative rotation so that it stays pointed in the same direction relative to the parent
-            child.box.relativeAngle -= parentHitbox.box.angle;
-            const diffX = child.box.position.x - parentHitbox.box.position.x;
-            const diffY = child.box.position.y - parentHitbox.box.position.y;
+            childHitbox.box.relativeAngle -= parentHitbox.box.angle;
+            const diffX = childHitbox.box.position.x - parentHitbox.box.position.x;
+            const diffY = childHitbox.box.position.y - parentHitbox.box.position.y;
          
             const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
             const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
-            child.box.offset.x = rotatedDiffX;
-            child.box.offset.y = rotatedDiffY;
+            childHitbox.box.offset.x = rotatedDiffX;
+            childHitbox.box.offset.y = rotatedDiffY;
+
+            setHitboxVelocity(childHitbox, parentVelocity.x, parentVelocity.y);
          }
       }
    }
@@ -777,6 +781,8 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
       for (const rootHitbox of entityTransformComponent.rootChildren) {
          if (entityChildIsHitbox(rootHitbox)) {
             // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
+
+            // Don't set 'rootHitbox.parent = parentHitbox' as that would imply that the 
             rootHitbox.parent = parentHitbox;
 
             // @Incomplete: why don't we set the offset here like in the non-tether function??

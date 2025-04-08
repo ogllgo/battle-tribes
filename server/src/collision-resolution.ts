@@ -5,11 +5,11 @@ import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getComponentArrayRecord } from "./components/ComponentArray";
-import { HitboxCollisionType, updateBox } from "battletribes-shared/boxes/boxes";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityComponentTypes, getEntityType } from "./world";
 import { HitboxCollisionPair } from "./collision-detection";
-import { getHitboxConnectedMass, Hitbox } from "./hitboxes";
+import { getHitboxConnectedMass, getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
    for (const tether of transformComponent.tethers) {
@@ -25,21 +25,24 @@ const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hi
 
 const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
-   affectedHitbox.box.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
-   affectedHitbox.box.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
+   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+
+   const previousVelocity = getHitboxVelocity(affectedHitbox);
 
    // Kill all the velocity going into the hitbox
    const bx = Math.sin(pushInfo.direction + Math.PI/2);
    const by = Math.cos(pushInfo.direction + Math.PI/2);
-   const velocityProjectionCoeff = affectedHitbox.velocity.x * bx + affectedHitbox.velocity.y * by;
-   affectedHitbox.velocity.x = bx * velocityProjectionCoeff;
-   affectedHitbox.velocity.y = by * velocityProjectionCoeff;
+   const velocityProjectionCoeff = previousVelocity.x * bx + previousVelocity.y * by;
+   const vx = bx * velocityProjectionCoeff;
+   const vy = by * velocityProjectionCoeff;
+   setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
 const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+   const previousVelocity = getHitboxVelocity(affectedHitbox);
+   
    // Transform the entity out of the hitbox
-   affectedHitbox.box.position.x += pushInfo.amountIn * Math.sin(pushInfo.direction);
-   affectedHitbox.box.position.y += pushInfo.amountIn * Math.cos(pushInfo.direction);
+   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
 
    // Reverse the velocity going into the hitbox
    
@@ -47,24 +50,20 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: Collision
    const separationAxisProjY = Math.cos(pushInfo.direction + Math.PI/2);
    const pushAxisProjX = Math.sin(pushInfo.direction + Math.PI);
    const pushAxisProjY = Math.cos(pushInfo.direction + Math.PI);
-
-   const velocitySeparationCoeff = affectedHitbox.velocity.x * separationAxisProjX + affectedHitbox.velocity.y * separationAxisProjY;
-   const velocityPushCoeff = affectedHitbox.velocity.x * pushAxisProjX + affectedHitbox.velocity.y * pushAxisProjY;
+   
+   const velocitySeparationCoeff = previousVelocity.x * separationAxisProjX + previousVelocity.y * separationAxisProjY;
+   const velocityPushCoeff = previousVelocity.x * pushAxisProjX + previousVelocity.y * pushAxisProjY;
    // Keep the velocity in the separation axis
-   affectedHitbox.velocity.x = separationAxisProjX * velocitySeparationCoeff;
-   affectedHitbox.velocity.y = separationAxisProjY * velocitySeparationCoeff;
+   setHitboxVelocity(affectedHitbox, separationAxisProjY * velocitySeparationCoeff, separationAxisProjX * velocitySeparationCoeff);
    // Reverse the velocity in the push axis
-   affectedHitbox.velocity.x -= pushAxisProjX * velocityPushCoeff;
-   affectedHitbox.velocity.y -= pushAxisProjY * velocityPushCoeff;
+   addHitboxVelocity(affectedHitbox, -pushAxisProjX * velocityPushCoeff, -pushAxisProjY * velocityPushCoeff);
 }
 
 const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
    if (totalAffectedMass !== 0) {
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
-      
-      affectedHitbox.velocity.x += pushForce * Math.sin(pushInfo.direction);
-      affectedHitbox.velocity.y += pushForce * Math.cos(pushInfo.direction);
+      addHitboxVelocity(affectedHitbox, pushForce * Math.sin(pushInfo.direction), pushForce * Math.cos(pushInfo.direction));
    }
 }
 

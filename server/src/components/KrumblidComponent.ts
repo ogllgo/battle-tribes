@@ -8,7 +8,7 @@ import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
-import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -215,7 +215,7 @@ function onTick(krumblid: Entity): void {
       // @Incomplete: use new move func
       const accelerationX = 200 * Math.sin(hitbox.box.angle);
       const accelerationY = 200 * Math.cos(hitbox.box.angle);
-      applyAcceleration(krumblid, hitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(krumblid, hitbox, accelerationX, accelerationY);
       return;
    }
 

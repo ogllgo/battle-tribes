@@ -10,9 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { getHitboxTile, getRootHitbox, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { applyAcceleration, getHitboxTile, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
 import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
-import { updateBox } from "../../../shared/src/boxes/boxes";
 import { cleanAngleNEW } from "../ai-shared";
 
 // @Cleanup: Variable names
@@ -131,14 +130,11 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // which is only set at the creation of an entity. To remove these conditions we could probably split the physics
    // entities into two groups, and call two different applyPhysicsFriction and applyPhysicsNoFriction functions to
    // the corresponding groups
-   
-   // @Temporary @Hack
-   if (isNaN(hitbox.velocity.x) || isNaN(hitbox.velocity.y)) {
-      console.warn("Entity type " + EntityTypeString[getEntityType(entity)] + " velocity was NaN.");
-      hitbox.velocity.x = 0;
-      hitbox.velocity.y = 0;
-   }
 
+   if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
+      throw new Error();
+   }
+   
    const layer = getEntityLayer(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -148,38 +144,49 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
    if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
-      hitbox.velocity.x += 240 * Settings.I_TPS * a[flowDirectionIdx];
-      hitbox.velocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
+      applyAcceleration(hitbox, 240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]);
    }
 
-   // Apply friction to velocity
-   if (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) {
-      const friction = TILE_FRICTIONS[tileType];
-      
-      if (physicsComponent.isAffectedByAirFriction) {
-         // Air friction
-         hitbox.velocity.x *= 1 - friction * Settings.I_TPS * 2;
-         hitbox.velocity.y *= 1 - friction * Settings.I_TPS * 2;
-      }
+   // @Cleanup: shouldn't be used by air friction.
+   const friction = TILE_FRICTIONS[tileType];
+   
+   let velX = hitbox.box.position.x - hitbox.previousPosition.x;
+   let velY = hitbox.box.position.y - hitbox.previousPosition.y;
 
-      if (physicsComponent.isAffectedByGroundFriction) {
-         // @Incomplete @Bug: Doesn't take into account the TPS. Would also be fixed by pre-multiplying the array
-         // Ground friction
-         const velocityMagnitude = hitbox.velocity.length();
-         if (velocityMagnitude > 0) {
-            const groundFriction = Math.min(friction, velocityMagnitude);
-            hitbox.velocity.x -= groundFriction * hitbox.velocity.x / velocityMagnitude;
-            hitbox.velocity.y -= groundFriction * hitbox.velocity.y / velocityMagnitude;
-         }
-      }
-
-      // Update position based on the sum of self-velocity and external velocity
-      hitbox.box.position.x += hitbox.velocity.x * Settings.I_TPS;
-      hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;
-
-      transformComponent.isDirty = true;
-      registerDirtyEntity(entity);
+   // Air friction
+   if (physicsComponent.isAffectedByAirFriction) {
+      // @IncompletE: shouldn't use tile friction!!
+      velX *= 1 - friction / Settings.TPS * 2;
+      velY *= 1 - friction / Settings.TPS * 2;
    }
+
+   if (physicsComponent.isAffectedByGroundFriction) {
+      // @Incomplete @Bug: Doesn't take into account the TPS. Would also be fixed by pre-multiplying the array
+      // Ground friction
+      const velocityMagnitude = Math.hypot(velX, velY);
+      if (velocityMagnitude > 0) {
+         const groundFriction = Math.min(friction, velocityMagnitude);
+         velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
+         velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
+      }
+   }
+   
+   // Verlet integration update:
+   // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x / Settings.TPS / Settings.TPS;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y / Settings.TPS / Settings.TPS;
+
+   hitbox.previousPosition.x = hitbox.box.position.x;
+   hitbox.previousPosition.y = hitbox.box.position.y;
+
+   hitbox.box.position.x = newX;
+   hitbox.box.position.y = newY;
+
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
+
+   transformComponent.isDirty = true;
+   registerDirtyEntity(entity);
 }
 
 const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformComponent): void => {
@@ -240,12 +247,6 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
    }
 }
 
-export function translateHitbox(hitbox: Hitbox, pushX: number, pushY: number): void {
-   const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += pushX;
-   pushedHitbox.box.position.y += pushY;
-}
-
 const applyHitboxTethers = (transformComponent: TransformComponent): void => {
    const tethers = transformComponent.tethers;
    
@@ -270,7 +271,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
       const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
       
-      // Apply spring force 
       translateHitbox(hitbox, springForceX, springForceY);
       if (tether.affectsOriginHitbox) {
          translateHitbox(originHitbox, -springForceX, -springForceY);

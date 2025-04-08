@@ -36,7 +36,7 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { getHitboxTile, Hitbox, setHitboxAngularVelocity } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, setHitboxVelocity } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
@@ -53,14 +53,19 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
       return;
    }
 
+   const transformComponent = TransformComponentArray.getComponent(player);
+   const playerHitbox = transformComponent.children[0] as Hitbox;
+
    const playerComponent = PlayerComponentArray.getComponent(player);
 
    const positionX = reader.readNumber();
    const positionY = reader.readNumber();
    const angle = reader.readNumber();
 
-   const velocityX = reader.readNumber();
-   const velocityY = reader.readNumber();
+   playerHitbox.previousPosition.x = reader.readNumber();
+   playerHitbox.previousPosition.y = reader.readNumber();
+   playerHitbox.acceleration.x = reader.readNumber();
+   playerHitbox.acceleration.y = reader.readNumber();
 
    playerComponent.movementIntention.x = reader.readNumber();
    playerComponent.movementIntention.y = reader.readNumber();
@@ -83,14 +88,8 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
    const hotbarLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-
-   const transformComponent = TransformComponentArray.getComponent(player);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
    
-   // If the player has moved or rotated, is is dirty
-   if (positionX !== playerHitbox.box.position.x || positionY !== playerHitbox.box.position.y || angle !== playerHitbox.box.angle) {
-      registerDirtyEntity(player);
-   }
+   registerDirtyEntity(player);
    playerHitbox.box.position.x = positionX;
    playerHitbox.box.position.y = positionY;
    playerHitbox.box.angle = angle;
@@ -103,13 +102,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerClient.gameDataOptions = gameDataOptions;
    
    transformComponent.isDirty = true;
-   
-   // @Hack
-   // Velocity gets overridden for carried entities, so setting here would be pointless (and would mess up stuff which relies on the velocity of carried entities)
-   if (transformComponent.rootEntity === player) {
-      playerHitbox.velocity.x = velocityX;
-      playerHitbox.velocity.y = velocityY;
-   }
 
    setHitboxAngularVelocity(playerHitbox, angularVelocity);
    
@@ -741,7 +733,7 @@ export function processPickUpArrowPacket(playerClient: PlayerClient, reader: Pac
 
    const transformComponent = TransformComponentArray.getComponent(arrow);
    const hitbox = transformComponent.children[0] as Hitbox;
-   if (hitbox.velocity.length() < 1) {
+   if (getHitboxVelocity(hitbox).length() < 1) {
       destroyEntity(arrow);
       
       const inventoryComponent = InventoryComponentArray.getComponent(player);

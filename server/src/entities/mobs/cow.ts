@@ -11,7 +11,7 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { PhysicsComponent, translateHitbox } from "../../components/PhysicsComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -25,7 +25,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, createHitbox, Hitbox } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, Hitbox } from "../../hitboxes";
 import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
 
 const enum Vars {

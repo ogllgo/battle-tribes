@@ -26,8 +26,7 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle, stopHitboxTurning } from "../hitboxes";
-import { translateHitbox } from "./PhysicsComponent";
+import { applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox, setHitboxIdealAngle, stopHitboxTurning, translateHitbox } from "../hitboxes";
 import { getEscapeTarget } from "../ai/EscapeAI";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 
@@ -226,7 +225,7 @@ const moveCow = (cow: Entity, turnTargetX: number, turnTargetY: number, moveTarg
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
    const accelerationX = acceleration * accelerationMultiplier * Math.sin(moveTargetDirection);
    const accelerationY = acceleration * accelerationMultiplier * Math.cos(moveTargetDirection);
-   applyAcceleration(cow, cowBodyHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
 
    const targetFaceDirection = angle(turnTargetX - cowBodyHitbox.box.position.x, turnTargetY - cowBodyHitbox.box.position.y);
    const turnSpeed = getAbsAngleDiff(cowBodyHitbox.box.angle, targetFaceDirection) > 0.3 ? 1 : 0.15;
@@ -626,7 +625,7 @@ function onTick(cow: Entity): void {
       // @Incomplete: use new move func
       const accelerationX = 200 * Math.sin(cowBodyHitbox.box.angle);
       const accelerationY = 200 * Math.cos(cowBodyHitbox.box.angle);
-      applyAcceleration(cow, cowBodyHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
       stopCow(cow);
       return;
    }
@@ -704,7 +703,7 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
       return;
    }
 
-   if (affectedHitbox.velocity.length() <= 100) {
+   if (getHitboxVelocity(affectedHitbox).length() <= 100) {
       // If the cow is being blocked, stop the ram
       const ticksSinceRamStart = getGameTicks() - cowComponent.ramStartTicks;
       if (ticksSinceRamStart >= 1 * Settings.TPS) {

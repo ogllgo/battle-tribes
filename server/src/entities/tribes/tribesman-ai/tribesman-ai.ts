@@ -27,7 +27,7 @@ import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 import { getAbsAngleDiff } from "../../../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../../../collision-detection";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -436,7 +436,7 @@ export function tickTribesman(tribesman: Entity): void {
          if (!willStopAtDesiredDistance(tribesmanHitbox, 80, distance)) {
             const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle);
             const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
@@ -576,12 +576,12 @@ export function tickTribesman(tribesman: Entity): void {
             // If the tribesman will stop too close to the target, move back a bit
             const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
             const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          } else if (!willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
             // Too far away, move closer
             const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(targetDirection);
             const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(targetDirection);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
          setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);

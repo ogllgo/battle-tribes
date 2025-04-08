@@ -5,7 +5,7 @@ import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferConta
 import Board from "./Board";
 import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { BlockType } from "../../shared/src/components";
-import { Hitbox } from "./hitboxes";
+import { getHitboxVelocity, Hitbox } from "./hitboxes";
 
 // @Cleanup: Standardise all these functions to just take the stuff necessary to create them, then have the places which call them modify the returned particle
 
@@ -130,7 +130,8 @@ export function createFootprintParticle(entity: Entity, numFootstepsTaken: numbe
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
    
-   const velocityDirection = angle(hitbox.velocity.x, hitbox.velocity.y);
+   const velocity = getHitboxVelocity(hitbox);
+   const velocityDirection = angle(velocity.x, velocity.y);
 
    const offsetMagnitude = footstepOffset / 2;
    const offsetDirection = velocityDirection + footstepAngleOffset + Math.PI/2;

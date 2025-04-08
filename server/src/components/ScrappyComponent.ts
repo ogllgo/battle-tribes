@@ -5,7 +5,7 @@ import { InventoryName } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { randFloat } from "../../../shared/src/utils";
 import { throwItem } from "../entities/tribes/tribe-member";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox, setHitboxVelocity } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { ComponentArray } from "./ComponentArray";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
@@ -92,10 +92,10 @@ function onTick(scrappy: Entity): void {
          // Drop the item
          throwItem(scrappy, InventoryName.hotbar, 1, 99, scrappyHitbox.box.angle + randFloat(-0.3, 0.3));
       } else {
-         if (scrappyHitbox.velocity.length() > 100) {
+         const velocity = getHitboxVelocity(scrappyHitbox);
+         if (velocity.length() > 100) {
             hasAccident = true;
-            scrappyHitbox.velocity.x *= 0.3;
-            scrappyHitbox.velocity.y *= 0.3;
+            setHitboxVelocity(scrappyHitbox, velocity.x * 0.3, velocity.y * 0.3);
          }
       }
       

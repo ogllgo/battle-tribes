@@ -13,7 +13,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
 import { addLocalInvulnerabilityHash, canDamageEntity, hitEntity, HealthComponentArray } from "./HealthComponent";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { applyAcceleration, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, applyKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
@@ -265,7 +265,7 @@ function onTick(golem: Entity): void {
 
    const accelerationX = 350 * Math.sin(angleToTarget);
    const accelerationY = 350 * Math.cos(angleToTarget);
-   applyAcceleration(golem, golemHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(golem, golemHitbox, accelerationX, accelerationY);
 
    setHitboxIdealAngle(golemHitbox, angleToTarget, Math.PI / 1.5, false);
 }

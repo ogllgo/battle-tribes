@@ -22,7 +22,7 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { createEntity } from "../Entity";
 import { createSlingTurretRockConfig } from "../entities/projectiles/sling-turret-rock";
 import { HealthComponentArray } from "./HealthComponent";
-import { Hitbox } from "../hitboxes";
+import { Hitbox, addHitboxVelocity } from "../hitboxes";
 
 export class TurretComponent {
    public aimDirection = 0;
@@ -169,8 +169,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    }
 
    const projectileHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   projectileHitbox.velocity.x = ammoInfo.projectileSpeed * Math.sin(fireDirection);
-   projectileHitbox.velocity.y = ammoInfo.projectileSpeed * Math.cos(fireDirection);
+   addHitboxVelocity(projectileHitbox, ammoInfo.projectileSpeed * Math.sin(fireDirection), ammoInfo.projectileSpeed * Math.cos(fireDirection));
 
    createEntity(config, getEntityLayer(turret), 0)
 }

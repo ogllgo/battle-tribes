@@ -93,7 +93,8 @@ export function padBoxData(reader: PacketReader): void {
 export function readHitboxFromData(reader: PacketReader, localID: number, children: ReadonlyArray<TransformNode>): Hitbox {
    const box = readBoxFromData(reader);
 
-   const velocity = new Point(reader.readNumber(), reader.readNumber());
+   const previousPosition = new Point(reader.readNumber(), reader.readNumber());
+   const acceleration = new Point(reader.readNumber(), reader.readNumber());
 
    const idealAngle = reader.readNumber();
    const angleTurnSpeed = reader.readNumber();
@@ -113,7 +114,7 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    // @INCOMPLETE @BUG: can't get from other transform components!
    const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
 
-   const hitbox = createHitbox(localID, parentHitbox, box, velocity, mass, collisionType, collisionBit, collisionMask, flags);
+   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, mass, collisionType, collisionBit, collisionMask, flags);
    hitbox.idealAngle = idealAngle;
    hitbox.angleTurnSpeed = angleTurnSpeed;
    return hitbox;
@@ -121,7 +122,7 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    padBoxData(reader);
 
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -182,8 +183,10 @@ export function updateBoxFromData(box: Box, reader: PacketReader): void {
 export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: PacketReader): void {
    updateBoxFromData(hitbox.box, reader);
 
-   hitbox.velocity.x = reader.readNumber();
-   hitbox.velocity.y = reader.readNumber();
+   hitbox.previousPosition.x = reader.readNumber();
+   hitbox.previousPosition.y = reader.readNumber();
+   hitbox.acceleration.x = reader.readNumber();
+   hitbox.acceleration.y = reader.readNumber();
 
    hitbox.idealAngle = reader.readNumber();
    hitbox.angleTurnSpeed = reader.readNumber();

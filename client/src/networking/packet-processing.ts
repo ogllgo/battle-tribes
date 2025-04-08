@@ -814,23 +814,22 @@ export function processGameDataPacket(reader: PacketReader): void {
 
 export function processSyncDataPacket(reader: PacketReader): void {
    if (!Game.isRunning || playerInstance === null) return;
+
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    
    const x = reader.readNumber();
    const y = reader.readNumber();
    const angle = reader.readNumber();
 
-   const velocityX = reader.readNumber();
-   const velocityY = reader.readNumber();
-
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   playerHitbox.previousPosition.x = reader.readNumber();
+   playerHitbox.previousPosition.y = reader.readNumber();
+   playerHitbox.acceleration.x = reader.readNumber();
+   playerHitbox.acceleration.y = reader.readNumber();
    
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
    playerHitbox.box.angle = angle;
-
-   playerHitbox.velocity.x = velocityX;
-   playerHitbox.velocity.y = velocityY;
    
    Game.sync();
 }

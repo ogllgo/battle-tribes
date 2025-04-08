@@ -16,7 +16,7 @@ import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 import { getTileLocalBiome } from "../../../local-biomes";
-import { Hitbox } from "../../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../../hitboxes";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -82,7 +82,8 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const displayX = roundNum(hitbox.box.position.x, 0);
    const displayY = roundNum(hitbox.box.position.y, 0);
 
-   let displayVelocityMagnitude = roundNum(hitbox.velocity.length(), 0);
+   const velocity = getHitboxVelocity(hitbox);
+   let displayVelocityMagnitude = roundNum(velocity.length(), 0);
 
    const chunks = Array.from(transformComponent.chunks).map(chunk => `${chunk.x}-${chunk.y}`);
    const chunkDisplayText = chunks.reduce((previousValue, chunk, idx) => {
