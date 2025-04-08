@@ -261,20 +261,17 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                
                // @HACK!
                // attachEntity(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, childInfo.attachInfo.destroyWhenParentIsDestroyed);
-               const angularTether: AngularTetherInfo = {
-                  springConstant: 10,
-                  angularDamping: 5,
-                  padding: 4
-               };
+               
                // const angularTether = undefined;
                // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, true, angularTether);
                if (childInfo.attachInfo.parentHitbox !== null) {
+                  const angularTether: AngularTetherInfo = {
+                     springConstant: 20,
+                     angularDamping: 0.5,
+                     padding: 0.1
+                  };
                   childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, angularTether);
                }
-
-               // @HACK only for static
-               (childTransformComponent.children[0] as Hitbox).box.relativeAngle = 0;
-               (childTransformComponent.children[0] as Hitbox).box.angle = 0;
             }
          }
       }

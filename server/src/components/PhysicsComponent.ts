@@ -304,22 +304,6 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       }
    }
 
-   // Verlet integration
-   // @Investigate: Do we not... apply velocity in a different way immediately before/after in the applyHitboxKinematics function...?
-   // for (const tether of tethers) {
-   //    const hitbox = tether.hitbox;
-      
-   //    const velocityX = (hitbox.box.position.x - tether.previousPositionX) * (1 - tether.damping);
-   //    const velocityY = (hitbox.box.position.y - tether.previousPositionY) * (1 - tether.damping);
-      
-   //    // Update previous position for next frame
-   //    tether.previousPositionX = hitbox.box.position.x;
-   //    tether.previousPositionY = hitbox.box.position.y;
-
-   //    hitbox.box.position.x += velocityX;
-   //    hitbox.box.position.y += velocityY;
-   // }
-
    if (tethers.length > 0) {
       // @Speed: Is this necessary every tick?
       transformComponent.isDirty = true;
