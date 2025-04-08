@@ -17,7 +17,7 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-// @TEMPORARY @HACK
+// @TEMPORARY @HACK bn  
 function onTakeDamage(tongueSegment: Entity): void {
    const tongueSegmentTransformComponent = TransformComponentArray.getComponent(tongueSegment);
    

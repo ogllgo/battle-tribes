@@ -5,11 +5,12 @@ import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { getAbsAngleDiff, Point } from "../../../shared/src/utils";
-import { runOkrenCombatAI, shouldRunOkrenCombatAI, updateOkrenCombatAI } from "../ai/OkrenCombatAI";
+import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
 import { applyAbsoluteKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { getEntityFullness } from "./HungerComponent";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 
 export const enum OkrenAgeStage {
@@ -154,8 +155,6 @@ export function getOkrenMandibleHitbox(okren: Entity, side: OkrenSide): Hitbox {
 }
 
 function onTick(okren: Entity): void {
-   // @Temporary
-   // if(1+1===2)return;
    const okrenComponent = OkrenComponentArray.getComponent(okren);
 
    for (const side of OKREN_SIDES) {
@@ -195,9 +194,18 @@ function onTick(okren: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(okren);
 
    const combatAI = aiHelperComponent.getOkrenCombatAI();
-   updateOkrenCombatAI(okren, aiHelperComponent, combatAI);
-   if (shouldRunOkrenCombatAI(combatAI)) {
-      runOkrenCombatAI(okren, aiHelperComponent, combatAI);
+
+   if (getEntityFullness(okren) < 0.5) {
+      const target = getOkrenPreyTarget(okren, aiHelperComponent);
+      if (target !== null) {
+         runOkrenCombatAI(okren, aiHelperComponent, combatAI, target);
+         return;
+      }
+   }
+   
+   const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
+   if (threatTarget !== null) {
+      runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
       return;
    }
    

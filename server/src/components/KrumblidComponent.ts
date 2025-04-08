@@ -100,6 +100,8 @@ const entityIsFollowable = (entity: Entity): boolean => {
 }
 
 function onTick(krumblid: Entity): void {
+   if (1+1 === 2) return;
+   
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
 
    // By default, move the krumblids' mandibles back to their resting position

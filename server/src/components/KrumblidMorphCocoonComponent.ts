@@ -2,7 +2,7 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
-import { createKrumblidConfig } from "../entities/mobs/krumblid";
+import { createOkrenConfig } from "../entities/desert/okren";
 import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
 import { destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
@@ -19,11 +19,12 @@ KrumblidMorphCocoonComponentArray.onTick = {
    func: onTick
 };
 
-const NUM_STAGES = 4;
+const NUM_STAGES = 9;
+const DURATION_HOURS = 72;
 
 const getStage = (ageTicks: number): number => {
    const ageHours = ticksToGameHours(ageTicks);
-   return 1 + Math.floor(ageHours / 12 * NUM_STAGES);
+   return 1 + Math.floor(ageHours / DURATION_HOURS * NUM_STAGES);
 }
 
 function onTick(cocoon: Entity): void {
@@ -37,8 +38,8 @@ function onTick(cocoon: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(cocoon);
       const hitbox = transformComponent.children[0] as Hitbox;
       
-      const krumblidConfig = createKrumblidConfig(hitbox.box.position.copy(), hitbox.box.angle);
-      createEntity(krumblidConfig, getEntityLayer(cocoon), 0);
+      const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 4);
+      createEntity(okrenConfig, getEntityLayer(cocoon), 0);
    } else if (stage !== krumblidMorphCocoonComponent.stage) {
       krumblidMorphCocoonComponent.stage = stage;
 

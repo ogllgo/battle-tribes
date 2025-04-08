@@ -1,9 +1,11 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType } from "../../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
+import { getTotalMass, Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { HealthComponentArray } from "./HealthComponent";
+import { PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class OkrenTongueTipComponent {
@@ -21,12 +23,46 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+const entityIsSnaggable = (entity: Entity): boolean => {
+   if (!HealthComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   if (!PhysicsComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   const physicsComponent = new PhysicsComponent();
+   if (physicsComponent.isImmovable) {
+      return false;
+   }
+
+   const mass = getTotalMass(entity);
+   if (mass > 2) {
+      return false;
+   }
+
+   // @Hack
+   if (getEntityType(entity) === EntityType.okrenTongueSegment || getEntityType(entity) === EntityType.okrenTongueTip) {
+      return false;
+   }
+
+   return true;
+}
+
 function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   if (getEntityType(collidingEntity) !== EntityType.player) {
+   if (!entityIsSnaggable(collidingEntity)) {
       return;
    }
 
    const victimTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+
+   // @Hack this is shiterrr
+   // Don't snag if the victim already has any tethers!
+   if (victimTransformComponent.tethers.length > 0) {
+      return;
+   }
+
    victimTransformComponent.addHitboxTether(collidingHitbox, affectedHitbox, 0, 15, 0.5, false);
 
    const okrenTongueTipComponent = OkrenTongueTipComponentArray.getComponent(tongueTip);

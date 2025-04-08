@@ -80,7 +80,7 @@ export function slowVelocity(hitbox: Hitbox, slowUnits: number): void {
 }
 
 /** Gets the root hitbox of an attached hitbox */
-const getRootHitbox = (hitbox: Hitbox): Hitbox => {
+export function getRootHitbox(hitbox: Hitbox): Hitbox {
    let currentHitbox = hitbox;
    while (currentHitbox.parent !== null) {
       currentHitbox = currentHitbox.parent;
@@ -88,7 +88,7 @@ const getRootHitbox = (hitbox: Hitbox): Hitbox => {
    return currentHitbox;
 }
 
-const getTotalMass = (node: Hitbox | Entity): number => {
+export function getTotalMass(node: Hitbox | Entity): number {
    let totalMass = 0;
    if (typeof node === "number") {
       const transformComponent = TransformComponentArray.getComponent(node);

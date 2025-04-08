@@ -11,6 +11,7 @@ import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
+import { HungerComponent } from "../../components/HungerComponent";
 import { OkrenAgeStage, OkrenComponent } from "../../components/OkrenComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -110,6 +111,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 540, move);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(250, Math.PI * 0.4);
    
+   // @Temporary
+   const hungerComponent = new HungerComponent(1000, 200);
+   
    const okrenComponent = new OkrenComponent();
    okrenComponent.size = size;
    
@@ -121,6 +125,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.hunger]: hungerComponent,
          [ServerComponentType.okren]: okrenComponent
       },
       lights: []

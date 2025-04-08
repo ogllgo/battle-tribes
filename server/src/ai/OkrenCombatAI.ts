@@ -19,14 +19,12 @@ export class OkrenCombatAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
 
-   public target: Entity = 0;
-
    public swingCooldownTicks = 0;
 
    public readonly okrenMandibleFlickCountdowns = [0, 0];
    public readonly okrenMandibleIsIns = [false, false];
 
-   public tongueCooldownTicks = 0;
+   public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
    public tongueIsRetracting = false;
 
    constructor(acceleration: number, turnSpeed: number) {
@@ -45,14 +43,19 @@ const entityIsThreatToDesert = (entity: Entity): boolean => {
    return TribeMemberComponentArray.hasComponent(entity) || getEntityType(entity) === EntityType.zombie;
 }
 
-const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+const entityIsPrey = (entity: Entity): boolean => {
+   const entityType = getEntityType(entity);
+   return entityType === EntityType.krumblid;
+}
+
+const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, entityIsTargetted: (entity: Entity) => boolean): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(okren);
    const hitbox = transformComponent.children[0] as Hitbox;
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
    for (const entity of aiHelperComponent.visibleEntities) {
-      if (!entityIsThreatToDesert(entity)) {
+      if (!entityIsTargetted(entity)) {
          continue;
       }
       
@@ -69,13 +72,12 @@ const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent): E
    return target;
 }
 
-export function updateOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI): void {
-   const target = getAttackTarget(okren, aiHelperComponent);
-   combatAI.target = target !== null ? target : 0;
+export function getOkrenThreatTarget(okren: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
+   return getAttackTarget(okren, aiHelperComponent, entityIsThreatToDesert);
 }
 
-export function shouldRunOkrenCombatAI(combatAI: OkrenCombatAI): boolean {
-   return entityExists(combatAI.target);
+export function getOkrenPreyTarget(okren: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
+   return getAttackTarget(okren, aiHelperComponent, entityIsPrey);
 }
 
 const getTongueRootEntity = (transformComponent: TransformComponent): Entity | null => {
@@ -192,13 +194,11 @@ const getTongueLength = (tongueRootEntity: Entity): number => {
    return length;
 }
 
-export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI): void {
+export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI, target: Entity): void {
    aiHelperComponent.currentAIType = AIType.krumblidCombat;
    
    const okrenComponent = OkrenComponentArray.getComponent(okren);
       
-   const target = combatAI.target;
-   
    const transformComponent = TransformComponentArray.getComponent(okren);
    const hitbox = transformComponent.children[0] as Hitbox;
    

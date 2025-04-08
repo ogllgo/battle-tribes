@@ -10,7 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { getHitboxTile, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { getHitboxTile, getRootHitbox, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { updateBox } from "../../../shared/src/boxes/boxes";
 import { cleanAngleNEW } from "../ai-shared";
@@ -241,19 +241,9 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
 }
 
 export function translateHitbox(hitbox: Hitbox, pushX: number, pushY: number): void {
-   if (hitbox.parent === null) {
-      // Add the raw translation here because the position is already world-relative
-      hitbox.box.position.x += pushX;
-      hitbox.box.position.y += pushY;
-   } else {
-      // We need to adjust the offset of the parent such that the position is moved by (springForceX, springForceY)
-      const rotatedSpringForceX = rotateXAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
-      const rotatedSpringForceY = rotateYAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
-
-      hitbox.box.offset.x += rotatedSpringForceX;
-      hitbox.box.offset.y += rotatedSpringForceY;
-      updateBox(hitbox.box, hitbox.parent.box);
-   }
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x += pushX;
+   pushedHitbox.box.position.y += pushY;
 }
 
 const applyHitboxTethers = (transformComponent: TransformComponent): void => {
