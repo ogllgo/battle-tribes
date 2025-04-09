@@ -43,7 +43,7 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 }
 
 const move = (krumblid: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(krumblid, x, y, acceleration, turnSpeed);
+   moveEntityToPosition(krumblid, x, y, acceleration, turnSpeed, 1);
 }
 
 export function createKrumblidConfig(position: Point, angle: number): EntityConfig {

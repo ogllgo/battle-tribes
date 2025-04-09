@@ -6,7 +6,7 @@ import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { getAbsAngleDiff, Point } from "../../../shared/src/utils";
 import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
-import { applyAbsoluteKnockback, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAbsoluteKnockback, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
@@ -93,11 +93,11 @@ export function setOkrenHitboxIdealAngles(okren: Entity, side: OkrenSide, idealA
       }
       
       if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
-         setHitboxIdealAngle(hitbox, idealAngles.bigIdealAngle, bigTurnSpeed, true);
+         turnHitboxToAngle(hitbox, idealAngles.bigIdealAngle, bigTurnSpeed, 1, true);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT)) {
-         setHitboxIdealAngle(hitbox, idealAngles.mediumIdealAngle, mediumTurnSpeed, true);
+         turnHitboxToAngle(hitbox, idealAngles.mediumIdealAngle, mediumTurnSpeed, 1, true);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION)) {
-         setHitboxIdealAngle(hitbox, idealAngles.smallIdealAngle, smallTurnSpeed, true);
+         turnHitboxToAngle(hitbox, idealAngles.smallIdealAngle, smallTurnSpeed, 1, true);
       }
    }
 }
@@ -117,15 +117,15 @@ export function okrenHitboxesHaveReachedIdealAngles(okren: Entity, side: OkrenSi
       }
       
       if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
-         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.bigIdealAngle) > Math.abs(hitbox.angleTurnSpeed) / Settings.TPS + EPSILON) {
+         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.bigIdealAngle) > EPSILON) {
             return false;
          }
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT)) {
-         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.mediumIdealAngle) > Math.abs(hitbox.angleTurnSpeed) / Settings.TPS + EPSILON) {
+         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.mediumIdealAngle) > EPSILON) {
             return false;
          }
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION)) {
-         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.smallIdealAngle) > Math.abs(hitbox.angleTurnSpeed) / Settings.TPS + EPSILON) {
+         if (getAbsAngleDiff(hitbox.box.relativeAngle, idealAngles.smallIdealAngle) > EPSILON) {
             return false;
          }
       }

@@ -27,7 +27,7 @@ import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 import { getAbsAngleDiff } from "../../../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../../../collision-detection";
-import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -440,7 +440,7 @@ export function tickTribesman(tribesman: Entity): void {
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
-         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
@@ -584,7 +584,7 @@ export function tickTribesman(tribesman: Entity): void {
             applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          // Select the hammer item slot
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);

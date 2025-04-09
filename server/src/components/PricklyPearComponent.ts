@@ -6,7 +6,7 @@ import { Point, randFloat, randSign } from "../../../shared/src/utils";
 import { createPricklyPearFragmentProjectileConfig } from "../entities/desert/prickly-pear-fragment-projectile";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import { Hitbox, addHitboxVelocity, setHitboxAngularVelocity } from "../hitboxes";
+import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 import { destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
@@ -40,8 +40,7 @@ const explode = (pricklyPear: Entity): void => {
       
       const projectileHitbox = projectileTransformComponent.children[0] as Hitbox;
       addHitboxVelocity(projectileHitbox, 520 * Math.sin(offsetDirection), 520 * Math.cos(offsetDirection));
-      
-      setHitboxAngularVelocity(projectileHitbox, randSign() * randFloat(2 * Math.PI, 3 * Math.PI));
+      addHitboxAngularVelocity(projectileHitbox, randSign() * randFloat(2 * Math.PI, 3 * Math.PI));
       
       createEntity(projectileConfig, layer, 0);
    }

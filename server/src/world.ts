@@ -15,8 +15,8 @@ import { generateSurfaceTerrain } from "./world-generation/surface-layer-generat
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./light-levels";
-import { AngularTetherInfo, attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./components/TransformComponent";
-import { Hitbox } from "./hitboxes";
+import { attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./components/TransformComponent";
+import { AngularTetherInfo, Hitbox } from "./hitboxes";
 
 const enum Vars {
    START_TIME = 12
@@ -225,7 +225,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
             if (entityConfigAttachInfoIsTethered(attachInfo)) {
-               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.affectsOriginHitbox, attachInfo.destroyWhenParentIsDestroyed, attachInfo.angularTether);
+               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.affectsOriginHitbox, attachInfo.destroyWhenParentIsDestroyed);
             } else {
                attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
             }
@@ -266,11 +266,13 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, true, angularTether);
                if (childInfo.attachInfo.parentHitbox !== null) {
                   const angularTether: AngularTetherInfo = {
+                     originHitbox: childInfo.attachInfo.parentHitbox,
                      springConstant: 20,
                      angularDamping: 0.5,
                      padding: 0.1
                   };
-                  childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 22, 1000, 10, false, angularTether);
+                  childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 22, 1000, 10, false);
+                  (childTransformComponent.children[0] as Hitbox).angularTethers.push(angularTether);
                }
             }
          }

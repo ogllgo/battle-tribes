@@ -7,7 +7,7 @@ import { ThrowingProjectileComponentArray } from "./ThrowingProjectileComponent"
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
+import { addHitboxAngularAcceleration, Hitbox, turnHitboxToAngle } from "../hitboxes";
 
 const enum Vars {
    RETURN_TIME_TICKS = 1 * Settings.TPS
@@ -27,7 +27,7 @@ function onTick(battleaxe: Entity): void {
 
    const ageTicks = getEntityAgeTicks(battleaxe);
    if (ageTicks < Vars.RETURN_TIME_TICKS) {
-      setHitboxAngularVelocity(battleaxeHitbox, -6 * Math.PI);
+      addHitboxAngularAcceleration(battleaxeHitbox, -6 * Math.PI);
    } else {
       const throwingProjectileComponent = ThrowingProjectileComponentArray.getComponent(battleaxe);
 
@@ -57,7 +57,7 @@ function onTick(battleaxe: Entity): void {
       transformComponent.isDirty = true;
 
       // Turn to face the owner
-      setHitboxIdealAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI, false);
+      turnHitboxToAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI, 0.5, false);
    }
 }
 

@@ -96,7 +96,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
       turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
    } else {
-      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed);
+      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed, 1);
    }
 }
 

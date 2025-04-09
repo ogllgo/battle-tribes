@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
 import { getEntityLayer } from "../../world";
 
 const enum Vars {
@@ -91,7 +91,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
       const accelerationY = 40 * Math.cos(direction);
       applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED, false);
+      turnHitboxToAngle(fishHitbox, direction, Vars.TURN_SPEED, 0.5, false);
    } else {
       // 
       // Lunge on land

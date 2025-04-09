@@ -23,7 +23,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 const move = (slimewisp: Entity, x: number, y: number): void => {
-   moveEntityToPosition(slimewisp, x, y, 100, Math.PI);
+   moveEntityToPosition(slimewisp, x, y, 100, Math.PI, 1);
 }
 
 export function createSlimewispConfig(position: Point, rotation: number): EntityConfig {

@@ -65,7 +65,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 
 const move = (slime: Entity, x: number, y: number): void => {
    const slimeComponent = SlimeComponentArray.getComponent(slime);
-   moveEntityToPosition(slime, x, y, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI);
+   moveEntityToPosition(slime, x, y, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI, 1);
 }
 
 export function createSlimeConfig(position: Point, rotation: number, size: SlimeSize): EntityConfig {

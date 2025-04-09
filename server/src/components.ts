@@ -47,7 +47,7 @@ import { ThrowingProjectileComponent } from "./components/ThrowingProjectileComp
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
-import { AngularTetherInfo, EntityAttachInfo, TransformComponent } from "./components/TransformComponent";
+import { EntityAttachInfo, TransformComponent } from "./components/TransformComponent";
 import { BoulderComponent } from "./components/BoulderComponent";
 import { ProjectileComponent } from "./components/ProjectileComponent";
 import { LayeredRodComponent } from "./components/LayeredRodComponent";
@@ -98,7 +98,7 @@ import { LootComponent } from "./components/LootComponent";
 import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponent";
 import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
-import { Hitbox } from "./hitboxes";
+import { AngularTetherInfo, Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
 import { GlurbComponent } from "./components/GlurbComponent";

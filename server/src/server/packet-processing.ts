@@ -36,7 +36,7 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { getHitboxTile, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, setHitboxVelocity } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
@@ -70,7 +70,8 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerComponent.movementIntention.x = reader.readNumber();
    playerComponent.movementIntention.y = reader.readNumber();
 
-   const angularVelocity = reader.readNumber();
+   playerHitbox.previousRelativeAngle = reader.readNumber();
+   playerHitbox.angularAcceleration = reader.readNumber();
 
    const screenWidth = reader.readNumber();
    const screenHeight = reader.readNumber();
@@ -102,8 +103,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerClient.gameDataOptions = gameDataOptions;
    
    transformComponent.isDirty = true;
-
-   setHitboxAngularVelocity(playerHitbox, angularVelocity);
    
    if (selectedHotbarItemSlot !== hotbarLimbInfo.selectedItemSlot) {
       hotbarLimbInfo.selectedItemSlot = selectedHotbarItemSlot;

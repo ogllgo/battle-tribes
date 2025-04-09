@@ -206,7 +206,7 @@ function onTick(fish: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(fish);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI);
+      moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI, 1);
    }
 }
 

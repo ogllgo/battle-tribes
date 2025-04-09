@@ -10,7 +10,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "./world";
-import { applyAccelerationFromGround, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "./hitboxes";
+import { addHitboxAngularAcceleration, applyAccelerationFromGround, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "./hitboxes";
 
 const TURN_CONSTANT = Math.PI / Settings.TPS;
 const WALL_AVOIDANCE_MULTIPLIER = 1.5;
@@ -67,10 +67,10 @@ export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: 
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
-   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed, false);
+   turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, 0.5, false);
 }
 
-export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number): void {
+export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
    const entityHitbox = transformComponent.children[0] as Hitbox;
@@ -81,7 +81,7 @@ export function moveEntityToPosition(entity: Entity, positionX: number, position
    const accelerationY = acceleration * Math.cos(targetDirection);
    applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(entityHitbox, targetDirection, turnSpeed, false);
+   turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
 export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
@@ -95,7 +95,7 @@ export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceler
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    // @Hack
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   moveEntityToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, acceleration, turnSpeed);
+   moveEntityToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, acceleration, turnSpeed, 1);
 }
 
 export function entityHasReachedPosition(entity: Entity, positionX: number, positionY: number): boolean {
@@ -310,7 +310,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       }
    }
 
-   setHitboxAngularVelocity(entityHitbox, angularVelocity);
+   addHitboxAngularAcceleration(entityHitbox, angularVelocity);
 }
 
 /** Gets all tiles within a given distance from a position */

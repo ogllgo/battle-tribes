@@ -78,8 +78,8 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
    packet.addNumber(hitbox.acceleration.x);
    packet.addNumber(hitbox.acceleration.y);
 
-   packet.addNumber(hitbox.idealAngle);
-   packet.addNumber(hitbox.angleTurnSpeed);
+   packet.addNumber(hitbox.previousRelativeAngle);
+   packet.addNumber(hitbox.angularAcceleration);
    
    packet.addNumber(hitbox.mass);
    packet.addNumber(hitbox.collisionType);

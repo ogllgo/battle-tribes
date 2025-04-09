@@ -12,7 +12,7 @@ import { createStatusEffectComponentParams } from "../entity-components/server-c
 import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
 import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
 import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
 import { EntityParams } from "../world";
 
@@ -21,7 +21,7 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 64);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

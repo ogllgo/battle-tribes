@@ -16,7 +16,7 @@ import { assert } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -79,7 +79,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const accelerationY = slowAcceleration * Math.cos(targetDirection);
       applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
       
       continueResearching(occupiedBench, tribesman, tech);
       

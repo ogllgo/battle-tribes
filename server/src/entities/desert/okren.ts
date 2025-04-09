@@ -19,7 +19,7 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { createHitbox } from "../../hitboxes";
 
 const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
-   moveEntityToPosition(okren, x, y, acceleration, turnSpeed);
+   moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 2);
 }
 
 // @Temporary: remove size parameter

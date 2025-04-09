@@ -18,7 +18,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
-import { applyAbsoluteKnockback, applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, setHitboxIdealAngle, setHitboxVelocity } from "../hitboxes";
+import { applyAbsoluteKnockback, applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle, setHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 10,
@@ -422,7 +422,7 @@ function onTick(frozenYeti: Entity): void {
       const wanderAI = aiHelperComponent.getWanderAI();
       wanderAI.update(frozenYeti);
       if (wanderAI.targetPositionX !== -1) {
-         moveEntityToPosition(frozenYeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.7 * Math.PI);
+         moveEntityToPosition(frozenYeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.7 * Math.PI, 1);
       }
       return;
    }
@@ -539,7 +539,7 @@ function onTick(frozenYeti: Entity): void {
          switch (frozenYetiComponent.attackStage) {
             // Windup
             case 0: {
-               setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 0.9, false);
+               turnHitboxToAngle(frozenYetiHitbox, angleToTarget, 0.9, 0.5, false);
                
                frozenYetiComponent.stageProgress += 0.55 / Settings.TPS;
                attemptToAdvanceStage(frozenYetiComponent);
@@ -573,7 +573,7 @@ function onTick(frozenYeti: Entity): void {
             // Windup
             case 0: {
                // Track target
-               setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 0.7, false);
+               turnHitboxToAngle(frozenYetiHitbox, angleToTarget, 0.7, 0.5, false);
 
                frozenYetiComponent.stageProgress += 0.4 / Settings.TPS;
                attemptToAdvanceStage(frozenYetiComponent);
@@ -582,7 +582,7 @@ function onTick(frozenYeti: Entity): void {
             // Roar attack
             case 1: {
                // Track target
-               setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 0.35, false);
+               turnHitboxToAngle(frozenYetiHitbox, angleToTarget, 0.35, 0.5, false);
 
                duringRoar(frozenYeti, targets);
                
@@ -602,7 +602,7 @@ function onTick(frozenYeti: Entity): void {
          switch (frozenYetiComponent.attackStage) {
             // Charge
             case 0: {
-               setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 0.9, false);
+               turnHitboxToAngle(frozenYetiHitbox, angleToTarget, 0.9, 0.5, false);
 
                frozenYetiComponent.stageProgress += 1.15 / Settings.TPS;
                attemptToAdvanceStage(frozenYetiComponent);
@@ -634,7 +634,7 @@ function onTick(frozenYeti: Entity): void {
                const accelerationY = Vars.ACCELERATION * Math.cos(angleToTarget);
                applyAccelerationFromGround(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
 
-               setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, 1.3, false);
+               turnHitboxToAngle(frozenYetiHitbox, angleToTarget, 1.3, 0.5, false);
 
                frozenYetiComponent.stageProgress += 2.5 / Settings.TPS;
                clearAttack(frozenYetiComponent);
@@ -649,7 +649,7 @@ function onTick(frozenYeti: Entity): void {
          const accelerationY = Vars.ACCELERATION * Math.cos(angleToTarget);
          applyAccelerationFromGround(frozenYeti, frozenYetiHitbox, accelerationX, accelerationY);
 
-         setHitboxIdealAngle(frozenYetiHitbox, angleToTarget, Math.PI, false);
+         turnHitboxToAngle(frozenYetiHitbox, angleToTarget, Math.PI, 0.5, false);
          
          break;
       }

@@ -4,14 +4,14 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
-import { assert, distance, Point, randInt } from "../../../shared/src/utils";
+import { assert, randInt } from "../../../shared/src/utils";
 import { runHibernateAI } from "../ai/DustfleaHibernateAI";
 import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { getHitboxTile, getHitboxVelocity, Hitbox, setHitboxAngularVelocity, stopHitboxTurning } from "../hitboxes";
+import { addHitboxAngularAcceleration, getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
+import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, hitEntity } from "./HealthComponent";
@@ -178,7 +178,7 @@ function onTick(dustflea: Entity): void {
    } else if (entityExists(dustfleaTransformComponent.rootEntity) && HealthComponentArray.hasComponent(dustfleaTransformComponent.rootEntity) && entityIsSuckTarget(dustfleaTransformComponent.rootEntity)) {
       // wriggle around
       const ageTicks = getEntityAgeTicks(dustflea);
-      setHitboxAngularVelocity(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
+      addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
       
       const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
       const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
@@ -208,7 +208,6 @@ function onTick(dustflea: Entity): void {
          }
       } else {
          // is sitting
-         stopHitboxTurning(dustfleaHitbox);
          return;
       }
    } else {
@@ -254,8 +253,6 @@ function onTick(dustflea: Entity): void {
    wanderAI.update(dustflea);
    if (wanderAI.targetPositionX !== -1) {
       aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
-   } else {
-      stopHitboxTurning(dustfleaHitbox);
    }
 }
 

@@ -4,7 +4,7 @@ import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { distance, Point } from "../../shared/src/utils";
 import Board from "./Board";
-import { createHitbox } from "./hitboxes";
+import { createHitbox, createHitboxQuick } from "./hitboxes";
 import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
 import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentParams } from "./entity-components/server-components/BuildingMaterialComponent";
@@ -93,7 +93,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             const transformComponentParams = createTransformComponentParams(
                // @HACK
                boxes.map(box => {
-                  return createHitbox(0, null, box, new Point(0, 0), new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+                  return createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
                }),
             );
 

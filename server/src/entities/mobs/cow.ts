@@ -109,7 +109,9 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    // Head hitbox
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
-   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, {
+   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, );
+   headHitbox.angularTethers.push({
+      originHitbox: bodyHitbox,
       springConstant: 5,
       angularDamping: 0,
       padding: Math.PI * 0.1

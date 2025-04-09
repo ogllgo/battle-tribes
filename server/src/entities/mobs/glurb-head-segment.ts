@@ -16,7 +16,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, entityChildIsEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { applyAccelerationFromGround, createHitbox, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
 import { createLight } from "../../light-levels";
 import { getEntityAgeTicks } from "../../world";
@@ -70,7 +70,7 @@ const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number
       if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
          targetDirection = angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
 
-         setHitboxIdealAngle(hitbox, targetDirection, Math.PI, false);
+         turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
       } else {
          // Move to next hitbox in chain
 

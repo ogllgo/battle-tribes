@@ -5,7 +5,7 @@ import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entiti
 import { HealthComponent } from "../../../components/HealthComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 export function tribeMemberShouldEscape(entityType: EntityType, healthComponent: HealthComponent): boolean {
    const remainingHealthRatio = healthComponent.health / healthComponent.maxHealth;
@@ -94,7 +94,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
    const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(runDirection);
    applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, false);
+   turnHitboxToAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
    clearTribesmanPath(tribesman);
 }

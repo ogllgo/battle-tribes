@@ -102,7 +102,7 @@ export default class GuardianCrystalSlamAI {
          this.stage = GuardianCrystalSlamStage.windup;
 
          // Keep moving to target
-         moveEntityToPosition(guardian, targetX, targetY, this.acceleration, this.turnSpeed);
+         moveEntityToPosition(guardian, targetX, targetY, this.acceleration, this.turnSpeed, 1);
          
          let progress = this.windupProgressTicks / Vars.WINDUP_TIME_TICKS;
          this.stageProgress = progress;

@@ -12,7 +12,7 @@ import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
 import { createOkrenTongueSegmentConfig } from "../entities/desert/okren-tongue-segment";
 import { createOkrenTongueTipConfig } from "../entities/desert/okren-tongue-tip";
 import { createEntity } from "../Entity";
-import { Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 
 export class OkrenCombatAI {
@@ -214,7 +214,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
       if (okrenComponent.swingStates[side] === OkrenSwingState.swinging) {
          const angleToTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
          const idealAngle = angleToTarget + (side === OkrenSide.right ? -0.3 : 0.3);
-         setHitboxIdealAngle(hitbox, idealAngle, combatAI.turnSpeed, false);
+         turnHitboxToAngle(hitbox, idealAngle, combatAI.turnSpeed, 0.5, false);
       }
    }
 
@@ -245,7 +245,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
 
       const mandibleHitbox = getOkrenMandibleHitbox(okren, side);
       const idealAngle = combatAI.okrenMandibleIsIns[side] ? -Math.PI * 0.3 : Math.PI * 0.1;
-      setHitboxIdealAngle(mandibleHitbox, idealAngle, 3 * Math.PI, true);
+      turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
    }
 
    const tongueRootEntity = getTongueRootEntity(transformComponent);

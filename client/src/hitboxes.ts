@@ -26,8 +26,8 @@ export interface Hitbox {
    readonly previousPosition: Point;
    readonly acceleration: Point;
 
-   idealAngle: number;
-   angleTurnSpeed: number;
+   previousRelativeAngle: number;
+   angularAcceleration: number;
 
    mass: number;
    collisionType: HitboxCollisionType;
@@ -38,7 +38,7 @@ export interface Hitbox {
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, parent: Hitbox | null, box: Box, previousPosition: Point, acceleration: Point, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, parent: Hitbox | null, box: Box, previousPosition: Point, acceleration: Point, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
       parent: parent,
@@ -46,8 +46,27 @@ export function createHitbox(localID: number, parent: Hitbox | null, box: Box, p
       box: box,
       previousPosition: previousPosition,
       acceleration: acceleration,
-      idealAngle: 0,
-      angleTurnSpeed: 0,
+      previousRelativeAngle: previousRelativeAngle,
+      angularAcceleration: angularAcceleration,
+      mass: mass,
+      collisionType: collisionType,
+      collisionBit: collisionBit,
+      collisionMask: collisionMask,
+      flags: flags,
+      lastUpdateTicks: Board.serverTicks
+   };
+}
+
+export function createHitboxQuick(localID: number, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+   return {
+      localID: localID,
+      parent: parent,
+      children: [],
+      box: box,
+      previousPosition: box.position.copy(),
+      acceleration: new Point(0, 0),
+      previousRelativeAngle: box.relativeAngle,
+      angularAcceleration: 0,
       mass: mass,
       collisionType: collisionType,
       collisionBit: collisionBit,
@@ -125,6 +144,5 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
 }
 
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.idealAngle = -999;
-   hitbox.angleTurnSpeed = angularVelocity;
+   hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity / Settings.TPS;
 }

@@ -10,7 +10,7 @@ import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
 import { HealthComponentArray, hitEntity } from "../components/HealthComponent";
 import { addHungerEnergy } from "../components/HungerComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { convertEntityPathfindingGroupID, findSingleLayerPath, getEntityFootprint, Path, PathfindOptions } from "../pathfinding";
 import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
@@ -110,7 +110,7 @@ export function runVegetationConsumeAI(krumblid: Entity, aiHelperComponent: AIHe
          // @Hack
          const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
          const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
-         setHitboxIdealAngle(mandibleHitbox, idealAngle, 3 * Math.PI, true);
+         turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
       }
 
       if (getEntityAgeTicks(krumblid) % Settings.TPS === 0) {

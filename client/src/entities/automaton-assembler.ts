@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
 import { Point } from "../../../shared/src/utils";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { createAutomatonAssemblerComponentParams } from "../entity-components/server-components/AutomatonAssemblerComponent";
 import { createCraftingStationComponentParams } from "../entity-components/server-components/CraftingStationComponent";
 import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
@@ -21,7 +21,7 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 160, 80);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
    
    return {

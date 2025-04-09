@@ -96,8 +96,8 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    const previousPosition = new Point(reader.readNumber(), reader.readNumber());
    const acceleration = new Point(reader.readNumber(), reader.readNumber());
 
-   const idealAngle = reader.readNumber();
-   const angleTurnSpeed = reader.readNumber();
+   const previousRelativeAngle = reader.readNumber();
+   const angularAcceleration = reader.readNumber();
    
    const mass = reader.readNumber();
    const collisionType = reader.readNumber() as HitboxCollisionType;
@@ -114,9 +114,7 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    // @INCOMPLETE @BUG: can't get from other transform components!
    const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
 
-   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, mass, collisionType, collisionBit, collisionMask, flags);
-   hitbox.idealAngle = idealAngle;
-   hitbox.angleTurnSpeed = angleTurnSpeed;
+   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
    return hitbox;
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
@@ -188,8 +186,8 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    hitbox.acceleration.x = reader.readNumber();
    hitbox.acceleration.y = reader.readNumber();
 
-   hitbox.idealAngle = reader.readNumber();
-   hitbox.angleTurnSpeed = reader.readNumber();
+   hitbox.previousRelativeAngle = reader.readNumber();
+   hitbox.angularAcceleration = reader.readNumber();
    
    hitbox.mass = reader.readNumber();
    hitbox.collisionType = reader.readNumber() as HitboxCollisionType;

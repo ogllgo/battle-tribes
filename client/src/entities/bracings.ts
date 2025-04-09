@@ -14,16 +14,16 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { Settings } from "../../../shared/src/settings";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 
 export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial): EntityParams {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
    
-   const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), new Point(0, 0), new Point(0, 0), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   const hitbox1 = createHitboxQuick(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
    hitboxes.push(hitbox1);
 
-   const hitbox2 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), new Point(0, 0), new Point(0, 0), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   const hitbox2 = createHitboxQuick(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
    hitboxes.push(hitbox2);
    
    return {

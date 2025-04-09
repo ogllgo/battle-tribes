@@ -8,7 +8,7 @@ import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
-import { applyAccelerationFromGround, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -108,7 +108,7 @@ function onTick(krumblid: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    for (let i = 0; i < 2; i++) {
       const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
-      setHitboxIdealAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, true);
+      turnHitboxToAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, 0.5, true);
    }
    
    const escapeAI = aiHelperComponent.getEscapeAI();
@@ -135,7 +135,7 @@ function onTick(krumblid: Entity): void {
          // @Hack
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
-         moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED);
+         moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
    
          if (entitiesAreColliding(krumblid, targetPricklyPear) !== CollisionVars.NO_COLLISION) {
             const energyStoreComponent = EnergyStoreComponentArray.getComponent(targetPricklyPear);
@@ -166,7 +166,7 @@ function onTick(krumblid: Entity): void {
       const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
       
       // Continue following the entity
-      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED);
+      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
       return;
    } else if (entityWantsToFollow(followAI)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -223,7 +223,7 @@ function onTick(krumblid: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(krumblid);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI);
+      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI, 1);
    }
 }
 

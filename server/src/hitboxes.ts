@@ -10,6 +10,14 @@ import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformCom
 import { registerPlayerKnockback } from "./server/player-clients";
 import { getEntityLayer, getEntityType } from "./world";
 
+export interface AngularTetherInfo {
+   readonly originHitbox: Hitbox;
+   readonly springConstant: number;
+   readonly angularDamping: number;
+   /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
+   readonly padding: number;
+}
+
 export interface Hitbox {
    readonly localID: number;
    
@@ -21,12 +29,9 @@ export interface Hitbox {
    readonly previousPosition: Point;
    readonly acceleration: Point;
    
-   // @Memory: So many hitboxes don't use these 2!
-   /** Angle the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI)
-    *  Exception: when set to -999, the hitbox will take angleTurnSpeed as an angular velocity value instead. */
-   idealAngle: number;
-   idealAngleIsRelative: boolean;
-   angleTurnSpeed: number;
+   previousRelativeAngle: number;
+   angularAcceleration: number;
+   readonly angularTethers: Array<AngularTetherInfo>;
    
    mass: number;
    collisionType: HitboxCollisionType;
@@ -51,9 +56,9 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       box: box,
       previousPosition: box.position.copy(),
       acceleration: new Point(0, 0),
-      idealAngle: -999,
-      idealAngleIsRelative: false,
-      angleTurnSpeed: 0,
+      previousRelativeAngle: box.relativeAngle,
+      angularAcceleration: 0,
+      angularTethers: [],
       mass: mass,
       collisionType: collisionType,
       collisionBit: collisionBit,
@@ -222,20 +227,65 @@ export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): v
    hitbox.acceleration.y += accY;
 }
 
-export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number, idealAngleIsRelative: boolean): void {
-   hitbox.idealAngle = idealAngle;
-   hitbox.idealAngleIsRelative = idealAngleIsRelative;
-   hitbox.angleTurnSpeed = angleTurnSpeed;
+const cleanAngle = (hitbox: Hitbox): void => {
+   // Clamp angle to [-PI, PI) range
+   if (hitbox.box.angle < -Math.PI) {
+      hitbox.box.angle += Math.PI * 2;
+   } else if (hitbox.box.angle >= Math.PI) {
+      hitbox.box.angle -= Math.PI * 2;
+   }
 }
 
-export function stopHitboxTurning(hitbox: Hitbox): void {
-   hitbox.idealAngle = -999;
-   hitbox.angleTurnSpeed = 0;
+const cleanRelativeAngle = (hitbox: Hitbox): void => {
+   // Clamp angle to [-PI, PI) range
+   if (hitbox.box.relativeAngle < -Math.PI) {
+      hitbox.box.relativeAngle += Math.PI * 2;
+   } else if (hitbox.box.relativeAngle >= Math.PI) {
+      hitbox.box.relativeAngle -= Math.PI * 2;
+   }
 }
 
-export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.idealAngle = -999;
-   hitbox.angleTurnSpeed = angularVelocity;
+export function getHitboxAngularVelocity(hitbox: Hitbox): number {
+   return (hitbox.box.relativeAngle - hitbox.previousRelativeAngle) * Settings.TPS;
+}
+
+export function addHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
+   hitbox.box.relativeAngle += angularVelocity / Settings.TPS;
+}
+
+export function addHitboxAngularAcceleration(hitbox: Hitbox, acceleration: number): void {
+   hitbox.angularAcceleration += acceleration;
+}
+
+export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, acceleration: number, damping: number, idealAngleIsRelative: boolean): void {
+   cleanAngle(hitbox);
+   cleanRelativeAngle(hitbox);
+
+   let idealRelativeAngle: number;
+   if (idealAngleIsRelative) {
+      idealRelativeAngle = idealAngle;
+   } else {
+      const parentAngle = hitbox.box.angle - hitbox.box.relativeAngle;
+      idealRelativeAngle = idealAngle - parentAngle;
+   }
+      
+   let clockwiseDist = idealRelativeAngle - hitbox.box.relativeAngle;
+   while (clockwiseDist < 0) {
+      clockwiseDist += 2 * Math.PI;
+   }
+   while (clockwiseDist >= 2 * Math.PI) {
+      clockwiseDist -= 2 * Math.PI;
+   }
+
+   const angularVelocity = getHitboxAngularVelocity(hitbox);
+   const adjustedDamping = damping * acceleration; // The damping parameter is a proportion of the acceleration
+   const dampingForce = -angularVelocity * adjustedDamping;
+
+   if (clockwiseDist <= Math.PI) {
+      hitbox.angularAcceleration += acceleration + dampingForce;
+   } else {
+      hitbox.angularAcceleration += -acceleration + dampingForce;
+   }
 }
 
 // @Location?

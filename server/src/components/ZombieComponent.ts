@@ -254,7 +254,7 @@ function onTick(zombie: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(attackTarget);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
-      moveEntityToPosition(zombie, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
+      moveEntityToPosition(zombie, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
       
       return;
    } else {
@@ -290,7 +290,7 @@ function onTick(zombie: Entity): void {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
          const foodHitbox = foodTransformComponent.children[0] as Hitbox;
          
-         moveEntityToPosition(zombie, foodHitbox.box.position.x, foodHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
+         moveEntityToPosition(zombie, foodHitbox.box.position.x, foodHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
 
          if (entitiesAreColliding(zombie, closestFoodItem) !== CollisionVars.NO_COLLISION) {
             healEntity(zombie, 3, zombie);
@@ -307,7 +307,7 @@ function onTick(zombie: Entity): void {
          const hurtEntityTransformComponent = TransformComponentArray.getComponent(hurtEntity);
          const hurtEntityHitbox = hurtEntityTransformComponent.children[0] as Hitbox;
          
-         moveEntityToPosition(zombie, hurtEntityHitbox.box.position.x, hurtEntityHitbox.box.position.y, Vars.ACCELERATION_SLOW, Vars.TURN_SPEED);
+         moveEntityToPosition(zombie, hurtEntityHitbox.box.position.x, hurtEntityHitbox.box.position.y, Vars.ACCELERATION_SLOW, Vars.TURN_SPEED, 1);
          return;
       }
    }
@@ -330,7 +330,7 @@ function onTick(zombie: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(zombie);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(zombie, wanderAI.targetPositionX, wanderAI.targetPositionY, 150, 3 * Math.PI);
+      moveEntityToPosition(zombie, wanderAI.targetPositionX, wanderAI.targetPositionY, 150, 3 * Math.PI, 1);
    }
 }
 

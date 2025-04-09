@@ -27,7 +27,7 @@ import { getBoxesCollidingEntities } from "../../../collision-detection";
 import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
 import { StructureType } from "../../../../../shared/src/structures";
 import { createEntity } from "../../../Entity";
-import { applyAccelerationFromGround, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -120,7 +120,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
          applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -145,7 +145,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          useInfo.lastAttackTicks = getGameTicks();
          return true;
       } else {
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -200,7 +200,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetAngle)) < 0.1) {
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
@@ -268,7 +268,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetAngle) < 0.1) {
          doMeleeAttack(tribesman, hammerItemSlot);

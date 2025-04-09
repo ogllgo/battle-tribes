@@ -20,7 +20,7 @@ import Layer from "../../../Layer";
 import { surfaceLayer } from "../../../layers";
 import { TileType } from "../../../../../shared/src/tiles";
 import { tribeMemberHasTitle, TribesmanComponentArray } from "../../../components/TribesmanComponent";
-import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 const enum Vars {
    BLOCKING_TRIBESMAN_DISTANCE = 80,
@@ -213,7 +213,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
 
       const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
-      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);

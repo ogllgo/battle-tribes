@@ -23,8 +23,8 @@ export function createPlayerDataPacket(): ArrayBuffer {
    lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
    // Movement intention
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-   // angular velocity
-   lengthBytes += 1 * Float32Array.BYTES_PER_ELEMENT;
+   // Previous relative angle, and angular acceleration
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // window size
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // inventory shit
@@ -51,7 +51,8 @@ export function createPlayerDataPacket(): ArrayBuffer {
    packet.addNumber(movementIntention.x);
    packet.addNumber(movementIntention.y);
 
-   packet.addNumber(playerHitbox.angleTurnSpeed);
+   packet.addNumber(playerHitbox.previousRelativeAngle);
+   packet.addNumber(playerHitbox.angularAcceleration);
 
    packet.addNumber(windowWidth);
    packet.addNumber(windowHeight);

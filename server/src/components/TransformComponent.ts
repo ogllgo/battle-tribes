@@ -23,13 +23,6 @@ import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hit
 import { getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
 
-export interface AngularTetherInfo {
-   readonly springConstant: number;
-   readonly angularDamping: number;
-   /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
-   readonly padding: number;
-}
-
 interface HitboxTether {
    readonly hitbox: Hitbox;
    readonly originHitbox: Hitbox;
@@ -40,10 +33,7 @@ interface HitboxTether {
 
    readonly affectsOriginHitbox: boolean;
 
-   readonly angularTether?: AngularTetherInfo;
-
    // Used for verlet integration
-   // @Cleanup: unused?
    previousPositionX: number;
    previousPositionY: number;
 }
@@ -103,7 +93,7 @@ export class TransformComponent {
 
    public nextHitboxLocalID = 1;
 
-   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, angularTether?: AngularTetherInfo): void {
+   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): void {
       const tether: HitboxTether = {
          hitbox: hitbox,
          originHitbox: otherHitbox,
@@ -112,8 +102,7 @@ export class TransformComponent {
          damping: damping,
          affectsOriginHitbox: affectsOriginHitbox,
          previousPositionX: hitbox.box.position.x,
-         previousPositionY: hitbox.box.position.y,
-         angularTether: angularTether
+         previousPositionY: hitbox.box.position.y
       };
       this.tethers.push(tether);
    }
@@ -763,7 +752,7 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
 }
 
 // @Copynpaste !
-export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: AngularTetherInfo): void {
+export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
@@ -787,7 +776,7 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 
             // @Incomplete: why don't we set the offset here like in the non-tether function??
 
-            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox, angularTether);
+            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
          }
       }
    }
