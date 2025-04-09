@@ -9,6 +9,14 @@ import { entityIsInRiver, getHitboxTile, TransformComponentArray, TransformNode 
 import { getEntityLayer } from "./world";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
+export interface HitboxTether {
+   readonly originBox: Box;
+
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
+}
+
 export const enum HitboxParentType {
    transformComponent,
    hitbox
@@ -25,6 +33,7 @@ export interface Hitbox {
    
    readonly previousPosition: Point;
    readonly acceleration: Point;
+   readonly tethers: Array<HitboxTether>;
 
    previousRelativeAngle: number;
    angularAcceleration: number;
@@ -38,7 +47,7 @@ export interface Hitbox {
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, parent: Hitbox | null, box: Box, previousPosition: Point, acceleration: Point, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, parent: Hitbox | null, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
       parent: parent,
@@ -46,6 +55,7 @@ export function createHitbox(localID: number, parent: Hitbox | null, box: Box, p
       box: box,
       previousPosition: previousPosition,
       acceleration: acceleration,
+      tethers: tethers,
       previousRelativeAngle: previousRelativeAngle,
       angularAcceleration: angularAcceleration,
       mass: mass,
@@ -65,6 +75,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       box: box,
       previousPosition: box.position.copy(),
       acceleration: new Point(0, 0),
+      tethers: [],
       previousRelativeAngle: box.relativeAngle,
       angularAcceleration: 0,
       mass: mass,

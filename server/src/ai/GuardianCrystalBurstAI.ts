@@ -75,7 +75,7 @@ export default class GuardianCrystalBurstAI {
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {
-      turnToPosition(guardian, targetX, targetY, this.turnSpeed);
+      turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
 
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {

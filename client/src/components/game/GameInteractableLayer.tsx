@@ -24,7 +24,7 @@ import { playSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
-import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
 import { createEntity, entityExists, EntityParams, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
@@ -1371,7 +1371,6 @@ const tickItem = (itemType: ItemType): void => {
             switch (componentType) {
                case ServerComponentType.transform: {
                   const hitboxes = new Array<Hitbox>();
-                  const tethers = new Array<HitboxTether>();
                   const staticHitboxes = new Array<Hitbox>();
                   for (let i = 0; i < placeInfo.hitboxes.length; i++) {
                      const hitbox = placeInfo.hitboxes[i];

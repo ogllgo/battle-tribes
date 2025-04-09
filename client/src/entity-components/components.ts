@@ -138,6 +138,7 @@ import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } fr
 import { KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentArray, KrumblidMorphCocoonComponentParams } from "./server-components/KrumblidMorphCocoonComponent";
 import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray } from "./server-components/OkrenTongueSegmentComponent";
 import { OkrenTongueTipComponent, OkrenTongueTipComponentArray } from "./server-components/OkrenTongueTipComponent";
+import { OkrenTongueComponent, OkrenTongueComponentArray } from "./server-components/OkrenTongueComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -282,6 +283,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
    [ServerComponentType.sandBall]: SandBallComponentArray,
    [ServerComponentType.krumblidMorphCocoon]: KrumblidMorphCocoonComponentArray,
+   [ServerComponentType.okrenTongue]: OkrenTongueComponentArray,
    [ServerComponentType.okrenTongueSegment]: OkrenTongueSegmentComponentArray,
    [ServerComponentType.okrenTongueTip]: OkrenTongueTipComponentArray,
 };
@@ -404,6 +406,7 @@ const ServerComponentRecord = {
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponent => 0 as any,
+   [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
    [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
    [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
@@ -528,6 +531,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,
+   [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
    [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
    [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
 } satisfies Record<ServerComponentType, object>;

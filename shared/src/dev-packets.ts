@@ -125,6 +125,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.dustfleaMorphCocoon]: {},
    [ServerComponentType.sandBall]: {},
    [ServerComponentType.krumblidMorphCocoon]: {},
+   [ServerComponentType.okrenTongue]: {},
    [ServerComponentType.okrenTongueSegment]: {},
    [ServerComponentType.okrenTongueTip]: {},
 } satisfies Record<ServerComponentType, object>;

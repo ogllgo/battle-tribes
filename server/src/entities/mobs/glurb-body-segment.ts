@@ -12,7 +12,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
 import { createLight } from "../../light-levels";
 
 registerEntityLootOnDeath(EntityType.glurbBodySegment, [
@@ -36,7 +36,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   transformComponent.addHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15, 0.5, true);
+   hitbox.tethers.push(createHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15, 0.5, true));
 
    const physicsComponent = new PhysicsComponent();
 

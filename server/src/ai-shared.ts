@@ -61,13 +61,13 @@ export function willStopAtDesiredDistance(hitbox: Hitbox, desiredDistance: numbe
    return distance - distanceToStop <= desiredDistance;
 }
 
-export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: number): void {
+export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: number, turnDamping: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
-   turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, 0.5, false);
+   turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
 
 export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
@@ -83,11 +83,11 @@ export function moveEntityToPosition(entity: Entity, positionX: number, position
 
    turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
-export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number): void {
+export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpeed: number, turnDamping: number): void {
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    // @Hack
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   turnToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, turnSpeed);
+   turnToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, turnDamping, turnSpeed);
 }
 
 // @Cleanup: unused?

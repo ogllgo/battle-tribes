@@ -20,23 +20,8 @@ import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
-import { getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
+import { createHitboxTether, getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
-
-interface HitboxTether {
-   readonly hitbox: Hitbox;
-   readonly originHitbox: Hitbox;
-   
-   readonly idealDistance: number;
-   readonly springConstant: number;
-   readonly damping: number;
-
-   readonly affectsOriginHitbox: boolean;
-
-   // Used for verlet integration
-   previousPositionX: number;
-   previousPositionY: number;
-}
 
 export interface EntityAttachInfo {
    readonly attachedEntity: Entity;
@@ -71,8 +56,6 @@ export class TransformComponent {
    public readonly children = new Array<TransformNode>();
    /** Children not attached to any hitbox interal to the same entity. Root children can either be children with no parent, or children with a different entity's hitbox as a parent. */
    public readonly rootChildren = new Array<TransformNode>();
-
-   public readonly tethers = new Array<HitboxTether>();
    
    public boundingAreaMinX = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
@@ -92,20 +75,6 @@ export class TransformComponent {
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();
 
    public nextHitboxLocalID = 1;
-
-   public addHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): void {
-      const tether: HitboxTether = {
-         hitbox: hitbox,
-         originHitbox: otherHitbox,
-         idealDistance: idealDistance,
-         springConstant: springConstant,
-         damping: damping,
-         affectsOriginHitbox: affectsOriginHitbox,
-         previousPositionX: hitbox.box.position.x,
-         previousPositionY: hitbox.box.position.y
-      };
-      this.tethers.push(tether);
-   }
 
    public resolveWallCollisions(entity: Entity): void {
       // Looser check that there are any wall tiles in any of the entities' chunks
@@ -528,9 +497,16 @@ function onJoin(entity: Entity): void {
    transformComponent.lastValidLayer = getEntityLayer(entity);
 
    // Update the hitbox tether last positions, in case their positions were changed after creation
-   for (const tether of transformComponent.tethers) {
-      tether.previousPositionX = tether.hitbox.box.position.x;
-      tether.previousPositionY = tether.hitbox.box.position.y;
+   for (const child of transformComponent.children) {
+      if (!entityChildIsHitbox(child)) {
+         continue;
+      }
+
+      const hitbox = child;
+      for (const tether of hitbox.tethers) {
+         tether.previousPositionX = hitbox.box.position.x;
+         tether.previousPositionY = hitbox.box.position.y;
+      }
    }
    
    // @Cleanup: This is so similar to the updatePosition function
@@ -631,29 +607,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          addEntityAttachInfoToPacket(packet, child);
       } else {
          const hitbox = child;
-
          addHitboxDataToPacket(packet, hitbox);
-
-         let tether: HitboxTether | undefined;
-         for (const currentTether of transformComponent.tethers) {
-            if (currentTether.hitbox === hitbox) {
-               tether = currentTether;
-            }
-         }
-   
-         // Tether data
-         if (typeof tether !== "undefined") {
-            packet.addBoolean(true);
-            packet.padOffset(3);
-   
-            addHitboxDataToPacket(packet, tether.originHitbox);
-            packet.addNumber(tether.idealDistance);
-            packet.addNumber(tether.springConstant);
-            packet.addNumber(tether.damping);
-         } else {
-            packet.addBoolean(false);
-            packet.padOffset(3);
-         }
       }
    }
 }
@@ -670,23 +624,7 @@ function getDataLength(entity: Entity): number {
          lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
       } else {
          const hitbox = child;
-         
          lengthBytes += getHitboxDataLength(hitbox);
-   
-         lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   
-         // @Copynpaste
-         let tether: HitboxTether | undefined;
-         for (const currentTether of transformComponent.tethers) {
-            if (currentTether.hitbox === hitbox) {
-               tether = currentTether;
-            }
-         }
-   
-         if (typeof tether !== "undefined") {
-            lengthBytes += getHitboxDataLength(tether.originHitbox);
-            lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
-         }
       }
    }
 
@@ -776,7 +714,9 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 
             // @Incomplete: why don't we set the offset here like in the non-tether function??
 
-            entityTransformComponent.addHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
+            // @Incomplete !
+            const tether = createHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
+            rootHitbox.tethers.push(tether);
          }
       }
    }
@@ -790,12 +730,6 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 
    registerDirtyEntity(entity);
    registerDirtyEntity(parent);
-}
-
-export function entityIsTethered(entity: Entity): boolean {
-   const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   // @Hack
-   return entityTransformComponent.tethers.length > 0;
 }
 
 export function removeAttachedEntity(parent: Entity, child: Entity): void {
@@ -834,15 +768,17 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    if (parentHitbox !== null) {
       for (const child of childTransformComponent.rootChildren) {
          if (entityChildIsHitbox(child)) {
-            child.parent = null;
+            const hitbox = child;
+
+            hitbox.parent = null;
             
-            child.box.relativeAngle += parentHitbox.box.angle;
+            hitbox.box.relativeAngle += parentHitbox.box.angle;
    
             // Remove any tethers to the parent hitbox
-            for (let i = 0; i < childTransformComponent.tethers.length; i++) {
-               const tether = childTransformComponent.tethers[i];
+            for (let i = 0; i < hitbox.tethers.length; i++) {
+               const tether = hitbox.tethers[i];
                if (tether.originHitbox === entityAttachInfo.parentHitbox) {
-                  childTransformComponent.tethers.splice(i, 1);
+                  hitbox.tethers.splice(i, 1);
                   break;
                }
             }

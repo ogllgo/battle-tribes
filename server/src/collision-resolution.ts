@@ -12,14 +12,18 @@ import { HitboxCollisionPair } from "./collision-detection";
 import { getHitboxConnectedMass, getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
-   for (const tether of transformComponent.tethers) {
-      if (tether.hitbox === hitbox1 && tether.originHitbox === hitbox2) {
-         return true;
-      }
-      if (tether.hitbox === hitbox2 && tether.originHitbox === hitbox1) {
-         return true;
-      }
-   }
+   // @INCOMPLETE!
+   
+   // for ()
+   
+   // for (const tether of transformComponent.tethers) {
+   //    if (tether.hitbox === hitbox1 && tether.originHitbox === hitbox2) {
+   //       return true;
+   //    }
+   //    if (tether.hitbox === hitbox2 && tether.originHitbox === hitbox1) {
+   //       return true;
+   //    }
+   // }
    return false;
 }
 

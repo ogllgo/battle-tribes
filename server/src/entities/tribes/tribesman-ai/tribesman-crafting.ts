@@ -94,7 +94,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
          }
          return;
       } else {
-         turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED);
+         turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED, 1);
       }
    }
 

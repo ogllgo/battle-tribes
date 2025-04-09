@@ -410,6 +410,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.dustfleaMorphCocoon]: ComponentArrayPriority.medium,
       [ServerComponentType.sandBall]: ComponentArrayPriority.medium,
       [ServerComponentType.krumblidMorphCocoon]: ComponentArrayPriority.medium,
+      [ServerComponentType.okrenTongue]: ComponentArrayPriority.medium,
       [ServerComponentType.okrenTongueSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.okrenTongueTip]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,

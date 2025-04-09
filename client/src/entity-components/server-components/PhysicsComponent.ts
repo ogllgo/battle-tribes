@@ -245,16 +245,13 @@ const translateHitbox = (hitbox: Hitbox, pushX: number, pushY: number): void => 
    }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent): void => {
-   const tethers = transformComponent.tethers;
-   
+const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
    // Apply the spring physics
-   for (const tether of tethers) {
-      const hitbox = tether.hitbox;
-      const originHitbox = tether.originHitbox;
+   for (const tether of hitbox.tethers) {
+      const originBox = tether.originBox;
 
-      const diffX = originHitbox.box.position.x - hitbox.box.position.x;
-      const diffY = originHitbox.box.position.y - hitbox.box.position.y;
+      const diffX = originBox.position.x - hitbox.box.position.x;
+      const diffY = originBox.position.y - hitbox.box.position.y;
       const distance = Math.sqrt(diffX * diffX + diffY * diffY);
       if (distance === 0) {
          throw new Error();
@@ -271,8 +268,7 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       
       // Apply spring force 
       translateHitbox(hitbox, springForceX, springForceY);
-      // @Bug: shouldn't this... not affect the origin hitbox if it isn't the player?
-      translateHitbox(originHitbox, -springForceX, -springForceY);
+      // Don't move the other hitbox, as that will be accounted for by the server!
    }
 }
 
@@ -302,7 +298,14 @@ function onUpdate(entity: Entity): void {
       throw new Error();
    }
 
-   applyHitboxTethers(transformComponent);
+   for (const child of transformComponent.children) {
+      if (!entityChildIsHitbox(child)) {
+         continue;
+      }
+
+      const hitbox = child;
+      applyHitboxTethers(transformComponent, hitbox);
+   }
    
    // If the entity isn't being carried, update its' physics
    if (transformComponent.rootEntity === entity) {

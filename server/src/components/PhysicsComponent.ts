@@ -10,7 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { applyAcceleration, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { cleanAngleNEW } from "../ai-shared";
 
@@ -188,15 +188,15 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       const diff = cleanAngleNEW(tetherDirection - idealDirection);
 
       if (Math.abs(diff) > angularTether.padding) {
-         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant * Settings.I_TPS;
+         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant / Settings.TPS;
 
-         originHitbox.box.relativeAngle += rotationForce;
+         addHitboxAngularAcceleration(originHitbox, rotationForce / getHitboxConnectedMass(originHitbox));
          
-         // hitbox.box.relativeAngle -= rotationForce;
+         addHitboxAngularAcceleration(hitbox, -rotationForce / getHitboxConnectedMass(hitbox));
 
          // We want to rotate the hitbox by -rotationForce relative to the originHitbox. But if the origin hitbox is the hitbox' parent, then we need to subtract it twice to counteract it.
          // const rotationalOffsetForce = -rotationForce * (hitbox.parent === originHitbox ? 2 : 1);
-         const rotationalOffsetForce = -rotationForce;
+         const rotationalOffsetForce = -rotationForce / getHitboxConnectedMass(hitbox);
          
          const currentOffsetX = hitbox.box.position.x - originHitbox.box.position.x;
          const currentOffsetY = hitbox.box.position.y - originHitbox.box.position.y;
@@ -205,16 +205,20 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          const moveX = newOffsetX - currentOffsetX;
          const moveY = newOffsetY - currentOffsetY;
          translateHitbox(hitbox, moveX, moveY);
+
+         // Restrict the relative angle of the hitbox to the 
+
+         // @HACK
+         // const a = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+         // hitbox.box.relativeAngle = a;
+         // hitbox.previousRelativeAngle = a;
       }
    }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent): void => {
-   const tethers = transformComponent.tethers;
-   
-   // Apply the spring physics
-   for (const tether of tethers) {
-      const hitbox = tether.hitbox;
+const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   // Position tethers
+   for (const tether of hitbox.tethers) {
       const originHitbox = tether.originHitbox;
 
       const diffX = originHitbox.box.position.x - hitbox.box.position.x;
@@ -253,20 +257,11 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       }
    }
 
-   let hasUpdated = false;
-   for (const child of transformComponent.children) {
-      if (!entityChildIsHitbox(child)) {
-         continue;
-      }
+   applyHitboxAngularTethers(hitbox);
+   // @Hack
+   const hasUpdated = hitbox.angularTethers.length > 0;
 
-      const hitbox = child;
-      applyHitboxAngularTethers(hitbox);
-      if (hitbox.angularTethers.length > 0) {
-         hasUpdated = true;
-      }
-   }
-
-   if (tethers.length > 0 || hasUpdated) {
+   if (hitbox.tethers.length > 0 || hasUpdated) {
       // @Speed: Is this necessary every tick?
       transformComponent.isDirty = true;
    }
@@ -289,7 +284,16 @@ export function tickEntityPhysics(entity: Entity): void {
          }
       }
    }
-   applyHitboxTethers(transformComponent);
+
+   for (const child of transformComponent.children) {
+      if (!entityChildIsHitbox(child)) {
+         continue;
+      }
+
+      const hitbox = child;
+      applyHitboxTethers(hitbox, transformComponent);
+   }
+
    updatePosition(entity, transformComponent);
 
    for (const entityAttachInfo of transformComponent.children) {

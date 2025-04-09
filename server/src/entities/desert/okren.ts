@@ -6,7 +6,7 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
-import { moveEntityToPosition } from "../../ai-shared";
+import { moveEntityToPosition, turnToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -19,7 +19,9 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { createHitbox } from "../../hitboxes";
 
 const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
-   moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 2);
+   // @Temporary
+   // moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 2);
+   turnToPosition(okren, x, y, turnSpeed, 2);
 }
 
 // @Temporary: remove size parameter

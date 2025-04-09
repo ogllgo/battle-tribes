@@ -98,7 +98,7 @@ import { LootComponent } from "./components/LootComponent";
 import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponent";
 import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
-import { AngularTetherInfo, Hitbox } from "./hitboxes";
+import { HitboxAngularTether, Hitbox } from "./hitboxes";
 import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
@@ -123,6 +123,7 @@ import { SandBallComponent } from "./components/SandBallComponent";
 import { KrumblidMorphCocoonComponent } from "./components/KrumblidMorphCocoonComponent";
 import { OkrenTongueSegmentComponent } from "./components/OkrenTongueSegmentComponent";
 import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
+import { OkrenTongueComponent } from "./components/OkrenTongueComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -244,6 +245,7 @@ const ComponentClassRecord = {
    [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
    [ServerComponentType.sandBall]: () => SandBallComponent,
    [ServerComponentType.krumblidMorphCocoon]: () => KrumblidMorphCocoonComponent,
+   [ServerComponentType.okrenTongue]: () => OkrenTongueComponent,
    [ServerComponentType.okrenTongueSegment]: () => OkrenTongueSegmentComponent,
    [ServerComponentType.okrenTongueTip]: () => OkrenTongueTipComponent,
 } satisfies {
@@ -275,7 +277,7 @@ export interface EntityConfigAttachInfoWithTether {
    readonly springConstant: number;
    readonly damping: number;
    readonly affectsOriginHitbox: boolean;
-   readonly angularTether?: AngularTetherInfo;
+   readonly angularTether?: HitboxAngularTether;
 }
 
 export interface EntityConfig {
@@ -301,7 +303,7 @@ export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbo
    };
 }
 
-export function createEntityConfigAttachInfoWithTether(parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: AngularTetherInfo): EntityConfigAttachInfoWithTether {
+export function createEntityConfigAttachInfoWithTether(parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
    return {
       parent: parent,
       parentHitbox: parentHitbox,

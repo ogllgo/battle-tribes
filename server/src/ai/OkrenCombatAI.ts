@@ -5,15 +5,14 @@ import { Point, randFloat, randInt } from "../../../shared/src/utils";
 import { getDistanceFromPointToEntity } from "../ai-shared";
 import { createEntityConfigAttachInfo } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
-import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenHitboxIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles, setOkrenHitboxIdealAngles } from "../components/OkrenComponent";
-import { OkrenTongueTipComponentArray } from "../components/OkrenTongueTipComponent";
-import { attachEntity, entityChildIsEntity, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles, setOkrenHitboxIdealAngles } from "../components/OkrenComponent";
+import { OkrenTongueComponentArray } from "../components/OkrenTongueComponent";
+import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
-import { createOkrenTongueSegmentConfig } from "../entities/desert/okren-tongue-segment";
-import { createOkrenTongueTipConfig } from "../entities/desert/okren-tongue-tip";
+import { createOkrenTongueConfig } from "../entities/desert/okren-tongue";
 import { createEntity } from "../Entity";
 import { Hitbox, turnHitboxToAngle } from "../hitboxes";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
 
 export class OkrenCombatAI {
    public readonly acceleration: number;
@@ -25,7 +24,6 @@ export class OkrenCombatAI {
    public readonly okrenMandibleIsIns = [false, false];
 
    public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
-   public tongueIsRetracting = false;
 
    constructor(acceleration: number, turnSpeed: number) {
       this.acceleration = acceleration;
@@ -80,9 +78,9 @@ export function getOkrenPreyTarget(okren: Entity, aiHelperComponent: AIHelperCom
    return getAttackTarget(okren, aiHelperComponent, entityIsPrey);
 }
 
-const getTongueRootEntity = (transformComponent: TransformComponent): Entity | null => {
+const getTongue = (transformComponent: TransformComponent): Entity | null => {
    for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && (getEntityType(child.attachedEntity) === EntityType.okrenTongueTip || getEntityType(child.attachedEntity) === EntityType.okrenTongueSegment)) {
+      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.okrenTongue) {
          return child.attachedEntity;
       }
    }
@@ -97,101 +95,9 @@ const getTonguePosition = (hitbox: Hitbox, offsetMagnitude: number): Point => {
 }
 
 const deployTongue = (okren: Entity, hitbox: Hitbox): void => {
-   const tongueConfig = createOkrenTongueTipConfig(getTonguePosition(hitbox, TONGUE_INITIAL_OFFSET), hitbox.box.angle);
+   const tongueConfig = createOkrenTongueConfig(getTonguePosition(hitbox, TONGUE_INITIAL_OFFSET), hitbox.box.angle, hitbox);
    tongueConfig.attachInfo = createEntityConfigAttachInfo(okren, hitbox, true);
    createEntity(tongueConfig, getEntityLayer(okren), 0);
-}
-
-const advanceTongue = (okren: Entity, hitbox: Hitbox, tongueRootEntity: Entity): void => {
-   const tongueRootTransformComponent = TransformComponentArray.getComponent(tongueRootEntity);
-   const tongueRootHitbox = tongueRootTransformComponent.children[0] as Hitbox;
-
-   tongueRootHitbox.box.offset.y += 500 / Settings.TPS;
-
-   // new segmente!
-   if (tongueRootHitbox.box.offset.y >= TONGUE_INITIAL_OFFSET + 24) {
-      const offsetMagnitude = tongueRootHitbox.box.offset.y - 24;
-      
-      // Create the new root entity
-      const segmentConfig = createOkrenTongueSegmentConfig(getTonguePosition(hitbox, offsetMagnitude), hitbox.box.angle);
-      
-      const segmentTransformComponent = segmentConfig.components[ServerComponentType.transform]!;
-      segmentConfig.attachInfo = createEntityConfigAttachInfo(okren, hitbox, true);
-      segmentConfig.childEntities = [
-         {
-            entity: tongueRootEntity,
-            attachInfo: {
-               attachedEntity: tongueRootEntity,
-               parentHitbox: segmentTransformComponent.children[0] as Hitbox,
-               destroyWhenParentIsDestroyed: true
-            }
-         }
-      ]
-
-      createEntity(segmentConfig, getEntityLayer(okren), 0);
-   }
-}
-
-const regressTongue = (okren: Entity, hitbox: Hitbox, tongueRootEntity: Entity, combatAI: OkrenCombatAI): void => {
-   const tongueRootTransformComponent = TransformComponentArray.getComponent(tongueRootEntity);
-   const tongueRootHitbox = tongueRootTransformComponent.children[0] as Hitbox;
-
-   let hasSnaggedSomething = false;
-   if (getEntityType(tongueRootEntity) === EntityType.okrenTongueTip) {
-      const okrenTongueTipComponent = OkrenTongueTipComponentArray.getComponent(tongueRootEntity);
-      if (okrenTongueTipComponent.hasSnaggedSomething && entityExists(okrenTongueTipComponent.snagged)) {
-         hasSnaggedSomething = true;
-      }
-   }
-
-   if (!hasSnaggedSomething) {
-      tongueRootHitbox.box.offset.y -= 750 / Settings.TPS;
-   
-      // remove root segment
-      if (tongueRootHitbox.box.offset.y < TONGUE_INITIAL_OFFSET) {
-         let nextTonguePart: Entity | null = null;
-         for (const child of tongueRootTransformComponent.children) {
-            if (entityChildIsEntity(child)) {
-               nextTonguePart = child.attachedEntity;
-               break;
-            }
-         }
-         
-         if (nextTonguePart !== null) {
-            removeAttachedEntity(tongueRootEntity, nextTonguePart);
-            attachEntity(nextTonguePart, okren, hitbox, true);
-         } else {
-            // final one! !
-            combatAI.tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
-         }
-         
-         destroyEntity(tongueRootEntity);
-      }
-   }
-}
-
-const getTongueLength = (tongueRootEntity: Entity): number => {
-   let currentTransformComponent = TransformComponentArray.getComponent(tongueRootEntity);
-   let length = 24;
-
-   while (true) {
-      let nextTonguePart: Entity | null = null;
-      for (const child of currentTransformComponent.children) {
-         if (entityChildIsEntity(child)) {
-            nextTonguePart = child.attachedEntity;
-            break;
-         }
-      }
-
-      if (nextTonguePart !== null) {
-         currentTransformComponent = TransformComponentArray.getComponent(nextTonguePart);
-         length += 24;
-      } else {
-         break;
-      }
-   }
-
-   return length;
 }
 
 export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI, target: Entity): void {
@@ -248,25 +154,16 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
       turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
    }
 
-   const tongueRootEntity = getTongueRootEntity(transformComponent);
-   if (tongueRootEntity === null) {
+   const existingTongue = getTongue(transformComponent);
+   if (existingTongue === null) {
       if (combatAI.tongueCooldownTicks > 0) {
          combatAI.tongueCooldownTicks--;
       }
       if (combatAI.tongueCooldownTicks === 0) {
          deployTongue(okren, hitbox);
-         combatAI.tongueIsRetracting = false;
       }
    } else {
-      const tongueLength = getTongueLength(tongueRootEntity);
-      if (tongueLength >= 500) {
-         combatAI.tongueIsRetracting = true;
-      }
-      
-      if (combatAI.tongueIsRetracting) {
-         regressTongue(okren, hitbox, tongueRootEntity, combatAI);
-      } else {
-         advanceTongue(okren, hitbox, tongueRootEntity);
-      }
+      const okrenTongueComponent = OkrenTongueComponentArray.getComponent(existingTongue);
+      okrenTongueComponent.target = target;
    }
 }

@@ -10,7 +10,21 @@ import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformCom
 import { registerPlayerKnockback } from "./server/player-clients";
 import { getEntityLayer, getEntityType } from "./world";
 
-export interface AngularTetherInfo {
+export interface HitboxTether {
+   readonly originHitbox: Hitbox;
+   
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
+
+   readonly affectsOriginHitbox: boolean;
+
+   // Used for verlet integration
+   previousPositionX: number;
+   previousPositionY: number;
+}
+
+export interface HitboxAngularTether {
    readonly originHitbox: Hitbox;
    readonly springConstant: number;
    readonly angularDamping: number;
@@ -28,10 +42,11 @@ export interface Hitbox {
    
    readonly previousPosition: Point;
    readonly acceleration: Point;
+   readonly tethers: Array<HitboxTether>;
    
    previousRelativeAngle: number;
    angularAcceleration: number;
-   readonly angularTethers: Array<AngularTetherInfo>;
+   readonly angularTethers: Array<HitboxAngularTether>;
    
    mass: number;
    collisionType: HitboxCollisionType;
@@ -46,6 +61,19 @@ export interface Hitbox {
    boundsMaxY: number;
 }
 
+export function createHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): HitboxTether {
+   const tether: HitboxTether = {
+      originHitbox: otherHitbox,
+      idealDistance: idealDistance,
+      springConstant: springConstant,
+      damping: damping,
+      affectsOriginHitbox: affectsOriginHitbox,
+      previousPositionX: hitbox.box.position.x,
+      previousPositionY: hitbox.box.position.y
+   };
+   return tether;
+}
+
 export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    const localID = transformComponent.nextHitboxLocalID++;
    
@@ -56,6 +84,7 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       box: box,
       previousPosition: box.position.copy(),
       acceleration: new Point(0, 0),
+      tethers: [],
       previousRelativeAngle: box.relativeAngle,
       angularAcceleration: 0,
       angularTethers: [],

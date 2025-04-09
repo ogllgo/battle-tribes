@@ -337,8 +337,8 @@ export function spawnInitialEntities(): void {
       // createEntity(dustfleaConfig, surfaceLayer, 0);
       setTimeout(() => {
          
-         const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
-         createEntity(krumblidConfig, surfaceLayer, 0);
+         // const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
+         // createEntity(krumblidConfig, surfaceLayer, 0);
       }, 6000)
 
       const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);

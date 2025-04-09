@@ -29,7 +29,7 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 }
 
 const move = (dustflea: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   turnToPosition(dustflea, x, y, turnSpeed);
+   turnToPosition(dustflea, x, y, turnSpeed, 1);
    
    const ageTicks = getEntityAgeTicks(dustflea);
    if ((ageTicks + dustflea) % Math.floor(Settings.TPS / 2.3) === 0) {

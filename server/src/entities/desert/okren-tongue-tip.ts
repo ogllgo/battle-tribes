@@ -13,7 +13,7 @@ import { createHitbox } from "../../hitboxes";
 export function createOkrenTongueTipConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
       
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 16, 24), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 16, 24), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

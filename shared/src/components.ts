@@ -134,6 +134,7 @@ export enum ServerComponentType {
    dustfleaMorphCocoon,
    sandBall,
    krumblidMorphCocoon,
+   okrenTongue,
    okrenTongueSegment,
    okrenTongueTip
 }
@@ -262,6 +263,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.dustfleaMorphCocoon]: "Dustflea Morph Cocoon Component",
    [ServerComponentType.sandBall]: "Sand Ball Component",
    [ServerComponentType.krumblidMorphCocoon]: "Krumblid Morph Cocoon Component",
+   [ServerComponentType.okrenTongue]: "Okren Tongue Component",
    [ServerComponentType.okrenTongueSegment]: "Okren Tongue Segment Component",
    [ServerComponentType.okrenTongueTip]: "Okren Tongue Tip Component",
 };
@@ -376,6 +378,7 @@ export const EntityComponents = {
    [EntityType.dustfleaMorphCocoon]: [],
    [EntityType.sandBall]: [],
    [EntityType.krumblidMorphCocoon]: [],
+   [EntityType.okrenTongue]: [],
    [EntityType.okrenTongueSegment]: [],
    [EntityType.okrenTongueTip]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;

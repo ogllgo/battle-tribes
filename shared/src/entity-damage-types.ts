@@ -447,6 +447,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
    },
+   [EntityType.okrenTongue]: {
+      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
    [EntityType.okrenTongueSegment]: {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []

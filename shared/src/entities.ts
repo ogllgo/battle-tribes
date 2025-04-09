@@ -108,6 +108,7 @@ export const enum EntityType {
    dustfleaMorphCocoon,
    sandBall,
    krumblidMorphCocoon,
+   okrenTongue,
    okrenTongueSegment,
    okrenTongueTip
 }
@@ -219,6 +220,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.dustfleaMorphCocoon]: "Dustflea Morph Cocoon",
    [EntityType.sandBall]: "Sand Ball",
    [EntityType.krumblidMorphCocoon]: "Krumblid Morph Cocoon",
+   [EntityType.okrenTongue]: "Okren Tongue",
    [EntityType.okrenTongueSegment]: "Okren Tongue Segment",
    [EntityType.okrenTongueTip]: "Okren Tongue Tip",
 };

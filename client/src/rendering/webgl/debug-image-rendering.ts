@@ -1,4 +1,4 @@
-import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { entityChildIsHitbox, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { getTexture } from "../../textures";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
@@ -58,30 +58,37 @@ export function renderDebugImages(): void {
    for (let i = 0; i < TransformComponentArray.components.length; i++) {
       const transformComponent = TransformComponentArray.components[i];
 
-      for (const tether of transformComponent.tethers) {
-         const direction = tether.hitbox.box.position.calculateAngleBetween(tether.originHitbox.box.position);
-         const perpDirection = direction + Math.PI * 0.5;
-         
-         const x1 = tether.hitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y1 = tether.hitbox.box.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
-         
-         const x2 = tether.hitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y2 = tether.hitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
-         
-         const x3 = tether.originHitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y3 = tether.originHitbox.box.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
-         
-         const x4 = tether.originHitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
-         const y4 = tether.originHitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+      for (const child of transformComponent.children) {
+         if (!entityChildIsHitbox(child)) {
+            continue;
+         }
 
-         vertices.push(
-            x1, y1, 0, 0,
-            x2, y2, 1, 0,
-            x3, y3, 0, 1,
-            x3, y3, 0, 1,
-            x2, y2, 1, 0,
-            x4, y4, 1, 1
-         );
+         const hitbox = child;
+         for (const tether of hitbox.tethers) {
+            const direction = hitbox.box.position.calculateAngleBetween(tether.originBox.position);
+            const perpDirection = direction + Math.PI * 0.5;
+            
+            const x1 = hitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+            const y1 = hitbox.box.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+            
+            const x2 = hitbox.box.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+            const y2 = hitbox.box.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+            
+            const x3 = tether.originBox.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+            const y3 = tether.originBox.position.y + Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+            
+            const x4 = tether.originBox.position.x - Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);
+            const y4 = tether.originBox.position.y - Vars.SPRING_WIDTH * 0.5 * Math.cos(perpDirection);
+   
+            vertices.push(
+               x1, y1, 0, 0,
+               x2, y2, 1, 0,
+               x3, y3, 0, 1,
+               x3, y3, 0, 1,
+               x2, y2, 1, 0,
+               x4, y4, 1, 1
+            );
+         }
       }
    }
 

@@ -6,7 +6,7 @@ import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
 import { getHitboxByLocalID, TransformNode } from "../entity-components/server-components/TransformComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const x = reader.readNumber();
@@ -96,6 +96,22 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    const previousPosition = new Point(reader.readNumber(), reader.readNumber());
    const acceleration = new Point(reader.readNumber(), reader.readNumber());
 
+   const tethers = new Array<HitboxTether>();
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      tethers.push(tether);
+   }
+   
    const previousRelativeAngle = reader.readNumber();
    const angularAcceleration = reader.readNumber();
    
@@ -114,13 +130,20 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    // @INCOMPLETE @BUG: can't get from other transform components!
    const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
 
-   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
+   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
    return hitbox;
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    padBoxData(reader);
 
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
+
+   // Tethers
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      padBoxData(reader);
+      reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   }
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -185,6 +208,26 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    hitbox.previousPosition.y = reader.readNumber();
    hitbox.acceleration.x = reader.readNumber();
    hitbox.acceleration.y = reader.readNumber();
+
+   // Remove all previous tethers and add new ones
+
+   hitbox.tethers.splice(0, hitbox.tethers.length);
+   
+   const tethers = new Array<HitboxTether>();
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      tethers.push(tether);
+   }
 
    hitbox.previousRelativeAngle = reader.readNumber();
    hitbox.angularAcceleration = reader.readNumber();

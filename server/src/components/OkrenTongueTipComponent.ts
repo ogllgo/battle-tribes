@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { getTotalMass, Hitbox } from "../hitboxes";
+import { createHitboxTether, getTotalMass, Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
@@ -55,19 +55,17 @@ function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedH
       return;
    }
 
-   const victimTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-
-   // @Hack this is shiterrr
-   // Don't snag if the victim already has any tethers!
-   if (victimTransformComponent.tethers.length > 0) {
-      return;
+   // Don't snag if the hitbox is already tethered
+   for (const tether of affectedHitbox.tethers) {
+      if (tether.originHitbox === affectedHitbox) {
+         return;
+      }
    }
 
-   victimTransformComponent.addHitboxTether(collidingHitbox, affectedHitbox, 0, 15, 0.5, false);
+   const tether = createHitboxTether(collidingHitbox, affectedHitbox, 0, 15, 0.5, false);
+   collidingHitbox.tethers.push(tether);
 
    const okrenTongueTipComponent = OkrenTongueTipComponentArray.getComponent(tongueTip);
    okrenTongueTipComponent.hasSnaggedSomething = true;
    okrenTongueTipComponent.snagged = collidingEntity;
-
-   // attachEntity(collidingEntity, tongueTip, affectedHitbox, false);
 }
