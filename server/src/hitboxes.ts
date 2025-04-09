@@ -20,7 +20,7 @@ export interface Hitbox {
    
    readonly previousPosition: Point;
    readonly acceleration: Point;
-
+   
    // @Memory: So many hitboxes don't use these 2!
    /** Angle the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI)
     *  Exception: when set to -999, the hitbox will take angleTurnSpeed as an angular velocity value instead. */

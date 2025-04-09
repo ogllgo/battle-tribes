@@ -270,7 +270,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                      angularDamping: 0.5,
                      padding: 0.1
                   };
-                  childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, angularTether);
+                  childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 22, 1000, 10, false, angularTether);
                }
             }
          }

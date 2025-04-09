@@ -10,7 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { applyAcceleration, getHitboxTile, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
+import { applyAcceleration, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
 import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { cleanAngleNEW } from "../ai-shared";
 
@@ -161,7 +161,6 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    }
 
    if (physicsComponent.isAffectedByGroundFriction) {
-      // @Incomplete @Bug: Doesn't take into account the TPS. Would also be fixed by pre-multiplying the array
       // Ground friction
       const velocityMagnitude = Math.hypot(velX, velY);
       if (velocityMagnitude > 0) {
@@ -270,10 +269,24 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       // Calculate spring force
       const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
       const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+   
+      const hitboxVelocity = getHitboxVelocity(hitbox);
+      const originHitboxVelocity = getHitboxVelocity(originHitbox);
+
+      const relVelX = hitboxVelocity.x - originHitboxVelocity.x;
+      const relVelY = hitboxVelocity.y - originHitboxVelocity.y;
+
+      const dampingForceX = -relVelX * tether.damping;
+      const dampingForceY = -relVelY * tether.damping;
       
-      translateHitbox(hitbox, springForceX, springForceY);
+      // @Incomplete: doesn't account for root hitbox!
+      hitbox.acceleration.x += (springForceX + dampingForceX) / hitbox.mass;
+      hitbox.acceleration.y += (springForceY + dampingForceY) / hitbox.mass;
+      // translateHitbox(hitbox, springForceX, springForceY);
       if (tether.affectsOriginHitbox) {
-         translateHitbox(originHitbox, -springForceX, -springForceY);
+         originHitbox.acceleration.x -= (springForceX + dampingForceX) / originHitbox.mass;
+         originHitbox.acceleration.y -= (springForceY + dampingForceY) / originHitbox.mass;
+         // translateHitbox(originHitbox, -springForceX, -springForceY);
       }
 
       // Angular tether
