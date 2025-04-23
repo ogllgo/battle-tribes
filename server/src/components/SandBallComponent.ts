@@ -21,6 +21,8 @@ function onTick(sandBall: Entity): void {
    // @HACK @SPEED
    const transformComponent = TransformComponentArray.getComponent(sandBall);
    if (transformComponent.rootEntity !== sandBall) {
+      // @temporary @Hack. I think this is caused if a krumblid starts balling up sand, creating a new sandBall entity, the exact tick it is killed??
+      
       assert(getEntityType(transformComponent.rootEntity) === EntityType.krumblid);
 
       const aiHelperComponent = AIHelperComponentArray.getComponent(transformComponent.rootEntity);

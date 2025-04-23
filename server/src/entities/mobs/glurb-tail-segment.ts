@@ -34,7 +34,7 @@ export function createGlurbTailSegmentConfig(position: Point, rotation: number, 
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   hitbox.tethers.push(createHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15, 0.5, true));
+   hitbox.tethers.push(createHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15/60, 0.5, true));
 
    const physicsComponent = new PhysicsComponent();
 

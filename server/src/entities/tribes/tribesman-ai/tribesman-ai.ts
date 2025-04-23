@@ -37,7 +37,7 @@ const enum Vars {
 
 const BARREL_INTERACT_DISTANCE = 80;
 
-export const TRIBESMAN_TURN_SPEED = 2 * Math.PI;
+export const TRIBESMAN_TURN_SPEED = 3 * Math.PI;
 
 export const TRIBESMAN_COMMUNICATION_RANGE = 1000;
 

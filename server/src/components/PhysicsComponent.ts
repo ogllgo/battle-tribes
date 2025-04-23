@@ -10,8 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { addHitboxAngularAcceleration, applyAcceleration, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
+import { addHitboxAngularAcceleration, addHitboxVelocity, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
+import { getAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { cleanAngleNEW } from "../ai-shared";
 
 // @Cleanup: Variable names
@@ -42,7 +42,6 @@ export class PhysicsComponent {
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
 
-
 const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent): void => {
    if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
       return;
@@ -53,6 +52,17 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
    hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
    hitbox.box.relativeAngle = newAngle;
    hitbox.angularAcceleration = 0;
+
+   // if (hitbox.parent !== null) {
+   //    const origin = hitbox.parent.box.position;
+   //    const angle = hitbox.parent.box.angle + hitbox.box.relativeAngle;
+   
+
+   //    const radius = hitbox.initialDistanceFromParent; // store this when attaching the tether
+   
+   //    hitbox.box.position.x = origin.x + Math.cos(angle) * radius;
+   //    hitbox.box.position.y = origin.y + Math.sin(angle) * radius;
+   // }
 
    transformComponent.isDirty = true;
    registerDirtyEntity(entity);
@@ -183,35 +193,32 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
    for (const angularTether of hitbox.angularTethers) {
       const originHitbox = angularTether.originHitbox;
       
-      const idealDirection = originHitbox.box.angle;
-      const tetherDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-      const diff = cleanAngleNEW(tetherDirection - idealDirection);
+      const currentDirection = originHitbox.box.angle;
+      const idealDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+      const diff = cleanAngleNEW(currentDirection - idealDirection);
 
       if (Math.abs(diff) > angularTether.padding) {
-         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant / Settings.TPS;
+         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant;
 
-         addHitboxAngularAcceleration(originHitbox, rotationForce / getHitboxConnectedMass(originHitbox));
-         
-         addHitboxAngularAcceleration(hitbox, -rotationForce / getHitboxConnectedMass(hitbox));
+         const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
+         const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
+   
+         const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
+   
+         const dampingForce = -relVel * angularTether.damping;
+   
+         const force = rotationForce + dampingForce;
 
-         // We want to rotate the hitbox by -rotationForce relative to the originHitbox. But if the origin hitbox is the hitbox' parent, then we need to subtract it twice to counteract it.
-         // const rotationalOffsetForce = -rotationForce * (hitbox.parent === originHitbox ? 2 : 1);
-         const rotationalOffsetForce = -rotationForce / getHitboxConnectedMass(hitbox);
-         
-         const currentOffsetX = hitbox.box.position.x - originHitbox.box.position.x;
-         const currentOffsetY = hitbox.box.position.y - originHitbox.box.position.y;
-         const newOffsetX = rotateXAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
-         const newOffsetY = rotateYAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
-         const moveX = newOffsetX - currentOffsetX;
-         const moveY = newOffsetY - currentOffsetY;
-         translateHitbox(hitbox, moveX, moveY);
-
-         // Restrict the relative angle of the hitbox to the 
-
+         // @Temporary
+         // addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
          // @HACK
-         // const a = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-         // hitbox.box.relativeAngle = a;
-         // hitbox.previousRelativeAngle = a;
+         // addHitboxAngularAcceleration(originHitbox, -force / getHitboxConnectedMass(originHitbox));
+
+
+         // @HACKKKK
+         const newRelativeAngle = hitbox.box.angle - hitbox.box.relativeAngle + idealDirection;
+         hitbox.previousRelativeAngle = newRelativeAngle;
+         hitbox.box.relativeAngle = newRelativeAngle;
       }
    }
 }
@@ -234,8 +241,8 @@ const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformCompone
       const displacement = distance - tether.idealDistance;
       
       // Calculate spring force
-      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
-      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceX = normalisedDiffX * tether.springConstant * displacement;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement;
    
       const hitboxVelocity = getHitboxVelocity(hitbox);
       const originHitboxVelocity = getHitboxVelocity(originHitbox);
@@ -245,15 +252,16 @@ const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformCompone
 
       const dampingForceX = -relVelX * tether.damping;
       const dampingForceY = -relVelY * tether.damping;
+
+      const forceX = springForceX + dampingForceX;
+      const forceY = springForceY + dampingForceY;
       
       // @Incomplete: doesn't account for root hitbox!
-      hitbox.acceleration.x += (springForceX + dampingForceX) / hitbox.mass;
-      hitbox.acceleration.y += (springForceY + dampingForceY) / hitbox.mass;
-      // translateHitbox(hitbox, springForceX, springForceY);
+      hitbox.acceleration.x += forceX / hitbox.mass;
+      hitbox.acceleration.y += forceY / hitbox.mass;
       if (tether.affectsOriginHitbox) {
-         originHitbox.acceleration.x -= (springForceX + dampingForceX) / originHitbox.mass;
-         originHitbox.acceleration.y -= (springForceY + dampingForceY) / originHitbox.mass;
-         // translateHitbox(originHitbox, -springForceX, -springForceY);
+         originHitbox.acceleration.x -= forceX / originHitbox.mass;
+         originHitbox.acceleration.y -= forceY / originHitbox.mass;
       }
    }
 

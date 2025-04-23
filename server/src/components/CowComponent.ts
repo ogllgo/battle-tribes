@@ -27,8 +27,8 @@ import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle, translateHitbox } from "../hitboxes";
-import { getEscapeTarget } from "../ai/EscapeAI";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -376,15 +376,7 @@ function onTick(cow: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 
    const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(cow, escapeAI);
-   if (escapeTarget !== null) {
-      const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-      const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
-      
-      const targetX = cowBodyHitbox.box.position.x * 2 - escapeTargetHitbox.box.position.x;
-      const targetY = cowBodyHitbox.box.position.y * 2 - escapeTargetHitbox.box.position.y;
-      const targetDirection = angle(targetX - cowBodyHitbox.box.position.x, targetY - cowBodyHitbox.box.position.y);
-      moveCow(cow, targetX, targetY, targetDirection, Vars.FAST_ACCELERATION);
+   if (runEscapeAI(cow, aiHelperComponent, escapeAI)) {
       return;
    }
 

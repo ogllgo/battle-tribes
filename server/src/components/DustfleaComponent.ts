@@ -6,7 +6,7 @@ import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity
 import { Settings } from "../../../shared/src/settings";
 import { assert, randInt } from "../../../shared/src/utils";
 import { runHibernateAI } from "../ai/DustfleaHibernateAI";
-import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHitboxAngularAcceleration, getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
@@ -17,6 +17,7 @@ import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, hitEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { attachEntity, getTransformComponentFirstHitbox, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
 const MIN_OBSTACLE_SIT_MODE_TICKS = 25 * Settings.TPS;
 const MAX_OBSTACLE_SIT_MODE_TICKS = 40 * Settings.TPS;
@@ -100,9 +101,7 @@ const getSitTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): E
 
 const entityIsSuckTarget = (entity: Entity): boolean => {
    const entityType = getEntityType(entity);
-   return entityType === EntityType.player;
-   // return entityType === EntityType.player || entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
-   // return entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
+   return TribeMemberComponentArray.hasComponent(entity) || entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
 }
 
 const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
@@ -133,9 +132,7 @@ function onTick(dustflea: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
 
    const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(dustflea, escapeAI);
-   if (escapeTarget !== null) {
-      runEscapeAI(dustflea, escapeTarget);
+   if (runEscapeAI(dustflea, aiHelperComponent, escapeAI)) {
       return;
    }
 

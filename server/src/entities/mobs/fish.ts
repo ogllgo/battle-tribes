@@ -122,7 +122,7 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
 
    const aiHelperComponent = new AIHelperComponent(hitbox, 200, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, wanderTargetIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3, 1);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
    

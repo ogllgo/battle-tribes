@@ -6,10 +6,10 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { customTickIntervalHasPassed, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, Point, randFloat, UtilVars } from "battletribes-shared/utils";
 import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 import { hitEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
@@ -178,9 +178,7 @@ function onTick(fish: Entity): void {
 
    // Escape AI
    const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(fish, escapeAI);
-   if (escapeTarget !== null) {
-      runEscapeAI(fish, escapeTarget);
+   if (runEscapeAI(fish, aiHelperComponent, escapeAI)) {
       return;
    }
 

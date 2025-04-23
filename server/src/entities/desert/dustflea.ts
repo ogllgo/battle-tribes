@@ -29,7 +29,7 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 }
 
 const move = (dustflea: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   turnToPosition(dustflea, x, y, turnSpeed, 1);
+   turnToPosition(dustflea, x, y, turnSpeed, 0.8);
    
    const ageTicks = getEntityAgeTicks(dustflea);
    if ((ageTicks + dustflea) % Math.floor(Settings.TPS / 2.3) === 0) {
@@ -70,10 +70,10 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
    const healthComponent = new HealthComponent(2);
 
    const aiHelperComponent = new AIHelperComponent(hitbox, 180, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 99999, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 4 * Math.PI, 99999, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(4 * Settings.TPS, 6 * Settings.TPS, 1, 80);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 2 * Math.PI, extraEscapeCondition);
-   aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 4 * Math.PI, 1, extraEscapeCondition);
+   aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI);
    // aiHelperComponent.ais[AIType.hoppingMovementAI] = new HoppingMovementAI();
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);

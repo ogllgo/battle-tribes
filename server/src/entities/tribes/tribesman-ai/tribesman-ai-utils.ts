@@ -213,7 +213,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
 
       const tribesmanHitbox = transformComponent.children[0] as Hitbox;
 
-      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 1, false);
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);

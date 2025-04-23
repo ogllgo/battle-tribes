@@ -559,7 +559,7 @@ function onRemove(entity: Entity): void {
 
    // Unattach any children of the entity which aren't being destroyed
    for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && !child.destroyWhenParentIsDestroyed) {
+      if (entityChildIsEntity(child)) {
          removeAttachedEntity(entity, child.attachedEntity);
       }
    }
@@ -665,6 +665,8 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
             // Once the entity gets attached, it's going to have the parent hitboxes' angle added to it, so subtract it now.
             // Adjust the child's relative rotation so that it stays pointed in the same direction relative to the parent
             childHitbox.box.relativeAngle -= parentHitbox.box.angle;
+            childHitbox.previousRelativeAngle -= parentHitbox.box.angle;
+
             const diffX = childHitbox.box.position.x - parentHitbox.box.position.x;
             const diffY = childHitbox.box.position.y - parentHitbox.box.position.y;
          
@@ -732,6 +734,7 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
    registerDirtyEntity(parent);
 }
 
+/** Detatches a child from a parent */
 export function removeAttachedEntity(parent: Entity, child: Entity): void {
    const parentTransformComponent = TransformComponentArray.getComponent(parent);
    const childTransformComponent = TransformComponentArray.getComponent(child);
@@ -773,6 +776,7 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
             hitbox.parent = null;
             
             hitbox.box.relativeAngle += parentHitbox.box.angle;
+            hitbox.previousRelativeAngle += parentHitbox.box.angle;
    
             // Remove any tethers to the parent hitbox
             for (let i = 0; i < hitbox.tethers.length; i++) {
@@ -787,8 +791,7 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
    }
    
    registerDirtyEntity(parent);
-   registerDirtyEntity(child);
-   
+   registerDirtyEntity(child);   
    propagateRootEntityChange(child, child);
 }
 

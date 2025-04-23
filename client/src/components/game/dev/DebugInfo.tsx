@@ -111,6 +111,7 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
       ) : null }
       
       <p>Rotation: <span className="highlight">{hitbox.box.angle.toFixed(2)}</span></p>
+      <p>Angular acceleration: <span className="highlight">{hitbox.angularAcceleration.toFixed(2)}</span></p>
 
       <p>Chunks: {chunkDisplayText}</p>
 

@@ -624,7 +624,6 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
 
    hitbox.tethers.splice(0, hitbox.tethers.length);
    
-   const tethers = new Array<HitboxTether>();
    const numTethers = reader.readNumber();
    for (let i = 0; i < numTethers; i++) {
       const originBox = readBoxFromData(reader);
@@ -637,7 +636,7 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
          springConstant: springConstant,
          damping: damping
       };
-      tethers.push(tether);
+      hitbox.tethers.push(tether);
    }
    
    reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);

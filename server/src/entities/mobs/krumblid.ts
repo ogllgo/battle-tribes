@@ -1,6 +1,6 @@
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, randInt } from "battletribes-shared/utils";
+import { getAbsAngleDiff, Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -8,7 +8,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
-import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -20,7 +20,7 @@ import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesCo
 import { Settings } from "../../../../shared/src/settings";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { HungerComponent } from "../../components/HungerComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { moveEntityToPosition } from "../../ai-shared";
@@ -29,6 +29,7 @@ import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox
 import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../../ai/KrumblidHibernateAI";
+import { getEntityType } from "../../world";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -43,7 +44,28 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 }
 
 const move = (krumblid: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(krumblid, x, y, acceleration, turnSpeed, 1);
+   moveEntityToPosition(krumblid, x, y, acceleration, turnSpeed, 0.4);
+}
+
+const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean => {
+   // Run from okrens which look like they are going for the krumblid
+   
+   if (getEntityType(escapeTarget) !== EntityType.okren) {
+      return false;
+   }
+
+   const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
+   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+
+   const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
+   const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+
+   const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(krumblidHitbox.box.position);
+   const positionFromEscapeTarget = new Point(krumblidHitbox.box.position.x - escapeTargetHitbox.box.position.x, krumblidHitbox.box.position.y - escapeTargetHitbox.box.position.y);
+
+   const escapeTargetVelocity = getHitboxVelocity(escapeTargetHitbox);
+   
+   return getAbsAngleDiff(angleFromEscapeTarget, escapeTargetHitbox.box.angle) < 0.4 && escapeTargetVelocity.calculateDotProduct(positionFromEscapeTarget) > 50;
 }
 
 export function createKrumblidConfig(position: Point, angle: number): EntityConfig {
@@ -74,14 +96,14 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 280, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 2 * Math.PI);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 200, move);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.25, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
-   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(200, 2 * Math.PI);
-   aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(300, 2 * Math.PI);
-   aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 2 * Math.PI);
-   aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(200, 2 * Math.PI);
+   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 5 * Math.PI);
+   aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(400, 5 * Math.PI);
+   aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 5 * Math.PI);
+   aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(240, 5 * Math.PI);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

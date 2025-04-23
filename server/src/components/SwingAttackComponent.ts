@@ -16,7 +16,6 @@ import { calculateItemDamage } from "../entities/tribes/tribe-member";
 import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { createEntity } from "../Entity";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { registerDirtyEntity } from "../server/player-clients";
 import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";

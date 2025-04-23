@@ -1,22 +1,22 @@
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { OkrenTongueComponent } from "../../components/OkrenTongueComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TransformComponent } from "../../components/TransformComponent";
-import { Hitbox, HitboxAngularTether } from "../../hitboxes";
+import { addHitboxVelocity, Hitbox, HitboxAngularTether } from "../../hitboxes";
 import { createOkrenTongueTipConfig } from "./okren-tongue-tip";
 
-export function createOkrenTongueConfig(position: Point, angle: number, okrenHitbox: Hitbox): EntityConfig {
+export function createOkrenTongueConfig(position: Point, angle: number, okrenHitbox: Hitbox, target: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
       
    const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(99);
 
-   const okrenTongueComponent = new OkrenTongueComponent();
+   const okrenTongueComponent = new OkrenTongueComponent(target);
    
    const tongueTipConfig = createOkrenTongueTipConfig(position, angle);
 
@@ -25,11 +25,17 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    // @Copynpaste
    const angularTether: HitboxAngularTether = {
       originHitbox: okrenHitbox,
-      springConstant: 1,
-      angularDamping: 0.5,
+      springConstant: 1/60,
+      damping: 0.5,
       padding: 0
    };
    tongueTipHitbox.angularTethers.push(angularTether);
+   
+   // @Copynpaste
+   // Apply some initial velocity
+   const vx = 200 * Math.sin(okrenHitbox.box.angle);
+   const vy = 200 * Math.cos(okrenHitbox.box.angle);
+   addHitboxVelocity(tongueTipHitbox, vx, vy);
    
    return {
       entityType: EntityType.okrenTongue,

@@ -3,8 +3,8 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { Point, distance } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
-import { InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
-import { InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
+import { InventoryComponentArray, countItemType, getInventory } from "../../../components/InventoryComponent";
+import { getCurrentLimbState, InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { calculateItemDamage, useItem } from "../tribe-member";
@@ -13,12 +13,13 @@ import { TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { clearTribesmanPath, getBestHammerItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
-import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item } from "battletribes-shared/items/items";
+import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item, ITEM_INFO_RECORD, itemInfoIsBow, QUIVER_ACCESS_TIME_TICKS, QUIVER_PULL_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { beginSwing } from "../limb-use";
 import { TribeType } from "../../../../../shared/src/tribes";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { copyLimbState, LimbState, QUIVER_PULL_LIMB_STATE } from "../../../../../shared/src/attack-patterns";
 
 const enum Vars {
    BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TPS,
@@ -33,6 +34,15 @@ const enum Vars {
 const EXTRA_BOW_COOLDOWNS: Partial<Record<EntityType, number>> = {
    [EntityType.tribeWorker]: Math.floor(0.3 * Settings.TPS),
    [EntityType.tribeWarrior]: Math.floor(0.1 * Settings.TPS)
+};
+
+// @Copynpaste
+const BOW_HOLDING_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 36,
+   angle: -Math.PI * 0.4,
+   extraOffsetX: 4,
+   extraOffsetY: 0
 };
 
 export function doMeleeAttack(tribesman: Entity, itemSlot: number): void {
@@ -77,6 +87,39 @@ const getMostDamagingItemSlot = (tribesman: Entity, huntedEntity: Entity): numbe
 
       if (dps > mostDps) {
          mostDps = dps;
+         bestItemSlot = itemSlot;
+      }
+   }
+
+   return bestItemSlot;
+}
+
+// @Copynpaste
+const getBestBowItemSlot = (tribesman: Entity): number | null => {
+   const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+
+   // @Hack!
+   if (countItemType(inventoryComponent, ItemType.woodenArrow) === 0) {
+      return null;
+   }
+
+   let bestItemSlot: number | null = null;
+   let mostDamage = 0;
+   for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
+      const item = hotbarInventory.itemSlots[itemSlot];
+      if (typeof item === "undefined") {
+         continue;
+      }
+      const itemInfo = ITEM_INFO_RECORD[item.type];
+      if (!itemInfoIsBow(item.type, itemInfo)) {
+         continue;
+      }
+
+      const damage = itemInfo.projectileDamage;
+
+      if (damage > mostDamage) {
+         mostDamage = damage;
          bestItemSlot = itemSlot;
       }
    }
@@ -154,16 +197,23 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
    const huntedHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
    
-   const mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
+   let mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
+   
+   // @Incomplete: switch to melee weapon when the target is too close
+   // If the tribesman has a bow, use it
+   const bowItemSlot = getBestBowItemSlot(tribesman);
+   if (bowItemSlot) {
+      mostDamagingItemSlot = bowItemSlot;
+   }
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
    const hotbarLimb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-   
+
    // Select the item slot
    if (hotbarLimb.selectedItemSlot !== mostDamagingItemSlot && limbHeldItemCanBeSwitched(hotbarLimb)) {
       hotbarLimb.selectedItemSlot = mostDamagingItemSlot;
    }
-   
+
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
    if (hotbar.hasItem(mostDamagingItemSlot) && hotbarLimb.selectedItemSlot === mostDamagingItemSlot) {
       const selectedItem = hotbar.itemSlots[hotbarLimb.selectedItemSlot]!;
@@ -238,26 +288,63 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
                const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
                applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            } else {
+               // If the tribesman will be close enough, move closer
+               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle);
+               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
+            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.75, false);
 
-            // @Incomplete!
-            // if (hotbarUseInfo.action !== LimbAction.chargeBow) {
-            //    // If the tribesman is only just charging the bow, reset the cooldown to prevent the bow firing immediately
-            //    const itemInfo = ITEM_INFO_RECORD[selectedItem.type] as BowItemInfo;
-            //    hotbarUseInfo.lastBowChargeTicks = Board.ticks;
-            //    hotbarUseInfo.bowCooldownTicks = itemInfo.shotCooldownTicks;
-            //    tribesmanComponent.extraBowCooldownTicks = EXTRA_BOW_COOLDOWNS[Board.getEntityType(tribesman)]!;
-            // } else if (hotbarUseInfo.bowCooldownTicks === 0 && tribesmanComponent.extraBowCooldownTicks > 0) {
-            //    tribesmanComponent.extraBowCooldownTicks--;
-            // } else {
-            //    // If the bow is fully charged, fire it
-            //    useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarUseInfo.selectedItemSlot);
-            //    tribesmanComponent.extraBowCooldownTicks = EXTRA_BOW_COOLDOWNS[Board.getEntityType(tribesman)]!;
-            // }
-            hotbarLimb.action = LimbAction.chargeBow;
+            // @Copynpaste All this shit is copypasted from the client
+            if (hotbarLimb.action === LimbAction.none) {
+               const holdingLimb = hotbarLimb;
+               const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+               
+               holdingLimb.action = LimbAction.engageBow;
+               holdingLimb.currentActionElapsedTicks = 0;
+               holdingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS + QUIVER_PULL_TIME_TICKS;
+               holdingLimb.currentActionRate = 1;
+               holdingLimb.currentActionStartLimbState = startHoldingLimbState;
+               holdingLimb.currentActionEndLimbState = BOW_HOLDING_LIMB_STATE;
+
+               // Meanwhile the drawing limb pulls an arrow out
+               
+               const drawingLimb = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+               const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+               
+               drawingLimb.action = LimbAction.moveLimbToQuiver;
+               drawingLimb.currentActionElapsedTicks = 0;
+               drawingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS;
+               drawingLimb.currentActionRate = 1;
+               drawingLimb.currentActionStartLimbState = startDrawingLimbState;
+               drawingLimb.currentActionEndLimbState = QUIVER_PULL_LIMB_STATE;
+            } else if (hotbarLimb.action === LimbAction.chargeBow && hotbarLimb.currentActionElapsedTicks === hotbarLimb.currentActionDurationTicks) {
+               // If the bow is fully charged, fire it
+               useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarLimb.selectedItemSlot);
+
+               const holdingLimb = hotbarLimb;
+               const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+               
+               holdingLimb.action = LimbAction.mainArrowReleased;
+               holdingLimb.currentActionElapsedTicks = 0;
+               holdingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+               holdingLimb.currentActionStartLimbState = copyLimbState(startHoldingLimbState);
+               holdingLimb.currentActionEndLimbState = copyLimbState(startHoldingLimbState);
+      
+               const drawingLimb = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+               const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+      
+               drawingLimb.action = LimbAction.arrowReleased;
+               drawingLimb.currentActionElapsedTicks = 0;
+               drawingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+               // @Garbage
+               drawingLimb.currentActionStartLimbState = copyLimbState(startDrawingLimbState);
+               // @Garbage
+               drawingLimb.currentActionEndLimbState = copyLimbState(startDrawingLimbState);
+            }
 
             clearTribesmanPath(tribesman);
          } else {

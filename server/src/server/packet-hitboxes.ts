@@ -3,7 +3,7 @@ import { Box, boxIsCircular } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { Packet } from "../../../shared/src/packets";
-import { getHitboxVelocity, Hitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 
 const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
    packet.addNumber(box.position.x);

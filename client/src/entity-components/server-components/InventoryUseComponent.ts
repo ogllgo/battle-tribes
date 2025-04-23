@@ -1614,7 +1614,10 @@ function updatePlayerFromData(reader: PacketReader): void {
 
       reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
       const thrownBattleaxeItemID = reader.readNumber();
-      reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
+
+      limbInfo.blockAttack = reader.readNumber();
+      
       // @Copynpaste
       const lastBlockTick = reader.readNumber();
       const blockPositionX = reader.readNumber();

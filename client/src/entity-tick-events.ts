@@ -65,7 +65,19 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.dustfleaLatch: {
-         playSoundOnHitbox("dustflea-latch.mp3", 0., randFloat(0.9, 1.1), entity, hitbox, true);
+         playSoundOnHitbox("dustflea-latch.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.tongueGrab: {
+         playSoundOnHitbox("tongue-grab.mp3", 0.8, 1, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.tongueLaunch: {
+         playSoundOnHitbox("okren-tongue-launch.mp3", 0.5, 1.2, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.tongueLick: {
+         playSoundOnHitbox("okren-tongue-lick.mp3", randFloat(0.3, 0.35), randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }
    }

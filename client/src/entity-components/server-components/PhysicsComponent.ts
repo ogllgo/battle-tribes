@@ -263,11 +263,11 @@ const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitb
       const displacement = distance - tether.idealDistance;
       
       // Calculate spring force
-      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
-      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceX = normalisedDiffX * tether.springConstant * displacement;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement;
       
-      // Apply spring force 
-      translateHitbox(hitbox, springForceX, springForceY);
+      hitbox.acceleration.x += springForceX / hitbox.mass;
+      hitbox.acceleration.y += springForceY / hitbox.mass;
       // Don't move the other hitbox, as that will be accounted for by the server!
    }
 }

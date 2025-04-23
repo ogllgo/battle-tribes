@@ -309,15 +309,15 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         let config: EntityConfig;
+         let arrowConfig: EntityConfig;
          switch (item.type) {
             case ItemType.wooden_bow:
             case ItemType.reinforced_bow: {
-               config = createWoodenArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
+               arrowConfig = createWoodenArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
                break;
             }
             case ItemType.ice_bow: {
-               config = createIceArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
+               arrowConfig = createIceArrowConfig(spawnPosition, angle, tribeComponent.tribe, tribeMember);
                break;
             }
             // @Robustness
@@ -327,10 +327,10 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          }
 
          const tribeMemberVelocity = getHitboxVelocity(tribeMemberHitbox);
-         const arrowHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+         const arrowHitbox = arrowConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
          addHitboxVelocity(arrowHitbox, tribeMemberVelocity.x + itemInfo.projectileSpeed * Math.sin(angle), tribeMemberVelocity.y + itemInfo.projectileSpeed * Math.cos(angle));
          
-         createEntity(config, getEntityLayer(tribeMember), 0);
+         createEntity(arrowConfig, getEntityLayer(tribeMember), 0);
 
          for (let i = 0; i < 2; i++) {
             const limb = inventoryUseComponent.getLimbInfo(i === 0 ? InventoryName.hotbar : InventoryName.offhand);

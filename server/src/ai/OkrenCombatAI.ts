@@ -1,18 +1,19 @@
-import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
 import { Point, randFloat, randInt } from "../../../shared/src/utils";
 import { getDistanceFromPointToEntity } from "../ai-shared";
 import { createEntityConfigAttachInfo } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
-import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles, setOkrenHitboxIdealAngles } from "../components/OkrenComponent";
+import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles } from "../components/OkrenComponent";
 import { OkrenTongueComponentArray } from "../components/OkrenTongueComponent";
 import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
 import { createOkrenTongueConfig } from "../entities/desert/okren-tongue";
 import { createEntity } from "../Entity";
-import { Hitbox, turnHitboxToAngle } from "../hitboxes";
-import { getEntityLayer, getEntityType } from "../world";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { entityExists, getEntityLayer, getEntityType } from "../world";
 
 export class OkrenCombatAI {
    public readonly acceleration: number;
@@ -23,7 +24,9 @@ export class OkrenCombatAI {
    public readonly okrenMandibleFlickCountdowns = [0, 0];
    public readonly okrenMandibleIsIns = [false, false];
 
-   public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
+   // @Temporary
+   // public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
+   public tongueCooldownTicks = 10 * Settings.TPS;
 
    constructor(acceleration: number, turnSpeed: number) {
       this.acceleration = acceleration;
@@ -31,11 +34,12 @@ export class OkrenCombatAI {
    }
 }
 
-const SWING_COOLDOWN_TICKS = Settings.TPS;
+const BOTH_SWING_COOLDOWN_TICKS = Math.floor(Settings.TPS * 0.7);
 
 const TONGUE_INITIAL_OFFSET = 88;
-const MIN_TONGUE_COOLDOWN_TICKS = 2 * Settings.TPS;
-const MAX_TONGUE_COOLDOWN_TICKS = 3 * Settings.TPS;
+// @Hack shouldn't export
+export const MIN_TONGUE_COOLDOWN_TICKS = 3 * Settings.TPS;
+export const MAX_TONGUE_COOLDOWN_TICKS = 4 * Settings.TPS;
 
 const entityIsThreatToDesert = (entity: Entity): boolean => {
    return TribeMemberComponentArray.hasComponent(entity) || getEntityType(entity) === EntityType.zombie;
@@ -94,38 +98,80 @@ const getTonguePosition = (hitbox: Hitbox, offsetMagnitude: number): Point => {
    return new Point(x, y);
 }
 
-const deployTongue = (okren: Entity, hitbox: Hitbox): void => {
-   const tongueConfig = createOkrenTongueConfig(getTonguePosition(hitbox, TONGUE_INITIAL_OFFSET), hitbox.box.angle, hitbox);
+const deployTongue = (okren: Entity, hitbox: Hitbox, target: Entity): void => {
+   const position = getTonguePosition(hitbox, TONGUE_INITIAL_OFFSET);
+   
+   const tongueConfig = createOkrenTongueConfig(position, hitbox.box.angle, hitbox, target);
    tongueConfig.attachInfo = createEntityConfigAttachInfo(okren, hitbox, true);
    createEntity(tongueConfig, getEntityLayer(okren), 0);
+
+   const tickEvent: EntityTickEvent = {
+      type: EntityTickEventType.tongueLaunch,
+      entityID: okren,
+      data: 0
+   };
+   registerEntityTickEvent(okren, tickEvent);
 }
 
-export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI, target: Entity): void {
+export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperComponent, combatAI: OkrenCombatAI, desiredTarget: Entity): void {
    aiHelperComponent.currentAIType = AIType.krumblidCombat;
    
    const okrenComponent = OkrenComponentArray.getComponent(okren);
       
    const transformComponent = TransformComponentArray.getComponent(okren);
    const hitbox = transformComponent.children[0] as Hitbox;
+
+   let target: Entity;
+   const existingTongue = getTongue(transformComponent);
+   if (existingTongue === null) {
+      if (combatAI.tongueCooldownTicks > 0) {
+         combatAI.tongueCooldownTicks--;
+      }
+      if (combatAI.tongueCooldownTicks === 0) {
+         deployTongue(okren, hitbox, desiredTarget);
+      }
+
+      target = desiredTarget;
+   } else {
+      // If the tongue is already deployed, stick with that target.
+      const okrenTongueComponent = OkrenTongueComponentArray.getComponent(existingTongue);
+      if (entityExists(okrenTongueComponent.target)) {
+         target = okrenTongueComponent.target;
+      } else {
+         target = desiredTarget;
+      }
+   }
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   
-   // @Incomplete: move using pathfinding!!!
-   aiHelperComponent.move(okren, combatAI.acceleration, combatAI.turnSpeed, targetHitbox.box.position.x, targetHitbox.box.position.y);
 
+   let isLeaning = false;
    // @Hack: override the ideal angle
    // Make the okren lean into the swings
    for (const side of OKREN_SIDES) {
-      if (okrenComponent.swingStates[side] === OkrenSwingState.swinging) {
+      if ((okrenComponent.swingStates[side] === OkrenSwingState.raising && okrenComponent.ticksInStates[side] > Math.floor(Settings.TPS * 0.25)) || (okrenComponent.swingStates[side] === OkrenSwingState.swinging && okrenComponent.ticksInStates[side] <= Math.floor(Settings.TPS * 0.15))) {
          const angleToTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         const idealAngle = angleToTarget + (side === OkrenSide.right ? -0.3 : 0.3);
-         turnHitboxToAngle(hitbox, idealAngle, combatAI.turnSpeed, 0.5, false);
+         const idealAngle = angleToTarget + (side === OkrenSide.right ? -0.6 : 0.6);
+
+         // @COPYNPASTE
+         // @HACK
+         const accelerationX = combatAI.acceleration * Math.sin(angleToTarget);
+         const accelerationY = combatAI.acceleration * Math.cos(angleToTarget);
+         applyAccelerationFromGround(okren, hitbox, accelerationX, accelerationY);
+         turnHitboxToAngle(hitbox, idealAngle, combatAI.turnSpeed * 1.5, 1.5 / 1.5, false);
+
+         isLeaning = true;
+         break;
       }
    }
 
+   if (!isLeaning) {
+      // @Incomplete: move using pathfinding!!!
+      aiHelperComponent.move(okren, combatAI.acceleration, combatAI.turnSpeed, targetHitbox.box.position.x, targetHitbox.box.position.y);
+   }
+
    const distanceToTarget = getDistanceFromPointToEntity(hitbox.box.position, targetTransformComponent);
-   const isInAttackRange = distanceToTarget <= 250;
+   const isInAttackRange = distanceToTarget <= 245;
 
    if (isInAttackRange) {
       if (--combatAI.swingCooldownTicks <= 0) {
@@ -133,8 +179,9 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
          for (const side of OKREN_SIDES) {
             if (okrenComponent.swingStates[side] === OkrenSwingState.resting && okrenHitboxesHaveReachedIdealAngles(okren, okrenComponent.currentSwingSide, restingIdealAngles)) {
                okrenComponent.swingStates[side] = OkrenSwingState.poising;
+               okrenComponent.ticksInStates[side] = 0;
                okrenComponent.currentSwingSide = okrenComponent.currentSwingSide === OkrenSide.right ? OkrenSide.left : OkrenSide.right;
-               combatAI.swingCooldownTicks = SWING_COOLDOWN_TICKS;
+               combatAI.swingCooldownTicks = BOTH_SWING_COOLDOWN_TICKS;
                break;
             }
          }
@@ -150,20 +197,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
       }
 
       const mandibleHitbox = getOkrenMandibleHitbox(okren, side);
-      const idealAngle = combatAI.okrenMandibleIsIns[side] ? -Math.PI * 0.3 : Math.PI * 0.1;
-      turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
-   }
-
-   const existingTongue = getTongue(transformComponent);
-   if (existingTongue === null) {
-      if (combatAI.tongueCooldownTicks > 0) {
-         combatAI.tongueCooldownTicks--;
-      }
-      if (combatAI.tongueCooldownTicks === 0) {
-         deployTongue(okren, hitbox);
-      }
-   } else {
-      const okrenTongueComponent = OkrenTongueComponentArray.getComponent(existingTongue);
-      okrenTongueComponent.target = target;
+      const idealAngle = combatAI.okrenMandibleIsIns[side] ? -Math.PI * 0.4 : Math.PI * 0.2;
+      turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
    }
 }

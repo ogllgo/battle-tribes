@@ -4,7 +4,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { assert, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
@@ -100,8 +100,6 @@ const entityIsFollowable = (entity: Entity): boolean => {
 }
 
 function onTick(krumblid: Entity): void {
-   if (1+1 === 2) return;
-   
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
 
    // By default, move the krumblids' mandibles back to their resting position
@@ -112,15 +110,13 @@ function onTick(krumblid: Entity): void {
    }
    
    const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(krumblid, escapeAI);
-   if (escapeTarget !== null) {
-      runEscapeAI(krumblid, escapeTarget);
+   if (runEscapeAI(krumblid, aiHelperComponent, escapeAI)) {
       return;
    }
    
    const ageTicks = getEntityAgeTicks(krumblid);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 0.5) {
+   if (ageHours >= 12) {
       const hibernateAI = aiHelperComponent.getKrumblidHibernateAI();
       runKrumblidHibernateAI(krumblid, aiHelperComponent, hibernateAI);
       return;

@@ -6,7 +6,7 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
-import { moveEntityToPosition, turnToPosition } from "../../ai-shared";
+import { moveEntityToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -19,17 +19,14 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { createHitbox } from "../../hitboxes";
 
 const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
-   // @Temporary
-   // moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 2);
-   turnToPosition(okren, x, y, turnSpeed, 2);
+   moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 0.6);
 }
 
 // @Temporary: remove size parameter
 export function createOkrenConfig(position: Point, angle: number, size: OkrenAgeStage): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   // @temporary: return mass to 5 once done!
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 64), 1.7, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 94), 5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    for (let i = 0; i < 2; i++) {
@@ -108,10 +105,10 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const healthComponent = new HealthComponent(50);
+   const healthComponent = new HealthComponent(150);
 
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 540, move);
-   aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(250, Math.PI * 0.4);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 700, move);
+   aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
    
    // @Temporary
    const hungerComponent = new HungerComponent(1000, 200);

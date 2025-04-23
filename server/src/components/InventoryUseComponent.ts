@@ -2,13 +2,13 @@ import { BlockType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
-import { getItemAttackInfo, Inventory, InventoryName, Item, ITEM_TYPE_RECORD } from "battletribes-shared/items/items";
+import { BowItemInfo, getItemAttackInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType, QUIVER_PULL_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import { Point } from "battletribes-shared/utils";
 import { Box } from "battletribes-shared/boxes/boxes";
 import { TransformComponentArray } from "./TransformComponent";
-import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES } from "battletribes-shared/attack-patterns";
+import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, interpolateLimbState } from "battletribes-shared/attack-patterns";
 import { registerDirtyEntity } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer from "../Layer";
@@ -62,6 +62,22 @@ export interface LimbInfo {
    blockPositionY: number;
    blockType: BlockType;
 }
+
+// @Copynpaste
+const BOW_DRAWING_CHARGE_START_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 0,
+   angle: 0,
+   extraOffsetX: 0,
+   extraOffsetY: 22
+};
+const BOW_DRAWING_CHARGE_END_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 0,
+   angle: 0,
+   extraOffsetX: 0,
+   extraOffsetY: 8
+};
 
 export function limbHeldItemCanBeSwitched(limb: LimbInfo): boolean {
    return limb.action === LimbAction.none && limb.currentActionElapsedTicks >= limb.currentActionDurationTicks;
@@ -178,6 +194,19 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
    }
 }
 
+export function getCurrentLimbState(limb: LimbInfo): LimbState {
+   let progress: number;
+   if (limb.currentActionDurationTicks === 0) {
+      // If the action has duration 0, assume that it is finished
+      progress = 1;
+   } else if (limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
+      progress = 1;
+   } else {
+      progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+   }
+   return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
+}
+
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {
    // @Speed
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
@@ -236,8 +265,9 @@ function onTick(entity: Entity): void {
       if (currentActionHasFinished(limb)) {
          switch (limb.action) {
             case LimbAction.engageBlock: {
-               const blockAttack = createBlockAttackConfig(entity, limb);
-               createEntity(blockAttack, getEntityLayer(entity), 0);
+               const blockAttackConfig = createBlockAttackConfig(entity, limb);
+               limb.blockAttack = createEntity(blockAttackConfig, getEntityLayer(entity), 0);
+               console.log(limb.blockAttack);
 
                limb.action = LimbAction.block;
                limb.currentActionElapsedTicks = 0;
@@ -344,6 +374,60 @@ function onTick(entity: Entity): void {
             }
             case LimbAction.returnBlockToRest: {
                limb.action = LimbAction.none;
+               break;
+            }
+            // If finished moving limb to quiver, move from quiver to charge start limbstate
+            case LimbAction.moveLimbToQuiver: {
+               const startLimbState = getCurrentLimbState(limb);
+         
+               limb.action = LimbAction.moveLimbFromQuiver;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = QUIVER_PULL_TIME_TICKS;
+               limb.currentActionStartLimbState = startLimbState;
+               limb.currentActionEndLimbState = BOW_DRAWING_CHARGE_START_LIMB_STATE;
+               break;
+            }
+            // If finished moving limb from quiver, start charging bow
+            case LimbAction.moveLimbFromQuiver: {
+               const startLimbState = getCurrentLimbState(limb);
+               // @Hack
+               const itemInfo = ITEM_INFO_RECORD[ItemType.wooden_bow] as BowItemInfo;
+               
+               limb.action = LimbAction.pullBackArrow;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = itemInfo.shotChargeTimeTicks;
+               limb.currentActionStartLimbState = startLimbState;
+               limb.currentActionEndLimbState = BOW_DRAWING_CHARGE_END_LIMB_STATE;
+               
+               const otherInventoryName = i === 0 ? InventoryName.offhand : InventoryName.hotbar;
+               const otherLimb = inventoryUseComponent.getLimbInfo(otherInventoryName);
+               const otherLimbStartState = getCurrentLimbState(otherLimb);
+               
+               otherLimb.action = LimbAction.chargeBow;
+               otherLimb.currentActionElapsedTicks = 0;
+               otherLimb.currentActionDurationTicks = itemInfo.shotChargeTimeTicks;
+               // Don't move the limb
+               otherLimb.currentActionStartLimbState = otherLimbStartState;
+               otherLimb.currentActionEndLimbState = otherLimbStartState;
+               break;
+            }
+            // If finished resting after arrow release, return to default state
+            case LimbAction.arrowReleased:
+            case LimbAction.mainArrowReleased: {
+               const startingLimbState = getCurrentLimbState(limb);
+               const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+               
+               limb.action = LimbAction.returnFromBow;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = RETURN_FROM_BOW_USE_TIME_TICKS;
+               limb.currentActionStartLimbState = copyLimbState(startingLimbState);
+               limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
+               break;
+            }
+            case LimbAction.returnFromBow: {
+               limb.action = LimbAction.none;
+               limb.currentActionElapsedTicks = 0;
+               limb.currentActionDurationTicks = 0;
                break;
             }
          }

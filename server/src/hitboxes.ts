@@ -4,7 +4,7 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
@@ -27,7 +27,7 @@ export interface HitboxTether {
 export interface HitboxAngularTether {
    readonly originHitbox: Hitbox;
    readonly springConstant: number;
-   readonly angularDamping: number;
+   readonly damping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
    readonly padding: number;
 }
@@ -275,7 +275,7 @@ const cleanRelativeAngle = (hitbox: Hitbox): void => {
 }
 
 export function getHitboxAngularVelocity(hitbox: Hitbox): number {
-   return (hitbox.box.relativeAngle - hitbox.previousRelativeAngle) * Settings.TPS;
+   return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TPS;
 }
 
 export function addHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
@@ -305,16 +305,15 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
    while (clockwiseDist >= 2 * Math.PI) {
       clockwiseDist -= 2 * Math.PI;
    }
-
+   
+   const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
+   const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now
+   
    const angularVelocity = getHitboxAngularVelocity(hitbox);
    const adjustedDamping = damping * acceleration; // The damping parameter is a proportion of the acceleration
    const dampingForce = -angularVelocity * adjustedDamping;
 
-   if (clockwiseDist <= Math.PI) {
-      hitbox.angularAcceleration += acceleration + dampingForce;
-   } else {
-      hitbox.angularAcceleration += -acceleration + dampingForce;
-   }
+   hitbox.angularAcceleration += springForce + dampingForce;
 }
 
 // @Location?

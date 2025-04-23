@@ -314,7 +314,7 @@ export function consumeItemTypeFromInventory(entity: Entity, inventoryComponent:
 export function consumeItemType(entity: Entity, inventoryComponent: InventoryComponent, itemType: ItemType, amount: number) {
    let amountRemainingToConsume = amount;
 
-   for (let i = 0; i < inventoryComponent.inventories.length, amountRemainingToConsume > 0; i++) {
+   for (let i = 0; i < inventoryComponent.inventories.length && amountRemainingToConsume > 0; i++) {
       const inventory = inventoryComponent.inventories[i];
       amountRemainingToConsume -= consumeItemTypeFromInventory(entity, inventoryComponent, inventory.name, itemType, amountRemainingToConsume);
    }
