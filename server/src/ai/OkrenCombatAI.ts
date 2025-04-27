@@ -24,9 +24,7 @@ export class OkrenCombatAI {
    public readonly okrenMandibleFlickCountdowns = [0, 0];
    public readonly okrenMandibleIsIns = [false, false];
 
-   // @Temporary
-   // public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
-   public tongueCooldownTicks = 10 * Settings.TPS;
+   public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
 
    constructor(acceleration: number, turnSpeed: number) {
       this.acceleration = acceleration;

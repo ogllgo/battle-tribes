@@ -11,7 +11,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { getEntityFullness } from "./HungerComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { entityChildIsEntity, entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 
 export const enum OkrenAgeStage {
    juvenile,
@@ -159,6 +159,18 @@ export function getOkrenMandibleHitbox(okren: Entity, side: OkrenSide): Hitbox {
    throw new Error();
 }
 
+const hasFleas = (okren: Entity): boolean => {
+   const transformComponent = TransformComponentArray.getComponent(okren);
+
+   for (const child of transformComponent.children) {
+      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.dustflea) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 function onTick(okren: Entity): void {
    const okrenComponent = OkrenComponentArray.getComponent(okren);
    okrenComponent.ticksInStates[0]++;
@@ -205,16 +217,21 @@ function onTick(okren: Entity): void {
 
    const combatAI = aiHelperComponent.getOkrenCombatAI();
    
-   const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
-   if (threatTarget !== null) {
-      runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
-      return;
-   }
+   // @Temporary until i'm done testing okren krumblid dynamics
+   // const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
+   // if (threatTarget !== null) {
+   //    runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
+   //    return;
+   // }
 
    if (getEntityFullness(okren) < 0.5) {
-      const target = getOkrenPreyTarget(okren, aiHelperComponent);
-      if (target !== null) {
-         runOkrenCombatAI(okren, aiHelperComponent, combatAI, target);
+      const preyTarget = getOkrenPreyTarget(okren, aiHelperComponent);
+      if (preyTarget !== null) {
+         if (hasFleas(okren)) {
+            
+         } else {
+            runOkrenCombatAI(okren, aiHelperComponent, combatAI, preyTarget);
+         }
          return;
       }
    }

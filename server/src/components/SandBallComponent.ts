@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { assert } from "../../../shared/src/utils";
-import { getEntityType } from "../world";
+import { entityExists, getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
@@ -16,13 +16,15 @@ SandBallComponentArray.onTick = {
    tickInterval: 1,
    func: onTick
 };
-
+ 
 function onTick(sandBall: Entity): void {
    // @HACK @SPEED
    const transformComponent = TransformComponentArray.getComponent(sandBall);
    if (transformComponent.rootEntity !== sandBall) {
-      // @temporary @Hack. I think this is caused if a krumblid starts balling up sand, creating a new sandBall entity, the exact tick it is killed??
-      
+      // @Temporary
+      if (!entityExists(transformComponent.rootEntity)) {
+         console.log(getEntityAgeTicks(sandBall));
+      }
       assert(getEntityType(transformComponent.rootEntity) === EntityType.krumblid);
 
       const aiHelperComponent = AIHelperComponentArray.getComponent(transformComponent.rootEntity);

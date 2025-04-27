@@ -96,7 +96,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 200, move);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 400, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.25, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);

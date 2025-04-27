@@ -102,7 +102,6 @@ const resolveBorderCollisions = (entity: Entity): boolean => {
    
    let hasMoved = false;
    
-   // @HACK
    const baseHitbox = transformComponent.children[0] as Hitbox;
 
    // @Incomplete: do this using transform component bounds

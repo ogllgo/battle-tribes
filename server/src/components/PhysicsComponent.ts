@@ -46,8 +46,12 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
    if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
       return;
    }
+
+   let angularVelocity = (hitbox.box.relativeAngle - hitbox.previousRelativeAngle);
+   // @Hack??
+   angularVelocity *= 0.98;
    
-   const newAngle = hitbox.box.relativeAngle + (hitbox.box.relativeAngle - hitbox.previousRelativeAngle) + hitbox.angularAcceleration / Settings.TPS / Settings.TPS;
+   const newAngle = hitbox.box.relativeAngle + angularVelocity + hitbox.angularAcceleration / Settings.TPS / Settings.TPS;
 
    hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
    hitbox.box.relativeAngle = newAngle;

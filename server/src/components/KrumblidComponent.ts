@@ -19,6 +19,7 @@ import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from ".
 import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { runKrumblidCombatAI, shouldRunKrumblidCombatAI, updateKrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { runKrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
+import { Settings } from "../../../shared/src/settings";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
