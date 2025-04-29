@@ -8,7 +8,7 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemFragmentProjectileConfig } from "../entities/projectiles/guardian-gem-fragment-projectile";
 import { createEntity } from "../Entity";
 import { getEntityLayer } from "../world";
-import { Hitbox, setHitboxAngularVelocity } from "../hitboxes";
+import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -38,9 +38,8 @@ const createFragmentProjectile = (guardian: Entity): void => {
    const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), 2 * Math.PI * Math.random(), guardian);
 
    const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   snowballHitbox.velocity.x = vx;
-   snowballHitbox.velocity.y = vy;
-   setHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign())
+   addHitboxVelocity(snowballHitbox, vx, vy);
+   addHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign());
 
    createEntity(config, getEntityLayer(guardian), 0);
 }
@@ -76,7 +75,7 @@ export default class GuardianCrystalBurstAI {
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {
-      turnToPosition(guardian, targetX, targetY, this.turnSpeed);
+      turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
 
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {

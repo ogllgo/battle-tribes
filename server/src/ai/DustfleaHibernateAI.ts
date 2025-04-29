@@ -4,14 +4,14 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../../shared/src/col
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { clampToBoardDimensions, clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
+import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
 import { createEntity } from "../Entity";
-import { Hitbox, stopHitboxTurning } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { Hitbox } from "../hitboxes";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
    public readonly acceleration: number;
@@ -179,9 +179,6 @@ export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComp
       wanderAI.update(dustflea);
       if (wanderAI.targetPositionX !== -1) {
          aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
-      } else {
-         const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
-         stopHitboxTurning(dustfleaHitbox);
       }
    }
 }

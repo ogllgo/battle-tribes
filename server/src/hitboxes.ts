@@ -4,11 +4,33 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { getEntityLayer, getEntityType } from "./world";
+
+export interface HitboxTether {
+   readonly originHitbox: Hitbox;
+   
+   readonly idealDistance: number;
+   readonly springConstant: number;
+   readonly damping: number;
+
+   readonly affectsOriginHitbox: boolean;
+
+   // Used for verlet integration
+   previousPositionX: number;
+   previousPositionY: number;
+}
+
+export interface HitboxAngularTether {
+   readonly originHitbox: Hitbox;
+   readonly springConstant: number;
+   readonly damping: number;
+   /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
+   readonly padding: number;
+}
 
 export interface Hitbox {
    readonly localID: number;
@@ -18,14 +40,13 @@ export interface Hitbox {
    
    readonly box: Box;
    
-   readonly velocity: Point;
-
-   // @Memory: So many hitboxes don't use these 2!
-   /** Angle the entity will try to turn towards. SHOULD ALWAYS BE IN RANGE [-PI, PI)
-    *  Exception: when set to -999, the hitbox will take angleTurnSpeed as an angular velocity value instead. */
-   idealAngle: number;
-   idealAngleIsRelative: boolean;
-   angleTurnSpeed: number;
+   readonly previousPosition: Point;
+   readonly acceleration: Point;
+   readonly tethers: Array<HitboxTether>;
+   
+   previousRelativeAngle: number;
+   angularAcceleration: number;
+   readonly angularTethers: Array<HitboxAngularTether>;
    
    mass: number;
    collisionType: HitboxCollisionType;
@@ -40,6 +61,19 @@ export interface Hitbox {
    boundsMaxY: number;
 }
 
+export function createHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): HitboxTether {
+   const tether: HitboxTether = {
+      originHitbox: otherHitbox,
+      idealDistance: idealDistance,
+      springConstant: springConstant,
+      damping: damping,
+      affectsOriginHitbox: affectsOriginHitbox,
+      previousPositionX: hitbox.box.position.x,
+      previousPositionY: hitbox.box.position.y
+   };
+   return tether;
+}
+
 export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    const localID = transformComponent.nextHitboxLocalID++;
    
@@ -48,10 +82,12 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       parent: parent,
       children: [],
       box: box,
-      velocity: new Point(0, 0),
-      idealAngle: -999,
-      idealAngleIsRelative: false,
-      angleTurnSpeed: 0,
+      previousPosition: box.position.copy(),
+      acceleration: new Point(0, 0),
+      tethers: [],
+      previousRelativeAngle: box.relativeAngle,
+      angularAcceleration: 0,
+      angularTethers: [],
       mass: mass,
       collisionType: collisionType,
       collisionBit: collisionBit,
@@ -69,18 +105,26 @@ export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitb
    return createHitbox(transformComponent, hitbox.parent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
 }
 
-export function slowVelocity(hitbox: Hitbox, slowUnits: number): void {
-   const velocityMagnitude = hitbox.velocity.length();
-
-   if (velocityMagnitude > 0) {
-      const reduction = Math.min(slowUnits, velocityMagnitude);
-      hitbox.velocity.x -= reduction * hitbox.velocity.x / velocityMagnitude;
-      hitbox.velocity.y -= reduction * hitbox.velocity.y / velocityMagnitude;
-   }
+export function getHitboxVelocity(hitbox: Hitbox): Point {
+   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TPS;
+   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TPS;
+   return new Point(vx, vy);
 }
 
-/** Gets the root hitbox of an attached hitbox */
-const getRootHitbox = (hitbox: Hitbox): Hitbox => {
+export function setHitboxVelocityX(hitbox: Hitbox, vx: number): void {
+   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+}
+
+export function setHitboxVelocityY(hitbox: Hitbox, vy: number): void {
+   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+}
+
+export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void {
+   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+}
+
+export function getRootHitbox(hitbox: Hitbox): Hitbox {
    let currentHitbox = hitbox;
    while (currentHitbox.parent !== null) {
       currentHitbox = currentHitbox.parent;
@@ -88,7 +132,21 @@ const getRootHitbox = (hitbox: Hitbox): Hitbox => {
    return currentHitbox;
 }
 
-const getTotalMass = (node: Hitbox | Entity): number => {
+export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x += pushX / Settings.TPS;
+   pushedHitbox.box.position.y += pushY / Settings.TPS;
+}
+
+export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x += translationX;
+   pushedHitbox.box.position.y += translationY;
+   hitbox.previousPosition.x += translationX;
+   hitbox.previousPosition.y += translationY;
+}
+
+export function getTotalMass(node: Hitbox | Entity): number {
    let totalMass = 0;
    if (typeof node === "number") {
       const transformComponent = TransformComponentArray.getComponent(node);
@@ -136,8 +194,7 @@ export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number
    const knockbackForce = knockback / totalMass;
 
    const rootHitbox = getRootHitbox(hitbox);
-   rootHitbox.velocity.x += knockbackForce * Math.sin(knockbackDirection);
-   rootHitbox.velocity.y += knockbackForce * Math.cos(knockbackDirection);
+   addHitboxVelocity(rootHitbox, knockbackForce * Math.sin(knockbackDirection), knockbackForce * Math.cos(knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -157,8 +214,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
    
    const rootHitbox = getRootHitbox(hitbox);
-   rootHitbox.velocity.x += knockback * Math.sin(knockbackDirection);
-   rootHitbox.velocity.y += knockback * Math.cos(knockbackDirection);
+   addHitboxVelocity(rootHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -167,7 +223,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
+export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -189,36 +245,75 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    const desiredVelocityX = accelerationX * tileFriction * moveSpeedMultiplier;
    const desiredVelocityY = accelerationY * tileFriction * moveSpeedMultiplier;
 
-   // Apply velocity with traction (blend towards desired velocity)
-   hitbox.velocity.x += (desiredVelocityX - hitbox.velocity.x) * physicsComponent.traction * Settings.I_TPS;
-   hitbox.velocity.y += (desiredVelocityY - hitbox.velocity.y) * physicsComponent.traction * Settings.I_TPS;
+   const currentVelocity = getHitboxVelocity(hitbox);
+
+   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * physicsComponent.traction;
+   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
 }
 
-export function applyForce(entity: Entity, hitbox: Hitbox, forceX: number, forceY: number): void {
-   const connectedMass = getHitboxConnectedMass(hitbox);
-   if (connectedMass === 0) {
-      return;
+export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): void {
+   hitbox.acceleration.x += accX;
+   hitbox.acceleration.y += accY;
+}
+
+const cleanAngle = (hitbox: Hitbox): void => {
+   // Clamp angle to [-PI, PI) range
+   if (hitbox.box.angle < -Math.PI) {
+      hitbox.box.angle += Math.PI * 2;
+   } else if (hitbox.box.angle >= Math.PI) {
+      hitbox.box.angle -= Math.PI * 2;
+   }
+}
+
+const cleanRelativeAngle = (hitbox: Hitbox): void => {
+   // Clamp angle to [-PI, PI) range
+   if (hitbox.box.relativeAngle < -Math.PI) {
+      hitbox.box.relativeAngle += Math.PI * 2;
+   } else if (hitbox.box.relativeAngle >= Math.PI) {
+      hitbox.box.relativeAngle -= Math.PI * 2;
+   }
+}
+
+export function getHitboxAngularVelocity(hitbox: Hitbox): number {
+   return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TPS;
+}
+
+export function addHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
+   hitbox.box.relativeAngle += angularVelocity / Settings.TPS;
+}
+
+export function addHitboxAngularAcceleration(hitbox: Hitbox, acceleration: number): void {
+   hitbox.angularAcceleration += acceleration;
+}
+
+export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, acceleration: number, damping: number, idealAngleIsRelative: boolean): void {
+   cleanAngle(hitbox);
+   cleanRelativeAngle(hitbox);
+
+   let idealRelativeAngle: number;
+   if (idealAngleIsRelative) {
+      idealRelativeAngle = idealAngle;
+   } else {
+      const parentAngle = hitbox.box.angle - hitbox.box.relativeAngle;
+      idealRelativeAngle = idealAngle - parentAngle;
+   }
+      
+   let clockwiseDist = idealRelativeAngle - hitbox.box.relativeAngle;
+   while (clockwiseDist < 0) {
+      clockwiseDist += 2 * Math.PI;
+   }
+   while (clockwiseDist >= 2 * Math.PI) {
+      clockwiseDist -= 2 * Math.PI;
    }
    
-   const accelerationX = forceX / connectedMass;
-   const accelerationY = forceY / connectedMass;
-   applyAcceleration(entity, hitbox, accelerationX, accelerationY);
-}
+   const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
+   const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now
+   
+   const angularVelocity = getHitboxAngularVelocity(hitbox);
+   const adjustedDamping = damping * acceleration; // The damping parameter is a proportion of the acceleration
+   const dampingForce = -angularVelocity * adjustedDamping;
 
-export function setHitboxIdealAngle(hitbox: Hitbox, idealAngle: number, angleTurnSpeed: number, idealAngleIsRelative: boolean): void {
-   hitbox.idealAngle = idealAngle;
-   hitbox.idealAngleIsRelative = idealAngleIsRelative;
-   hitbox.angleTurnSpeed = angleTurnSpeed;
-}
-
-export function stopHitboxTurning(hitbox: Hitbox): void {
-   hitbox.idealAngle = -999;
-   hitbox.angleTurnSpeed = 0;
-}
-
-export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.idealAngle = -999;
-   hitbox.angleTurnSpeed = angularVelocity;
+   hitbox.angularAcceleration += springForce + dampingForce;
 }
 
 // @Location?

@@ -6,10 +6,9 @@ import { turnEntityToEntity } from "../../../ai-shared";
 import { recipeCraftingStationIsAvailable, InventoryComponentArray, craftRecipe, InventoryComponent, countItemType } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanPathType, TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import { getAvailableCraftingStations } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
 import { CraftingStation, CRAFTING_RECIPES, CRAFTING_STATION_ITEM_TYPE_RECORD } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
@@ -19,6 +18,7 @@ import { addAssignmentPart, AIAssignmentComponentArray } from "../../../componen
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { assert } from "../../../../../shared/src/utils";
 import { Hitbox } from "../../../hitboxes";
+import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
 const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
    return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
@@ -84,7 +84,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
          const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
          const craftingStationHitbox = craftingStationTransformComponent.children[0] as Hitbox;
          
-         const isFinished = pathfindTribesman(tribesman, craftingStationHitbox.box.position.x, craftingStationHitbox.box.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+         const isFinished = pathfindTribesman(tribesman, craftingStationHitbox.box.position.x, craftingStationHitbox.box.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
          if (!isFinished) {
             const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
             const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
@@ -94,7 +94,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
          }
          return;
       } else {
-         turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED);
+         turnEntityToEntity(tribesman, craftingStation, TRIBESMAN_TURN_SPEED, 1);
       }
    }
 
@@ -128,7 +128,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
       tribesmanComponent.currentCraftingTicks = 0;
    }
 
-   clearTribesmanPath(tribesman);
+   clearPathfinding(tribesman);
 }
 
 export function craftGoalIsComplete(plan: AICraftRecipePlan, inventoryComponent: InventoryComponent): boolean {

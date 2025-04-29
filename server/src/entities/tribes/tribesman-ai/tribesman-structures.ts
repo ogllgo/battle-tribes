@@ -10,11 +10,11 @@ import { consumeItemFromSlot, InventoryComponentArray, getInventory, inventoryHa
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import { TITLE_REWARD_CHANCES } from "../../../tribesman-title-generation";
 import { placeBlueprint } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getBestHammerItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, clearTribesmanPath } from "./tribesman-ai-utils";
+import { getBestHammerItemSlot, getTribesmanAttackRadius, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration } from "./tribesman-ai-utils";
 import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { Inventory, InventoryName, ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType } from "battletribes-shared/items/items";
@@ -27,7 +27,8 @@ import { getBoxesCollidingEntities } from "../../../collision-detection";
 import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
 import { StructureType } from "../../../../../shared/src/structures";
 import { createEntity } from "../../../Entity";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
 const enum Vars {
    BUILDING_PLACE_DISTANCE = 80
@@ -118,9 +119,9 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          const acceleration = getTribesmanSlowAcceleration(tribesman);
          const accelerationX = acceleration * Math.sin(targetDirection + Math.PI);
          const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
          
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -145,7 +146,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          useInfo.lastAttackTicks = getGameTicks();
          return true;
       } else {
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          setLimbActions(inventoryUseComponent, LimbAction.none);
          tribesmanComponent.currentAIType = TribesmanAIType.building;
@@ -153,7 +154,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       }
    } else {
       // Move to the building plan
-      const isFinished = pathfindTribesman(tribesman, virtualBuilding.position.x, virtualBuilding.position.y, virtualBuilding.layer, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      const isFinished = pathfindTribesman(tribesman, virtualBuilding.position.x, virtualBuilding.position.y, virtualBuilding.layer, 0, TribesmanPathType.default, Math.floor(Vars.BUILDING_PLACE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
       if (!isFinished) {
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          
@@ -196,17 +197,17 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
          const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetAngle)) < 0.1) {
          placeBlueprint(tribesman, building, plan.blueprintType, plan.rotation);
       }
    } else {
-      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(building), building, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
@@ -264,19 +265,19 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
          const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetAngle) < 0.1) {
          doMeleeAttack(tribesman, hammerItemSlot);
       }
 
-      clearTribesmanPath(tribesman);
+      clearPathfinding(tribesman);
    } else {
-      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, buildingHitbox.box.position.x, buildingHitbox.box.position.y, getEntityLayer(closestDamagedBuilding), closestDamagedBuilding, TribesmanPathType.default, Math.floor(desiredAttackRange / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
    }
 
    const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);

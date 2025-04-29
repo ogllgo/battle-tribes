@@ -3,22 +3,24 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import { Point, distance } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
-import { InventoryComponentArray, getInventory } from "../../../components/InventoryComponent";
-import { InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
+import { InventoryComponentArray, countItemType, getInventory } from "../../../components/InventoryComponent";
+import { getCurrentLimbState, InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import { calculateItemDamage, useItem } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { TribeComponentArray } from "../../../components/TribeComponent";
 import { calculateAttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { clearTribesmanPath, getBestHammerItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { getBestHammerItemSlot, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
-import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item } from "battletribes-shared/items/items";
+import { InventoryName, ITEM_TYPE_RECORD, getItemAttackInfo, Item, ITEM_INFO_RECORD, itemInfoIsBow, QUIVER_ACCESS_TIME_TICKS, QUIVER_PULL_TIME_TICKS, ARROW_RELEASE_WAIT_TIME_TICKS, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { beginSwing } from "../limb-use";
 import { TribeType } from "../../../../../shared/src/tribes";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { copyLimbState, LimbState, QUIVER_PULL_LIMB_STATE } from "../../../../../shared/src/attack-patterns";
+import { clearPathfinding, pathfindTribesman, pathToEntityExists } from "../../../components/AIPathfindingComponent";
 
 const enum Vars {
    BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TPS,
@@ -33,6 +35,15 @@ const enum Vars {
 const EXTRA_BOW_COOLDOWNS: Partial<Record<EntityType, number>> = {
    [EntityType.tribeWorker]: Math.floor(0.3 * Settings.TPS),
    [EntityType.tribeWarrior]: Math.floor(0.1 * Settings.TPS)
+};
+
+// @Copynpaste
+const BOW_HOLDING_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 36,
+   angle: -Math.PI * 0.4,
+   extraOffsetX: 4,
+   extraOffsetY: 0
 };
 
 export function doMeleeAttack(tribesman: Entity, itemSlot: number): void {
@@ -77,6 +88,39 @@ const getMostDamagingItemSlot = (tribesman: Entity, huntedEntity: Entity): numbe
 
       if (dps > mostDps) {
          mostDps = dps;
+         bestItemSlot = itemSlot;
+      }
+   }
+
+   return bestItemSlot;
+}
+
+// @Copynpaste
+const getBestBowItemSlot = (tribesman: Entity): number | null => {
+   const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+
+   // @Hack!
+   if (countItemType(inventoryComponent, ItemType.woodenArrow) === 0) {
+      return null;
+   }
+
+   let bestItemSlot: number | null = null;
+   let mostDamage = 0;
+   for (let itemSlot = 1; itemSlot <= hotbarInventory.width * hotbarInventory.height; itemSlot++) {
+      const item = hotbarInventory.itemSlots[itemSlot];
+      if (typeof item === "undefined") {
+         continue;
+      }
+      const itemInfo = ITEM_INFO_RECORD[item.type];
+      if (!itemInfoIsBow(item.type, itemInfo)) {
+         continue;
+      }
+
+      const damage = itemInfo.projectileDamage;
+
+      if (damage > mostDamage) {
+         mostDamage = damage;
          bestItemSlot = itemSlot;
       }
    }
@@ -154,16 +198,23 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
    const huntedHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
    
-   const mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
+   let mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
+   
+   // @Incomplete: switch to melee weapon when the target is too close
+   // If the tribesman has a bow, use it
+   const bowItemSlot = getBestBowItemSlot(tribesman);
+   if (bowItemSlot) {
+      mostDamagingItemSlot = bowItemSlot;
+   }
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
    const hotbarLimb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-   
+
    // Select the item slot
    if (hotbarLimb.selectedItemSlot !== mostDamagingItemSlot && limbHeldItemCanBeSwitched(hotbarLimb)) {
       hotbarLimb.selectedItemSlot = mostDamagingItemSlot;
    }
-   
+
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
    if (hotbar.hasItem(mostDamagingItemSlot) && hotbarLimb.selectedItemSlot === mostDamagingItemSlot) {
       const selectedItem = hotbar.itemSlots[hotbarLimb.selectedItemSlot]!;
@@ -173,20 +224,20 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       if (weaponCategory === "spear" && selectedItem.count > 1) {
          // Rotate to face the target
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
          if (distance > 250) {
             // Move closer
             const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(targetAngle);
             const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(targetAngle);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          } else if (distance <= 150) {
             // Backpedal away from the entity if too close
             const backwards = targetAngle + Math.PI;
             const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(backwards);
             const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(backwards);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
          if (hotbarLimb.action !== LimbAction.chargeSpear) {
@@ -232,41 +283,78 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                const moveDirection = tribesmanHitbox.box.position.calculateAngleBetween(targetUsePoint);
                const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
                const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
             } else if (willStopAtDesiredDistance(tribesmanHitbox, Vars.DESIRED_RANGED_ATTACK_DISTANCE - 20, distance)) {
                // If the tribesman will stop too close to the target, move back a bit
                const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
                const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-               applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            } else {
+               // If the tribesman will be close enough, move closer
+               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle);
+               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.75, false);
 
-            // @Incomplete!
-            // if (hotbarUseInfo.action !== LimbAction.chargeBow) {
-            //    // If the tribesman is only just charging the bow, reset the cooldown to prevent the bow firing immediately
-            //    const itemInfo = ITEM_INFO_RECORD[selectedItem.type] as BowItemInfo;
-            //    hotbarUseInfo.lastBowChargeTicks = Board.ticks;
-            //    hotbarUseInfo.bowCooldownTicks = itemInfo.shotCooldownTicks;
-            //    tribesmanComponent.extraBowCooldownTicks = EXTRA_BOW_COOLDOWNS[Board.getEntityType(tribesman)]!;
-            // } else if (hotbarUseInfo.bowCooldownTicks === 0 && tribesmanComponent.extraBowCooldownTicks > 0) {
-            //    tribesmanComponent.extraBowCooldownTicks--;
-            // } else {
-            //    // If the bow is fully charged, fire it
-            //    useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarUseInfo.selectedItemSlot);
-            //    tribesmanComponent.extraBowCooldownTicks = EXTRA_BOW_COOLDOWNS[Board.getEntityType(tribesman)]!;
-            // }
-            hotbarLimb.action = LimbAction.chargeBow;
+            // @Copynpaste All this shit is copypasted from the client
+            if (hotbarLimb.action === LimbAction.none) {
+               const holdingLimb = hotbarLimb;
+               const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+               
+               holdingLimb.action = LimbAction.engageBow;
+               holdingLimb.currentActionElapsedTicks = 0;
+               holdingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS + QUIVER_PULL_TIME_TICKS;
+               holdingLimb.currentActionRate = 1;
+               holdingLimb.currentActionStartLimbState = startHoldingLimbState;
+               holdingLimb.currentActionEndLimbState = BOW_HOLDING_LIMB_STATE;
 
-            clearTribesmanPath(tribesman);
+               // Meanwhile the drawing limb pulls an arrow out
+               
+               const drawingLimb = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+               const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+               
+               drawingLimb.action = LimbAction.moveLimbToQuiver;
+               drawingLimb.currentActionElapsedTicks = 0;
+               drawingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS;
+               drawingLimb.currentActionRate = 1;
+               drawingLimb.currentActionStartLimbState = startDrawingLimbState;
+               drawingLimb.currentActionEndLimbState = QUIVER_PULL_LIMB_STATE;
+            } else if (hotbarLimb.action === LimbAction.chargeBow && hotbarLimb.currentActionElapsedTicks === hotbarLimb.currentActionDurationTicks) {
+               // If the bow is fully charged, fire it
+               useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarLimb.selectedItemSlot);
+
+               const holdingLimb = hotbarLimb;
+               const startHoldingLimbState = getCurrentLimbState(holdingLimb);
+               
+               holdingLimb.action = LimbAction.mainArrowReleased;
+               holdingLimb.currentActionElapsedTicks = 0;
+               holdingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+               holdingLimb.currentActionStartLimbState = copyLimbState(startHoldingLimbState);
+               holdingLimb.currentActionEndLimbState = copyLimbState(startHoldingLimbState);
+      
+               const drawingLimb = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+               const startDrawingLimbState = getCurrentLimbState(drawingLimb);
+      
+               drawingLimb.action = LimbAction.arrowReleased;
+               drawingLimb.currentActionElapsedTicks = 0;
+               drawingLimb.currentActionDurationTicks = ARROW_RELEASE_WAIT_TIME_TICKS;
+               // @Garbage
+               drawingLimb.currentActionStartLimbState = copyLimbState(startDrawingLimbState);
+               // @Garbage
+               drawingLimb.currentActionEndLimbState = copyLimbState(startDrawingLimbState);
+            }
+
+            clearPathfinding(tribesman);
          } else {
-            const isFinished = pathfindTribesman(tribesman, huntedHitbox.box.position.x, huntedHitbox.box.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
+            const isFinished = pathfindTribesman(tribesman, huntedHitbox.box.position.x, huntedHitbox.box.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.returnClosest);
 
             // If reached goal, turn towards the enemy
             if (isFinished) {
                const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-               setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+               turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
             }
          }
 
@@ -282,21 +370,21 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
             if (distance > Vars.BATTLEAXE_IDEAL_USE_RANGE + 10) {
                // Move closer
                const acceleration = getTribesmanSlowAcceleration(tribesman);
                const accelerationX = acceleration * Math.sin(targetAngle);
                const accelerationY = acceleration * Math.cos(targetAngle);
-               applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
             } else if (distance < Vars.BATTLEAXE_IDEAL_USE_RANGE - 10) {
                // Move futher away
                const acceleration = getTribesmanSlowAcceleration(tribesman);
                const moveDirection = targetAngle + Math.PI;
                const accelerationX = acceleration * Math.sin(moveDirection);
                const accelerationY = acceleration * Math.cos(moveDirection);
-               applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
             }
 
             const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastBattleaxeChargeTicks;
@@ -311,7 +399,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
             tribesmanComponent.currentAIType = TribesmanAIType.attacking;
 
-            clearTribesmanPath(tribesman);
+            clearPathfinding(tribesman);
             return;
          }
       }
@@ -351,16 +439,16 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
          const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-      setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
    
       // If in melee range, try to do a melee attack
       doMeleeAttack(tribesman, mostDamagingItemSlot);
 
-      clearTribesmanPath(tribesman);
+      clearPathfinding(tribesman);
    } else {
       const pointDistance = tribesmanHitbox.box.position.calculateDistanceBetween(huntedHitbox.box.position);
       const targetDirectRadius = pointDistance - distance;
@@ -368,7 +456,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
       // @Temporary?
       // const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
-      const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.none;
+      const failureDefault = isAggressive ? PathfindingFailureDefault.returnClosest : PathfindingFailureDefault.none;
       pathfindTribesman(tribesman, huntedHitbox.box.position.x, huntedHitbox.box.position.y, getEntityLayer(huntedEntity), huntedEntity, TribesmanPathType.default, goalRadius, failureDefault);
    }
 

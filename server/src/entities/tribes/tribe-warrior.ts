@@ -23,6 +23,7 @@ import { PatrolAI } from "../../ai/PatrolAI";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
+import { AIPathfindingComponent } from "../../components/AIPathfindingComponent";
 
 const move = () => {
    throw new Error();
@@ -86,6 +87,8 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
 
    const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, move);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
+   
+   const aiPathfindingComponent = new AIPathfindingComponent();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
    
@@ -107,6 +110,7 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
          [ServerComponentType.tribesman]: tribesmanComponent,
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.aiPathfinding]: aiPathfindingComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,

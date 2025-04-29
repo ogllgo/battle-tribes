@@ -4,7 +4,7 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { angle, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randItem, TileIndex } from "../../../shared/src/utils";
 import { entityHasReachedPosition } from "../ai-shared";
-import { Hitbox } from "../hitboxes";
+import { Hitbox, addHitboxVelocity } from "../hitboxes";
 import { getEntityType, getEntityLayer } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -177,8 +177,7 @@ function onTick(fleshSword: Entity): void {
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
       hitbox.box.relativeAngle = moveAngle - Math.PI/4;
-      hitbox.velocity.x = moveSpeed! * Math.sin(moveAngle);
-      hitbox.velocity.y = moveSpeed! * Math.cos(moveAngle);
+      addHitboxVelocity(hitbox, moveSpeed! * Math.sin(moveAngle), moveSpeed! * Math.cos(moveAngle));
 
       transformComponent.isDirty = true;
    }

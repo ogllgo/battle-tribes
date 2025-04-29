@@ -12,6 +12,7 @@ import { AIPlan } from "./tribesman-ai/tribesman-ai-planning";
 import { AIPlanType, getTileX, getTileY } from "../../shared/src/utils";
 import { AIAssignmentComponentArray } from "./components/AIAssignmentComponent";
 import { YetiComponentArray } from "./components/YetiComponent";
+import { AIPathfindingComponentArray } from "./components/AIPathfindingComponent";
 
 const getPlanDebugString = (plan: AIPlan): string => {
    switch (plan.type) {
@@ -65,8 +66,18 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
       
       debugEntries.push("Current AI type: " + TribesmanAIType[tribesmanAIComponent.currentAIType]);
       
-      if (tribesmanAIComponent.paths.length > 0) {
-         const path = tribesmanAIComponent.paths[0];
+      // Communication range
+      circles.push({
+         radius: TRIBESMAN_COMMUNICATION_RANGE,
+         thickness: 8,
+         colour: [1, 0, 0.3]
+      });
+   }
+
+   if (AIPathfindingComponentArray.hasComponent(entity)) {
+      const aiPathfindingComponent = AIPathfindingComponentArray.getComponent(entity);
+      if (aiPathfindingComponent.paths.length > 0) {
+         const path = aiPathfindingComponent.paths[0];
 
          pathData = {
             goalX: path.goalX,
@@ -76,13 +87,6 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
             visitedNodes: path.visitedNodes
          };
       }
-      
-      // Communication range
-      circles.push({
-         radius: TRIBESMAN_COMMUNICATION_RANGE,
-         thickness: 8,
-         colour: [1, 0, 0.3]
-      });
    }
 
    if (AIAssignmentComponentArray.hasComponent(entity)) {

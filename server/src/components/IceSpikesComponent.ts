@@ -16,7 +16,7 @@ import { createIceShardConfig } from "../entities/projectiles/ice-shard";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { getDistanceToClosestEntity } from "../layer-utils";
-import { applyKnockback, Hitbox } from "../hitboxes";
+import { applyKnockback, Hitbox, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    TICKS_TO_GROW = 1/5 * Settings.TPS,
@@ -149,8 +149,10 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       const position = new Point(x, y);
 
       const config = createIceShardConfig(position, moveDirection);
-      (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.x += 700 * Math.sin(moveDirection);
-      (config.components[ServerComponentType.transform]!.children[0] as Hitbox).velocity.y += 700 * Math.cos(moveDirection);
+
+      const iceShardHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      addHitboxVelocity(iceShardHitbox, 700 * Math.sin(moveDirection), 700 * Math.cos(moveDirection));
+
       createEntity(config, layer, 0);
    }
 }

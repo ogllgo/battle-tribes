@@ -4,19 +4,20 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
-import { assert, distance, Point, randInt } from "../../../shared/src/utils";
+import { assert, randInt } from "../../../shared/src/utils";
 import { runHibernateAI } from "../ai/DustfleaHibernateAI";
-import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { getHitboxTile, Hitbox, setHitboxAngularVelocity, stopHitboxTurning } from "../hitboxes";
+import { addHitboxAngularAcceleration, getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
+import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, hitEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { attachEntity, getTransformComponentFirstHitbox, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
 const MIN_OBSTACLE_SIT_MODE_TICKS = 25 * Settings.TPS;
 const MAX_OBSTACLE_SIT_MODE_TICKS = 40 * Settings.TPS;
@@ -100,9 +101,7 @@ const getSitTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): E
 
 const entityIsSuckTarget = (entity: Entity): boolean => {
    const entityType = getEntityType(entity);
-   return entityType === EntityType.player;
-   // return entityType === EntityType.player || entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
-   // return entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
+   return TribeMemberComponentArray.hasComponent(entity) || entityType === EntityType.krumblid || entityType === EntityType.zombie || entityType === EntityType.okren;
 }
 
 const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
@@ -131,23 +130,24 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
 
 function onTick(dustflea: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
 
-   const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(dustflea, escapeAI);
-   if (escapeTarget !== null) {
-      runEscapeAI(dustflea, escapeTarget);
-      return;
+   // If the dustflea is attached to something, don't escape at all. (To prevent it trying to hop around in escape, while on an okren, causing the okren to hop around)
+   if (dustfleaTransformComponent.rootEntity === dustflea) {
+      const escapeAI = aiHelperComponent.getEscapeAI();
+      if (runEscapeAI(dustflea, aiHelperComponent, escapeAI)) {
+         return;
+      }
    }
 
    const ageTicks = getEntityAgeTicks(dustflea);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 2) {
+   if (ageHours >= 12) {
       const hibernateAI = aiHelperComponent.getDustfleaHibernateAI();
       runHibernateAI(dustflea, aiHelperComponent, hibernateAI);
       return;
    }
 
-   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
    const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
 
    // Find some targets to suckle
@@ -160,11 +160,7 @@ function onTick(dustflea: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
-         if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && dustfleaHitbox.velocity.calculateDistanceBetween(targetHitbox.velocity) < 125) {
-            // @Hack: not doing this causes the parents to jitter..... for some reason???
-            dustfleaHitbox.velocity.x = 0;
-            dustfleaHitbox.velocity.y = 0;
-            
+         if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
             attachEntity(dustflea, suckTarget, targetHitbox, false);
 
             const tickEvent: EntityTickEvent = {
@@ -182,7 +178,7 @@ function onTick(dustflea: Entity): void {
    } else if (entityExists(dustfleaTransformComponent.rootEntity) && HealthComponentArray.hasComponent(dustfleaTransformComponent.rootEntity) && entityIsSuckTarget(dustfleaTransformComponent.rootEntity)) {
       // wriggle around
       const ageTicks = getEntityAgeTicks(dustflea);
-      setHitboxAngularVelocity(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
+      addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
       
       const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
       const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
@@ -206,17 +202,12 @@ function onTick(dustflea: Entity): void {
             const targetHitbox = targetTransformComponent.children[0] as Hitbox;
             aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
             if (entitiesAreColliding(dustflea, sitTarget) !== CollisionVars.NO_COLLISION) {
-               // @Hack: not doing this causes the parents to jitter..... for some reason???
-               dustfleaHitbox.velocity.x = 0;
-               dustfleaHitbox.velocity.y = 0;
-               
                attachEntity(dustflea, sitTarget, targetHitbox, false);
             }
             return;
          }
       } else {
          // is sitting
-         stopHitboxTurning(dustfleaHitbox);
          return;
       }
    } else {
@@ -262,8 +253,6 @@ function onTick(dustflea: Entity): void {
    wanderAI.update(dustflea);
    if (wanderAI.targetPositionX !== -1) {
       aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
-   } else {
-      stopHitboxTurning(dustfleaHitbox);
    }
 }
 

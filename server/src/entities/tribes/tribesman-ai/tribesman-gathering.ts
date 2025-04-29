@@ -1,14 +1,14 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { HealthComponentArray } from "../../../components/HealthComponent";
 import { VACUUM_RANGE, tribeMemberCanPickUpItem } from "../tribe-member";
-import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType, inventoryIsFull } from "../../../components/InventoryComponent";
+import { InventoryComponent, InventoryComponentArray, addItem, countItemType, getInventory, inventoryHasItemType } from "../../../components/InventoryComponent";
 import { TribesmanAIType } from "battletribes-shared/components";
 import { tribeMemberShouldEscape } from "./tribesman-escaping";
-import { continueCurrentPath, getFinalPath, getHumanoidRadius, pathfindTribesman, pathToEntityExists } from "./tribesman-ai-utils";
+import { getHumanoidRadius } from "./tribesman-ai-utils";
 import { ItemComponentArray } from "../../../components/ItemComponent";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import { ItemType, InventoryName, ItemTypeString, ITEM_INFO_RECORD, itemInfoIsConsumable } from "battletribes-shared/items/items";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { goKillEntity } from "./tribesman-combat-ai";
@@ -18,12 +18,13 @@ import { AIGatherItemPlan } from "../../../tribesman-ai/tribesman-ai-planning";
 import { assert, distance, getTileIndexIncludingEdges, getTileX, getTileY, randItem } from "../../../../../shared/src/utils";
 import { runPatrolAI } from "../../../ai/PatrolAI";
 import { TribeComponentArray } from "../../../components/TribeComponent";
-import { entityDropsFoodItem, entityDropsItem, getEntityTypesWhichDropItem, LootComponentArray } from "../../../components/LootComponent";
+import { entityDropsFoodItem, entityDropsItem, getEntityTypesWhichDropItem } from "../../../components/LootComponent";
 import { getSpawnInfoForEntityType } from "../../../entity-spawn-info";
 import { Biome } from "../../../../../shared/src/biomes";
 import { LocalBiome } from "../../../world-generation/terrain-generation-utils";
 import Layer from "../../../Layer";
 import { getHitboxTile, Hitbox } from "../../../hitboxes";
+import { pathToEntityExists, pathfindTribesman, getFinalPath, continueCurrentPath, AIPathfindingComponentArray } from "../../../components/AIPathfindingComponent";
 
 // @Cleanup: unused?
 const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: EntityType): boolean => {
@@ -180,7 +181,7 @@ const goPickupItemEntity = (tribesman: Entity, pickupTarget: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(pickupTarget);
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
-   pathfindTribesman(tribesman, targetHitbox.box.position.x, targetHitbox.box.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+   pathfindTribesman(tribesman, targetHitbox.box.position.x, targetHitbox.box.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
    tribesmanAIComponent.currentAIType = TribesmanAIType.pickingUpDroppedItems;
@@ -212,10 +213,10 @@ const findBiomeForGathering = (tribesman: Entity, layer: Layer, biome: Biome): L
 }
 
 const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): void => {
-   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   const aiPathfindingComponent = AIPathfindingComponentArray.getComponent(tribesman);
 
    // If the tribesman is already on way to the biome, continue
-   const finalPath = getFinalPath(tribesmanAIComponent);
+   const finalPath = getFinalPath(aiPathfindingComponent);
    if (finalPath !== null) {
       const targetTileX = Math.floor(finalPath.goalX / Settings.TILE_SIZE);
       const targetTileY = Math.floor(finalPath.goalY / Settings.TILE_SIZE);
@@ -249,9 +250,10 @@ const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): vo
       }
    }
    
-   pathfindTribesman(tribesman, targetX, targetY, localBiome.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+   pathfindTribesman(tribesman, targetX, targetY, localBiome.layer, 0, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
 
    // @Incomplete: also note which layer the tribesman is moving to
+   const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
    tribesmanAIComponent.currentAIType = TribesmanAIType.moveToBiome;
 }
 

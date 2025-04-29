@@ -9,13 +9,13 @@ import { TribesmanAIComponentArray, TribesmanPathType } from "../../../component
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { EntityRelationship, TribeComponentArray, getEntityRelationship } from "../../../components/TribeComponent";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import Tribe from "../../../Tribe";
 import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { HutComponentArray } from "../../../components/HutComponent";
 import { PlayerComponentArray } from "../../../components/PlayerComponent";
 import { goResearchTech } from "./tribesman-researching";
-import { clearTribesmanPath, getBestHammerItemSlot, getTribesmanAcceleration, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration, pathfindTribesman } from "./tribesman-ai-utils";
+import { getBestHammerItemSlot, getTribesmanAcceleration, getTribesmanDesiredAttackRange, getHumanoidRadius, getTribesmanSlowAcceleration } from "./tribesman-ai-utils";
 import { attemptToRepairBuildings } from "./tribesman-structures";
 import { escapeFromEnemies, tribeMemberShouldEscape } from "./tribesman-escaping";
 import { continueTribesmanHealing, getHealingItemUseInfo } from "./tribesman-healing";
@@ -27,7 +27,8 @@ import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 import { getAbsAngleDiff } from "../../../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../../../collision-detection";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
 
@@ -37,7 +38,7 @@ const enum Vars {
 
 const BARREL_INTERACT_DISTANCE = 80;
 
-export const TRIBESMAN_TURN_SPEED = 2 * Math.PI;
+export const TRIBESMAN_TURN_SPEED = 3 * Math.PI;
 
 export const TRIBESMAN_COMMUNICATION_RANGE = 1000;
 
@@ -104,7 +105,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
       // @Cleanup: bad. should only change tribesman ai in that tribesman's tick function.
       const healthComponent = HealthComponentArray.getComponent(currentTribesman);
       if (!tribeMemberShouldEscape(getEntityType(currentTribesman), healthComponent)) {
-         pathfindTribesman(currentTribesman, communicatingTribesmanHitbox.box.position.x, communicatingTribesmanHitbox.box.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+         pathfindTribesman(currentTribesman, communicatingTribesmanHitbox.box.position.x, communicatingTribesmanHitbox.box.position.y, getEntityLayer(communicatingTribesman), communicatingTribesman, TribesmanPathType.tribesmanRequest, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
       }
    }
 }
@@ -318,7 +319,7 @@ export function tickTribesman(tribesman: Entity): void {
             const hutTransformComponent = TransformComponentArray.getComponent(hut);
             const hutHitbox = hutTransformComponent.children[0] as Hitbox;
             
-            pathfindTribesman(tribesman, hutHitbox.box.position.x, hutHitbox.box.position.y, getEntityLayer(hut), hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+            pathfindTribesman(tribesman, hutHitbox.box.position.x, hutHitbox.box.position.y, getEntityLayer(hut), hut, TribesmanPathType.default, Math.floor(50 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
             
             if (entitiesAreColliding(tribesman, hut) !== CollisionVars.NO_COLLISION) {
                destroyEntity(tribesman);
@@ -436,18 +437,18 @@ export function tickTribesman(tribesman: Entity): void {
          if (!willStopAtDesiredDistance(tribesmanHitbox, 80, distance)) {
             const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle);
             const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
-         setHitboxIdealAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
          
          tribesmanAIComponent.currentAIType = TribesmanAIType.idle;
          useInfo.action = LimbAction.none;
-         clearTribesmanPath(tribesman);
+         clearPathfinding(tribesman);
          return;
       }
    }
@@ -459,7 +460,7 @@ export function tickTribesman(tribesman: Entity): void {
          const hutTransformComponent = TransformComponentArray.getComponent(availableHut);
          const hutHitbox = hutTransformComponent.children[0] as Hitbox;
          
-         const isFinished = pathfindTribesman(tribesman, hutHitbox.box.position.x, hutHitbox.box.position.y, getEntityLayer(availableHut), availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+         const isFinished = pathfindTribesman(tribesman, hutHitbox.box.position.x, hutHitbox.box.position.y, getEntityLayer(availableHut), availableHut, TribesmanPathType.default, Math.floor(32 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
 
          if (entitiesAreColliding(tribesman, availableHut) !== CollisionVars.NO_COLLISION) {
             tribesmanAIComponent.hut = availableHut;
@@ -503,7 +504,7 @@ export function tickTribesman(tribesman: Entity): void {
 
    // Help other tribesmen
    if (tribesmanAIComponent.ticksSinceLastHelpRequest <= Vars.HELP_TIME) {
-      const isFinished = pathfindTribesman(tribesman, tribesmanAIComponent.helpX, tribesmanAIComponent.helpY, getEntityLayer(tribesman), 0, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.returnClosest);
+      const isFinished = pathfindTribesman(tribesman, tribesmanAIComponent.helpX, tribesmanAIComponent.helpY, getEntityLayer(tribesman), 0, TribesmanPathType.default, Math.floor(100 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.returnClosest);
       
       if (!isFinished) {
          tribesmanAIComponent.currentAIType = TribesmanAIType.assistingOtherTribesmen;
@@ -576,15 +577,15 @@ export function tickTribesman(tribesman: Entity): void {
             // If the tribesman will stop too close to the target, move back a bit
             const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
             const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          } else if (!willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
             // Too far away, move closer
             const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(targetDirection);
             const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(targetDirection);
-            applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
          }
 
-         setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          // Select the hammer item slot
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
@@ -752,10 +753,11 @@ export function tickTribesman(tribesman: Entity): void {
          const barrelHitbox = barrelTransformComponent.children[0] as Hitbox;
          
          if (tribesmanHitbox.box.position.calculateDistanceBetween(barrelHitbox.box.position) > BARREL_INTERACT_DISTANCE) {
-            pathfindTribesman(tribesman, barrelHitbox.box.position.x, barrelHitbox.box.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+            pathfindTribesman(tribesman, barrelHitbox.box.position.x, barrelHitbox.box.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
          } else {
             grabBarrelFood(tribesman, closestBarrelWithFood);
-            clearTribesmanPath(tribesman);
+            // @Cleanup: not needed? When the tribesman finishes pathfinding it should automatically clear the path??
+            clearPathfinding(tribesman);
          }
          tribesmanAIComponent.currentAIType = TribesmanAIType.grabbingFood;
          return;

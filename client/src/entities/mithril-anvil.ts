@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
 import { Point } from "../../../shared/src/utils";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { createCraftingStationComponentParams } from "../entity-components/server-components/CraftingStationComponent";
 import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
 import { createMithrilAnvilComponentParams } from "../entity-components/server-components/MithrilAnvilComponent";
@@ -23,21 +23,21 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    // Middle box
    {
       const box = new RectangularBox(position, new Point(-16, 0), rotation, 48, 56);
-      const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
       hitboxes.push(hitbox);
    }
 
    // Left box
    {
       const box = new RectangularBox(position, new Point(-48, 0), rotation, 16, 40);
-      const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
       hitboxes.push(hitbox);
    }
 
    // Right box
    {
       const box = new RectangularBox(position, new Point(30, 0), rotation, 44, 40);
-      const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
       hitboxes.push(hitbox);
    }
    

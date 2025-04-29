@@ -16,7 +16,7 @@ import { EntityAttachInfo, entityChildIsEntity, entityChildIsHitbox, entityIsInR
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { applyAcceleration, getHitboxVelocity, Hitbox, setHitboxVelocityX, setHitboxVelocityY } from "../../hitboxes";
 import { updateBox } from "../../../../shared/src/boxes/boxes";
 
 export interface PhysicsComponentParams {
@@ -38,14 +38,8 @@ export function resetIgnoredTileSpeedMultipliers(physicsComponent: PhysicsCompon
 }
 
 const applyHitboxKinematics = (transformComponent: TransformComponent, entity: Entity, hitbox: Hitbox): void => {
-   if (isNaN(hitbox.velocity.x)) {
-      throw new Error("Self velocity was NaN.");
-   }
-   if (isNaN(hitbox.velocity.x)) {
-      throw new Error("External velocity was NaN.");
-   }
-   if (!isFinite(hitbox.velocity.x)) {
-      throw new Error("External velocity is infinite.");
+   if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
+      throw new Error("Position was NaN.");
    }
 
    const layer = getEntityLayer(entity);
@@ -60,46 +54,45 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         hitbox.velocity.x += 240 / Settings.TPS * Math.sin(flowDirection - 1);
-         hitbox.velocity.y += 240 / Settings.TPS * Math.cos(flowDirection - 1);
+         applyAcceleration(entity, hitbox, 240 / Settings.TPS * Math.sin(flowDirection - 1), 240 / Settings.TPS * Math.cos(flowDirection - 1));
       }
    }
 
-   let shouldUpdate = false;
-   
-   // Apply friction to velocity
-   if (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) {
-      const friction = TILE_FRICTIONS[tile.type];
+   const friction = TILE_FRICTIONS[tile.type];
+
+   let velX = hitbox.box.position.x - hitbox.previousPosition.x;
+   let velY = hitbox.box.position.y - hitbox.previousPosition.y;
       
-      // Apply air and ground friction to velocity
-      hitbox.velocity.x *= 1 - friction * Settings.I_TPS * 2;
-      hitbox.velocity.y *= 1 - friction * Settings.I_TPS * 2;
+   // Air friction
+   velX *= 1 - friction / Settings.TPS * 2;
+   velY *= 1 - friction / Settings.TPS * 2;
 
-      const velocityMagnitude = hitbox.velocity.length();
-      if (velocityMagnitude > 0) {
-         const groundFriction = Math.min(friction, velocityMagnitude);
-         hitbox.velocity.x -= groundFriction * hitbox.velocity.x / velocityMagnitude;
-         hitbox.velocity.y -= groundFriction * hitbox.velocity.y / velocityMagnitude;
-      }
-
-      shouldUpdate = true;
+   // Ground friction
+   const velocityMagnitude = Math.hypot(velX, velY);
+   if (velocityMagnitude > 0) {
+      const groundFriction = Math.min(friction, velocityMagnitude);
+      velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
+      velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
    }
+   
+   // Verlet integration update:
+   // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x / Settings.TPS / Settings.TPS;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y / Settings.TPS / Settings.TPS;
 
-   if (shouldUpdate) {
-      // Update position based on the sum of self-velocity and external velocity
-      hitbox.box.position.x += hitbox.velocity.x * Settings.I_TPS;
-      hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;
+   hitbox.previousPosition.x = hitbox.box.position.x;
+   hitbox.previousPosition.y = hitbox.box.position.y;
 
-      // Mark entity's position as updated
-      cleanTransform(entity);
-      const renderInfo = getEntityRenderInfo(entity);
-      registerDirtyRenderInfo(renderInfo);
-   }
+   hitbox.box.position.x = newX;
+   hitbox.box.position.y = newY;
 
-   if (isNaN(hitbox.box.position.x)) {
-      console.log(hitbox.velocity.x, hitbox.velocity.x);
-      throw new Error("Position was NaN.");
-   }
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
+
+   // Mark entity's position as updated
+   cleanTransform(entity);
+   const renderInfo = getEntityRenderInfo(entity);
+   registerDirtyRenderInfo(renderInfo);
 }
 
 const resolveBorderCollisions = (entity: Entity): boolean => {
@@ -109,7 +102,6 @@ const resolveBorderCollisions = (entity: Entity): boolean => {
    
    let hasMoved = false;
    
-   // @HACK
    const baseHitbox = transformComponent.children[0] as Hitbox;
 
    // @Incomplete: do this using transform component bounds
@@ -129,26 +121,31 @@ const resolveBorderCollisions = (entity: Entity): boolean => {
 
       // Left wall
       if (minX < 0) {
-         baseHitbox.box.position.x -= minX - EPSILON;
-         baseHitbox.velocity.x = 0;
+         translateHitbox(baseHitbox, -minX + EPSILON, 0);
+         setHitboxVelocityX(baseHitbox, 0);
          hasMoved = true;
          // Right wall
       } else if (maxX > Settings.BOARD_UNITS) {
-         baseHitbox.box.position.x -= maxX - Settings.BOARD_UNITS + EPSILON;
-         baseHitbox.velocity.x = 0;
+         translateHitbox(baseHitbox, Settings.BOARD_UNITS - maxX - EPSILON, 0);
+         setHitboxVelocityX(baseHitbox, 0);
          hasMoved = true;
       }
       
       // Bottom wall
       if (minY < 0) {
-         baseHitbox.box.position.y -= minY - EPSILON;
-         baseHitbox.velocity.y = 0;
+         translateHitbox(baseHitbox, 0, -minY + EPSILON);
+         setHitboxVelocityY(baseHitbox, 0);
          hasMoved = true;
          // Top wall
       } else if (maxY > Settings.BOARD_UNITS) {
-         baseHitbox.box.position.y -= maxY - Settings.BOARD_UNITS + EPSILON;
-         baseHitbox.velocity.y = 0;
+         translateHitbox(baseHitbox, 0, -maxY + Settings.BOARD_UNITS - EPSILON);
+         setHitboxVelocityY(baseHitbox, 0);
          hasMoved = true;
+      }
+
+      // @Bug @Incomplete Can happen if maxX is something crazy like 1584104521169366000. fix!!!
+      if (box.calculateBoundsMinX() < 0 || box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || box.calculateBoundsMinY() < 0 || box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+         throw new Error();
       }
    }
 
@@ -199,7 +196,7 @@ function onTick(entity: Entity): void {
    
    // Water splash particles
    // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) && getEntityType(entity) !== EntityType.fish) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).length() > 0&& getEntityType(entity) !== EntityType.fish) {
       const lifetime = 2.5;
 
       const particle = new Particle(lifetime);
@@ -247,16 +244,13 @@ const translateHitbox = (hitbox: Hitbox, pushX: number, pushY: number): void => 
    }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent): void => {
-   const tethers = transformComponent.tethers;
-   
+const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
    // Apply the spring physics
-   for (const tether of tethers) {
-      const hitbox = tether.hitbox;
-      const originHitbox = tether.originHitbox;
+   for (const tether of hitbox.tethers) {
+      const originBox = tether.originBox;
 
-      const diffX = originHitbox.box.position.x - hitbox.box.position.x;
-      const diffY = originHitbox.box.position.y - hitbox.box.position.y;
+      const diffX = originBox.position.x - hitbox.box.position.x;
+      const diffY = originBox.position.y - hitbox.box.position.y;
       const distance = Math.sqrt(diffX * diffX + diffY * diffY);
       if (distance === 0) {
          throw new Error();
@@ -268,17 +262,12 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       const displacement = distance - tether.idealDistance;
       
       // Calculate spring force
-      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
-      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceX = normalisedDiffX * tether.springConstant * displacement;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement;
       
-      // Apply spring force 
-      translateHitbox(hitbox, springForceX, springForceY);
-      translateHitbox(originHitbox, -springForceX, -springForceY);
-
-      // @Hack !
-      // This is so that the player's velocity matches the thing they're riding, but in reality it's not exactly equal...
-      hitbox.velocity.x = originHitbox.velocity.x;
-      hitbox.velocity.y = originHitbox.velocity.y;
+      hitbox.acceleration.x += springForceX / hitbox.mass;
+      hitbox.acceleration.y += springForceY / hitbox.mass;
+      // Don't move the other hitbox, as that will be accounted for by the server!
    }
 }
 
@@ -304,8 +293,18 @@ const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInf
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+      throw new Error();
+   }
 
-   applyHitboxTethers(transformComponent);
+   for (const child of transformComponent.children) {
+      if (!entityChildIsHitbox(child)) {
+         continue;
+      }
+
+      const hitbox = child;
+      applyHitboxTethers(transformComponent, hitbox);
+   }
    
    // If the entity isn't being carried, update its' physics
    if (transformComponent.rootEntity === entity) {
@@ -347,7 +346,10 @@ function onUpdate(entity: Entity): void {
          }
       }
    }
-   console.assert(transformComponent.boundingAreaMinX >= 0 && transformComponent.boundingAreaMaxX < Settings.BOARD_UNITS && transformComponent.boundingAreaMinY >= 0 && transformComponent.boundingAreaMaxY < Settings.BOARD_UNITS, getEntityType(entity).toString());
+
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+      throw new Error();
+   }
 }
 
 function padData(reader: PacketReader): void {

@@ -1,17 +1,17 @@
 import CircularBox from "../../../shared/src/boxes/CircularBox";
+import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { Point, randInt } from "../../../shared/src/utils";
-import { getDistanceFromPointToEntity, moveEntityToEntity } from "../ai-shared";
 import { createEntityConfigAttachInfoWithTether } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { SandBallComponentArray } from "../components/SandBallComponent";
-import { AngularTetherInfo, attachEntityWithTether, entityChildIsEntity, entityIsTethered, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { entityChildIsEntity, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
 import { createEntity } from "../Entity";
-import { applyAcceleration, Hitbox, setHitboxAngularVelocity, setHitboxIdealAngle } from "../hitboxes";
-import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
+import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class SandBallingAI {
    public readonly acceleration: number;
@@ -81,17 +81,17 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
 
       // switche
       if (sandBallingAI.isTurningClockwise) {
-         setHitboxAngularVelocity(entityHitbox, 1);
-         setHitboxAngularVelocity(sandBallHitbox, 1);
+         addHitboxAngularAcceleration(entityHitbox, 1);
+         addHitboxAngularAcceleration(sandBallHitbox, 1);
       } else {
-         setHitboxAngularVelocity(entityHitbox, -1);
-         setHitboxAngularVelocity(sandBallHitbox, -1);
+         addHitboxAngularAcceleration(entityHitbox, -1);
+         addHitboxAngularAcceleration(sandBallHitbox, -1);
       }
 
       // move forwards
       const accelerationX = sandBallingAI.acceleration * Math.sin(entityHitbox.box.angle);
       const accelerationY = sandBallingAI.acceleration * Math.cos(entityHitbox.box.angle);
-      applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
 
       const sandBallComponent = SandBallComponentArray.getComponent(sandBall);
 
@@ -119,7 +119,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
          // @Hack
          const mandibleHitbox = entityTransformComponent.children[i + 1] as Hitbox;
          const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
-         setHitboxIdealAngle(mandibleHitbox, idealAngle, 3 * Math.PI, true);
+         turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
       }
    } else {
       // Start a new ball
@@ -130,12 +130,16 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       
       const ballConfig = createSandBallConfig(new Point(x, y), entityHitbox.box.angle);
 
-      const angularTether: AngularTetherInfo = {
+      const ballHitbox = ballConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      const angularTether: HitboxAngularTether = {
+         originHitbox: entityHitbox,
          springConstant: 10,
-         angularDamping: 0.4,
+         damping: 0.4,
          padding: 0
       };
-      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, entityHitbox, 32, 10, 0.4, false, false, angularTether);;
+      ballHitbox.angularTethers.push(angularTether);
+
+      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, entityHitbox, 32, 10, 0.4, false, false);
       
       createEntity(ballConfig, getEntityLayer(entity), 0);
    }

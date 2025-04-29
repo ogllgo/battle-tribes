@@ -5,11 +5,9 @@ import { Settings } from "../../../shared/src/settings";
 import { Point } from "../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
-import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
-import { hitEntity, HealthComponentArray } from "../components/HealthComponent";
-import { addHungerEnergy } from "../components/HungerComponent";
+import { hitEntity } from "../components/HealthComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { getEntityType, entityExists, getEntityAgeTicks } from "../world";
 
 export class KrumblidCombatAI {
@@ -82,7 +80,7 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
          // @Hack
          const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
          const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
-         setHitboxIdealAngle(mandibleHitbox, idealAngle, 3 * Math.PI, true);
+         turnHitboxToAngle(mandibleHitbox, idealAngle, 12 * Math.PI, 0.5, true);
       }
 
       if (getEntityAgeTicks(krumblid) % Settings.TPS === 0) {

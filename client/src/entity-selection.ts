@@ -35,7 +35,7 @@ import { HealthComponentArray } from "./entity-components/server-components/Heal
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
 import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
-import { createHitbox, Hitbox } from "./hitboxes";
+import { createHitbox, createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
@@ -322,7 +322,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
-      if (hitbox.velocity.length() < 1) {
+      if (getHitboxVelocity(hitbox).length() < 1) {
          return {
             type: InteractActionType.pickUpArrow,
             interactEntity: entity,
@@ -382,7 +382,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
 
          // @HACK
          const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
-         const hitbox = createHitbox(0, null, box, new Point(0, 0), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+         const hitbox = createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
 
          const renderPart = new TexturedRenderPart(
             hitbox,

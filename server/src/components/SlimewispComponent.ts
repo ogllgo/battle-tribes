@@ -52,7 +52,7 @@ function onTick(slimewisp: Entity): void {
          const mergingSlimewispTransformComponent = TransformComponentArray.getComponent(mergingSlimewisp);
          const mergingSlimewispHitbox = mergingSlimewispTransformComponent.children[0] as Hitbox;
          
-         moveEntityToPosition(slimewisp, mergingSlimewispHitbox.box.position.x, mergingSlimewispHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED);
+         moveEntityToPosition(slimewisp, mergingSlimewispHitbox.box.position.x, mergingSlimewispHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
    
          // Continue merge
          if (entitiesAreColliding(slimewisp, mergingSlimewisp) !== CollisionVars.NO_COLLISION) {
@@ -77,7 +77,7 @@ function onTick(slimewisp: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(slimewisp);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI);
+      moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI, 1);
    }
 }
 

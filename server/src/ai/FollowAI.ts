@@ -3,7 +3,7 @@ import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, wil
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { entityExists, getEntityType } from "../world";
-import { applyAcceleration, Hitbox } from "../hitboxes";
+import { applyAccelerationFromGround, Hitbox } from "../hitboxes";
 import { randInt } from "../../../shared/src/utils";
 
 export class FollowAI {
@@ -86,17 +86,17 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance - 4)) {
       // Too close, move backwards!
-      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
+      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed, 1);
 
       const moveDirection = entityHitbox.box.position.calculateAngleBetween(followTargetHitbox.box.position) + Math.PI;
       const accelerationX = acceleration * Math.sin(moveDirection);
       const accelerationY = acceleration * Math.cos(moveDirection);
-      applyAcceleration(entity, entityHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
    }
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
-      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed);
+      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed, 1);
    } else {
-      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed);
+      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed, 1);
    }
 }
 

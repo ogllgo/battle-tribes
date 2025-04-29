@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
-import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { angleToPoint, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
@@ -16,17 +16,17 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { entityExists, getEntityType } from "../../world";
 import Tribe from "../../Tribe";
 import { Settings } from "../../../../shared/src/settings";
-import { applyKnockback, createHitbox, Hitbox, slowVelocity } from "../../hitboxes";
+import { applyKnockback, createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
+   // physicsComponent.isImmovable = true;
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -94,7 +94,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    }
 
    // Don't damage if the arrow is moving too slow
-   if (affectedHitbox.velocity.length() < 10) {
+   if (getHitboxVelocity(affectedHitbox).length() < 10) {
       return;
    } 
 
@@ -118,19 +118,10 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
       }
    }
 
-   // Slow down the arrow as it passes through the entity
-   slowVelocity(affectedHitbox, 10000 * Settings.I_TPS);
-
+   // When the hitbox is pushed to the point that it is no longer travelling in the direction it is facing, attach it to the colliding hitbox
    // Lodge the arrow in the entity when it's slow enough
-   if (affectedHitbox.velocity.lengthSquared() < 50) {
+   const arrowVelocity = getHitboxVelocity(affectedHitbox);
+   if (arrowVelocity.length() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
       attachEntity(arrow, collidingEntity, collidingHitbox, false);
-
-      // @Hack: Once the entity gets mounted, the velocity it had at this point in time gets frozen.
-      // This is because this "fix carried entity position" code only runs on physics components, and if
-      // the arrow gets stuck on a tree then it has no physics component and the velocity never gets overridden
-      // with 0.
-      // Need to make the fixing carried entity position code run on the transform component instead.
-      affectedHitbox.velocity.x = 0;
-      affectedHitbox.velocity.y = 0;
    }
 }

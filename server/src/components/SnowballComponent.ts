@@ -7,7 +7,7 @@ import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback, Hitbox } from "../hitboxes";
+import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class SnowballComponent {
@@ -32,15 +32,16 @@ SnowballComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onTick(snowball: Entity): void {
    // Decrease angular velocity over time
-   const transformComponent = TransformComponentArray.getComponent(snowball);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   if (hitbox.angleTurnSpeed !== 0) {
-      const beforeSign = Math.sign(hitbox.angleTurnSpeed);
-      hitbox.angleTurnSpeed -= Math.PI / Settings.TPS * beforeSign;
-      if (beforeSign !== Math.sign(hitbox.angleTurnSpeed)) {
-         hitbox.angleTurnSpeed = 0;
-      }
-   }
+   // @INCOMPLETE!
+   // const transformComponent = TransformComponentArray.getComponent(snowball);
+   // const hitbox = transformComponent.children[0] as Hitbox;
+   // if (hitbox.angleTurnSpeed !== 0) {
+   //    const beforeSign = Math.sign(hitbox.angleTurnSpeed);
+   //    hitbox.angleTurnSpeed -= Math.PI / Settings.TPS * beforeSign;
+   //    if (beforeSign !== Math.sign(hitbox.angleTurnSpeed)) {
+   //       hitbox.angleTurnSpeed = 0;
+   //    }
+   // }
          
    const snowballComponent = SnowballComponentArray.getComponent(snowball);
    const ageTicks = getEntityAgeTicks(snowball);
@@ -63,9 +64,7 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       }
    }
    
-   const vx = snowballHitbox.velocity.x;
-   const vy = snowballHitbox.velocity.y;
-   const velocity = Math.sqrt(vx * vx + vy * vy);
+   const velocity = getHitboxVelocity(snowballHitbox).length();
 
    const ageTicks = getEntityAgeTicks(snowball);
    if (velocity < DAMAGE_VELOCITY_THRESHOLD || ageTicks >= 2 * Settings.TPS) {

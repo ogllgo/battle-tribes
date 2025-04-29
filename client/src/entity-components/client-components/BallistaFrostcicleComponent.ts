@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
@@ -54,10 +54,11 @@ function getMaxRenderParts(): number {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
+   const velocity = getHitboxVelocity(hitbox);
 
    // Create arrow break particles
    for (let i = 0; i < 6; i++) {
-      createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, hitbox.velocity.x, hitbox.velocity.y);
+      createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, velocity.x, velocity.y);
    }
 
    playSoundOnHitbox("ice-break.mp3", 0.4, 1, entity, hitbox, false);

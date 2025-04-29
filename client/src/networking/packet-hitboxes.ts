@@ -6,7 +6,7 @@ import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
 import { getHitboxByLocalID, TransformNode } from "../entity-components/server-components/TransformComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const x = reader.readNumber();
@@ -93,10 +93,27 @@ export function padBoxData(reader: PacketReader): void {
 export function readHitboxFromData(reader: PacketReader, localID: number, children: ReadonlyArray<TransformNode>): Hitbox {
    const box = readBoxFromData(reader);
 
-   const velocity = new Point(reader.readNumber(), reader.readNumber());
+   const previousPosition = new Point(reader.readNumber(), reader.readNumber());
+   const acceleration = new Point(reader.readNumber(), reader.readNumber());
 
-   const idealAngle = reader.readNumber();
-   const angleTurnSpeed = reader.readNumber();
+   const tethers = new Array<HitboxTether>();
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      tethers.push(tether);
+   }
+   
+   const previousRelativeAngle = reader.readNumber();
+   const angularAcceleration = reader.readNumber();
    
    const mass = reader.readNumber();
    const collisionType = reader.readNumber() as HitboxCollisionType;
@@ -113,15 +130,20 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
    // @INCOMPLETE @BUG: can't get from other transform components!
    const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
 
-   const hitbox = createHitbox(localID, parentHitbox, box, velocity, mass, collisionType, collisionBit, collisionMask, flags);
-   hitbox.idealAngle = idealAngle;
-   hitbox.angleTurnSpeed = angleTurnSpeed;
+   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
    return hitbox;
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    padBoxData(reader);
 
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
+
+   // Tethers
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      padBoxData(reader);
+      reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   }
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -182,11 +204,33 @@ export function updateBoxFromData(box: Box, reader: PacketReader): void {
 export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: PacketReader): void {
    updateBoxFromData(hitbox.box, reader);
 
-   hitbox.velocity.x = reader.readNumber();
-   hitbox.velocity.y = reader.readNumber();
+   hitbox.previousPosition.x = reader.readNumber();
+   hitbox.previousPosition.y = reader.readNumber();
+   hitbox.acceleration.x = reader.readNumber();
+   hitbox.acceleration.y = reader.readNumber();
 
-   hitbox.idealAngle = reader.readNumber();
-   hitbox.angleTurnSpeed = reader.readNumber();
+   // Remove all previous tethers and add new ones
+
+   hitbox.tethers.splice(0, hitbox.tethers.length);
+   
+   const tethers = new Array<HitboxTether>();
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      tethers.push(tether);
+   }
+
+   hitbox.previousRelativeAngle = reader.readNumber();
+   hitbox.angularAcceleration = reader.readNumber();
    
    hitbox.mass = reader.readNumber();
    hitbox.collisionType = reader.readNumber() as HitboxCollisionType;

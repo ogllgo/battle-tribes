@@ -2,13 +2,14 @@ import { TribesmanAIType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { distance, getTileX, getTileY, Point, TileIndex } from "../../../shared/src/utils";
-import { getHumanoidRadius, pathfindTribesman, clearTribesmanPath } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
+import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { Hitbox } from "../hitboxes";
-import { getEntityFootprint, PathfindFailureDefault, findSingleLayerPath, PathfindOptions } from "../pathfinding";
+import { getEntityFootprint, PathfindingFailureDefault, findSingleLayerPath, PathfindingQueryOptions } from "../pathfinding";
 import { getEntityLayer, getGameTicks } from "../world";
 import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../components/TribesmanAIComponent";
+import { clearPathfinding, pathfindTribesman } from "../components/AIPathfindingComponent";
 
 export class PatrolAI {
    public targetPatrolPosition: Readonly<Point> | null = null;
@@ -70,7 +71,7 @@ const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileI
       const x = (tileX + Math.random()) * Settings.TILE_SIZE;
       const y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
-      const options: PathfindOptions = {
+      const options: PathfindingQueryOptions = {
          goalRadius: 0,
          failureDefault: 0,
          nodeBudget: 1000
@@ -97,7 +98,7 @@ export function runPatrolAI(tribeMember: Entity, patrolAI: PatrolAI, patrolArea:
    }
    
    if (patrolAI.targetPatrolPosition !== null) {
-      const isFinished = pathfindTribesman(tribeMember, patrolAI.targetPatrolPosition.x, patrolAI.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindFailureDefault.none);
+      const isFinished = pathfindTribesman(tribeMember, patrolAI.targetPatrolPosition.x, patrolAI.targetPatrolPosition.y, getEntityLayer(tribeMember), 0, TribesmanPathType.default, 0, PathfindingFailureDefault.none);
       if (!isFinished) {
          // @Hack
          if (TribesmanAIComponentArray.hasComponent(tribeMember)) {
@@ -117,5 +118,5 @@ export function runPatrolAI(tribeMember: Entity, patrolAI: PatrolAI, patrolArea:
    }
 
    patrolAI.targetPatrolPosition = null;
-   clearTribesmanPath(tribeMember);
+   clearPathfinding(tribeMember);
 }

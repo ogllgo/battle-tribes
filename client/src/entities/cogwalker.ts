@@ -11,7 +11,7 @@ import { createTransformComponentParams } from "../entity-components/server-comp
 import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
 import { createTribeMemberComponentParams } from "../entity-components/server-components/TribeMemberComponent";
 import { createTribesmanAIComponentParams } from "../entity-components/server-components/TribesmanAIComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
 import { EntityParams } from "../world";
 
@@ -19,7 +19,7 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
-   const hitbox = createHitbox(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 28), new Point(0, 0), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, new CircularBox(position, new Point(0, 0), rotation, 28), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

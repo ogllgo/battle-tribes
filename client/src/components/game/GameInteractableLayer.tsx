@@ -24,13 +24,13 @@ import { playSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
-import { createTransformComponentParams, HitboxTether, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
 import { createEntity, entityExists, EntityParams, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
-import { applyAcceleration, Hitbox } from "../../hitboxes";
+import { applyAcceleration, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createBracingsComponentParams } from "../../entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
 import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
@@ -304,13 +304,12 @@ export function updatePlayerItems(): void {
 
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerHitbox = transformComponent.children[0] as Hitbox;
+         const playerVelocity = getHitboxVelocity(playerHitbox);
 
          // Add extra range for moving attacks
-         const vx = playerHitbox.velocity.x;
-         const vy = playerHitbox.velocity.y;
-         if (vx !== 0 || vy !== 0) {
-            const velocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-            const attackAlignment = (vx * Math.sin(playerHitbox.box.angle) + vy * Math.cos(playerHitbox.box.angle)) / velocityMagnitude;
+         const velocityMagnitude = playerVelocity.length();
+         if (velocityMagnitude > 0) {
+            const attackAlignment = (playerVelocity.x * Math.sin(playerHitbox.box.angle) + playerVelocity.y * Math.cos(playerHitbox.box.angle)) / velocityMagnitude;
             if (attackAlignment > 0) {
                const extraAmount = AttackVars.MAX_EXTRA_ATTACK_RANGE * Math.min(velocityMagnitude / AttackVars.MAX_EXTRA_ATTACK_RANGE_SPEED);
                limb.currentActionEndLimbState.extraOffsetY += extraAmount;
@@ -1372,7 +1371,6 @@ const tickItem = (itemType: ItemType): void => {
             switch (componentType) {
                case ServerComponentType.transform: {
                   const hitboxes = new Array<Hitbox>();
-                  const tethers = new Array<HitboxTether>();
                   const staticHitboxes = new Array<Hitbox>();
                   for (let i = 0; i < placeInfo.hitboxes.length; i++) {
                      const hitbox = placeInfo.hitboxes[i];

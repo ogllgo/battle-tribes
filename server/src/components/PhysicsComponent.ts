@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
@@ -10,9 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { getHitboxTile, Hitbox, hitboxIsInRiver } from "../hitboxes";
-import { getAbsAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
-import { updateBox } from "../../../shared/src/boxes/boxes";
+import { addHitboxAngularAcceleration, addHitboxVelocity, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
+import { getAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { cleanAngleNEW } from "../ai-shared";
 
 // @Cleanup: Variable names
@@ -43,87 +42,34 @@ export class PhysicsComponent {
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
 
-const cleanAngle = (hitbox: Hitbox): void => {
-   // Clamp angle to [-PI, PI) range
-   if (hitbox.box.angle < -Math.PI) {
-      hitbox.box.angle += Math.PI * 2;
-   } else if (hitbox.box.angle >= Math.PI) {
-      hitbox.box.angle -= Math.PI * 2;
-   }
-}
-
-const cleanRelativeAngle = (hitbox: Hitbox): void => {
-   // Clamp angle to [-PI, PI) range
-   if (hitbox.box.relativeAngle < -Math.PI) {
-      hitbox.box.relativeAngle += Math.PI * 2;
-   } else if (hitbox.box.relativeAngle >= Math.PI) {
-      hitbox.box.relativeAngle -= Math.PI * 2;
-   }
-}
-
-const turnHitbox = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent): void => {
-   if (hitbox.angleTurnSpeed === 0) {
+const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
       return;
    }
+
+   let angularVelocity = (hitbox.box.relativeAngle - hitbox.previousRelativeAngle);
+   // @Hack??
+   angularVelocity *= 0.98;
    
-   if (hitbox.idealAngle === -999) {
-      // Take the angleTurnSpeed value as angular velocity
-      hitbox.box.relativeAngle += hitbox.angleTurnSpeed * Settings.I_TPS;
-      transformComponent.isDirty = true;
-      registerDirtyEntity(entity);
-   } else {
-      cleanAngle(hitbox);
-      cleanRelativeAngle(hitbox);
+   const newAngle = hitbox.box.relativeAngle + angularVelocity + hitbox.angularAcceleration / Settings.TPS / Settings.TPS;
 
-      const previousRelativeAngle = hitbox.box.relativeAngle;
+   hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle = newAngle;
+   hitbox.angularAcceleration = 0;
 
-      let idealAngle: number;
-      if (hitbox.idealAngleIsRelative) {
-         idealAngle = hitbox.idealAngle;
-      } else {
-         const parentAngle = hitbox.box.angle - hitbox.box.relativeAngle;
-         idealAngle = hitbox.idealAngle - parentAngle;
-      }
+   // if (hitbox.parent !== null) {
+   //    const origin = hitbox.parent.box.position;
+   //    const angle = hitbox.parent.box.angle + hitbox.box.relativeAngle;
+   
 
-      // From here on we only work in terms of the relative angle of the hitbox.
-      
-      let clockwiseDist = idealAngle - hitbox.box.relativeAngle;
-      while (clockwiseDist < 0) {
-         clockwiseDist += 2 * Math.PI;
-      }
-      while (clockwiseDist >= 2 * Math.PI) {
-         clockwiseDist -= 2 * Math.PI;
-      }
+   //    const radius = hitbox.initialDistanceFromParent; // store this when attaching the tether
+   
+   //    hitbox.box.position.x = origin.x + Math.cos(angle) * radius;
+   //    hitbox.box.position.y = origin.y + Math.sin(angle) * radius;
+   // }
 
-      if (clockwiseDist <= Math.PI) {  
-         // If the entity would turn past the target direction, snap back to the target direction
-         if (hitbox.angleTurnSpeed / Settings.TPS > clockwiseDist) {
-            hitbox.box.relativeAngle = idealAngle;
-         } else {
-            hitbox.box.relativeAngle += hitbox.angleTurnSpeed / Settings.TPS;
-         }
-      } else {
-         const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
-         
-         // If the entity would turn past the target direction, snap back to the target direction
-         if (hitbox.angleTurnSpeed / Settings.TPS > anticlockwiseDist) {
-            hitbox.box.relativeAngle = idealAngle;
-         } else {
-            hitbox.box.relativeAngle -= hitbox.angleTurnSpeed / Settings.TPS;
-         }
-      }
-
-      // @Incomplete: Floating point inconsistencies might shittify this check.
-      if (hitbox.box.relativeAngle !== previousRelativeAngle) {
-         transformComponent.isDirty = true;
-         registerDirtyEntity(entity);
-      }
-
-      const amountTurned = getAbsAngleDiff(previousRelativeAngle, hitbox.box.relativeAngle);
-      if (amountTurned > (hitbox.angleTurnSpeed / Settings.TPS) + 0.001) {
-         throw new Error("Hitbox turned more than it should have! Turned " + amountTurned + " while max turn should be " + (hitbox.angleTurnSpeed / Settings.TPS));
-      }
-   }
+   transformComponent.isDirty = true;
+   registerDirtyEntity(entity);
 }
 
 const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
@@ -131,14 +77,11 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // which is only set at the creation of an entity. To remove these conditions we could probably split the physics
    // entities into two groups, and call two different applyPhysicsFriction and applyPhysicsNoFriction functions to
    // the corresponding groups
-   
-   // @Temporary @Hack
-   if (isNaN(hitbox.velocity.x) || isNaN(hitbox.velocity.y)) {
-      console.warn("Entity type " + EntityTypeString[getEntityType(entity)] + " velocity was NaN.");
-      hitbox.velocity.x = 0;
-      hitbox.velocity.y = 0;
-   }
 
+   if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
+      throw new Error();
+   }
+   
    const layer = getEntityLayer(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -148,38 +91,48 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
    if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
-      hitbox.velocity.x += 240 * Settings.I_TPS * a[flowDirectionIdx];
-      hitbox.velocity.y += 240 * Settings.I_TPS * b[flowDirectionIdx];
+      applyAcceleration(hitbox, 240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]);
    }
 
-   // Apply friction to velocity
-   if (hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) {
-      const friction = TILE_FRICTIONS[tileType];
-      
-      if (physicsComponent.isAffectedByAirFriction) {
-         // Air friction
-         hitbox.velocity.x *= 1 - friction * Settings.I_TPS * 2;
-         hitbox.velocity.y *= 1 - friction * Settings.I_TPS * 2;
-      }
+   // @Cleanup: shouldn't be used by air friction.
+   const friction = TILE_FRICTIONS[tileType];
+   
+   let velX = hitbox.box.position.x - hitbox.previousPosition.x;
+   let velY = hitbox.box.position.y - hitbox.previousPosition.y;
 
-      if (physicsComponent.isAffectedByGroundFriction) {
-         // @Incomplete @Bug: Doesn't take into account the TPS. Would also be fixed by pre-multiplying the array
-         // Ground friction
-         const velocityMagnitude = hitbox.velocity.length();
-         if (velocityMagnitude > 0) {
-            const groundFriction = Math.min(friction, velocityMagnitude);
-            hitbox.velocity.x -= groundFriction * hitbox.velocity.x / velocityMagnitude;
-            hitbox.velocity.y -= groundFriction * hitbox.velocity.y / velocityMagnitude;
-         }
-      }
-
-      // Update position based on the sum of self-velocity and external velocity
-      hitbox.box.position.x += hitbox.velocity.x * Settings.I_TPS;
-      hitbox.box.position.y += hitbox.velocity.y * Settings.I_TPS;
-
-      transformComponent.isDirty = true;
-      registerDirtyEntity(entity);
+   // Air friction
+   if (physicsComponent.isAffectedByAirFriction) {
+      // @IncompletE: shouldn't use tile friction!!
+      velX *= 1 - friction / Settings.TPS * 2;
+      velY *= 1 - friction / Settings.TPS * 2;
    }
+
+   if (physicsComponent.isAffectedByGroundFriction) {
+      // Ground friction
+      const velocityMagnitude = Math.hypot(velX, velY);
+      if (velocityMagnitude > 0) {
+         const groundFriction = Math.min(friction, velocityMagnitude);
+         velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
+         velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
+      }
+   }
+   
+   // Verlet integration update:
+   // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x / Settings.TPS / Settings.TPS;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y / Settings.TPS / Settings.TPS;
+
+   hitbox.previousPosition.x = hitbox.box.position.x;
+   hitbox.previousPosition.y = hitbox.box.position.y;
+
+   hitbox.box.position.x = newX;
+   hitbox.box.position.y = newY;
+
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
+
+   transformComponent.isDirty = true;
+   registerDirtyEntity(entity);
 }
 
 const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformComponent): void => {
@@ -240,28 +193,43 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
    }
 }
 
-export function translateHitbox(hitbox: Hitbox, pushX: number, pushY: number): void {
-   if (hitbox.parent === null) {
-      // Add the raw translation here because the position is already world-relative
-      hitbox.box.position.x += pushX;
-      hitbox.box.position.y += pushY;
-   } else {
-      // We need to adjust the offset of the parent such that the position is moved by (springForceX, springForceY)
-      const rotatedSpringForceX = rotateXAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
-      const rotatedSpringForceY = rotateYAroundOrigin(pushX, pushY, -hitbox.parent.box.angle);
+const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
+   for (const angularTether of hitbox.angularTethers) {
+      const originHitbox = angularTether.originHitbox;
+      
+      const currentDirection = originHitbox.box.angle;
+      const idealDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+      const diff = cleanAngleNEW(currentDirection - idealDirection);
 
-      hitbox.box.offset.x += rotatedSpringForceX;
-      hitbox.box.offset.y += rotatedSpringForceY;
-      updateBox(hitbox.box, hitbox.parent.box);
+      if (Math.abs(diff) > angularTether.padding) {
+         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant;
+
+         const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
+         const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
+   
+         const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
+   
+         const dampingForce = -relVel * angularTether.damping;
+   
+         const force = rotationForce + dampingForce;
+
+         // @Temporary
+         // addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
+         // @HACK
+         // addHitboxAngularAcceleration(originHitbox, -force / getHitboxConnectedMass(originHitbox));
+
+
+         // @HACKKKK
+         const newRelativeAngle = hitbox.box.angle - hitbox.box.relativeAngle + idealDirection;
+         hitbox.previousRelativeAngle = newRelativeAngle;
+         hitbox.box.relativeAngle = newRelativeAngle;
+      }
    }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent): void => {
-   const tethers = transformComponent.tethers;
-   
-   // Apply the spring physics
-   for (const tether of tethers) {
-      const hitbox = tether.hitbox;
+const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   // Position tethers
+   for (const tether of hitbox.tethers) {
       const originHitbox = tether.originHitbox;
 
       const diffX = originHitbox.box.position.x - hitbox.box.position.x;
@@ -277,60 +245,35 @@ const applyHitboxTethers = (transformComponent: TransformComponent): void => {
       const displacement = distance - tether.idealDistance;
       
       // Calculate spring force
-      const springForceX = normalisedDiffX * tether.springConstant * displacement * Settings.I_TPS;
-      const springForceY = normalisedDiffY * tether.springConstant * displacement * Settings.I_TPS;
+      const springForceX = normalisedDiffX * tether.springConstant * displacement;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement;
+   
+      const hitboxVelocity = getHitboxVelocity(hitbox);
+      const originHitboxVelocity = getHitboxVelocity(originHitbox);
+
+      const relVelX = hitboxVelocity.x - originHitboxVelocity.x;
+      const relVelY = hitboxVelocity.y - originHitboxVelocity.y;
+
+      const dampingForceX = -relVelX * tether.damping;
+      const dampingForceY = -relVelY * tether.damping;
+
+      const forceX = springForceX + dampingForceX;
+      const forceY = springForceY + dampingForceY;
       
-      // Apply spring force 
-      translateHitbox(hitbox, springForceX, springForceY);
+      // @Incomplete: doesn't account for root hitbox!
+      hitbox.acceleration.x += forceX / hitbox.mass;
+      hitbox.acceleration.y += forceY / hitbox.mass;
       if (tether.affectsOriginHitbox) {
-         translateHitbox(originHitbox, -springForceX, -springForceY);
-      }
-
-      // Angular tether
-      if (typeof tether.angularTether !== "undefined") {
-         const idealDirection = originHitbox.box.angle;
-         const tetherDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-         const diff = cleanAngleNEW(tetherDirection - idealDirection);
-
-         if (Math.abs(diff) > tether.angularTether.padding) {
-            const rotationForce = (diff - tether.angularTether.padding * Math.sign(diff)) * tether.angularTether.springConstant * Settings.I_TPS;
-   
-            originHitbox.box.relativeAngle += rotationForce;
-            
-            // hitbox.box.relativeAngle -= rotationForce;
-   
-            // We want to rotate the hitbox by -rotationForce relative to the originHitbox. But if the origin hitbox is the hitbox' parent, then we need to subtract it twice to counteract it.
-            // const rotationalOffsetForce = -rotationForce * (hitbox.parent === originHitbox ? 2 : 1);
-            const rotationalOffsetForce = -rotationForce;
-            
-            const currentOffsetX = hitbox.box.position.x - originHitbox.box.position.x;
-            const currentOffsetY = hitbox.box.position.y - originHitbox.box.position.y;
-            const newOffsetX = rotateXAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
-            const newOffsetY = rotateYAroundOrigin(currentOffsetX, currentOffsetY, rotationalOffsetForce);
-            const moveX = newOffsetX - currentOffsetX;
-            const moveY = newOffsetY - currentOffsetY;
-            translateHitbox(hitbox, moveX, moveY);
-         }
+         originHitbox.acceleration.x -= forceX / originHitbox.mass;
+         originHitbox.acceleration.y -= forceY / originHitbox.mass;
       }
    }
 
-   // Verlet integration
-   // @Investigate: Do we not... apply velocity in a different way immediately before/after in the applyHitboxKinematics function...?
-   // for (const tether of tethers) {
-   //    const hitbox = tether.hitbox;
-      
-   //    const velocityX = (hitbox.box.position.x - tether.previousPositionX) * (1 - tether.damping);
-   //    const velocityY = (hitbox.box.position.y - tether.previousPositionY) * (1 - tether.damping);
-      
-   //    // Update previous position for next frame
-   //    tether.previousPositionX = hitbox.box.position.x;
-   //    tether.previousPositionY = hitbox.box.position.y;
+   applyHitboxAngularTethers(hitbox);
+   // @Hack
+   const hasUpdated = hitbox.angularTethers.length > 0;
 
-   //    hitbox.box.position.x += velocityX;
-   //    hitbox.box.position.y += velocityY;
-   // }
-
-   if (tethers.length > 0) {
+   if (hitbox.tethers.length > 0 || hasUpdated) {
       // @Speed: Is this necessary every tick?
       transformComponent.isDirty = true;
    }
@@ -342,7 +285,7 @@ export function tickEntityPhysics(entity: Entity): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    for (const child of transformComponent.children) {
       if (entityChildIsHitbox(child)) {
-         turnHitbox(entity, child, transformComponent);
+         tickHitboxAngularPhysics(entity, child, transformComponent);
       }
    }
    // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
@@ -353,7 +296,16 @@ export function tickEntityPhysics(entity: Entity): void {
          }
       }
    }
-   applyHitboxTethers(transformComponent);
+
+   for (const child of transformComponent.children) {
+      if (!entityChildIsHitbox(child)) {
+         continue;
+      }
+
+      const hitbox = child;
+      applyHitboxTethers(hitbox, transformComponent);
+   }
+
    updatePosition(entity, transformComponent);
 
    for (const entityAttachInfo of transformComponent.children) {

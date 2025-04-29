@@ -39,6 +39,7 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+/** Returns how full an entity is as a proportion of their energy capacity */
 export function getEntityFullness(entity: Entity): number {
    if (!HungerComponentArray.hasComponent(entity)) {
       throw new Error();

@@ -11,7 +11,7 @@ import { createStatusEffectComponentParams } from "../entity-components/server-c
 import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
 import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
 import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
 import { EntityParams } from "../world";
 
@@ -20,7 +20,7 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    let hitboxLocalID = 0;
    
    // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
-   const hitbox = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    // const hitbox1 = createHitbox(hitboxLocalID++, null, new RectangularBox(position.copy(), new Point(0, 0), rotation, 72, 80), new Point(0, 0), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);

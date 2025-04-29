@@ -4,7 +4,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
 import { createPlanterBoxComponentParams } from "../entity-components/server-components/PlanterBoxComponent";
 import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
@@ -19,7 +19,7 @@ export function createPlanterBoxConfig(position: Point, rotation: number, tribe:
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 80, 80);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

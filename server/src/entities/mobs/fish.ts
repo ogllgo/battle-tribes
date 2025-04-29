@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { applyAcceleration, createHitbox, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
 import { getEntityLayer } from "../../world";
 
 const enum Vars {
@@ -89,9 +89,9 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
       // Swim on water
       const accelerationX = 40 * Math.sin(direction);
       const accelerationY = 40 * Math.cos(direction);
-      applyAcceleration(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(fishHitbox, direction, Vars.TURN_SPEED, false);
+      turnHitboxToAngle(fishHitbox, direction, Vars.TURN_SPEED, 0.5, false);
    } else {
       // 
       // Lunge on land
@@ -99,9 +99,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         
-         fishHitbox.velocity.x += Vars.LUNGE_FORCE * Math.sin(direction);
-         fishHitbox.velocity.y += Vars.LUNGE_FORCE * Math.cos(direction);
+         addHitboxVelocity(fishHitbox, Vars.LUNGE_FORCE * Math.sin(direction), Vars.LUNGE_FORCE * Math.cos(direction));
          if (direction !== fishHitbox.box.angle) {
             fishHitbox.box.angle = direction;
             transformComponent.isDirty = true;
@@ -124,7 +122,7 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
 
    const aiHelperComponent = new AIHelperComponent(hitbox, 200, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, wanderTargetIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3, 1);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
    

@@ -1,11 +1,12 @@
 import { angle } from "battletribes-shared/utils";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { clearTribesmanPath, getTribesmanAcceleration } from "./tribesman-ai-utils";
+import { getTribesmanAcceleration } from "./tribesman-ai-utils";
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { HealthComponent } from "../../../components/HealthComponent";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { clearPathfinding } from "../../../components/AIPathfindingComponent";
 
 export function tribeMemberShouldEscape(entityType: EntityType, healthComponent: HealthComponent): boolean {
    const remainingHealthRatio = healthComponent.health / healthComponent.maxHealth;
@@ -92,9 +93,9 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
 
    const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(runDirection);
    const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(runDirection);
-   applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-   setHitboxIdealAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, false);
+   turnHitboxToAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
 
-   clearTribesmanPath(tribesman);
+   clearPathfinding(tribesman);
 }

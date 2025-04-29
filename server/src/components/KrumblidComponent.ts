@@ -4,11 +4,11 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { assert, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { getEscapeTarget, runEscapeAI } from "../ai/EscapeAI";
+import { runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
-import { applyAcceleration, getHitboxTile, Hitbox, setHitboxIdealAngle } from "../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
@@ -106,19 +106,17 @@ function onTick(krumblid: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    for (let i = 0; i < 2; i++) {
       const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
-      setHitboxIdealAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, true);
+      turnHitboxToAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, 0.5, true);
    }
    
    const escapeAI = aiHelperComponent.getEscapeAI();
-   const escapeTarget = getEscapeTarget(krumblid, escapeAI);
-   if (escapeTarget !== null) {
-      runEscapeAI(krumblid, escapeTarget);
+   if (runEscapeAI(krumblid, aiHelperComponent, escapeAI)) {
       return;
    }
    
    const ageTicks = getEntityAgeTicks(krumblid);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 0.5) {
+   if (ageHours >= 12) {
       const hibernateAI = aiHelperComponent.getKrumblidHibernateAI();
       runKrumblidHibernateAI(krumblid, aiHelperComponent, hibernateAI);
       return;
@@ -133,7 +131,7 @@ function onTick(krumblid: Entity): void {
          // @Hack
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
-         moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED);
+         moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
    
          if (entitiesAreColliding(krumblid, targetPricklyPear) !== CollisionVars.NO_COLLISION) {
             const energyStoreComponent = EnergyStoreComponentArray.getComponent(targetPricklyPear);
@@ -164,7 +162,7 @@ function onTick(krumblid: Entity): void {
       const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
       
       // Continue following the entity
-      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED);
+      moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
       return;
    } else if (entityWantsToFollow(followAI)) {
       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
@@ -213,7 +211,7 @@ function onTick(krumblid: Entity): void {
       // @Incomplete: use new move func
       const accelerationX = 200 * Math.sin(hitbox.box.angle);
       const accelerationY = 200 * Math.cos(hitbox.box.angle);
-      applyAcceleration(krumblid, hitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(krumblid, hitbox, accelerationX, accelerationY);
       return;
    }
 
@@ -221,7 +219,7 @@ function onTick(krumblid: Entity): void {
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(krumblid);
    if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI);
+      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI, 1);
    }
 }
 

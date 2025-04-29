@@ -36,16 +36,16 @@ export interface Path {
    readonly isFailed: boolean;
 }
 
-export const enum PathfindFailureDefault {
+export const enum PathfindingFailureDefault {
    /** Default */
    none,
    /** Returns the path to the node which was closest to the goal */
    returnClosest
 }
 
-export interface PathfindOptions {
+export interface PathfindingQueryOptions {
    readonly goalRadius: number;
-   readonly failureDefault: PathfindFailureDefault;
+   readonly failureDefault: PathfindingFailureDefault;
    /** Determines the node budget used when finding a path. If not present, an appropriate node budget will be automatically determined. */
    readonly nodeBudget?: number;
 }
@@ -453,7 +453,7 @@ const reconstructRawPath = (finalNode: PathfindingNodeIndex, cameFrom: Record<Pa
  * Attempts to find a path from one position to another in a single layer. Uses A* pathfinding.
  * @param pathfindingEntityFootprint Radius of the entity's footprint in nodes
  */
-export function findSingleLayerPath(layer: Layer, startX: number, startY: number, goalX: number, goalY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Path {
+export function findSingleLayerPath(layer: Layer, startX: number, startY: number, goalX: number, goalY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindingQueryOptions): Path {
    const start = getClosestPathfindNode(startX, startY);
    const goal = getClosestPathfindNode(goalX, goalY);
 
@@ -538,7 +538,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
    }
 
    switch (options.failureDefault) {
-      case PathfindFailureDefault.returnClosest: {
+      case PathfindingFailureDefault.returnClosest: {
          const evaluatedNodes = Object.keys(gScore);
 
          if (evaluatedNodes.length === 0) {
@@ -576,7 +576,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
             isFailed: false
          };
       }
-      case PathfindFailureDefault.none: {
+      case PathfindingFailureDefault.none: {
          return {
             layer: layer,
             goalX: goalX,
@@ -590,7 +590,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
    }
 }
 
-export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Array<Path> {
+export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindingQueryOptions): Array<Path> {
    const paths = new Array<Path>();
    
    let x1: number;
@@ -605,10 +605,10 @@ export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: n
       x1 = (tileX + 0.5) * Settings.TILE_SIZE;
       y1 = (tileY + 0.5) * Settings.TILE_SIZE;
 
-      const changeLayerOptions: PathfindOptions = {
+      const changeLayerOptions: PathfindingQueryOptions = {
          // Should move right on the goal
          goalRadius: 0,
-         failureDefault: PathfindFailureDefault.none
+         failureDefault: PathfindingFailureDefault.none
       };
       const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, changeLayerOptions);
 

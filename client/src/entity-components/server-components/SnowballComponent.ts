@@ -11,7 +11,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export interface SnowballComponentParams {
    readonly size: SnowballSize;
@@ -86,7 +86,8 @@ function getMaxRenderParts(): number {
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   if ((hitbox.velocity.x !== 0 || hitbox.velocity.y !== 0) && hitbox.velocity.lengthSquared() > 2500) {
+   const velocity = getHitboxVelocity(hitbox);
+   if (velocity.length() > 50) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
       }

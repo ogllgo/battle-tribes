@@ -14,7 +14,7 @@ import { entityChildIsHitbox, TransformComponentArray } from "./TransformCompone
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 enum GolemRockSize {
    massive,
@@ -226,11 +226,12 @@ function onTick(entity: Entity): void {
          }
          
          const box = hitbox.box as CircularBox;
+         const velocity = getHitboxVelocity(hitbox);
 
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, hitbox.velocity.x, hitbox.velocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, velocity.x, velocity.y, ParticleRenderLayer.low);
       }
    } else if (golemComponent.wakeProgress === 1) {
       for (let i = 0; i < transformComponent.children.length; i++) {
@@ -243,11 +244,12 @@ function onTick(entity: Entity): void {
             continue;
          }
          const box = hitbox.box as CircularBox;
+         const velocity = getHitboxVelocity(hitbox);
 
          const offsetDirection = 2 * Math.PI * Math.random();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
-         createRockSpeckParticle(x, y, 0, hitbox.velocity.x, hitbox.velocity.y, ParticleRenderLayer.low);
+         createRockSpeckParticle(x, y, 0, velocity.x, velocity.y, ParticleRenderLayer.low);
       }
    }
 }

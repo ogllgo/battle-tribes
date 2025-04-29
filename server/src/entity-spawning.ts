@@ -1,6 +1,6 @@
 import { EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randFloat, getTileIndexIncludingEdges, distance, assert, Point } from "battletribes-shared/utils";
+import { randFloat, getTileIndexIncludingEdges, distance, assert, Point, randAngle } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
@@ -153,9 +153,7 @@ const entityTileTypesAreValid = (node: EntityConfig | Hitbox, spawnInfo: EntityS
 const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
-   const angle = 2 * Math.PI * Math.random();
-   
-   const config = spawnInfo.createEntity(x, y, angle, firstEntityConfig, spawnInfo.layer);
+   const config = spawnInfo.createEntity(x, y, randAngle(), firstEntityConfig, spawnInfo.layer);
    if (config === null) {
       return null;
    }
@@ -169,6 +167,14 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    const transformComponent = config.components[ServerComponentType.transform];
    if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
       return null;
+   }
+
+   for (const hitbox of transformComponent.children) {
+      if (entityChildIsHitbox(hitbox)) {
+         if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+            return null;
+         }
+      }
    }
 
    // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
@@ -335,11 +341,17 @@ export function spawnInitialEntities(): void {
    setTimeout(() => {
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);
-      // const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
-      // createEntity(krumblidConfig, surfaceLayer, 0);
+      // setTimeout(() => {
+         
+      //    const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
+      //    createEntity(krumblidConfig, surfaceLayer, 0);
+      // }, 4000)
 
-      const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
-      createEntity(ancientOkrenConfig, surfaceLayer, 0);
+      // setTimeout(() => {
+
+      //    const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      //    createEntity(ancientOkrenConfig, surfaceLayer, 0);
+      // }, 10000)
 
       // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 940, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
       // createEntity(juvenileOkrenConfig, surfaceLayer, 0);

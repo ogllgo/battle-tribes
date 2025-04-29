@@ -16,18 +16,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
-import { padBoxData, padHitboxDataExceptLocalID, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
+import { getHitboxVelocity, Hitbox, HitboxTether, setHitboxVelocity } from "../../hitboxes";
+import { padBoxData, padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
 import { ComponentArray } from "../ComponentArray";
-
-export interface HitboxTether {
-   readonly hitbox: Hitbox;
-   readonly originHitbox: Hitbox;
-
-   readonly idealDistance: number;
-   readonly springConstant: number;
-   readonly damping: number;
-}
 
 export interface EntityAttachInfo {
    readonly attachedEntity: Entity;
@@ -46,7 +37,6 @@ export interface TransformComponentParams {
    readonly rootEntity: Entity;
    readonly parentEntity: Entity;
    readonly children: Array<TransformNode>;
-   readonly tethers: Array<HitboxTether>;
    readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
 }
@@ -60,7 +50,6 @@ export interface TransformComponent {
    readonly hitboxMap: Map<number, Hitbox>;
 
    readonly rootChildren: Array<TransformNode>;
-   readonly tethers: Array<HitboxTether>;
 
    collisionBit: number;
    collisionMask: number;
@@ -74,10 +63,9 @@ export interface TransformComponent {
    parentEntity: Entity;
 }
 
-const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, children: Array<TransformNode>, tethers: Array<HitboxTether>, collisionBit: CollisionBit, collisionMask: number): TransformComponentParams => {
+const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, children: Array<TransformNode>, collisionBit: CollisionBit, collisionMask: number): TransformComponentParams => {
    return {
       children: children,
-      tethers: tethers,
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       rootEntity: rootEntity,
@@ -88,7 +76,6 @@ const fillTransformComponentParams = (rootEntity: Entity, parentEntity: Entity, 
 export function createTransformComponentParams(children: Array<TransformNode>): TransformComponentParams {
    return {
       children: children,
-      tethers: [],
       collisionBit: CollisionBit.default,
       collisionMask: DEFAULT_COLLISION_MASK,
       rootEntity: 0,
@@ -125,7 +112,6 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
    const collisionMask = reader.readNumber();
 
    const children = new Array<TransformNode>();
-   const tethers = new Array<HitboxTether>();
    
    const numChildren = reader.readNumber();
    for (let i = 0; i < numChildren; i++) {
@@ -138,17 +124,10 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
    
          const hitbox = readHitboxFromData(reader, localID, children);
          children.push(hitbox);
-   
-         const isTethered = reader.readBoolean();
-         reader.padOffset(3);
-         if (isTethered) {
-            const tether = readTetherFromData(reader, hitbox, children);
-            tethers.push(tether);
-         }
       }
    }
 
-   return fillTransformComponentParams(rootEntity, parentEntity, children, tethers, collisionBit, collisionMask);
+   return fillTransformComponentParams(rootEntity, parentEntity, children, collisionBit, collisionMask);
 }
 
 // @Location
@@ -180,23 +159,6 @@ export function getHitboxByLocalID(children: ReadonlyArray<TransformNode>, local
 const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    return getHitboxByLocalID(transformComponent.children, localID);
-}
-
-const readTetherFromData = (reader: PacketReader, hitbox: Hitbox, readingEntityChildren: ReadonlyArray<TransformNode>): HitboxTether => {
-   const originHitboxLocalID = reader.readNumber();
-   const originHitbox = readHitboxFromData(reader, originHitboxLocalID, readingEntityChildren);
-
-   const idealDistance = reader.readNumber();
-   const springConstant = reader.readNumber();
-   const damping = reader.readNumber();
-
-   return {
-      hitbox: hitbox,
-      originHitbox: originHitbox,
-      idealDistance: idealDistance,
-      springConstant: springConstant,
-      damping: damping
-   };
 }
 
 const addAttachInfo = (transformComponent: TransformComponent, attachInfo: EntityAttachInfo): void => {
@@ -329,8 +291,8 @@ export function cleanTransform(node: Hitbox | Entity): void {
       } else {
          updateBox(hitbox.box, hitbox.parent.box);
          // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
-         hitbox.velocity.x = hitbox.parent.velocity.x;
-         hitbox.velocity.y = hitbox.parent.velocity.y;
+         const parentVelocity = getHitboxVelocity(hitbox.parent);
+         setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
       }
       
       for (const child of node.children) {
@@ -421,7 +383,6 @@ function createComponent(entityParams: EntityParams): TransformComponent {
       chunks: new Set(),
       children: transformComponentParams.children,
       hitboxMap: hitboxMap,
-      tethers: transformComponentParams.tethers,
       rootChildren: rootChildren,
       collisionBit: transformComponentParams.collisionBit,
       collisionMask: transformComponentParams.collisionMask,
@@ -549,40 +510,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          const hitbox = transformComponent.hitboxMap.get(localID);
          if (typeof hitbox === "undefined") {
             const hitbox = readHitboxFromData(reader, localID, transformComponent.children);
-   
             addHitbox(transformComponent, hitbox);
-   
-            const isTethered = reader.readBoolean();
-            reader.padOffset(3);
-            if (isTethered) {
-               const tether = readTetherFromData(reader, hitbox, transformComponent.children);
-               transformComponent.tethers.push(tether);
-            }
          } else {
             updateHitboxExceptLocalIDFromData(hitbox, reader);
-   
-            const isTethered = reader.readBoolean();
-            reader.padOffset(3);
-            if (isTethered) {
-               const existingTether = getExistingTether(transformComponent, hitbox);
-               if (existingTether === null) {
-                  const tether = readTetherFromData(reader, hitbox, transformComponent.children);
-                  transformComponent.tethers.push(tether);
-               } else {
-                  reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-                  updateHitboxExceptLocalIDFromData(existingTether.originHitbox, reader);
-                  reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-               }
-            } else {
-               // Remove the tether if possible
-               for (let i = 0; i < transformComponent.tethers.length; i++) {
-                  const tether = transformComponent.tethers[i];
-                  if (tether.hitbox === hitbox) {
-                     transformComponent.tethers.splice(i, 1);
-                     break;
-                  }
-               }
-            }
          }
       }
    }
@@ -688,7 +618,28 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader: PacketReader): void => {
    padBoxData(reader);
 
-   reader.padOffset(8 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
+
+   // Remove all previous tethers and add new ones
+
+   hitbox.tethers.splice(0, hitbox.tethers.length);
+   
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      hitbox.tethers.push(tether);
+   }
+   
+   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
    
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
@@ -704,15 +655,6 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
    }
 
    hitbox.lastUpdateTicks = Board.serverTicks;
-}
-
-const getExistingTether = (transformComponent: TransformComponent, hitbox: Hitbox): HitboxTether | null => {
-   for (const tether of transformComponent.tethers) {
-      if (tether.hitbox === hitbox) {
-         return tether;
-      }
-   }
-   return null;
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
@@ -739,29 +681,6 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
          assert(typeof hitbox !== "undefined");
 
          updatePlayerHitboxFromData(hitbox, transformComponent.parentEntity, reader);
-   
-         const isTethered = reader.readBoolean();
-         reader.padOffset(3);
-         if (isTethered) {
-            const existingTether = getExistingTether(transformComponent, hitbox);
-            if (existingTether === null) {
-               const tether = readTetherFromData(reader, hitbox, transformComponent.children);
-               transformComponent.tethers.push(tether);
-            } else {
-               reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-               updateHitboxExceptLocalIDFromData(existingTether.originHitbox, reader);
-               reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-            }
-         } else {
-            // Remove the tether if possible
-            for (let i = 0; i < transformComponent.tethers.length; i++) {
-               const tether = transformComponent.tethers[i];
-               if (tether.hitbox === hitbox) {
-                  transformComponent.tethers.splice(i, 1);
-                  break;
-               }
-            }
-         }
       }
    }
 }

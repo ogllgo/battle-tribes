@@ -134,12 +134,6 @@ export class TribesmanAIComponent {
    // the tribesmen finishes researching, is there some better way which doesn't need having this value?
    public targetResearchBenchID = 0;
 
-   /**
-    * Stores an array of all paths the entity is going to follow to reach its destination.
-    * Once an indiviual path is completed, it is removed from this array.
-   */
-   public paths = new Array<Path>();
-
    /** Artificial cooldown added to tribesmen to make them a bit worse at bow combat */
    public extraBowCooldownTicks = 0;
 

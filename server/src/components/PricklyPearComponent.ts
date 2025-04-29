@@ -1,14 +1,12 @@
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
-import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Point, randFloat, randSign } from "../../../shared/src/utils";
 import { createPricklyPearFragmentProjectileConfig } from "../entities/desert/prickly-pear-fragment-projectile";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
-import { Hitbox, setHitboxAngularVelocity } from "../hitboxes";
-import { registerEntityTickEvent } from "../server/player-clients";
+import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 import { destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
@@ -39,10 +37,10 @@ const explode = (pricklyPear: Entity): void => {
       const projectileConfig = createPricklyPearFragmentProjectileConfig(new Point(x, y), 2 * Math.PI * Math.random(), parentCactus);
 
       const projectileTransformComponent = projectileConfig.components[ServerComponentType.transform]!;
+      
       const projectileHitbox = projectileTransformComponent.children[0] as Hitbox;
-      projectileHitbox.velocity.x = 520 * Math.sin(offsetDirection);
-      projectileHitbox.velocity.y = 520 * Math.cos(offsetDirection);
-      setHitboxAngularVelocity(projectileHitbox, randSign() * randFloat(2 * Math.PI, 3 * Math.PI));
+      addHitboxVelocity(projectileHitbox, 520 * Math.sin(offsetDirection), 520 * Math.cos(offsetDirection));
+      addHitboxAngularVelocity(projectileHitbox, randSign() * randFloat(2 * Math.PI, 3 * Math.PI));
       
       createEntity(projectileConfig, layer, 0);
    }
@@ -68,8 +66,7 @@ const drop = (pricklyPear: Entity): void => {
 
    const itemTransformComponent = itemConfig.components[ServerComponentType.transform]!;
    const itemHitbox = itemTransformComponent.children[0] as Hitbox;
-   itemHitbox.velocity.x = 150 * Math.sin(angleFromCactusToPear);
-   itemHitbox.velocity.y = 150 * Math.cos(angleFromCactusToPear);
+   addHitboxVelocity(itemHitbox, 150 * Math.sin(angleFromCactusToPear), 150 * Math.cos(angleFromCactusToPear));
 
    createEntity(itemConfig, layer, 0);
 }

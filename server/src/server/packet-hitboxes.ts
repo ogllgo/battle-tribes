@@ -73,11 +73,22 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
 
    addBoxDataToPacket(packet, hitbox.box);
 
-   packet.addNumber(hitbox.velocity.x);
-   packet.addNumber(hitbox.velocity.y);
+   packet.addNumber(hitbox.previousPosition.x);
+   packet.addNumber(hitbox.previousPosition.y);
+   packet.addNumber(hitbox.acceleration.x);
+   packet.addNumber(hitbox.acceleration.y);
 
-   packet.addNumber(hitbox.idealAngle);
-   packet.addNumber(hitbox.angleTurnSpeed);
+   // Tethers
+   packet.addNumber(hitbox.tethers.length);
+   for (const tether of hitbox.tethers) {
+      addBoxDataToPacket(packet, tether.originHitbox.box);
+      packet.addNumber(tether.idealDistance);
+      packet.addNumber(tether.springConstant);
+      packet.addNumber(tether.damping);
+   }
+
+   packet.addNumber(hitbox.previousRelativeAngle);
+   packet.addNumber(hitbox.angularAcceleration);
    
    packet.addNumber(hitbox.mass);
    packet.addNumber(hitbox.collisionType);
@@ -95,7 +106,15 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
 export function getHitboxDataLength(hitbox: Hitbox): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += getBoxDataLength(hitbox.box);
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
+
+   // Tethers
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const tether of hitbox.tethers) {
+      lengthBytes += getBoxDataLength(tether.originHitbox.box);
+      lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
+   }
+   
    // angle shit
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;

@@ -1,16 +1,17 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType } from "../../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Point } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
+import { createHitboxTether, getTotalMass, Hitbox } from "../hitboxes";
+import { registerEntityTickEvent } from "../server/player-clients";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { TransformComponentArray } from "./TransformComponent";
+import { HealthComponentArray } from "./HealthComponent";
+import { OkrenTongueComponentArray, startRetractingTongue } from "./OkrenTongueComponent";
+import { PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
+import { attachEntity, TransformComponentArray } from "./TransformComponent";
 
-export class OkrenTongueTipComponent {
-   // @HACK! should instead just hceck if the tether existss
-   public hasSnaggedSomething = false;
-   public snagged = 0;
-}
+export class OkrenTongueTipComponent {}
 
 export const OkrenTongueTipComponentArray = new ComponentArray<OkrenTongueTipComponent>(ServerComponentType.okrenTongueTip, true, getDataLength, addDataToPacket);
 OkrenTongueTipComponentArray.onHitboxCollision = onHitboxCollision;
@@ -21,17 +22,62 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+const entityIsSnaggable = (entity: Entity): boolean => {
+   if (!HealthComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   if (!PhysicsComponentArray.hasComponent(entity)) {
+      return false;
+   }
+
+   const physicsComponent = new PhysicsComponent();
+   if (physicsComponent.isImmovable) {
+      return false;
+   }
+
+   const mass = getTotalMass(entity);
+   if (mass > 2) {
+      return false;
+   }
+
+   // @Hack
+   if (getEntityType(entity) === EntityType.okrenTongueSegment || getEntityType(entity) === EntityType.okrenTongueTip) {
+      return false;
+   }
+
+   return true;
+}
+
 function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   if (getEntityType(collidingEntity) !== EntityType.player) {
+   if (!entityIsSnaggable(collidingEntity)) {
       return;
    }
 
-   const victimTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-   victimTransformComponent.addHitboxTether(collidingHitbox, affectedHitbox, 0, 15, 0.5, false);
+   // Don't snag if the hitbox is already tethered
+   for (const tether of collidingHitbox.tethers) {
+      if (tether.originHitbox === affectedHitbox) {
+         return;
+      }
+   }
 
-   const okrenTongueTipComponent = OkrenTongueTipComponentArray.getComponent(tongueTip);
-   okrenTongueTipComponent.hasSnaggedSomething = true;
-   okrenTongueTipComponent.snagged = collidingEntity;
-
+   // @HACK: have to put it on the colliding hitbox so that if the player is the one being snagged, they know they are tethered to the tongue and so can update their phsycis.
+   const tether = createHitboxTether(collidingHitbox, affectedHitbox, 0, 100, 2, true);
+   collidingHitbox.tethers.push(tether);
    // attachEntity(collidingEntity, tongueTip, affectedHitbox, false);
+
+   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   const tongue = tongueTipTransformComponent.parentEntity;
+   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   startRetractingTongue(tongue, okrenTongueComponent);
+   okrenTongueComponent.hasCaughtSomething = true;
+   // @Hack
+   okrenTongueComponent.caughtEntity = collidingEntity;
+
+   const tickEvent: EntityTickEvent = {
+      type: EntityTickEventType.tongueGrab,
+      entityID: tongueTip,
+      data: 0
+   };
+   registerEntityTickEvent(tongueTip, tickEvent);
 }

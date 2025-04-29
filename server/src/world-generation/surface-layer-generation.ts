@@ -656,37 +656,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimeConfig(new Point(x, y), angle, 0);
       }
+   }); 
+   registerNewSpawnInfo({
+      entityType: EntityType.dustflea,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.008),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createDustfleaConfig(new Point(x, y), angle);
+      }
    });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.krumblid,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.015),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createKrumblidConfig(new Point(x, y), angle);
-   //    }
-   // });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.dustflea,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.004),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createDustfleaConfig(new Point(x, y), angle);
-   //    }
-   // });
    registerNewSpawnInfo({
       entityType: EntityType.krumblid,
       layer: surfaceLayer,
@@ -702,21 +687,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createKrumblidConfig(new Point(x, y), angle);
       }
    });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.okren,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.005,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.0007),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createOkrenConfig(new Point(x, y), angle, 4);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityType: EntityType.okren,
+      layer: surfaceLayer,
+      spawnRate: 0.005,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.0007),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+         return createOkrenConfig(new Point(x, y), angle, 4);
+      }
+   });
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,
@@ -774,21 +759,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createLilypadConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.golem,
-      layer: surfaceLayer,
-      spawnRate: 0.002,
-      biome: Biome.mountains,
-      tileTypes: [TileType.rock],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.004),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createGolemConfig(new Point(x, y), angle);
-      }
-   });
+   // @TEMPORARY: crashes fo some reason...
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.golem,
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.002,
+   //    biome: Biome.mountains,
+   //    tileTypes: [TileType.rock],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.004),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createGolemConfig(new Point(x, y), angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityType: EntityType.cactus,
       layer: surfaceLayer,

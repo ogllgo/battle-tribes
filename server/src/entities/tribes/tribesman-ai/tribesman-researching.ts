@@ -7,7 +7,7 @@ import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearch
 import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { getTribesmanSlowAcceleration, getHumanoidRadius, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanSlowAcceleration, getHumanoidRadius } from "./tribesman-ai-utils";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
@@ -15,8 +15,9 @@ import Tribe from "../../../Tribe";
 import { assert } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
-import { PathfindFailureDefault } from "../../../pathfinding";
-import { applyAcceleration, Hitbox, setHitboxIdealAngle } from "../../../hitboxes";
+import { PathfindingFailureDefault } from "../../../pathfinding";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
 const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
@@ -77,9 +78,9 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
       const accelerationX = slowAcceleration * Math.sin(targetDirection);
       const accelerationY = slowAcceleration * Math.cos(targetDirection);
-      applyAcceleration(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
 
-      setHitboxIdealAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
       
       continueResearching(occupiedBench, tribesman, tech);
       
@@ -100,7 +101,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const benchLayer = getEntityLayer(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
-      pathfindTribesman(tribesman, researchBenchHitbox.box.position.x, researchBenchHitbox.box.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
+      pathfindTribesman(tribesman, researchBenchHitbox.box.position.x, researchBenchHitbox.box.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
       
       tribesmanAIComponent.targetResearchBenchID = bench;
       tribesmanAIComponent.currentAIType = TribesmanAIType.researching;

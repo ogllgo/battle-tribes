@@ -96,7 +96,7 @@ function wanderPositionIsValid(entity: Entity, layer: Layer, x: number, y: numbe
 }
 
 const move = (slimewisp: Entity, x: number, y: number, acceleration: number, turnSpeed: number): void => {
-   moveEntityToPosition(slimewisp, x, y, acceleration, turnSpeed);
+   moveEntityToPosition(slimewisp, x, y, acceleration, turnSpeed, 1);
 }
 
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {

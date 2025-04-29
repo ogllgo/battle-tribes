@@ -199,6 +199,10 @@ export function generateTribesmanName(tribeType: TribeType): string {
    // Pick a random base name
    let name = nameArray[Math.floor(Math.random() * nameArray.length)];
 
+   if (Math.random() < 0.3) {
+      name += "son";
+   }
+
    // Add the untitled adjective
    const descriptor = UNTITLED_ADJECTIVES[Math.floor(Math.random() * UNTITLED_ADJECTIVES.length)];
    name += " the " + descriptor;

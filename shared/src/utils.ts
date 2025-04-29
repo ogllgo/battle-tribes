@@ -437,6 +437,10 @@ export function dotAngles(angle1: number, angle2: number): number {
    return Math.sin(angle1) * Math.sin(angle2) + Math.cos(angle1) * Math.cos(angle2);
 }
 
+export function angleToPoint(angle: number): Point {
+   return new Point(Math.sin(angle), Math.cos(angle));
+}
+
 export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
    return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_BOARD_DIMENSIONS + tileX + Settings.EDGE_GENERATION_DISTANCE;
 }

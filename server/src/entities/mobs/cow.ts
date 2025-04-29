@@ -11,7 +11,7 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { PhysicsComponent, translateHitbox } from "../../components/PhysicsComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -25,7 +25,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, createHitbox, Hitbox } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
 import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
 
 const enum Vars {
@@ -109,9 +109,12 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    // Head hitbox
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
-   transformComponent.addHitboxTether(headHitbox, bodyHitbox, 50, 5, 0.4, true, {
-      springConstant: 5,
-      angularDamping: 0,
+
+   headHitbox.tethers.push(createHitboxTether(headHitbox, bodyHitbox, 50, 5/60, 0.4, true));
+   headHitbox.angularTethers.push({
+      originHitbox: bodyHitbox,
+      springConstant: 5/60,
+      damping: 0,
       padding: Math.PI * 0.1
    });
 
@@ -123,7 +126,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    const aiHelperComponent = new AIHelperComponent(headHitbox, 320, move);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 1);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TPS, 30 * Settings.TPS, 0.2, 60);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);

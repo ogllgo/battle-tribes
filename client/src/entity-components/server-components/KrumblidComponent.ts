@@ -11,6 +11,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import { HealthComponentArray } from "./HealthComponent";
 
 export interface KrumblidComponentParams {}
 
@@ -97,6 +98,11 @@ function onHit(krumblid: Entity, hitData: HitData): void {
 }
 
 function onDie(krumblid: Entity): void {
+   const healthComponent = HealthComponentArray.getComponent(krumblid);
+   if (healthComponent.health > 0) {
+      return;
+   }
+   
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    const hitbox = transformComponent.children[0] as Hitbox;
 

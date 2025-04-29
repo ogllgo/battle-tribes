@@ -2,7 +2,7 @@ import { ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays, getComponentArrayRecord } from "../components/ComponentArray";
-import { HealthComponentArray, removeDefence } from "../components/HealthComponent";
+import { HealthComponentArray } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
 import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
 import { SERVER } from "./server";
@@ -22,7 +22,7 @@ import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation"
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 import { Point } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../hitboxes";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -601,7 +601,7 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const offhandInventory = getInventory(inventoryComponent, InventoryName.offhand);
    const gloveSlotInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
 
-   let lengthBytes = 7 * Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = 9 * Float32Array.BYTES_PER_ELEMENT;
    
    // Player inventories
    lengthBytes += getInventoryDataLength(hotbarInventory);
@@ -621,8 +621,10 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    packet.addNumber(hitbox.box.position.y);
    packet.addNumber(hitbox.box.angle);
 
-   packet.addNumber(hitbox.velocity.x);
-   packet.addNumber(hitbox.velocity.y);
+   packet.addNumber(hitbox.previousPosition.x);
+   packet.addNumber(hitbox.previousPosition.y);
+   packet.addNumber(hitbox.acceleration.x);
+   packet.addNumber(hitbox.acceleration.y);
 
    // Add inventory data
    addInventoryDataToPacket(packet, hotbarInventory);

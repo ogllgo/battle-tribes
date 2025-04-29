@@ -22,6 +22,7 @@ import { createHitbox, Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateCogwalkerName } from "../../../tribesman-names";
+import { AIPathfindingComponent } from "../../../components/AIPathfindingComponent";
 
 const move = () => {
    throw new Error();
@@ -50,6 +51,8 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
    const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, move);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
+   const aiPathfindingComponent = new AIPathfindingComponent();
+   
    const aiAssignmentComponent = new AIAssignmentComponent();
 
    const inventoryComponent = new InventoryComponent();
@@ -71,6 +74,7 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
          [ServerComponentType.tribeMember]: tribeMemberComponent,
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.aiPathfinding]: aiPathfindingComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,

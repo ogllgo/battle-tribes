@@ -12,7 +12,7 @@ import { StatusEffect } from "../../../shared/src/status-effects";
 import { Point } from "../../../shared/src/utils";
 import { HealthComponentArray, hitEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
-import { applyKnockback, Hitbox } from "../hitboxes";
+import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 
 const enum Vars {
    BREAK_VELOCITY = 100
@@ -37,10 +37,7 @@ SlimeSpitComponentArray.preRemove = preRemove;
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    const hitbox = transformComponent.children[0] as Hitbox;
-
-   const vx = hitbox.velocity.x;
-   const vy = hitbox.velocity.y;
-   if (vx * vx + vy * vy <= Vars.BREAK_VELOCITY * Vars.BREAK_VELOCITY) {
+   if (getHitboxVelocity(hitbox).length() <= Vars.BREAK_VELOCITY) {
       destroyEntity(spit);
    }
 }

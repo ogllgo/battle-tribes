@@ -15,7 +15,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export interface StatusEffectComponentParams {
    readonly statusEffects: Array<StatusEffectData>;
@@ -278,10 +278,12 @@ function onTick(entity: Entity): void {
    const heatSicknessStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.heatSickness);
    if (heatSicknessStatusEffect !== null) {
       if (Board.tickIntervalHasPassed(0.15)) {
+         const hitboxVelocity = getHitboxVelocity(hitbox);
+         
          const spawnOffsetDirection = 2 * Math.PI * Math.random();
          const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
-         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), hitbox.velocity.x, hitbox.velocity.y);
+         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), hitboxVelocity.x, hitboxVelocity.y);
       }
    }
 }

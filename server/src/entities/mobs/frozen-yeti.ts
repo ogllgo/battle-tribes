@@ -45,7 +45,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 }
 
 const move = (frozenYeti: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(frozenYeti, x, y, acceleration, turnSpeed);
+   moveEntityToPosition(frozenYeti, x, y, acceleration, turnSpeed, 1);
 }
 
 export function createFrozenYetiConfig(position: Point, rotation: number): EntityConfig {

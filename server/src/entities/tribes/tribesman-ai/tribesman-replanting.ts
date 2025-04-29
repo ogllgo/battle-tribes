@@ -4,15 +4,16 @@ import { Inventory, InventoryName, ItemType } from "../../../../../shared/src/it
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { AIHelperComponent } from "../../../components/AIHelperComponent";
+import { pathfindTribesman } from "../../../components/AIPathfindingComponent";
 import { getItemTypeSlot, InventoryComponentArray, getInventory, consumeItemFromSlot } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { placePlantInPlanterBox, PlanterBoxComponentArray } from "../../../components/PlanterBoxComponent";
 import { TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
 import { TribesmanAIComponent, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { Hitbox } from "../../../hitboxes";
-import { PathfindFailureDefault } from "../../../pathfinding";
+import { PathfindingFailureDefault } from "../../../pathfinding";
 import { getEntityType, entityExists, getEntityLayer } from "../../../world";
-import { getTribesmanAttackRadius, getHumanoidRadius, pathfindTribesman } from "./tribesman-ai-utils";
+import { getTribesmanAttackRadius, getHumanoidRadius } from "./tribesman-ai-utils";
 
 export const PLANT_TO_SEED_RECORD: Record<PlantedEntityType, ItemType> = {
    [EntityType.treePlanted]: ItemType.seed,
@@ -102,7 +103,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
          const goalRadius = Math.floor((desiredDistance + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
          // @Temporary: failure default
          // pathfindToPosition(tribesman, closestReplantablePlanterBox.position.x, closestReplantablePlanterBox.position.y, closestReplantablePlanterBox.id, TribesmanPathType.default, goalRadius, PathfindFailureDefault.throwError);
-         pathfindTribesman(tribesman, planterBoxHitbox.box.position.x, planterBoxHitbox.box.position.y, getEntityLayer(closestReplantablePlanterBox), closestReplantablePlanterBox, TribesmanPathType.default, goalRadius, PathfindFailureDefault.returnClosest);
+         pathfindTribesman(tribesman, planterBoxHitbox.box.position.x, planterBoxHitbox.box.position.y, getEntityLayer(closestReplantablePlanterBox), closestReplantablePlanterBox, TribesmanPathType.default, goalRadius, PathfindingFailureDefault.returnClosest);
 
          tribesmanAIComponent.currentAIType = TribesmanAIType.planting;
          setLimbActions(inventoryUseComponent, LimbAction.none);

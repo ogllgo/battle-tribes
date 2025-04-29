@@ -19,12 +19,12 @@ import { Hitbox } from "../hitboxes";
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
-   // Velocity
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+   // Previous position and acceleration
+   lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
    // Movement intention
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-   // angular velocity
-   lengthBytes += 1 * Float32Array.BYTES_PER_ELEMENT;
+   // Previous relative angle, and angular acceleration
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // window size
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // inventory shit
@@ -42,14 +42,17 @@ export function createPlayerDataPacket(): ArrayBuffer {
    packet.addNumber(playerHitbox.box.position.y);
    packet.addNumber(playerHitbox.box.angle);
 
-   packet.addNumber(playerHitbox.velocity.x);
-   packet.addNumber(playerHitbox.velocity.y);
+   packet.addNumber(playerHitbox.previousPosition.x);
+   packet.addNumber(playerHitbox.previousPosition.y);
+   packet.addNumber(playerHitbox.acceleration.x);
+   packet.addNumber(playerHitbox.acceleration.y);
 
    const movementIntention = getPlayerMoveIntention();
    packet.addNumber(movementIntention.x);
    packet.addNumber(movementIntention.y);
 
-   packet.addNumber(playerHitbox.angleTurnSpeed);
+   packet.addNumber(playerHitbox.previousRelativeAngle);
+   packet.addNumber(playerHitbox.angularAcceleration);
 
    packet.addNumber(windowWidth);
    packet.addNumber(windowHeight);

@@ -24,7 +24,7 @@ import { attachLightToRenderPart, createLight, Light, removeLight } from "../../
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -200,6 +200,24 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [164/255, 131/255, 96/255]
    ],
    [ItemType.pricklyPear]: [
+      [117/255, 25/255, 40/255],
+      [153/255, 29/255, 37/255],
+      [217/255, 41/255, 41/255],
+      [222/255, 58/255, 58/255],
+      [222/255, 87/255, 87/255],
+      [217/255, 124/255, 124/255],
+      [217/255, 173/255, 173/255]
+   ],
+   [ItemType.rawCrabMeat]: [
+      [117/255, 25/255, 40/255],
+      [153/255, 29/255, 37/255],
+      [217/255, 41/255, 41/255],
+      [222/255, 58/255, 58/255],
+      [222/255, 87/255, 87/255],
+      [217/255, 124/255, 124/255],
+      [217/255, 173/255, 173/255]
+   ],
+   [ItemType.cookedCrabMeat]: [
       [117/255, 25/255, 40/255],
       [153/255, 29/255, 37/255],
       [217/255, 41/255, 41/255],
@@ -572,12 +590,13 @@ function onTick(entity: Entity): void {
 
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.children[0] as Hitbox;
+      const velocity = getHitboxVelocity(hitbox);
 
       switch (limbInfo.heldItemType) {
          case ItemType.deepfrost_heart: {
             // Make the deep frost heart item spew blue blood particles
             const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[limbIdx];
-            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, hitbox.velocity.x, hitbox.velocity.y);
+            createDeepFrostHeartBloodParticles(activeItemRenderPart.renderPosition.x, activeItemRenderPart.renderPosition.y, velocity.x, velocity.y);
             break;
          }
          case ItemType.fireTorch: {
@@ -598,8 +617,8 @@ function onTick(entity: Entity): void {
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
-               const vx = hitbox.velocity.x;
-               const vy = hitbox.velocity.y;
+               const vx = velocity.x;
+               const vy = velocity.y;
                createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), vx, vy);
             }
 
@@ -652,9 +671,9 @@ function onTick(entity: Entity): void {
 
             let velocityMagnitude = randFloat(130, 170);
             const velocityDirection = 2 * Math.PI * Math.random();
-            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + hitbox.velocity.x;
-            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + hitbox.velocity.y;
-            velocityMagnitude += hitbox.velocity.length();
+            const velocityX = velocityMagnitude * Math.sin(velocityDirection) + velocity.x;
+            const velocityY = velocityMagnitude * Math.cos(velocityDirection) + velocity.y;
+            velocityMagnitude += velocity.length();
             
             const lifetime = randFloat(0.3, 0.4);
 
@@ -1595,7 +1614,10 @@ function updatePlayerFromData(reader: PacketReader): void {
 
       reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
       const thrownBattleaxeItemID = reader.readNumber();
-      reader.padOffset(7 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
+
+      limbInfo.blockAttack = reader.readNumber();
+      
       // @Copynpaste
       const lastBlockTick = reader.readNumber();
       const blockPositionX = reader.readNumber();

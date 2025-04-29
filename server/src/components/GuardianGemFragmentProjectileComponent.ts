@@ -7,7 +7,7 @@ import { angle, Point, randFloat, randInt } from "battletribes-shared/utils";
 import { getEntityAgeTicks, destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { applyKnockback, Hitbox } from "../hitboxes";
+import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 
 export class GuardianGemFragmentProjectileComponent {
    public readonly fragmentShape = randInt(0, 2);
@@ -52,9 +52,9 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
 
    hitEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    
-   const knockbackMagnitude = affectedHitbox.velocity.length();
-   const knockbackDirection = angle(affectedHitbox.velocity.x, affectedHitbox.velocity.y);
-   applyKnockback(collidingEntity, collidingHitbox, knockbackMagnitude, knockbackDirection);
+   const affectedHitboxVelocity = getHitboxVelocity(affectedHitbox);
+   const knockbackDirection = angle(affectedHitboxVelocity.x, affectedHitboxVelocity.y);
+   applyKnockback(collidingEntity, collidingHitbox, affectedHitboxVelocity.length(), knockbackDirection);
    
    addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
 }

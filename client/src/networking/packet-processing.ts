@@ -438,6 +438,7 @@ export function processEntityCreationData(entity: Entity, reader: PacketReader):
 
 const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => {
    // Skip entity type and spawn ticks
+   // @Temporary
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
    const layerIdx = reader.readNumber();
@@ -452,6 +453,7 @@ const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => 
    const numComponents = reader.readNumber();
    for (let i = 0; i < numComponents; i++) {
       const componentType = reader.readNumber() as ServerComponentType;
+      assert(Number.isInteger(componentType) && componentType >= 0);
       const componentArray = getServerComponentArray(componentType);
       
       componentArray.updateFromData(reader, entity);
@@ -814,23 +816,22 @@ export function processGameDataPacket(reader: PacketReader): void {
 
 export function processSyncDataPacket(reader: PacketReader): void {
    if (!Game.isRunning || playerInstance === null) return;
+
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const playerHitbox = transformComponent.children[0] as Hitbox;
    
    const x = reader.readNumber();
    const y = reader.readNumber();
    const angle = reader.readNumber();
 
-   const velocityX = reader.readNumber();
-   const velocityY = reader.readNumber();
-
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   playerHitbox.previousPosition.x = reader.readNumber();
+   playerHitbox.previousPosition.y = reader.readNumber();
+   playerHitbox.acceleration.x = reader.readNumber();
+   playerHitbox.acceleration.y = reader.readNumber();
    
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
    playerHitbox.box.angle = angle;
-
-   playerHitbox.velocity.x = velocityX;
-   playerHitbox.velocity.y = velocityY;
    
    Game.sync();
 }

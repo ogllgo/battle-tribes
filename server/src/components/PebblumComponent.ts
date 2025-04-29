@@ -36,7 +36,7 @@ function onTick(pebblum: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
-      moveEntityToPosition(pebblum, targetHitbox.box.position.x, targetHitbox.box.position.y, 850, Vars.TURN_SPEED);
+      moveEntityToPosition(pebblum, targetHitbox.box.position.x, targetHitbox.box.position.y, 850, Vars.TURN_SPEED, 1);
    }
 }
 

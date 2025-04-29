@@ -20,6 +20,8 @@ export enum RenderLayer {
    lilypads,
    reeds,
    lowEntities,
+   // So that the tongue is rendfered below okrens
+   okrenTongue,
    defaultEntities,
    // @Hack So that these will be shown above the default entities which they are carried on
    ridingEntities,
@@ -170,6 +172,10 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       }
       case EntityType.desertSmallWeed: {
          return RenderLayer.desertLowestPlants;
+      }
+      case EntityType.okrenTongueSegment:
+      case EntityType.okrenTongueTip: {
+         return RenderLayer.okrenTongue;
       }
       // (default)
       default: {

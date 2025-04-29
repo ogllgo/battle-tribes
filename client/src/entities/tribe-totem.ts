@@ -10,7 +10,7 @@ import { createStructureComponentParams } from "../entity-components/server-comp
 import { createTotemBannerComponentParams } from "../entity-components/server-components/TotemBannerComponent";
 import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
 import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
 import { EntityParams } from "../world";
 
@@ -19,7 +19,7 @@ export function createTribeTotemConfig(position: Point, rotation: number, tribe:
    let hitboxLocalID = 0;
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 60);
-   const hitbox = createHitbox(hitboxLocalID++, null, box, new Point(0, 0), 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

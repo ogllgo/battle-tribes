@@ -22,6 +22,7 @@ import { createHitbox, Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
+import { AIPathfindingComponent } from "../../../components/AIPathfindingComponent";
 
 const move = () => {
    throw new Error();
@@ -48,6 +49,8 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
    
    const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300, move);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
+   
+   const aiPathfindingComponent = new AIPathfindingComponent();
 
    const aiAssignmentComponent = new AIAssignmentComponent();
 
@@ -70,6 +73,7 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
          [ServerComponentType.tribeMember]: tribeMemberComponent,
          [ServerComponentType.tribesmanAI]: tribesmanAIComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.aiPathfinding]: aiPathfindingComponent,
          [ServerComponentType.aiAssignment]: aiAssignmentComponent,
          [ServerComponentType.inventory]: inventoryComponent,
          [ServerComponentType.inventoryUse]: inventoryUseComponent,
