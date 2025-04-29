@@ -130,10 +130,14 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
 
 function onTick(dustflea: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
 
-   const escapeAI = aiHelperComponent.getEscapeAI();
-   if (runEscapeAI(dustflea, aiHelperComponent, escapeAI)) {
-      return;
+   // If the dustflea is attached to something, don't escape at all. (To prevent it trying to hop around in escape, while on an okren, causing the okren to hop around)
+   if (dustfleaTransformComponent.rootEntity === dustflea) {
+      const escapeAI = aiHelperComponent.getEscapeAI();
+      if (runEscapeAI(dustflea, aiHelperComponent, escapeAI)) {
+         return;
+      }
    }
 
    const ageTicks = getEntityAgeTicks(dustflea);
@@ -144,7 +148,6 @@ function onTick(dustflea: Entity): void {
       return;
    }
 
-   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
    const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
 
    // Find some targets to suckle

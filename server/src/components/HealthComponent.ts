@@ -67,11 +67,6 @@ const callOnTakeDamageCallbacks = (entity: Entity, attackingEntity: Entity | nul
          componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
       }
    }
-
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (entityExists(transformComponent.parentEntity)) {
-      callOnTakeDamageCallbacks(transformComponent.parentEntity, attackingEntity, damageSource, damage);
-   }
 }
 
 const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource): void => {
@@ -84,12 +79,6 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
          componentArray.onDeath(entity, attackingEntity, damageSource);
       }
    }
-
-   // @???
-   // const transformComponent = TransformComponentArray.getComponent(entity);
-   // if (entityExists(transformComponent.parentEntity)) {
-   //    callOnDeathCallbacks(transformComponent.parentEntity, attackingEntity, damageSource);
-   // }
 }
 
 /**

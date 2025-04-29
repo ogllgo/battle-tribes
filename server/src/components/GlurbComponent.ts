@@ -22,6 +22,7 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 function onTakeDamage(entity: Entity): void {
+   // @INCOMPLETE: No longer works since I removed the thing which triggers parent onTakeDamage callbacks when the child takes damage.
    const tamingComponent = TamingComponentArray.getComponent(entity);
    addSkillLearningProgress(tamingComponent, TamingSkillID.dulledPainReceptors, 1);
 }

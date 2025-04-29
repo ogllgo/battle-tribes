@@ -558,7 +558,9 @@ function onRemove(entity: Entity): void {
    }
 
    // Unattach any children of the entity which aren't being destroyed
-   for (const child of transformComponent.children) {
+   // (Iterate backwards as children are removed from this array in the removeAttachedEntity function)
+   for (let i = transformComponent.children.length - 1; i >= 0; i--) {
+      const child = transformComponent.children[i];
       if (entityChildIsEntity(child)) {
          removeAttachedEntity(entity, child.attachedEntity);
       }

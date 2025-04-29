@@ -3,6 +3,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Packet } from "../../../shared/src/packets";
+import { Settings } from "../../../shared/src/settings";
 import { getAbsAngleDiff, Point } from "../../../shared/src/utils";
 import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
 import { applyAbsoluteKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
@@ -66,12 +67,16 @@ const swungIdealAngles: OkrenHitboxIdealAngles = {
    smallIdealAngle: -Math.PI * 0.3
 };
 
+const KRUMBLID_PEACE_TIME_TICKS = 5 * Settings.TPS;
+
 export class OkrenComponent {
    public size = OkrenAgeStage.juvenile;
    
    public swingStates = [OkrenSwingState.resting, OkrenSwingState.resting];
    public ticksInStates = [0, 0];
    public currentSwingSide = OkrenSide.right;
+
+   public remainingPeaceTimeTicks = 0;
 }
 
 export const OkrenComponentArray = new ComponentArray<OkrenComponent>(ServerComponentType.okren, true, getDataLength, addDataToPacket);
@@ -173,6 +178,11 @@ const hasFleas = (okren: Entity): boolean => {
 
 function onTick(okren: Entity): void {
    const okrenComponent = OkrenComponentArray.getComponent(okren);
+
+   if (okrenComponent.remainingPeaceTimeTicks > 0) {
+      okrenComponent.remainingPeaceTimeTicks--;
+   }
+   
    okrenComponent.ticksInStates[0]++;
    okrenComponent.ticksInStates[1]++;
 
@@ -228,8 +238,8 @@ function onTick(okren: Entity): void {
       const preyTarget = getOkrenPreyTarget(okren, aiHelperComponent);
       if (preyTarget !== null) {
          if (hasFleas(okren)) {
-            
-         } else {
+            okrenComponent.remainingPeaceTimeTicks = KRUMBLID_PEACE_TIME_TICKS;
+         } else if (okrenComponent.remainingPeaceTimeTicks === 0) {
             runOkrenCombatAI(okren, aiHelperComponent, combatAI, preyTarget);
          }
          return;
@@ -283,14 +293,13 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
    }
 
    const velocityDiff = getHitboxVelocity(affectedHitbox).calculateDistanceBetween(getHitboxVelocity(collidingHitbox));
-   // @Temporary?
-   // if (velocityDiff < 120) {
-   //    return;
-   // }
+   if (velocityDiff < 100) {
+      return;
+   }
       
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
-   }
+   } 
 
    const hash = "okren_" + okren + "_" + affectedHitbox.localID;
    

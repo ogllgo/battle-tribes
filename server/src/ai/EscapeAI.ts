@@ -106,7 +106,6 @@ export function runEscapeAI(entity: Entity, aiHelperComponent: AIHelperComponent
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   
 
    const targetX = hitbox.box.position.x * 2 - escapePosition.x;
    const targetY = hitbox.box.position.y * 2 - escapePosition.y;

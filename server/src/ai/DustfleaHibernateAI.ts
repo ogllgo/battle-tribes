@@ -11,7 +11,7 @@ import { removeAttachedEntity, TransformComponentArray } from "../components/Tra
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
 import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
    public readonly acceleration: number;
