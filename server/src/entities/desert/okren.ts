@@ -105,7 +105,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const healthComponent = new HealthComponent(50);
+   const healthComponent = new HealthComponent(500000);
 
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 540, move);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(250, Math.PI * 0.4);
