@@ -177,6 +177,22 @@ const hasFleas = (okren: Entity): boolean => {
 }
 
 function onTick(okren: Entity): void {
+   // @HACK: this should really be like some muscle or restriction thing defined when the okren is created.
+   // Cuz what if this function gets disabled or when this gets abstracted into an AI component and the okren's AI gets turned off?
+   for (const side of OKREN_SIDES) {
+      const minAngle = -Math.PI * 0.4;
+      const maxAngle = Math.PI * 0.2;
+
+      const mandibleHitbox = getOkrenMandibleHitbox(okren, side);
+      if (mandibleHitbox.box.relativeAngle < minAngle) {
+         mandibleHitbox.box.relativeAngle = minAngle;
+         mandibleHitbox.previousRelativeAngle = minAngle;
+      } else if (mandibleHitbox.box.relativeAngle > maxAngle) {
+         mandibleHitbox.box.relativeAngle = maxAngle;
+         mandibleHitbox.previousRelativeAngle = maxAngle;
+      }
+   }
+   
    const okrenComponent = OkrenComponentArray.getComponent(okren);
 
    if (okrenComponent.remainingPeaceTimeTicks > 0) {
@@ -299,7 +315,7 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
       
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
-   } 
+   }
 
    const hash = "okren_" + okren + "_" + affectedHitbox.localID;
    

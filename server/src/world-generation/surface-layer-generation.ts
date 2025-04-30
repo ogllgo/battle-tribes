@@ -665,7 +665,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.008),
+      spawnDistribution: createRawSpawnDistribution(4, 0.013),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
