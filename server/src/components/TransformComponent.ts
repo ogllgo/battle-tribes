@@ -52,6 +52,7 @@ export class TransformComponent {
    public rootEntity: Entity = 0;
    public parentEntity: Entity = 0;
    
+   // @Speed: mix and matching 2 types is very bad for performance. Is there some arcitecture which won't do this?
    /** All children attached to the entity */
    public readonly children = new Array<TransformNode>();
    /** Children not attached to any hitbox interal to the same entity. Root children can either be children with no parent, or children with a different entity's hitbox as a parent. */

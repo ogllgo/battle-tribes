@@ -100,7 +100,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.25, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
-   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 5 * Math.PI);
+   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 1, 1);
    aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(400, 5 * Math.PI);
    aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 5 * Math.PI);
    aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(240, 5 * Math.PI);

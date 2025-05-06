@@ -136,9 +136,10 @@ import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./ser
 import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
 import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } from "./server-components/SandBallComponent";
 import { KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentArray, KrumblidMorphCocoonComponentParams } from "./server-components/KrumblidMorphCocoonComponent";
-import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray } from "./server-components/OkrenTongueSegmentComponent";
-import { OkrenTongueTipComponent, OkrenTongueTipComponentArray } from "./server-components/OkrenTongueTipComponent";
-import { OkrenTongueComponent, OkrenTongueComponentArray } from "./server-components/OkrenTongueComponent";
+import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray, OkrenTongueSegmentComponentParams } from "./server-components/OkrenTongueSegmentComponent";
+import { OkrenTongueTipComponent, OkrenTongueTipComponentArray, OkrenTongueTipComponentParams } from "./server-components/OkrenTongueTipComponent";
+import { OkrenTongueComponent, OkrenTongueComponentArray, OkrenTongueComponentParams } from "./server-components/OkrenTongueComponent";
+import { DustfleaEggComponent, DustfleaEggComponentArray, DustfleaEggComponentParams } from "./server-components/DustfleaEggComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -286,6 +287,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.okrenTongue]: OkrenTongueComponentArray,
    [ServerComponentType.okrenTongueSegment]: OkrenTongueSegmentComponentArray,
    [ServerComponentType.okrenTongueTip]: OkrenTongueTipComponentArray,
+   [ServerComponentType.dustfleaEgg]: DustfleaEggComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -409,6 +411,7 @@ const ServerComponentRecord = {
    [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
    [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
    [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
+   [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -531,9 +534,10 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,
-   [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
-   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
-   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
+   [ServerComponentType.okrenTongue]: (): OkrenTongueComponentParams => 0 as any,
+   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponentParams => 0 as any,
+   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponentParams => 0 as any,
+   [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

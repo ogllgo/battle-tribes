@@ -78,7 +78,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    // @Hack: not right - assumes 1 circular hitbox with radius of 32
    // @Hack: This so asssss, should call a function to find the distance between entities instead
    let radius: number;
-   if (getEntityType(entity) === EntityType.krumblid) {
+   if (getEntityType(entity) === EntityType.krumblid) { 
       radius = 12;
    } else {
       radius = 32;
