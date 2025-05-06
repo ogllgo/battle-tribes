@@ -1,6 +1,6 @@
-import { circlesDoIntersect, circleAndRectangleDoIntersect } from "../collision";
-import { Point, rotateXAroundOrigin, rotateXAroundPoint, rotateYAroundOrigin, rotateYAroundPoint } from "../utils";
-import { PivotPoint, PivotPointType } from "./BaseBox";
+import { getCircleCircleCollisionResult, getCircleRectangleCollisionResult } from "../collision";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "../utils";
+import { PivotPointType } from "./BaseBox";
 import { CircularBox } from "./CircularBox";
 import RectangularBox from "./RectangularBox";
 
@@ -160,10 +160,12 @@ export function updateBox(box: Box, parent: Box): void {
 export function boxIsWithinRange(box: Box, position: Point, range: number): boolean {
    if (boxIsCircular(box)) {
       // Circular hitbox
-      return circlesDoIntersect(position, range, box.position, box.radius * box.scale);
+      const collisionResult = getCircleCircleCollisionResult(position, range, box.position, box.radius * box.scale);
+      return collisionResult.isColliding;
    } else {
       // Rectangular hitbox
-      return circleAndRectangleDoIntersect(position, range, box.position, box.width * box.scale, box.height * box.scale, box.angle);
+      const collisionResult = getCircleRectangleCollisionResult(position, range, box.position, box.width * box.scale, box.height * box.scale, box.angle);
+      return collisionResult.isColliding;
    }
 }
 

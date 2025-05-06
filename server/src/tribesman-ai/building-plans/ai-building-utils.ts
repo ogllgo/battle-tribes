@@ -91,7 +91,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
             const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
             const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
 
-            if (box.isColliding(tileBox)) {
+            if (box.getCollisionResult(tileBox).isColliding) {
                return false;
             }
          }

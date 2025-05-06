@@ -62,7 +62,7 @@ const isValidHibernatePosition = (krumblid: Entity, position: Point): boolean =>
             // @Speed
             const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
             const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
-            if (testHitbox.isColliding(tileBox)) {
+            if (testHitbox.getCollisionResult(tileBox).isColliding) {
                return false;
             }
          }
@@ -89,7 +89,7 @@ const isValidHibernatePosition = (krumblid: Entity, position: Point): boolean =>
                // @Speed
                const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
                const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
-               if (testHitbox.isColliding(tileBox)) {
+               if (testHitbox.getCollisionResult(tileBox).isColliding) {
                   isNearWall = true;
                }
             }

@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
-import { collisionBitsAreCompatible, CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
-import { Point } from "battletribes-shared/utils";
+import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Entity } from "battletribes-shared/entities";
@@ -13,44 +13,58 @@ import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
 import { getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
+import { CollisionResult } from "../../shared/src/collision";
+
+export interface HitboxCollisionPair {
+   readonly affectedHitbox: Hitbox;
+   readonly collidingHitbox: Hitbox;
+   readonly collisionResult: CollisionResult;
+}
 
 interface EntityPairCollisionInfo {
-   readonly minEntityInvolvedHitboxes: Array<Hitbox>;
-   readonly maxEntityInvolvedHitboxes: Array<Hitbox>;
+   readonly collidingHitboxPairs: Array<HitboxCollisionPair>;
 }
 
 type CollisionPairs = Record<number, Record<number, EntityPairCollisionInfo | null>>;
 
-const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
+   // @Temporary: once it's guaranteed that overlap !== 0 this won't be needed.
+   if (collisionResult.overlap.length() === 0) {
+      console.warn("garbo");
+      return;
+   }
+
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+   translateHitbox(affectedHitbox, collisionResult.overlap.x, collisionResult.overlap.y);
 
    const previousVelocity = getHitboxVelocity(affectedHitbox);
    
    // Kill all the velocity going into the hitbox
-   const bx = Math.sin(pushInfo.direction + Math.PI/2);
-   const by = Math.cos(pushInfo.direction + Math.PI/2);
+   const _bx = collisionResult.overlap.x / collisionResult.overlap.length();
+   const _by = collisionResult.overlap.y / collisionResult.overlap.length();
+   // @SPEED
+   const bx = rotateXAroundOrigin(_bx, _by, Math.PI/2);
+   const by = rotateYAroundOrigin(_bx, _by, Math.PI/2);
    const velocityProjectionCoeff = previousVelocity.x * bx + previousVelocity.y * by;
    const vx = bx * velocityProjectionCoeff;
    const vy = by * velocityProjectionCoeff;
    setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
-const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / transformComponent.totalMass;
-      addHitboxVelocity(affectedHitbox, pushForce * Math.sin(pushInfo.direction), pushForce * Math.cos(pushInfo.direction));
+      const pushForceMultiplier = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushingHitbox.mass / transformComponent.totalMass;
+      addHitboxVelocity(affectedHitbox, collisionResult.overlap.x * pushForceMultiplier, collisionResult.overlap.y * pushForceMultiplier);
    }
 }
 
-export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, isPushed: boolean): void {
+export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
    if (isPushed && PhysicsComponentArray.hasComponent(entity)) {
-      const pushInfo = getCollisionPushInfo(pushedHitbox.box, pushingHitbox.box);
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
-         resolveHardCollision(pushedHitbox, pushInfo);
+         resolveHardCollision(pushedHitbox, collisionResult);
       } else {
-         resolveSoftCollision(entity, pushedHitbox, pushingHitbox, pushInfo);
+         resolveSoftCollision(entity, pushedHitbox, pushingHitbox, collisionResult);
       }
    }
 
@@ -76,8 +90,7 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
       return null;
    }
 
-   const entity1InvolvedHitboxes = new Array<Hitbox>();
-   const entity2InvolvedHitboxes = new Array<Hitbox>();
+   const hitboxCollisionPairs = new Array<HitboxCollisionPair>();
    
    // More expensive hitbox check
    for (const hitbox of transformComponent1.children) {
@@ -97,17 +110,20 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
          }
          
          // If the objects are colliding, add the colliding object and this object
-         if (box.isColliding(otherBox)) {
-            entity1InvolvedHitboxes.push(hitbox);
-            entity2InvolvedHitboxes.push(otherHitbox);
+         const collisionResult = box.getCollisionResult(otherBox);
+         if (collisionResult.isColliding) {
+            hitboxCollisionPairs.push({
+               affectedHitbox: hitbox,
+               collidingHitbox: hitbox,
+               collisionResult: collisionResult
+            });
          }
       }
    }
 
-   if (entity1InvolvedHitboxes.length > 0) {
+   if (hitboxCollisionPairs.length > 0) {
       return {
-         minEntityInvolvedHitboxes: entity1 < entity2 ? entity1InvolvedHitboxes : entity2InvolvedHitboxes,
-         maxEntityInvolvedHitboxes: entity1 < entity2 ? entity2InvolvedHitboxes : entity1InvolvedHitboxes
+         collidingHitboxPairs: hitboxCollisionPairs
       };
    }
    return null;
@@ -168,12 +184,14 @@ const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayer
 
          // Note: from here, entity1 < entity2 (by definition)
 
-         for (let i = 0; i < collisionInfo.minEntityInvolvedHitboxes.length; i++) {
-            const entity1Hitbox = collisionInfo.minEntityInvolvedHitboxes[i];
-            const entity2Hitbox = collisionInfo.maxEntityInvolvedHitboxes[i];
+         for (const pair of collisionInfo.collidingHitboxPairs) {
+            // Of entity 1
+            const affectedHitbox = pair.affectedHitbox;
+            // Of entity 2
+            const collidingHitbox = pair.collidingHitbox;
 
-            collide(entity1, entity2, entity1Hitbox, entity2Hitbox, !onlyResolvePlayerCollisions || entity1 === playerInstance);
-            collide(entity2, entity1, entity2Hitbox, entity1Hitbox, !onlyResolvePlayerCollisions || entity2 === playerInstance);
+            collide(entity1, entity2, affectedHitbox, collidingHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || entity1 === playerInstance);
+            collide(entity2, entity1, collidingHitbox, affectedHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || entity2 === playerInstance);
          }
       }
    }
@@ -248,9 +266,9 @@ export function resolveWallCollisions(entity: Entity): boolean {
             const tileBox = new RectangularBox(new Point(tileCenterX, tileCenterY), new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
             
             // Check if the tile is colliding
-            if (box.isColliding(tileBox)) {
-               const pushInfo = getCollisionPushInfo(box, tileBox);
-               resolveHardCollision(hitbox, pushInfo);
+            const collisionResult = box.getCollisionResult(tileBox);
+            if (collisionResult.isColliding) {
+               resolveHardCollision(hitbox, collisionResult);
                hasMoved = true;
             }
          }
@@ -262,7 +280,7 @@ export function resolveWallCollisions(entity: Entity): boolean {
 const boxHasCollisionWithHitboxes = (box: Box, children: ReadonlyArray<TransformNode>, epsilon: number = 0): boolean => {
    for (let i = 0; i < children.length; i++) {
       const otherHitbox = children[i];
-      if (entityChildIsHitbox(otherHitbox) && box.isColliding(otherHitbox.box, epsilon)) {
+      if (entityChildIsHitbox(otherHitbox) && box.getCollisionResult(otherHitbox.box, epsilon).isColliding) {
          return true;
       }
    }
@@ -360,7 +378,7 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
 
             // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
             for (const hitbox of transformComponent.children) {
-               if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
+               if (entityChildIsHitbox(hitbox) && testCircularBox.getCollisionResult(hitbox.box).isColliding) {
                   entities.push(entity);
                   seenIDs.add(entity);
                   break;

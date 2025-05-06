@@ -1,3 +1,4 @@
+import { CollisionResult } from "../collision";
 import { Point } from "../utils";
 import { Box } from "./boxes";
 
@@ -55,7 +56,7 @@ abstract class BaseBox {
    public abstract calculateBoundsMinY(): number;
    public abstract calculateBoundsMaxY(): number;
 
-   public abstract isColliding(otherBox: Box, epsilon?: number): boolean;
+   public abstract getCollisionResult(otherBox: Box, epsilon?: number): CollisionResult;
 }
 
 export default BaseBox;

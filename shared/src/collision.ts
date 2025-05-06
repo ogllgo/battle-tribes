@@ -1,7 +1,7 @@
 import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
-import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
+import { Mutable, Point, angle, assert, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
 // @Speed: Maybe make into const enum?
 export const enum CollisionBit {
@@ -16,11 +16,10 @@ export const enum CollisionBit {
 
 export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus | CollisionBit.iceSpikes | CollisionBit.plants | CollisionBit.planterBox | CollisionBit.arrowPassable;
 
-export interface CollisionData {
+export interface CollisionResult {
    readonly isColliding: boolean;
-   readonly axisX: number;
-   readonly axisY: number;
-   readonly overlap: number;
+   /** If isColliding is false then this value is just garbage and has no meaning */
+   readonly overlap: Point;
    readonly collisionPoint: Point;
 }
 
@@ -80,32 +79,132 @@ const findMaxWithOffset = (box: RectangularBox, x: number, y: number, axisX: num
 
 // @Cleanup: call these functions with the actual hitboxes
 
-export function circlesDoIntersect(circle1Pos: Point, radius1: number, circle2Pos: Point, radius2: number): boolean {
+export function getCircleCircleCollisionResult(circle1Pos: Point, radius1: number, circle2Pos: Point, radius2: number): CollisionResult {
    const dist = distance(circle1Pos.x, circle1Pos.y, circle2Pos.x, circle2Pos.y);
-   return dist <= radius1 + radius2;
+      
+   const amountIn = radius1 + radius2 - dist;
+   // Angle from pushing hitbox to pushed hitbox
+   const direction = angle(circle1Pos.x - circle2Pos.x, circle1Pos.y - circle2Pos.y);
+   
+   return {
+      isColliding: amountIn > 0,
+      overlap: Point.fromVectorForm(amountIn, direction),
+      collisionPoint: new Point(0, 0)
+   };
 }
 
 /** Checks if a circle and rectangle are intersecting */
-export function circleAndRectangleDoIntersect(circlePos: Point, circleRadius: number, rectPos: Point, rectWidth: number, rectHeight: number, rectRotation: number): boolean {
+export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius: number, rectPos: Point, rectWidth: number, rectHeight: number, rectRotation: number): CollisionResult {
    // Rotate the circle around the rectangle to "align" it
-   const alignedCirclePosX = rotateXAroundPoint(circlePos.x, circlePos.y, rectPos.x, rectPos.y, -rectRotation);
-   const alignedCirclePosY = rotateYAroundPoint(circlePos.x, circlePos.y, rectPos.x, rectPos.y, -rectRotation);
+   const circlePosX = rotateXAroundPoint(circlePos.x, circlePos.y, rectPos.x, rectPos.y, -rectRotation);
+   const circlePosY = rotateYAroundPoint(circlePos.x, circlePos.y, rectPos.x, rectPos.y, -rectRotation);
 
    // 
    // Then do a regular rectangle check
    // 
 
-   const distanceX = Math.abs(alignedCirclePosX - rectPos.x);
-   const distanceY = Math.abs(alignedCirclePosY - rectPos.y);
+   const distanceX = circlePosX - rectPos.x;
+   const distanceY = circlePosY - rectPos.y;
+   
+   const absDistanceX = Math.abs(distanceX);
+   const absDistanceY = Math.abs(distanceY);
 
-   if (distanceX > (rectWidth/2 + circleRadius)) return false;
-   if (distanceY > (rectHeight/2 + circleRadius)) return false;
+   // Amount the circular hitbox is inside the rectangle horizontally
+   const horizontalAmountIn = rectWidth/2 + circleRadius - absDistanceX;
+   // Amount the circular hitbox is inside the rectangle vertically
+   const verticalAmountIn = rectHeight/2 + circleRadius - absDistanceY;
+   
+   if (horizontalAmountIn <= 0 || verticalAmountIn <= 0) {
+      return {
+         isColliding: false,
+         overlap: new Point(0, 0),
+         collisionPoint: new Point(0, 0)
+      };
+   }
+   // Top and bottom collisions
+   if (absDistanceX <= rectWidth/2) {
+      const direction = rectRotation + Math.PI + (distanceY > 0 ? Math.PI : 0);
 
-   if (distanceX <= rectWidth/2) return true;
-   if (distanceY <= rectHeight/2) return true;
+      return {
+         isColliding: true,
+         // @Speed: don't need sin/cos here at all
+         overlap: Point.fromVectorForm(verticalAmountIn, direction),
+         collisionPoint: new Point(0, 0)
+      };
+   }
 
-   const cornerDistanceSquared = Math.pow(distanceX - rectWidth/2, 2) + Math.pow(distanceY - rectHeight/2, 2);
-   return cornerDistanceSquared <= Math.pow(circleRadius, 2);
+   // Left and right collisions
+   if (absDistanceY <= rectHeight/2) {
+      const direction = rectRotation + Math.PI + (distanceX > 0 ? Math.PI/2 : -Math.PI/2);
+      
+      return {
+         isColliding: true,
+         // @Speed: don't need sin/cos here at all
+         overlap: Point.fromVectorForm(horizontalAmountIn, direction),
+         collisionPoint: new Point(0, 0)
+      };
+   }
+
+   const cornerDistanceSquared = Math.pow(absDistanceX - rectWidth/2, 2) + Math.pow(absDistanceY - rectHeight/2, 2);
+   if (cornerDistanceSquared <= circleRadius * circleRadius) {
+      // @Cleanup: Whole lot of copy and paste
+      if (verticalAmountIn < horizontalAmountIn) {
+         const closestRectBorderY = circlePosY < rectPos.y ? rectPos.y - rectHeight/2 : rectPos.y + rectHeight/2;
+         const closestRectBorderX = circlePosX < rectPos.x ? rectPos.x - rectWidth/2 : rectPos.x + rectWidth/2;
+         const xDistanceFromRectBorder = Math.abs(closestRectBorderX - circlePosX);
+         const len = Math.sqrt(circleRadius * circleRadius - xDistanceFromRectBorder * xDistanceFromRectBorder);
+
+         const amountIn = Math.abs(closestRectBorderY - (circlePosY - len * Math.sign(distanceY)));
+         const direction = rectRotation + Math.PI + (distanceY > 0 ? Math.PI : 0);
+         
+         // @Temporary @Hack: should be guaranteed
+         if (amountIn > 0) {
+            return {
+               isColliding: true,
+               overlap: Point.fromVectorForm(amountIn, direction),
+               collisionPoint: new Point(0, 0)
+            };
+         } else {
+            // @Temporary: this shittiness is here to further encourage me to fix the above issue
+            return {
+               isColliding: false,
+               overlap: new Point(0, 0),
+               collisionPoint: new Point(0, 0)
+            };
+         }
+      } else {
+         const closestRectBorderX = circlePosX < rectPos.x ? rectPos.x - rectWidth/2 : rectPos.x + rectWidth/2;
+         
+         const closestRectBorderY = circlePosY < rectPos.y ? rectPos.y - rectHeight/2 : rectPos.y + rectHeight/2;
+         const yDistanceFromRectBorder = Math.abs(closestRectBorderY - circlePosY);
+         const len = Math.sqrt(circleRadius * circleRadius - yDistanceFromRectBorder * yDistanceFromRectBorder);
+
+         const amountIn = Math.abs(closestRectBorderX - (circlePosX - len * Math.sign(distanceX)));
+         const direction = rectRotation + (distanceX > 0 ? Math.PI/2 : -Math.PI/2);
+         
+         // @Temporary @Hack: should be guaranteed
+         if (amountIn > 0) {
+            return {
+               isColliding: true,
+               overlap: Point.fromVectorForm(amountIn, direction),
+               collisionPoint: new Point(0, 0)
+            };
+         } else {
+            // @Temporary: this shittiness is here to further encourage me to fix the above issue
+            return {
+               isColliding: false,
+               overlap: new Point(0, 0),
+               collisionPoint: new Point(0, 0)
+            };
+         }
+      }
+   } else {
+      return {
+         isColliding: false,
+         overlap: new Point(0, 0),
+         collisionPoint: new Point(0, 0)
+      };
+   }
 }
 
 /** Computes the axis for the line created by two points */
@@ -118,23 +217,21 @@ function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2m
    return Math.min(proj1max, proj2max) - Math.max(proj1min, proj2min);
 }
 
-const updateMinOverlap = (collisionData: Mutable<CollisionData>, proj1min: number, proj1max: number, proj2min: number, proj2max: number, axisX: number, axisY: number): void => {
+const updateMinOverlap = (collisionData: Mutable<CollisionResult>, proj1min: number, proj1max: number, proj2min: number, proj2max: number, axisX: number, axisY: number): void => {
    const axisOverlap = getOverlap(proj1min, proj1max, proj2min, proj2max);
-   if (axisOverlap < collisionData.overlap) {
-      collisionData.overlap = axisOverlap;
-      collisionData.axisX = axisX;
-      collisionData.axisY = axisY;
+   // The first check in this if statement is so that the first overlap will always ovreride, without it every single overlap will be discarded
+   if ((collisionData.overlap.x === 0 && collisionData.overlap.y === 0) || axisOverlap < collisionData.overlap.length()) {
+      collisionData.overlap.x = axisOverlap * Math.sin(axisX);
+      collisionData.overlap.y = axisOverlap * Math.cos(axisY);
    }
 }
 
-export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBox): CollisionData {
+export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBox): CollisionResult {
    // @Incomplete: Collision point
    
-   const collisionData: Mutable<CollisionData> = {
+   const collisionData: Mutable<CollisionResult> = {
       isColliding: false,
-      axisX: 0,
-      axisY: 0,
-      overlap: Number.MAX_SAFE_INTEGER,
+      overlap: new Point(0, 0),
       collisionPoint: new Point(0, 0)
    };
 
@@ -186,9 +283,14 @@ export function rectanglesAreColliding(box1: RectangularBox, box2: RectangularBo
    const directionVectorX = box2.position.x - box1.position.x;
    const directionVectorY = box2.position.y - box1.position.y;
 
-   if (collisionData.axisX * directionVectorX + collisionData.axisY * directionVectorY > 0) {
-      collisionData.axisX = -collisionData.axisX;
-      collisionData.axisY = -collisionData.axisY;
+   // @Speed @Cleanup: why is this needed...
+   if (collisionData.overlap.x * directionVectorX + collisionData.overlap.y * directionVectorY > 0) {
+      collisionData.overlap.x *= -1;
+      collisionData.overlap.y *= -1;
+   }
+
+   if (collisionData.overlap.x === 0 && collisionData.overlap.y === 0) {
+      throw new Error();
    }
 
    // Is colliding!
@@ -201,7 +303,8 @@ export function boxIsCollidingWithSubtile(box: Box, subtileX: number, subtileY: 
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
    
-   return box.isColliding(tileBox);
+   const collisionResult = box.getCollisionResult(tileBox);
+   return collisionResult.isColliding;
 }
 
 export function boxIsCollidingWithTile(box: Box, tileX: number, tileY: number): boolean {
@@ -209,5 +312,6 @@ export function boxIsCollidingWithTile(box: Box, tileX: number, tileY: number): 
    const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
    
-   return box.isColliding(tileBox);
+   const collisionResult = box.getCollisionResult(tileBox);
+   return collisionResult.isColliding;
 }

@@ -1,8 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getComponentArrayRecord } from "./components/ComponentArray";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -10,6 +9,7 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityComponentTypes, getEntityType } from "./world";
 import { HitboxCollisionPair } from "./collision-detection";
 import { getHitboxConnectedMass, getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
+import { CollisionResult } from "../../shared/src/collision";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
    // @INCOMPLETE!
@@ -27,33 +27,58 @@ const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hi
    return false;
 }
 
-const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
+   // @Temporary: Won't be needed once this switches to C++ (use builtin /= 0 check)
+   if (collisionResult.overlap.length() === 0) {
+      throw new Error();
+   }
+   
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+   translateHitbox(affectedHitbox, collisionResult.overlap.x, collisionResult.overlap.y);
 
    const previousVelocity = getHitboxVelocity(affectedHitbox);
 
    // Kill all the velocity going into the hitbox
-   const bx = Math.sin(pushInfo.direction + Math.PI/2);
-   const by = Math.cos(pushInfo.direction + Math.PI/2);
+   const _bx = collisionResult.overlap.x / collisionResult.overlap.length();
+   const _by = collisionResult.overlap.y / collisionResult.overlap.length();
+   // @SPEED
+   const bx = rotateXAroundOrigin(_bx, _by, Math.PI/2);
+   const by = rotateYAroundOrigin(_bx, _by, Math.PI/2);
+   // const bx = Math.sin(pushInfo.direction + Math.PI/2);
+   // const by = Math.cos(pushInfo.direction + Math.PI/2);
    const velocityProjectionCoeff = previousVelocity.x * bx + previousVelocity.y * by;
    const vx = bx * velocityProjectionCoeff;
    const vy = by * velocityProjectionCoeff;
    setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
-const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
+   // @Temporary: Won't be needed once this switches to C++ (use builtin /= 0 check)
+   if (collisionResult.overlap.length() === 0) {
+      throw new Error();
+   }
+   
    const previousVelocity = getHitboxVelocity(affectedHitbox);
    
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+   translateHitbox(affectedHitbox, collisionResult.overlap.x, collisionResult.overlap.y);
 
    // Reverse the velocity going into the hitbox
    
-   const separationAxisProjX = Math.sin(pushInfo.direction + Math.PI/2);
-   const separationAxisProjY = Math.cos(pushInfo.direction + Math.PI/2);
-   const pushAxisProjX = Math.sin(pushInfo.direction + Math.PI);
-   const pushAxisProjY = Math.cos(pushInfo.direction + Math.PI);
+   const _separationAxisProjX = collisionResult.overlap.x / collisionResult.overlap.length();
+   const _separationAxisProjY = collisionResult.overlap.y / collisionResult.overlap.length();
+   // @Speed @Cleanup
+   const separationAxisProjX = rotateXAroundOrigin(_separationAxisProjX, _separationAxisProjY, Math.PI/2);
+   const separationAxisProjY = rotateYAroundOrigin(_separationAxisProjX, _separationAxisProjY, Math.PI/2);
+   // const separationAxisProjX = Math.sin(pushInfo.direction + Math.PI/2);
+   // const separationAxisProjY = Math.cos(pushInfo.direction + Math.PI/2);
+   const _pushAxisProjX = collisionResult.overlap.x / collisionResult.overlap.length();
+   const _pushAxisProjY = collisionResult.overlap.y / collisionResult.overlap.length();
+   // @Speed @Cleanup
+   const pushAxisProjX = rotateXAroundOrigin(_pushAxisProjX, _pushAxisProjY, Math.PI/2);
+   const pushAxisProjY = rotateYAroundOrigin(_pushAxisProjX, _pushAxisProjY, Math.PI/2);
+   // const pushAxisProjX = Math.sin(pushInfo.direction + Math.PI);
+   // const pushAxisProjY = Math.cos(pushInfo.direction + Math.PI);
    
    const velocitySeparationCoeff = previousVelocity.x * separationAxisProjX + previousVelocity.y * separationAxisProjY;
    const velocityPushCoeff = previousVelocity.x * pushAxisProjX + previousVelocity.y * pushAxisProjY;
@@ -63,11 +88,11 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: Collision
    addHitboxVelocity(affectedHitbox, -pushAxisProjX * velocityPushCoeff, -pushAxisProjY * velocityPushCoeff);
 }
 
-const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult): void => {
    const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
    if (totalAffectedMass !== 0) {
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
-      addHitboxVelocity(affectedHitbox, pushForce * Math.sin(pushInfo.direction), pushForce * Math.cos(pushInfo.direction));
+      const pushForceMultiplier = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushingHitbox.mass / totalAffectedMass;
+      addHitboxVelocity(affectedHitbox, collisionResult.overlap.x * pushForceMultiplier, collisionResult.overlap.y * pushForceMultiplier);
    }
 }
 
@@ -86,8 +111,8 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    
    for (let i = 0; i < collidingHitboxPairs.length; i++) {
       const pair = collidingHitboxPairs[i];
-      const affectedHitbox = pair[0];
-      const collidingHitbox = pair[1];
+      const affectedHitbox = pair.affectedHitbox;
+      const collidingHitbox = pair.collidingHitbox;
 
       // @HACK @SPEED: There is some very weird behaviour when two hitboxes are tethered and also can collide, so this shitter is here to prevent that
       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
@@ -109,16 +134,10 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
       if (PhysicsComponentArray.hasComponent(affectedEntity)) {
          const physicsComponent = PhysicsComponentArray.getComponent(affectedEntity);
          if (!physicsComponent.isImmovable) {
-            // @Bug: This isn't right! Should instead keep track of the collision data from the collision detection code, and use it here.
-            // Currently there are issues as one collision pair being resolved can change the push info away from what was used in detection.
-            // Which is extra bad cause sometimes collisions which aren't actually happening can have their push info gotten. previously this has causesd
-            // a nasty to resolve crash, and i put in a hacky solution. would be great to fix
-            const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
-
             if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
-               resolveHardCollision(affectedHitbox, pushInfo);
+               resolveHardCollision(affectedHitbox, pair.collisionResult);
             } else {
-               resolveSoftCollision(affectedHitbox, collidingHitbox, pushInfo);
+               resolveSoftCollision(affectedHitbox, collidingHitbox, pair.collisionResult);
             }
    
             // @Cleanup: Should we just clean it immediately here?
@@ -167,17 +186,17 @@ export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: n
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
    
-   if (!hitbox.box.isColliding(tileBox)) {
+   const collisionResult = hitbox.box.getCollisionResult(tileBox);
+   if (!collisionResult.isColliding) {
       return;
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   const pushInfo = getCollisionPushInfo(hitbox.box, tileBox);
    if (getEntityType(entity) === EntityType.guardianSpikyBall) {
-      resolveHardCollisionAndFlip(hitbox, pushInfo);
+      resolveHardCollisionAndFlip(hitbox, collisionResult);
    } else {
-      resolveHardCollision(hitbox, pushInfo);
+      resolveHardCollision(hitbox, collisionResult);
    }
 
    transformComponent.isDirty = true;

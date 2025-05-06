@@ -225,8 +225,8 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
 
    let hitDirection = 0;
    for (const hitboxPair of collidingHitboxPairs) {
-      const affectedHitbox = hitboxPair[0];
-      const collidingHitbox = hitboxPair[1];
+      const affectedHitbox = hitboxPair.affectedHitbox;
+      const collidingHitbox = hitboxPair.collidingHitbox;
       hitDirection += affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
    }
    hitDirection /= collidingHitboxPairs.length;
@@ -239,7 +239,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
    hitEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, collidingHitboxPairs[0][1], attackKnockback, hitDirection);
+   applyKnockback(victim, collidingHitboxPairs[0].collidingHitbox, attackKnockback, hitDirection);
 
    if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
       applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);

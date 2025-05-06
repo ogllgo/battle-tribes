@@ -7,13 +7,20 @@ import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./c
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
 import { Box } from "../../shared/src/boxes/boxes";
+import { CollisionResult } from "../../shared/src/collision";
 
 export const enum CollisionVars {
    NO_COLLISION = 0xFFFF
 }
 
 type EntityCollisionPair = [affectedEntity: Entity, collidingEntity: Entity];
-export type HitboxCollisionPair = [affectedHitbox: Hitbox, collidingHitbox: Hitbox];
+// export type HitboxCollisionPair = [affectedHitbox: Hitbox, collidingHitbox: Hitbox];
+
+export interface HitboxCollisionPair {
+   readonly affectedHitbox: Hitbox;
+   readonly collidingHitbox: Hitbox;
+   readonly collisionResult: CollisionResult;
+}
 
 export interface EntityPairCollisionInfo {
    readonly collidingEntity: Entity;
@@ -81,8 +88,13 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
          const otherBox = otherHitbox.box;
 
          // If the objects are colliding, add the colliding object and this object
-         if (box.isColliding(otherBox)) {
-            collidingHitboxPairs.push([hitbox, otherHitbox]);
+         const collisionResult = box.getCollisionResult(otherBox);
+         if (collisionResult.isColliding) {
+            collidingHitboxPairs.push({
+               affectedHitbox: hitbox,
+               collidingHitbox: otherHitbox,
+               collisionResult: collisionResult
+            });
          }
       }
    }
@@ -132,7 +144,7 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
          }
 
          // If the objects are colliding, add the colliding object and this object
-         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherHitbox.box)) {
+         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.getCollisionResult(otherHitbox.box).isColliding) {
             return i + (j << 8);
          }
       }
@@ -227,7 +239,7 @@ export function resolveEntityCollisions(layer: Layer): void {
 export function boxArraysAreColliding(boxes1: ReadonlyArray<Box>, boxes2: ReadonlyArray<Box>): boolean {
    for (const box of boxes1) {
       for (const otherBox of boxes2) {
-         if (box.isColliding(otherBox)) {
+         if (box.getCollisionResult(otherBox)) {
             return true;
          }
       }
@@ -238,7 +250,7 @@ export function boxArraysAreColliding(boxes1: ReadonlyArray<Box>, boxes2: Readon
 export function boxHasCollisionWithBoxes(box: Box, boxes: ReadonlyArray<Box>, epsilon: number = 0): boolean {
    for (let i = 0; i < boxes.length; i++) {
       const otherBox = boxes[i];
-      if (box.isColliding(otherBox, epsilon)) {
+      if (box.getCollisionResult(otherBox, epsilon)) {
          return true;
       }
    }
@@ -249,7 +261,7 @@ const boxHasCollisionWithChildren = (box: Box, children: ReadonlyArray<Transform
    for (let i = 0; i < children.length; i++) {
       const otherHitbox = children[i];
       if (entityChildIsHitbox(otherHitbox)) {
-         if (box.isColliding(otherHitbox.box, epsilon)) {
+         if (box.getCollisionResult(otherHitbox.box, epsilon)) {
             return true;
          }
       }

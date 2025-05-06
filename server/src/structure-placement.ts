@@ -1,4 +1,4 @@
-import { updateBox, boxIsCircular } from "../../shared/src/boxes/boxes";
+import { boxIsCircular } from "../../shared/src/boxes/boxes";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { getEntityCollisionGroup, CollisionGroup } from "../../shared/src/collision-groups";
@@ -163,7 +163,7 @@ const structureIntersectsWithBuildingBlockingTiles = (layer: Layer, hitboxes: Re
             const position = new Point((tileX + 0.5) * Settings.TILE_SIZE, (tileY + 0.5) * Settings.TILE_SIZE);
             const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.TILE_SIZE, Settings.TILE_SIZE);
 
-            if (box.isColliding(tileBox)) {
+            if (box.getCollisionResult(tileBox).isColliding) {
                return true;
             }
          }

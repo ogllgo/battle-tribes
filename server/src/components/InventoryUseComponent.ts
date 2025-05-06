@@ -212,7 +212,7 @@ const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number)
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
    const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
    
-   return box.isColliding(tileBox);
+   return box.getCollisionResult(tileBox).isColliding;
 }
 
 const getBoxCollidingWallSubtiles = (layer: Layer, box: Box): ReadonlyArray<number> => {

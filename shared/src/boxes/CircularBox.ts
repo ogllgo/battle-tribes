@@ -1,4 +1,4 @@
-import { circlesDoIntersect, circleAndRectangleDoIntersect } from "../collision";
+import { getCircleCircleCollisionResult, getCircleRectangleCollisionResult, CollisionResult } from "../collision";
 import { Point } from "../utils";
 import BaseBox from "./BaseBox";
 import { Box, boxIsCircular } from "./boxes";
@@ -24,13 +24,13 @@ export class CircularBox extends BaseBox {
       return this.position.y + this.radius;
    }
 
-   public isColliding(otherHitbox: Box, epsilon: number = 0): boolean {
+   public getCollisionResult(otherHitbox: Box, epsilon: number = 0): CollisionResult {
       if (boxIsCircular(otherHitbox)) {
          // Circular hitbox
-         return circlesDoIntersect(this.position, this.radius * this.scale - epsilon, otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon);
+         return getCircleCircleCollisionResult(this.position, this.radius * this.scale - epsilon, otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon);
       } else {
          // Rectangular hitbox
-         return circleAndRectangleDoIntersect(this.position, this.radius - epsilon, otherHitbox.position, otherHitbox.width - epsilon * 0.5, otherHitbox.height - epsilon * 0.5, otherHitbox.angle);
+         return getCircleRectangleCollisionResult(this.position, this.radius - epsilon, otherHitbox.position, otherHitbox.width - epsilon * 0.5, otherHitbox.height - epsilon * 0.5, otherHitbox.angle);
       }
    }
 }

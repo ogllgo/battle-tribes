@@ -11,7 +11,7 @@ import { removeAttachedEntity, TransformComponentArray } from "../components/Tra
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
 import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
    public readonly acceleration: number;
@@ -62,7 +62,7 @@ const isValidHibernatePosition = (dustflea: Entity, position: Point): boolean =>
             // @Speed
             const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
             const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
-            if (testHitbox.isColliding(tileBox)) {
+            if (testHitbox.getCollisionResult(tileBox).isColliding) {
                return false;
             }
          }
@@ -89,7 +89,7 @@ const isValidHibernatePosition = (dustflea: Entity, position: Point): boolean =>
                // @Speed
                const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
                const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
-               if (testHitbox.isColliding(tileBox)) {
+               if (testHitbox.getCollisionResult(tileBox).isColliding) {
                   isNearWall = true;
                }
             }

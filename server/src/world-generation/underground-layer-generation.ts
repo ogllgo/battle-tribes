@@ -425,21 +425,22 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          return createBoulderConfig(new Point(x, y), angle);
       }
    });
-   registerNewSpawnInfo({
-      entityType: EntityType.glurb,
-      layer: undergroundLayer,
-      spawnRate: 0.0025,
-      biome: Biome.caves,
-      tileTypes: [TileType.stone],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 100,
-      spawnDistribution: createRawSpawnDistribution(32, 0.004),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createGlurbConfig(x, y, angle);
-      }
-   });
+   // @Temporary to reduce amount of collision warnings for debugging purposes
+   // registerNewSpawnInfo({
+   //    entityType: EntityType.glurb,
+   //    layer: undergroundLayer,
+   //    spawnRate: 0.0025,
+   //    biome: Biome.caves,
+   //    tileTypes: [TileType.stone],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 100,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.004),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+   //       return createGlurbConfig(x, y, angle);
+   //    }
+   // });
    // @HACK: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
       entityType: EntityType.mithrilOreNode,

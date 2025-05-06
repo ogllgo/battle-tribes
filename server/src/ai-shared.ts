@@ -393,7 +393,7 @@ export function boxIsInRange(position: Point, range: number, box: Box): boolean 
    testCircularBox.position.x = position.x;
    testCircularBox.position.y = position.y;
 
-   return testCircularBox.isColliding(box);
+   return testCircularBox.getCollisionResult(box).isColliding;
 }
 
 export function entityIsInVisionRange(position: Point, visionRange: number, entity: Entity): boolean {
@@ -410,7 +410,7 @@ export function entityIsInVisionRange(position: Point, visionRange: number, enti
 
    // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
    for (const hitbox of transformComponent.children) {
-      if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
+      if (entityChildIsHitbox(hitbox) && testCircularBox.getCollisionResult(hitbox.box).isColliding) {
          return true;
       }
    }
@@ -452,7 +452,7 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
 
             // If the test hitbox can 'see' any of the game object's hitboxes, it is visible
             for (const hitbox of transformComponent.children) {
-               if (entityChildIsHitbox(hitbox) && testCircularBox.isColliding(hitbox.box)) {
+               if (entityChildIsHitbox(hitbox) && testCircularBox.getCollisionResult(hitbox.box).isColliding) {
                   entities.push(entity);
                   seenIDs.add(entity);
                   break;

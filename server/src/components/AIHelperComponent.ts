@@ -1,4 +1,3 @@
-import { circlesDoIntersect, circleAndRectangleDoIntersect } from "battletribes-shared/collision";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Chunk from "../Chunk";
@@ -23,6 +22,7 @@ import { VegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
 import { OkrenCombatAI } from "../ai/OkrenCombatAI";
+import { getCircleCircleCollisionResult, getCircleRectangleCollisionResult } from "../../../shared/src/collision";
 
 export const enum AIType {
    wander,
@@ -169,10 +169,10 @@ function onRemove(entity: Entity): void {
 const boxIsVisible = (seeingHitbox: Hitbox, box: Box, visionRange: number): boolean => {
    if (boxIsCircular(box)) {
       // Circular hitbox
-      return circlesDoIntersect(seeingHitbox.box.position, visionRange, box.position, box.radius);
+      return getCircleCircleCollisionResult(seeingHitbox.box.position, visionRange, box.position, box.radius).isColliding;
    } else {
       // Rectangular hitbox
-      return circleAndRectangleDoIntersect(seeingHitbox.box.position, visionRange, box.position, box.width, box.height, box.relativeAngle);
+      return getCircleRectangleCollisionResult(seeingHitbox.box.position, visionRange, box.position, box.width, box.height, box.relativeAngle).isColliding;
    }
 }
 

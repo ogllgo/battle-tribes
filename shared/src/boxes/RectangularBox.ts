@@ -1,4 +1,4 @@
-import { circleAndRectangleDoIntersect, rectanglesAreColliding } from "../collision";
+import { CollisionResult, getCircleRectangleCollisionResult, rectanglesAreColliding } from "../collision";
 import { Point } from "../utils";
 import BaseBox from "./BaseBox";
 import { Box, boxIsCircular, updateVertexPositionsAndSideAxes } from "./boxes";
@@ -36,10 +36,13 @@ class RectangularBox extends BaseBox {
       return this.position.y + Math.max(this.topLeftVertexOffset.y, this.topRightVertexOffset.y, -this.topLeftVertexOffset.y, -this.topRightVertexOffset.y);
    }
 
-   public isColliding(otherHitbox: Box, epsilon: number = 0): boolean {
+   public getCollisionResult(otherHitbox: Box, epsilon: number = 0): CollisionResult {
       if (boxIsCircular(otherHitbox)) {
          // Circular hitbox
-         return circleAndRectangleDoIntersect(otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon, this.position, this.width * this.scale - epsilon * 0.5, this.height * this.scale - epsilon * 0.5, this.angle);
+         const collisionResult = getCircleRectangleCollisionResult(otherHitbox.position, otherHitbox.radius * otherHitbox.scale - epsilon, this.position, this.width * this.scale - epsilon * 0.5, this.height * this.scale - epsilon * 0.5, this.angle);
+         collisionResult.overlap.x *= -1;
+         collisionResult.overlap.y *= -1;
+         return collisionResult;
       } else {
          // Rectangular hitbox
 
@@ -54,7 +57,11 @@ class RectangularBox extends BaseBox {
 
          // If the distance between the entities is greater than the sum of their half diagonals then they can never collide
          if (diffX * diffX + diffY * diffY > (width1Squared + height1Squared + width2Squared + height2Squared + 2 * Math.sqrt((width1Squared + height1Squared) * (width2Squared + height2Squared))) * 0.25) {
-            return false;
+            return {
+               isColliding: false,
+               overlap: new Point(0, 0),
+               collisionPoint: new Point(0, 0)
+            };
          }
 
          const thisWidthBefore = this.width;
@@ -67,7 +74,7 @@ class RectangularBox extends BaseBox {
             updateVertexPositionsAndSideAxes(this);
          }
          
-         const collisionData = rectanglesAreColliding(this, otherHitbox);
+         const collisionResult = rectanglesAreColliding(this, otherHitbox);
 
          if (epsilon > 0) {
             this.width = thisWidthBefore;
@@ -76,7 +83,7 @@ class RectangularBox extends BaseBox {
             updateVertexPositionsAndSideAxes(this);
          }
          
-         return collisionData.isColliding;
+         return collisionResult;
       }
    }
 }
