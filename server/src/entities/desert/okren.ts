@@ -37,7 +37,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       let eyeOffset: Point;
       switch (size) {
          case OkrenAgeStage.juvenile: eyeOffset = new Point(34, 60); break;
-         case OkrenAgeStage.youth:    eyeOffset = new Point(38, 64); break;
+         case OkrenAgeStage.youth:    eyeOffset = new Point(36, 66); break;
          case OkrenAgeStage.adult:    eyeOffset = new Point(42, 72); break;
          case OkrenAgeStage.elder:    eyeOffset = new Point(46, 76); break;
          case OkrenAgeStage.ancient:  eyeOffset = new Point(46, 84); break;
@@ -54,7 +54,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       switch (size) {
          case OkrenAgeStage.juvenile: mandibleOffset = new Point(16, 80); break;
          case OkrenAgeStage.youth:    mandibleOffset = new Point(18, 84); break;
-         case OkrenAgeStage.adult:    mandibleOffset = new Point(18, 88); break;
+         case OkrenAgeStage.adult:    mandibleOffset = new Point(20, 92); break;
          case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 98); break;
          case OkrenAgeStage.ancient:  mandibleOffset = new Point(22, 106); break;
       }
@@ -69,11 +69,11 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       
       let bigArmSegmentOffset: Point;
       switch (size) {
-         case OkrenAgeStage.juvenile: bigArmSegmentOffset = new Point(52, 62); break;
-         case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(64, 64); break;
-         case OkrenAgeStage.adult:    bigArmSegmentOffset = new Point(74, 66); break;
-         case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(82, 68); break;
-         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(78, 86); break;
+         case OkrenAgeStage.juvenile: bigArmSegmentOffset = new Point(52, 66); break;
+         case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(64, 68); break;
+         case OkrenAgeStage.adult:    bigArmSegmentOffset = new Point(74, 72); break;
+         case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(80, 84); break;
+         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(86, 88); break;
       }
       const bigArmSegmentPosition = fleshBodyHitbox.box.position.copy();
       bigArmSegmentPosition.add(bigArmSegmentOffset);
@@ -86,11 +86,11 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
 
       let mediumArmSegmentOffset: Point;
       switch (size) {
-         case OkrenAgeStage.juvenile: mediumArmSegmentOffset = new Point(0, 68); break;
-         case OkrenAgeStage.youth:    mediumArmSegmentOffset = new Point(4, 72); break;
+         case OkrenAgeStage.juvenile: mediumArmSegmentOffset = new Point(0, 64); break;
+         case OkrenAgeStage.youth:    mediumArmSegmentOffset = new Point(4, 68); break;
          case OkrenAgeStage.adult:    mediumArmSegmentOffset = new Point(4, 72); break;
-         case OkrenAgeStage.elder:    mediumArmSegmentOffset = new Point(4, 72); break;
-         case OkrenAgeStage.ancient:  mediumArmSegmentOffset = new Point(4, 72); break;
+         case OkrenAgeStage.elder:    mediumArmSegmentOffset = new Point(4, 74); break;
+         case OkrenAgeStage.ancient:  mediumArmSegmentOffset = new Point(4, 76); break;
       }
       const mediumArmSegmentPosition = bigArmSegmentHitbox.box.position.copy();
       mediumArmSegmentPosition.add(mediumArmSegmentOffset);
@@ -106,13 +106,26 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       mediumArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, mediumArmPivotY);
       addHitboxToTransformComponent(transformComponent, mediumArmSegmentHitbox);
       
-      const slashingArmSegmentOffset = Point.fromVectorForm(40, -Math.PI * 0.3);
-      slashingArmSegmentOffset.x += 32;
-      slashingArmSegmentOffset.y += 40;
+      let slashingArmSegmentOffset: Point;
+      switch (size) {
+         case OkrenAgeStage.juvenile: slashingArmSegmentOffset = new Point(0, 56); break;
+         case OkrenAgeStage.youth:    slashingArmSegmentOffset = new Point(0, 60); break;
+         case OkrenAgeStage.adult:    slashingArmSegmentOffset = new Point(0, 68); break;
+         case OkrenAgeStage.elder:    slashingArmSegmentOffset = new Point(0, 76); break;
+         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 80); break;
+      }
       const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
       slashingArmSegmentPosition.add(slashingArmSegmentOffset);
       const slashingArmSegmentHitbox = createHitbox(transformComponent, mediumArmSegmentHitbox, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3, 20, 80), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
-      slashingArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, -32);
+      let smallArmPivotY: number;
+      switch (size) {
+         case OkrenAgeStage.juvenile: smallArmPivotY = -26; break;
+         case OkrenAgeStage.youth:    smallArmPivotY = -30; break;
+         case OkrenAgeStage.adult:    smallArmPivotY = -32; break;
+         case OkrenAgeStage.elder:    smallArmPivotY = -36; break;
+         case OkrenAgeStage.ancient:  smallArmPivotY = -36; break;
+      }
+      slashingArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, smallArmPivotY);
       addHitboxToTransformComponent(transformComponent, slashingArmSegmentHitbox);
    }
    

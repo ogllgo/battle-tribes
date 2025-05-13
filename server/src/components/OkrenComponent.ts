@@ -10,7 +10,7 @@ import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
-import { getOkrenPreyTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
+import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
 import { runSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { createDustfleaEggConfig } from "../entities/desert/dustflea-egg";
 import { createEntity } from "../Entity";
