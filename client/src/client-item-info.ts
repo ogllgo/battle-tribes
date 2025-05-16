@@ -755,6 +755,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Cooked Crab Meat",
       namePlural: "Cooked Crab Meats",
       description: ""
+   },
+   [ItemType.chitin]: {
+      entityTextureSource: "items/small/chitin.png",
+      textureSource: "items/large/chitin.png",
+      toolTextureSource: "",
+      name: "Chitin",
+      namePlural: "Chitin",
+      description: ""
    }
 };
 

@@ -5,7 +5,8 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
-import { Point } from "../../../../shared/src/utils";
+import { ItemType } from "../../../../shared/src/items/items";
+import { Point, randInt } from "../../../../shared/src/utils";
 import { moveEntityToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { SandBallingAI } from "../../ai/SandBallingAI";
@@ -13,11 +14,47 @@ import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { HungerComponent } from "../../components/HungerComponent";
-import { OkrenAgeStage, OkrenComponent } from "../../components/OkrenComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { OkrenAgeStage, OkrenComponent, OkrenComponentArray } from "../../components/OkrenComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
+
+// const HEALTHS = [50, 80, 115, 150, 200];
+const HEALTHS = [1, 1, 1, 1,1];
+const VISION_RANGES = [500, 550, 600, 650, 700];
+
+registerEntityLootOnDeath(EntityType.okren, [
+   {
+      itemType: ItemType.rawCrabMeat,
+      getAmount: (okren: Entity) => {
+         const okrenComponent = OkrenComponentArray.getComponent(okren);
+         
+         switch (okrenComponent.size) {
+            case OkrenAgeStage.juvenile: return randInt(5, 7);
+            case OkrenAgeStage.youth: return randInt(7, 10);
+            case OkrenAgeStage.adult: return randInt(11, 15);
+            case OkrenAgeStage.elder: return randInt(16, 21);
+            case OkrenAgeStage.ancient: return randInt(22, 30);
+         }
+      }
+   },
+   {
+      itemType: ItemType.chitin,
+      getAmount: (okren: Entity) => {
+         const okrenComponent = OkrenComponentArray.getComponent(okren);
+         
+         switch (okrenComponent.size) {
+            case OkrenAgeStage.juvenile: return randInt(1, 2);
+            case OkrenAgeStage.youth: return randInt(2, 3);
+            case OkrenAgeStage.adult: return randInt(4, 6);
+            case OkrenAgeStage.elder: return randInt(7, 10);
+            case OkrenAgeStage.ancient: return randInt(11, 15);
+         }
+      }
+   }
+]);
 
 const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
    moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 0.6);
@@ -73,7 +110,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(64, 68); break;
          case OkrenAgeStage.adult:    bigArmSegmentOffset = new Point(74, 72); break;
          case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(80, 84); break;
-         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(86, 88); break;
+         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(86, 90); break;
       }
       const bigArmSegmentPosition = fleshBodyHitbox.box.position.copy();
       bigArmSegmentPosition.add(bigArmSegmentOffset);
@@ -100,8 +137,8 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.juvenile: mediumArmPivotY = -28; break;
          case OkrenAgeStage.youth:    mediumArmPivotY = -32; break;
          case OkrenAgeStage.adult:    mediumArmPivotY = -36; break;
-         case OkrenAgeStage.elder:    mediumArmPivotY = -36; break;
-         case OkrenAgeStage.ancient:  mediumArmPivotY = -36; break;
+         case OkrenAgeStage.elder:    mediumArmPivotY = -38; break;
+         case OkrenAgeStage.ancient:  mediumArmPivotY = -38; break;
       }
       mediumArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, mediumArmPivotY);
       addHitboxToTransformComponent(transformComponent, mediumArmSegmentHitbox);
@@ -111,8 +148,8 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.juvenile: slashingArmSegmentOffset = new Point(0, 56); break;
          case OkrenAgeStage.youth:    slashingArmSegmentOffset = new Point(0, 60); break;
          case OkrenAgeStage.adult:    slashingArmSegmentOffset = new Point(0, 68); break;
-         case OkrenAgeStage.elder:    slashingArmSegmentOffset = new Point(0, 76); break;
-         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 80); break;
+         case OkrenAgeStage.elder:    slashingArmSegmentOffset = new Point(0, 78); break;
+         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 82); break;
       }
       const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
       slashingArmSegmentPosition.add(slashingArmSegmentOffset);
@@ -133,14 +170,16 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const healthComponent = new HealthComponent(150);
+   const healthComponent = new HealthComponent(HEALTHS[size]);
 
-   const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, 700, move);
+   const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, VISION_RANGES[size], move);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
    
    // @Temporary
    const hungerComponent = new HungerComponent(1000, 200);
+   
+   const lootComponent = new LootComponent();
    
    const okrenComponent = new OkrenComponent();
    okrenComponent.size = size;
@@ -154,6 +193,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.hunger]: hungerComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.okren]: okrenComponent
       },
       lights: []

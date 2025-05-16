@@ -254,7 +254,7 @@ const isValidEggLayPosition = (okren: Entity, position: Point): boolean => {
 }
 
 function onTick(okren: Entity): void {
-   if (1+1===2)return;
+   // if (1+1===2)return;
    
    // @HACK: this should really be like some muscle or restriction thing defined when the okren is created.
    // Cuz what if this function gets disabled or when this gets abstracted into an AI component and the okren's AI gets turned off?
@@ -330,22 +330,22 @@ function onTick(okren: Entity): void {
    const combatAI = aiHelperComponent.getOkrenCombatAI();
    
    // @Temporary until i'm done testing okren krumblid dynamics
-   // const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
-   // if (threatTarget !== null) {
-   //    runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
-   //    return;
-   // }
-
-   if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
-      // Wait until the okren finds a good spot to lay eggs
-      if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
-         const potentialPosition = getRandomNearbyPosition(okren);
-         if (isValidEggLayPosition(okren, potentialPosition)) {
-            okrenComponent.eggLayPosition = potentialPosition;
-            okrenComponent.isLayingEggs = true;
-         }
-      }
+   const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
+   if (threatTarget !== null) {
+      runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
+      return;
    }
+
+   // if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
+   //    // Wait until the okren finds a good spot to lay eggs
+   //    if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
+   //       const potentialPosition = getRandomNearbyPosition(okren);
+   //       if (isValidEggLayPosition(okren, potentialPosition)) {
+   //          okrenComponent.eggLayPosition = potentialPosition;
+   //          okrenComponent.isLayingEggs = true;
+   //       }
+   //    }
+   // }
 
    const okrenTransformComponent = TransformComponentArray.getComponent(okren);
    const okrenBodyHitbox = okrenTransformComponent.children[0] as Hitbox;
@@ -490,9 +490,10 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
    }
 
    const velocityDiff = getHitboxVelocity(affectedHitbox).calculateDistanceBetween(getHitboxVelocity(collidingHitbox));
-   if (velocityDiff < 100) {
-      return;
-   }
+   // @Temporary @Hack as sometimes the slashers aren't moving fast enough... maybe just remove it completely but only have it work for one side? not the back of the hitbox/
+   // if (velocityDiff < 100) {
+   //    return;
+   // }
       
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
