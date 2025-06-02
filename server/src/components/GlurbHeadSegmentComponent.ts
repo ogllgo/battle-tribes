@@ -200,10 +200,10 @@ function onTick(glurbHead: Entity): void {
                   let config: EntityConfig;
                   if (currentNumComponents + 1 === glurbComponent.numSegments) {
                      // Tail segment
-                     config = createGlurbTailSegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                     config = createGlurbTailSegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox, finalSegmentTransformComponent);
                   } else {
                      // Body segment
-                     config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                     config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox, finalSegmentTransformComponent);
                   }
                   config.attachInfo = createEntityConfigAttachInfo(glurb, null, true);
                   createEntity(config, getEntityLayer(glurb), 0);

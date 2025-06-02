@@ -25,8 +25,8 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAccelerationFromGround, createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
-import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
+import { createHitbox } from "../../hitboxes";
+import { tetherHitboxes } from "../../tethers";
 
 const enum Vars {
    HEAD_TURN_SPEED = 0.75 * UtilVars.PI
@@ -110,7 +110,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   headHitbox.tethers.push(createHitboxTether(headHitbox, bodyHitbox, 50, 5/60, 0.4, true));
+   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, 50, 5/60, 0.4);
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
       springConstant: 5/60,

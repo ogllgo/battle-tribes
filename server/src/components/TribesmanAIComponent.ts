@@ -116,6 +116,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.rawCrabMeat]: 1,
    [ItemType.cookedCrabMeat]: 1,
    [ItemType.chitin]: 1,
+   [ItemType.crabplateArmour]: 1,
 };
 
 export const enum TribesmanPathType {

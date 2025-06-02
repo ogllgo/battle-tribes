@@ -81,10 +81,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(_entity: Entity, hitbox: Hitbox): void {
    createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 
    for (let i = 0; i < 2; i++) {

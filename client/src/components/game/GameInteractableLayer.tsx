@@ -25,7 +25,7 @@ import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInvent
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
 import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState } from "../../../../shared/src/attack-patterns";
+import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState, BLOCKING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
 import { createEntity, entityExists, EntityParams, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
@@ -363,13 +363,14 @@ export function updatePlayerItems(): void {
 
       // If finished resting after arrow release, return to default state
       if ((limb.action === LimbAction.arrowReleased || limb.action === LimbAction.mainArrowReleased) && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
-         const startingLimbState = getCurrentLimbState(limb);
+         const initialLimbState = getCurrentLimbState(limb);
          const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
          
          limb.action = LimbAction.returnFromBow;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = RETURN_FROM_BOW_USE_TIME_TICKS;
-         limb.currentActionStartLimbState = copyLimbState(startingLimbState);
+         // @Speed: why are we copying?
+         limb.currentActionStartLimbState = copyLimbState(initialLimbState);
          limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
       }
 
@@ -393,19 +394,41 @@ export function updatePlayerItems(): void {
          limb.action = LimbAction.block;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = 0;
+
+         
+      // case LimbAction.block: {
+      //    // @Copynpaste
+      //    const state = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
+      //    setThingToState(getHumanoidRadius(entity), attachPoint, state);
+      //    resetThing(limbRenderPart);
+      //    updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
+      //    removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
+      //    break;
+      // }
       }
 
       // @Incomplete: Double-check there isn't a tick immediately after depressing the button where this hasn't registered in the limb yet
       // If blocking but not right clicking, return to rest
       if (limb.action === LimbAction.block && !rightMouseButtonIsPressed) {
-         const blockAttackComponent = BlockAttackComponentArray.getComponent(limb.blockAttack);
+         let hasBlocked: boolean;
+         if (BlockAttackComponentArray.hasComponent(limb.blockAttack)) {
+            const blockAttackComponent = BlockAttackComponentArray.getComponent(limb.blockAttack);
+            hasBlocked = blockAttackComponent.hasBlocked;
+         } else {
+            hasBlocked = false;
+         }
+
+         const initialLimbState = getCurrentLimbState(limb);
 
          const attackInfo = getItemAttackInfo(limb.heldItemType);
          limb.action = LimbAction.returnBlockToRest;
          limb.currentActionElapsedTicks = 0;
          // @Temporary? Perhaps use separate blockReturnTimeTicks.
          limb.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks!;
-         limb.currentActionRate = blockAttackComponent.hasBlocked ? 2 : 1;
+         limb.currentActionRate = hasBlocked ? 2 : 1;
+         // @Speed: why copy?
+         limb.currentActionStartLimbState = copyLimbState(initialLimbState);
+         limb.currentActionEndLimbState = RESTING_LIMB_STATES[getLimbConfiguration(inventoryUseComponent)];
 
          sendStopItemUsePacket();
       }
@@ -1012,10 +1035,15 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       // Start blocking
       if (limb.action === LimbAction.none) {
          if (!itemIsResting(itemSlot)) {
+            const initialLimbState = getCurrentLimbState(limb);
+            
             limb.action = LimbAction.engageBlock;
             limb.currentActionElapsedTicks = 0;
             limb.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
             limb.currentActionRate = 1;
+            // @Speed: why are we copying?
+            limb.currentActionStartLimbState = copyLimbState(initialLimbState);
+            limb.currentActionEndLimbState = limb.heldItemType !== null && ITEM_TYPE_RECORD[limb.heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE;
             
             sendStartItemUsePacket();
          }
@@ -1210,7 +1238,7 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
             if (limb.thrownBattleaxeItemID !== -1 || limb.action !== LimbAction.chargeBattleaxe) {
                break;
             }
-
+ 
             limb.thrownBattleaxeItemID = item.id;
 
             // @Hack?

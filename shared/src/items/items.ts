@@ -96,9 +96,11 @@ export const enum ItemType {
    pricklyPear,
    rawCrabMeat,
    cookedCrabMeat,
-   chitin
+   chitin,
+   crabplateArmour
 }
 
+// @Cleanup @Robustness: pretty sure there's a C++ thing to automatically do this
 export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.wood]: "wood",
    [ItemType.workbench]: "workbench",
@@ -193,6 +195,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.rawCrabMeat]: "Raw Crab Meat",
    [ItemType.cookedCrabMeat]: "Cooked Crab Meat",
    [ItemType.chitin]: "Chitin",
+   [ItemType.crabplateArmour]: "Crabplate Armour",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -545,6 +548,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.rawCrabMeat]: "healing",
    [ItemType.cookedCrabMeat]: "healing",
    [ItemType.chitin]: "material",
+   [ItemType.crabplateArmour]: "armour",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -979,6 +983,9 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.chitin]: {
       stackSize: 99,
+   },
+   [ItemType.crabplateArmour]: {
+      defence: 0.3
    },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 

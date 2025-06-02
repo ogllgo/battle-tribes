@@ -1,5 +1,5 @@
-import { LimbState } from "../../../shared/src/attack-patterns";
-import { assertBoxIsCircular } from "../../../shared/src/boxes/boxes";
+import { BLOCKING_LIMB_STATE, LimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
+import { assertBoxIsCircular, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { HitFlags } from "../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
@@ -23,7 +23,7 @@ import { doBlueprintWork } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
 import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
-import { getHeldItem, LimbInfo } from "./InventoryUseComponent";
+import { getCurrentLimbState, getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
 import { entityTreeHasComponent, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
@@ -48,30 +48,18 @@ SwingAttackComponentArray.onTick = {
 };
 SwingAttackComponentArray.onEntityCollision = onEntityCollision;
 
-const setHitbox = (ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbAngle: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+// @Cleanup: not just used in this file!!
+export function setHitboxToLimbState(ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, limb: LimbState, isFlipped: boolean): void {
    const flipMultiplier = isFlipped ? -1 : 1;
 
-   const offset = extraOffset + getHumanoidRadius(ownerTransformComponent) + 2;
+   const offset = limb.extraOffset + getHumanoidRadius(ownerTransformComponent) + 2;
 
    const box = hitbox.box;
-   box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
-   box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
-   box.relativeAngle = limbAngle * flipMultiplier;
+   box.offset.x = offset * Math.sin(limb.direction * flipMultiplier) + limb.extraOffsetX * flipMultiplier;
+   box.offset.y = offset * Math.cos(limb.direction * flipMultiplier) + limb.extraOffsetY;
+   box.relativeAngle = limb.angle * flipMultiplier;
 
    hitboxTransformComponent.isDirty = true;
-}
-
-export function lerpHitboxBetweenStates(ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
-   const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
-   const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
-   const angle = lerp(startingLimbState.angle, targetLimbState.angle, progress);
-   const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
-   const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
-   setHitbox(ownerTransformComponent, hitboxTransformComponent, hitbox, direction, extraOffset, angle, extraOffsetX, extraOffsetY, isFlipped);
-}
-
-export function setHitboxToState(transformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
-   setHitbox(transformComponent, hitboxTransformComponent, hitbox, state.direction, state.extraOffset, state.angle, state.extraOffsetX, state.extraOffsetY, isFlipped);
 }
 
 function onTick(swingAttack: Entity): void {
@@ -87,9 +75,8 @@ function onTick(swingAttack: Entity): void {
    }
    
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
-   const swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
    const ownerTransformComponent = TransformComponentArray.getComponent(swingAttackComponent.owner);
-   lerpHitboxBetweenStates(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
+   setHitboxToLimbState(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, getCurrentLimbState(limb), isFlipped);
 }
 
 function getDataLength(): number {
@@ -165,6 +152,7 @@ const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | nu
 
 const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
    const plantTransformComponent = TransformComponentArray.getComponent(plant);
+   const plantHitbox = plantTransformComponent.children[0] as Hitbox;
    
    if (isBerryBushWithBerries(plant)) {
       const gatherMultiplier = getPlantGatherAmount(attacker, plant, gloves);
@@ -175,7 +163,6 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
          hitEntityWithoutDamage(plant, attacker, new Point(0, 0), 0);
       }
    } else {
-      const plantHitbox = plantTransformComponent.children[0] as Hitbox;
       assertBoxIsCircular(plantHitbox.box);
       const plantRadius = plantHitbox.box.radius;
 
@@ -193,7 +180,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
    // @HACK
    const collisionPoint = new Point(0, 0);
 
-   hitEntity(plant, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
+   hitEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
 const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
@@ -232,14 +219,15 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    hitDirection /= collidingHitboxPairs.length;
 
    // @Hack
-   const victimTransformComponent = TransformComponentArray.getComponent(victim);
-   const victimHitbox = victimTransformComponent.children[0] as Hitbox;
+   const firstHitboxPair = collidingHitboxPairs[0];
+
+   const victimHitbox = firstHitboxPair[1];
    const collisionPoint = new Point((victimHitbox.box.position.x + victimHitbox.box.position.x) / 2, (victimHitbox.box.position.y + victimHitbox.box.position.y) / 2);
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   hitEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, collidingHitboxPairs[0][1], attackKnockback, hitDirection);
+   hitEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
+   applyKnockback(victim, victimHitbox, attackKnockback, hitDirection);
 
    if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
       applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
@@ -254,6 +242,14 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
 }
 
 function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {
+   // @TEMPORARY: for optometrist shot
+   for (const pair of collidingHitboxPairs) {
+      if (pair[1].flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
+         return;
+      }
+      break;
+   }
+   
    // If the swing attack is finished, don't attack anymore
    if (entityIsFlaggedForDestruction(swingAttack)) {
       return;

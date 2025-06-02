@@ -1,4 +1,4 @@
-import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData, GameDataPacketOptions } from "battletribes-shared/client-server-types";
+import { PlayerKnockbackData, HealData, ResearchOrbCompleteData, GameDataPacketOptions } from "battletribes-shared/client-server-types";
 import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { Entity } from "battletribes-shared/entities";
@@ -6,9 +6,21 @@ import WebSocket from "ws";
 import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import Layer from "../Layer";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { Hitbox } from "../hitboxes";
 
 export const enum PlayerClientVars {
    VIEW_PADDING = 128
+}
+
+export interface HitData {
+   readonly hitEntity: Entity;
+   readonly hitHitbox: Hitbox;
+   readonly hitPosition: Readonly<Point>;
+   readonly attackEffectiveness: AttackEffectiveness;
+   readonly damage: number;
+   readonly shouldShowDamageNumber: boolean;
+   readonly flags: number;
 }
 
 class PlayerClient {

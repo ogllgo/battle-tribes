@@ -375,7 +375,7 @@ const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
             // @Hack
             const collisionPoint = new Point((hitHitbox.box.position.x + frozenYetiHitbox.box.position.x) / 2, (hitHitbox.box.position.y + frozenYetiHitbox.box.position.y) / 2);
 
-            hitEntity(victim, frozenYeti, 3, DamageSource.frozenYeti, AttackEffectiveness.effective, collisionPoint, 0);
+            hitEntity(victim, hitHitbox, frozenYeti, 3, DamageSource.frozenYeti, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(victim, hitHitbox, 200, angleToTarget);
 
             if (StatusEffectComponentArray.hasComponent(victim)) {
@@ -680,7 +680,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-function onTakeDamage(frozenYeti: Entity, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
+function onTakeDamage(frozenYeti: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
    if (attackingEntity === null) {
       return;
    }

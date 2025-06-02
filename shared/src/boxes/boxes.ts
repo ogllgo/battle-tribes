@@ -1,6 +1,6 @@
 import { circlesDoIntersect, circleAndRectangleDoIntersect } from "../collision";
-import { Point, rotateXAroundOrigin, rotateXAroundPoint, rotateYAroundOrigin, rotateYAroundPoint } from "../utils";
-import { PivotPoint, PivotPointType } from "./BaseBox";
+import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "../utils";
+import { PivotPointType } from "./BaseBox";
 import { CircularBox } from "./CircularBox";
 import RectangularBox from "./RectangularBox";
 
@@ -172,5 +172,13 @@ export function cloneBox(box: Box): Box {
       return new CircularBox(box.position.copy(), box.offset.copy(), box.angle, box.radius);
    } else {
       return new RectangularBox(box.position.copy(), box.offset.copy(), box.angle, box.width, box.height);
+   }
+}
+
+export function getBoxArea(box: Box): number {
+   if (boxIsCircular(box)) {
+      return Math.PI * box.radius * box.radius;
+   } else {
+      return box.width * box.height;
    }
 }

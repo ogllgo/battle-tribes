@@ -14,7 +14,7 @@ import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
-import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
+import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { EntityParams, getEntityRenderInfo } from "../../world";
@@ -254,13 +254,13 @@ const BOW_CHARGE_NON_DOMINANT_LIMB_STATE: LimbState = {
 type InventoryUseEntityType = EntityType.player | EntityType.tribeWorker | EntityType.tribeWarrior | EntityType.zombie;
 
 export function getCurrentLimbState(limb: LimbInfo): LimbState {
-   let progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
-   if (progress > 1) {
-      progress = 1;
-   } else if (progress < 0) {
-      progress = 0;
+   if (limb.currentActionDurationTicks === 0 || limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
+      // If the action has duration 0, assume that it is finished
+      return copyLimbState(limb.currentActionEndLimbState);
+   } else {
+      const progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+      return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
    }
-   return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
 }
 
 const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
@@ -404,6 +404,7 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
    let rotation: number;
    let showLargeTexture: boolean;
 
+   // @Shit
    switch (ITEM_TYPE_RECORD[heldItemType]) {
       case "shield": {
          offsetX = 8;
@@ -438,6 +439,13 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
       case "animalStaff": {
          offsetX = 26;
          offsetY = 24;
+         rotation = 0;
+         showLargeTexture = true;
+         break;
+      }
+      case "spear": {
+         offsetX = 4;
+         offsetY = 20;
          rotation = 0;
          showLargeTexture = true;
          break;
@@ -1117,45 +1125,6 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
          break;
       }
-      case LimbAction.engageBlock: {
-         // @Copynpaste
-         const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         let animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
-
-         // @Copynpaste
-         const endState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(entity, attachPoint, RESTING_LIMB_STATES[limbConfiguration], endState, animationProgress);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         
-         break;
-      }
-      case LimbAction.block: {
-         // @Copynpaste
-         const state = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         setThingToState(getHumanoidRadius(entity), attachPoint, state);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         break;
-      }
-      case LimbAction.returnBlockToRest: {
-         // @Copynpaste
-         const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         let animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
-         if (animationProgress > 1) {
-            animationProgress = 1;
-         }
-
-         // @Copynpaste
-         const startState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(entity, attachPoint, startState, RESTING_LIMB_STATES[limbConfiguration], animationProgress);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         break;
-      }
       case LimbAction.chargeSpear: {
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const chargeProgress = secondsSinceLastAction < 3 ? 1 - Math.pow(secondsSinceLastAction / 3 - 1, 2) : 1;
@@ -1168,6 +1137,9 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          attachPoint.shakeAmount = chargeProgress * 1.5;
          break;
       }
+      case LimbAction.engageBlock:
+      case LimbAction.block:
+      case LimbAction.returnBlockToRest:
       case LimbAction.engageBow:
       case LimbAction.moveLimbToQuiver:
       case LimbAction.moveLimbFromQuiver:

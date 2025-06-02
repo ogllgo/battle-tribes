@@ -81,7 +81,8 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
    // Tethers
    packet.addNumber(hitbox.tethers.length);
    for (const tether of hitbox.tethers) {
-      addBoxDataToPacket(packet, tether.originHitbox.box);
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      addBoxDataToPacket(packet, otherHitbox.box);
       packet.addNumber(tether.idealDistance);
       packet.addNumber(tether.springConstant);
       packet.addNumber(tether.damping);
@@ -111,7 +112,8 @@ export function getHitboxDataLength(hitbox: Hitbox): number {
    // Tethers
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const tether of hitbox.tethers) {
-      lengthBytes += getBoxDataLength(tether.originHitbox.box);
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      lengthBytes += getBoxDataLength(otherHitbox.box);
       lengthBytes += 3 * Float32Array.BYTES_PER_ELEMENT;
    }
    

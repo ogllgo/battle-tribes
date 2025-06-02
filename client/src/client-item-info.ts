@@ -763,6 +763,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Chitin",
       namePlural: "Chitin",
       description: ""
+   },
+   [ItemType.crabplateArmour]: {
+      entityTextureSource: "items/small/crabplate-armour.png",
+      textureSource: "items/large/crabplate-armour.png",
+      toolTextureSource: "",
+      name: "Crabplate Armour",
+      namePlural: "Crabplate Armour",
+      description: ""
    }
 };
 

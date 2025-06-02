@@ -10,8 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { addHitboxAngularAcceleration, addHitboxVelocity, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
-import { getAngleDiff, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
+import { applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
 import { cleanAngleNEW } from "../ai-shared";
 
 // @Cleanup: Variable names
@@ -228,52 +227,11 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
 }
 
 const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
-   // Position tethers
-   for (const tether of hitbox.tethers) {
-      const originHitbox = tether.originHitbox;
-
-      const diffX = originHitbox.box.position.x - hitbox.box.position.x;
-      const diffY = originHitbox.box.position.y - hitbox.box.position.y;
-      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
-      if (distance === 0) {
-         continue;
-      }
-
-      const normalisedDiffX = diffX / distance;
-      const normalisedDiffY = diffY / distance;
-
-      const displacement = distance - tether.idealDistance;
-      
-      // Calculate spring force
-      const springForceX = normalisedDiffX * tether.springConstant * displacement;
-      const springForceY = normalisedDiffY * tether.springConstant * displacement;
+   // @Cleanup: basically a wrapper now
    
-      const hitboxVelocity = getHitboxVelocity(hitbox);
-      const originHitboxVelocity = getHitboxVelocity(originHitbox);
-
-      const relVelX = hitboxVelocity.x - originHitboxVelocity.x;
-      const relVelY = hitboxVelocity.y - originHitboxVelocity.y;
-
-      const dampingForceX = -relVelX * tether.damping;
-      const dampingForceY = -relVelY * tether.damping;
-
-      const forceX = springForceX + dampingForceX;
-      const forceY = springForceY + dampingForceY;
-      
-      // @Incomplete: doesn't account for root hitbox!
-      hitbox.acceleration.x += forceX / hitbox.mass;
-      hitbox.acceleration.y += forceY / hitbox.mass;
-      if (tether.affectsOriginHitbox) {
-         originHitbox.acceleration.x -= forceX / originHitbox.mass;
-         originHitbox.acceleration.y -= forceY / originHitbox.mass;
-      }
-   }
-
    applyHitboxAngularTethers(hitbox);
-   // @Hack
-   const hasUpdated = hitbox.angularTethers.length > 0;
 
-   if (hitbox.tethers.length > 0 || hasUpdated) {
+   if (hitbox.angularTethers.length > 0) {
       // @Speed: Is this necessary every tick?
       transformComponent.isDirty = true;
    }

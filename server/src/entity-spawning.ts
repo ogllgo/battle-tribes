@@ -359,10 +359,10 @@ export function spawnInitialEntities(): void {
       // createEntity(youthOkrenConfig, surfaceLayer, 0);
       // const adultOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 220, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 2);
       // createEntity(adultOkrenConfig, surfaceLayer, 0);
-      // const elderOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
-      // createEntity(elderOkrenConfig, surfaceLayer, 0);
-      const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
-      createEntity(ancientOkrenConfig, surfaceLayer, 0);
+      const elderOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
+      createEntity(elderOkrenConfig, surfaceLayer, 0);
+      // const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      // createEntity(ancientOkrenConfig, surfaceLayer, 0);
       
       if(1+1===2)return;
       // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
@@ -391,7 +391,7 @@ export function spawnInitialEntities(): void {
       // a.components[ServerComponentType.transform].position.y = y;
       // createEntity(a, undergroundLayer, 0);
       // }
-   }, 9100);
+   }, 13100);
 
    if (!OPTIONS.spawnEntities) {
       return;

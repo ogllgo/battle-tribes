@@ -84,6 +84,11 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          playSoundOnHitbox("dustflea-egg-pop.mp3", 0.4, 1, entity, hitbox, true);
          break;
       }
+      case EntityTickEventType.okrenEyeHitSound: {
+         console.log("AAA");
+         playSoundOnHitbox("okren-eye-hit.mp3", 1.5, 0.6, entity, hitbox, true);
+         break;
+      }
    }
 }
 

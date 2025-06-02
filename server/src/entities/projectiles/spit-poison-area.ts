@@ -44,7 +44,8 @@ export function onSpitPoisonCollision(spit: Entity, collidingEntity: Entity, col
       return;
    }
 
-   hitEntity(collidingEntity, spit, 1, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLET
+   // hitEntity(collidingEntity, spit, 1, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "spitPoison", 0.35);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

@@ -413,7 +413,7 @@ const merge = (slime1: Entity, slime2: Entity): void => {
    destroyEntity(slime2);
 }
 
-function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox: Hitbox, receivingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Merge with slimes
@@ -439,7 +439,7 @@ function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox:
       const slimeComponent = SlimeComponentArray.getComponent(slime);
       const damage = CONTACT_DAMAGE[slimeComponent.size];
 
-      hitEntity(collidingEntity, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, collidingHitbox, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "slime", 0.3);
    }
 }
@@ -512,7 +512,7 @@ const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, pr
    }
 }
 
-function onTakeDamage(slime: Entity, attackingEntity: Entity | null): void {
+function onTakeDamage(slime: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null): void {
    if (attackingEntity === null) {
       return;
    }

@@ -8,21 +8,8 @@ import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } fr
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
+import { HitboxTether } from "./tethers";
 import { getEntityLayer, getEntityType } from "./world";
-
-export interface HitboxTether {
-   readonly originHitbox: Hitbox;
-   
-   readonly idealDistance: number;
-   readonly springConstant: number;
-   readonly damping: number;
-
-   readonly affectsOriginHitbox: boolean;
-
-   // Used for verlet integration
-   previousPositionX: number;
-   previousPositionY: number;
-}
 
 export interface HitboxAngularTether {
    readonly originHitbox: Hitbox;
@@ -42,6 +29,7 @@ export interface Hitbox {
    
    readonly previousPosition: Point;
    readonly acceleration: Point;
+   // @Incomplete: make it impossible to add or remove from here
    readonly tethers: Array<HitboxTether>;
    
    previousRelativeAngle: number;
@@ -59,19 +47,6 @@ export interface Hitbox {
    boundsMaxX: number;
    boundsMinY: number;
    boundsMaxY: number;
-}
-
-export function createHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): HitboxTether {
-   const tether: HitboxTether = {
-      originHitbox: otherHitbox,
-      idealDistance: idealDistance,
-      springConstant: springConstant,
-      damping: damping,
-      affectsOriginHitbox: affectsOriginHitbox,
-      previousPositionX: hitbox.box.position.x,
-      previousPositionY: hitbox.box.position.y
-   };
-   return tether;
 }
 
 export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {

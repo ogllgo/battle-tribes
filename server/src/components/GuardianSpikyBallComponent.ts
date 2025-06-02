@@ -49,7 +49,7 @@ function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, affectedH
 
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-      hitEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, collidingHitbox, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "gemSpikyBall", 0.5);
    }

@@ -37,6 +37,7 @@ import { createDustfleaConfig } from "../entities/desert/dustflea";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
+import { applyTethers } from "../tethers";
 
 /*
 
@@ -229,31 +230,33 @@ class GameServer {
 
                // @Temporary
                // setTimeout(() => {
-               //    const pos1 = spawnPosition.copy();
-               //    pos1.x -= 50;
-               //    const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-               //    createEntity(t1, layer, 0);
+               // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
+               
+                  // const pos1 = spawnPosition.copy();
+                  // pos1.x -= 50;
+                  // const t1 = createTribeWorkerConfig(pos1, 0, tribe);
+                  // createEntity(t1, layer, 0);
 
-               //    setTimeout(() => {
-               //       const pos2 = spawnPosition.copy();
-               //       pos2.x -= 100;
-               //       const t2 = createTribeWorkerConfig(pos2, 0, tribe);
-               //       createEntity(t2, layer, 0);
-               //    }, 100)
+                  // setTimeout(() => {
+                  //    const pos2 = spawnPosition.copy();
+                  //    pos2.x -= 100;
+                  //    const t2 = createTribeWorkerConfig(pos2, 0, tribe);
+                  //    createEntity(t2, layer, 0);
+                  // }, 100)
 
-               //    setTimeout(() => {
-               //       const pos3 = spawnPosition.copy();
-               //       pos3.x -= 150;
-               //       const t3 = createTribeWorkerConfig(pos3, 0, tribe);
-               //       createEntity(t3, layer, 0);
-               //    }, 316)
+                  // setTimeout(() => {
+                  //    const pos3 = spawnPosition.copy();
+                  //    pos3.x -= 150;
+                  //    const t3 = createTribeWorkerConfig(pos3, 0, tribe);
+                  //    createEntity(t3, layer, 0);
+                  // }, 316)
 
-               //    setTimeout(() => {
-               //       const pos4 = spawnPosition.copy();
-               //       pos4.x -= 200;
-               //       const t4 = createTribeWorkerConfig(pos4, 0, tribe);
-               //       createEntity(t4, layer, 0);
-               //    }, 602)
+                  // setTimeout(() => {
+                  //    const pos4 = spawnPosition.copy();
+                  //    pos4.x -= 200;
+                  //    const t4 = createTribeWorkerConfig(pos4, 0, tribe);
+                  //    createEntity(t4, layer, 0);
+                  // }, 602)
                // }, 10000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
@@ -464,6 +467,7 @@ class GameServer {
          updateWind();
          
          tickEntities();
+         applyTethers();
          updateDynamicPathfindingNodes();
 
          for (const layer of layers) {

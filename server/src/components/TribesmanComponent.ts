@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType, Entity, LimbAction } from "../../../shared/src/entities";
-import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
+import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { TitleGenerationInfo, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "../../../shared/src/titles";
@@ -11,6 +11,7 @@ import { onFishLeaderHurt } from "../entities/mobs/fish";
 import { useItem } from "../entities/tribes/tribe-member";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { addHumanoidInventories } from "../inventories";
+import { createItem } from "../items";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -46,7 +47,9 @@ TribesmanComponentArray.onKill = onKill;
 TribesmanComponentArray.onTakeDamage = onTakeDamage;
 TribesmanComponentArray.onDealDamage = onDealDamage;
 
-function onInitialise(config: EntityConfig, _: unknown): void {
+let a = 0;
+
+function onInitialise(config: EntityConfig): void {
    // War paint type
    const tribesmanComponent = config.components[ServerComponentType.tribesman]!;
    const tribeComponent = config.components[ServerComponentType.tribe]!;
@@ -67,6 +70,24 @@ function onInitialise(config: EntityConfig, _: unknown): void {
    const inventoryComponent = config.components[ServerComponentType.inventory]!;
    const inventoryUseComponent = config.components[ServerComponentType.inventoryUse]!;
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, config.entityType);
+
+   if (a <= 1 || 1+1===2) {
+      const shield = createItem(ItemType.spear, 1);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(shield, 1);
+      const armo = createItem(ItemType.crabplateArmour, 1);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(armo, 2);
+      const berry = createItem(ItemType.berry, 17);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(berry, 3);
+   } else {
+      const bow = createItem(ItemType.wooden_bow, 1);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(bow, 1);
+      const arrows = createItem(ItemType.woodenArrow, 16);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(arrows, 2);
+      const arrows2 = createItem(ItemType.woodenArrow, 16);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(arrows2, 3);
+   }
+   
+   a++;
 }
 
 function getDataLength(entity: Entity): number {
@@ -299,7 +320,7 @@ function onKill(entity: Entity, deadEntity: Entity): void {
    }
 }
 
-function onTakeDamage(tribeMember: Entity, attackingEntity: Entity | null): void {
+function onTakeDamage(tribeMember: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null): void {
    if (attackingEntity === null) {
       return;
    }

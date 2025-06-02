@@ -76,7 +76,7 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       if (canDamageEntity(healthComponent, "snowball")) {
          const hitDirection = snowballHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-         hitEntity(collidingEntity, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
+         hitEntity(collidingEntity, collidingHitbox, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "snowball", 0.3);
       }

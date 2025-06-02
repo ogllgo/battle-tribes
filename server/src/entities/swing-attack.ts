@@ -9,7 +9,7 @@ import { Point } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
-import { setHitboxToState, SwingAttackComponent } from "../components/SwingAttackComponent";
+import { setHitboxToLimbState, SwingAttackComponent } from "../components/SwingAttackComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createHitbox, Hitbox } from "../hitboxes";
 
@@ -28,7 +28,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    const limbHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, limbHitbox);
 
-   setHitboxToState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
+   setHitboxToLimbState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
    // @hack ? Should probably set all hitbox positions when they are added from the join buffer.
    updateBox(limbHitbox.box, ownerHitbox.box);
 

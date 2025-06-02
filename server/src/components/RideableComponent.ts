@@ -3,9 +3,8 @@ import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { Hitbox } from "../hitboxes";
-import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -53,7 +52,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 }
 
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false, false);
+   attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
    carrySlot.occupiedEntity = entity;
 }
 

@@ -4,8 +4,8 @@ import { PacketReader } from "../../../../shared/src/packets";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
-import { randFloat, angle, randItem, randInt } from "../../../../shared/src/utils";
+import { HitFlags } from "../../../../shared/src/client-server-types";
+import { randFloat, randItem, randInt, Point } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
@@ -93,16 +93,13 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    treePlantedComponent.renderPart.switchTextureSource(getTextureSource(treePlantedComponent.growthProgress));
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
    const treePlantedComponent = TreePlantedComponentArray.getComponent(entity);
    
    const radius = Math.floor(treePlantedComponent.growthProgress * 10);
 
    // @Cleanup: copy and paste
-   const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
+   const isDamagingHit = (hitFlags & HitFlags.NON_DAMAGING_HIT) === 0;
    
    // Create leaf particles
    {
@@ -123,7 +120,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    if (isDamagingHit) {
       // Create wood specks at the point of hit
 
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + (radius + 2) * Math.sin(offsetDirection);

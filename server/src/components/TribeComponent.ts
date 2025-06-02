@@ -79,13 +79,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
 
          return planterBoxTribeComponent.tribe === tribeComponent.tribe ? EntityRelationship.neutral : EntityRelationship.enemyBuilding;
       }
-      // Friendlies
-      // @Hack @Hardcoded
-      case EntityType.player:
-      case EntityType.tribeWorker:
-      case EntityType.tribeWarrior:
-      case EntityType.scrappy:
-      case EntityType.cogwalker:
+      // Projectiles, although they do belong to a tribe, damage every tribe. so they should just be considered neutral
       case EntityType.woodenArrow:
       case EntityType.ballistaWoodenBolt:
       case EntityType.ballistaRock:
@@ -93,6 +87,15 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.ballistaSlimeball:
       case EntityType.slingTurretRock:
       case EntityType.iceArrow: {
+         return EntityRelationship.neutral;
+      }
+      // Friendlies
+      // @Hack @Hardcoded
+      case EntityType.player:
+      case EntityType.tribeWorker:
+      case EntityType.tribeWarrior:
+      case EntityType.scrappy:
+      case EntityType.cogwalker:{
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const comparingEntityTribeComponent = TribeComponentArray.getComponent(comparingEntity);
 

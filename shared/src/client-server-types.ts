@@ -2,9 +2,7 @@ import { BuildingPlanData, TribeWallData, WallConnectionData } from "./ai-buildi
 import { BlueprintType } from "./components";
 import { EntitySummonPacket } from "./dev-packets";
 import { LimbAction } from "./entities";
-import { AttackEffectiveness } from "./entity-damage-types";
 import { EntityTickEvent } from "./entity-events";
-import { HitboxCollisionType, HitboxFlag } from "./boxes/boxes";
 import { InventoryName, ItemType } from "./items/items";
 import { StatusEffect } from "./status-effects";
 import { TechID } from "./techs";
@@ -28,15 +26,6 @@ export const HitFlags = {
    NON_DAMAGING_HIT: 1 << 1,
    HIT_BY_SPIKES: 1 << 2
 };
-
-export interface HitData {
-   readonly hitEntityID: number;
-   readonly hitPosition: [number, number];
-   readonly attackEffectiveness: AttackEffectiveness;
-   readonly damage: number;
-   readonly shouldShowDamageNumber: boolean;
-   readonly flags: number;
-}
 
 export interface PlayerKnockbackData {
    readonly knockback: number;
@@ -75,8 +64,6 @@ export enum GameDataPacketOptions {
 /** Data about the game state sent to the client each tick */
 export interface GameDataPacket {
    readonly tileUpdates: ReadonlyArray<ServerTileUpdateData>;
-   /** All hits taken by visible entities server-side */
-   readonly visibleHits: ReadonlyArray<HitData>;
    readonly playerKnockbacks: ReadonlyArray<PlayerKnockbackData>;
    /** All healing received by visible entities server-side */
    readonly heals: ReadonlyArray<HealData>;

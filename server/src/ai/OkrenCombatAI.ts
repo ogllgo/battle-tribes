@@ -36,8 +36,8 @@ const BOTH_SWING_COOLDOWN_TICKS = Math.floor(Settings.TPS * 0.7);
 
 const TONGUE_INITIAL_OFFSET = 88;
 // @Hack shouldn't export
-export const MIN_TONGUE_COOLDOWN_TICKS = 3 * Settings.TPS;
-export const MAX_TONGUE_COOLDOWN_TICKS = 4 * Settings.TPS;
+export const MIN_TONGUE_COOLDOWN_TICKS = 4 * Settings.TPS;
+export const MAX_TONGUE_COOLDOWN_TICKS = 5 * Settings.TPS;
 
 const entityIsThreatToDesert = (entity: Entity): boolean => {
    return TribeMemberComponentArray.hasComponent(entity) || getEntityType(entity) === EntityType.zombie;

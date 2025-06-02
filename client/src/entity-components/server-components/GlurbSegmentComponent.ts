@@ -1,4 +1,3 @@
-import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
@@ -145,14 +144,12 @@ function onTick(glurb: Entity): void {
    }
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
+function onHit(entity: Entity, _hitbox: Hitbox, hitPosition: Point): void {
    for (let i = 0; i < 10; i++) {
-      const spawnPositionX = hitData.hitPosition[0];
-      const spawnPositionY = hitData.hitPosition[1];
-      createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createSlurbParticle(hitPosition.x, hitPosition.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
    }
 
-   playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), Point.unpackage(hitData.hitPosition), getEntityLayer(entity));
+   playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), hitPosition, getEntityLayer(entity));
 }
 
 function onDie(entity: Entity): void {

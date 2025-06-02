@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { angle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { angle, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
@@ -12,7 +12,6 @@ import { entityChildIsHitbox, getHitboxTile, TransformComponentArray } from "./T
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
 import { Hitbox } from "../../hitboxes";
@@ -220,10 +219,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    cowComponent.isRamming = isRamming;
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-         
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    // Blood pool particles
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
@@ -231,7 +227,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);

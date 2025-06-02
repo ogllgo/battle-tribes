@@ -225,7 +225,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
             if (entityConfigAttachInfoIsTethered(attachInfo)) {
-               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.affectsOriginHitbox, attachInfo.destroyWhenParentIsDestroyed);
+               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
             } else {
                attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
             }
@@ -247,33 +247,6 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
                assert(typeof childJoinInfo !== "undefined");
                
                attachEntity(childJoinInfo.entity, joinInfo.entity, null, true);
-            }
-         }
-
-         const childEntities = joinInfo.entityConfig.childEntities;
-         if (typeof childEntities !== "undefined") {
-            for (const childInfo of childEntities) {
-               const childTransformComponent = TransformComponentArray.getComponent(childInfo.entity);
-               // Remove from previous parent if it exists
-               // if (childT`ransformComponent.rootEntity !== childInfo.entity) {
-               //    removeAttachedEntity(childTransformComponent.parentEntity, childInfo.entity);
-               // }`
-               
-               // @HACK!
-               // attachEntity(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, childInfo.attachInfo.destroyWhenParentIsDestroyed);
-               
-               // const angularTether = undefined;
-               // attachEntityWithTether(childInfo.entity, joinInfo.entity, childInfo.attachInfo.parentHitbox, 24, 10, 0.5, false, true, angularTether);
-               // if (childInfo.attachInfo.parentHitbox !== null) {
-               //    const angularTether: HitboxAngularTether = {
-               //       originHitbox: childInfo.attachInfo.parentHitbox,
-               //       springConstant: 20,
-               //       angularDamping: 0.5,
-               //       padding: 0.1
-               //    };
-               //    childTransformComponent.addHitboxTether(childTransformComponent.children[0] as Hitbox, childInfo.attachInfo.parentHitbox, 22, 1000, 10, false);
-               //    (childTransformComponent.children[0] as Hitbox).angularTethers.push(angularTether);
-               // }
             }
          }
       }

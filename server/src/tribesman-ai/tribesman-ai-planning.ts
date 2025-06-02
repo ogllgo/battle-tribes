@@ -190,6 +190,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.rawCrabMeat]: null,
    [ItemType.cookedCrabMeat]: null,
    [ItemType.chitin]: null,
+   [ItemType.crabplateArmour]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {

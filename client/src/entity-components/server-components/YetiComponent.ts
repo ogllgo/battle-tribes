@@ -1,4 +1,4 @@
-import { angle, lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { lerp, Point, randFloat, randItem } from "battletribes-shared/utils";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -11,7 +11,6 @@ import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
@@ -158,10 +157,7 @@ function onTick(entity: Entity): void {
    yetiComponent.lastAttackProgress = yetiComponent.attackProgress;
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    playSoundOnHitbox(randItem(HURT_SOUNDS), 0.7, 1, entity, hitbox, false);
 
    // Blood pool particle
@@ -169,7 +165,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + YETI_SIZE / 2 * Math.sin(offsetDirection);

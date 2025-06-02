@@ -1,10 +1,10 @@
-import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
+import { PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
 import { BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
 import { TechID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
-import PlayerClient from "./PlayerClient";
+import PlayerClient, { HitData } from "./PlayerClient";
 import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./packet-creation";
 import { Entity, EntityType } from "battletribes-shared/entities";
@@ -399,7 +399,7 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
    return viewingPlayerClients;
 }
 
-export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
+export function registerEntityHit(hitEntity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
    const viewingPlayers = getPlayersViewingEntity(hitEntity);
    if (viewingPlayers.length === 0) {
       return;
@@ -409,8 +409,9 @@ export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | n
       const playerClient = viewingPlayers[i];
 
       const hitData: HitData = {
-         hitEntityID: hitEntity,
-         hitPosition: hitPosition.package(),
+         hitEntity: hitEntity,
+         hitHitbox: hitHitbox,
+         hitPosition: hitPosition,
          attackEffectiveness: attackEffectiveness,
          damage: damage,
          shouldShowDamageNumber: shouldShowDamageNumber(playerClient, attackingEntity),

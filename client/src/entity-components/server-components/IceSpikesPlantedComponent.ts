@@ -88,9 +88,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    iceSpikesPlantedComponent.renderPart.switchTextureSource(getTextureSource(growthProgress));
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    // @Incomplete: particles?
    playSoundOnHitbox("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
 }

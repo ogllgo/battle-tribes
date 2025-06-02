@@ -127,7 +127,7 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

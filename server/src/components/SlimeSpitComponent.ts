@@ -73,7 +73,7 @@ function onHitboxCollision(spit: Entity, collidingEntity: Entity, affectedHitbox
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

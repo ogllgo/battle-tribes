@@ -102,10 +102,7 @@ function onTick(entity: Entity): void {
    }
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(_entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 2; i++) {
       let spawnPositionX: number;
       let spawnPositionY: number;
@@ -118,7 +115,6 @@ function onHit(entity: Entity): void {
       }
 
       let moveDirection = angle(spawnPositionX - hitbox.box.position.x, spawnPositionY - hitbox.box.position.y)
-      
       moveDirection += randFloat(-1, 1);
 
       createRockParticle(spawnPositionX, spawnPositionY, moveDirection, randFloat(80, 125), ParticleRenderLayer.low);

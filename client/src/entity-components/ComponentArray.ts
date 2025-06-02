@@ -2,9 +2,8 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
-import { HitData } from "../../../shared/src/client-server-types";
 import { ClientComponentType } from "./client-component-types";
-import { assert } from "../../../shared/src/utils";
+import { assert, Point } from "../../../shared/src/utils";
 import { EntityIntermediateInfo, EntityParams } from "../world";
 import { Hitbox } from "../hitboxes";
 
@@ -30,7 +29,7 @@ export interface ComponentArrayFunctions<T extends object, ComponentIntermediate
    /** Called when a packet is skipped and there is no data to update from, so we must extrapolate all the game logic */
    onUpdate?(entity: Entity): void;
    onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   onHit?(entity: Entity, hitData: Readonly<HitData>): void;
+   onHit?(entity: Entity, hitHitbox: Hitbox, hitPosition: Point, hitFlags: number): void;
    onRemove?(entity: Entity): void;
    /** Called when the entity dies, not when the entity leaves the player's vision. */
    onDie?(entity: Entity): void;
@@ -85,7 +84,7 @@ export abstract class ComponentArray<
    public onTick?: (entity: Entity) => void;
    public onUpdate?: (entity: Entity) => void;
    public onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   public onHit?(entity: Entity, hitData: Readonly<HitData>): void;
+   public onHit?(entity: Entity, hitHitbox: Hitbox, hitPosition: Point, hitFlags: number): void;
    public onDie?(entity: Entity): void;
    public onRemove?(entity: Entity): void;
 

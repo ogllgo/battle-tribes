@@ -158,14 +158,12 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 4; i++) {
       const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
       const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
+      // @HACK @Robustness
       let moveDirection = Math.PI/2 - Math.atan2(spawnPositionY, spawnPositionX);
       moveDirection += randFloat(-1, 1);
       

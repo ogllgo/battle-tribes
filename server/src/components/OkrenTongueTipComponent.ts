@@ -2,19 +2,21 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Point } from "../../../shared/src/utils";
-import { createHitboxTether, getTotalMass, Hitbox } from "../hitboxes";
+import { getTotalMass, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
+import { tetherHitboxes } from "../tethers";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
 import { OkrenTongueComponentArray, startRetractingTongue } from "./OkrenTongueComponent";
 import { PhysicsComponent, PhysicsComponentArray } from "./PhysicsComponent";
-import { attachEntity, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export class OkrenTongueTipComponent {}
 
 export const OkrenTongueTipComponentArray = new ComponentArray<OkrenTongueTipComponent>(ServerComponentType.okrenTongueTip, true, getDataLength, addDataToPacket);
 OkrenTongueTipComponentArray.onHitboxCollision = onHitboxCollision;
+OkrenTongueTipComponentArray.onTakeDamage = onTakeDamage;
 
 function getDataLength(): number {
    return 0;
@@ -56,17 +58,27 @@ function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedH
 
    // Don't snag if the hitbox is already tethered
    for (const tether of collidingHitbox.tethers) {
-      if (tether.originHitbox === affectedHitbox) {
+      const otherHitbox = tether.getOtherHitbox(collidingHitbox);
+      if (otherHitbox === affectedHitbox) {
          return;
       }
    }
 
-   // @HACK: have to put it on the colliding hitbox so that if the player is the one being snagged, they know they are tethered to the tongue and so can update their phsycis.
-   const tether = createHitboxTether(collidingHitbox, affectedHitbox, 0, 100, 2, true);
-   collidingHitbox.tethers.push(tether);
-   // attachEntity(collidingEntity, tongueTip, affectedHitbox, false);
+   {
+   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   const tongue = tongueTipTransformComponent.parentEntity;
+   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+      // @Hack @Temporary
+      if (okrenTongueComponent.isRetracting) {
+         return;
+      }
+   }
 
    const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+
+   const collidingHitboxTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   tetherHitboxes(collidingHitbox, affectedHitbox, collidingHitboxTransformComponent, tongueTipTransformComponent, 0, 100, 2);
+
    const tongue = tongueTipTransformComponent.parentEntity;
    const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
    startRetractingTongue(tongue, okrenTongueComponent);
@@ -80,4 +92,13 @@ function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedH
       data: 0
    };
    registerEntityTickEvent(tongueTip, tickEvent);
+}
+
+// @Copynpaste
+function onTakeDamage(tongueTip: Entity): void {
+   // @Copynpaste
+   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   const tongue = tongueTipTransformComponent.parentEntity;
+   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   startRetractingTongue(tongue, okrenTongueComponent);
 }

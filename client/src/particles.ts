@@ -2218,3 +2218,44 @@ export function createSandParticle(spawnPositionX: number, spawnPositionY: numbe
    );
    Board.highMonocolourParticles.push(particle);
 }
+
+export function createOkrenEyeParticle(spawnPositionX: number, spawnPositionY: number, vx: number, vy: number, moveDirection: number): void {
+   const lifetime = randFloat(0.3, 0.4);
+   
+   const moveSpeed = randFloat(40, 60);
+   const velocityX = vx + moveSpeed * Math.sin(moveDirection);
+   const velocityY = vy + moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+ 
+   const lowR = 22/255;
+   const lowG = 25/255;
+   const lowB = 41/255;
+   const highR = 69/255;
+   const highG = 73/255;
+   const highB = 96/255;
+
+   const u = Math.random();
+   const r = lerp(lowR, highR, u);
+   const g = lerp(lowG, highG, u);
+   const b = lerp(lowB, highB, u);
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      4, 4,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}

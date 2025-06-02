@@ -183,7 +183,7 @@ function onTick(dustflea: Entity): void {
       const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
       const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
       if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
-         hitEntity(dustfleaTransformComponent.rootEntity, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
+         hitEntity(dustfleaTransformComponent.rootEntity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
       }
       return;
    }
@@ -262,7 +262,8 @@ function onWallCollision(dustflea: Entity): void {
    // Die when crushed against a wall
    if (transformComponent.rootEntity !== dustflea) {
       const hitbox = getTransformComponentFirstHitbox(transformComponent);
-      hitEntity(dustflea, null, 999, 0, AttackEffectiveness.effective, hitbox!.box.position.copy(), 0);
+      assert(hitbox !== null);
+      hitEntity(dustflea, hitbox, null, 999, 0, AttackEffectiveness.effective, hitbox!.box.position.copy(), 0);
    }
 }
 

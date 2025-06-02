@@ -2,9 +2,8 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { Entity } from "../../../../shared/src/entities";
-import { angle, randFloat, randInt } from "../../../../shared/src/utils";
+import { Point, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
@@ -77,15 +76,12 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(krumblid: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
+function onHit(krumblid: Entity, hitbox: Hitbox, hitPosition: Point): void {
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
    // Blood particles
    for (let i = 0; i < 5; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);

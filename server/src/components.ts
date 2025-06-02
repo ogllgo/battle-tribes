@@ -290,11 +290,6 @@ export interface EntityConfig {
    attachInfo?: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether;
    /** Any child entities' configs. */
    childConfigs?: ReadonlyArray<EntityConfig>;
-   /** Any existing entities for which, upon the entity spawns, they will all be childed to the entity and removed from their existing parents. */
-   childEntities?: ReadonlyArray<{
-      entity: Entity,
-      attachInfo: EntityAttachInfo;
-   }>;
 }
 
 export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {

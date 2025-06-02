@@ -11,8 +11,9 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
+import { createHitbox, Hitbox } from "../../hitboxes";
 import { createLight } from "../../light-levels";
+import { tetherHitboxes } from "../../tethers";
 
 registerEntityLootOnDeath(EntityType.glurbTailSegment, [
    {
@@ -21,7 +22,7 @@ registerEntityLootOnDeath(EntityType.glurbTailSegment, [
    }
 ]);
 
-export function createGlurbTailSegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox): EntityConfig {
+export function createGlurbTailSegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox, lastTransformComponent: TransformComponent): EntityConfig {
    const radius = 20;
    const flags = [HitboxFlag.GLURB_TAIL_SEGMENT];
    const mass = 0.4;
@@ -34,7 +35,7 @@ export function createGlurbTailSegmentConfig(position: Point, rotation: number, 
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   hitbox.tethers.push(createHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15/60, 0.5, true));
+   tetherHitboxes(hitbox, lastHitbox, transformComponent, lastTransformComponent, tetherIdealDistance, 15/60, 0.5);
 
    const physicsComponent = new PhysicsComponent();
 

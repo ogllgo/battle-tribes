@@ -8,15 +8,15 @@ import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt } from "../../../shared/src/utils";
+import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt, randSign } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
 import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
 import { runSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { createDustfleaEggConfig } from "../entities/desert/dustflea-egg";
 import { createEntity } from "../Entity";
-import { applyAbsoluteKnockback, getHitboxAngularVelocity, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { addHitboxAngularVelocity, applyAbsoluteKnockback, getHitboxAngularVelocity, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
@@ -89,6 +89,8 @@ const MAX_DUSTFLEA_GESTATION_TIME = 5 * Settings.TPS;
 
 const DUSTFLEA_EGG_LAY_TIME_TICKS = Settings.TPS;
 
+const ATTACK_DAMAGES = [2, 2, 3, 3, 4];
+
 export class OkrenComponent {
    public size = OkrenAgeStage.juvenile;
    
@@ -105,6 +107,9 @@ export class OkrenComponent {
    public eggLayPosition = new Point(0, 0);
 
    public isProtectingEggs = false;
+
+   /** If an element is greater than 0, it means that the corresponding eye is hardened */
+   public eyeHardenTimers = [0, 0];
 }
 
 export const OkrenComponentArray = new ComponentArray<OkrenComponent>(ServerComponentType.okren, true, getDataLength, addDataToPacket);
@@ -113,6 +118,8 @@ OkrenComponentArray.onTick = {
    func: onTick
 };
 OkrenComponentArray.onHitboxCollision = onHitboxCollision;
+OkrenComponentArray.onTakeDamage = onTakeDamage;
+OkrenComponentArray.getDamageTakenMultiplier = getDamageTakenMultiplier;
 
 const setOkrenHitboxIdealAngles = (okren: Entity, side: OkrenSide, idealAngles: OkrenHitboxIdealAngles, bigTurnSpeed: number, mediumTurnSpeed: number, smallTurnSpeed: number): void => {
    // @Hack
@@ -324,6 +331,12 @@ function onTick(okren: Entity): void {
          okrenComponent.ticksInStates[side] = 0;
       }
    }
+
+   for (const side of OKREN_SIDES) {
+      if (okrenComponent.eyeHardenTimers[side] > 0) {
+         okrenComponent.eyeHardenTimers[side]--;
+      }
+   }
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(okren);
 
@@ -455,12 +468,14 @@ function onTick(okren: Entity): void {
 }
 
 function getDataLength(): number {
-   return Float32Array.BYTES_PER_ELEMENT;
+   return 3 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, okren: Entity): void {
    const okrenComponent = OkrenComponentArray.getComponent(okren);
    packet.addNumber(okrenComponent.size);
+   packet.addNumber(okrenComponent.eyeHardenTimers[0]);
+   packet.addNumber(okrenComponent.eyeHardenTimers[1]);
 }
 
 function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
@@ -506,9 +521,48 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
       return;
    }
 
+   const okrenComponent = OkrenComponentArray.getComponent(okren);
+   
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, okren, 4, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, okren, ATTACK_DAMAGES[okrenComponent.size], DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, hash, 0.3);
+}
+
+function onTakeDamage(okren: Entity, hitHitbox: Hitbox): void {
+   if (hitHitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
+      // @Hack: entity is the okren because the dustflea egg isn't created yet so the function can't get the transform component of it
+      const tickEvent: EntityTickEvent = {
+         type: EntityTickEventType.okrenEyeHitSound,
+         entityID: okren,
+         data: 0
+      };
+      registerEntityTickEvent(okren, tickEvent);
+
+      // Make the eye harden for a bit
+      const isLeftSide = hitHitbox.box.flipX;
+      const i = isLeftSide ? OkrenSide.left : OkrenSide.right;
+      const okrenComponent = OkrenComponentArray.getComponent(okren);
+      const hardenTimeTicks = Math.floor(0.62 * Settings.TPS);
+      if (hardenTimeTicks > okrenComponent.eyeHardenTimers[i]) {
+         okrenComponent.eyeHardenTimers[i] = hardenTimeTicks;
+      }
+
+      // Make all the limbs spasm a lil' bit
+      const transformComponent = TransformComponentArray.getComponent(okren);
+      for (const hitbox of transformComponent.children) {
+         if (entityChildIsHitbox(hitbox) && (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT) || hitbox.flags.includes(HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT) || hitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION))) {
+            addHitboxAngularVelocity(hitbox, -randFloat(1.1, 1.3));
+         }
+      }
+   }
+}
+
+function getDamageTakenMultiplier(_entity: Entity, hitHitbox: Hitbox): number {
+   if (hitHitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
+      return 2;
+   } else {
+      return 1;
+   }
 }

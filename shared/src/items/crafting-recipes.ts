@@ -517,6 +517,15 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.automatonAssembler
    },
+   {
+      product: ItemType.crabplateArmour,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.chitin]: 15
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.mithrilAnvil
+   },
 ];
 
 export function getItemRecipe(itemType: ItemType): CraftingRecipe | null {

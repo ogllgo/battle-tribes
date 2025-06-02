@@ -120,7 +120,7 @@ function onTick(entity: Entity): void {
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
                   const hitPosition = getRandomPositionInEntity(transformComponent);
-                  hitEntity(entity, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
+                  hitEntity(entity, hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
             break;
@@ -129,8 +129,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 0.5)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
+               hitEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -138,8 +140,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 1)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               hitEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -147,8 +151,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 2)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               hitEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
          }
       }

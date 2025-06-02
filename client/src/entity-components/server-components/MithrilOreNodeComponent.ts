@@ -9,7 +9,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInBox, getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
 export interface MithrilOreNodeComponentParams {
    readonly size: number;
@@ -97,13 +97,11 @@ function updateFromData(reader: PacketReader): void {
    padData(reader);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 3; i++) {
       const c = randFloat(0.25, 0.4);
       
-      const position = getRandomPositionInEntity(transformComponent);
+      const position = getRandomPositionInBox(hitbox.box);
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
    

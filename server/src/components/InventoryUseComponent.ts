@@ -195,16 +195,13 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
 }
 
 export function getCurrentLimbState(limb: LimbInfo): LimbState {
-   let progress: number;
-   if (limb.currentActionDurationTicks === 0) {
+   if (limb.currentActionDurationTicks === 0 || limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
       // If the action has duration 0, assume that it is finished
-      progress = 1;
-   } else if (limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
-      progress = 1;
+      return copyLimbState(limb.currentActionEndLimbState);
    } else {
-      progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+      const progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+      return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
    }
-   return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
 }
 
 const boxIsCollidingWithSubtile = (box: Box, subtileX: number, subtileY: number): boolean => {
@@ -260,14 +257,11 @@ function onTick(entity: Entity): void {
          limb.currentActionElapsedTicks += limb.currentActionRate;
       }
       
-      const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
-      
       if (currentActionHasFinished(limb)) {
          switch (limb.action) {
             case LimbAction.engageBlock: {
                const blockAttackConfig = createBlockAttackConfig(entity, limb);
                limb.blockAttack = createEntity(blockAttackConfig, getEntityLayer(entity), 0);
-               console.log(limb.blockAttack);
 
                limb.action = LimbAction.block;
                limb.currentActionElapsedTicks = 0;
@@ -286,6 +280,8 @@ function onTick(entity: Entity): void {
                
                applyKnockback(entity, entityHitbox, 250, entityHitbox.box.angle);
 
+               // @Incomplete
+               
                // const blockAttack = createBlockAttackConfig(entity, limb);
                // createEntity(blockAttack, getEntityLayer(entity), 0);
 
@@ -433,19 +429,7 @@ function onTick(entity: Entity): void {
          }
       }
 
-      let swingProgress: number;
-      if (limb.currentActionDurationTicks === 0) {
-         swingProgress = 0;
-      } else if (limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
-         swingProgress = 1;
-      } else {
-         swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
-      }
-         
-      // @Incomplete?
-      // lerpLimbBetweenStates(entity, limb, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
-
-      // @Temporary?
+      // @Temporary? why did i comment this out
       // If the attack collides with a wall, cancel it
       // if (limb.action === LimbAction.attack) {
       //    const layer = getEntityLayer(entity);

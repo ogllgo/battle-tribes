@@ -45,14 +45,14 @@ function onTick(quake: Entity): void {
    }
 }
 
-function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "gemQuake")) {
          return;
       }
 
-      hitEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "gemQuake", 0.3);
    }
 }

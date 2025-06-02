@@ -1,6 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
+import { Hitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 
@@ -64,7 +65,7 @@ function onTick(entity: Entity): void {
    }
 }
 
-function onTakeDamage(entity: Entity, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
+function onTakeDamage(entity: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
    if (attackingEntity === null) {
       return;
    }

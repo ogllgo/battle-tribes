@@ -4,7 +4,7 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
-import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
+import { getCurrentLimbState, getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { changeEntityLayer, getFirstComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -40,6 +40,7 @@ import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
+import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -217,16 +218,21 @@ export function processStartItemUsePacket(playerClient: PlayerClient, reader: Pa
    const attackInfo = getItemAttackInfo(item.type);
    if (attackInfo.attackTimings.blockTimeTicks !== null) {
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
-      const limbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+      const limb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+      
+      const initialLimbState = getCurrentLimbState(limb);
 
       // @Cleanup: unneeded?
-      limbInfo.selectedItemSlot = itemSlot;
+      limb.selectedItemSlot = itemSlot;
       
       // Begin blocking
-      limbInfo.action = LimbAction.engageBlock;
-      limbInfo.currentActionElapsedTicks = 0;
-      limbInfo.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
-      limbInfo.currentActionRate = 1;
+      limb.action = LimbAction.engageBlock;
+      limb.currentActionElapsedTicks = 0;
+      limb.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
+      limb.currentActionRate = 1;
+      // @Speed: why are we copying?
+      limb.currentActionStartLimbState = copyLimbState(initialLimbState);
+      limb.currentActionEndLimbState = item.type !== null && ITEM_TYPE_RECORD[item.type] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE;
       return;
    }
 

@@ -50,7 +50,7 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
    const fragmentHitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
    applyKnockback(collidingEntity, collidingHitbox, 50, fragmentHitDirection);
 
-   hitEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    
    const affectedHitboxVelocity = getHitboxVelocity(affectedHitbox);
    const knockbackDirection = angle(affectedHitboxVelocity.x, affectedHitboxVelocity.y);

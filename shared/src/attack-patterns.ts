@@ -138,9 +138,9 @@ export const SPEAR_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo>
          extraOffsetY: 0
       },
       swung: {
-         direction: Math.PI * 0.13,
-         extraOffset: 26,
-         angle: Math.PI * -1/6,
+         direction: Math.PI * 0.06,
+         extraOffset: 28,
+         angle: Math.PI * -0.75/6,
          extraOffsetX: 0,
          extraOffsetY: 0
       }
@@ -323,7 +323,7 @@ export const SPEAR_DAMAGE_BOX_INFO: LimbHeldItemDamageBoxInfo = {
    height: 96,
    rotation: 0,
    offsetX: 5,
-   offsetY: 22
+   offsetY: 30
 };
 
 export function createZeroedLimbState(): LimbState {

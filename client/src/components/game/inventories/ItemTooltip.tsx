@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimalStaffItemInfo, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../../../shared/src/items/items";
+import { AnimalStaffItemInfo, ArmourItemInfo, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../../../shared/src/items/items";
 import CLIENT_ITEM_INFO_RECORD from "../../../client-item-info";
 
 export let ItemTooltip_setItem: (item: Item | null) => void = () => {};
@@ -40,6 +40,10 @@ export const ItemTooltip = () => {
 
       {itemCategory === "animalStaff" && (
          <p>Control range: {(itemInfo as AnimalStaffItemInfo).controlRange} units</p>
+      )}
+
+      {itemCategory === "armour" && (
+         <p>Defence: {(itemInfo as ArmourItemInfo).defence * 100}%</p>
       )}
 
       {typeof clientItemInfo.flavourText !== "undefined" ? (

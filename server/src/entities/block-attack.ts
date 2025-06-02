@@ -9,7 +9,7 @@ import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { BlockAttackComponent } from "../components/BlockAttackComponent";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
-import { setHitboxToState } from "../components/SwingAttackComponent";
+import { setHitboxToLimbState } from "../components/SwingAttackComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createHitbox, Hitbox } from "../hitboxes";
 
@@ -28,14 +28,14 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   setHitboxToState(ownerTransformComponent, transformComponent, hitbox, limb.currentActionStartLimbState, isFlipped);
+   setHitboxToLimbState(ownerTransformComponent, transformComponent, hitbox, limb.currentActionStartLimbState, isFlipped);
    // @hack ? Should probably set all hitbox positions when they are added from the join buffer.
    updateBox(hitbox.box, ownerHitbox.box);
    
    const physicsComponent = new PhysicsComponent();
 
    const blockType = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? BlockType.shieldBlock : BlockType.toolBlock;
-   const blockAttackComponent = new BlockAttackComponent(owner, blockType);
+   const blockAttackComponent = new BlockAttackComponent(owner, limb, blockType);
 
    return {
       entityType: EntityType.blockAttack,

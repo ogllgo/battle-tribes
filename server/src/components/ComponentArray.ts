@@ -78,7 +78,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
     * Called when the entity takes damage.
     * Only relevant for entities with health components
    */
-   public onTakeDamage?(entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource, damageTaken: number): void;
+   public onTakeDamage?(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damageSource: DamageSource, damageTaken: number): void;
 
    /**
     * Called when the entity deals damage to another entity
@@ -86,6 +86,8 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    */
    public onDealDamage?(entity: Entity, attackedEntity: Entity, damageSource: DamageSource): void;
 
+   public getDamageTakenMultiplier?(entity: Entity, hitHitbox: Hitbox): number;
+   
    /**
     * Called when the entity is killed (their health is reduced to 0.)
     * Only relevant for entities with health components

@@ -58,6 +58,7 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
    let currentY = y;
    
    let lastHitbox: Hitbox | undefined;
+   let lastTransformComponent: TransformComponent | undefined;
    for (let i = 0; i < numSegments; i++) {
       currentY -= 30;
       
@@ -65,13 +66,14 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
       if (i === 0) {
          config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
       } else if (i < numSegments - 1) {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, lastTransformComponent!);
       } else {
-         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!);
+         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, lastTransformComponent!);
       }
       
       const segmentTransformComponent = config.components[ServerComponentType.transform]!;
       lastHitbox = segmentTransformComponent.children[0] as Hitbox;
+      lastTransformComponent = segmentTransformComponent;
 
       childConfigs.push(config);
    }

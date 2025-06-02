@@ -78,10 +78,7 @@ function updateFromData(reader: PacketReader): void {
    padData(reader);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 6; i++) {
       createWoodSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16 * Math.random());
    }

@@ -117,6 +117,7 @@ export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, colli
    }
    
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLETE
+   // hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
 }

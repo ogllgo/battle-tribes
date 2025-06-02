@@ -87,7 +87,7 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
 
       if (getEntityAgeTicks(krumblid) % Settings.TPS === 0) {
          const hitPosition = new Point((targetHitbox.box.position.x + hitbox.box.position.x) / 2, (targetHitbox.box.position.y + hitbox.box.position.y) / 2);
-         hitEntity(target, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
+         hitEntity(target, targetHitbox, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
       }
    }
 }

@@ -2,7 +2,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
-import { Point, angle, assert, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
+import { Point, assert, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
 import { Light, attachLightToRenderPart, createLight, removeAllAttachedLights } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -19,7 +19,6 @@ import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./Physi
 import ServerComponentArray from "../ServerComponentArray";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { TribeType } from "../../../../shared/src/tribes";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { InventoryName, ItemType } from "../../../../shared/src/items/items";
 import { playSoundOnHitbox } from "../../sound";
 import { InventoryComponentArray, getInventory } from "./InventoryComponent";
@@ -808,16 +807,13 @@ function updatePlayerFromData(reader: PacketReader): void {
    TitlesTab_setTitles(titles);
 }
    
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    // Blood pool particle
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);

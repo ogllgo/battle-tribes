@@ -283,7 +283,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.padOffset(3);
 }
 
-function onTakeDamage(golem: Entity, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
+function onTakeDamage(golem: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {
    // @Cleanup: Copy and paste from frozen-yeti
 
    if (attackingEntity === null || !HealthComponentArray.hasComponent(attackingEntity)) {
@@ -327,7 +327,7 @@ function onHitboxCollision(golem: Entity, collidingEntity: Entity, affectedHitbo
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 300, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

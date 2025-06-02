@@ -65,7 +65,7 @@ function onHitboxCollision(rockSpikeProjectile: Entity, collidingEntity: Entity,
       
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
+      hitEntity(collidingEntity, collidingHitbox, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "rock_spike", 0.3);
    }

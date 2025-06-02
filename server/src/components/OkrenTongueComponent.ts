@@ -1,18 +1,17 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
-import { Settings } from "../../../shared/src/settings";
 import { assert, customTickIntervalHasPassed, Point, randInt } from "../../../shared/src/utils";
 import { MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS } from "../ai/OkrenCombatAI";
 import { createEntityConfigAttachInfo } from "../components";
 import { createOkrenTongueSegmentConfig } from "../entities/desert/okren-tongue-segment";
 import { createEntity } from "../Entity";
-import { addHitboxVelocity, applyAcceleration, createHitboxTether, Hitbox, HitboxAngularTether, turnHitboxToAngle } from "../hitboxes";
+import { addHitboxVelocity, applyAcceleration, Hitbox, HitboxAngularTether, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
+import { destroyTether, tetherHitboxes } from "../tethers";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { OkrenTongueTipComponentArray } from "./OkrenTongueTipComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export class OkrenTongueComponent {
@@ -60,7 +59,7 @@ const getTongueTip = (transformComponent: TransformComponent): Entity => {
    return attachInfo.attachedEntity;
 }
 
-const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, previousBaseHitbox: Hitbox, distance: number): void => {
+const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, previousBaseHitbox: Hitbox, previousBaseTransformComponent: TransformComponent, distance: number): void => {
    const offsetMagnitude = distance - IDEAL_SEPARATION;
    
    // Create the new root entity
@@ -94,7 +93,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
    newSegmentHitbox.angularTethers.push(angularTether);
 
    // Tether the old base entity to the new base entity
-   previousBaseHitbox.tethers.push(createHitboxTether(previousBaseHitbox, newSegmentHitbox, IDEAL_SEPARATION, 280, 2.5, true));
+   tetherHitboxes(previousBaseHitbox, newSegmentHitbox, previousBaseTransformComponent, segmentTransformComponent, IDEAL_SEPARATION, 280, 2.5);
    segmentConfig.attachInfo = createEntityConfigAttachInfo(tongue, null, true);
    previousBaseHitbox.angularTethers.push({
       originHitbox: newSegmentHitbox,
@@ -164,7 +163,7 @@ const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
    const distance = okrenHitbox.box.position.calculateDistanceBetween(tongueBaseHitbox.box.position);
 
    if (distance >= TONGUE_INITIAL_OFFSET + IDEAL_SEPARATION) {
-      addTongueSegment(tongue, okren, okrenHitbox, tongueBaseHitbox, distance);
+      addTongueSegment(tongue, okren, okrenHitbox, tongueBaseHitbox, tongueBaseTransformComponent, distance);
    }
 }
 
@@ -195,6 +194,25 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
    };
    tongueBaseHitbox.angularTethers.push(angularTether);
    // tongueBaseHitbox.tethers.push(createHitboxTether(tongueBaseHitbox, okrenHitbox, 0, 400/60, 0.5, false));
+
+   // Do an initial jerk back of the tongue as the okren reacts to whatever caused it to want to retract its tongue (be it being hit, reaching max length, or catching something)
+   for (let i = 0; i < tongueTransformComponent.children.length; i++) {
+      const child = tongueTransformComponent.children[i];
+      if (!entityChildIsEntity(child)) {
+         return;
+      }
+
+      const tonguePart = child.attachedEntity;
+      const partTransformComponent = TransformComponentArray.getComponent(tonguePart);
+      const partHitbox = partTransformComponent.children[0] as Hitbox;
+
+      const directionToOkren = partHitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
+      
+      const vel = 200;
+      const pushX = vel * Math.sin(directionToOkren);
+      const pushY = vel * Math.cos(directionToOkren);
+      addHitboxVelocity(partHitbox, pushX, pushY);
+   }
 }
 
 const regressTongue = (tongue: Entity, tongueTransformComponent: TransformComponent, okrenTongueComponent: OkrenTongueComponent, okren: Entity): void => {
@@ -262,8 +280,9 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
          let hasFound = false;
          for (let i = 0; i < nextBaseSegmentHitbox.tethers.length; i++) {
             const tether = nextBaseSegmentHitbox.tethers[i];
-            if (tether.originHitbox === tongueBaseHitbox) {
-               nextBaseSegmentHitbox.tethers.splice(i, 1);
+            const otherHitbox = tether.getOtherHitbox(nextBaseSegmentHitbox);
+            if (otherHitbox === tongueBaseHitbox) {
+               destroyTether(tether);
                hasFound = true;
                break;
             }
@@ -300,7 +319,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
       // Destroy the previous base
       destroyEntity(tongueBaseEntity);
    } else if (distance >= TONGUE_INITIAL_OFFSET + IDEAL_SEPARATION) {
-      addTongueSegment(tongue, okren, okrenHitbox, tongueBaseHitbox, distance);
+      addTongueSegment(tongue, okren, okrenHitbox, tongueBaseHitbox, tongueBaseTransformComponent, distance);
    }
 }
 

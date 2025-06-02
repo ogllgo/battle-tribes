@@ -350,7 +350,7 @@ function onTick(cow: Entity): void {
    }
 
    if (cowComponent.bowelFullness === 0 && getEntityAgeTicks(cow) % (2 * Settings.TPS) === 0) {
-      hitEntity(cow, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
+      hitEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
    }
    
    // If the cow is recovering after doing a ram, just stand still and do nothing else
@@ -691,7 +691,7 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
    
-   hitEntity(collidingEntity, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
 
    stopRamming(cowComponent);

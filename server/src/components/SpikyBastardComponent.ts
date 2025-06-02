@@ -34,7 +34,7 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHit
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

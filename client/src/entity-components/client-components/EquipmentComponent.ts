@@ -31,13 +31,15 @@ export interface EquipmentComponent {
    hasFrostShield: boolean;
 }
 
+// @Cleanup: copy the file name frmo the client item info thing
 const ARMOUR_TEXTURE_SOURCE_ENDINGS: Record<ArmourItemType, string> = {
    [ItemType.leather_armour]: "leather-armour.png",
    [ItemType.frostArmour]: "frost-armour.png",
    [ItemType.meat_suit]: "meat-suit.png",
    [ItemType.fishlord_suit]: "fishlord-suit.png",
    [ItemType.leaf_suit]: "leaf-suit.png",
-   [ItemType.mithrilArmour]: "mithril-armour.png"
+   [ItemType.mithrilArmour]: "mithril-armour.png",
+   [ItemType.crabplateArmour]: "crabplate-armour.png",
 };
 
 const GLOVES_TEXTURE_SOURCE_RECORD: Record<GloveItemType, string> = {

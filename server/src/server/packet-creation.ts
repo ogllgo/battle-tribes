@@ -195,7 +195,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * removedEntities.length;
 
    // Visible hits
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 7 * Float32Array.BYTES_PER_ELEMENT * playerClient.visibleHits.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 8 * Float32Array.BYTES_PER_ELEMENT * playerClient.visibleHits.length;
    // Player knockback
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * playerClient.playerKnockbacks.length;
    // Player heals
@@ -299,9 +299,10 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    packet.addNumber(playerClient.visibleHits.length);
    for (let i = 0; i < playerClient.visibleHits.length; i++) {
       const hitData = playerClient.visibleHits[i];
-      packet.addNumber(hitData.hitEntityID);
-      packet.addNumber(hitData.hitPosition[0]);
-      packet.addNumber(hitData.hitPosition[1]);
+      packet.addNumber(hitData.hitEntity);
+      packet.addNumber(hitData.hitHitbox.localID);
+      packet.addNumber(hitData.hitPosition.x);
+      packet.addNumber(hitData.hitPosition.y);
       packet.addNumber(hitData.attackEffectiveness);
       packet.addNumber(hitData.damage);
       packet.addBoolean(hitData.shouldShowDamageNumber);

@@ -115,7 +115,8 @@ export function onPunjiSticksCollision(punjiSticks: Entity, collidingEntity: Ent
    }
    
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, punjiSticks, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLETE
+   // hitEntity(collidingEntity, punjiSticks, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "punjiSticks", 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

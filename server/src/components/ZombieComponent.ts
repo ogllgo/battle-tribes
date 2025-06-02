@@ -362,7 +362,7 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitb
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // Damage and knock back the player
-   hitEntity(collidingEntity, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   hitEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 
@@ -379,7 +379,7 @@ function preRemove(zombie: Entity): void {
    }
 }
 
-function onTakeDamage(zombie: Entity, attackingEntity: Entity | null): void {
+function onTakeDamage(zombie: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null): void {
    if (attackingEntity !== null) {
       // @Cleanup: too many ifs. generalise
       const attackingEntityType = getEntityType(attackingEntity);

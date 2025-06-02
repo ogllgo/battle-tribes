@@ -1,4 +1,4 @@
-import { createAbsolutePivotPoint, createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
+import { createAbsolutePivotPoint, createNormalisedPivotPoint, PivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
@@ -21,8 +21,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 
-// const HEALTHS = [50, 80, 115, 150, 200];
-const HEALTHS = [1, 1, 1, 1,1];
+const HEALTHS = [50, 80, 115, 150, 200];
 const VISION_RANGES = [500, 550, 600, 650, 700];
 
 registerEntityLootOnDeath(EntityType.okren, [
@@ -65,7 +64,15 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const transformComponent = new TransformComponent();
    
    // Flesh body hitbox
-   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 80), 5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
+   let bodyRadius: number;
+   switch (size) {
+      case OkrenAgeStage.juvenile: bodyRadius = 48; break;
+      case OkrenAgeStage.youth:    bodyRadius = 56; break;
+      case OkrenAgeStage.adult:    bodyRadius = 64; break;
+      case OkrenAgeStage.elder:    bodyRadius = 72; break;
+      case OkrenAgeStage.ancient:  bodyRadius = 80; break;
+   }
+   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
    addHitboxToTransformComponent(transformComponent, fleshBodyHitbox);
 
    for (let i = 0; i < 2; i++) {
@@ -76,12 +83,21 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.juvenile: eyeOffset = new Point(34, 60); break;
          case OkrenAgeStage.youth:    eyeOffset = new Point(36, 66); break;
          case OkrenAgeStage.adult:    eyeOffset = new Point(42, 72); break;
-         case OkrenAgeStage.elder:    eyeOffset = new Point(46, 76); break;
-         case OkrenAgeStage.ancient:  eyeOffset = new Point(46, 84); break;
+         case OkrenAgeStage.elder:    eyeOffset = new Point(46, 80); break;
+         case OkrenAgeStage.ancient:  eyeOffset = new Point(46, 88); break;
+      }
+      let eyeRadius: number;
+      switch (size) {
+         // In all of these, the radius put in is 4 larger than the radius of the actual eye sprite to make it easier to hit
+         case OkrenAgeStage.juvenile: eyeRadius = 18; break;
+         case OkrenAgeStage.youth:    eyeRadius = 18; break;
+         case OkrenAgeStage.adult:    eyeRadius = 18; break;
+         case OkrenAgeStage.elder:    eyeRadius = 18; break;
+         case OkrenAgeStage.ancient:  eyeRadius = 18; break;
       }
       const eyePosition = fleshBodyHitbox.box.position.copy();
       eyePosition.add(eyeOffset);
-      const eyeHitbox = createHitbox(transformComponent, fleshBodyHitbox, new CircularBox(eyePosition, eyeOffset, 0, 18), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_EYE]);
+      const eyeHitbox = createHitbox(transformComponent, fleshBodyHitbox, new CircularBox(eyePosition, eyeOffset, 0, eyeRadius), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_EYE]);
       eyeHitbox.box.flipX = sideIsFlipped;
       // @Hack
       eyeHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
@@ -149,20 +165,20 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.youth:    slashingArmSegmentOffset = new Point(0, 60); break;
          case OkrenAgeStage.adult:    slashingArmSegmentOffset = new Point(0, 68); break;
          case OkrenAgeStage.elder:    slashingArmSegmentOffset = new Point(0, 78); break;
-         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 82); break;
+         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 78); break;
       }
       const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
       slashingArmSegmentPosition.add(slashingArmSegmentOffset);
       const slashingArmSegmentHitbox = createHitbox(transformComponent, mediumArmSegmentHitbox, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3, 20, 80), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
-      let smallArmPivotY: number;
+      let smallArmPivotPoint: PivotPoint;
       switch (size) {
-         case OkrenAgeStage.juvenile: smallArmPivotY = -26; break;
-         case OkrenAgeStage.youth:    smallArmPivotY = -30; break;
-         case OkrenAgeStage.adult:    smallArmPivotY = -32; break;
-         case OkrenAgeStage.elder:    smallArmPivotY = -36; break;
-         case OkrenAgeStage.ancient:  smallArmPivotY = -36; break;
+         case OkrenAgeStage.juvenile: smallArmPivotPoint = createAbsolutePivotPoint(0, -26); break;
+         case OkrenAgeStage.youth:    smallArmPivotPoint = createAbsolutePivotPoint(0, -30); break;
+         case OkrenAgeStage.adult:    smallArmPivotPoint = createAbsolutePivotPoint(0, -32); break;
+         case OkrenAgeStage.elder:    smallArmPivotPoint = createAbsolutePivotPoint(0, -36); break;
+         case OkrenAgeStage.ancient:  smallArmPivotPoint = createAbsolutePivotPoint(-4, -40); break;
       }
-      slashingArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, smallArmPivotY);
+      slashingArmSegmentHitbox.box.pivot = smallArmPivotPoint;
       addHitboxToTransformComponent(transformComponent, slashingArmSegmentHitbox);
    }
    

@@ -104,10 +104,7 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    // Blood particles
    for (let i = 0; i < 5; i++) {
       const position = hitbox.box.position.offset(16, 2 * Math.PI * Math.random());

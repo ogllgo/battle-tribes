@@ -2,7 +2,8 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { Point, randFloat, randInt, randSign } from "../../../shared/src/utils";
-import { addHitboxAngularVelocity, createHitboxTether, Hitbox } from "../hitboxes";
+import { addHitboxAngularVelocity, Hitbox } from "../hitboxes";
+import { tetherHitboxes } from "../tethers";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
@@ -61,17 +62,21 @@ function onHitboxCollision(dustfleaEgg: Entity, collidingEntity: Entity, affecte
 
    // Make sure neither of the hitboxes are already tethered to either of each other
    for (const tether of affectedHitbox.tethers) {
-      if (tether.originHitbox === collidingHitbox) {
+      const otherHitbox = tether.getOtherHitbox(affectedHitbox);
+      if (otherHitbox === collidingHitbox) {
          return;
       }
    }
    // @Copynpaste @Hack: ideally we shouldn't have to check both hitboxes for the tether. references should be present on both not just 1
    for (const tether of collidingHitbox.tethers) {
-      if (tether.originHitbox === affectedHitbox) {
+      const otherHitbox = tether.getOtherHitbox(collidingHitbox)
+      if (otherHitbox === affectedHitbox) {
          return;
       }
    }
 
-   const tether = createHitboxTether(affectedHitbox, collidingHitbox, 20, 10, 1, true);
-   affectedHitbox.tethers.push(tether);
+   // @Cleanup: this sucks. tethers shouldn't know about transform components (?)
+   const transformComponent1 = TransformComponentArray.getComponent(dustfleaEgg);
+   const transformComponent2 = TransformComponentArray.getComponent(collidingEntity);
+   tetherHitboxes(affectedHitbox, collidingHitbox, transformComponent1, transformComponent2, 20, 10, 1);
 }

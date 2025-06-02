@@ -65,9 +65,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-const createIceSpeckProjectile = (transformComponent: TransformComponent): void => {
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
+const createIceSpeckProjectile = (hitbox: Hitbox): void => {
    const spawnOffsetDirection = 2 * Math.PI * Math.random();
    const spawnPositionX = hitbox.box.position.x + SIZE / 2 * Math.sin(spawnOffsetDirection);
    const spawnPositionY = hitbox.box.position.y + SIZE / 2 * Math.cos(spawnOffsetDirection);
@@ -102,13 +100,10 @@ const createIceSpeckProjectile = (transformComponent: TransformComponent): void 
    Board.lowMonocolourParticles.push(particle);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    // Create ice particles on hit
    for (let i = 0; i < 10; i++) {
-      createIceSpeckProjectile(transformComponent);
+      createIceSpeckProjectile(hitbox);
    }
    
    playSoundOnHitbox("ice-spikes-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
@@ -119,7 +114,7 @@ function onDie(entity: Entity): void {
    const hitbox = transformComponent.children[0] as Hitbox;
 
    for (let i = 0; i < 15; i++) {
-      createIceSpeckProjectile(transformComponent);
+      createIceSpeckProjectile(hitbox);
    }
    
    playSoundOnHitbox("ice-spikes-destroy.mp3", 0.4, 1, entity, hitbox, false);

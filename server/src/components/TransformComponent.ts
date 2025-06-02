@@ -12,7 +12,7 @@ import { tickEntityPhysics } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
-import { Box, boxIsCircular, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
+import { Box, boxIsCircular, getBoxArea, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { destroyEntity, entityExists, getEntityLayer, getEntityType, setEntityLayer } from "../world";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
@@ -20,8 +20,9 @@ import { removeEntityLights, updateEntityLights } from "../light-levels";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
-import { createHitboxTether, getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
+import { getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
+import { destroyTether as destroyTether, tetherHitboxes } from "../tethers";
 
 export interface EntityAttachInfo {
    readonly attachedEntity: Entity;
@@ -53,6 +54,7 @@ export class TransformComponent {
    public parentEntity: Entity = 0;
    
    // @Speed: mix and matching 2 types is very bad for performance. Is there some arcitecture which won't do this?
+   // @Robustness: also having it be one or the other can easily introduce bugs where you assume it's one or the other. Should completely remove that architecturally
    /** All children attached to the entity */
    public readonly children = new Array<TransformNode>();
    /** Children not attached to any hitbox interal to the same entity. Root children can either be children with no parent, or children with a different entity's hitbox as a parent. */
@@ -496,19 +498,6 @@ function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    transformComponent.lastValidLayer = getEntityLayer(entity);
-
-   // Update the hitbox tether last positions, in case their positions were changed after creation
-   for (const child of transformComponent.children) {
-      if (!entityChildIsHitbox(child)) {
-         continue;
-      }
-
-      const hitbox = child;
-      for (const tether of hitbox.tethers) {
-         tether.previousPositionX = hitbox.box.position.x;
-         tether.previousPositionY = hitbox.box.position.y;
-      }
-   }
    
    // @Cleanup: This is so similar to the updatePosition function
    
@@ -564,6 +553,14 @@ function onRemove(entity: Entity): void {
       const child = transformComponent.children[i];
       if (entityChildIsEntity(child)) {
          removeAttachedEntity(entity, child.attachedEntity);
+      } else {
+         const hitbox = child;
+
+         // Untether from other hitbox
+         while (hitbox.tethers.length > 0) {
+            const tether = hitbox.tethers[0];
+            destroyTether(tether);
+         }
       }
    }
    
@@ -695,7 +692,7 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
 }
 
 // @Copynpaste !
-export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean): void {
+export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
@@ -720,8 +717,7 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
             // @Incomplete: why don't we set the offset here like in the non-tether function??
 
             // @Incomplete !
-            const tether = createHitboxTether(rootHitbox, parentHitbox, idealDistance, springConstant, damping, affectsOriginHitbox);
-            rootHitbox.tethers.push(tether);
+            tetherHitboxes(rootHitbox, parentHitbox, entityTransformComponent, parentTransformComponent, idealDistance, springConstant, damping);
          }
       }
    }
@@ -784,8 +780,9 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
             // Remove any tethers to the parent hitbox
             for (let i = 0; i < hitbox.tethers.length; i++) {
                const tether = hitbox.tethers[i];
-               if (tether.originHitbox === entityAttachInfo.parentHitbox) {
-                  hitbox.tethers.splice(i, 1);
+               const otherHitbox = tether.getOtherHitbox(hitbox);
+               if (otherHitbox === entityAttachInfo.parentHitbox) {
+                  destroyTether(tether);
                   break;
                }
             }
@@ -814,46 +811,81 @@ export function getRandomPositionInBox(box: Box): Point {
    }
 }
 
-const countHitboxes = (transformComponent: TransformComponent): number => {
-   let numHitboxes = 0;
+// const countHitboxes = (transformComponent: TransformComponent): number => {
+//    let numHitboxes = 0;
+//    for (const child of transformComponent.children) {
+//       if (entityChildIsEntity(child)) {
+//          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+//          numHitboxes += countHitboxes(childTransformComponent);
+//       } else {
+//          numHitboxes++;
+//       }
+//    } 
+//    return numHitboxes;
+// }
+
+// const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: number, hitboxIdx: number): Hitbox | number => {
+//    let newI = i;
+//    for (const child of transformComponent.children) {
+//       if (entityChildIsEntity(child)) {
+//          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
+//          const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
+//          if (typeof result === "number") {
+//             newI = result;
+//          } else {
+//             return result;
+//          }
+//       } else {
+//          if (newI === hitboxIdx) {
+//             return child;
+//          }
+         
+//          newI++;
+//       }
+//    } 
+//    return newI;
+// }
+
+const getTotalEntityHitboxArea = (transformComponent: TransformComponent): number => {
+   let area = 0;
    for (const child of transformComponent.children) {
       if (entityChildIsEntity(child)) {
          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-         numHitboxes += countHitboxes(childTransformComponent);
+         area += getTotalEntityHitboxArea(childTransformComponent);
       } else {
-         numHitboxes++;
+         const hitbox = child;
+         area += getBoxArea(hitbox.box);
       }
-   } 
-   return numHitboxes;
+   }
+   return area;
 }
 
-const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: number, hitboxIdx: number): Hitbox | number => {
-   let newI = i;
+const getWeightedHitbox = (transformComponent: TransformComponent, currentArea: number, targetArea: number): Hitbox | number => {
+   let area = currentArea;
    for (const child of transformComponent.children) {
       if (entityChildIsEntity(child)) {
          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-         const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
+         const result = getWeightedHitbox(childTransformComponent, area, targetArea);
          if (typeof result === "number") {
-            newI = result;
+            area = result;
          } else {
             return result;
          }
       } else {
-         if (newI === hitboxIdx) {
-            return child;
-         }
+         const hitbox = child;
+         area += getBoxArea(hitbox.box);
          
-         newI++;
+         if (area >= targetArea) {
+            return hitbox;
+         }
       }
-   } 
-   return newI;
+   }
+   return area;
 }
 
 export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
-   const numHitboxes = countHitboxes(transformComponent);
-   const hitboxIdx = Math.floor(Math.random() * numHitboxes);
-   
-   const hitbox = getHeirarchyIndexedHitbox(transformComponent, 0, hitboxIdx);
+   const targetWeight = Math.random() * getTotalEntityHitboxArea(transformComponent);
+   const hitbox = getWeightedHitbox(transformComponent, 0, targetWeight);
    if (typeof hitbox === "number") {
       throw new Error();
    }
