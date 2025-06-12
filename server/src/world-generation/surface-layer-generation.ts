@@ -656,7 +656,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
          return createSlimeConfig(new Point(x, y), angle, 0);
       }
-   }); 
+   });
+
+
    registerNewSpawnInfo({
       entityType: EntityType.dustflea,
       layer: surfaceLayer,
@@ -702,6 +704,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createOkrenConfig(new Point(x, y), angle, 4);
       }
    });
+
+
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,
