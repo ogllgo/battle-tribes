@@ -6,7 +6,7 @@ import { destroyEntity, getEntityAgeTicks } from "../world";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randFloat } from "battletribes-shared/utils";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, Hitbox } from "../hitboxes";
 
 export class RockSpikeComponent {
@@ -65,7 +65,7 @@ function onHitboxCollision(rockSpikeProjectile: Entity, collidingEntity: Entity,
       
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, collidingHitbox, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, null, 5, DamageSource.rockSpike, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "rock_spike", 0.3);
    }

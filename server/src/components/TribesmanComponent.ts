@@ -72,12 +72,14 @@ function onInitialise(config: EntityConfig): void {
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, config.entityType);
 
    if (a <= 1 || 1+1===2) {
-      const shield = createItem(ItemType.spear, 1);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(shield, 1);
-      const armo = createItem(ItemType.crabplateArmour, 1);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(armo, 2);
-      const berry = createItem(ItemType.berry, 17);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(berry, 3);
+      const sword = createItem(ItemType.stone_sword, 1);
+      getInventory(inventoryComponent, InventoryName.hotbar).addItem(sword, 1);
+      // const shield = createItem(ItemType.spear, 1);
+      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(shield, 1);
+      // const armo = createItem(ItemType.crabplateArmour, 1);
+      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(armo, 2);
+      // const berry = createItem(ItemType.berry, 17);
+      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(berry, 3);
    } else {
       const bow = createItem(ItemType.wooden_bow, 1);
       getInventory(inventoryComponent, InventoryName.hotbar).addItem(bow, 1);

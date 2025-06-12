@@ -4,7 +4,7 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { assert, clampAngle0ToPi, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
@@ -274,13 +274,7 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
       idealRelativeAngle = idealAngle - parentAngle;
    }
       
-   let clockwiseDist = idealRelativeAngle - hitbox.box.relativeAngle;
-   while (clockwiseDist < 0) {
-      clockwiseDist += 2 * Math.PI;
-   }
-   while (clockwiseDist >= 2 * Math.PI) {
-      clockwiseDist -= 2 * Math.PI;
-   }
+   const clockwiseDist = clampAngle0ToPi(idealRelativeAngle - hitbox.box.relativeAngle);
    
    const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
    const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now

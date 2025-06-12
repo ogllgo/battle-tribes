@@ -14,7 +14,7 @@ import { Packet } from "battletribes-shared/packets";
 import { cleanAngleNEW, findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
-import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
+import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
@@ -350,7 +350,7 @@ function onTick(cow: Entity): void {
    }
 
    if (cowComponent.bowelFullness === 0 && getEntityAgeTicks(cow) % (2 * Settings.TPS) === 0) {
-      hitEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
+      damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
    }
    
    // If the cow is recovering after doing a ram, just stand still and do nothing else
@@ -691,7 +691,7 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
    
-   hitEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
 
    stopRamming(cowComponent);

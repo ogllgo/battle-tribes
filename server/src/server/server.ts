@@ -23,7 +23,7 @@ import { entityChildIsEntity, TransformComponentArray } from "../components/Tran
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -38,6 +38,7 @@ import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
 import { applyTethers } from "../tethers";
+import { getEntityCount } from "../census";
 
 /*
 
@@ -230,34 +231,34 @@ class GameServer {
 
                // @Temporary
                // setTimeout(() => {
-               // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
+               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
                
-                  // const pos1 = spawnPosition.copy();
-                  // pos1.x -= 50;
-                  // const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-                  // createEntity(t1, layer, 0);
+               //    const pos1 = spawnPosition.copy();
+               //    pos1.x -= 50;
+               //    const t1 = createTribeWorkerConfig(pos1, 0, tribe);
+               //    createEntity(t1, layer, 0);
 
-                  // setTimeout(() => {
-                  //    const pos2 = spawnPosition.copy();
-                  //    pos2.x -= 100;
-                  //    const t2 = createTribeWorkerConfig(pos2, 0, tribe);
-                  //    createEntity(t2, layer, 0);
-                  // }, 100)
+               //    setTimeout(() => {
+               //       const pos2 = spawnPosition.copy();
+               //       pos2.x -= 100;
+               //       const t2 = createTribeWorkerConfig(pos2, 0, tribe);
+               //       createEntity(t2, layer, 0);
+               //    }, 100)
 
-                  // setTimeout(() => {
-                  //    const pos3 = spawnPosition.copy();
-                  //    pos3.x -= 150;
-                  //    const t3 = createTribeWorkerConfig(pos3, 0, tribe);
-                  //    createEntity(t3, layer, 0);
-                  // }, 316)
+               //    setTimeout(() => {
+               //       const pos3 = spawnPosition.copy();
+               //       pos3.x -= 150;
+               //       const t3 = createTribeWorkerConfig(pos3, 0, tribe);
+               //       createEntity(t3, layer, 0);
+               //    }, 316)
 
-                  // setTimeout(() => {
-                  //    const pos4 = spawnPosition.copy();
-                  //    pos4.x -= 200;
-                  //    const t4 = createTribeWorkerConfig(pos4, 0, tribe);
-                  //    createEntity(t4, layer, 0);
-                  // }, 602)
-               // }, 10000);
+               //    setTimeout(() => {
+               //       const pos4 = spawnPosition.copy();
+               //       pos4.x -= 200;
+               //       const t4 = createTribeWorkerConfig(pos4, 0, tribe);
+               //       createEntity(t4, layer, 0);
+               //    }, 602)
+               // }, 3000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 
@@ -494,6 +495,16 @@ class GameServer {
       // Update server ticks and time
       // This is done at the end of the tick so that information sent by players is associated with the next tick to run
       tickGameTime();
+
+      if (getGameTicks() % (Settings.TPS * 15) === 0) {
+         const s = Math.floor(getGameTicks() / Settings.TPS) % 60;
+         const m = Math.floor(getGameTicks() / (Settings.TPS * 60));
+         
+         const numDustfleas = getEntityCount(EntityType.dustflea);
+         const numKrumblids = getEntityCount(EntityType.krumblid);
+         const numOkrens = getEntityCount(EntityType.okren);
+         console.log("(" + m + "m " + s + "s) #dust: " + numDustfleas + " | #krumb: " + numKrumblids + " | #okren: " + numOkrens)
+      }
    }
 
    // @Cleanup: maybe move this function to player-clients?

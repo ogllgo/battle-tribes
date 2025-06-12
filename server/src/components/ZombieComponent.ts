@@ -8,7 +8,7 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point, randFloat, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { addLocalInvulnerabilityHash, canDamageEntity, hitEntity, healEntity, HealthComponentArray } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -362,7 +362,7 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitb
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // Damage and knock back the player
-   hitEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 

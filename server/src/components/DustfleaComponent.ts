@@ -14,7 +14,7 @@ import { registerEntityTickEvent } from "../server/player-clients";
 import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
+import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { attachEntity, getTransformComponentFirstHitbox, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
@@ -183,7 +183,7 @@ function onTick(dustflea: Entity): void {
       const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
       const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
       if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
-         hitEntity(dustfleaTransformComponent.rootEntity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
+         damageEntity(dustfleaTransformComponent.rootEntity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
       }
       return;
    }
@@ -263,7 +263,7 @@ function onWallCollision(dustflea: Entity): void {
    if (transformComponent.rootEntity !== dustflea) {
       const hitbox = getTransformComponentFirstHitbox(transformComponent);
       assert(hitbox !== null);
-      hitEntity(dustflea, hitbox, null, 999, 0, AttackEffectiveness.effective, hitbox!.box.position.copy(), 0);
+      damageEntity(dustflea, hitbox, null, 999, 0, AttackEffectiveness.effective, hitbox!.box.position.copy(), 0);
    }
 }
 

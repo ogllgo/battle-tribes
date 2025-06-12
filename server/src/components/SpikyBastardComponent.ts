@@ -5,7 +5,7 @@ import { Point } from "../../../shared/src/utils";
 import { applyKnockback, Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
 export class SpikyBastardComponent {}
 
@@ -34,7 +34,7 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHit
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, collidingHitbox, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

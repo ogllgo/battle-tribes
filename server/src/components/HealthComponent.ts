@@ -87,7 +87,7 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function hitEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
    const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
    if (damagedEntity === null) {
       throw new Error();

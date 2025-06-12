@@ -21,7 +21,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
-import { HungerComponent } from "../../components/HungerComponent";
+import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { moveEntityToPosition } from "../../ai-shared";
 import { SandBallingAI } from "../../ai/SandBallingAI";
@@ -30,6 +30,7 @@ import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../../ai/KrumblidHibernateAI";
 import { getEntityType } from "../../world";
+import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -109,7 +110,9 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    
    const lootComponent = new LootComponent();
 
-   const hungerComponent = new HungerComponent(300, 1);
+   const energyStoreComponent = new EnergyStoreComponent(500);
+   
+   const energyStomachComponent = new EnergyStomachComponent(300, 3, 1);
    
    const krumblidComponent = new KrumblidComponent();
    
@@ -123,7 +126,8 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.hunger]: hungerComponent,
+         [ServerComponentType.energyStore]: energyStoreComponent,
+         [ServerComponentType.energyStomach]: energyStomachComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       },
       lights: []

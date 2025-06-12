@@ -1,3 +1,4 @@
+import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
@@ -44,7 +45,7 @@ function onTick(cocoon: Entity): void {
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
       const hitbox = transformComponent.children[0] as Hitbox;
-      // (hitbox.box as CircularBox).radius += 4;
+      (hitbox.box as CircularBox).radius += 4;
       transformComponent.isDirty = true;
    }
 }

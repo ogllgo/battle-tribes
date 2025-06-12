@@ -11,7 +11,7 @@ import { PebblumComponentArray } from "./PebblumComponent";
 import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
-import { addLocalInvulnerabilityHash, canDamageEntity, hitEntity, HealthComponentArray } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, HealthComponentArray } from "./HealthComponent";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { applyAccelerationFromGround, applyKnockback, Hitbox, turnHitboxToAngle } from "../hitboxes";
 
@@ -327,7 +327,7 @@ function onHitboxCollision(golem: Entity, collidingEntity: Entity, affectedHitbo
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, collidingHitbox, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 300, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

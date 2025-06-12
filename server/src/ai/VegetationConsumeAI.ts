@@ -7,8 +7,8 @@ import { Point } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
-import { HealthComponentArray, hitEntity } from "../components/HealthComponent";
-import { addHungerEnergy } from "../components/HungerComponent";
+import { HealthComponentArray, damageEntity } from "../components/HealthComponent";
+import { addHungerEnergy } from "../components/EnergyStomachComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { convertEntityPathfindingGroupID, findSingleLayerPath, getEntityFootprint, Path, PathfindOptions } from "../pathfinding";
@@ -115,7 +115,7 @@ export function runVegetationConsumeAI(krumblid: Entity, aiHelperComponent: AIHe
 
       if (getEntityAgeTicks(krumblid) % Settings.TPS === 0) {
          const hitPosition = new Point((targetHitbox.box.position.x + hitbox.box.position.x) / 2, (targetHitbox.box.position.y + hitbox.box.position.y) / 2);
-         hitEntity(target, targetHitbox, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
+         damageEntity(target, targetHitbox, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
 
          const targetHealthComponent = HealthComponentArray.getComponent(target);
          if (targetHealthComponent.health <= 0) {

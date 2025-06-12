@@ -5,7 +5,7 @@ import { Point } from "../../../shared/src/utils";
 import { applyKnockback, Hitbox } from "../hitboxes";
 import { getEntityType, validateEntity, destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
+import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { ProjectileComponentArray } from "./ProjectileComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
 
@@ -59,7 +59,7 @@ function onHitboxCollision(slingTurretRock: Entity, collidingEntity: Entity, aff
       const owner = validateEntity(projectileComponent.creator);
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, collidingHitbox, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 75, hitDirection);
 
       destroyEntity(slingTurretRock);

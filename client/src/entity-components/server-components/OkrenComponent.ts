@@ -4,7 +4,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { entityChildIsHitbox } from "./TransformComponent";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { Entity } from "../../../../shared/src/entities";
 import { Hitbox } from "../../hitboxes";
@@ -12,8 +12,17 @@ import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { createOkrenEyeParticle } from "../../particles";
 import { renderParentIsHitbox } from "../../rendering/render-part-matrices";
 
+// @Copynpaste from server
+export const enum OkrenAgeStage {
+   juvenile,
+   youth,
+   adult,
+   elder,
+   ancient
+}
+
 export interface OkrenComponentParams {
-   readonly size: number;
+   readonly size: OkrenAgeStage;
    readonly rightEyeHardenTimer: number;
    readonly leftEyeHardenTimer: number;
 }
@@ -21,7 +30,7 @@ export interface OkrenComponentParams {
 interface IntermediateInfo {}
 
 export interface OkrenComponent {
-   size: number;
+   size: OkrenAgeStage;
 }
 
 export const OkrenComponentArray = new ServerComponentArray<OkrenComponent, OkrenComponentParams, IntermediateInfo>(ServerComponentType.okren, true, {
@@ -112,33 +121,6 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
                getTextureArrayIndex("entities/okren/" + sizeString + "/mandible.png")
             )
          );
-      } else if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
-            new TexturedRenderPart(
-               hitbox,
-               2,
-               0,
-               getTextureArrayIndex("entities/okren/" + sizeString + "/big-arm-segment.png")
-            )
-         );
-      } else if (hitbox.flags.includes(HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
-            new TexturedRenderPart(
-               hitbox,
-               1,
-               0,
-               getTextureArrayIndex("entities/okren/" + sizeString + "/medium-arm-segment.png")
-            )
-         );
-      } else if (hitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
-            new TexturedRenderPart(
-               hitbox,
-               0,
-               0,
-               getTextureArrayIndex("entities/okren/" + sizeString + "/arm-segment-of-slashing-and-destruction.png")
-            )
-         );
       }
    }
 
@@ -154,7 +136,7 @@ function createComponent(entityParams: EntityParams): OkrenComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 11;
+   return 5;
 }
    
 function padData(reader: PacketReader): void {

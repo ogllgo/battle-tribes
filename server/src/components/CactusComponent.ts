@@ -5,7 +5,7 @@ import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point, randInt } from "../../../shared/src/utils";
 import { getEntityType, destroyEntity, getEntityLayer } from "../world";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
 import { Settings } from "../../../shared/src/settings";
 import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
@@ -127,7 +127,7 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, collidingHitbox, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

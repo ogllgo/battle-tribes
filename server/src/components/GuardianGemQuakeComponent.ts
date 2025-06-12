@@ -6,7 +6,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { destroyEntity, getEntityAgeTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../hitboxes";
 
@@ -52,7 +52,7 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHit
          return;
       }
 
-      hitEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "gemQuake", 0.3);
    }
 }

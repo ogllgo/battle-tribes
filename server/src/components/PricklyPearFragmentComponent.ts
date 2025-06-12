@@ -6,7 +6,7 @@ import { Point, randInt } from "../../../shared/src/utils";
 import { Hitbox, applyKnockback, getHitboxVelocity } from "../hitboxes";
 import { destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { addLocalInvulnerabilityHash, canDamageEntity, HealthComponentArray, hitEntity } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, HealthComponentArray, damageEntity } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class PricklyPearFragmentProjectileComponent {
@@ -61,7 +61,7 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, fragment.toString(), 0.3);
 }

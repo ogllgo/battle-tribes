@@ -126,7 +126,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
          combatAI.tongueCooldownTicks--;
       }
       if (combatAI.tongueCooldownTicks === 0) {
-         deployTongue(okren, hitbox, desiredTarget);
+         // deployTongue(okren, hitbox, desiredTarget);
       }
 
       target = desiredTarget;
@@ -193,9 +193,11 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
          combatAI.okrenMandibleFlickCountdowns[side] = Math.floor(randFloat(0.08, 0.2) * Settings.TPS);
          combatAI.okrenMandibleIsIns[side] = !combatAI.okrenMandibleIsIns[side];
       }
-
+      
       const mandibleHitbox = getOkrenMandibleHitbox(okren, side);
-      const idealAngle = combatAI.okrenMandibleIsIns[side] ? -Math.PI * 0.4 : Math.PI * 0.2;
-      turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+      if (mandibleHitbox !== null) {
+         const idealAngle = combatAI.okrenMandibleIsIns[side] ? -Math.PI * 0.4 : Math.PI * 0.2;
+         turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+      }
    }
 }

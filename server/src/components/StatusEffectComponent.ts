@@ -3,7 +3,7 @@ import { Entity, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/status-effects";
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import { hitEntity } from "./HealthComponent";
+import { damageEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
@@ -120,7 +120,7 @@ function onTick(entity: Entity): void {
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
                   const hitPosition = getRandomPositionInEntity(transformComponent);
-                  hitEntity(entity, hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
+                  damageEntity(entity, hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
             break;
@@ -132,7 +132,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -143,7 +143,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -154,7 +154,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.children[0] as Hitbox;
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
          }
       }

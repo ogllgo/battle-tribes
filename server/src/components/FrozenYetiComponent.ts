@@ -12,7 +12,7 @@ import { createRockSpikeConfig, ROCK_SPIKE_HITBOX_SIZES } from "../entities/proj
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
+import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
@@ -375,7 +375,7 @@ const doBiteAttack = (frozenYeti: Entity, angleToTarget: number): void => {
             // @Hack
             const collisionPoint = new Point((hitHitbox.box.position.x + frozenYetiHitbox.box.position.x) / 2, (hitHitbox.box.position.y + frozenYetiHitbox.box.position.y) / 2);
 
-            hitEntity(victim, hitHitbox, frozenYeti, 3, DamageSource.frozenYeti, AttackEffectiveness.effective, collisionPoint, 0);
+            damageEntity(victim, hitHitbox, frozenYeti, 3, DamageSource.frozenYeti, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(victim, hitHitbox, 200, angleToTarget);
 
             if (StatusEffectComponentArray.hasComponent(victim)) {

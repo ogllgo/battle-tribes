@@ -2,7 +2,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, hitEntity } from "../../components/HealthComponent";
+import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";

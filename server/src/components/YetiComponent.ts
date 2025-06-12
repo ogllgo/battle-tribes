@@ -13,7 +13,7 @@ import { moveEntityToPosition } from "../ai-shared";
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity, healEntity } from "./HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { TribeComponentArray } from "./TribeComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
@@ -549,7 +549,7 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
 
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, collidingHitbox, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "yeti", 0.3);
    }

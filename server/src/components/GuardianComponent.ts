@@ -10,7 +10,7 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GuardianSpikyBallComponentArray } from "./GuardianSpikyBallComponent";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { applyKnockback, Hitbox } from "../hitboxes";
 
@@ -404,7 +404,7 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, affectedHi
 
       const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "guardianLimb", 0.3);
    }

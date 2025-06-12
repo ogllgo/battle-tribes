@@ -113,7 +113,7 @@ import { TumbleweedDeadComponent } from "./components/TumbleweedDeadComponent";
 import { PalmTreeComponent } from "./components/PalmTreeComponent";
 import { PricklyPearComponent } from "./components/PricklyPearComponent";
 import { PricklyPearFragmentProjectileComponent } from "./components/PricklyPearFragmentComponent";
-import { HungerComponent } from "./components/HungerComponent";
+import { EnergyStomachComponent } from "./components/EnergyStomachComponent";
 import { EnergyStoreComponent } from "./components/EnergyStoreComponent";
 import { DustfleaComponent } from "./components/DustfleaComponent";
 import { SandstoneRockComponent } from "./components/SandstoneRockComponent";
@@ -125,6 +125,7 @@ import { OkrenTongueSegmentComponent } from "./components/OkrenTongueSegmentComp
 import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
 import { OkrenTongueComponent } from "./components/OkrenTongueComponent";
 import { DustfleaEggComponent } from "./components/DustfleaEggComponent";
+import { OkrenClawComponent } from "./components/OkrenClawComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -238,11 +239,12 @@ const ComponentClassRecord = {
    [ServerComponentType.palmTree]: () => PalmTreeComponent,
    [ServerComponentType.pricklyPear]: () => PricklyPearComponent,
    [ServerComponentType.pricklyPearFragmentProjectile]: () => PricklyPearFragmentProjectileComponent,
-   [ServerComponentType.hunger]: () => HungerComponent,
    [ServerComponentType.energyStore]: () => EnergyStoreComponent,
+   [ServerComponentType.energyStomach]: () => EnergyStomachComponent,
    [ServerComponentType.dustflea]: () => DustfleaComponent,
    [ServerComponentType.sandstoneRock]: () => SandstoneRockComponent,
    [ServerComponentType.okren]: () => OkrenComponent,
+   [ServerComponentType.okrenClaw]: () => OkrenClawComponent,
    [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
    [ServerComponentType.sandBall]: () => SandBallComponent,
    [ServerComponentType.krumblidMorphCocoon]: () => KrumblidMorphCocoonComponent,

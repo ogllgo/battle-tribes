@@ -10,7 +10,7 @@ import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { Point } from "../../../shared/src/utils";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
+import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 
@@ -73,7 +73,7 @@ function onHitboxCollision(spit: Entity, collidingEntity: Entity, affectedHitbox
 
    const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

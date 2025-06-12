@@ -115,7 +115,8 @@ export function getCollisionPushInfo(pushedHitbox: Box, pushingHitbox: Box): Col
       const collisionData = rectanglesAreColliding(pushedHitbox, pushingHitbox);
       if (!collisionData.isColliding) {
          // @HACK @INCOMPLETE
-         console.warn("Some silliness has occured when trying to get push info!");
+         // @TEMPORARY
+         // console.warn("Some silliness has occured when trying to get push info!");
          return {
             amountIn: 0,
             direction: 0
@@ -123,7 +124,8 @@ export function getCollisionPushInfo(pushedHitbox: Box, pushingHitbox: Box): Col
       }
       if (collisionData.overlap < 0) {
          // @HACK @INCOMPLETE
-         console.warn("Negative overlap! what!");
+         // @TEMPORARY
+         // console.warn("Negative overlap! what!");
          return {
             amountIn: 0,
             direction: 0

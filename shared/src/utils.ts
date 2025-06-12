@@ -487,3 +487,8 @@ export function unitsToChunksClamped(a: number): number {
 export function randAngle(): number {
    return 2 * Math.PI * Math.random();
 }
+
+export function clampAngle0ToPi(angle: number): number {
+  const twoPi = Math.PI * 2;
+  return ((angle % twoPi) + twoPi) % twoPi;
+}

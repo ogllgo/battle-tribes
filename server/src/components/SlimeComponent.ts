@@ -10,7 +10,7 @@ import { turnAngle, getEntitiesInRange, moveEntityToPosition } from "../ai-share
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity, getEntityHealth, healEntity } from "./HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, getEntityHealth, healEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
@@ -439,7 +439,7 @@ function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox:
       const slimeComponent = SlimeComponentArray.getComponent(slime);
       const damage = CONTACT_DAMAGE[slimeComponent.size];
 
-      hitEntity(collidingEntity, collidingHitbox, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "slime", 0.3);
    }
 }

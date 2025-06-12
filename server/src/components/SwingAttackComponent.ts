@@ -21,7 +21,7 @@ import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
-import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
+import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { getCurrentLimbState, getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
@@ -180,7 +180,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
    // @HACK
    const collisionPoint = new Point(0, 0);
 
-   hitEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
+   damageEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
 const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
@@ -226,7 +226,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   hitEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
+   damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
    applyKnockback(victim, victimHitbox, attackKnockback, hitDirection);
 
    if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
@@ -259,14 +259,16 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
    const owner = swingAttackComponent.owner;
    // @Temporary: remove when bug is fixed
    if (!entityExists(owner)) {
-      console.warn("OUSEOFJHOSJFOISDJF bad")
+      // @TEMPORARY
+      // console.warn("OUSEOFJHOSJFOISDJF bad")
       return;
    }
    // @Temporary: remove when bug is fixed
    // @Bug: Happens when a zombie swings !!!
    if (!TribeComponentArray.hasComponent(owner)) {
-      console.log(getEntityType(owner));
-      console.warn(getEntityType(owner));
+      // @TEMPORARY
+      // console.log(getEntityType(owner));
+      // console.warn(getEntityType(owner));
       return;
    }
    

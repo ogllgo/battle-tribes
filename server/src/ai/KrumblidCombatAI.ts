@@ -6,8 +6,8 @@ import { Point } from "../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
-import { hitEntity, HealthComponentArray } from "../components/HealthComponent";
-import { addHungerEnergy } from "../components/HungerComponent";
+import { damageEntity, HealthComponentArray } from "../components/HealthComponent";
+import { addHungerEnergy } from "../components/EnergyStomachComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { getEntityType, entityExists, getEntityAgeTicks } from "../world";
@@ -87,7 +87,7 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
 
       if (getEntityAgeTicks(krumblid) % Settings.TPS === 0) {
          const hitPosition = new Point((targetHitbox.box.position.x + hitbox.box.position.x) / 2, (targetHitbox.box.position.y + hitbox.box.position.y) / 2);
-         hitEntity(target, targetHitbox, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
+         damageEntity(target, targetHitbox, krumblid, 1, 0, AttackEffectiveness.effective, hitPosition, 0);
       }
    }
 }

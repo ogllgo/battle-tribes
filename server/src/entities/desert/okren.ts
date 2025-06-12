@@ -13,16 +13,21 @@ import { SandBallingAI } from "../../ai/SandBallingAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { HungerComponent } from "../../components/HungerComponent";
+import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
+import { OkrenClawGrowthStage } from "../../components/OkrenClawComponent";
 import { OkrenAgeStage, OkrenComponent, OkrenComponentArray } from "../../components/OkrenComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
+import { createOkrenClawConfig } from "./okren-claw";
+import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 
 const HEALTHS = [50, 80, 115, 150, 200];
 const VISION_RANGES = [500, 550, 600, 650, 700];
+
+const ENERGIES = [2000, 2500, 3000, 3500, 4000];
 
 registerEntityLootOnDeath(EntityType.okren, [
    {
@@ -75,6 +80,8 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
    addHitboxToTransformComponent(transformComponent, fleshBodyHitbox);
 
+   const childConfigs = new Array<EntityConfig>();
+
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 1;
       
@@ -105,10 +112,10 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
 
       let mandibleOffset: Point;
       switch (size) {
-         case OkrenAgeStage.juvenile: mandibleOffset = new Point(16, 80); break;
-         case OkrenAgeStage.youth:    mandibleOffset = new Point(18, 84); break;
-         case OkrenAgeStage.adult:    mandibleOffset = new Point(20, 92); break;
-         case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 98); break;
+         case OkrenAgeStage.juvenile: mandibleOffset = new Point(16, 80);  break;
+         case OkrenAgeStage.youth:    mandibleOffset = new Point(18, 84);  break;
+         case OkrenAgeStage.adult:    mandibleOffset = new Point(20, 92);  break;
+         case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 98);  break;
          case OkrenAgeStage.ancient:  mandibleOffset = new Point(22, 106); break;
       }
       const mandiblePosition = fleshBodyHitbox.box.position.copy();
@@ -119,67 +126,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       mandibleHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
       mandibleHitbox.box.pivot = createNormalisedPivotPoint(-0.5, -0.5);
       addHitboxToTransformComponent(transformComponent, mandibleHitbox);
-      
-      let bigArmSegmentOffset: Point;
-      switch (size) {
-         case OkrenAgeStage.juvenile: bigArmSegmentOffset = new Point(52, 66); break;
-         case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(64, 68); break;
-         case OkrenAgeStage.adult:    bigArmSegmentOffset = new Point(74, 72); break;
-         case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(80, 84); break;
-         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(86, 90); break;
-      }
-      const bigArmSegmentPosition = fleshBodyHitbox.box.position.copy();
-      bigArmSegmentPosition.add(bigArmSegmentOffset);
-      const bigArmSegmentHitbox = createHitbox(transformComponent, fleshBodyHitbox, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3, 36, 72), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
-      bigArmSegmentHitbox.box.flipX = sideIsFlipped;
-      // @Hack
-      bigArmSegmentHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
-      bigArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(-2, -38);
-      addHitboxToTransformComponent(transformComponent, bigArmSegmentHitbox);
 
-      let mediumArmSegmentOffset: Point;
-      switch (size) {
-         case OkrenAgeStage.juvenile: mediumArmSegmentOffset = new Point(0, 64); break;
-         case OkrenAgeStage.youth:    mediumArmSegmentOffset = new Point(4, 68); break;
-         case OkrenAgeStage.adult:    mediumArmSegmentOffset = new Point(4, 72); break;
-         case OkrenAgeStage.elder:    mediumArmSegmentOffset = new Point(4, 74); break;
-         case OkrenAgeStage.ancient:  mediumArmSegmentOffset = new Point(4, 76); break;
-      }
-      const mediumArmSegmentPosition = bigArmSegmentHitbox.box.position.copy();
-      mediumArmSegmentPosition.add(mediumArmSegmentOffset);
-      const mediumArmSegmentHitbox = createHitbox(transformComponent, bigArmSegmentHitbox, new RectangularBox(mediumArmSegmentPosition, mediumArmSegmentOffset, -Math.PI * 0.3, 20, 40), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT]);
-      let mediumArmPivotY: number;
-      switch (size) {
-         case OkrenAgeStage.juvenile: mediumArmPivotY = -28; break;
-         case OkrenAgeStage.youth:    mediumArmPivotY = -32; break;
-         case OkrenAgeStage.adult:    mediumArmPivotY = -36; break;
-         case OkrenAgeStage.elder:    mediumArmPivotY = -38; break;
-         case OkrenAgeStage.ancient:  mediumArmPivotY = -38; break;
-      }
-      mediumArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, mediumArmPivotY);
-      addHitboxToTransformComponent(transformComponent, mediumArmSegmentHitbox);
-      
-      let slashingArmSegmentOffset: Point;
-      switch (size) {
-         case OkrenAgeStage.juvenile: slashingArmSegmentOffset = new Point(0, 56); break;
-         case OkrenAgeStage.youth:    slashingArmSegmentOffset = new Point(0, 60); break;
-         case OkrenAgeStage.adult:    slashingArmSegmentOffset = new Point(0, 68); break;
-         case OkrenAgeStage.elder:    slashingArmSegmentOffset = new Point(0, 78); break;
-         case OkrenAgeStage.ancient:  slashingArmSegmentOffset = new Point(0, 78); break;
-      }
-      const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
-      slashingArmSegmentPosition.add(slashingArmSegmentOffset);
-      const slashingArmSegmentHitbox = createHitbox(transformComponent, mediumArmSegmentHitbox, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3, 20, 80), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
-      let smallArmPivotPoint: PivotPoint;
-      switch (size) {
-         case OkrenAgeStage.juvenile: smallArmPivotPoint = createAbsolutePivotPoint(0, -26); break;
-         case OkrenAgeStage.youth:    smallArmPivotPoint = createAbsolutePivotPoint(0, -30); break;
-         case OkrenAgeStage.adult:    smallArmPivotPoint = createAbsolutePivotPoint(0, -32); break;
-         case OkrenAgeStage.elder:    smallArmPivotPoint = createAbsolutePivotPoint(0, -36); break;
-         case OkrenAgeStage.ancient:  smallArmPivotPoint = createAbsolutePivotPoint(-4, -40); break;
-      }
-      slashingArmSegmentHitbox.box.pivot = smallArmPivotPoint;
-      addHitboxToTransformComponent(transformComponent, slashingArmSegmentHitbox);
+      const clawConfig = createOkrenClawConfig(fleshBodyHitbox.box.position.copy(), 0, size, OkrenClawGrowthStage.FOUR, sideIsFlipped, fleshBodyHitbox);
+      childConfigs.push(clawConfig);
    }
    
    const physicsComponent = new PhysicsComponent();
@@ -192,8 +141,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
    
-   // @Temporary
-   const hungerComponent = new HungerComponent(1000, 200);
+   const energyStoreComponent = new EnergyStoreComponent(ENERGIES[size]);
+   
+   const energyStomachComponent = new EnergyStomachComponent(1000, 10, 5);
    
    const lootComponent = new LootComponent();
    
@@ -208,10 +158,12 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
-         [ServerComponentType.hunger]: hungerComponent,
+         [ServerComponentType.energyStore]: energyStoreComponent,
+         [ServerComponentType.energyStomach]: energyStomachComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.okren]: okrenComponent
       },
-      lights: []
+      lights: [],
+      childConfigs: childConfigs
    };
 }

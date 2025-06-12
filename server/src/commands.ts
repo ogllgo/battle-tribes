@@ -1,7 +1,7 @@
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { parseCommand } from "battletribes-shared/commands";
-import { hitEntity, healEntity } from "./components/HealthComponent";
+import { damageEntity, healEntity } from "./components/HealthComponent";
 import { InventoryComponentArray, addItem } from "./components/InventoryComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getPlayerFromUsername } from "./server/player-clients";
@@ -18,7 +18,7 @@ const killPlayer = (player: Entity): void => {
    const hitbox = transformComponent.children[0] as Hitbox;
    
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   hitEntity(player, hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const damagePlayer = (player: Entity, damage: number): void => {
@@ -26,7 +26,7 @@ const damagePlayer = (player: Entity, damage: number): void => {
    const hitbox = transformComponent.children[0] as Hitbox;
 
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   hitEntity(player, hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const setTime = (time: number): void => {

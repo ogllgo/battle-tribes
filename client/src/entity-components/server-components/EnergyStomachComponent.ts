@@ -1,11 +1,11 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface HungerComponentParams {}
+export interface EnergyStomachComponentParams {}
 
-export interface HungerComponent {}
+export interface EnergyStomachComponent {}
 
-export const HungerComponentArray = new ServerComponentArray<HungerComponent, HungerComponentParams, never>(ServerComponentType.hunger, true, {
+export const EnergyStomachComponentArray = new ServerComponentArray<EnergyStomachComponent, EnergyStomachComponentParams, never>(ServerComponentType.energyStomach, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
@@ -13,11 +13,11 @@ export const HungerComponentArray = new ServerComponentArray<HungerComponent, Hu
    updateFromData: updateFromData
 });
 
-function createParamsFromData(): HungerComponentParams {
+function createParamsFromData(): EnergyStomachComponentParams {
    return {};
 }
 
-function createComponent(): HungerComponentParams {
+function createComponent(): EnergyStomachComponentParams {
    return {};
 }
 

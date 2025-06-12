@@ -15,6 +15,8 @@ import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { DustfleaComponent } from "../../components/DustfleaComponent";
+import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
+import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -78,6 +80,10 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
    
+   const energyStoreComponent = new EnergyStoreComponent(30);
+
+   const energyStomachComponent = new EnergyStomachComponent(20, 1, 1);
+   
    const dustfleaComponent = new DustfleaComponent();
    
    return {
@@ -89,6 +95,8 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.energyStore]: energyStoreComponent,
+         [ServerComponentType.energyStomach]: energyStomachComponent,
          [ServerComponentType.dustflea]: dustfleaComponent
       },
       lights: []

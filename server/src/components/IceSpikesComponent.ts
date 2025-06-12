@@ -13,7 +13,7 @@ import { EntityConfig } from "../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { createIceShardConfig } from "../entities/projectiles/ice-shard";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { getDistanceToClosestEntity } from "../layer-utils";
 import { applyKnockback, Hitbox, addHitboxVelocity } from "../hitboxes";
@@ -168,7 +168,7 @@ function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, affectedH
       if (canDamageEntity(healthComponent, "ice_spikes")) {
          const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
          
-         hitEntity(collidingEntity, collidingHitbox, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+         damageEntity(collidingEntity, collidingHitbox, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    

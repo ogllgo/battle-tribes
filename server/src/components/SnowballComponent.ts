@@ -6,7 +6,7 @@ import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -76,7 +76,7 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       if (canDamageEntity(healthComponent, "snowball")) {
          const hitDirection = snowballHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-         hitEntity(collidingEntity, collidingHitbox, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
+         damageEntity(collidingEntity, collidingHitbox, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "snowball", 0.3);
       }

@@ -134,8 +134,10 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
          for (let i = 0; i < 2; i++) {
             const side = OKREN_SIDES[i];
             const mandibleHitbox = getOkrenMandibleHitbox(entity, side);
-            const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
-            turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+            if (mandibleHitbox !== null) {
+               const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
+               turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+            }
          }
       } else {
          throw new Error();

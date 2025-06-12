@@ -128,7 +128,7 @@ import { TumbleweedDeadComponent, TumbleweedDeadComponentArray, TumbleweedDeadCo
 import { PalmTreeComponent, PalmTreeComponentArray, PalmTreeComponentParams } from "./server-components/PalmTreeComponent";
 import { PricklyPearComponent, PricklyPearComponentArray, PricklyPearComponentParams } from "./server-components/PricklyPearComponent";
 import { PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentArray, PricklyPearFragmentProjectileComponentParams } from "./server-components/PricklyPearFragmentProjectileComponent";
-import { HungerComponent, HungerComponentArray, HungerComponentParams } from "./server-components/HungerComponent";
+import { EnergyStomachComponent, EnergyStomachComponentArray, EnergyStomachComponentParams } from "./server-components/EnergyStomachComponent";
 import { EnergyStoreComponent, EnergyStoreComponentArray, EnergyStoreComponentParams } from "./server-components/EnergyStoreComponent";
 import { DustfleaComponent, DustfleaComponentArray, DustfleaComponentParams } from "./server-components/DustfleaComponent";
 import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockComponentParams } from "./server-components/SandstoneRockComponent";
@@ -140,6 +140,7 @@ import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray, OkrenTon
 import { OkrenTongueTipComponent, OkrenTongueTipComponentArray, OkrenTongueTipComponentParams } from "./server-components/OkrenTongueTipComponent";
 import { OkrenTongueComponent, OkrenTongueComponentArray, OkrenTongueComponentParams } from "./server-components/OkrenTongueComponent";
 import { DustfleaEggComponent, DustfleaEggComponentArray, DustfleaEggComponentParams } from "./server-components/DustfleaEggComponent";
+import { OkrenClawComponent, OkrenClawComponentArray, OkrenClawComponentParams } from "./server-components/OkrenClawComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -276,11 +277,12 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.palmTree]: PalmTreeComponentArray,
    [ServerComponentType.pricklyPear]: PricklyPearComponentArray,
    [ServerComponentType.pricklyPearFragmentProjectile]: PricklyPearFragmentProjectileComponentArray,
-   [ServerComponentType.hunger]: HungerComponentArray,
    [ServerComponentType.energyStore]: EnergyStoreComponentArray,
+   [ServerComponentType.energyStomach]: EnergyStomachComponentArray,
    [ServerComponentType.dustflea]: DustfleaComponentArray,
    [ServerComponentType.sandstoneRock]: SandstoneRockComponentArray,
    [ServerComponentType.okren]: OkrenComponentArray,
+   [ServerComponentType.okrenClaw]: OkrenClawComponentArray,
    [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
    [ServerComponentType.sandBall]: SandBallComponentArray,
    [ServerComponentType.krumblidMorphCocoon]: KrumblidMorphCocoonComponentArray,
@@ -400,11 +402,12 @@ const ServerComponentRecord = {
    [ServerComponentType.palmTree]: (): PalmTreeComponent => 0 as any,
    [ServerComponentType.pricklyPear]: (): PricklyPearComponent => 0 as any,
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponent => 0 as any,
-   [ServerComponentType.hunger]: (): HungerComponent => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponent => 0 as any,
+   [ServerComponentType.energyStomach]: (): EnergyStomachComponent => 0 as any,
    [ServerComponentType.dustflea]: (): DustfleaComponent => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponent => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
+   [ServerComponentType.okrenClaw]: (): OkrenClawComponent => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponent => 0 as any,
@@ -526,11 +529,12 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.palmTree]: (): PalmTreeComponentParams => 0 as any,
    [ServerComponentType.pricklyPear]: (): PricklyPearComponentParams => 0 as any,
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponentParams => 0 as any,
-   [ServerComponentType.hunger]: (): HungerComponentParams => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponentParams => 0 as any,
+   [ServerComponentType.energyStomach]: (): EnergyStomachComponentParams => 0 as any,
    [ServerComponentType.dustflea]: (): DustfleaComponentParams => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponentParams => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
+   [ServerComponentType.okrenClaw]: (): OkrenClawComponentParams => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,

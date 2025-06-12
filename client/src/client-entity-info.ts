@@ -418,6 +418,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Okren",
       internalName: "okren"
    },
+   [EntityType.okrenClaw]: {
+      name: "Okren Claw",
+      internalName: "okren-claw"
+   },
    [EntityType.dustfleaMorphCocoon]: {
       name: "Dustflea Morph Cocoon",
       internalName: "dustflea-morph-cocoon"

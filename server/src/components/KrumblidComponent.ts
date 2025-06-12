@@ -13,13 +13,12 @@ import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { addHungerEnergy, getEntityFullness } from "./HungerComponent";
+import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
 import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { runKrumblidCombatAI, shouldRunKrumblidCombatAI, updateKrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { runKrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
-import { Settings } from "../../../shared/src/settings";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
