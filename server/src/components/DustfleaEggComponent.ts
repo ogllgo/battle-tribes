@@ -2,9 +2,11 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { Point, randFloat, randInt, randSign } from "../../../shared/src/utils";
+import { createDustfleaConfig } from "../entities/desert/dustflea";
+import { createEntity } from "../Entity";
 import { addHitboxAngularVelocity, Hitbox } from "../hitboxes";
 import { tetherHitboxes } from "../tethers";
-import { getEntityType } from "../world";
+import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -40,6 +42,16 @@ function onTick(dustfleaEgg: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       addHitboxAngularVelocity(hitbox, randFloat(0.4, 0.7) * randSign());
    }
+
+   const ageHours = ticksToGameHours(getEntityAgeTicks(dustfleaEgg));
+   if (ageHours >= 2) {
+      // Dustflea!!
+      const transformComponent = TransformComponentArray.getComponent(dustfleaEgg);
+      const hitbox = transformComponent.children[0] as Hitbox;
+      const dustfleaConfig = createDustfleaConfig(hitbox.box.position.copy(), hitbox.box.angle);
+      createEntity(dustfleaConfig, getEntityLayer(dustfleaEgg), 0);
+      destroyEntity(dustfleaEgg);
+   }
 }
 
 function getDataLength(): number {
@@ -55,8 +67,7 @@ function onHitboxCollision(dustfleaEgg: Entity, collidingEntity: Entity, affecte
    }
    
    // @Hack: so that the eggs don't immediately stick to the okren when they come out
-   const dustfleaEggComponent = DustfleaEggComponentArray.getComponent(dustfleaEgg);
-   if (collidingEntity === dustfleaEggComponent.parentOkren) {
+   if (getEntityType(collidingEntity) === EntityType.okren || getEntityType(collidingEntity) === EntityType.okrenClaw) {
       return;
    }
 

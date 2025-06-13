@@ -658,11 +658,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
 
-
    registerNewSpawnInfo({
       entityType: EntityType.dustflea,
       layer: surfaceLayer,
-      spawnRate: 0.005,
+      spawnRate: 0,
       biome: Biome.desert,
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
@@ -677,7 +676,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityType: EntityType.krumblid,
       layer: surfaceLayer,
-      spawnRate: 0.005,
+      spawnRate: 0,
       biome: Biome.desert,
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
@@ -692,7 +691,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityType: EntityType.okren,
       layer: surfaceLayer,
-      spawnRate: 0.005,
+      spawnRate: 0,
       biome: Biome.desert,
       tileTypes: [TileType.sand],
       onlySpawnsInNight: false,
@@ -704,8 +703,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createOkrenConfig(new Point(x, y), angle, 4);
       }
    });
-
-
+   
    registerNewSpawnInfo({
       entityType: EntityType.frozenYeti,
       layer: surfaceLayer,

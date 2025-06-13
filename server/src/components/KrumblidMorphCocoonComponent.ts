@@ -38,7 +38,7 @@ function onTick(cocoon: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(cocoon);
       const hitbox = transformComponent.children[0] as Hitbox;
       
-      const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 4);
+      const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 0);
       createEntity(okrenConfig, getEntityLayer(cocoon), 0);
    } else if (stage !== krumblidMorphCocoonComponent.stage) {
       krumblidMorphCocoonComponent.stage = stage;

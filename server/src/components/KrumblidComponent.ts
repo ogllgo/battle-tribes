@@ -116,7 +116,7 @@ function onTick(krumblid: Entity): void {
    
    const ageTicks = getEntityAgeTicks(krumblid);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 12) {
+   if (ageHours >= 24) {
       const hibernateAI = aiHelperComponent.getKrumblidHibernateAI();
       runKrumblidHibernateAI(krumblid, aiHelperComponent, hibernateAI);
       return;
