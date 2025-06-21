@@ -23,7 +23,7 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { getEntityFullness } from "./EnergyStomachComponent";
-import { OkrenClawComponentArray, OkrenClawGrowthStage, switchOkrenClawGrowthStage } from "./OkrenClawComponent";
+import { OkrenClawGrowthStage } from "./OkrenClawComponent";
 import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export const enum OkrenAgeStage {
@@ -342,11 +342,14 @@ function onTick(okren: Entity): void {
       okrenComponent.remainingPeaceTimeTicks--;
    }
 
-   if (okrenComponent.dustfleaGestationTimer > 0) {
-      okrenComponent.dustfleaGestationTimer--;
-   } else {
-      okrenComponent.dustfleaGestationTimer = randInt(MIN_DUSTFLEA_GESTATION_TIME, MAX_DUSTFLEA_GESTATION_TIME);
-      okrenComponent.numEggsReady++;
+   // @HACK: hardcoded so that when >= 0.5, doesn't look for food and gestates eggs, when < 0.5, looks for food doesn't gestate
+   if (getEntityFullness(okren) >= 0.5) {
+      if (okrenComponent.dustfleaGestationTimer > 0) {
+         okrenComponent.dustfleaGestationTimer--;
+      } else {
+         okrenComponent.dustfleaGestationTimer = randInt(MIN_DUSTFLEA_GESTATION_TIME, MAX_DUSTFLEA_GESTATION_TIME);
+         okrenComponent.numEggsReady++;
+      }
    }
    
    okrenComponent.ticksInStates[0]++;

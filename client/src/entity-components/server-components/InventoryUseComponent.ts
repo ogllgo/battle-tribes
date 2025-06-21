@@ -226,6 +226,12 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [217/255, 124/255, 124/255],
       [217/255, 173/255, 173/255]
    ],
+   [ItemType.dustfleaEgg]: [
+      [166/255, 84/255, 156/255],
+      [190/255, 96/255, 166/255],
+      [211/255, 107/255, 184/255],
+      [216/255, 127/255, 201/255],
+   ],
 };
 
 const BOW_CHARGE_DOMINANT_START_LIMB_STATE: LimbState = {

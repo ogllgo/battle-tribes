@@ -39,27 +39,37 @@ registerEntityTamingSpec(EntityType.yeti, {
       {
          skill: getTamingSkill(TamingSkillID.follow),
          x: 0,
-         y: 10
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
       },
       {
          skill: getTamingSkill(TamingSkillID.riding),
          x: -18,
-         y: 30
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
       },
       {
          skill: getTamingSkill(TamingSkillID.move),
          x: 18,
-         y: 30
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
       },
       {
          skill: getTamingSkill(TamingSkillID.carry),
          x: -18,
-         y: 50
+         y: 50,
+         parent: TamingSkillID.riding,
+         requiredTamingTier: 3
       },
       {
          skill: getTamingSkill(TamingSkillID.attack),
          x: 18,
-         y: 50
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
       }
    ],
    foodItemType: ItemType.raw_beef,

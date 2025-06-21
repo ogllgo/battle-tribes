@@ -23,7 +23,7 @@ export function createPricklyPearConfig(position: Point, angle: number): EntityC
    
    const healthComponent = new HealthComponent(2);
 
-   const energyStoreComponent = new EnergyStoreComponent(120);
+   const energyStoreComponent = new EnergyStoreComponent(50);
 
    const pricklyPearComponent = new PricklyPearComponent();
    

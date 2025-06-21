@@ -123,7 +123,7 @@ export function addSkillLearningProgress(tamingComponent: TamingComponent, skill
          requirementProgressArray: skill.requirements.map(_ => 0)
       };
       // @Hack
-      skillLearning.requirementProgressArray[0] = amount;
+      skillLearning.requirementProgressArray[0] = amount + 900;
       tamingComponent.skillLearningArray.push(skillLearning);
    }
 }

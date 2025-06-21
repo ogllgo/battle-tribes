@@ -23,12 +23,16 @@ registerEntityTamingSpec(EntityType.glurb, {
       {
          skill: getTamingSkill(TamingSkillID.follow),
          x: -13,
-         y: 10
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
       },
       {
          skill: getTamingSkill(TamingSkillID.dulledPainReceptors),
          x: 13,
-         y: 10
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
       }
    ],
    foodItemType: ItemType.berry,

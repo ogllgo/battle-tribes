@@ -6,7 +6,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { customTickIntervalHasPassed, Point, randFloat, UtilVars } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, Point, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
@@ -17,7 +17,7 @@ import { TransformComponentArray, getRandomPositionInEntity } from "./TransformC
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity } from "../hitboxes";
+import { applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, addHitboxAngularVelocity } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -165,9 +165,8 @@ function onTick(fish: Entity): void {
       fishComponent.flailTimer += Settings.I_TPS;
       if (fishComponent.flailTimer >= 0.75) {
          const flailDirection = 2 * Math.PI * Math.random();
-         fishHitbox.box.relativeAngle = flailDirection + randFloat(-0.5, 0.5);
-         transformComponent.isDirty = true;
          
+         addHitboxAngularVelocity(fishHitbox, randFloat(1.5, 2.2) * randSign());
          addHitboxVelocity(fishHitbox, 200 * Math.sin(flailDirection), 200 * Math.cos(flailDirection));
    
          fishComponent.flailTimer = 0;

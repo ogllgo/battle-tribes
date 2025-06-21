@@ -14,7 +14,9 @@ export const enum EntityTickEventType {
    tongueLaunch,
    tongueLick,
    dustfleaEggPop,
-   okrenEyeHitSound
+   okrenEyeHitSound,
+   foodMunch,
+   foodBurp,
 }
 
 const EventDataTypes = {
@@ -27,7 +29,9 @@ const EventDataTypes = {
    [EntityTickEventType.tongueLaunch]: (): unknown => 0 as any,
    [EntityTickEventType.tongueLick]: (): unknown => 0 as any,
    [EntityTickEventType.dustfleaEggPop]: (): unknown => 0 as any,
-   [EntityTickEventType.okrenEyeHitSound]: (): unknown => 0 as any
+   [EntityTickEventType.okrenEyeHitSound]: (): unknown => 0 as any,
+   [EntityTickEventType.foodMunch]: (): unknown => 0 as any,
+   [EntityTickEventType.foodBurp]: (): unknown => 0 as any,
 } satisfies Record<EntityTickEventType, () => unknown>;
 
 export type EntityEventData<T extends EntityTickEventType> = ReturnType<typeof EventDataTypes[T]>;

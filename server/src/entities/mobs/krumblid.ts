@@ -31,6 +31,43 @@ import { KrumblidCombatAI } from "../../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../../ai/KrumblidHibernateAI";
 import { getEntityType } from "../../world";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
+import { TamingComponent } from "../../components/TamingComponent";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { registerEntityTamingSpec } from "../../taming-specs";
+
+registerEntityTamingSpec(EntityType.krumblid, {
+   maxTamingTier: 3,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 0,
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.imprint),
+         x: 0,
+         y: 50,
+         parent: TamingSkillID.attack,
+         requiredTamingTier: 3
+      }
+   ],
+   foodItemType: ItemType.leaf,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5,
+      2: 20,
+      3: 60
+   }
+});
 
 registerEntityLootOnDeath(EntityType.krumblid, [
    {
@@ -98,7 +135,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 400, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.25, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 1, 1);
@@ -114,6 +151,8 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    
    const energyStomachComponent = new EnergyStomachComponent(300, 3, 1);
    
+   const tamingComponent = new TamingComponent();
+   
    const krumblidComponent = new KrumblidComponent();
    
    return {
@@ -128,6 +167,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,
          [ServerComponentType.energyStomach]: energyStomachComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.krumblid]: krumblidComponent
       },
       lights: []

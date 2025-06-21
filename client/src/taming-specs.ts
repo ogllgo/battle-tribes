@@ -23,10 +23,14 @@ const readTamingSpecFromData = (reader: PacketReader): EntityTamingSpec => {
       const skillID = reader.readNumber() as TamingSkillID;
       const x = reader.readNumber();
       const y = reader.readNumber();
+      const parentSkillID = reader.readNumber();
+      const requiredTamingTier = reader.readNumber();
       skillNodes.push({
          skill: getTamingSkill(skillID),
          x: x,
-         y: y
+         y: y,
+         parent: parentSkillID !== -1 ? parentSkillID as TamingSkillID : null,
+         requiredTamingTier: requiredTamingTier
       });
    }
 

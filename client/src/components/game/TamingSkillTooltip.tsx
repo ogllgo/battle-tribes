@@ -1,15 +1,16 @@
-import { TamingSkill } from "../../../../shared/src/taming";
+import { TamingSkill, TamingSkillNode } from "../../../../shared/src/taming";
 import { getTamingSkillLearning, hasTamingSkill, skillLearningIsComplete, TamingComponent } from "../../entity-components/server-components/TamingComponent";
 import { cursorX, cursorY } from "../../mouse";
 
 interface TamingSkillTooltipProps {
    readonly tamingComponent: TamingComponent;
-   readonly skill: TamingSkill;
+   readonly skillNode: TamingSkillNode;
 }
 
 const TamingSkillTooltip = (props: TamingSkillTooltipProps) => {
    const tamingComponent = props.tamingComponent;
-   const skill = props.skill;
+   const skillNode = props.skillNode;
+   const skill = skillNode.skill;
    
    const x = cursorX;
    const y = cursorY;
@@ -20,7 +21,7 @@ const TamingSkillTooltip = (props: TamingSkillTooltipProps) => {
       <p className="description">{skill.description}</p>
 
       {!hasTamingSkill(tamingComponent, skill.id) ? <>
-         {skill.requiredTamingTier <= tamingComponent.tamingTier ? (
+         {skillNode.requiredTamingTier <= tamingComponent.tamingTier ? (
             skill.requirements.map((requirement, i) => {
                let requirementProgress: number;
                const skillLearning = getTamingSkillLearning(tamingComponent, skill.id);

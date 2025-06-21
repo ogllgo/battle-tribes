@@ -22,6 +22,8 @@ export enum RenderLayer {
    lowEntities,
    // So that the tongue is rendfered below okrens
    okrenTongue,
+   // so that the limbs are rendered below okrens
+   okrenClaw,
    defaultEntities,
    // @Hack So that these will be shown above the default entities which they are carried on
    ridingEntities,
@@ -176,6 +178,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       case EntityType.okrenTongueSegment:
       case EntityType.okrenTongueTip: {
          return RenderLayer.okrenTongue;
+      }
+      case EntityType.okrenClaw: {
+         return RenderLayer.okrenClaw;
       }
       // (default)
       default: {

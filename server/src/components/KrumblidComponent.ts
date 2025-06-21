@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { assert, UtilVars } from "battletribes-shared/utils";
+import { angle, assert, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
@@ -17,8 +17,16 @@ import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
 import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
-import { runKrumblidCombatAI, shouldRunKrumblidCombatAI, updateKrumblidCombatAI } from "../ai/KrumblidCombatAI";
+import { getKrumblidAttackTarget, getKrumblidDustfleaThreatTarget, runKrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { runKrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
+import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { ItemComponentArray } from "./ItemComponent";
+import { InventoryUseComponentArray } from "./InventoryUseComponent";
+import { ItemType } from "../../../shared/src/items/items";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { Settings } from "../../../shared/src/settings";
+import { TamingSkillID } from "../../../shared/src/taming";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI * 2
@@ -99,6 +107,60 @@ const entityIsFollowable = (entity: Entity): boolean => {
    return true;
 }
 
+// @Hack @COPYNPASTE from cow
+const eatLeafItem = (krumblid: Entity, berryItemEntity: Entity): void => {
+   addHungerEnergy(krumblid, 5);
+
+   const itemComponent = ItemComponentArray.getComponent(berryItemEntity);
+   if (itemComponent.throwingEntity !== null) {
+      const tamingComponent = TamingComponentArray.getComponent(krumblid);
+      tamingComponent.foodEatenInTier++;
+   }
+
+   destroyEntity(berryItemEntity);
+
+   // @Hack`
+   const tickEvent: EntityTickEvent = {
+      entityID: krumblid,
+      type: EntityTickEventType.cowEat,
+      data: 0
+   };
+   registerEntityTickEvent(krumblid, tickEvent);
+}
+
+// @Hack @COPYNPASTE from cow
+const chaseAndEatLeafItem = (krumblid: Entity, berryItemEntity: Entity): boolean => {
+   if (entitiesAreColliding(krumblid, berryItemEntity) !== CollisionVars.NO_COLLISION) {
+      eatLeafItem(krumblid, berryItemEntity);
+      return true;
+   }
+
+   const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
+   const berryHitbox = berryTransformComponent.children[0] as Hitbox;
+
+   const targetX = berryHitbox.box.position.x;
+   const targetY = berryHitbox.box.position.y;
+   moveEntityToPosition(krumblid, targetX, targetY, 350, Vars.TURN_SPEED * 1.5, 0.4);
+
+   return false;
+}
+
+// @Hack @COPYNPASTE from cow
+const entityIsHoldingLeafItem = (entity: Entity): boolean => {
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
+
+   for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
+      const limbInfo = inventoryUseComponent.limbInfos[i];
+
+      const heldItem = limbInfo.associatedInventory.itemSlots[limbInfo.selectedItemSlot];
+      if (typeof heldItem !== "undefined" && heldItem.type === ItemType.leaf) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 function onTick(krumblid: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(krumblid);
 
@@ -107,6 +169,11 @@ function onTick(krumblid: Entity): void {
    for (let i = 0; i < 2; i++) {
       const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
       turnHitboxToAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, 0.5, true);
+   }
+
+   const tamingComponent = TamingComponentArray.getComponent(krumblid);
+   if (tamingComponent.tamingTier >= 3 && getEntityAgeTicks(krumblid) % Settings.TPS === 0) {
+      addSkillLearningProgress(tamingComponent, TamingSkillID.imprint, 1);
    }
    
    const escapeAI = aiHelperComponent.getEscapeAI();
@@ -120,6 +187,23 @@ function onTick(krumblid: Entity): void {
       const hibernateAI = aiHelperComponent.getKrumblidHibernateAI();
       runKrumblidHibernateAI(krumblid, aiHelperComponent, hibernateAI);
       return;
+   }
+   
+   // @Hack @COPYNPASTE from cow
+   // Eat leaf items
+   if (getEntityFullness(krumblid) < 0.9) {
+      for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
+         const itemEntity = aiHelperComponent.visibleEntities[i];
+         if (getEntityType(itemEntity) === EntityType.itemEntity) {
+            const itemComponent = ItemComponentArray.getComponent(itemEntity);
+            if (itemComponent.itemType === ItemType.leaf) {
+               const wasEaten = chaseAndEatLeafItem(krumblid, itemEntity);
+               if (!wasEaten) {
+                  return;
+               }
+            }
+         }
+      }
    }
 
    // Eat prickly pears
@@ -142,13 +226,12 @@ function onTick(krumblid: Entity): void {
       }
    }
 
-   if (getEntityFullness(krumblid) < 0.5) {
-      const krumblidCombatAI = aiHelperComponent.getKrumblidCombatAI();
-      updateKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI);
-      if (shouldRunKrumblidCombatAI(krumblidCombatAI)) {
-         runKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI);
-         return;
-      }
+   // If there's a dustflea going towards the krumblid, turn towards it to try and munch it so that it doesn't slurp you
+   const krumblidCombatAI = aiHelperComponent.getKrumblidCombatAI();
+   const dustfleaThreat = getKrumblidDustfleaThreatTarget(krumblid, aiHelperComponent);
+   if (dustfleaThreat !== null) {
+      runKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI, dustfleaThreat);
+      return;
    }
    
    // Follow AI: Make the krumblid like to hide in cacti
@@ -186,14 +269,25 @@ function onTick(krumblid: Entity): void {
       }
    }
 
+   // Eat dustfleas when low on food
+   // (but prefer to eat them less than vegetation, so that krumblids don't crash the dustflea population)
+   if (getEntityFullness(krumblid) < 0.5) {
+      const eatTarget = getKrumblidAttackTarget(krumblid, aiHelperComponent);
+      if (eatTarget !== null) {
+         runKrumblidCombatAI(krumblid, aiHelperComponent, krumblidCombatAI, eatTarget);
+         return;
+      }
+   }
+
    // Sand balling AI
    // something they do for fun
-   const sandBallingAI = aiHelperComponent.getSandBallingAI();
-   updateSandBallingAI(sandBallingAI);
-   if (shouldRunSandBallingAI(sandBallingAI)) {
-      runSandBallingAI(krumblid, aiHelperComponent, sandBallingAI);
-      return;
-   }
+   // @TEMPORARY for shot
+   // const sandBallingAI = aiHelperComponent.getSandBallingAI();
+   // updateSandBallingAI(sandBallingAI);
+   // if (shouldRunSandBallingAI(sandBallingAI)) {
+   //    runSandBallingAI(krumblid, aiHelperComponent, sandBallingAI);
+   //    return;
+   // }
 
    // Herd AI
    // @Incomplete: Steer the herd away from non-plains biomes

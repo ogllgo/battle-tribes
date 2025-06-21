@@ -2,21 +2,18 @@ import { assertBoxIsCircular } from "../../../shared/src/boxes/boxes";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Settings } from "../../../shared/src/settings";
-import { Point } from "../../../shared/src/utils";
+import { getAbsAngleDiff, Point } from "../../../shared/src/utils";
+import { getDistanceFromPointToHitbox } from "../ai-shared";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
-import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
-import { damageEntity, HealthComponentArray } from "../components/HealthComponent";
-import { addHungerEnergy } from "../components/EnergyStomachComponent";
+import { damageEntity } from "../components/HealthComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox, turnHitboxToAngle } from "../hitboxes";
-import { getEntityType, entityExists, getEntityAgeTicks } from "../world";
+import { getEntityType, getEntityAgeTicks } from "../world";
 
 export class KrumblidCombatAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
-
-   public target: Entity = 0;
 
    constructor(acceleration: number, turnSpeed: number) {
       this.acceleration = acceleration;
@@ -24,11 +21,55 @@ export class KrumblidCombatAI {
    }
 }
 
+const dustfleaIsThreat = (krumblid: Entity, dustflea: Entity): boolean => {
+   const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
+   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+
+   // Make sure not too far away
+   if (getDistanceFromPointToHitbox(krumblidHitbox.box.position, dustfleaHitbox) > 120) {
+      return false;
+   }
+   
+   // Make sure the dustflea is looking towards the krumblid
+   const angleFromEscapeTarget = dustfleaHitbox.box.position.calculateAngleBetween(krumblidHitbox.box.position);
+   return getAbsAngleDiff(angleFromEscapeTarget, dustfleaHitbox.box.angle) < 0.6;
+}
+
 const wantsToAttackEntity = (entity: Entity): boolean => {
    return getEntityType(entity) === EntityType.dustflea;
 }
 
-const getAttackTarget = (krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+// @Cleanup: shouldn't be extorted to everywhere!!
+export function getKrumblidDustfleaThreatTarget(krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
+   const transformComponent = TransformComponentArray.getComponent(krumblid);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let target: Entity | null = null;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (getEntityType(entity) !== EntityType.dustflea || !dustfleaIsThreat(krumblid, entity)) {
+         continue;
+      }
+      
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      assertBoxIsCircular(entityHitbox.box);
+
+      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         target = entity;
+      }
+   }
+
+   return target;
+}
+
+// @Cleanup: shouldn't be extorted to everywhere!!
+export function getKrumblidAttackTarget(krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    const hitbox = transformComponent.children[0] as Hitbox;
 
@@ -53,19 +94,8 @@ const getAttackTarget = (krumblid: Entity, aiHelperComponent: AIHelperComponent)
    return target;
 }
 
-export function updateKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelperComponent, krumblidCombatAI: KrumblidCombatAI): void {
-   const target = getAttackTarget(krumblid, aiHelperComponent);
-   krumblidCombatAI.target = target !== null ? target : 0;
-}
-
-export function shouldRunKrumblidCombatAI(krumblidCombatAI: KrumblidCombatAI): boolean {
-   return entityExists(krumblidCombatAI.target);
-}
-
-export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelperComponent, krumblidCombatAI: KrumblidCombatAI): void {
+export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelperComponent, krumblidCombatAI: KrumblidCombatAI, target: Entity): void {
    aiHelperComponent.currentAIType = AIType.krumblidCombat;
-   
-   const target = krumblidCombatAI.target;
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    const hitbox = transformComponent.children[0] as Hitbox;

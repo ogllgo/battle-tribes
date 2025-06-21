@@ -1,5 +1,4 @@
 import { assertBoxIsRectangular, HitboxFlag } from "../../../shared/src/boxes/boxes";
-import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";

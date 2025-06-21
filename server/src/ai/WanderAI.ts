@@ -41,7 +41,8 @@ export default class WanderAI {
 
    private shouldTryAndWander(hitbox: Hitbox): boolean {
       const velocity = getHitboxVelocity(hitbox);
-      return velocity.x === 0 && velocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
+      // We check for < 1 instead of == 0 here as sometimtes the velocity can be an infinitessimal
+      return Math.abs(velocity.x) < 1 && Math.abs(velocity.y) < 1 && Math.random() < this.wanderRate / Settings.TPS;
    }
 
    public update(entity: Entity): void {

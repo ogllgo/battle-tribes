@@ -13,7 +13,7 @@ import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-mem
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable, addItem } from "../components/InventoryComponent";
 import { BlueprintType } from "battletribes-shared/components";
-import { Point } from "battletribes-shared/utils";
+import { Point, randAngle } from "battletribes-shared/utils";
 import { createEntity } from "../Entity";
 import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
 import { createItem } from "../items";
@@ -41,6 +41,7 @@ import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
 import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
+import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
 
 /** How far away from the entity the attack is done */
 const ATTACK_OFFSET = 50;
@@ -825,6 +826,13 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
    tamingComponent.tameTribe = playerClient.tribe;
+
+   // @TEMPORARY for a shot
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+   const config = createKrumblidMorphCocoonConfig(hitbox.box.position.copy(), randAngle());
+   createEntity(config, getEntityLayer(entity), 0);
+   destroyEntity(entity);
 }
 
 export function processAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {

@@ -60,7 +60,8 @@ const enum InteractActionType {
    setCarryTarget,
    selectAttackTarget,
    openTamingMenu,
-   inscribeFloorSign
+   inscribeFloorSign,
+   pickUpDustfleaEgg
 }
 
 interface BaseInteractAction {
@@ -133,7 +134,11 @@ interface InscribeFloorSignAction extends BaseInteractAction {
    readonly type: InteractActionType.inscribeFloorSign;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction;
+interface PickUpDustfleaEggAction extends BaseInteractAction {
+   readonly type: InteractActionType.pickUpDustfleaEgg;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction | PickUpDustfleaEggAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -368,7 +373,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.setCarryTarget:
       case InteractActionType.selectAttackTarget:
       case InteractActionType.openTamingMenu:
-      case InteractActionType.inscribeFloorSign: {
+      case InteractActionType.inscribeFloorSign:
+      case InteractActionType.pickUpDustfleaEgg: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {

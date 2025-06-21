@@ -771,6 +771,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Crabplate Armour",
       namePlural: "Crabplate Armour",
       description: ""
+   },
+   [ItemType.dustfleaEgg]: {
+      entityTextureSource: "items/small/dustflea-egg.png",
+      textureSource: "items/large/dustflea-egg.png",
+      toolTextureSource: "",
+      name: "Dustflea Egg",
+      namePlural: "Dustflea Egg",
+      description: ""
    }
 };
 

@@ -20,11 +20,14 @@ KrumblidMorphCocoonComponentArray.onTick = {
 };
 
 const NUM_STAGES = 9;
-const DURATION_HOURS = 72;
+// @TEMPORARY
+// const DURATION_HOURS = 72;
+const DURATION_HOURS = 2;
 
 const getStage = (ageTicks: number): number => {
    const ageHours = ticksToGameHours(ageTicks);
-   return 1 + Math.floor(ageHours / DURATION_HOURS * NUM_STAGES);
+   // @TEMPORARY
+   return 1 + Math.floor(ageHours / DURATION_HOURS * NUM_STAGES) + 7;
 }
 
 function onTick(cocoon: Entity): void {

@@ -36,6 +36,7 @@ OkrenTongueComponentArray.onTakeDamage = onTakeDamage;
 // @HACK @COPYNPASTE
 const TONGUE_INITIAL_OFFSET = 88;
 const IDEAL_SEPARATION = 18;
+const MAX_TONGUE_LENGTH = 500;
 
 const getTongueBaseEntity = (transformComponent: TransformComponent): Entity => {
    const attachInfo = transformComponent.children[transformComponent.children.length - 1] as EntityAttachInfo;
@@ -328,7 +329,7 @@ function onTick(tongue: Entity): void {
    const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
 
    const length = getTongueLength(transformComponent);
-   if (length >= 600) {
+   if (length >= MAX_TONGUE_LENGTH) {
       startRetractingTongue(tongue, okrenTongueComponent);
    }
 

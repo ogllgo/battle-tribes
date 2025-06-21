@@ -495,16 +495,6 @@ class GameServer {
       // Update server ticks and time
       // This is done at the end of the tick so that information sent by players is associated with the next tick to run
       tickGameTime();
-
-      if (getGameTicks() % (Settings.TPS * 15) === 0) {
-         const s = Math.floor(getGameTicks() / Settings.TPS) % 60;
-         const m = Math.floor(getGameTicks() / (Settings.TPS * 60));
-         
-         const numDustfleas = getEntityCount(EntityType.dustflea);
-         const numKrumblids = getEntityCount(EntityType.krumblid);
-         const numOkrens = getEntityCount(EntityType.okren);
-         console.log("(" + m + "m " + s + "s) #dust: " + numDustfleas + " | #krumb: " + numKrumblids + " | #okren: " + numOkrens)
-      }
    }
 
    // @Cleanup: maybe move this function to player-clients?

@@ -45,9 +45,10 @@
 }
 
 #taming-menu .progress-area .row {
-   width: 70%;
+   /* @INCOMPLETE: need to make it be centered! */
+   /* width: 70%; */
    display: flex;
-   margin-left: 15%;
+   /* margin-left: 15%; */
 }
 
 #taming-menu .berry-progress-bar {
@@ -261,6 +262,7 @@
 /* TAMING SKILL TOOLTIP */
 
 #taming-skill-tooltip {
+   max-width: 24rem;
    font-family: "Noto Sans";
    color: #fff;
    background-color: #888;

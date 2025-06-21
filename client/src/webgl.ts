@@ -54,7 +54,11 @@ export function resizeCanvas(): void {
 window.addEventListener("resize", resizeCanvas);
 
 export function createWebGLContext(): void {
-   canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
+   const canvasCheck = document.getElementById("game-canvas");
+   if (canvasCheck instanceof HTMLCanvasElement) {
+      canvas = canvasCheck;
+   }
+   
    const glAttempt = canvas.getContext("webgl2", { alpha: false });
 
    if (glAttempt === null) {

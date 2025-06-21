@@ -23,11 +23,62 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { createHitbox } from "../../hitboxes";
 import { createOkrenClawConfig } from "./okren-claw";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
+import { registerEntityTamingSpec } from "../../taming-specs";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { TamingComponent } from "../../components/TamingComponent";
 
 const HEALTHS = [50, 80, 115, 150, 200];
 const VISION_RANGES = [500, 550, 600, 650, 700];
 
 const ENERGIES = [2000, 2500, 3000, 3500, 4000];
+
+registerEntityTamingSpec(EntityType.okren, {
+   maxTamingTier: 3,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.riding),
+         x: -18,
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.move),
+         x: 18,
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.carry),
+         x: -30,
+         y: 50,
+         parent: TamingSkillID.riding,
+         requiredTamingTier: 3
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 6,
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
+      }
+   ],
+   foodItemType: ItemType.berry,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5,
+      2: 20,
+      3: 60
+   }
+});
 
 registerEntityLootOnDeath(EntityType.okren, [
    {
@@ -77,7 +128,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       case OkrenAgeStage.elder:    bodyRadius = 72; break;
       case OkrenAgeStage.ancient:  bodyRadius = 80; break;
    }
-   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
+   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
    addHitboxToTransformComponent(transformComponent, fleshBodyHitbox);
 
    const childConfigs = new Array<EntityConfig>();
@@ -143,9 +194,11 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    
    const energyStoreComponent = new EnergyStoreComponent(ENERGIES[size]);
    
-   const energyStomachComponent = new EnergyStomachComponent(1000, 10, 5);
+   const energyStomachComponent = new EnergyStomachComponent(1000, 4, 5);
    
    const lootComponent = new LootComponent();
+   
+   const tamingComponent = new TamingComponent();
    
    const okrenComponent = new OkrenComponent();
    okrenComponent.size = size;
@@ -161,6 +214,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          [ServerComponentType.energyStore]: energyStoreComponent,
          [ServerComponentType.energyStomach]: energyStomachComponent,
          [ServerComponentType.loot]: lootComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.okren]: okrenComponent
       },
       lights: [],

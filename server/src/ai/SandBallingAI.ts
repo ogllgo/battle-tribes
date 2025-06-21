@@ -15,13 +15,19 @@ import { createEntity } from "../Entity";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
 import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
+const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
+const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;
+
+const MIN_BALL_TIME_TICKS = 1.5 * Settings.TPS;
+const MAX_BALL_TIME_TICKS = 5 * Settings.TPS;
+
 export class SandBallingAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
 
    public readonly sandBallGrowRate: number;
    
-   public ballingInterestCooldownTicks = randInt(MIN_BALLING_COOLDOWN_TICKS, MAX_BALLING_COOLDOWN_TICKS);
+   public ballingInterestCooldownTicks = Math.floor(randInt(MIN_BALLING_COOLDOWN_TICKS, MAX_BALLING_COOLDOWN_TICKS) * Math.random());
 
    public remainingBallTimeTicks = 0;
 
@@ -33,12 +39,6 @@ export class SandBallingAI {
       this.sandBallGrowRate = sandBallGrowRate;
    }
 }
-
-const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
-const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;
-
-const MIN_BALL_TIME_TICKS = 1.5 * Settings.TPS;
-const MAX_BALL_TIME_TICKS = 5 * Settings.TPS;
 
 export function updateSandBallingAI(sandBallingAI: SandBallingAI): void {
    if (sandBallingAI.ballingInterestCooldownTicks > 0) {

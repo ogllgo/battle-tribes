@@ -323,16 +323,21 @@ export function setRenderedTribePlanID(id: number | null): void {
 }
 
 export function renderTribePlans(): void {
-   if (renderedTribeID === null) {
-      document.getElementById("tribe-plan-visualiser-canvas")!.classList.add("hidden");
-      TribePlanVisualiser_setPlan(null, null);
+   const canvasElement = document.getElementById("tribe-plan-visualiser-canvas");
+   if (canvasElement === null) {
       return;
    }
-   document.getElementById("tribe-plan-visualiser-canvas")!.classList.remove("hidden");
-
-   gl.clearColor(0, 0, 0, 1);
-   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
    
-   const tribeAssignmentInfo = tribePlanDataRecord[renderedTribeID];
-   TribePlanVisualiser_setPlan(tribeAssignmentInfo, getTribeByID(renderedTribeID) as ExtendedTribe);
+   if (renderedTribeID === null) {
+      canvasElement.classList.add("hidden");
+      TribePlanVisualiser_setPlan(null, null);
+   } else {
+      canvasElement.classList.remove("hidden");
+      
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      
+      const tribeAssignmentInfo = tribePlanDataRecord[renderedTribeID];
+      TribePlanVisualiser_setPlan(tribeAssignmentInfo, getTribeByID(renderedTribeID) as ExtendedTribe);
+   }
 }

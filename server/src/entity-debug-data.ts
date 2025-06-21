@@ -14,6 +14,7 @@ import { AIAssignmentComponentArray } from "./components/AIAssignmentComponent";
 import { YetiComponentArray } from "./components/YetiComponent";
 import { EnergyStoreComponentArray } from "./components/EnergyStoreComponent";
 import { EnergyStomachComponentArray } from "./components/EnergyStomachComponent";
+import { OkrenComponentArray } from "./components/OkrenComponent";
 
 const getPlanDebugString = (plan: AIPlan): string => {
    switch (plan.type) {
@@ -111,6 +112,11 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
             tilePosition: [tileX, tileY]
          });
       }
+   }
+
+   if (OkrenComponentArray.hasComponent(entity)) {
+      const okrenComponent = OkrenComponentArray.getComponent(entity);
+      debugEntries.push("Eggs ready: " + okrenComponent.numEggsReady);
    }
 
    if (EnergyStoreComponentArray.hasComponent(entity)) {

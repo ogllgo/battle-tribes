@@ -256,6 +256,13 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
             limb.currentActionElapsedTicks = 0;
             limb.currentActionDurationTicks = 0;
          }
+         
+         const event: EntityTickEvent = {
+            entityID: tribeMember,
+            type: EntityTickEventType.foodBurp,
+            data: 0
+         };
+         registerEntityTickEvent(tribeMember, event);
 
          break;
       }

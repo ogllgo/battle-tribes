@@ -65,15 +65,18 @@ function onHitboxCollision(tumbleweed: Entity, collidingEntity: Entity, affected
       return;
    }
 
+   // @Temporary @Hack: tumbleweeds crash the server like fuck rn
+   return;
+
    // Attach to the other tumbleweed!
    const transformComponent = TransformComponentArray.getComponent(tumbleweed);
    if (transformComponent.rootEntity === tumbleweed) {
       const otherTransformComponent = TransformComponentArray.getComponent(collidingEntity);
       if (transformComponent.rootEntity !== otherTransformComponent.rootEntity) {
-         // @Hack: what if i change their radius?
          const hitbox = transformComponent.children[0] as Hitbox;
          const otherHitbox = otherTransformComponent.children[0] as Hitbox;
          const dist = hitbox.box.position.calculateDistanceBetween(otherHitbox.box.position);
+         // @Hack: what if i change their radius?
          if (dist < 70) {
             attachEntity(tumbleweed, collidingEntity, collidingHitbox, false);
          }

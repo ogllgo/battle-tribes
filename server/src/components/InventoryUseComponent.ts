@@ -5,11 +5,11 @@ import { ComponentArray } from "./ComponentArray";
 import { BowItemInfo, getItemAttackInfo, Inventory, InventoryName, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType, QUIVER_PULL_TIME_TICKS, RETURN_FROM_BOW_USE_TIME_TICKS } from "battletribes-shared/items/items";
 import { Packet } from "battletribes-shared/packets";
 import { getInventory, InventoryComponentArray } from "./InventoryComponent";
-import { Point } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, Point } from "battletribes-shared/utils";
 import { Box } from "battletribes-shared/boxes/boxes";
 import { TransformComponentArray } from "./TransformComponent";
 import { AttackVars, BLOCKING_LIMB_STATE, copyLimbState, LimbConfiguration, LimbState, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, interpolateLimbState } from "battletribes-shared/attack-patterns";
-import { registerDirtyEntity } from "../server/player-clients";
+import { registerDirtyEntity, registerEntityTickEvent } from "../server/player-clients";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
@@ -18,6 +18,7 @@ import { createEntity } from "../Entity";
 import { destroyEntity, entityExists, getEntityLayer } from "../world";
 import { createSwingAttackConfig } from "../entities/swing-attack";
 import { applyKnockback, Hitbox } from "../hitboxes";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 
 // @Cleanup: Make into class Limb with getHeldItem method
 export interface LimbInfo {
@@ -249,6 +250,16 @@ function onTick(entity: Entity): void {
       // Certain actions should always show an update for the player
       if (limb.action !== LimbAction.none) {
          registerDirtyEntity(entity);
+      }
+
+      // @Hack
+      if (limb.action === LimbAction.eat && customTickIntervalHasPassed(limb.currentActionElapsedTicks, 0.19)) {
+         const event: EntityTickEvent = {
+            entityID: entity,
+            type: EntityTickEventType.foodMunch,
+            data: 0
+         };
+         registerEntityTickEvent(entity, event);
       }
 
       if (limb.currentActionPauseTicksRemaining > 0) {

@@ -126,7 +126,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
          combatAI.tongueCooldownTicks--;
       }
       if (combatAI.tongueCooldownTicks === 0) {
-         // deployTongue(okren, hitbox, desiredTarget);
+         deployTongue(okren, hitbox, desiredTarget);
       }
 
       target = desiredTarget;

@@ -101,6 +101,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
          addHitboxVelocity(fishHitbox, Vars.LUNGE_FORCE * Math.sin(direction), Vars.LUNGE_FORCE * Math.cos(direction));
          if (direction !== fishHitbox.box.angle) {
+            // @HACK @BUG
             fishHitbox.box.angle = direction;
             transformComponent.isDirty = true;
          }

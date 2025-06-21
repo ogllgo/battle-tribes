@@ -6,7 +6,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Tile } from "../../../Tile";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
-import { getCurrentLayer, getEntityType } from "../../../world";
+import { entityExists, getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { Entity, EntityTypeString } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
@@ -188,7 +188,7 @@ const DebugInfo = () => {
 
    return <div id="debug-info">
       {tile !== null ? <TileDebugInfo layer={layer} tile={tile} /> : undefined}
-      {entity !== null ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}
+      {entity !== null && entityExists(entity) ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}
    </div>;
 }
 

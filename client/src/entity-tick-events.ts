@@ -85,8 +85,15 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          break;
       }
       case EntityTickEventType.okrenEyeHitSound: {
-         console.log("AAA");
          playSoundOnHitbox("okren-eye-hit.mp3", 1.5, 0.6, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.foodMunch: {
+         playSoundOnHitbox("food-munch-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.foodBurp: {
+         playSoundOnHitbox("food-burp.mp3", 0.5, randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }
    }

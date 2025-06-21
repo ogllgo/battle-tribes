@@ -23,6 +23,7 @@ export const DustfleaComponentArray = new ServerComponentArray<DustfleaComponent
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
+   onHit: onHit,
    onDie: onDie
 });
 
@@ -57,6 +58,10 @@ function getMaxRenderParts(): number {
 function padData(reader: PacketReader): void {}
 
 function updateFromData(reader: PacketReader): void {}
+
+function onHit(dustflea: Entity, hitbox: Hitbox): void {
+   playSoundOnHitbox("dustflea-hit.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
+}
 
 function onDie(dustflea: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(dustflea);

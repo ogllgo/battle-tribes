@@ -46,6 +46,7 @@ const SKILL_ICON_NAMES: Record<TamingSkillID, string> = {
    [TamingSkillID.attack]: "attack-skill.png",
    [TamingSkillID.shatteredWill]: "shattered-will-skill.png",
    [TamingSkillID.dulledPainReceptors]: "dulled-pain-receptors.png",
+   [TamingSkillID.imprint]: "imprint-skill.png",
 };
 
 const UNUSED_NAMETAG_IMG = require("../../images/menus/taming-almanac/nametag-unused.png");
@@ -89,7 +90,7 @@ const TamingMenu = () => {
    const [entity, setEntity] = useState(0);
    const [isVisible, setIsVisible] = useState(false);
    const [_, forceUpdate] = useReducer(x => x + 1, 0);
-   const [hoveredSkill, setHoveredSkill] = useState<TamingSkill | null>(null);
+   const [hoveredSkill, setHoveredSkill] = useState<TamingSkillNode | null>(null);
    
    useEffect(() => {
       TamingMenu_setEntity = setEntity;
@@ -135,7 +136,7 @@ const TamingMenu = () => {
       }
    }
 
-   const onSkillMouseOver = (skill: TamingSkill): void => {
+   const onSkillMouseOver = (skill: TamingSkillNode): void => {
       setHoveredSkill(skill);
    }
 
@@ -216,12 +217,12 @@ const TamingMenu = () => {
             </div>
          </div>
 
-         <div className="skill-map-container" style={{width: skillMapWidth * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", height: skillMapHeight * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem"}}>
+         <div className="skill-map-container" style={{minWidth: skillMapWidth * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", height: skillMapHeight * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem"}}>
             {tamingSpec.skillNodes.map((skillNode, i) => {
                const skill = skillNode.skill;
                
                let className = "skill";
-               if (skill.requiredTamingTier > tamingComponent.tamingTier) {
+               if (skillNode.requiredTamingTier > tamingComponent.tamingTier) {
                   className += " inaccessible";
                }
                if (hasTamingSkill(tamingComponent, skill.id)) {
@@ -234,7 +235,7 @@ const TamingMenu = () => {
 
                return <div key={i} className={className} style={{top: skillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
                   <div>
-                     <div className="skill-icon-wrapper" onMouseDown={() => onSkillClick(skill)} onMouseOver={() => onSkillMouseOver(skill)} onMouseOut={() => onSkillMouseOut()}>
+                     <div className="skill-icon-wrapper" onMouseDown={() => onSkillClick(skill)} onMouseOver={() => onSkillMouseOver(skillNode)} onMouseOut={() => onSkillMouseOut()}>
                         <div className="skill-bg" />
                         <img className="skill-icon" src={iconSrc} />
                      </div>
@@ -243,11 +244,10 @@ const TamingMenu = () => {
                </div>;
             })}
             {tamingSpec.skillNodes.map((skillNode, i) => {
-               const skill = skillNode.skill;
-               if (skill.parent !== null && tamingComponent.tamingTier >= skill.requiredTamingTier) {
+               if (skillNode.parent !== null && tamingComponent.tamingTier >= skillNode.requiredTamingTier) {
                   let parentSkillNode: TamingSkillNode | undefined;
                   for (const currentSkillNode of tamingSpec.skillNodes) {
-                     if (currentSkillNode.skill.id === skill.parent) {
+                     if (currentSkillNode.skill.id === skillNode.parent) {
                         parentSkillNode = currentSkillNode;
                         break;
                      }
@@ -273,7 +273,7 @@ const TamingMenu = () => {
       </Menu>
 
       {hoveredSkill !== null ? (
-         <TamingSkillTooltip tamingComponent={tamingComponent} skill={hoveredSkill} />
+         <TamingSkillTooltip tamingComponent={tamingComponent} skillNode={hoveredSkill} />
       ) : null}
    </>;
 }

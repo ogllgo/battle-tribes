@@ -7,7 +7,8 @@ export const enum TamingSkillID {
    carry,
    attack,
    shatteredWill,
-   dulledPainReceptors
+   dulledPainReceptors,
+   imprint
 }
 
 export type TamingTier = 0 | 1 | 2 | 3;
@@ -23,14 +24,14 @@ export interface TamingSkill {
    readonly name: string;
    readonly description: string;
    readonly requirements: ReadonlyArray<TamingSkillRequirement>;
-   readonly requiredTamingTier: number;
-   readonly parent: TamingSkillID | null;
 }
 
 export interface TamingSkillNode {
    readonly skill: TamingSkill;
    readonly x: number;
    readonly y: number;
+   readonly parent: TamingSkillID | null;
+   readonly requiredTamingTier: number;
 }
 
 export interface EntityTamingSpec<TamingTiers extends TamingTier = TamingTier> {
@@ -51,9 +52,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 1,
-      parent: null
+      ]
    },
    [TamingSkillID.riding]: {
       id: TamingSkillID.riding,
@@ -65,9 +64,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 5,
             suffix: " attempts"
          }
-      ],
-      requiredTamingTier: 2,
-      parent: TamingSkillID.follow
+      ]
    },
    [TamingSkillID.move]: {
       id: TamingSkillID.move,
@@ -79,9 +76,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 2,
-      parent: TamingSkillID.follow
+      ]
    },
    [TamingSkillID.carry]: {
       id: TamingSkillID.carry,
@@ -93,9 +88,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 120,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.riding
+      ]
    },
    [TamingSkillID.attack]: {
       id: TamingSkillID.attack,
@@ -107,9 +100,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.move
+      ]
    },
    [TamingSkillID.shatteredWill]: {
       id: TamingSkillID.shatteredWill,
@@ -121,9 +112,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 15,
             suffix: " damage"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.move
+      ]
    },
    [TamingSkillID.dulledPainReceptors]: {
       id: TamingSkillID.dulledPainReceptors,
@@ -135,9 +124,19 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 15,
             suffix: " damage"
          }
-      ],
-      requiredTamingTier: 1,
-      parent: null
+      ]
+   },
+   [TamingSkillID.imprint]: {
+      id: TamingSkillID.imprint,
+      name: "Imprint",
+      description: "The krumblid will remain tame at Taming Tier 1 when it metamorphs into an okren.",
+      requirements: [
+         {
+            description: "Time spent at Taming Tier 3",
+            amountRequired: 1000,
+            suffix: " seconds"
+         }
+      ]
    }
 };
 

@@ -293,7 +293,14 @@ export async function loadSoundEffects(): Promise<void> {
       "okren-tongue-launch.mp3",
       "okren-tongue-lick.mp3",
       "dustflea-egg-pop.mp3",
-      "okren-eye-hit.mp3"
+      "okren-eye-hit.mp3",
+      "dustflea-hit.mp3",
+      "food-burp.mp3",
+      "food-munch-1.mp3",
+      "food-munch-2.mp3",
+      "food-munch-3.mp3",
+      "food-munch-4.mp3",
+      "food-munch-5.mp3",
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
