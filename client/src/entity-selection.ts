@@ -1,5 +1,5 @@
 import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Game from "./Game";
@@ -23,7 +23,7 @@ import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-com
 import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendPickUpEntityPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
 import { AnimalStaffCommandType, AnimalStaffOptions_isHovering, AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible, createControlCommandParticles } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
@@ -35,7 +35,7 @@ import { HealthComponentArray } from "./entity-components/server-components/Heal
 import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
 import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
-import { createHitbox, createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
+import { createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
@@ -56,7 +56,7 @@ const enum InteractActionType {
    openCraftingStation,
    openAnimalStaffMenu,
    mountCarrySlot,
-   pickUpArrow,
+   pickUpEntity,
    setCarryTarget,
    selectAttackTarget,
    openTamingMenu,
@@ -112,10 +112,11 @@ interface OpenAnimalStaffMenuAction extends BaseInteractAction {
 
 interface MountCarrySlotAction extends BaseInteractAction {
    readonly type: InteractActionType.mountCarrySlot;
+   readonly carrySlotIdx: number;
 }
 
-interface PickUpArrowAction extends BaseInteractAction {
-   readonly type: InteractActionType.pickUpArrow;
+interface PickUpEntityAction extends BaseInteractAction {
+   readonly type: InteractActionType.pickUpEntity;
 }
 
 interface SetCarryTargetAction extends BaseInteractAction {
@@ -138,7 +139,7 @@ interface PickUpDustfleaEggAction extends BaseInteractAction {
    readonly type: InteractActionType.pickUpDustfleaEgg;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction | PickUpDustfleaEggAction;
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpEntityAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction | PickUpDustfleaEggAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -193,6 +194,34 @@ const getTunnelDoorSide = (groupNum: number): TunnelDoorSide => {
       case 2: return 0b10;
       default: throw new Error();
    }
+}
+
+const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
+   if (Game.cursorX === null || Game.cursorY === null) {
+      return null;
+   }
+   
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.children[0] as Hitbox;
+
+   const rideableComponent = RideableComponentArray.getComponent(entity);
+
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestCarrySlotIdx: number | null = null;
+   
+   for (let i = 0; i < rideableComponent.carrySlots.length; i++) {
+      const carrySlot = rideableComponent.carrySlots[i];
+      const x = hitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
+      const y = hitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
+
+      const dist = distance(x, y, Game.cursorX, Game.cursorY);
+      if (dist < minDist) {
+         minDist = dist;
+         closestCarrySlotIdx = i;
+      }
+   }
+
+   return closestCarrySlotIdx;
 }
 
 const getEntityInteractAction = (gameInteractState: GameInteractState, entity: Entity): InteractAction | null => {
@@ -312,14 +341,19 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       };
    // Rideable entities
    } else if (RideableComponentArray.hasComponent(entity)) {
-      const rideableComponent = RideableComponentArray.getComponent(entity);
-      const carrySlot = rideableComponent.carrySlots[0];
-      if (!entityExists(carrySlot.occupiedEntity)) {
-         return {
-            type: InteractActionType.mountCarrySlot,
-            interactEntity: entity,
-            interactRange: Vars.DEFAULT_INTERACT_RANGE
-         };
+      const carrySlotIdx = getSelectedCarrySlotIdx(entity);
+      if (carrySlotIdx !== null) {
+         // @Hack
+         const rideableComponent = RideableComponentArray.getComponent(entity);
+         const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
+         if (!entityExists(carrySlot.occupiedEntity)) {
+            return {
+               type: InteractActionType.mountCarrySlot,
+               interactEntity: entity,
+               interactRange: Vars.DEFAULT_INTERACT_RANGE,
+               carrySlotIdx: carrySlotIdx
+            };
+         }
       }
    }
 
@@ -329,21 +363,30 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       const hitbox = transformComponent.children[0] as Hitbox;
       if (getHitboxVelocity(hitbox).length() < 1) {
          return {
-            type: InteractActionType.pickUpArrow,
+            type: InteractActionType.pickUpEntity,
             interactEntity: entity,
             interactRange: Vars.DEFAULT_INTERACT_RANGE
          };
       }
    }
 
+   // Pick up dustflea eggs
+   if (entityType === EntityType.dustfleaEgg) {
+      return {
+         type: InteractActionType.pickUpEntity,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
+   }
+
    // Inscribe signs
-if (FloorSignComponentArray.hasComponent(entity)) {
-   return {
-      type: InteractActionType.inscribeFloorSign,
-      interactEntity: entity,
-      interactRange: Vars.DEFAULT_INTERACT_RANGE
-   };
-}
+   if (FloorSignComponentArray.hasComponent(entity)) {
+      return {
+         type: InteractActionType.inscribeFloorSign,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
+   }
 
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
@@ -369,7 +412,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.openInventory:
       case InteractActionType.openCraftingStation:
       case InteractActionType.openAnimalStaffMenu:
-      case InteractActionType.pickUpArrow:
+      case InteractActionType.pickUpEntity:
       case InteractActionType.setCarryTarget:
       case InteractActionType.selectAttackTarget:
       case InteractActionType.openTamingMenu:
@@ -384,7 +427,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
 
          const rideableComponent = RideableComponentArray.getComponent(interactAction.interactEntity);
-         const carrySlot = rideableComponent.carrySlots[0];
+         const carrySlot = rideableComponent.carrySlots[interactAction.carrySlotIdx];
 
          // @HACK
          const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
@@ -483,11 +526,11 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          break;
       }
       case InteractActionType.mountCarrySlot: {
-         sendMountCarrySlotPacket(entity);
+         sendMountCarrySlotPacket(entity, action.carrySlotIdx);
          break;
       }
-      case InteractActionType.pickUpArrow: {
-         sendPickUpArrowPacket(entity);
+      case InteractActionType.pickUpEntity: {
+         sendPickUpEntityPacket(entity);
          break;
       }
       case InteractActionType.setCarryTarget: {
@@ -521,6 +564,9 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
             deselectSelectedEntity();
             SignInscribeMenu_setEntity(null);
          });
+         break;
+      }
+      case InteractActionType.pickUpDustfleaEgg: {
          break;
       }
       default: {

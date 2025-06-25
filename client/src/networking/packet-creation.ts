@@ -40,7 +40,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const playerHitbox = transformComponent.children[0] as Hitbox;
    packet.addNumber(playerHitbox.box.position.x);
    packet.addNumber(playerHitbox.box.position.y);
-   packet.addNumber(playerHitbox.box.angle);
+   packet.addNumber(playerHitbox.box.relativeAngle);
 
    packet.addNumber(playerHitbox.previousPosition.x);
    packet.addNumber(playerHitbox.previousPosition.y);
@@ -297,9 +297,10 @@ export function sendAnimalStaffFollowCommandPacket(entity: Entity): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendMountCarrySlotPacket(mount: Entity): void {
-   const packet = new Packet(PacketType.mountCarrySlot, 2 * Float32Array.BYTES_PER_ELEMENT);
+export function sendMountCarrySlotPacket(mount: Entity, carrySlotIdx: number): void {
+   const packet = new Packet(PacketType.mountCarrySlot, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(mount);
+   packet.addNumber(carrySlotIdx);
    Client.sendPacket(packet.buffer);
 }
 
@@ -308,9 +309,9 @@ export function sendDismountCarrySlotPacket(): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendPickUpArrowPacket(arrow: Entity): void {
-   const packet = new Packet(PacketType.pickUpArrow, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(arrow);
+export function sendPickUpEntityPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.pickUpEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 

@@ -44,7 +44,7 @@ function onTick(dustfleaEgg: Entity): void {
    }
 
    const ageHours = ticksToGameHours(getEntityAgeTicks(dustfleaEgg));
-   if (ageHours >= 2) {
+   if (ageHours >= 4) {
       // Dustflea!!
       const transformComponent = TransformComponentArray.getComponent(dustfleaEgg);
       const hitbox = transformComponent.children[0] as Hitbox;

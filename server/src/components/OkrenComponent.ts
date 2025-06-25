@@ -18,13 +18,16 @@ import { createOkrenClawConfig } from "../entities/desert/okren-claw";
 import { createEntity } from "../Entity";
 import { addHitboxAngularVelocity, getHitboxAngularVelocity, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { getEntityFullness } from "./EnergyStomachComponent";
 import { OkrenClawGrowthStage } from "./OkrenClawComponent";
 import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TamingComponentArray } from "./TamingComponent";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 
 export const enum OkrenAgeStage {
    juvenile,
@@ -95,7 +98,7 @@ const DUSTFLEA_EGG_LAY_TIME_TICKS = Settings.TPS;
 const LIMB_REGROW_TIME = 60 * Settings.TPS;
 
 export class OkrenComponent {
-   public size = OkrenAgeStage.juvenile;
+   public size: OkrenAgeStage;
    
    public swingStates = [OkrenSwingState.resting, OkrenSwingState.resting];
    public ticksInStates = [0, 0];
@@ -115,6 +118,10 @@ export class OkrenComponent {
    public eyeHardenTimers = [0, 0];
 
    public limbRegrowTimes = [LIMB_REGROW_TIME, LIMB_REGROW_TIME];
+
+   constructor(size: OkrenAgeStage) {
+      this.size = size;
+   }
 }
 
 export const OkrenComponentArray = new ComponentArray<OkrenComponent>(ServerComponentType.okren, true, getDataLength, addDataToPacket);
@@ -402,7 +409,43 @@ function onTick(okren: Entity): void {
 
    const combatAI = aiHelperComponent.getOkrenCombatAI();
    
-   // @Temporary until i'm done testing okren krumblid dynamics
+   // If the okren is being directed to attack something, attack it
+   const tamingComponent = TamingComponentArray.getComponent(okren);
+   if (entityExists(tamingComponent.attackTarget)) {
+      runOkrenCombatAI(okren, aiHelperComponent, combatAI, tamingComponent.attackTarget);
+      return;
+   }
+   
+   // Go to follow target if possible
+   // @Copynpaste
+   if (entityExists(tamingComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+      return;
+   }
+   
+   // @Hack @Copynpaste
+   // Pick up carry target
+   if (entityExists(tamingComponent.carryTarget)) {
+      const rideableComponent = RideableComponentArray.getComponent(okren);
+      const carrySlot = getAvailableCarrySlot(rideableComponent);
+      if (carrySlot !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         
+         const targetDirection = okrenBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+
+         // Force carry if colliding and head is looking at the carry target
+         if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(okren, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+            mountCarrySlot(tamingComponent.carryTarget, okren, carrySlot);
+            tamingComponent.carryTarget = 0;
+         }
+         return;
+      }
+   }
+   
    const threatTarget = getOkrenThreatTarget(okren, aiHelperComponent);
    if (threatTarget !== null) {
       runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
@@ -522,6 +565,15 @@ function onTick(okren: Entity): void {
    for (const side of OKREN_SIDES) {
       setOkrenHitboxIdealAngles(okren, side, idealAngles, 1 * Math.PI, 1 * Math.PI, 1 * Math.PI);
    }
+   
+   // Wander AI
+   // @Temporary for shot
+   // const wanderAI = aiHelperComponent.getWanderAI();
+   // wanderAI.update(okren);
+   // if (wanderAI.targetPositionX !== -1) {
+   //    // @Hack @Cleanup: really bad place to define the acceleration and turn speed
+   //    aiHelperComponent.move(okren, 350, Math.PI * 1.6, wanderAI.targetPositionX, wanderAI.targetPositionY);
+   // }
 }
 
 function getDataLength(): number {
@@ -536,6 +588,11 @@ function addDataToPacket(packet: Packet, okren: Entity): void {
 }
 
 function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   // @HACK so that okrens don't immediately kill the dustflea eggs they create
+   if (getEntityType(collidingEntity) === EntityType.dustfleaEgg) {
+      return;
+   }
+   
    // @Hack: mandible attacking
    if (!affectedHitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
       return;

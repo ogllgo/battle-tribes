@@ -1,4 +1,4 @@
-import { updateBox, boxIsCircular } from "../../shared/src/boxes/boxes";
+import { boxIsCircular } from "../../shared/src/boxes/boxes";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { getEntityCollisionGroup, CollisionGroup } from "../../shared/src/collision-groups";

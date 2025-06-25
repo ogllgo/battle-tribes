@@ -26,6 +26,9 @@ export class TamingComponent {
 
    public readonly acquiredSkills = new Array<TamingSkill>();
    public readonly skillLearningArray = new Array<TamingSkillLearning>();
+
+   // @Temporary
+   public attackTarget: Entity = 0;
    
    // @Temporary
    public carryTarget: Entity = 0;
@@ -50,7 +53,7 @@ function getDataLength(entity: Entity): number {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * skillLearning.requirementProgressArray.length;
    }
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    
    return lengthBytes;
 }
@@ -75,6 +78,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.addNumber(requirementProgress);
       }
    }
+
+   packet.addBoolean(entityExists(tamingComponent.attackTarget));
+   packet.padOffset(3);
    
    packet.addBoolean(entityExists(tamingComponent.followTarget));
    packet.padOffset(3);
@@ -147,4 +153,13 @@ export function getRiderTargetPosition(rider: Entity): Point | null {
    }
 
    return null;
+}
+
+export function hasTamingSkill(tamingComponent: TamingComponent, skillID: TamingSkillID): boolean {
+   for (const skill of tamingComponent.acquiredSkills) {
+      if (skill.id === skillID) {
+         return true;
+      }
+   }
+   return false;
 }

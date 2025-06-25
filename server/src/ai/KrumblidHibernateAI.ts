@@ -4,9 +4,11 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../../shared/src/col
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { TamingSkillID } from "../../../shared/src/taming";
 import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
+import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
 import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
 import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
 import { createEntity } from "../Entity";
@@ -168,7 +170,11 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
       if (krumblidHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
          destroyEntity(krumblid);
 
-         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+         // If the krumblid has the imprint skill, then it retains its tame tribe
+         const tamingComponent = TamingComponentArray.getComponent(krumblid);
+         const tribe = hasTamingSkill(tamingComponent, TamingSkillID.imprint) ? tamingComponent.tameTribe : null;
+
+         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), 2 * Math.PI * Math.random(), tribe);
          createEntity(cocoonConfig, getEntityLayer(krumblid), 0);
       }
    } else {

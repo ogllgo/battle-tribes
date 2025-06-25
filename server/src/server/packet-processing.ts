@@ -31,12 +31,12 @@ import { attemptToOccupyResearchBench } from "../components/ResearchBenchCompone
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
-import { dismountCarrySlot, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
+import { dismountMount, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox, setHitboxAngle } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
@@ -77,10 +77,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    const screenWidth = reader.readNumber();
    const screenHeight = reader.readNumber();
-   // const minVisibleChunkX = reader.readNumber();
-   // const maxVisibleChunkX = reader.readNumber();
-   // const minVisibleChunkY = reader.readNumber();
-   // const maxVisibleChunkY = reader.readNumber();
    
    const selectedHotbarItemSlot = reader.readNumber();
    const mainAction = reader.readNumber() as LimbAction;
@@ -95,10 +91,19 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    registerDirtyEntity(player);
    playerHitbox.box.position.x = positionX;
    playerHitbox.box.position.y = positionY;
-   playerHitbox.box.angle = angle;
-   playerHitbox.box.relativeAngle = angle;
+   
+   // @Hack
+   if (playerHitbox.parent === null) {
+      playerHitbox.box.angle = angle;
+      playerHitbox.box.relativeAngle = angle;
 
-   // playerClient.visibleChunkBounds = [minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY];
+      playerHitbox.previousRelativeAngle = angle;
+   } else {
+      // @HACK cuz this is reaaally broken right now and i dont know what to do D:
+      playerHitbox.box.relativeAngle = angle;
+      playerHitbox.previousRelativeAngle = angle;
+   }
+
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
    playerClient.updatePosition(playerHitbox.box.position.x, playerHitbox.box.position.y);
@@ -711,8 +716,10 @@ export function processMountCarrySlotPacket(playerClient: PlayerClient, reader: 
       return;
    }
 
+   const carrySlotIdx = reader.readNumber();
+
    const rideableComponent = RideableComponentArray.getComponent(mount);
-   const carrySlot = rideableComponent.carrySlots[0];
+   const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
 
    mountCarrySlot(player, mount, carrySlot);
 }
@@ -725,27 +732,43 @@ export function processDismountCarrySlotPacket(playerClient: PlayerClient): void
 
    const transformComponent = TransformComponentArray.getComponent(player);
    if (entityExists(transformComponent.parentEntity)) {
-      dismountCarrySlot(player, transformComponent.parentEntity);
+      dismountMount(player, transformComponent.parentEntity);
    }
 }
 
-export function processPickUpArrowPacket(playerClient: PlayerClient, reader: PacketReader): void {
+export function processPickUpEntityPacket(playerClient: PlayerClient, reader: PacketReader): void {
    const player = playerClient.instance;
    if (!entityExists(player)) {
       return;
    }
 
-   const arrow = reader.readNumber() as Entity;
+   const entity = reader.readNumber() as Entity;
 
-   const transformComponent = TransformComponentArray.getComponent(arrow);
+   const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   if (getHitboxVelocity(hitbox).length() < 1) {
-      destroyEntity(arrow);
-      
-      const inventoryComponent = InventoryComponentArray.getComponent(player);
-      addItem(player, inventoryComponent, ItemType.woodenArrow, 1);
-      // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
-      registerPlayerDroppedItemPickup(player);
+   switch (getEntityType(entity)) {
+      case EntityType.woodenArrow: {
+         if (getHitboxVelocity(hitbox).length() < 1) {
+            destroyEntity(entity);
+            
+            const inventoryComponent = InventoryComponentArray.getComponent(player);
+            addItem(player, inventoryComponent, ItemType.woodenArrow, 1);
+            // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
+            registerPlayerDroppedItemPickup(player);
+         }
+         break;
+      }
+      case EntityType.dustfleaEgg: {
+         // @Copynpaste
+
+         destroyEntity(entity);
+
+         const inventoryComponent = InventoryComponentArray.getComponent(player);
+         addItem(player, inventoryComponent, ItemType.dustfleaEgg, 1);
+         // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
+         registerPlayerDroppedItemPickup(player);
+         break;
+      }
    }
 }
 
@@ -793,8 +816,11 @@ export function processSetAttackTargetPacket(playerClient: PlayerClient, reader:
    const entity = reader.readNumber() as Entity;
    const attackTarget = reader.readNumber();
    
-   const cowComponent = CowComponentArray.getComponent(entity);
-   cowComponent.attackTarget = attackTarget;
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.attackTarget = attackTarget;
 }
 
 export function processCompleteTamingTierPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -830,7 +856,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    // @TEMPORARY for a shot
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-   const config = createKrumblidMorphCocoonConfig(hitbox.box.position.copy(), randAngle());
+   const config = createKrumblidMorphCocoonConfig(hitbox.box.position.copy(), randAngle(), playerClient.tribe);
    createEntity(config, getEntityLayer(entity), 0);
    destroyEntity(entity);
 }

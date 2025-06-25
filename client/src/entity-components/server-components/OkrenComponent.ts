@@ -94,14 +94,14 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       }
 
       if (hitbox.flags.includes(HitboxFlag.OKREN_BODY)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
-            new TexturedRenderPart(
-               hitbox,
-               3,
-               0,
-               getTextureArrayIndex("entities/okren/" + sizeString + "/body.png")
-            )
+         const bodyRenderPart = new TexturedRenderPart(
+            hitbox,
+            3,
+            0,
+            getTextureArrayIndex("entities/okren/" + sizeString + "/body.png")
          );
+         bodyRenderPart.addTag("tamingComponent:head");
+         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
          const hardenTimer = hitbox.box.flipX ? okrenComponentParams.leftEyeHardenTimer : okrenComponentParams.rightEyeHardenTimer;
          entityIntermediateInfo.renderInfo.attachRenderPart(

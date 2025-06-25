@@ -1,13 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { angle, Point, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { Point, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
 import { entityChildIsHitbox, getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -19,24 +19,20 @@ import { Hitbox } from "../../hitboxes";
 export interface CowComponentParams {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
-   readonly isAttacking: boolean;
    readonly isRamming: boolean;
 }
 
 interface IntermediateInfo {
    readonly headRenderPart: RenderPart;
-   readonly attackHalo: RenderPart | null;
 }
 
 export interface CowComponent {
    readonly species: CowSpecies;
    grazeProgress: number;
 
-   isAttacking: boolean;
    isRamming: boolean;
    
    readonly headRenderPart: RenderPart;
-   attackHalo: RenderPart | null;
 }
 
 export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, IntermediateInfo>(ServerComponentType.cow, true, {
@@ -54,28 +50,14 @@ export const CowComponentArray = new ServerComponentArray<CowComponent, CowCompo
 function createParamsFromData(reader: PacketReader): CowComponentParams {
    const species = reader.readNumber();
    const grazeProgress = reader.readNumber();
-   const isAttacking = reader.readBoolean();
-   reader.padOffset(3);
    const isRamming = reader.readBoolean();
    reader.padOffset(3);
 
    return {
       species: species,
       grazeProgress: grazeProgress,
-      isAttacking: isAttacking,
       isRamming: isRamming
    };
-}
-
-const createAttackHalo = (headRenderPart: RenderPart): RenderPart => {
-   const attackHalo = new TexturedRenderPart(
-      headRenderPart,
-      2,
-      0,
-      getTextureArrayIndex("entities/miscellaneous/attack-halo.png")
-   );
-   attackHalo.inheritParentRotation = false;
-   return attackHalo;
 }
 
 function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
@@ -111,18 +93,8 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       }
    }
 
-   // Attack halo
-   let attackHalo: RenderPart | null;
-   if (cowComponentParams.isAttacking) {
-      attackHalo = createAttackHalo(headRenderPart);
-      entityIntermediateInfo.renderInfo.attachRenderPart(attackHalo);
-   } else {
-      attackHalo = null;
-   }
-
    return {
-      headRenderPart: headRenderPart,
-      attackHalo: attackHalo
+      headRenderPart: headRenderPart
    };
 }
 
@@ -132,10 +104,8 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
    return {
       species: cowComponentParams.species,
       grazeProgress: cowComponentParams.grazeProgress,
-      isAttacking: cowComponentParams.isAttacking,
       isRamming: cowComponentParams.isRamming,
-      headRenderPart: intermediateInfo.headRenderPart,
-      attackHalo: intermediateInfo.attackHalo
+      headRenderPart: intermediateInfo.headRenderPart
    };
 }
 
@@ -162,15 +132,10 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, hitbox, true);
    }
-
-   // @Copynpaste
-   if (cowComponent.attackHalo !== null) {
-      cowComponent.attackHalo.angle += 0.65 * UtilVars.PI * Settings.I_TPS;
-   }
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -193,21 +158,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
    cowComponent.grazeProgress = grazeProgress;
-
-   cowComponent.isAttacking = reader.readBoolean();
-   reader.padOffset(3);
-
-   if (cowComponent.isAttacking) {
-      if (cowComponent.attackHalo === null) {
-         const renderInfo = getEntityRenderInfo(entity);
-         cowComponent.attackHalo = createAttackHalo(cowComponent.headRenderPart);
-         renderInfo.attachRenderPart(cowComponent.attackHalo);
-      }
-   } else if (cowComponent.attackHalo !== null) {
-      const renderInfo = getEntityRenderInfo(entity);
-      renderInfo.removeRenderPart(cowComponent.attackHalo);
-      cowComponent.attackHalo = null;
-   }
 
    const isRamming = reader.readBoolean();
    reader.padOffset(3);

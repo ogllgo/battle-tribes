@@ -33,6 +33,10 @@ const entityIsImmuneToStatusEffect = (statusEffectComponent: StatusEffectCompone
 }
 
 export function applyStatusEffect(entity: Entity, statusEffect: StatusEffect, durationTicks: number): void {
+   if (!StatusEffectComponentArray.hasComponent(entity)) {
+      return;
+   }
+   
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    if (entityIsImmuneToStatusEffect(statusEffectComponent, statusEffect)) {
       return;

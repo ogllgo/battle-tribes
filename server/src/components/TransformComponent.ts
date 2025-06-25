@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";

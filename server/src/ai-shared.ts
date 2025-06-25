@@ -476,25 +476,6 @@ export function getAngleDifference(angle1: number, angle2: number): number {
    return angleDifference;
 }
 
-export function cleanAngle(angle: number): number {
-   return angle - 2 * Math.PI * Math.floor(angle / (2 * Math.PI));
-}
-
-/** Clamps an angle into the [-PI, PI) range. */
-// @Cleanup: The game should only use this function instead of the above one
-export function cleanAngleNEW(angle: number): number {
-   // @Speed
-
-   let res = angle;
-   while (res < -Math.PI) {
-      res += Math.PI * 2;
-   }
-   while (res >= Math.PI) {
-      res -= Math.PI * 2;
-   }
-   return res;
-}
-
 export function getMinAngleToCircularBox(x: number, y: number, hitbox: CircularBox): number {
    const xDiff = hitbox.position.x - x;
    const yDiff = hitbox.position.y - y;

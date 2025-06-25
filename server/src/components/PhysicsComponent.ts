@@ -10,8 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
-import { cleanAngleNEW } from "../ai-shared";
+import { applyAcceleration, getHitboxAngularVelocity, getHitboxTile, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
+import { clampAngleB } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -141,55 +141,57 @@ const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformCo
 }
 
 const updatePosition = (entity: Entity, transformComponent: TransformComponent): void => {
+   if (!transformComponent.isDirty) {
+      return;
+   }
+   
+   cleanTransform(entity);
+
+   // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
+   dirtifyPathfindingNodes(entity, transformComponent);
+   registerDirtyEntity(entity);
+
+   // (Potentially introduces dirt)
+   transformComponent.resolveWallCollisions(entity);
+
+   // If the object moved due to resolving wall tile collisions, recalculate
    if (transformComponent.isDirty) {
       cleanTransform(entity);
-
-      // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
-      dirtifyPathfindingNodes(entity, transformComponent);
+      // @Cleanup: pointless, if always done above?
       registerDirtyEntity(entity);
+   }
 
-      // (Potentially introduces dirt)
-      transformComponent.resolveWallCollisions(entity);
+   // (Potentially introduces dirt)
+   resolveEntityBorderCollisions(transformComponent);
 
-      // If the object moved due to resolving wall tile collisions, recalculate
-      if (transformComponent.isDirty) {
-         cleanTransform(entity);
-         // @Cleanup: pointless, if always done above?
-         registerDirtyEntity(entity);
-      }
+   // If the object moved due to resolving border collisions, recalculate
+   if (transformComponent.isDirty) {
+      cleanTransform(entity);
+      // @Cleanup: pointless, if always done above?
+      registerDirtyEntity(entity);
+   }
 
-      // (Potentially introduces dirt)
-      resolveEntityBorderCollisions(transformComponent);
-   
-      // If the object moved due to resolving border collisions, recalculate
-      if (transformComponent.isDirty) {
-         cleanTransform(entity);
-         // @Cleanup: pointless, if always done above?
-         registerDirtyEntity(entity);
-      }
-
-      // Check to see if the entity has descended into the underground layer
-      const entityType = getEntityType(entity);
-      if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
-         // @Hack: fo da glurb container entity
-         if (entityChildIsHitbox(transformComponent.children[0])) {
-            // Update the last valid layer
-            const layer = getEntityLayer(entity);
-            // @Hack
-            const hitbox = transformComponent.children[0] as Hitbox;
-            const tileIndex = getHitboxTile(hitbox);
-            if (layer.getTileType(tileIndex) !== TileType.dropdown) {
-               transformComponent.lastValidLayer = layer;
-            // If the layer is valid and the entity is on a dropdown, move down
-            } else if (layer === transformComponent.lastValidLayer) {
-               // @Temporary
-               changeEntityLayer(entity, undergroundLayer);
-            }
+   // Check to see if the entity has descended into the underground layer
+   const entityType = getEntityType(entity);
+   if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
+      // @Hack: fo da glurb container entity
+      if (entityChildIsHitbox(transformComponent.children[0])) {
+         // Update the last valid layer
+         const layer = getEntityLayer(entity);
+         // @Hack
+         const hitbox = transformComponent.children[0] as Hitbox;
+         const tileIndex = getHitboxTile(hitbox);
+         if (layer.getTileType(tileIndex) !== TileType.dropdown) {
+            transformComponent.lastValidLayer = layer;
+         // If the layer is valid and the entity is on a dropdown, move down
+         } else if (layer === transformComponent.lastValidLayer) {
+            // @Temporary
+            changeEntityLayer(entity, undergroundLayer);
          }
       }
-
-      updateEntityLights(entity);
    }
+
+   updateEntityLights(entity);
 }
 
 const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
@@ -198,7 +200,7 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       
       const currentDirection = originHitbox.box.angle;
       const idealDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-      const diff = cleanAngleNEW(currentDirection - idealDirection);
+      const diff = clampAngleB(currentDirection - idealDirection);
 
       if (Math.abs(diff) > angularTether.padding) {
          const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant;

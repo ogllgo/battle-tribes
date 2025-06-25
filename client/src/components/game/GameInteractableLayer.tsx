@@ -1728,7 +1728,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          }
          
          const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
-         if (didSelectEntity) {
+         if (didSelectEntity && 1+1===3) {
             e.preventDefault();
          } else {
             const selectedItemInfo = getSelectedItemInfo();

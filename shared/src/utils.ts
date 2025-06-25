@@ -488,7 +488,13 @@ export function randAngle(): number {
    return 2 * Math.PI * Math.random();
 }
 
-export function clampAngle0ToPi(angle: number): number {
+/** Clamps an angle into the [0, 2PI) range. */
+export function clampAngleA(angle: number): number {
   const twoPi = Math.PI * 2;
   return ((angle % twoPi) + twoPi) % twoPi;
+}
+
+/** Clamps an angle into the [-PI, PI) range. */
+export function clampAngleB(angle: number): number {
+   return clampAngleA(angle) - Math.PI;
 }

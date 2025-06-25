@@ -5,12 +5,20 @@ import { Packet } from "../../../shared/src/packets";
 import { createOkrenConfig } from "../entities/desert/okren";
 import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
+import Tribe from "../Tribe";
 import { destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class KrumblidMorphCocoonComponent {
    public stage = 1;
+
+   /** Krumblids can transfer their tameness to their okren stage, so this is necessary as an intermediary */
+   public readonly tameTribe: Tribe | null;
+
+   constructor(tameTribe: Tribe | null) {
+      this.tameTribe = tameTribe;
+   }
 }
 
 export const KrumblidMorphCocoonComponentArray = new ComponentArray<KrumblidMorphCocoonComponent>(ServerComponentType.krumblidMorphCocoon, true, getDataLength, addDataToPacket);
@@ -41,7 +49,16 @@ function onTick(cocoon: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(cocoon);
       const hitbox = transformComponent.children[0] as Hitbox;
       
-      const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 0);
+      // @Temporary: size
+      const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 4);
+
+      const tribe = krumblidMorphCocoonComponent.tameTribe;
+      if (tribe !== null) {
+         const tamingComponent = okrenConfig.components[ServerComponentType.taming]!;
+         tamingComponent.tamingTier = 1;
+         tamingComponent.tameTribe = tribe;
+      }
+      
       createEntity(okrenConfig, getEntityLayer(cocoon), 0);
    } else if (stage !== krumblidMorphCocoonComponent.stage) {
       krumblidMorphCocoonComponent.stage = stage;

@@ -27,7 +27,7 @@ import { applyStatusEffect } from "./StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
-import { mountCarrySlot, RideableComponentArray } from "./RideableComponent";
+import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 
@@ -249,6 +249,7 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
    }
 
    // If tame, don't attack stuff belonging to the tame tribe
+   // @Hack
    if (TribeComponentArray.hasComponent(entity)) {
       const entityTribeComponent = TribeComponentArray.getComponent(entity);
       const tamingComponent = TamingComponentArray.getComponent(yeti);
@@ -355,19 +356,21 @@ function onTick(yeti: Entity): void {
    // @Hack @Copynpaste
    // Pick up carry target
    if (entityExists(tamingComponent.carryTarget)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-      moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED, 1);
+      const rideableComponent = RideableComponentArray.getComponent(yeti);
+      const carrySlot = getAvailableCarrySlot(rideableComponent);
+         if (carrySlot !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
+         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED, 1);
 
-      // Force carry if colliding and head is looking at the carry target
-      const targetDirection = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-      if (getAbsAngleDiff(yetiBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
-         const rideableComponent = RideableComponentArray.getComponent(yeti);
-         const carrySlot = rideableComponent.carrySlots[0];
-         mountCarrySlot(tamingComponent.carryTarget, yeti, carrySlot);
-         tamingComponent.carryTarget = 0;
+         // Force carry if colliding and head is looking at the carry target
+         const targetDirection = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         if (getAbsAngleDiff(yetiBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+            mountCarrySlot(tamingComponent.carryTarget, yeti, carrySlot);
+            tamingComponent.carryTarget = 0;
+         }
+         return;
       }
-      return;
    }
 
    if (yetiComponent.isThrowingSnow) {

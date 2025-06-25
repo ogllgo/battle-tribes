@@ -3,8 +3,9 @@ import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
 import { Hitbox } from "../hitboxes";
+import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -51,14 +52,42 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
+export function getAvailableCarrySlot(rideableComponent: RideableComponent): CarrySlot | null {
+   for (const carrySlot of rideableComponent.carrySlots) {
+      if (!entityExists(carrySlot.occupiedEntity)) {
+         return carrySlot;
+      }
+   }
+   return null;
+}
+
 export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
-   attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
+   // Set the entity to the carry slot's position
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   entityHitbox.box.position.x = carrySlot.parentHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, carrySlot.parentHitbox.box.angle);
+   entityHitbox.box.position.y = carrySlot.parentHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, carrySlot.parentHitbox.box.angle);
+   
+   // attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
+   // @INCOMPLETE: SHOULD USE TETHER!!!!
+   attachEntity(entity, mount, carrySlot.parentHitbox, false);
    carrySlot.occupiedEntity = entity;
 }
 
-export function dismountCarrySlot(entity: Entity, mount: Entity): void {
+export function dismountMount(entity: Entity, mount: Entity): void {
+   // Find the carry slot the entity is attached to
+   let carrySlot: CarrySlot | undefined;
    const rideableComponent = RideableComponentArray.getComponent(mount);
-   const carrySlot = rideableComponent.carrySlots[0];
+   for (const currentCarrySlot of rideableComponent.carrySlots) {
+      if (currentCarrySlot.occupiedEntity === entity) {
+         carrySlot = currentCarrySlot;
+         break;
+      }
+   }
+   
+   if (typeof carrySlot === "undefined") {
+      return;
+   }
 
    removeAttachedEntity(mount, entity); 
    carrySlot.occupiedEntity = 0;

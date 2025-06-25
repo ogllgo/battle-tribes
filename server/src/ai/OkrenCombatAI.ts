@@ -7,7 +7,9 @@ import { createEntityConfigAttachInfo } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles } from "../components/OkrenComponent";
 import { OkrenTongueComponentArray } from "../components/OkrenTongueComponent";
+import { TamingComponentArray } from "../components/TamingComponent";
 import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { TribeComponentArray } from "../components/TribeComponent";
 import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
 import { createOkrenTongueConfig } from "../entities/desert/okren-tongue";
 import { createEntity } from "../Entity";
@@ -39,23 +41,32 @@ const TONGUE_INITIAL_OFFSET = 88;
 export const MIN_TONGUE_COOLDOWN_TICKS = 4 * Settings.TPS;
 export const MAX_TONGUE_COOLDOWN_TICKS = 5 * Settings.TPS;
 
-const entityIsThreatToDesert = (entity: Entity): boolean => {
+const entityIsThreatToDesert = (okren: Entity, entity: Entity): boolean => {
+   // @Hack
+   if (TribeComponentArray.hasComponent(entity)) {
+      const entityTribeComponent = TribeComponentArray.getComponent(entity);
+      const tamingComponent = TamingComponentArray.getComponent(okren);
+      if (entityTribeComponent.tribe === tamingComponent.tameTribe) {
+         return false;
+      }
+   }
+   
    return TribeMemberComponentArray.hasComponent(entity) || getEntityType(entity) === EntityType.zombie;
 }
 
-const entityIsPrey = (entity: Entity): boolean => {
+const entityIsPrey = (_okren: Entity, entity: Entity): boolean => {
    const entityType = getEntityType(entity);
    return entityType === EntityType.krumblid;
 }
 
-const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, entityIsTargetted: (entity: Entity) => boolean): Entity | null => {
+const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, entityIsTargetted: (okren: Entity, entity: Entity) => boolean): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(okren);
    const hitbox = transformComponent.children[0] as Hitbox;
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
    for (const entity of aiHelperComponent.visibleEntities) {
-      if (!entityIsTargetted(entity)) {
+      if (!entityIsTargetted(okren, entity)) {
          continue;
       }
       

@@ -10,8 +10,9 @@ import { KrumblidMorphCocoonComponent } from "../../components/KrumblidMorphCoco
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
+import Tribe from "../../Tribe";
 
-export function createKrumblidMorphCocoonConfig(position: Point, angle: number): EntityConfig {
+export function createKrumblidMorphCocoonConfig(position: Point, angle: number, tameTribe: Tribe | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 28), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
@@ -21,7 +22,7 @@ export function createKrumblidMorphCocoonConfig(position: Point, angle: number):
 
    const healthComponent = new HealthComponent(20);
    
-   const krumblidMorphCocoonComponent = new KrumblidMorphCocoonComponent();
+   const krumblidMorphCocoonComponent = new KrumblidMorphCocoonComponent(tameTribe);
    
    return {
       entityType: EntityType.krumblidMorphCocoon,

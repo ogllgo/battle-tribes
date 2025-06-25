@@ -4,7 +4,7 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, clampAngle0ToPi, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { assert, clampAngleA, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
@@ -232,6 +232,13 @@ export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): v
    hitbox.acceleration.y += accY;
 }
 
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.angle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+}
+
 const cleanAngle = (hitbox: Hitbox): void => {
    // Clamp angle to [-PI, PI) range
    if (hitbox.box.angle < -Math.PI) {
@@ -274,7 +281,7 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
       idealRelativeAngle = idealAngle - parentAngle;
    }
       
-   const clockwiseDist = clampAngle0ToPi(idealRelativeAngle - hitbox.box.relativeAngle);
+   const clockwiseDist = clampAngleA(idealRelativeAngle - hitbox.box.relativeAngle);
    
    const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
    const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now
@@ -286,7 +293,6 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
    hitbox.angularAcceleration += springForce + dampingForce;
 }
 
-// @Location?
 export function getHitboxTile(hitbox: Hitbox): TileIndex {
    const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
    const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);

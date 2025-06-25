@@ -47,8 +47,6 @@ TribesmanComponentArray.onKill = onKill;
 TribesmanComponentArray.onTakeDamage = onTakeDamage;
 TribesmanComponentArray.onDealDamage = onDealDamage;
 
-let a = 0;
-
 function onInitialise(config: EntityConfig): void {
    // War paint type
    const tribesmanComponent = config.components[ServerComponentType.tribesman]!;
@@ -70,26 +68,6 @@ function onInitialise(config: EntityConfig): void {
    const inventoryComponent = config.components[ServerComponentType.inventory]!;
    const inventoryUseComponent = config.components[ServerComponentType.inventoryUse]!;
    addHumanoidInventories(inventoryComponent, inventoryUseComponent, config.entityType);
-
-   if (a <= 1 || 1+1===2) {
-      const sword = createItem(ItemType.stone_sword, 1);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(sword, 1);
-      // const shield = createItem(ItemType.spear, 1);
-      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(shield, 1);
-      // const armo = createItem(ItemType.crabplateArmour, 1);
-      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(armo, 2);
-      // const berry = createItem(ItemType.berry, 17);
-      // getInventory(inventoryComponent, InventoryName.hotbar).addItem(berry, 3);
-   } else {
-      const bow = createItem(ItemType.wooden_bow, 1);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(bow, 1);
-      const arrows = createItem(ItemType.woodenArrow, 16);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(arrows, 2);
-      const arrows2 = createItem(ItemType.woodenArrow, 16);
-      getInventory(inventoryComponent, InventoryName.hotbar).addItem(arrows2, 3);
-   }
-   
-   a++;
 }
 
 function getDataLength(entity: Entity): number {

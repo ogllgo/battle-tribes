@@ -131,6 +131,11 @@ function onHitboxCollision(okrenClaw: Entity, collidingEntity: Entity, affectedH
       return;
    }
 
+   // @HACK so that okrens don't immediately kill the dustflea eggs they create
+   if (getEntityType(collidingEntity) === EntityType.dustfleaEgg) {
+      return;
+   }
+   
    const velocityDiff = getHitboxVelocity(affectedHitbox).calculateDistanceBetween(getHitboxVelocity(collidingHitbox));
    // @Temporary @Hack as sometimes the slashers aren't moving fast enough... maybe just remove it completely but only have it work for one side? not the back of the hitbox/
    // if (velocityDiff < 100) {

@@ -5,8 +5,7 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
-import { angle, Point } from "../../../../shared/src/utils";
-import { cleanAngle } from "../../ai-shared";
+import { angle, clampAngleA, Point } from "../../../../shared/src/utils";
 import { entityChildIsHitbox } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
@@ -234,7 +233,7 @@ const getWallSideNodeDir = (node: SafetyNode, wallPosition: Point, wallRotation:
 
    let dir = angle(x - wallPosition.x, y - wallPosition.y) - wallRotation;
    dir += Math.PI/4;
-   dir = cleanAngle(dir);
+   dir = clampAngleA(dir);
 
    return dir;
 }

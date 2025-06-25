@@ -27,6 +27,7 @@ import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
+import { moveEntityToPosition } from "../../ai-shared";
 
 const enum Vars {
    HEAD_TURN_SPEED = 0.75 * UtilVars.PI
@@ -107,8 +108,8 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-const move = (cow: Entity, acceleration: number, _turnSpeed: number, turnTargetX: number, turnTargetY: number): void => {
-   throw new Error();
+const move = (cow: Entity, acceleration: number, _turnSpeed: number, x: number, y: number): void => {
+   moveEntityToPosition(cow, x, y, acceleration, _turnSpeed, 0.4);
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
@@ -119,7 +120,8 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
    // Head hitbox
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headPosition = position.copy();
+   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
    tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, 50, 5/60, 0.4);

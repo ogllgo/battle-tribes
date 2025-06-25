@@ -124,12 +124,16 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
    const playerHitbox = transformComponent.children[0] as Hitbox;
    
-   const previousRotation = playerHitbox.box.angle;
-   playerHitbox.box.angle = cursorDirection;
-   playerHitbox.box.relativeAngle = cursorDirection;
+   const previousRelativeAngle = playerHitbox.box.relativeAngle;
+
+   // @HACK: without this silliness occurs
+   if (playerHitbox.parent === null) {
+      playerHitbox.box.angle = playerHitbox.box.relativeAngle;
+   }
+   playerHitbox.box.relativeAngle = cursorDirection - playerHitbox.box.angle + playerHitbox.box.relativeAngle;
 
    // Angular velocity
-   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousRotation) * Settings.TPS);
+   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.relativeAngle - previousRelativeAngle) * Settings.TPS);
 
    const renderInfo = getEntityRenderInfo(playerInstance);
    // @Temporary

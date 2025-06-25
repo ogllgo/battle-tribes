@@ -20,9 +20,7 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collis
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
-import { createDustfleaConfig } from "./entities/desert/dustflea";
-import { createKrumblidConfig } from "./entities/mobs/krumblid";
-import { createOkrenConfig } from "./entities/desert/okren";
+import { createCowConfig } from "./entities/mobs/cow";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -162,7 +160,7 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnInfo, x: number, y: number, 
    const autoSpawnedComponent = new AutoSpawnedComponent(spawnInfo);
    config.components[ServerComponentType.autoSpawned] = autoSpawnedComponent;
 
-   // @Cleanup: should this be done here, or automatically as the hitboxes are created
+   // @Cleanup: should this instead be done automatically as the entity is created??
 
    const transformComponent = config.components[ServerComponentType.transform];
    if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
@@ -217,12 +215,10 @@ const spawnEntities = (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOr
       const minY = Math.max(spawnOriginY - spawnInfo.packSpawning.spawnRange, 0);
       const maxY = Math.min(spawnOriginY + spawnInfo.packSpawning.spawnRange, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
    
-      let totalSpawnAttempts = 0;
-   
       const packSize = spawnInfo.packSpawning.getPackSize(spawnOriginX, spawnOriginY);
       const additionalSpawnCount = packSize - 1;
    
-      for (let numSpawned = 0; numSpawned < additionalSpawnCount && totalSpawnAttempts < 100;) {
+      for (let numSpawned = 0, totalSpawnAttempts = 0; numSpawned < additionalSpawnCount && totalSpawnAttempts < 100; totalSpawnAttempts++) {
          const x = randFloat(minX, maxX);
          const y = randFloat(minY, maxY);
          const dist = distance(x, y, spawnOriginX, spawnOriginY);
@@ -339,6 +335,9 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
+      const cowConfig = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
+      createEntity(cowConfig, surfaceLayer, 0);
+
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);
       // setTimeout(() => {

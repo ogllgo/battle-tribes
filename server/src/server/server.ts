@@ -15,7 +15,7 @@ import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handleP
 import { createPlayerConfig } from "../entities/tribes/player";
 import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -144,6 +144,7 @@ class GameServer {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
       SRandom.seed(3520905774);
+               const tribe = new Tribe(TribeType.plainspeople, false, generatePlayerSpawnPosition(0));
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -214,7 +215,7 @@ class GameServer {
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    
-               const tribe = new Tribe(tribeType, false, spawnPosition.copy());
+               // const tribe = new Tribe(tribeType, false, spawnPosition.copy());
                // @TEMPORARY @HACK
                // const layer = isSpectating ? undergroundLayer : surfaceLayer;
                const layer = surfaceLayer;
@@ -390,8 +391,8 @@ class GameServer {
                   processDismountCarrySlotPacket(playerClient);
                   break;
                }
-               case PacketType.pickUpArrow: {
-                  processPickUpArrowPacket(playerClient, reader);
+               case PacketType.pickUpEntity: {
+                  processPickUpEntityPacket(playerClient, reader);
                   break;
                }
                case PacketType.modifyBuilding: {

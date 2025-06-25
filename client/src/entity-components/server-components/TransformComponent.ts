@@ -304,6 +304,9 @@ export function cleanTransform(node: Hitbox | Entity): void {
       }
    } else {
       const entity = node;
+      if (!TransformComponentArray.hasComponent(entity)) {
+         return;
+      }
       const transformComponent = TransformComponentArray.getComponent(entity);
       
       for (const child of transformComponent.rootChildren) {
@@ -616,7 +619,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 }
 
 const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader: PacketReader): void => {
-   padBoxData(reader);
+   // @Garbage
+   const dataBox = readBoxFromData(reader);
 
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -652,6 +656,10 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
       assert(entityExists(parentEntity));
       hitbox.parent = findEntityHitbox(parentEntity, parentLocalID);
       assert(hitbox.parent !== null);
+
+      // If the player is attached to something, set the hitboxes' offset
+      hitbox.box.offset.x = dataBox.offset.x;
+      hitbox.box.offset.y = dataBox.offset.y;
    }
 
    hitbox.lastUpdateTicks = Board.serverTicks;

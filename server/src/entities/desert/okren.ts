@@ -26,6 +26,10 @@ import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { TamingComponent } from "../../components/TamingComponent";
+import { Biome } from "../../../../shared/src/biomes";
+import WanderAI from "../../ai/WanderAI";
+import Layer from "../../Layer";
+import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 
 const HEALTHS = [50, 80, 115, 150, 200];
 const VISION_RANGES = [500, 550, 600, 650, 700];
@@ -111,6 +115,11 @@ registerEntityLootOnDeath(EntityType.okren, [
    }
 ]);
 
+function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
+   const biome = layer.getBiomeAtPosition(x, y);
+   return biome === Biome.desert || biome === Biome.desertOasis;
+}
+
 const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
    moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 0.6);
 }
@@ -189,6 +198,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const healthComponent = new HealthComponent(HEALTHS[size]);
 
    const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, VISION_RANGES[size], move);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
    
@@ -196,12 +206,16 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    
    const energyStomachComponent = new EnergyStomachComponent(1000, 4, 5);
    
+   const rideableComponent = new RideableComponent();
+   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, 0, -40, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, 30, 20, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, -30, 20, 72, 0));
+   
    const lootComponent = new LootComponent();
    
    const tamingComponent = new TamingComponent();
    
-   const okrenComponent = new OkrenComponent();
-   okrenComponent.size = size;
+   const okrenComponent = new OkrenComponent(size);
    
    return {
       entityType: EntityType.okren,
@@ -213,6 +227,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,
          [ServerComponentType.energyStomach]: energyStomachComponent,
+         [ServerComponentType.rideable]: rideableComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.okren]: okrenComponent
