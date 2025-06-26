@@ -7,7 +7,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Point, randInt } from "../../../../shared/src/utils";
-import { moveEntityToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { SandBallingAI } from "../../ai/SandBallingAI";
 import { EntityConfig } from "../../components";
@@ -120,8 +120,12 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
    return biome === Biome.desert || biome === Biome.desertOasis;
 }
 
-const move = (okren: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => {
-   moveEntityToPosition(okren, x, y, acceleration, turnSpeed, 0.6);
+const moveFunc = (okren: Entity, pos: Point, acceleration: number): void => {
+   accelerateEntityToPosition(okren, pos, acceleration);
+}
+
+const turnFunc = (okren: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(okren, pos, turnSpeed, turnDamping);
 }
 
 // @Temporary: remove size parameter
@@ -197,9 +201,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
 
    const healthComponent = new HealthComponent(HEALTHS[size]);
 
-   const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, VISION_RANGES[size], move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.35, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
+   const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, VISION_RANGES[size], moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.6, 0.35, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6, 0.6);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
    
    const energyStoreComponent = new EnergyStoreComponent(ENERGIES[size]);

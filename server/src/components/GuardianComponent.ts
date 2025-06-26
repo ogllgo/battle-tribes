@@ -328,8 +328,8 @@ function onTick(guardian: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(guardian);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(guardian, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.5 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(guardian, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 200, 0.5 * Math.PI, 1);
    }
 }
 

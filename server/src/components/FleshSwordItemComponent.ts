@@ -119,7 +119,7 @@ function onTick(fleshSword: Entity): void {
       fleshSwordComponent.tileTargetPosition = null;
    } else {
       if (fleshSwordComponent.tileTargetPosition !== null) {
-         if (entityHasReachedPosition(fleshSword, fleshSwordComponent.tileTargetPosition.x, fleshSwordComponent.tileTargetPosition.y)) {
+         if (entityHasReachedPosition(fleshSword, fleshSwordComponent.tileTargetPosition)) {
             fleshSwordComponent.tileTargetPosition = null;
          } else {
             targetPositionX = fleshSwordComponent.tileTargetPosition.x;

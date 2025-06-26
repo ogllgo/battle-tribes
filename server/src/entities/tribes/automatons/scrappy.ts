@@ -23,7 +23,11 @@ import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -46,7 +50,7 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
 
    const tribesmanAIComponent = new TribesmanAIComponent();
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();

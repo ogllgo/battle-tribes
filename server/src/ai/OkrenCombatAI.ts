@@ -20,6 +20,7 @@ import { entityExists, getEntityLayer, getEntityType } from "../world";
 export class OkrenCombatAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
 
    public swingCooldownTicks = 0;
 
@@ -28,9 +29,10 @@ export class OkrenCombatAI {
 
    public tongueCooldownTicks = randInt(MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS);
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
@@ -176,7 +178,8 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
 
    if (!isLeaning) {
       // @Incomplete: move using pathfinding!!!
-      aiHelperComponent.move(okren, combatAI.acceleration, combatAI.turnSpeed, targetHitbox.box.position.x, targetHitbox.box.position.y);
+      aiHelperComponent.moveFunc(okren, targetHitbox.box.position, combatAI.acceleration);
+      aiHelperComponent.turnFunc(okren, targetHitbox.box.position, combatAI.turnSpeed, combatAI.turnDamping);
    }
 
    const distanceToTarget = getDistanceFromPointToEntity(hitbox.box.position, targetTransformComponent);

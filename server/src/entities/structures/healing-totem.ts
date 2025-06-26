@@ -18,7 +18,11 @@ import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -37,7 +41,7 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
 
    const tribeComponent = new TribeComponent(tribe);
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 270, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 270, moveFunc, turnFunc);
    
    const healingTotemComponent = new HealingTotemComponent();
    

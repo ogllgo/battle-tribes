@@ -11,7 +11,8 @@ import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
 import { applyAcceleration, getHitboxAngularVelocity, getHitboxTile, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
-import { clampAngleB } from "../../../shared/src/utils";
+import { clampAngleB, getAngleDiff } from "../../../shared/src/utils";
+import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -46,26 +47,16 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
       return;
    }
 
-   let angularVelocity = (hitbox.box.relativeAngle - hitbox.previousRelativeAngle);
+   // We don't use the getAngularVelocity function as that multplies it by the tps (it's the instantaneous velocity)
+   let angularVelocityTick = getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle);
    // @Hack??
-   angularVelocity *= 0.98;
+   angularVelocityTick *= 0.98;
    
-   const newAngle = hitbox.box.relativeAngle + angularVelocity + hitbox.angularAcceleration / Settings.TPS / Settings.TPS;
+   const newAngle = hitbox.box.relativeAngle + angularVelocityTick + hitbox.angularAcceleration / Settings.TPS / Settings.TPS;
 
    hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
    hitbox.box.relativeAngle = newAngle;
    hitbox.angularAcceleration = 0;
-
-   // if (hitbox.parent !== null) {
-   //    const origin = hitbox.parent.box.position;
-   //    const angle = hitbox.parent.box.angle + hitbox.box.relativeAngle;
-   
-
-   //    const radius = hitbox.initialDistanceFromParent; // store this when attaching the tether
-   
-   //    hitbox.box.position.x = origin.x + Math.cos(angle) * radius;
-   //    hitbox.box.position.y = origin.y + Math.sin(angle) * radius;
-   // }
 
    transformComponent.isDirty = true;
    registerDirtyEntity(entity);

@@ -76,8 +76,8 @@ function onTick(slimewisp: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(slimewisp);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(slimewisp, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 100, Math.PI, 1);
    }
 }
 

@@ -131,7 +131,7 @@ export default class GuardianCrystalSlamAI {
          this.stage = GuardianCrystalSlamStage.return;
 
          // Look at target
-         turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
+         turnToPosition(guardian, new Point(targetX, targetY), this.turnSpeed, 1);
 
          // Return limbs to normal
          let progress = this.returnProgressTicks / Vars.RETURN_TIME_TICKS;

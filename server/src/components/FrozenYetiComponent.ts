@@ -421,9 +421,9 @@ function onTick(frozenYeti: Entity): void {
       // Wander AI
       const wanderAI = aiHelperComponent.getWanderAI();
       wanderAI.update(frozenYeti);
-      if (wanderAI.targetPositionX !== -1) {
-         moveEntityToPosition(frozenYeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.7 * Math.PI, 1);
-      }
+      // if (wanderAI.targetPosition !== -1) {
+      //    moveEntityToPosition(frozenYeti, wanderAI.targetPosition, wanderAI.targetPositionY, 200, 0.7 * Math.PI, 1);
+      // }
       return;
    }
 

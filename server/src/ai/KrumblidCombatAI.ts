@@ -14,10 +14,12 @@ import { getEntityType, getEntityAgeTicks } from "../world";
 export class KrumblidCombatAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
@@ -104,7 +106,8 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
    // @Incomplete: move using pathfinding!!!
-   aiHelperComponent.move(krumblid, krumblidCombatAI.acceleration, krumblidCombatAI.turnSpeed, targetHitbox.box.position.x, targetHitbox.box.position.y);
+   aiHelperComponent.moveFunc(krumblid, targetHitbox.box.position, krumblidCombatAI.acceleration);
+   aiHelperComponent.turnFunc(krumblid, targetHitbox.box.position, krumblidCombatAI.turnSpeed, krumblidCombatAI.turnDamping);
 
    if (entitiesAreColliding(krumblid, target) !== CollisionVars.NO_COLLISION) {
       // @Copynpaste

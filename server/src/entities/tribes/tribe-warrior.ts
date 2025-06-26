@@ -24,7 +24,11 @@ import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -84,7 +88,7 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();

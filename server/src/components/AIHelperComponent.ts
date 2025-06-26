@@ -23,6 +23,7 @@ import { VegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { KrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
 import { OkrenCombatAI } from "../ai/OkrenCombatAI";
+import { Point } from "../../../shared/src/utils";
 
 export const enum AIType {
    wander,
@@ -64,7 +65,8 @@ type AIRecord = Partial<{
    [T in AIType]: AIClass<T>;
 }>;
 
-type MoveEntityFunction = (entity: Entity, acceleration: number, turnSpeed: number, x: number, y: number) => void;
+type MoveEntityFunction = (entity: Entity, pos: Point, acceleration: number) => void;
+type TurnEntityFunction = (entity: Entity, pos: Point, turnSpeed: number, turnDamping: number) => void;
 
 export class AIHelperComponent {
    public readonly seeingHitbox: Hitbox;
@@ -84,12 +86,14 @@ export class AIHelperComponent {
 
    public currentAIType: AIType | null = null;
 
-   public readonly move: MoveEntityFunction;
+   public readonly moveFunc: MoveEntityFunction;
+   public readonly turnFunc: TurnEntityFunction;
 
-   constructor(seeingHitbox: Hitbox, visionRange: number, moveEntity: MoveEntityFunction) {
+   constructor(seeingHitbox: Hitbox, visionRange: number, moveFunc: MoveEntityFunction, turnFunc: TurnEntityFunction) {
       this.seeingHitbox = seeingHitbox;
       this.visionRange = visionRange;
-      this.move = moveEntity;
+      this.moveFunc = moveFunc;
+      this.turnFunc = turnFunc;
    }
 
    // @Cleanup: this is shite.

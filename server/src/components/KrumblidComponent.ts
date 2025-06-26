@@ -312,8 +312,9 @@ function onTick(krumblid: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(krumblid);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(krumblid, wanderAI.targetPositionX, wanderAI.targetPositionY, 250, 2 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(krumblid, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(krumblid, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

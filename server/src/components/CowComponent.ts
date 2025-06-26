@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, clampAngleB, getAbsAngleDiff, lerp, Point, positionIsInWorld, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, Point, positionIsInWorld, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -11,7 +11,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
+import { getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
@@ -26,7 +26,7 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle, translateHitbox } from "../hitboxes";
+import { applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 import { runEscapeAI } from "../ai/EscapeAI";
 
@@ -199,72 +199,6 @@ const findHerdMembers = (cowComponent: CowComponent, visibleEntities: ReadonlyAr
    return herdMembers;
 }
 
-const moveCow = (cow: Entity, x: number, y: number, acceleration: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
-
-   const moveTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(new Point(x, y));
-
-   // 
-   // Move whole cow to the target
-   // 
-   
-   const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, moveTargetDirection);
-   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
-   const accelerationX = acceleration * accelerationMultiplier * Math.sin(moveTargetDirection);
-   const accelerationY = acceleration * accelerationMultiplier * Math.cos(moveTargetDirection);
-   applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
-
-   const targetFaceDirection = angle(x - cowBodyHitbox.box.position.x, y - cowBodyHitbox.box.position.y);
-   const turnSpeed = getAbsAngleDiff(cowBodyHitbox.box.angle, targetFaceDirection) > 0.3 ? 1 : 0.15;
-   turnHitboxToAngle(cowBodyHitbox, targetFaceDirection, turnSpeed, 0.5, false);
-   
-   // 
-   // Move head to the target
-   // 
-   
-   const headHitbox = transformComponent.children[1] as Hitbox;
-   const headTargetDirection = angle(x - headHitbox.box.position.x, y - headHitbox.box.position.y);
-
-   // @Hack
-   const headForce = 30;
-   const moveX = headForce * Settings.I_TPS * Math.sin(headTargetDirection);
-   const moveY = headForce * Settings.I_TPS * Math.cos(headTargetDirection);
-   translateHitbox(headHitbox, moveX, moveY);
-
-   // Turn the head to face the target
-
-   turnHitboxToAngle(headHitbox, headTargetDirection, Vars.HEAD_TURN_SPEED, 0.5, false);
-
-   // Restrict how far the neck can turn
-   headHitbox.box.relativeAngle = clampAngleB(headHitbox.box.relativeAngle);
-   if (headHitbox.box.relativeAngle < -0.5) {
-      headHitbox.box.relativeAngle = -0.5;
-   } else if (headHitbox.box.relativeAngle > 0.5) {
-      headHitbox.box.relativeAngle = 0.5;
-   }
-
-   // 
-   // Turn the body with the head
-   // 
-   // @Cleanup: A cleaner and better solution would be a spring on the rotational offset
-
-   // let headOffsetDirection = angle(headHitbox.box.position.x - cowBodyHitbox.box.position.x, headHitbox.box.position.y - cowBodyHitbox.box.position.y);
-   // headOffsetDirection = cleanAngleNEW(headOffsetDirection);
-
-   // if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
-   //    // Force is in the direction which will get head offset direction back towards 0
-   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY) * Math.sign(headOffsetDirection) * Settings.I_TPS;
-
-   //    cowBodyHitbox.box.relativeAngle += rotationForce;
-
-   //    const headOffsetX = headHitbox.box.offset.x;
-   //    const headOffsetY = headHitbox.box.offset.y;
-   //    headHitbox.box.offset.x = rotateXAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
-   //    headHitbox.box.offset.y = rotateYAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
-   // }
-}
-
 const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEntity: Entity): boolean => {
    if (entitiesAreColliding(cow, berryItemEntity) !== CollisionVars.NO_COLLISION) {
       eatBerry(cow, berryItemEntity, cowComponent);
@@ -274,7 +208,9 @@ const chaseAndEatBerry = (cow: Entity, cowComponent: CowComponent, berryItemEnti
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
    const berryHitbox = berryTransformComponent.children[0] as Hitbox;
 
-   moveCow(cow, berryHitbox.box.position.x, berryHitbox.box.position.y, Vars.MEDIUM_ACCELERATION);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
+   aiHelperComponent.moveFunc(cow, berryHitbox.box.position, Vars.MEDIUM_ACCELERATION);
+   aiHelperComponent.turnFunc(cow, berryHitbox.box.position, Math.PI, 0.4);
 
    return false;
 }
@@ -352,6 +288,8 @@ function onTick(cow: Entity): void {
       return;
    }
 
+   const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
+
    // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
    //   entity isn't exactly on the thing being accelerated.
    // When something is riding the cow, that entity controls the cow's movement
@@ -360,12 +298,11 @@ function onTick(cow: Entity): void {
    if (entityExists(rider)) {
       const targetPosition = getRiderTargetPosition(rider);
       if (targetPosition !== null) {
-         moveCow(cow, targetPosition.x, targetPosition.y, Vars.FAST_ACCELERATION);
+         aiHelperComponent.moveFunc(cow, targetPosition, Vars.FAST_ACCELERATION);
+         aiHelperComponent.turnFunc(cow, targetPosition, Math.PI, 0.4);
          return;
       }
    }
-
-   const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
 
    const escapeAI = aiHelperComponent.getEscapeAI();
    if (runEscapeAI(cow, aiHelperComponent, escapeAI)) {
@@ -379,8 +316,8 @@ function onTick(cow: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
-      const targetDirection = angle(targetHitbox.box.position.x - cowBodyHitbox.box.position.x, targetHitbox.box.position.y - cowBodyHitbox.box.position.y);
-      moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
+      aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
+      aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
       if (getEntityAgeTicks(cow) % Settings.TPS === 0) {
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
       }
@@ -389,10 +326,8 @@ function onTick(cow: Entity): void {
 
    // Go to move target
    if (cowComponent.targetMovePosition !== null) {
-      const targetX = cowComponent.targetMovePosition.x;
-      const targetY = cowComponent.targetMovePosition.y;
-      const targetDirection = angle(targetX - cowBodyHitbox.box.position.x, targetY - cowBodyHitbox.box.position.y);
-      moveCow(cow, targetX, targetY, targetDirection, Vars.MEDIUM_ACCELERATION);
+      aiHelperComponent.moveFunc(cow, cowComponent.targetMovePosition, Vars.MEDIUM_ACCELERATION);
+      aiHelperComponent.turnFunc(cow, cowComponent.targetMovePosition, Math.PI, 0.4);
       return;
    }
 
@@ -405,8 +340,10 @@ function onTick(cow: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
+         aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
+         aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
+
          const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
 
          // Force carry if colliding and head is looking at the carry target
          const headHitbox = transformComponent.children[1] as Hitbox;
@@ -427,11 +364,13 @@ function onTick(cow: Entity): void {
          if (cowComponent.ramRemainingChargeTicks > 0) {
             cowComponent.ramRemainingChargeTicks--;
             // Turn towards the target
-            moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, 0, 0);
+            aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
          } else {
             // Continue charging on straight in the head's current direction
-            const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-            moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.FAST_ACCELERATION);
+            const cowHeadHitbox = transformComponent.children[1] as Hitbox;
+            const targetPos = cowBodyHitbox.box.position.offset(999, cowHeadHitbox.box.angle);
+            aiHelperComponent.moveFunc(cow, targetPos, Vars.FAST_ACCELERATION);
+            aiHelperComponent.turnFunc(cow, targetPos, Math.PI, 0.4);
          }
       } else {
          if (cowComponent.ramCooldownTicks > 0) {
@@ -442,13 +381,15 @@ function onTick(cow: Entity): void {
          
          if (willStopAtDesiredDistance(cowBodyHitbox, 130, dist)) {
             // If the cow is too close, move away
-            let targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-            targetDirection += Math.PI;
+            // Turn to the target while moving backwards away from it
+            const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(cowBodyHitbox.box.position);
+            const awayPos = cowBodyHitbox.box.position.offset(999, awayFromTarget);
             // @Hack: acceleration (to counteract acceleration multiplier)
-            moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOWMEDIUM_ACCELERATION / 0.3);
+            aiHelperComponent.moveFunc(cow, awayPos, Vars.SLOWMEDIUM_ACCELERATION / 0.3);
+            aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
          } else if (willStopAtDesiredDistance(cowBodyHitbox, 180, dist)) {
             // Within valid ram start range
-            moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, 0, 0);
+            aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
             if (cowComponent.ramCooldownTicks === 0) {
                // If the ram attack isn't 
                const headHitbox = transformComponent.children[1] as Hitbox;
@@ -461,8 +402,8 @@ function onTick(cow: Entity): void {
             }
          } else {
             // If the cow isn't close enough, move towards the target
-            const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-            moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.MEDIUM_ACCELERATION);
+            aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
+            aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
          }
       }
       return;
@@ -543,8 +484,8 @@ function onTick(cow: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
-         const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOW_ACCELERATION);
+         aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
+         aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
 
          // If the target entity is directly in front of the cow, start eatin it
          const eatPositionX = cowBodyHitbox.box.position.x + 60 * Math.sin(cowBodyHitbox.box.angle);
@@ -579,8 +520,8 @@ function onTick(cow: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(followAI.followTargetID);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
       
-      const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-      moveCow(cow, targetHitbox.box.position.x, targetHitbox.box.position.y, targetDirection, Vars.SLOW_ACCELERATION);
+      aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
+      aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
       return;
    } else {
       const [followTarget, isHoldingBerry] = getFollowTarget(followAI, aiHelperComponent.visibleEntities);
@@ -607,9 +548,9 @@ function onTick(cow: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(cow);
-   if (wanderAI.targetPositionX !== -1) {
-      const targetDirection = angle(wanderAI.targetPositionX - cowBodyHitbox.box.position.x, wanderAI.targetPositionY - cowBodyHitbox.box.position.y);
-      moveCow(cow, wanderAI.targetPositionX, wanderAI.targetPositionY, targetDirection, Vars.SLOW_ACCELERATION);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(cow, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(cow, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

@@ -11,6 +11,7 @@ export type ExtraEscapeCondition = (entity: Entity, escapeTarget: Entity) => boo
 export class EscapeAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
 
    public readonly escapeTargetRememberTime: number;
    public lastEscapeTargetPosition = new Point(0, 0);
@@ -18,9 +19,10 @@ export class EscapeAI {
    
    public readonly extraEscapeCondition?: ExtraEscapeCondition;
 
-   constructor(acceleration: number, turnSpeed: number, escapeTargetRememberTime: number, extraEscapeCondition?: ExtraEscapeCondition) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number, escapeTargetRememberTime: number, extraEscapeCondition?: ExtraEscapeCondition) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
       this.escapeTargetRememberTime = escapeTargetRememberTime;
       this.extraEscapeCondition = extraEscapeCondition;
    }
@@ -109,8 +111,10 @@ export function runEscapeAI(entity: Entity, aiHelperComponent: AIHelperComponent
 
    const targetX = hitbox.box.position.x * 2 - escapePosition.x;
    const targetY = hitbox.box.position.y * 2 - escapePosition.y;
+   const targetPos = new Point(targetX, targetY);
 
-   aiHelperComponent.move(entity, escapeAI.acceleration, escapeAI.turnSpeed, targetX, targetY);
+   aiHelperComponent.moveFunc(entity, targetPos, escapeAI.acceleration);
+   aiHelperComponent.turnFunc(entity, targetPos, escapeAI.turnSpeed, escapeAI.turnDamping);
 
    return true;
 }

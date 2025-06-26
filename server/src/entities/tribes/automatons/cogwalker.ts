@@ -23,7 +23,11 @@ import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateCogwalkerName } from "../../../tribesman-names";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -47,7 +51,7 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
    // @Hack @Temporary?
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();

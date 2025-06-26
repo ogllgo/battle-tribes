@@ -23,7 +23,7 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { moveEntityToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
 import { SandBallingAI } from "../../ai/SandBallingAI";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";
@@ -81,8 +81,12 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
    return biome === Biome.desert || biome === Biome.desertOasis;
 }
 
-const move = (krumblid: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(krumblid, x, y, acceleration, turnSpeed, 0.4);
+const moveFunc = (krumblid: Entity, pos: Point, acceleration: number): void => {
+   accelerateEntityToPosition(krumblid, pos, acceleration);
+}
+
+const turnFunc = (krumblid: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(krumblid, pos, turnSpeed, turnDamping);
 }
 
 const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean => {
@@ -134,14 +138,14 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 400, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.35, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 1, extraEscapeCondition);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 400, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.4, 0.35, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 0.4, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 1, 1);
-   aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(400, 5 * Math.PI);
-   aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 5 * Math.PI);
-   aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(240, 5 * Math.PI);
+   aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(400, 5 * Math.PI, 0.4);
+   aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 5 * Math.PI, 0.4);
+   aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(240, 5 * Math.PI, 0.4);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

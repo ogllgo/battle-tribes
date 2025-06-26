@@ -483,14 +483,8 @@ function onTick(yeti: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(yeti);
-   if (wanderAI.targetPositionX !== -1) {
-      const tileX = Math.floor(wanderAI.targetPositionX / Settings.TILE_SIZE);
-      const tileY = Math.floor(wanderAI.targetPositionY / Settings.TILE_SIZE);
-      if (getEntityLayer(yeti).getTileXYBiome(tileX, tileY) !== Biome.tundra) {
-         throw new Error();
-      }
-      
-      moveEntityToPosition(yeti, wanderAI.targetPositionX, wanderAI.targetPositionY, 300, 1.5 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(yeti, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 300, 1.5 * Math.PI, 1);
    }
 }
 

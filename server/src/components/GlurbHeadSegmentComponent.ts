@@ -50,7 +50,8 @@ const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {
    
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   aiHelperComponent.move(glurb, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
+   aiHelperComponent.moveFunc(glurb, targetHitbox.box.position, 0);
+   aiHelperComponent.turnFunc(glurb, targetHitbox.box.position, 0, 0);
 }
 
 const getFollowTarget = (followAIComponent: FollowAI, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
@@ -128,7 +129,9 @@ function onTick(glurbHead: Entity): void {
       // Run away!!
       const targetX = headHitbox.box.position.x * 2 - attackerHitbox.box.position.x;
       const targetY = headHitbox.box.position.y * 2 - attackerHitbox.box.position.y;
-      aiHelperComponent.move(glurbHead, 0, 0, targetX, targetY);
+      const targetPos = new Point(targetX, targetY);
+      aiHelperComponent.moveFunc(glurbHead, targetPos, 0);
+      aiHelperComponent.turnFunc(glurbHead, targetPos, 0, 0);
       return;
    }
    
@@ -233,7 +236,8 @@ function onTick(glurbHead: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(glurbHead);
-   if (wanderAI.targetPositionX !== -1) {
-      aiHelperComponent.move(glurbHead, 0, 0, wanderAI.targetPositionX, wanderAI.targetPositionY);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(glurbHead, wanderAI.targetPosition, 0);
+      aiHelperComponent.turnFunc(glurbHead, wanderAI.targetPosition, 0, 0);
    }
 }

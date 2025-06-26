@@ -17,13 +17,15 @@ import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "
 export class VegetationConsumeAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
 
    public target: Entity = 0;
    public pathToTarget: Path | null = null;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
@@ -102,7 +104,8 @@ export function runVegetationConsumeAI(krumblid: Entity, aiHelperComponent: AIHe
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
    // @Incomplete: move using pathfinding!!!
-   aiHelperComponent.move(krumblid, vegetationConsumeAI.acceleration, vegetationConsumeAI.turnSpeed, targetHitbox.box.position.x, targetHitbox.box.position.y);
+   aiHelperComponent.moveFunc(krumblid, targetHitbox.box.position, vegetationConsumeAI.acceleration);
+   aiHelperComponent.turnFunc(krumblid, targetHitbox.box.position, vegetationConsumeAI.turnSpeed, vegetationConsumeAI.turnDamping);
 
    if (entitiesAreColliding(krumblid, target) !== CollisionVars.NO_COLLISION) {
       // @Copynpaste

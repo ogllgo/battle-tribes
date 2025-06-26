@@ -44,8 +44,8 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return layer.getTileTypeAtPosition(x, y) === TileType.fimbultur;
 }
 
-const move = (frozenYeti: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(frozenYeti, x, y, acceleration, turnSpeed, 1);
+const moveFunc = (): void => {
+   throw new Error();
 }
 
 export function createFrozenYetiConfig(position: Point, rotation: number): EntityConfig {
@@ -70,8 +70,8 @@ export function createFrozenYetiConfig(position: Point, rotation: number): Entit
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
-   const aiHelperComponent = new AIHelperComponent(headHitbox, FrozenYetiVars.VISION_RANGE, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI * 0.7, 0.6, positionIsValidCallback);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, FrozenYetiVars.VISION_RANGE, moveFunc, moveFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI * 0.7, 0, 0.6, positionIsValidCallback);
    
    const frozenYetiComponent = new FrozenYetiComponent();
    

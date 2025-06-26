@@ -61,21 +61,33 @@ export function willStopAtDesiredDistance(hitbox: Hitbox, desiredDistance: numbe
    return distance - distanceToStop <= desiredDistance;
 }
 
-export function turnToPosition(entity: Entity, x: number, y: number, turnSpeed: number, turnDamping: number): void {
+export function turnToPosition(entity: Entity, pos: Point, turnSpeed: number, turnDamping: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
-   const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
+   const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
    turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
 
-export function moveEntityToPosition(entity: Entity, positionX: number, positionY: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
+export function accelerateEntityToPosition(entity: Entity, pos: Point, acceleration: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
    const entityHitbox = transformComponent.children[0] as Hitbox;
 
-   const targetDirection = angle(positionX - entityHitbox.box.position.x, positionY - entityHitbox.box.position.y);
+   const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
+
+   const accelerationX = acceleration * Math.sin(targetDirection);
+   const accelerationY = acceleration * Math.cos(targetDirection);
+   applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
+}
+
+export function moveEntityToPosition(entity: Entity, x: number, y: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   // @Hack
+   const entityHitbox = transformComponent.children[0] as Hitbox;
+
+   const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
 
    const accelerationX = acceleration * Math.sin(targetDirection);
    const accelerationY = acceleration * Math.cos(targetDirection);
@@ -87,7 +99,7 @@ export function turnEntityToEntity(entity: Entity, targetEntity: Entity, turnSpe
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
    // @Hack
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   turnToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, turnDamping, turnSpeed);
+   turnToPosition(entity, targetHitbox.box.position, turnDamping, turnSpeed);
 }
 
 // @Cleanup: unused?
@@ -98,13 +110,13 @@ export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceler
    moveEntityToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, acceleration, turnSpeed, 1);
 }
 
-export function entityHasReachedPosition(entity: Entity, positionX: number, positionY: number): boolean {
+export function entityHasReachedPosition(entity: Entity, pos: Point): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @HACK
    const entityHitbox = transformComponent.children[0] as Hitbox;
    
-   const relativeX = entityHitbox.box.position.x - positionX;
-   const relativeY = entityHitbox.box.position.y - positionY;
+   const relativeX = entityHitbox.box.position.x - pos.x;
+   const relativeY = entityHitbox.box.position.y - pos.y;
 
    const velocity = getHitboxVelocity(entityHitbox);
    const dotProduct = velocity.x * relativeX + velocity.y * relativeY;

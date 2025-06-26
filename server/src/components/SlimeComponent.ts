@@ -298,8 +298,8 @@ function onTick(slime: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(slime);
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(slime);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(slime, wanderAI.targetPositionX, wanderAI.targetPositionY, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(slime, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 150 * SLIME_SPEED_MULTIPLIERS[slimeComponent.size], 2 * Math.PI, 1);
    }
 }
 

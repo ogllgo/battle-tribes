@@ -23,7 +23,7 @@ import { registerEntityTamingSpec } from "../../taming-specs";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
-import { moveEntityToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
 
@@ -105,8 +105,12 @@ function wanderPositionIsValid(entity: Entity, layer: Layer, x: number, y: numbe
    return layer.getTileBiome(tileIndex) === Biome.tundra && yetiComponent.territory.includes(tileIndex);
 }
 
-const move = (slimewisp: Entity, x: number, y: number, acceleration: number, turnSpeed: number): void => {
-   moveEntityToPosition(slimewisp, x, y, acceleration, turnSpeed, 1);
+const moveFunc = (slimewisp: Entity, pos: Point, acceleration: number): void => {
+   accelerateEntityToPosition(slimewisp, pos, acceleration);
+}
+
+const turnFunc = (slimewisp: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(slimewisp, pos, turnSpeed, turnDamping);
 }
 
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {
@@ -124,8 +128,8 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    
    const statusEffectComponent = new StatusEffectComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 500, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 0.6, wanderPositionIsValid);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 500, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 1, 0.6, wanderPositionIsValid);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

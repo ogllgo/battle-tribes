@@ -70,7 +70,7 @@ export default class GuardianSpikyBallSummonAI {
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {
-      turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
+      turnToPosition(guardian, new Point(targetX, targetY), this.turnSpeed, 1);
 
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {

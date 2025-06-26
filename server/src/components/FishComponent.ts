@@ -133,13 +133,15 @@ function onTick(fish: Entity): void {
          const leaderHitbox = leaderTransformComponent.children[0] as Hitbox;
          
          // Follow leader
-         aiHelperComponent.move(fish, 0, 0, leaderHitbox.box.position.x, leaderHitbox.box.position.y);
+         aiHelperComponent.moveFunc(fish, leaderHitbox.box.position, 40);
+         aiHelperComponent.turnFunc(fish, leaderHitbox.box.position, Math.PI / 1.5, 0.5);
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
          // Attack the target
-         aiHelperComponent.move(fish, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
+         aiHelperComponent.moveFunc(fish, targetHitbox.box.position, 40);
+         aiHelperComponent.turnFunc(fish, targetHitbox.box.position, Math.PI / 1.5, 0.5);
 
          if (entitiesAreColliding(fish, target) !== CollisionVars.NO_COLLISION) {
             const healthComponent = HealthComponentArray.getComponent(target);
@@ -202,8 +204,9 @@ function onTick(fish: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(fish);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(fish, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(fish, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

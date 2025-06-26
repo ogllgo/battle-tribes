@@ -44,7 +44,7 @@ const getAcceleration = (glurb: Entity): number => {
    return lerp(200, 450, u);
 }
 
-const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number, y: number): void => {
+const moveFunc = (head: Entity, pos: Point): void => {
    const acceleration = getAcceleration(head);
 
    const headTransformComponent = TransformComponentArray.getComponent(head);
@@ -68,9 +68,7 @@ const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number
       let targetDirection: number;
       
       if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-         targetDirection = angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
-
-         turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
+         targetDirection = hitbox.box.position.calculateAngleBetween(pos);
       } else {
          // Move to next hitbox in chain
 
@@ -90,6 +88,33 @@ const move = (head: Entity, _acceleration: number, _turnSpeed: number, x: number
    }
 }
 
+const turnFunc = (head: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   const headTransformComponent = TransformComponentArray.getComponent(head);
+
+   const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
+
+   for (let i = 0; i < glurbTransformComponent.children.length; i++) {
+      const child = glurbTransformComponent.children[i];
+      if (!entityChildIsEntity(child)) {
+         continue;
+      }
+
+      const glurbSegment = child.attachedEntity;
+      if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
+         continue;
+      }
+
+      const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+      const hitbox = transformComponent.children[0] as Hitbox;
+   
+      if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
+         const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
+
+         turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
+      }
+   }
+}
+
 export function createGlurbHeadSegmentConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
@@ -100,8 +125,8 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
 
    const healthComponent = new HealthComponent(5);
    
-   const aiHelperComponent = new AIHelperComponent(hitbox, 350, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.25, positionIsValidCallback);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 350, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.5, 0.25, positionIsValidCallback);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(Vars.MIN_FOLLOW_COOLDOWN, Vars.MAX_FOLLOW_COOLDOWN, 0.2, 35);
 
    // @HACK @TEMPORARY

@@ -329,8 +329,8 @@ function onTick(zombie: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(zombie);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(zombie, wanderAI.targetPositionX, wanderAI.targetPositionY, 150, 3 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(zombie, wanderAI.targetPosition.x, wanderAI.targetPosition.y, wanderAI.acceleration, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

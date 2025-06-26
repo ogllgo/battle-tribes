@@ -421,7 +421,8 @@ function onTick(okren: Entity): void {
    if (entityExists(tamingComponent.followTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
       const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-      aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+      aiHelperComponent.moveFunc(okren, targetHitbox.box.position, 350);
+      aiHelperComponent.turnFunc(okren, targetHitbox.box.position, 0.5 * Math.PI, 0.6);
       return;
    }
    
@@ -435,7 +436,8 @@ function onTick(okren: Entity): void {
          const targetHitbox = targetTransformComponent.children[0] as Hitbox;
          
          const targetDirection = okrenBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+         aiHelperComponent.moveFunc(okren, targetHitbox.box.position, 350);
+         aiHelperComponent.turnFunc(okren, targetHitbox.box.position, 0.5 * Math.PI, 0.6);
 
          // Force carry if colliding and head is looking at the carry target
          if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(okren, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
@@ -479,7 +481,8 @@ function onTick(okren: Entity): void {
             updateSandBallingAI(sandBallingAI);
             runSandBallingAI(okren, aiHelperComponent, sandBallingAI);
          } else {
-            aiHelperComponent.move(okren, 350, 0.5 * Math.PI, okrenComponent.eggLayPosition.x, okrenComponent.eggLayPosition.y);
+            aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
+            aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 0.5 * Math.PI, 0.6);
          }
       } else {
          // Isn't facing correct angle to ball up sand
@@ -488,7 +491,8 @@ function onTick(okren: Entity): void {
          if (willStopAtDesiredDistance(okrenBodyHitbox, 75, distance)) {
             const targetPos = okrenBodyHitbox.box.position.offset(1, angleToLayPosition + Math.PI);
             
-            aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetPos.x, targetPos.y);
+            aiHelperComponent.moveFunc(okren, targetPos, 350);
+            aiHelperComponent.turnFunc(okren, targetPos, 0.5 * Math.PI, 0.6);
          } else {
             if (getHitboxVelocity(okrenBodyHitbox).length() < 30) {
                // @Copynpaste
@@ -533,7 +537,8 @@ function onTick(okren: Entity): void {
          }
       } else {
          // @Hack @Cleanup: really bad place to define the acceleration and turn speed
-         aiHelperComponent.move(okren, 350, Math.PI * 1.6, okrenComponent.eggLayPosition.x, okrenComponent.eggLayPosition.y);
+         aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
+         aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 1.6 * Math.PI, 0.6);
       }
          
       if (okrenComponent.numEggsReady === 0) {

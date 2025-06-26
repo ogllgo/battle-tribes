@@ -258,6 +258,8 @@ const cleanRelativeAngle = (hitbox: Hitbox): void => {
 }
 
 export function getHitboxAngularVelocity(hitbox: Hitbox): number {
+   // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
+   // return 
    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TPS;
 }
 

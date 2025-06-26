@@ -18,12 +18,14 @@ import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from 
 export class KrumblidHibernateAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
    
    public hibernateTargetPosition: Point | null = null;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
@@ -164,7 +166,8 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
 
    if (hibernateAI.hibernateTargetPosition !== null) {
       // go to it!
-      aiHelperComponent.move(krumblid, hibernateAI.acceleration, hibernateAI.turnSpeed, hibernateAI.hibernateTargetPosition.x, hibernateAI.hibernateTargetPosition.y);
+      aiHelperComponent.moveFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.acceleration);
+      aiHelperComponent.turnFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.turnSpeed, hibernateAI.turnDamping);
 
       const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
       if (krumblidHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
@@ -184,8 +187,9 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
       // Wander AI
       const wanderAI = aiHelperComponent.getWanderAI();
       wanderAI.update(krumblid);
-      if (wanderAI.targetPositionX !== -1) {
-         aiHelperComponent.move(krumblid, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
+      if (wanderAI.targetPosition !== null) {
+         aiHelperComponent.moveFunc(krumblid, wanderAI.targetPosition, wanderAI.acceleration);
+         aiHelperComponent.turnFunc(krumblid, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
       }
    }
 }

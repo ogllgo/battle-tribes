@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
+import { angle, clampAngleB, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -25,9 +25,9 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
+import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, translateHitbox, turnHitboxToAngle } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
-import { moveEntityToPosition } from "../../ai-shared";
+import { findAngleAlignment, moveEntityToPosition } from "../../ai-shared";
 
 const enum Vars {
    HEAD_TURN_SPEED = 0.75 * UtilVars.PI
@@ -108,8 +108,85 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-const move = (cow: Entity, acceleration: number, _turnSpeed: number, x: number, y: number): void => {
-   moveEntityToPosition(cow, x, y, acceleration, _turnSpeed, 0.4);
+const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+
+   const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
+
+   // 
+   // Move whole cow to the target
+   // 
+   
+   const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
+   const accelerationX = acceleration * accelerationMultiplier * Math.sin(bodyToTargetDirection);
+   const accelerationY = acceleration * accelerationMultiplier * Math.cos(bodyToTargetDirection);
+   applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
+   
+   // 
+   // Move head to the target
+   // 
+   
+   const headHitbox = transformComponent.children[1] as Hitbox;
+   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+
+   // @Hack
+   const headForce = 30;
+   const headAcc = Point.fromVectorForm(headForce / Settings.TPS, headToTargetDirection);
+   applyAcceleration(headHitbox, headAcc.x, headAcc.y);
+}
+
+const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+
+   const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
+
+   // 
+   // Move whole cow to the target
+   // 
+
+   turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
+   
+   // 
+   // Move head to the target
+   // 
+   
+   const headHitbox = transformComponent.children[1] as Hitbox;
+   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+
+   // Turn the head to face the target
+
+   // turnHitboxToAngle(headHitbox, headToTargetDirection, Vars.HEAD_TURN_SPEED, 0.5, false);
+
+   // // Restrict how far the neck can turn
+   // headHitbox.box.relativeAngle = clampAngleB(headHitbox.box.relativeAngle);
+   // if (headHitbox.box.relativeAngle < -0.5) {
+   //    headHitbox.box.relativeAngle = -0.5;
+   // } else if (headHitbox.box.relativeAngle > 0.5) {
+   //    headHitbox.box.relativeAngle = 0.5;
+   // }
+
+   // 
+   // Turn the body with the head
+   // 
+   // @Cleanup: A cleaner and better solution would be a spring on the rotational offset
+
+   // let headOffsetDirection = angle(headHitbox.box.position.x - cowBodyHitbox.box.position.x, headHitbox.box.position.y - cowBodyHitbox.box.position.y);
+   // headOffsetDirection = cleanAngleNEW(headOffsetDirection);
+
+   // if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
+   //    // Force is in the direction which will get head offset direction back towards 0
+   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY) * Math.sign(headOffsetDirection) * Settings.I_TPS;
+
+   //    cowBodyHitbox.box.relativeAngle += rotationForce;
+
+   //    const headOffsetX = headHitbox.box.offset.x;
+   //    const headOffsetY = headHitbox.box.offset.y;
+   //    headHitbox.box.offset.x = rotateXAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
+   //    headHitbox.box.offset.y = rotateYAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
+   // }
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
@@ -138,9 +215,9 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 320, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 1);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 320, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.4, 0.6, positionIsValidCallback)
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 0.4, 1);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TPS, 30 * Settings.TPS, 0.2, 60);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);

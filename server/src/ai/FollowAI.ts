@@ -86,7 +86,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance - 4)) {
       // Too close, move backwards!
-      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed, 1);
+      turnToPosition(entity, followTargetHitbox.box.position, turnSpeed, 1);
 
       const moveDirection = entityHitbox.box.position.calculateAngleBetween(followTargetHitbox.box.position) + Math.PI;
       const accelerationX = acceleration * Math.sin(moveDirection);
@@ -94,7 +94,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
       applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
    }
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
-      turnToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, turnSpeed, 1);
+      turnToPosition(entity, followTargetHitbox.box.position, turnSpeed, 1);
    } else {
       moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed, 1);
    }

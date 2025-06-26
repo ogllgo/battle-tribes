@@ -423,10 +423,9 @@ export function assert(condition: unknown, errorMessage?: string): asserts condi
    }
 }
 
+/** Gets the smallest angle you need to add/subtract to the source angle to reach the target angle, in the range [-pi, pi) */
 export function getAngleDiff(sourceAngle: number, targetAngle: number): number {
-   let a = targetAngle - sourceAngle;
-   a = Math.abs((a + Math.PI) % (Math.PI * 2)) - Math.PI;
-   return a;
+   return clampAngleB(targetAngle - sourceAngle);
 }
 
 export function getAbsAngleDiff(sourceAngle: number, targetAngle: number): number {
@@ -496,5 +495,5 @@ export function clampAngleA(angle: number): number {
 
 /** Clamps an angle into the [-PI, PI) range. */
 export function clampAngleB(angle: number): number {
-   return clampAngleA(angle) - Math.PI;
+   return clampAngleA(angle + Math.PI) - Math.PI;
 }

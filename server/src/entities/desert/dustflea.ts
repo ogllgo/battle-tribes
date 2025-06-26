@@ -30,17 +30,19 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
    return biome === Biome.desert || biome === Biome.desertOasis;
 }
 
-const move = (dustflea: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
-   turnToPosition(dustflea, x, y, turnSpeed, 0.25);
-   
+const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
    const ageTicks = getEntityAgeTicks(dustflea);
    if ((ageTicks + dustflea) % Math.floor(Settings.TPS / 2.3) === 0) {
       const transformComponent = TransformComponentArray.getComponent(dustflea);
       const hitbox = transformComponent.children[0] as Hitbox;
       
-      const direction = angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
+      const direction = hitbox.box.position.calculateAngleBetween(pos);
       applyAbsoluteKnockback(dustflea, hitbox, 125, direction);
    }
+}
+
+const turnFunc = (dustflea: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(dustflea, pos, turnSpeed, turnDamping);
 }
 
 const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean => {
@@ -71,10 +73,10 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
 
    const healthComponent = new HealthComponent(2);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 180, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 4 * Math.PI, 99999, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 4 * Math.PI, 1, extraEscapeCondition);
-   aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 180, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 4 * Math.PI, 0.25, 99999, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 4 * Math.PI, 0.25, 1, extraEscapeCondition);
+   aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI, 0.25);
    // aiHelperComponent.ais[AIType.hoppingMovementAI] = new HoppingMovementAI();
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);

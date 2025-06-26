@@ -120,7 +120,8 @@ function onTick(dustflea: Entity): void {
          if (dustfleaTransformComponent.rootEntity === dustflea) {
             const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
             const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-            aiHelperComponent.move(dustflea, 250, 16 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+            aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+            aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
             if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
                attachEntity(dustflea, suckTarget, targetHitbox, false);
 
@@ -174,7 +175,8 @@ function onTick(dustflea: Entity): void {
          if (sitTarget !== null) {
             const targetTransformComponent = TransformComponentArray.getComponent(sitTarget);
             const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-            aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+            aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+            aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 2 * Math.PI, 0.25);
             if (entitiesAreColliding(dustflea, sitTarget) !== CollisionVars.NO_COLLISION) {
                attachEntity(dustflea, sitTarget, targetHitbox, false);
             }
@@ -200,8 +202,9 @@ function onTick(dustflea: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(dustflea);
-   if (wanderAI.targetPositionX !== -1) {
-      aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(dustflea, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(dustflea, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

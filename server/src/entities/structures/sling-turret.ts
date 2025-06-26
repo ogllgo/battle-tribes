@@ -23,7 +23,11 @@ import { StructureConnection } from "../../structure-placement";
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -44,7 +48,7 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
 
    const turretComponent = new TurretComponent(SLING_TURRET_SHOT_COOLDOWN_TICKS + SLING_TURRET_RELOAD_TIME_TICKS);
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, moveFunc, turnFunc);
 
    const slingTurretComponent = new SlingTurretComponent();
    
