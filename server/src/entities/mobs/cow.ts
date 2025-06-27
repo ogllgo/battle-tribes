@@ -132,8 +132,8 @@ const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
 
    // @Hack
-   const headForce = 30;
-   const headAcc = Point.fromVectorForm(headForce / Settings.TPS, headToTargetDirection);
+   const headForce = 150;
+   const headAcc = Point.fromVectorForm(headForce, headToTargetDirection);
    applyAcceleration(headHitbox, headAcc.x, headAcc.y);
 }
 
@@ -196,12 +196,14 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
+   const idealHeadDist = 50;
+   
    // Head hitbox
-   const headPosition = position.copy();
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headPosition = position.offset(idealHeadDist, angle);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, 50, 5/60, 0.4);
+   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 7.5, 0.8);
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
       springConstant: 5/60,

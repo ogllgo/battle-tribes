@@ -213,7 +213,6 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
 
    hitbox.tethers.splice(0, hitbox.tethers.length);
    
-   const tethers = new Array<HitboxTether>();
    const numTethers = reader.readNumber();
    for (let i = 0; i < numTethers; i++) {
       const originBox = readBoxFromData(reader);
@@ -226,7 +225,7 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
          springConstant: springConstant,
          damping: damping
       };
-      tethers.push(tether);
+      hitbox.tethers.push(tether);
    }
 
    hitbox.previousRelativeAngle = reader.readNumber();
