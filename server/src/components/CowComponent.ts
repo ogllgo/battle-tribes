@@ -26,7 +26,7 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { addHitboxVelocity, applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 import { runEscapeAI } from "../ai/EscapeAI";
 
@@ -385,7 +385,7 @@ function onTick(cow: Entity): void {
             const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(cowBodyHitbox.box.position);
             const awayPos = cowBodyHitbox.box.position.offset(999, awayFromTarget);
             // @Hack: acceleration (to counteract acceleration multiplier)
-            aiHelperComponent.moveFunc(cow, awayPos, Vars.SLOWMEDIUM_ACCELERATION / 0.3);
+            aiHelperComponent.moveFunc(cow, awayPos, Vars.SLOWMEDIUM_ACCELERATION / 0.6);
             aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
          } else if (willStopAtDesiredDistance(cowBodyHitbox, 180, dist)) {
             // Within valid ram start range
@@ -628,4 +628,10 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
    applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
 
    stopRamming(cowComponent);
+
+   // Slow the cow down as well
+   const cowTransformComponent = TransformComponentArray.getComponent(cow);
+   const cowBodyHitbox = cowTransformComponent.children[0] as Hitbox;
+   const cowVelocity = getHitboxVelocity(cowBodyHitbox);
+   addHitboxVelocity(cowBodyHitbox, cowVelocity.x * -0.5, cowVelocity.y * -0.5);
 }

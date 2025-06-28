@@ -34,6 +34,7 @@ export interface Hitbox {
    
    previousRelativeAngle: number;
    angularAcceleration: number;
+   // NOTE: Angular tethers only work correctly when the hitbox has a normalised pivot point of (0, -0.5)
    readonly angularTethers: Array<HitboxAngularTether>;
    
    mass: number;

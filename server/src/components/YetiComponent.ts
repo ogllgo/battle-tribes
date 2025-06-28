@@ -22,7 +22,7 @@ import { AttackingEntitiesComponent, AttackingEntitiesComponentArray } from "./A
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
-import { addSkillLearningProgress, TamingComponentArray } from "./TamingComponent";
+import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray } from "./TamingComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TamingSkillID } from "../../../shared/src/taming";
@@ -224,6 +224,11 @@ const throwSnow = (yeti: Entity, target: Entity): void => {
 
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
    const entityType = getEntityType(entity);
+   
+   // @Temporary for a shot
+   if (getEntityType(entity) === EntityType.cow) {
+      return true;
+   }
 
    // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
    if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntitiesComponent.attackingEntities.has(entity))) {
@@ -314,31 +319,20 @@ function onTick(yeti: Entity): void {
    const layer = getEntityLayer(yeti);
    const tileIndex = getHitboxTile(yetiBodyHitbox);
    if (layer.getTileBiome(tileIndex) !== Biome.tundra) {
-      applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
+      // applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
    }
-   
-   // @INCOMPLETE: This used to rely on the acceleration of the carried entity, but that's gone now.
-   // What will need to be done to return this to a functional state is to make all AI components report
-   // what their current movement target is. (Use AIHelperComponent for now but add @Hack comment?)
-   
-   // // @Hack @Copynpaste
-   // // When something is riding the cow, that entity controls the cow's movement
-   // const rideableComponent = RideableComponentArray.getComponent(yeti);
-   // const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   // // @Hack: the physics component check for the rider
-   // if (entityExists(rider) && PhysicsComponentArray.hasComponent(rider)) {
-   //    const riderPhysicsComponent = PhysicsComponentArray.getComponent(rider);
-   //    const accelerationMagnitude = Math.sqrt(riderPhysicsComponent.acceleration.x * riderPhysicsComponent.acceleration.x + riderPhysicsComponent.acceleration.y * riderPhysicsComponent.acceleration.y);
-   //    if (accelerationMagnitude > 0) {
-   //       const normalisedAccelerationX = riderPhysicsComponent.acceleration.x / accelerationMagnitude;
-   //       const normalisedAccelerationY = riderPhysicsComponent.acceleration.y / accelerationMagnitude;
 
-   //       const targetX = yetiBodyHitbox.box.position.x + 400 * normalisedAccelerationX;
-   //       const targetY = yetiBodyHitbox.box.position.y + 400 * normalisedAccelerationY;
-   //       moveEntityToPosition(yeti, targetX, targetY, Vars.FAST_ACCELERATION, Vars.TURN_SPEED);
-   //       return;
-   //    }
-   // }
+   // @Copynpaste
+   const rideableComponent = RideableComponentArray.getComponent(yeti);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   if (entityExists(rider)) {
+      const targetPosition = getRiderTargetPosition(rider);
+      if (targetPosition !== null) {
+         aiHelperComponent.moveFunc(yeti, targetPosition, Vars.FAST_ACCELERATION);
+         aiHelperComponent.turnFunc(yeti, targetPosition, Vars.TURN_SPEED, 0.6);
+         return;
+      }
+   }
    
    // Go to follow target if possible
    // @Copynpaste

@@ -144,7 +144,6 @@ class GameServer {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
       SRandom.seed(3520905774);
-               const tribe = new Tribe(TribeType.plainspeople, false, generatePlayerSpawnPosition(0));
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -215,7 +214,7 @@ class GameServer {
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    
-               // const tribe = new Tribe(tribeType, false, spawnPosition.copy());
+               const tribe = new Tribe(tribeType, false, spawnPosition.copy());
                // @TEMPORARY @HACK
                // const layer = isSpectating ? undergroundLayer : surfaceLayer;
                const layer = surfaceLayer;

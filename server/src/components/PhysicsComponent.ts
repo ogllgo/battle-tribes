@@ -10,9 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { applyAcceleration, getHitboxAngularVelocity, getHitboxTile, Hitbox, hitboxIsInRiver, translateHitbox } from "../hitboxes";
-import { clampAngleB, getAngleDiff } from "../../../shared/src/utils";
-import { HitboxFlag } from "../../../shared/src/boxes/boxes";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { getAngleDiff, Point } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names
 const a = [0];
@@ -188,22 +187,24 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
 const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
    for (const angularTether of hitbox.angularTethers) {
       const originHitbox = angularTether.originHitbox;
+
+      const originToHitboxDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
       
-      const currentDirection = originHitbox.box.angle;
-      const idealDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
-      const diff = clampAngleB(currentDirection - idealDirection);
+      const directionDiff = getAngleDiff(originToHitboxDirection, originHitbox.box.angle);
+      
+      if (Math.abs(directionDiff) > angularTether.padding) {
+         const rotationForce = (directionDiff - angularTether.padding * Math.sign(directionDiff)) * angularTether.springConstant;
 
-      if (Math.abs(diff) > angularTether.padding) {
-         const rotationForce = (diff - angularTether.padding * Math.sign(diff)) * angularTether.springConstant;
+         // const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
+         // const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
+   
+         // const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
+   
+         // const dampingForce = -relVel * angularTether.damping;
+   
+         // const force = rotationForce + dampingForce;
 
-         const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
-         const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
-   
-         const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
-   
-         const dampingForce = -relVel * angularTether.damping;
-   
-         const force = rotationForce + dampingForce;
+         const force = rotationForce;
 
          // @Temporary
          // addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
@@ -212,9 +213,42 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
 
 
          // @HACKKKK
-         const newRelativeAngle = hitbox.box.angle - hitbox.box.relativeAngle + idealDirection;
-         hitbox.previousRelativeAngle = newRelativeAngle;
-         hitbox.box.relativeAngle = newRelativeAngle;
+         // const newRelativeAngle = hitbox.box.angle - hitbox.box.relativeAngle + idealDirection;
+         // hitbox.previousRelativeAngle = newRelativeAngle;
+         // hitbox.box.relativeAngle = newRelativeAngle;
+
+         // const rotation = force / getHitboxConnectedMass(hitbox) / Settings.TPS;
+         // const rotatedX = rotateXAroundPoint(hitbox.box.position.x, hitbox.box.position.y, originHitbox.box.position.x, originHitbox.box.position.y, rotation);
+         // const rotatedY = rotateYAroundPoint(hitbox.box.position.x, hitbox.box.position.y, originHitbox.box.position.x, originHitbox.box.position.y, rotation);
+         // const diffX = rotatedX - hitbox.box.position.x;
+         // const diffY = rotatedY - hitbox.box.position.y;
+
+         // const accMag = force / getHitboxConnectedMass(hitbox) * originHitbox.box.position.calculateDistanceBetween(hitbox.box.position);
+         const hitboxAccMag = force / getHitboxConnectedMass(hitbox) * 40;
+         const hitboxAccDir = originToHitboxDirection + Math.PI/2;
+         const hitboxAcc = Point.fromVectorForm(hitboxAccMag, hitboxAccDir);
+         applyAcceleration(hitbox, hitboxAcc.x, hitboxAcc.y);
+
+         const originHitboxAccMag = -force / getHitboxConnectedMass(originHitbox) * 40;
+         const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
+         const originHitboxAcc = Point.fromVectorForm(originHitboxAccMag, originHitboxAccDir);
+         applyAcceleration(hitbox, originHitboxAcc.x, originHitboxAcc.y);
+      }
+
+      // Restrict the hitboxes' angle to match its direction
+      const angleDiff = getAngleDiff(hitbox.box.angle, originToHitboxDirection);
+      // @Hack @Cleanup: hardcoded for cow head
+      const anglePadding = 0.3;
+      const angleSpringConstant = 15;
+      const angleDamping = 0.8;
+      if (Math.abs(angleDiff) > anglePadding) {
+         const rotationForce = (angleDiff - anglePadding * Math.sign(angleDiff)) * angleSpringConstant;
+
+         const dampingForce = -getHitboxAngularVelocity(hitbox) * angleDamping;
+
+         const force = rotationForce + dampingForce;
+         
+         addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
       }
    }
 }

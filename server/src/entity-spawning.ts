@@ -21,6 +21,7 @@ import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
 import { createCowConfig } from "./entities/mobs/cow";
+import { createYetiConfig } from "./entities/mobs/yeti";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnInfo): boolean => {
    // Make sure there is a block which lacks density
@@ -335,8 +336,11 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      const cowConfig = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
-      createEntity(cowConfig, surfaceLayer, 0);
+      // const cowConfig = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
+      // createEntity(cowConfig, surfaceLayer, 0);
+
+      const yetiConfig = createYetiConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, []);
+      createEntity(yetiConfig, surfaceLayer, 0);
 
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);

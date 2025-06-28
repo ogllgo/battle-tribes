@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, clampAngleB, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -25,13 +25,10 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, translateHitbox, turnHitboxToAngle } from "../../hitboxes";
+import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
-import { findAngleAlignment, moveEntityToPosition } from "../../ai-shared";
-
-const enum Vars {
-   HEAD_TURN_SPEED = 0.75 * UtilVars.PI
-}
+import { findAngleAlignment } from "../../ai-shared";
+import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 
 export const enum CowVars {
    MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
@@ -131,8 +128,8 @@ const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
 
-   // @Hack
-   const headForce = 150;
+   // @Hack?
+   const headForce = acceleration * 0.8;
    const headAcc = Point.fromVectorForm(headForce, headToTargetDirection);
    applyAcceleration(headHitbox, headAcc.x, headAcc.y);
 }
@@ -158,7 +155,7 @@ const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: numbe
 
    // Turn the head to face the target
 
-   // turnHitboxToAngle(headHitbox, headToTargetDirection, Vars.HEAD_TURN_SPEED, 0.5, false);
+   turnHitboxToAngle(headHitbox, headToTargetDirection, 1.5 * Math.PI, 0.5, false);
 
    // // Restrict how far the neck can turn
    // headHitbox.box.relativeAngle = clampAngleB(headHitbox.box.relativeAngle);
@@ -200,15 +197,16 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 7.5, 0.8);
+   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 25, 1);
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
-      springConstant: 5/60,
+      springConstant: 18,
       damping: 0,
-      padding: Math.PI * 0.1
+      padding: Math.PI * 0.08
    });
 
    const physicsComponent = new PhysicsComponent();

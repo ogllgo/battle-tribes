@@ -500,7 +500,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.004),
+      spawnDistribution: createRawSpawnDistribution(16, 0.003),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: false,
       createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
@@ -516,7 +516,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.grass],
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.0025),
+      spawnDistribution: createRawSpawnDistribution(8, 0.0025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
