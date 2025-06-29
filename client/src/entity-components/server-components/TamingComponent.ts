@@ -239,6 +239,39 @@ function padData(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
+/**
+crypto miner video
+- the actual game should eb something tangientally reltated to crypto mining, e.g. you are a miner of the corporation Crypt Miners Inc., working in the crypt (the cover)
+- through tthe video make very many hints that it is a crypto miner
+- REALLY encourage people to play the game throughout the video
+   - say "leave it running throughout the night"
+   - mention the high battery usage but say there are complex algorithms at work
+   - this game uses an advanced monetisation model (never mention what it is and have it be free to play with no ads or in game purchases)
+   - in every irl clip with the game have my computer going with fan at 100% completely overpowering the narration and other audio
+   - mention i've been looking into diversifying my income streams recently
+   - mention doge at least 3 times
+      - also mention web3 VERY frequently (this game uses BLOCKCHAIN technology to secure your account and other features)
+   - say that you should play this game with the best GPU possible. "EXTREMELY GPU INTENSIVE GAME". and have the graphics be REAAALY simple and no intensive logic
+      - 8 bit sound effects
+      - similar to legend of zelda 1 (slow load times)
+      as a loading thing have "mining crypto.." and it changes to "calculating AI vectors"
+         - "Mining crypto for Eggpoison ({{wallet address}})" for the 1st frame and it immediately changes and from then on is normal stuff
+         have my wallet address be a central plot point but not mentioned as a wallet address
+            - "We must find the first part of the Key" -> first 10 chars
+            - maybe you mine the ore and then bring it back to a house where its address is my crypto wallet
+            have the gameplay mimic the crypto mining process (e.g. mine until you finish the job)
+   - maybe a followup video on 2nd chanpnel about the allegations that it is a crypto miner
+      - in the comments, vehemently argue with every single person, regardless of whether they are in on it or not. Also constnatly shill bitcoin indiscretely; make every response very clearly written by an old model of chatgpt. It should always end with "Let me know if you ahve any other questions!" and begin with "Thanks for the really insightful comment!"
+      - never deny it, only plug blockchain technology and doge
+         - First, let me weave you a story. About a new up and coming Web3 blockchain product which will revolutionise the industry (never mention which industry)
+         - Let me address the unfounded and frankly antagonistic allegations that my most recent game is mining crypto in the background. But before we unpack these fantasies, have you heard of BitCoin?
+         - start the video on a browser page looking at my crypto wallet
+            - make another program which shows all active players of the game as little rats in cells in a big block with all of their hostnames, and coins being funneled into a big pig money jar, squid game stylo
+         - be eating chips the entire time, as i'm speaking too, and drinking water really obnoxiously
+         * @param tamingComponent 
+ * @param skillID 
+ * @returns 
+ */
 export function getTamingSkillLearning(tamingComponent: TamingComponent, skillID: TamingSkillID): TamingSkillLearning | null {
    for (const skillLearning of tamingComponent.skillLearningArray) {
       if (skillLearning.skill.id === skillID) {

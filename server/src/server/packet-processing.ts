@@ -786,7 +786,7 @@ export function processModifyBuildingPacket(playerClient: PlayerClient, reader: 
 export function processSetMoveTargetPositionPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
-   }
+   } 
 
    const entity = reader.readNumber() as Entity;
    const targetX = reader.readNumber();
@@ -852,13 +852,6 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
    tamingComponent.tameTribe = playerClient.tribe;
-
-   // @TEMPORARY for a shot
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   const config = createKrumblidMorphCocoonConfig(hitbox.box.position.copy(), randAngle(), playerClient.tribe);
-   createEntity(config, getEntityLayer(entity), 0);
-   destroyEntity(entity);
 }
 
 export function processAcquireTamingSkillPacket(playerClient: PlayerClient, reader: PacketReader): void {

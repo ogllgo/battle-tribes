@@ -594,10 +594,10 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       layer: surfaceLayer,
       spawnRate: 0.004,
       biome: Biome.tundra,
-      tileTypes: [TileType.snow],
+      tileTypes: [TileType.snow, TileType.ice, TileType.permafrost, TileType.fimbultur],
       onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.008),
+      minSpawnDistance: 90,
+      spawnDistribution: createRawSpawnDistribution(32, 0.008),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {

@@ -198,15 +198,11 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
    createEntity(config, getEntityLayer(yeti), 0);
 }
 
-const throwSnow = (yeti: Entity, target: Entity): void => {
+const throwSnow = (yeti: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
    const yetiHitbox = transformComponent.rootChildren[0] as Hitbox;
    
-   const targetTransformComponent = TransformComponentArray.getComponent(target);
-   // @Bug @Hack: Should instead pick from one of the visible hitboxes. There will be cases where the root hitbox isn't visible, but others are...
-   const targetHitbox = targetTransformComponent.rootChildren[0] as Hitbox;
-   
-   const throwAngle = yetiHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   const throwAngle = yetiHitbox.box.angle;
 
    // Large snowballs
    for (let i = 0; i < 2; i++) {
@@ -381,7 +377,7 @@ function onTick(yeti: Entity): void {
             case SnowThrowStage.windup: {
                yetiComponent.snowThrowAttackProgress -= Settings.I_TPS / Vars.SNOW_THROW_WINDUP_TIME;
                if (yetiComponent.snowThrowAttackProgress <= 0) {
-                  throwSnow(yeti, yetiComponent.attackTarget!);
+                  throwSnow(yeti);
                   yetiComponent.snowThrowAttackProgress = 0;
                   yetiComponent.snowThrowCooldown = YETI_SNOW_THROW_COOLDOWN;
                   yetiComponent.snowThrowStage = SnowThrowStage.hold;
