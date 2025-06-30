@@ -30,6 +30,8 @@ import { StructureComponentArray } from "./StructureComponent";
 import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
+import { registerEntityTickEvent } from "../server/player-clients";
 
 const enum Vars {
    SMALL_SNOWBALL_THROW_SPEED_MIN = 550,
@@ -221,11 +223,11 @@ const throwSnow = (yeti: Entity): void => {
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
    const entityType = getEntityType(entity);
    
-   // @Temporary for a shot
-   if (getEntityType(entity) === EntityType.cow) {
+   // @Temporary for shot
+   if (1+1===2&&(entityType === EntityType.tribeWorker||entityType===EntityType.wall||entityType===EntityType.door||entityType===EntityType.barrel||entityType===EntityType.workbench||entityType===EntityType.workerHut||entityType===EntityType.furnace||entityType===EntityType.fireTorch)) {
       return true;
    }
-
+   
    // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
    if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntitiesComponent.attackingEntities.has(entity))) {
       return false;
@@ -465,6 +467,14 @@ function onTick(yeti: Entity): void {
 
             const tamingComponent = TamingComponentArray.getComponent(yeti);
             tamingComponent.foodEatenInTier++;
+
+            // @Hack`
+            const tickEvent: EntityTickEvent = {
+               entityID: yeti,
+               type: EntityTickEventType.cowEat,
+               data: 0
+            };
+            registerEntityTickEvent(yeti, tickEvent);
          }
          return;
       }

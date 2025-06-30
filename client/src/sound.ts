@@ -301,6 +301,7 @@ export async function loadSoundEffects(): Promise<void> {
       "food-munch-3.mp3",
       "food-munch-4.mp3",
       "food-munch-5.mp3",
+      "taming-skill-acquire.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

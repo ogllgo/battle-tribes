@@ -35,6 +35,24 @@ export class TamingComponent {
    
    // @Temporary
    public followTarget: Entity = 0;
+
+   constructor() {
+      const follow = getTamingSkill(TamingSkillID.follow);
+      this.skillLearningArray.push({
+         skill: follow,
+         requirementProgressArray: [follow.requirements[0].amountRequired]
+      })
+      const move = getTamingSkill(TamingSkillID.move);
+      this.skillLearningArray.push({
+         skill: move,
+         requirementProgressArray: [move.requirements[0].amountRequired]
+      })
+      const attack = getTamingSkill(TamingSkillID.attack);
+      this.skillLearningArray.push({
+         skill: attack,
+         requirementProgressArray: [attack.requirements[0].amountRequired]
+      })
+   }
 }
 
 export const TamingComponentArray = new ComponentArray<TamingComponent>(ServerComponentType.taming, true, getDataLength, addDataToPacket);
@@ -129,7 +147,7 @@ export function addSkillLearningProgress(tamingComponent: TamingComponent, skill
          requirementProgressArray: skill.requirements.map(_ => 0)
       };
       // @Hack
-      skillLearning.requirementProgressArray[0] = amount + 900;
+      skillLearning.requirementProgressArray[0] = amount;
       tamingComponent.skillLearningArray.push(skillLearning);
    }
 }

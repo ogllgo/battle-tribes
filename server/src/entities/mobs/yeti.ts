@@ -127,7 +127,8 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    
    const physicsComponent = new PhysicsComponent();
    
-   const healthComponent = new HealthComponent(100);
+   // @Temporary for shot
+   const healthComponent = new HealthComponent(100 * 10);
    
    const statusEffectComponent = new StatusEffectComponent(0);
    

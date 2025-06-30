@@ -15,8 +15,8 @@
             "-r", "ts-node/register",
             "-r", "tsconfig-paths/register"
          ],
-         // tell it to use node v20 cuz it was using v10 for some reason which don't worky!
-         "runtimeExecutable": "/home/eggp/.nvm/versions/node/v20.19.2/bin/node",
+         // tell it to use node v22 cuz it was using v10 for some reason which don't worky!
+         "runtimeExecutable": "/home/eggp/.nvm/versions/node/v22.17.0/bin/node",
          "cwd": "${workspaceRoot}",
          "internalConsoleOptions": "openOnSessionStart"
       }

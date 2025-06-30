@@ -126,7 +126,7 @@ const eatLeafItem = (krumblid: Entity, berryItemEntity: Entity): void => {
       data: 0
    };
    registerEntityTickEvent(krumblid, tickEvent);
-}
+} 
 
 // @Hack @COPYNPASTE from cow
 const chaseAndEatLeafItem = (krumblid: Entity, berryItemEntity: Entity): boolean => {

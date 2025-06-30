@@ -339,8 +339,8 @@ export function spawnInitialEntities(): void {
       // const cowConfig = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
       // createEntity(cowConfig, surfaceLayer, 0);
 
-      const yetiConfig = createYetiConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, []);
-      createEntity(yetiConfig, surfaceLayer, 0);
+      // const yetiConfig = createYetiConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, []);
+      // createEntity(yetiConfig, surfaceLayer, 0);
 
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);

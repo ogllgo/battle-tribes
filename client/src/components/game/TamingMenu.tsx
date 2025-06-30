@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from "react";
 import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
-import { entityExists, getEntityType } from "../../world";
+import { entityExists, getCurrentLayer, getEntityType } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battletribes-shared/taming";
 import { getRootEntity, hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
@@ -12,6 +12,8 @@ import TamingSkillTooltip from "./TamingSkillTooltip";
 import { getEntityTamingSpec } from "../../taming-specs";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../client-item-info";
 import { assert } from "../../../../shared/src/utils";
+import { playSound } from "../../sound";
+import Camera from "../../Camera";
 
 const enum Vars {
    SKILL_TRANSFORM_SCALE_FACTOR = 0.5
@@ -134,6 +136,8 @@ const TamingMenu = () => {
       } else {
          sendAcquireTamingSkillPacket(entity, skill.id);
       }
+
+      playSound("taming-skill-acquire.mp3", 0.4, 1, Camera.position.copy(), getCurrentLayer());
    }
 
    const onSkillMouseOver = (skill: TamingSkillNode): void => {

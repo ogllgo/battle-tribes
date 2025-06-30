@@ -592,12 +592,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityType: EntityType.yeti,
       layer: surfaceLayer,
-      spawnRate: 0.004,
+      spawnRate: 0.0004,
       biome: Biome.tundra,
       tileTypes: [TileType.snow, TileType.ice, TileType.permafrost, TileType.fimbultur],
       onlySpawnsInNight: false,
       minSpawnDistance: 90,
-      spawnDistribution: createRawSpawnDistribution(32, 0.008),
+      spawnDistribution: createRawSpawnDistribution(64, 0.0008),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (x: number, y: number, angle: number): EntityConfig | null => {

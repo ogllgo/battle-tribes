@@ -123,6 +123,14 @@ export function translateHitbox(hitbox: Hitbox, translationX: number, translatio
    hitbox.previousPosition.y += translationY;
 }
 
+export function teleportHitbox(hitbox: Hitbox, pos: Point): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x = pos.x;
+   pushedHitbox.box.position.y = pos.y;
+   hitbox.previousPosition.x = pos.x;
+   hitbox.previousPosition.y = pos.y;
+}
+
 export function getTotalMass(node: Hitbox | Entity): number {
    let totalMass = 0;
    if (typeof node === "number") {

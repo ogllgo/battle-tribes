@@ -1,13 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, lerp } from "battletribes-shared/utils";
+import { angle, lerp, Point } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { EntityConfig } from "../components";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { Hitbox } from "../hitboxes";
+import { Hitbox, setHitboxAngle, teleportHitbox } from "../hitboxes";
 
 const DOOR_SWING_SPEED = 5 / Settings.TPS;
 
@@ -41,9 +41,8 @@ const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): voi
    const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(doorComponent.closedAngle + Math.PI/2 + angleToCenter);
    const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(doorComponent.closedAngle + Math.PI/2 + angleToCenter);
 
-   doorHitbox.box.position.x = doorComponent.originX + xOffset;
-   doorHitbox.box.position.y = doorComponent.originY + yOffset;
-   doorHitbox.box.relativeAngle = angle;
+   teleportHitbox(doorHitbox, new Point(doorComponent.originX + xOffset, doorComponent.originY + yOffset));
+   setHitboxAngle(doorHitbox, angle);
    transformComponent.isDirty = true;
 }
 
