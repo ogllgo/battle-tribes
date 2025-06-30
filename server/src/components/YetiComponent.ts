@@ -320,51 +320,6 @@ function onTick(yeti: Entity): void {
       // applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
    }
 
-   // @Copynpaste
-   const rideableComponent = RideableComponentArray.getComponent(yeti);
-   const rider = rideableComponent.carrySlots[0].occupiedEntity;
-   if (entityExists(rider)) {
-      const targetPosition = getRiderTargetPosition(rider);
-      if (targetPosition !== null) {
-         aiHelperComponent.moveFunc(yeti, targetPosition, Vars.FAST_ACCELERATION);
-         aiHelperComponent.turnFunc(yeti, targetPosition, Vars.TURN_SPEED, 0.6);
-         return;
-      }
-   }
-   
-   // Go to follow target if possible
-   // @Copynpaste
-   const tamingComponent = TamingComponentArray.getComponent(yeti);
-   if (entityExists(tamingComponent.followTarget)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-      moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED, 1);
-      if (getEntityAgeTicks(yeti) % Settings.TPS === 0) {
-         addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
-      }
-      return;
-   }
-   
-   // @Hack @Copynpaste
-   // Pick up carry target
-   if (entityExists(tamingComponent.carryTarget)) {
-      const rideableComponent = RideableComponentArray.getComponent(yeti);
-      const carrySlot = getAvailableCarrySlot(rideableComponent);
-         if (carrySlot !== null) {
-         const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-         moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.MEDIUM_ACCELERATION, Vars.TURN_SPEED, 1);
-
-         // Force carry if colliding and head is looking at the carry target
-         const targetDirection = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         if (getAbsAngleDiff(yetiBodyHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(yeti, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
-            mountCarrySlot(tamingComponent.carryTarget, yeti, carrySlot);
-            tamingComponent.carryTarget = 0;
-         }
-         return;
-      }
-   }
-
    if (yetiComponent.isThrowingSnow) {
       // If the target is dead or has run outside the yeti's vision range, cancel the attack
       if (!entityExists(yetiComponent.attackTarget) || !aiHelperComponent.visibleEntities.includes(yetiComponent.attackTarget)) {

@@ -16,14 +16,10 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
-import { TamingComponent } from "../../components/TamingComponent";
-import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
-import { registerEntityTamingSpec } from "../../taming-specs";
-import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
-import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
 
@@ -32,54 +28,6 @@ export enum SnowThrowStage {
    hold,
    return
 }
-
-registerEntityTamingSpec(EntityType.yeti, {
-   maxTamingTier: 3,
-   skillNodes: [
-      {
-         skill: getTamingSkill(TamingSkillID.follow),
-         x: 0,
-         y: 10,
-         parent: null,
-         requiredTamingTier: 1
-      },
-      {
-         skill: getTamingSkill(TamingSkillID.riding),
-         x: -18,
-         y: 30,
-         parent: TamingSkillID.follow,
-         requiredTamingTier: 2
-      },
-      {
-         skill: getTamingSkill(TamingSkillID.move),
-         x: 18,
-         y: 30,
-         parent: TamingSkillID.follow,
-         requiredTamingTier: 2
-      },
-      {
-         skill: getTamingSkill(TamingSkillID.carry),
-         x: -18,
-         y: 50,
-         parent: TamingSkillID.riding,
-         requiredTamingTier: 3
-      },
-      {
-         skill: getTamingSkill(TamingSkillID.attack),
-         x: 18,
-         y: 50,
-         parent: TamingSkillID.move,
-         requiredTamingTier: 3
-      }
-   ],
-   foodItemType: ItemType.raw_beef,
-   tierFoodRequirements: {
-      0: 0,
-      1: 10,
-      2: 30,
-      3: 70
-   }
-});
 
 registerEntityLootOnDeath(EntityType.yeti, [
    {
@@ -137,12 +85,7 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    
-   const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, 0, 64, 0));
-   
    const lootComponent = new LootComponent();
-   
-   const tamingComponent = new TamingComponent();
    
    const yetiComponent = new YetiComponent(territory);
    
@@ -155,9 +98,7 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
-         [ServerComponentType.rideable]: rideableComponent,
          [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.yeti]: yetiComponent
       },
       lights: []
