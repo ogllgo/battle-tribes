@@ -98,10 +98,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Krumblid",
       internalName: "krumblid"
    },
-   [EntityType.frozenYeti]: {
-      name: "Frozen Yeti",
-      internalName: "frozen-yeti"
-   },
    [EntityType.fish]: {
       name: "Fish",
       internalName: "fish"
@@ -141,10 +137,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.iceShardProjectile]: {
       name: "Ice Shard Projectile",
       internalName: "ice-shard-projectile"
-   },
-   [EntityType.rockSpikeProjectile]: {
-      name: "Rock Spike Projectile",
-      internalName: "rock-spike-projectile"
    },
    [EntityType.spearProjectile]: {
       name: "Spear Projectile",

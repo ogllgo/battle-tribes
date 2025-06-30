@@ -25,7 +25,6 @@ export const enum EntityType {
    furnace,
    snowball,
    krumblid,
-   frozenYeti,
    fish,
    itemEntity,
    fleshSwordItemEntity,
@@ -36,7 +35,6 @@ export const enum EntityType {
    ballistaFrostcicle,
    slingTurretRock,
    iceShardProjectile,
-   rockSpikeProjectile,
    spearProjectile,
    researchBench,
    wall,
@@ -139,7 +137,6 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.furnace]: "furnace",
    [EntityType.snowball]: "snowball",
    [EntityType.krumblid]: "krumblid",
-   [EntityType.frozenYeti]: "frozenYeti",
    [EntityType.fish]: "fish",
    [EntityType.itemEntity]: "Item Entity",
    [EntityType.fleshSwordItemEntity]: "Flesh Sword Item Entity",
@@ -150,7 +147,6 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.ballistaFrostcicle]: "ballistaFrostcicle",
    [EntityType.slingTurretRock]: "slingTurretRock",
    [EntityType.iceShardProjectile]: "iceShardProjectile",
-   [EntityType.rockSpikeProjectile]: "rockSpikeProjectile",
    [EntityType.spearProjectile]: "spearProjectile",
    [EntityType.researchBench]: "researchBench",
    [EntityType.wall]: "wall",
@@ -241,9 +237,6 @@ export function getEntityTypeFromString(entityTypeString: string): EntityType | 
    return null;
 }
    
-export const RESOURCE_ENTITY_TYPES: ReadonlyArray<EntityType> = [EntityType.tree, EntityType.berryBush, EntityType.iceSpikes, EntityType.cactus, EntityType.boulder];
-export const MOB_ENTITY_TYPES: ReadonlyArray<EntityType> = [EntityType.cow, EntityType.zombie, EntityType.yeti, EntityType.slime, EntityType.slimewisp, EntityType.krumblid, EntityType.frozenYeti];
-
 // @Cleanup: move all of this
 
 export enum CowSpecies {

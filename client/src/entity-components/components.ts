@@ -25,7 +25,6 @@ import { FenceComponent, FenceComponentArray, FenceComponentParams } from "./ser
 import { FenceGateComponent, FenceGateComponentArray, FenceGateComponentParams } from "./server-components/FenceGateComponent";
 import { FireTorchComponent, FireTorchComponentArray, FireTorchComponentParams } from "./server-components/FireTorchComponent";
 import { FishComponent, FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
-import { FrozenYetiComponent, FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
 import { FurnaceComponent, FurnaceComponentArray, FurnaceComponentParams } from "./server-components/FurnaceComponent";
 import { GlurbHeadSegmentComponent, GlurbHeadSegmentComponentArray, GlurbHeadSegmentComponentParams } from "./server-components/GlurbHeadSegmentComponent";
 import { GolemComponent, GolemComponentArray, GolemComponentParams } from "./server-components/GolemComponent";
@@ -53,7 +52,6 @@ import { PlanterBoxComponent, PlanterBoxComponentArray, PlanterBoxComponentParam
 import { PlayerComponent, PlayerComponentArray, PlayerComponentParams } from "./server-components/PlayerComponent";
 import { PunjiSticksComponent, PunjiSticksComponentArray, PunjiSticksComponentParams } from "./server-components/PunjiSticksComponent";
 import { ResearchBenchComponent, ResearchBenchComponentArray, ResearchBenchComponentParams } from "./server-components/ResearchBenchComponent";
-import { RockSpikeComponent, RockSpikeComponentArray, RockSpikeComponentParams } from "./server-components/RockSpikeComponent";
 import { ScrappyComponent, ScrappyComponentArray, ScrappyComponentParams } from "./server-components/ScrappyComponent";
 import { SlimeComponent, SlimeComponentArray, SlimeComponentParams } from "./server-components/SlimeComponent";
 import { SlimeSpitComponent, SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
@@ -193,13 +191,11 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.projectile]: ProjectileComponentArray,
    [ServerComponentType.iceArrow]: IceArrowComponentArray,
    [ServerComponentType.yeti]: YetiComponentArray,
-   [ServerComponentType.frozenYeti]: FrozenYetiComponentArray,
    [ServerComponentType.totemBanner]: TotemBannerComponentArray,
    [ServerComponentType.cooking]: CookingComponentArray,
    [ServerComponentType.hut]: HutComponentArray,
    [ServerComponentType.snowball]: SnowballComponentArray,
    [ServerComponentType.fish]: FishComponentArray,
-   [ServerComponentType.rockSpike]: RockSpikeComponentArray,
    [ServerComponentType.slimeSpit]: SlimeSpitComponentArray,
    [ServerComponentType.door]: DoorComponentArray,
    [ServerComponentType.tribesman]: TribesmanComponentArray,
@@ -318,13 +314,11 @@ const ServerComponentRecord = {
    [ServerComponentType.projectile]: (): ProjectileComponent => 0 as any,
    [ServerComponentType.iceArrow]: (): IceArrowComponent => 0 as any,
    [ServerComponentType.yeti]: (): YetiComponent => 0 as any,
-   [ServerComponentType.frozenYeti]: (): FrozenYetiComponent => 0 as any,
    [ServerComponentType.totemBanner]: (): TotemBannerComponent => 0 as any,
    [ServerComponentType.cooking]: (): CookingComponent => 0 as any,
    [ServerComponentType.hut]: (): HutComponent => 0 as any,
    [ServerComponentType.snowball]: (): SnowballComponent => 0 as any,
    [ServerComponentType.fish]: (): FishComponent => 0 as any,
-   [ServerComponentType.rockSpike]: (): RockSpikeComponent => 0 as any,
    [ServerComponentType.slimeSpit]: (): SlimeSpitComponent => 0 as any,
    [ServerComponentType.door]: (): DoorComponent => 0 as any,
    [ServerComponentType.tribesman]: (): TribesmanComponent => 0 as any,
@@ -445,13 +439,11 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.projectile]: (): ProjectileComponentParams => 0 as any,
    [ServerComponentType.iceArrow]: (): IceArrowComponentParams => 0 as any,
    [ServerComponentType.yeti]: (): YetiComponentParams => 0 as any,
-   [ServerComponentType.frozenYeti]: (): FrozenYetiComponentParams => 0 as any,
    [ServerComponentType.totemBanner]: (): TotemBannerComponentParams => 0 as any,
    [ServerComponentType.cooking]: (): CookingComponentParams => 0 as any,
    [ServerComponentType.hut]: (): HutComponentParams => 0 as any,
    [ServerComponentType.snowball]: (): SnowballComponentParams => 0 as any,
    [ServerComponentType.fish]: (): FishComponentParams => 0 as any,
-   [ServerComponentType.rockSpike]: (): RockSpikeComponentParams => 0 as any,
    [ServerComponentType.slimeSpit]: (): SlimeSpitComponentParams => 0 as any,
    [ServerComponentType.door]: (): DoorComponentParams => 0 as any,
    [ServerComponentType.tribesman]: (): TribesmanComponentParams => 0 as any,

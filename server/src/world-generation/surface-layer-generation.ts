@@ -30,7 +30,6 @@ import { generateYetiTerritoryTiles, yetiTerritoryIsValid } from "../components/
 import { createIceSpikesConfig } from "../entities/resources/ice-spikes";
 import { createSlimewispConfig } from "../entities/mobs/slimewisp";
 import { createSlimeConfig } from "../entities/mobs/slime";
-import { createFrozenYetiConfig } from "../entities/mobs/frozen-yeti";
 import { createFishConfig } from "../entities/mobs/fish";
 import { createLilypadConfig } from "../entities/lilypad";
 import { createGolemConfig } from "../entities/mobs/golem";
@@ -705,21 +704,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    }
    // });
    
-   registerNewSpawnInfo({
-      entityType: EntityType.frozenYeti,
-      layer: surfaceLayer,
-      spawnRate: 0.004,
-      biome: Biome.tundra,
-      tileTypes: [TileType.fimbultur],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.008),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createFrozenYetiConfig(new Point(x, y), angle);
-      }
-   });
    registerNewSpawnInfo({
       entityType: EntityType.fish,
       layer: surfaceLayer,

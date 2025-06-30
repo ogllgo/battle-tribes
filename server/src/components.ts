@@ -10,7 +10,6 @@ import { DoorComponent } from "./components/DoorComponent";
 import { FenceComponent } from "./components/FenceComponent";
 import { FenceGateComponent } from "./components/FenceGateComponent";
 import { FishComponent } from "./components/FishComponent";
-import { FrozenYetiComponent } from "./components/FrozenYetiComponent";
 import { GolemComponent } from "./components/GolemComponent";
 import { HealingTotemComponent } from "./components/HealingTotemComponent";
 import { HealthComponent } from "./components/HealthComponent";
@@ -37,7 +36,6 @@ import { TunnelComponent } from "./components/TunnelComponent";
 import { TurretComponent } from "./components/TurretComponent";
 import { YetiComponent } from "./components/YetiComponent";
 import { ZombieComponent } from "./components/ZombieComponent";
-import { RockSpikeComponent } from "./components/RockSpikeComponent";
 import { AIHelperComponent } from "./components/AIHelperComponent";
 import { IceShardComponent } from "./components/IceShardComponent";
 import { IceSpikesComponent } from "./components/IceSpikesComponent";
@@ -47,7 +45,7 @@ import { ThrowingProjectileComponent } from "./components/ThrowingProjectileComp
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
-import { EntityAttachInfo, TransformComponent } from "./components/TransformComponent";
+import { TransformComponent } from "./components/TransformComponent";
 import { BoulderComponent } from "./components/BoulderComponent";
 import { ProjectileComponent } from "./components/ProjectileComponent";
 import { LayeredRodComponent } from "./components/LayeredRodComponent";
@@ -154,13 +152,11 @@ const ComponentClassRecord = {
    [ServerComponentType.blueprint]: () => BlueprintComponent,
    [ServerComponentType.boulder]: () => BoulderComponent,
    [ServerComponentType.yeti]: () => YetiComponent,
-   [ServerComponentType.frozenYeti]: () => FrozenYetiComponent,
    [ServerComponentType.totemBanner]: () => TotemBannerComponent,
    [ServerComponentType.cooking]: () => CookingComponent,
    [ServerComponentType.hut]: () => HutComponent,
    [ServerComponentType.snowball]: () => SnowballComponent,
    [ServerComponentType.fish]: () => FishComponent,
-   [ServerComponentType.rockSpike]: () => RockSpikeComponent,
    [ServerComponentType.slimeSpit]: () => SlimeSpitComponent,
    [ServerComponentType.door]: () => DoorComponent,
    [ServerComponentType.tribesman]: () => TribesmanComponent,

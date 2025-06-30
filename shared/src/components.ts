@@ -25,7 +25,6 @@ export enum ServerComponentType {
    cow,
    door,
    fish,
-   frozenYeti,
    golem,
    health,
    hut,
@@ -38,7 +37,6 @@ export enum ServerComponentType {
    pebblum,
    physics,
    player,
-   rockSpike,
    slime,
    slimeSpit,
    slimewisp,
@@ -151,7 +149,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.cow]: "Cow Component",
    [ServerComponentType.door]: "Foor Component",
    [ServerComponentType.fish]: "Fish Component",
-   [ServerComponentType.frozenYeti]: "Frozen Yeti Component",
    [ServerComponentType.golem]: "Golem Component",
    [ServerComponentType.health]: "Health Component",
    [ServerComponentType.hut]: "Hut Component",
@@ -164,7 +161,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.pebblum]: "Pebblum Component",
    [ServerComponentType.physics]: "Physics Component",
    [ServerComponentType.player]: "Player Component",
-   [ServerComponentType.rockSpike]: "Rock Spike Component",
    [ServerComponentType.slime]: "Slime Component",
    [ServerComponentType.slimeSpit]: "Slime Spit Component",
    [ServerComponentType.slimewisp]: "Slimewisp Component",
@@ -299,7 +295,6 @@ export const EntityComponents = {
    [EntityType.furnace]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.inventory, ServerComponentType.cooking, ServerComponentType.furnace] as const,
    [EntityType.snowball]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.snowball] as const,
    [EntityType.krumblid]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.krumblid] as const,
-   [EntityType.frozenYeti]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.frozenYeti, ServerComponentType.aiHelper] as const,
    [EntityType.fish]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.fish] as const,
    [EntityType.itemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
    [EntityType.fleshSwordItemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
@@ -310,7 +305,6 @@ export const EntityComponents = {
    [EntityType.ballistaFrostcicle]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.slingTurretRock]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.iceShardProjectile]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.iceShard] as const,
-   [EntityType.rockSpikeProjectile]: [ServerComponentType.transform, ServerComponentType.rockSpike] as const,
    [EntityType.spearProjectile]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.throwingProjectile, ServerComponentType.spearProjectile] as const,
    [EntityType.researchBench]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.researchBench] as const,
    [EntityType.wall]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial] as const,
@@ -477,16 +471,6 @@ export interface FishComponentData extends BaseComponentData {
    readonly colour: FishColour;
 }
 
-/* Frozen Yeti Component */
-
-export interface FrozenYetiComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.frozenYeti;
-   readonly attackType: FrozenYetiAttackType;
-   readonly attackStage: number;
-   readonly stageProgress: number;
-   readonly rockSpikePositions: Array<[number, number]>;
-}
-
 /* Golem Component */
 
 export interface GolemComponentData extends BaseComponentData {
@@ -559,14 +543,6 @@ export interface PhysicsComponentData extends BaseComponentData {
 export interface PlayerComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.player;
    readonly username: string;
-}
-
-/* Rock Spike Component */
-
-export interface RockSpikeProjectileComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.rockSpike;
-   readonly size: RockSpikeProjectileSize;
-   readonly lifetime: number;
 }
 
 /* Slime Component */

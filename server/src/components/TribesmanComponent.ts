@@ -295,8 +295,6 @@ function onKill(entity: Entity, deadEntity: Entity): void {
       awardTitle(entity, TribesmanTitle.deathbringer);
    } else if (getEntityType(deadEntity) === EntityType.yeti && Math.random() < TITLE_REWARD_CHANCES.YETISBANE_REWARD_CHANCE) {
       awardTitle(entity, TribesmanTitle.yetisbane);
-   } else if (getEntityType(deadEntity) === EntityType.frozenYeti && Math.random() < TITLE_REWARD_CHANCES.WINTERSWRATH_REWARD_CHANCE) {
-      awardTitle(entity, TribesmanTitle.winterswrath);
    }
 }
 

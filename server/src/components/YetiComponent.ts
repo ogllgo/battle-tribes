@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { getAbsAngleDiff, getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
@@ -16,18 +16,13 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { TribeComponentArray } from "./TribeComponent";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { surfaceLayer } from "../layers";
 import { AttackingEntitiesComponent, AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { SnowballComponentArray } from "./SnowballComponent";
-import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray } from "./TamingComponent";
-import { applyStatusEffect } from "./StatusEffectComponent";
-import { StatusEffect } from "../../../shared/src/status-effects";
-import { TamingSkillID } from "../../../shared/src/taming";
 import { StructureComponentArray } from "./StructureComponent";
-import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { applyAbsoluteKnockback, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../hitboxes";
 import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
@@ -228,8 +223,8 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
       return true;
    }
    
-   // Don't chase entities without health or natural tundra resources or snowballs or frozen yetis who aren't attacking the yeti
-   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball || (entityType === EntityType.frozenYeti && !attackingEntitiesComponent.attackingEntities.has(entity))) {
+   // Don't chase entities without health or natural tundra resources or snowballs
+   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball) {
       return false;
    }
    
@@ -249,16 +244,6 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
    // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
    if (!attackingEntitiesComponent.attackingEntities.has(entity) && !yetiComponent.territory.includes(entityTileIndex)) {
       return false;
-   }
-
-   // If tame, don't attack stuff belonging to the tame tribe
-   // @Hack
-   if (TribeComponentArray.hasComponent(entity)) {
-      const entityTribeComponent = TribeComponentArray.getComponent(entity);
-      const tamingComponent = TamingComponentArray.getComponent(yeti);
-      if (entityTribeComponent.tribe === tamingComponent.tameTribe) {
-         return false;
-      }
    }
 
    // @Hack: Don't attack structures place by frostlings. Ideally instead frostlings would just
@@ -420,9 +405,6 @@ function onTick(yeti: Entity): void {
             healEntity(yeti, 3, yeti);
             destroyEntity(closestFoodItem);
 
-            const tamingComponent = TamingComponentArray.getComponent(yeti);
-            tamingComponent.foodEatenInTier++;
-
             // @Hack`
             const tickEvent: EntityTickEvent = {
                entityID: yeti,
@@ -484,7 +466,7 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
    
    // Don't damage yetis which haven't damaged it
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(yeti);
-   if ((collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.frozenYeti) && !attackingEntitiesComponent.attackingEntities.has(collidingEntity)) {
+   if (collidingEntityType === EntityType.yeti && !attackingEntitiesComponent.attackingEntities.has(collidingEntity)) {
       return;
    }
 

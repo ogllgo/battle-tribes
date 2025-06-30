@@ -115,10 +115,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
-   [EntityType.frozenYeti]: {
-      effectiveDamageTypes: [DamageType.weapon],
-      stoppedDamageTypes: []
-   },
    [EntityType.fish]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
@@ -156,10 +152,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.iceShardProjectile]: {
-      effectiveDamageTypes: [],
-      stoppedDamageTypes: []
-   },
-   [EntityType.rockSpikeProjectile]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },

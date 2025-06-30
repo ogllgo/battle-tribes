@@ -122,7 +122,6 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
          return Object.keys(golemComponent.attackingEntities).length > 0 ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }
       // Hostile if attacking a tribesman or on tribe territory, neutral otherwise
-      case EntityType.frozenYeti:
       case EntityType.yeti:
       case EntityType.slime:
       case EntityType.guardian: {
@@ -145,7 +144,6 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.iceShardProjectile:
       case EntityType.itemEntity:
       case EntityType.krumblid:
-      case EntityType.rockSpikeProjectile:
       case EntityType.slimeSpit:
       case EntityType.slimewisp:
       case EntityType.snowball:

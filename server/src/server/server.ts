@@ -143,7 +143,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(3520905774);
+      SRandom.seed(5128141131);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
